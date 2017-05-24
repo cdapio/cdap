@@ -358,9 +358,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } catch (Throwable t) {
       cleanupTask.run();
       // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
-      if (t instanceof TransactionFailureException && t.getCause() instanceof Exception
-        && !(t instanceof TransactionConflictException)) {
-        throw (Exception) t.getCause();
+      if (t instanceof TransactionFailureException) {
+        throw Transactions.propagate((TransactionFailureException) t, Exception.class);
       }
       throw t;
     }
@@ -562,12 +561,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (TransactionControl.EXPLICIT == txControl) {
       doInitialize(job);
     } else {
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          doInitialize(job);
-        }
-      });
+      try {
+        context.execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext context) throws Exception {
+            doInitialize(job);
+          }
+        });
+      } catch (TransactionFailureException e) {
+        throw Transactions.propagate(e, Exception.class);
+      }
     }
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
     try {

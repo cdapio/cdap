@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.streaming;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
@@ -41,6 +42,7 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
+import org.apache.tephra.TransactionFailureException;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -108,7 +110,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   public <U> SparkCollection<U> compute(final StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageInfo, sec), compute);
-    sec.execute(new TxRunnable() {
+    TransactionUtil.execute(sec, new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
         SparkExecutionPluginContext sparkPluginContext =
@@ -116,7 +118,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
                                                datasetContext, stageInfo);
         wrappedCompute.initialize(sparkPluginContext);
       }
-    });
+    }, Exception.class);
     return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageInfo, wrappedCompute)));
   }
 

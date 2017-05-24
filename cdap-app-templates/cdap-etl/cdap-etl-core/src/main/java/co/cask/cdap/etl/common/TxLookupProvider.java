@@ -15,12 +15,12 @@
  */
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.TransactionUtil;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.Lookup;
 import com.google.common.base.Function;
-import org.apache.tephra.TransactionFailureException;
 
 import java.util.Map;
 import java.util.Set;
@@ -83,18 +83,14 @@ public class TxLookupProvider extends AbstractLookupProvider {
   @Nullable
   private <T, R> R executeLookup(final String table, final Map<String, String> arguments,
                                  final Function<Lookup<T>, R> func) {
-    try {
-      final AtomicReference<R> result = new AtomicReference<>();
-      tx.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          Lookup<T> lookup = getLookup(table, context.getDataset(table, arguments));
-          result.set(func.apply(lookup));
-        }
-      });
-      return result.get();
-    } catch (TransactionFailureException e) {
-      throw new RuntimeException("Failed to execute transaction", e);
-    }
+    final AtomicReference<R> result = new AtomicReference<>();
+    TransactionUtil.execute(tx, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        Lookup<T> lookup = getLookup(table, context.getDataset(table, arguments));
+        result.set(func.apply(lookup));
+      }
+    });
+    return result.get();
   }
 }
