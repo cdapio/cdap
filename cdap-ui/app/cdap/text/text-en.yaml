@@ -589,7 +589,7 @@ features:
       expand: Expand the side panel
     TopPanel:
       applyBtnLabel: Apply
-      addToPipelineBtnLabel: Add to Pipeline
+      addToPipelineBtnLabel: Create Pipeline
       database: Database
       file: File System
       invalidFieldNameMessage: Invalid column name "{fieldName}"
@@ -605,6 +605,33 @@ features:
       title: Data Preparation
       upgradeBtnLabel: Upgrade
       viewSchemaBtnLabel: View Schema
+      copyToCDAPDatasetBtn:
+        uploadDisabledMessage: Copying to a dataset is not supported for uploaded files.
+        btnLabel: Make a Copy
+        createBtnLabel: Copy Data
+        copyingSteps:
+          Step1: 'Preparing to copy...'
+          Step1Error: 'Unable to copy data.'
+          Step2: 'Submitting copy task...'
+          Step2Error: 'Unable to submit copy task.'
+        description: You are creating a new Dataset, select a type and enter information about this new entity
+        Form:
+          datasetNameLabel: Dataset Name
+          datasetTooltip: Name of the dataset to copy to
+          fileSetBtnlabel: Fileset
+          formatLabel: Format
+          formatTooltip: Format of data
+          requiredLabel: Required
+          rowKeyLabel: Row Key
+          rowKeyTooltip: Its a rowkey
+          typeLabel: Type
+          tableBtnlabel: Table
+        Formats:
+          avro: Avro
+          orc: ORC
+          parquet: Parquet
+        modalTitle: Make a Copy
+        monitorBtnLabel: Monitor Data Copy
       WorkspaceModal:
         create: Create
         createModalTitle: Create Workspace
