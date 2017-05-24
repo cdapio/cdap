@@ -419,8 +419,8 @@ features:
           ndigitnumberPatternContent:
             description1: Extract numbers with
             description2: digits
-          patternDescription: Select a regex pattern to extract a group of data in a new column named "{column}"
-          phoneNumberPattern: Phone numbers
+          patternDescription: Select a pattern to extract from the column "{column}"
+          phoneNumberPattern: U.S. Phone Numbers
           phoneNumberPatternExample: 'e.g. (###) - ###-####'
           selectPatternMessage: Select a Pattern
           showPatternLabel: Show Pattern
