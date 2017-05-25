@@ -26,6 +26,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketTimeoutException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -63,16 +64,19 @@ public final class LocalStreamFileJanitorService extends AbstractService impleme
         }
 
         LOG.debug("Execute stream file cleanup.");
-
+        long delay = 0;
         try {
           janitor.cleanAll();
           LOG.debug("Completed stream file cleanup.");
+        } catch (SocketTimeoutException e) {
+          // Caught a SocketTimeoutException, wait a little longer before retrying
+          delay = cleanupPeriod;
         } catch (Throwable e) {
           LOG.warn("Failed to cleanup stream files.", e);
         } finally {
           // Compute the next cleanup time. It is aligned to work clock based on the period.
           long now = System.currentTimeMillis();
-          long delay = (now / cleanupPeriod + 1) * cleanupPeriod - now;
+          delay = delay == 0  ? (now / cleanupPeriod + 1) * cleanupPeriod - now : delay;
 
           if (delay <= 0) {
             executor.submit(this);
