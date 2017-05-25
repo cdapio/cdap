@@ -52,13 +52,17 @@ public class FilePathResolver {
   /**
    * Resolves a bash-style file path into a {@link File}.
    *
-   * Handles ".", "..", and "~".
+   * Handles ".", "..", "~", and escaped space.
    *
    * @param path bash-style path
    * @return {@link File} of the resolved path
    */
   public File resolvePathToFile(String path) {
     path = resolveVariables(path);
+
+    if (path.contains("\\ ")) {
+      path = path.replace("\\ ", " ");
+    }
 
     if (path.contains("/") || path.contains("\\")) {
       path = path.replace("/", File.separator);

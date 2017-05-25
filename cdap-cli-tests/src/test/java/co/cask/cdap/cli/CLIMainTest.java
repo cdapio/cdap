@@ -312,6 +312,23 @@ public class CLIMainTest extends CLITestBase {
   }
 
   @Test
+  public void testAppDeployWithSpace() throws Exception {
+    String streamId = ConfigTestApp.DEFAULT_STREAM;
+    String datasetId = ConfigTestApp.DEFAULT_TABLE;
+    File appJarFile = createAppJarFileWithSpace(ConfigTestApp.class);
+    testCommandOutputContains(cli, String.format("deploy app %s", appJarFile.getAbsolutePath()
+      .replace("fake app folder", "fake\\ app\\ folder")), "Successfully");
+
+    if (!appJarFile.delete()) {
+      LOG.warn("Failed to delete temporary app jar file: {}", appJarFile.getAbsolutePath());
+    }
+
+    testCommandOutputContains(cli, "list streams", streamId);
+    testCommandOutputContains(cli, "list dataset instances", datasetId);
+    testCommandOutputContains(cli, "delete app " + ConfigTestApp.NAME, "Successfully");
+  }
+
+  @Test
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
 
@@ -935,6 +952,16 @@ public class CLIMainTest extends CLITestBase {
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
     File tmpFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    File appJarFile =
+      new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
+    Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
+    return appJarFile;
+  }
+
+  private static File createAppJarFileWithSpace(Class<?> cls) throws IOException {
+    File tmpFolder = TMP_FOLDER.newFolder("fake app folder");
     LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
     File appJarFile =
