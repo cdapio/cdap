@@ -38,6 +38,7 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.CompositeFinisher;
@@ -378,6 +379,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     public void map(Object key, Object value, Mapper.Context context) throws IOException, InterruptedException {
       try {
         transformRunner.transform(key, value);
+      } catch (StageFailureException e) {
+        PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
+        Throwables.propagate(e.getCause());
       } catch (Exception e) {
         Throwables.propagate(e);
       }
@@ -413,6 +417,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     protected void reduce(Object key, Iterable values, Context context) throws IOException, InterruptedException {
       try {
         transformRunner.transform(key, values.iterator());
+      } catch (StageFailureException e) {
+        PIPELINE_LOG.error("{}", e.getMessage(), e.getCause());
+        Throwables.propagate(e.getCause());
       } catch (Exception e) {
         Throwables.propagate(e);
       }
