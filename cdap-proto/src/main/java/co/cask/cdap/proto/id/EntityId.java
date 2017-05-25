@@ -164,9 +164,9 @@ public abstract class EntityId implements IdCompatible {
       List<String> idParts = Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString));
       // special case for DatasetId, DatasetModuleId, DatasetTypeId since we allow . in the name
       if (EnumSet.of(EntityType.DATASET, EntityType.DATASET_MODULE, EntityType.DATASET_TYPE).contains(typeFromString)) {
-        idParts = new ArrayList<>();
         int namespaceSeparatorPos = idString.indexOf(IDSTRING_PART_SEPARATOR);
         if (namespaceSeparatorPos > 0) {
+          idParts = new ArrayList<>();
           idParts.add(idString.substring(0, namespaceSeparatorPos));
           idParts.add(idString.substring(namespaceSeparatorPos + 1));
         }
