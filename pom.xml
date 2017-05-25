@@ -2615,6 +2615,7 @@
         <module>cdap-explore-jdbc</module>
         <module>cdap-explore</module>
         <module>cdap-unit-test</module>
+        <module>cdap-unit-test-spark2_2.11</module>
         <module>cdap-kms</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>

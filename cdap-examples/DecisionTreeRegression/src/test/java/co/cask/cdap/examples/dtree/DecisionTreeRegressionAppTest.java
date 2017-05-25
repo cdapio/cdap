@@ -23,7 +23,7 @@ import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.TestBase;
+import co.cask.cdap.test.TestBaseWithSpark2;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -45,12 +45,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Decision Tree Example tests.
  */
-public class DecisionTreeRegressionAppTest extends TestBase {
+public class DecisionTreeRegressionAppTest extends TestBaseWithSpark2 {
   private static final Gson GSON = new Gson();
 
   @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
-                                                                       Constants.AppFabric.SPARK_COMPAT, "spark2_2.11");
+  public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
   @Test
   public void test() throws Exception {
