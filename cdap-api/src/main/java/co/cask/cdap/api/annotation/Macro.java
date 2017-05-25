@@ -26,4 +26,16 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Macro {
+
+  /**
+   * Returns whether escaping is enabled. Default is false.
+   *
+   * When escaping is enabled, any character can be escaped with a backslash '\'. For example, with escaping enabled,
+   * '\${val}' would evaluate to '${val}'. With escaping disabled, '\${val}' would result in a lookup of 'val'.
+   * If the lookup for 'val' is 'xyz', the entire macro would evaluate to '\xyz'. Before enabling escaping on a field,
+   * keep in mind that an escape enabled macro field will behave differently than a non-macro field.
+   * In a non-macro field, '\n' will be evaluated as-is. In an escape enabled macro field, '\n' will evaluate
+   * to 'n'.
+   */
+  boolean escapingEnabled() default false;
 }
