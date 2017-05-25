@@ -34,6 +34,7 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
   private transient int endHour;
   private transient int endMinute;
 
+  private transient boolean isStartTimeSmaller;
   private transient Calendar calendar;
 
   public TimeRangeConstraint(String startTime, String endTime, TimeZone timeZone) {
@@ -58,6 +59,8 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
       endHour = calendar.get(Calendar.HOUR_OF_DAY);
       endMinute = calendar.get(Calendar.MINUTE);
 
+      isStartTimeSmaller = vr.getStartDate().compareTo(vr.getEndDate()) < 0;
+
       this.calendar = calendar; // do this last, it should only be set if validation was successful
     }
   }
@@ -70,14 +73,24 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
     int minute = calendar.get(Calendar.MINUTE);
 
     boolean pastOrEqualStartRange = hourOfDay > startHour || (hourOfDay == startHour && minute >= startMinute);
-    boolean pastEndRange = hourOfDay > endHour || (hourOfDay == endHour && minute >= endMinute);
+    boolean pastOrEqualEndRange = hourOfDay > endHour || (hourOfDay == endHour && minute >= endMinute);
 
-    boolean satisfied = pastOrEqualStartRange && !pastEndRange;
-    if (satisfied) {
-      return ConstraintResult.SATISFIED;
+    if (isStartTimeSmaller) {
+      // [6AM,10PM)
+      boolean satisfied = pastOrEqualStartRange && !pastOrEqualEndRange;
+      if (satisfied) {
+        return ConstraintResult.SATISFIED;
+      }
+    } else {
+      // [10PM,6AM)
+      boolean satisfied = pastOrEqualStartRange || !pastOrEqualEndRange;
+      if (satisfied) {
+        return ConstraintResult.SATISFIED;
+      }
     }
 
-    if (pastEndRange) {
+    // the next satisfy time will always be later today if isStartTimeSmaller is false
+    if (pastOrEqualEndRange && isStartTimeSmaller) {
       // we've past the end time range for today
       calendar.add(Calendar.DAY_OF_YEAR, 1);
     }
