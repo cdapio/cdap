@@ -202,8 +202,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       public Void run(ProgramScheduleStoreDataset store) throws NotFoundException {
         try {
           // TODO: [CDAP-11576] need to clean up the inconsistent state if this operation fails
-          scheduler.updateProgramSchedule(schedule);
-        } catch (SchedulerException e) {
+          ProgramSchedule oldSchedule = store.getSchedule(schedule.getScheduleId());
+          // delete the old schedule read from the store first and add the new schedule. In case old schedule
+          // and new schedule have different types of trigger, deletion and creation need to be performed separately
+          // in StreamSizeScheduler and TimeScheduler
+          scheduler.deleteProgramSchedule(oldSchedule);
+          scheduler.addProgramSchedule(schedule);
+          // AlreadyExistsException from scheduler.addProgramSchedule(schedule) should never happen
+        } catch (SchedulerException | AlreadyExistsException e) {
           // TODO: [CDAP-11574] temporarily catch the SchedulerException and throw NotFoundException.
           // Need better error handling
           LOG.error("Exception occurs when updating schedule {}", schedule, e);

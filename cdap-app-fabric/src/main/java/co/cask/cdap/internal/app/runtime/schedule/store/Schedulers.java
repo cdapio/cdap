@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -33,7 +34,6 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -41,13 +41,19 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
+import joptsimple.internal.Strings;
+import org.quartz.CronExpression;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -92,8 +98,8 @@ public class Schedulers {
       trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
     } else {
       StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
-      trigger = new ProtoTrigger.StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
-                                                   streamSizeSchedule.getDataTriggerMB());
+      trigger = new StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
+                                      streamSizeSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
@@ -113,7 +119,7 @@ public class Schedulers {
     } else {
       StreamSizeSchedule streamSchedule = (StreamSizeSchedule) schedule;
       StreamId streamId = programId.getNamespaceId().stream(streamSchedule.getStreamName());
-      trigger = new ProtoTrigger.StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
+      trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
@@ -136,8 +142,46 @@ public class Schedulers {
   }
 
   public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
-    ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) schedule.getTrigger();
+    StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
     return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
                                   trigger.getStream().getStream(), trigger.getTriggerMB());
+  }
+
+  public static void validateCronExpression(String cronExpression) {
+    String quartzCron = getQuartzCronExpression(cronExpression);
+    try {
+      CronExpression.validateExpression(quartzCron);
+    } catch (ParseException e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  // Helper function to adapt cron entry to a cronExpression that is usable by Quartz with the following rules:
+  // 1. Quartz doesn't support specifying both day-of-the-month and day-of-the-week,
+  //    one of them must be '?' if the other is specified with anything other than '?'
+  // 2. Quartz resolution is in seconds which cron entry doesn't support.
+  public static String getQuartzCronExpression(String cronEntry) {
+    // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
+    // CronExpression will directly be used for tests.
+    String parts [] = cronEntry.split(" ");
+    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
+    if (parts.length == 5) {
+      // Convert cron entry format to Quartz format by replacing wild-card character "*"
+      // if day-of-the-month is not "?" and day-of-the-week is wild-card, replace day-of-the-week with "?"
+      if (!parts[2].equals("?") && parts[4].equals("*")) {
+        parts[4] = "?";
+      }
+      // if day-of-the-week is not "?" and day-of-the-month is wild-card, replace day-of-the-month with "?"
+      if (!parts[4].equals("?") && parts[2].equals("*")) {
+        parts[2] = "?";
+      }
+      List<String> partsList = new ArrayList<>(Arrays.asList(parts));
+      // add "0" to seconds in Quartz format without changing the meaning of the original cron expression
+      partsList.add(0, "0");
+      return Strings.join(partsList, " ");
+    } else {
+      //Use the given cronExpression
+      return cronEntry;
+    }
   }
 }

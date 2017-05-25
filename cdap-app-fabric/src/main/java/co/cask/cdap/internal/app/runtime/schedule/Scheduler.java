@@ -42,14 +42,6 @@ public interface Scheduler {
   void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException;
 
   /**
-   * Updates a {@link ProgramSchedule} in the store. The schedule with the same {@link ScheduleId}
-   * as the given {@code schedule} will be replaced.
-   *
-   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
-   */
-  void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException;
-
-  /**
    * Deletes the schedule corresponding to the given {@link ProgramSchedule} if it exists
    *
    * @param schedule the {@link ProgramSchedule} to delete
