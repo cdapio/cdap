@@ -54,8 +54,8 @@ public class DefaultSchedulerService {
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
-      LOG.debug("Trying to run job {} with trigger {}", context.getJobDetail().getKey().toString(),
-                context.getTrigger().getKey().toString());
+      LOG.debug("Emitting time notification for program '{}' and schedule '{}'.",
+                context.getJobDetail().getKey().toString(), context.getTrigger().getKey().toString());
       Trigger trigger = context.getTrigger();
       String key = trigger.getKey().getName();
       String[] parts = key.split(":");
@@ -68,7 +68,6 @@ public class DefaultSchedulerService {
       // Skip program type in parts[3] and program name in parts[4]
       String scheduleName = parts[5];
 
-      LOG.debug("Schedule execute {}", key);
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
 
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
