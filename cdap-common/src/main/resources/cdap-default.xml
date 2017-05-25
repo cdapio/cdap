@@ -1690,6 +1690,7 @@
       &lt;common.prefix&gt;, and the numerical suffixes will range from 0 to
       (&lt;total.topic.number&gt; - 1).
     </description>
+    <final>true</final>
   </property>
 
   <property>
