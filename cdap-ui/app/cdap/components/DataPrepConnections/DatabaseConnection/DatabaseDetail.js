@@ -20,6 +20,8 @@ import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import replace from 'lodash/replace';
+import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
 
 const CONN_TYPE = {
@@ -39,60 +41,57 @@ export default class DatabaseDetail extends Component {
     this.state = {
       connType: CONN_TYPE.basic,
       name: '',
-      host: '',
+      hostname: '',
       port: '',
-      userName: '',
+      username: '',
       password: '',
       database: '',
-      connectionString: ''
+      connectionString: '',
+      connectionResult: null
     };
 
+    this.eventEmitter = ee(ee);
     this.addConnection = this.addConnection.bind(this);
     this.editConnection = this.editConnection.bind(this);
+    this.testConnection = this.testConnection.bind(this);
+    this.preventDefault = this.preventDefault.bind(this);
   }
 
   componentWillMount() {
     if (this.props.mode !== 'ADD') {
-      let namespace = NamespaceStore.getState().selectedNamespace;
+      let name = this.props.mode === 'EDIT' ? this.props.connInfo.name : '';
 
-      let params = {
-        namespace,
-        connectionId: this.props.connectionId
-      };
+      let {
+        connectionString = '',
+        password = '',
+        username = '',
+        hostname = '',
+        port = '',
+        database = ''
+      } = this.props.connInfo.properties;
 
-      MyDataPrepApi.getConnection(params)
-        .subscribe((res) => {
-          let connInfo = objectQuery(res, 'values', 0);
-
-          let name = this.props.mode === 'EDIT' ? connInfo.name : '';
-
-          let {
-            connectionString = '',
-            password = '',
-            userName = '',
-            hostname = '',
-            port = '',
-            database = ''
-          } = connInfo.properties;
-
-          this.setState({
-            name,
-            connectionString,
-            password,
-            userName,
-            hostname,
-            port,
-            database,
-            connType: connectionString ? CONN_TYPE.advanced : CONN_TYPE.basic
-          });
-        }, (err) => {
-          console.log('err', err);
-        });
+      this.setState({
+        name,
+        connectionString,
+        password,
+        username,
+        hostname,
+        port,
+        database,
+        connType: connectionString ? CONN_TYPE.advanced : CONN_TYPE.basic
+      });
     }
   }
 
+  preventDefault(e) {
+    e.preventDefault();
+  }
+
   handleChange(key, e) {
-    this.setState({[key]: e.target.value});
+    this.setState({
+      [key]: e.target.value,
+      connectionResult: null
+    });
   }
 
   handleConnTypeChange(type) {
@@ -101,24 +100,47 @@ export default class DatabaseDetail extends Component {
 
   constructProperties() {
     let properties;
+    let db = this.props.db;
 
     if (this.state.connType === CONN_TYPE.basic) {
       properties = {
-        hostname: this.state.host,
+        hostname: this.state.hostname,
         port: this.state.port,
-        userName: this.state.userName,
+        username: this.state.username,
         password: this.state.password,
         database: this.state.database
       };
     } else {
       properties = {
         connectionString: this.state.connectionString,
-        userName: this.state.userName,
+        username: this.state.username,
         password: this.state.password
       };
     }
 
+    properties.name = db.name;
+    properties.type = db.pluginInfo.properties.type;
+    properties.class =  db.pluginInfo.properties.class;
+    properties.url = this.interpolateConnectionString(db.pluginInfo.url);
+
     return properties;
+  }
+
+  interpolateConnectionString(url) {
+    let state = this.state;
+    let required = this.props.db.pluginInfo.fields;
+
+    let interpolatedUrl = url;
+
+    if (this.state.connType === CONN_TYPE.basic) {
+      required.forEach((field) => {
+        interpolatedUrl = replace(interpolatedUrl, '${' + field + '}', state[field]);
+      });
+    } else {
+      interpolatedUrl = this.state.connectionString;
+    }
+
+    return interpolatedUrl;
   }
 
   addConnection() {
@@ -139,35 +161,57 @@ export default class DatabaseDetail extends Component {
   }
 
   editConnection() {
-    // needs some work from backend
-    // currently not working
-
     let namespace = NamespaceStore.getState().selectedNamespace;
-
-    // let params = {
-    //   namespace,
-    //   connectionId: this.props.connectionId,
-    //   key: 'ssl',
-    //   value: true
-    // };
-
-    // let requestBody = this.constructProperties();
 
     let params = {
       namespace,
-      connectionId: this.props.connectionId,
-      key: 'ssl'
+      connectionId: this.props.connectionId
     };
 
-    params = Object.assign(params, this.constructProperties());
+    let requestBody = {
+      name: this.state.name,
+      id: this.props.connectionId,
+      type: 'DATABASE',
+      properties: this.constructProperties()
+    };
 
-    MyDataPrepApi.updateConnection(params)
-      .subscribe((res) => {
+    MyDataPrepApi.updateConnection(params, requestBody)
+      .subscribe(() => {
+        this.eventEmitter.emit('DATAPREP_CONNECTION_EDIT_DATABASE', this.props.connectionId);
         this.props.onAdd();
-
-        console.log('test', res);
       }, (err) => {
         console.log('err', err);
+      });
+  }
+
+  testConnection() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    let requestBody = {
+      name: this.state.name,
+      type: 'DATABASE',
+      properties: this.constructProperties()
+    };
+
+    MyDataPrepApi.jdbcTestConnection({namespace}, requestBody)
+      .subscribe((res) => {
+        this.setState({
+          connectionResult: {
+            type: 'success',
+            message: res.message
+          }
+        });
+      }, (err) => {
+        console.log('Error testing database connection', err);
+
+        let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || T.translate(`${PREFIX}.defaultTestErrorMessage`);
+
+        this.setState({
+          connectionResult: {
+            type: 'danger',
+            message: errorMessage
+          }
+        });
       });
   }
 
@@ -175,14 +219,14 @@ export default class DatabaseDetail extends Component {
     return (
       <div className="form-group row">
         <label className={LABEL_COL_CLASS}>
-          {T.translate(`${PREFIX}.userName`)}
+          {T.translate(`${PREFIX}.username`)}
         </label>
         <div className={INPUT_COL_CLASS}>
           <input
             type="text"
             className="form-control"
-            value={this.state.userName}
-            onChange={this.handleChange.bind(this, 'userName')}
+            value={this.state.username}
+            onChange={this.handleChange.bind(this, 'username')}
           />
         </div>
       </div>
@@ -207,20 +251,48 @@ export default class DatabaseDetail extends Component {
     );
   }
 
+  renderTestButton() {
+    return (
+      <div className="form-group row">
+        <div className="col-xs-8 offset-xs-4">
+          <button
+            className="btn btn-secondary"
+            onClick={this.testConnection}
+          >
+            Test Connection
+          </button>
+
+          {
+            this.state.connectionResult ?
+              (
+                <span
+                  className={`connection-check text-${this.state.connectionResult.type}`}
+                >
+                  {this.state.connectionResult.message}
+                </span>
+              )
+            :
+              null
+          }
+        </div>
+      </div>
+    );
+  }
+
   renderBasic() {
     return (
       <div>
         <div className="form-group row">
           <label className={LABEL_COL_CLASS}>
-            {T.translate(`${PREFIX}.host`)}
+            {T.translate(`${PREFIX}.hostname`)}
             <span className="asterisk">*</span>
           </label>
           <div className={INPUT_COL_CLASS}>
             <input
               type="text"
               className="form-control"
-              value={this.state.host}
-              onChange={this.handleChange.bind(this, 'host')}
+              value={this.state.hostname}
+              onChange={this.handleChange.bind(this, 'hostname')}
             />
           </div>
         </div>
@@ -243,6 +315,8 @@ export default class DatabaseDetail extends Component {
         {this.renderUsername()}
 
         {this.renderPassword()}
+
+        {this.renderTestButton()}
 
         <div className="form-group row">
           <label className={LABEL_COL_CLASS}>
@@ -288,16 +362,18 @@ export default class DatabaseDetail extends Component {
   }
 
   renderDriverInfo() {
+    let db = this.props.db;
+
     return (
       <div className="row driver-info">
         <div className="col-xs-4 text-xs-right">
-          <div className={`db-image ${this.props.db.database.classname}`}></div>
-          <span>{this.props.db.database.name}</span>
+          <div className={`db-image db-${db.name}`}></div>
+          <span>{db.label}</span>
         </div>
 
         <div className="col-xs-8 driver-detail">
           <span>
-            {this.props.db.pluginInfo.artifactVersion}
+            {db.pluginInfo.version}
           </span>
 
           <span>
@@ -324,7 +400,7 @@ export default class DatabaseDetail extends Component {
     let disabled = !this.state.name;
 
     if (this.state.connType === CONN_TYPE.basic) {
-      disabled = disabled || !this.state.host || !this.state.port;
+      disabled = disabled || !this.state.hostname || !this.state.port;
     } else {
       disabled = disabled || !this.state.connectionString;
     }
@@ -381,7 +457,7 @@ export default class DatabaseDetail extends Component {
             </div>
           </div>
 
-          <form>
+          <form onSubmit={this.preventDefault}>
             <div className="form-group row">
               <label className={LABEL_COL_CLASS}>
                 {T.translate(`${PREFIX}.name`)}
@@ -436,6 +512,7 @@ DatabaseDetail.propTypes = {
   db: PropTypes.object,
   onAdd: PropTypes.func,
   mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
-  connectionId: PropTypes.string
+  connectionId: PropTypes.string,
+  connInfo: PropTypes.object
 };
 

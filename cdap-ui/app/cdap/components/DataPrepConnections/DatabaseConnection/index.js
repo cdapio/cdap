@@ -18,6 +18,11 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import DatabaseOptions from 'components/DataPrepConnections/DatabaseConnection/DatabaseOptions';
 import DatabaseDetail from 'components/DataPrepConnections/DatabaseConnection/DatabaseDetail';
+import NamespaceStore from 'services/NamespaceStore';
+import {objectQuery} from 'services/helpers';
+import MyDataPrepApi from 'api/dataprep';
+import find from 'lodash/find';
+import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 
 require('./DatabaseConnection.scss');
@@ -29,7 +34,10 @@ export default class DatabaseConnection extends Component {
     super(props);
 
     this.state = {
-      activeDB: null
+      activeDB: null,
+      connInfo: null,
+      error: null,
+      loading: false
     };
 
     this.add = this.add.bind(this);
@@ -37,18 +45,58 @@ export default class DatabaseConnection extends Component {
 
   componentWillMount() {
     if (this.props.mode !== 'ADD') {
-      // Being Hardcoded right now until getting info back from backend
+      this.setState({loading: true});
 
-      this.setActiveDB({
-        database: {
-          name: 'MySQL',
-          classname: 'db-mysql'
-        },
-        pluginInfo: {
-          version: '5.1.38'
-        }
-      });
+      let namespace = NamespaceStore.getState().selectedNamespace;
+
+      let params = {
+        namespace,
+        connectionId: this.props.connectionId
+      };
+
+      MyDataPrepApi.getConnection(params)
+        .combineLatest(
+          MyDataPrepApi.jdbcDrivers({ namespace }),
+          MyDataPrepApi.jdbcAllowed(params)
+        )
+        .subscribe((res) => {
+          let connInfo = objectQuery(res, 0, 'values', 0);
+          let driverName = connInfo.properties.name;
+
+          let pluginsList = objectQuery(res, 1, 'values');
+
+          let matchedPlugin = find(pluginsList, (o) => {
+            return o.properties.name === driverName;
+          });
+
+          if (!matchedPlugin) {
+            this.setState({
+              error: `Cannot find driver ${driverName}`,
+              loading: false
+            });
+
+            return;
+          }
+
+          let pluginAllowed = objectQuery(res, 2, 'values');
+          let matchedPluginAllowed = find(pluginAllowed, (o) => {
+            return o.label === matchedPlugin.label;
+          });
+
+          let dbInfo = matchedPluginAllowed;
+          dbInfo.pluginInfo = matchedPlugin;
+
+          this.setState({
+            connInfo,
+            activeDB: dbInfo,
+            loading: false
+          });
+
+        }, (err) => {
+          console.log('err', err);
+        });
     }
+
   }
 
   setActiveDB(db) {
@@ -71,6 +119,7 @@ export default class DatabaseConnection extends Component {
         onAdd={this.add}
         mode={this.props.mode}
         connectionId={this.props.connectionId}
+        connInfo={this.state.connInfo}
       />
     );
   }
@@ -81,6 +130,16 @@ export default class DatabaseConnection extends Component {
   }
 
   render() {
+    let content = this.state.activeDB ? this.renderDatabaseDetail() : this.renderDatabaseSelection();
+
+    if (this.state.loading) {
+      content = (
+        <div className="text-xs-center">
+          <LoadingSVG />
+        </div>
+      );
+    }
+
     return (
       <div>
         <Modal
@@ -95,12 +154,7 @@ export default class DatabaseConnection extends Component {
           </ModalHeader>
 
           <ModalBody>
-            {
-              this.state.activeDB ?
-                this.renderDatabaseDetail()
-              :
-                this.renderDatabaseSelection()
-            }
+            {content}
           </ModalBody>
         </Modal>
       </div>

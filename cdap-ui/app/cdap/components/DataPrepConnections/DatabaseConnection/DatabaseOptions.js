@@ -22,55 +22,13 @@ import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
+import find from 'lodash/find';
+import shortid from 'shortid';
+import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
+import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
+import orderBy from 'lodash/orderBy';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Database.DatabaseOptions';
-
-const DB_LIST = {
-  column1: [
-    {
-      id: 'db2',
-      name: 'DB2 11',
-      classname: 'db-db2',
-    },
-    {
-      id: 'oracle',
-      name: 'Oracle 12c',
-      classname: 'db-oracle12c',
-    },
-    {
-      id: 'MSSQL',
-      name: 'MSSQL',
-      classname: 'db-mssql',
-    },
-    {
-      id: 'Netezza',
-      name: 'Netezza',
-      classname: 'db-netezza',
-    }
-  ],
-  column2: [
-    {
-      id: 'MySQL',
-      name: 'MySQL',
-      classname: 'db-mysql',
-    },
-    {
-      id: 'Teradata',
-      name: 'Teradata',
-      classname: 'db-teradata',
-    },
-    {
-      id: 'PostGres',
-      name: 'Postgresql',
-      classname: 'db-postgres',
-    },
-    {
-      id: 'OTHER',
-      name: 'Other Database',
-      classname: 'db-other',
-    }
-  ]
-};
 
 export default class DatabaseOptions extends Component {
   constructor(props) {
@@ -78,7 +36,7 @@ export default class DatabaseOptions extends Component {
 
     this.state = {
       loading: true,
-      drivers: {},
+      drivers: [],
       uploadArtifact: false
     };
 
@@ -93,40 +51,57 @@ export default class DatabaseOptions extends Component {
   fetchDrivers() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.listDrivers({namespace})
+    let params = {
+      namespace
+    };
+
+    MyDataPrepApi.jdbcAllowed(params)
+      .combineLatest(MyDataPrepApi.jdbcDrivers(params))
       .subscribe((res) => {
-        this.mapUploadedArtifact(res);
-      }, (err) => {
-        console.log('Error fetching drivers list', err);
+        let driversList = res[0].values;
+        let installedList = res[1].values;
+
+        driversList = driversList.map((driver) => {
+          let matched = find(installedList, (o) => {
+            return o.label === driver.label;
+          });
+
+          driver.uniqueId = shortid.generate();
+
+          if (matched) {
+            driver.installed = true;
+            driver.pluginInfo = matched;
+          } else {
+            driver.installed = false;
+          }
+
+          return driver;
+        });
+
+        driversList = orderBy(driversList, ['label'], ['asc']);
+
+        this.setState({
+          drivers: driversList,
+          loading: false
+        });
       });
   }
 
-  mapUploadedArtifact(response) {
-    let drivers = {};
+  toggleArtifactUploadWizard(db) {
+    if (db) {
+      ArtifactUploadStore.dispatch({
+        type: ArtifactUploadActions.setNameAndClass,
+        payload: {
+          name: db.name,
+          classname: db.class
+        }
+      });
 
-    DB_LIST.column2.concat(DB_LIST.column1).forEach((db) => {
-      if (response[db.id]) {
-        drivers[db.id] = {
-          installed: true,
-          pluginInfo: response[db.id][0],
-          database: db
-        };
-      } else {
-        drivers[db.id] = {
-          installed: false,
-          database: db
-        };
-      }
-    });
+      this.setState({uploadArtifact: true});
+      return;
+    }
 
-    this.setState({
-      drivers,
-      loading: false
-    });
-  }
-
-  toggleArtifactUploadWizard() {
-    this.setState({uploadArtifact: !this.state.uploadArtifact});
+    this.setState({uploadArtifact: false});
   }
 
   onDBClick(db) {
@@ -142,7 +117,7 @@ export default class DatabaseOptions extends Component {
           <span>{T.translate(`${PREFIX}.install`)}</span>
           <span
             className="upload"
-            onClick={this.toggleArtifactUploadWizard}
+            onClick={this.toggleArtifactUploadWizard.bind(this, db)}
           >
             {T.translate(`${PREFIX}.upload`)}
           </span>
@@ -153,7 +128,7 @@ export default class DatabaseOptions extends Component {
     return (
       <div className="db-installed">
         <span>
-          {db.pluginInfo.artifactVersion}
+          {db.pluginInfo.version}
         </span>
         <span className="fa fa-fw check-icon">
           <IconSVG name="icon-check" />
@@ -164,18 +139,27 @@ export default class DatabaseOptions extends Component {
   }
 
   renderDBOption(db) {
-    let dbInfo = this.state.drivers[db.id];
-
     return (
       <div
-        key={db.id}
-        className={classnames('database-option', {'installed': dbInfo.installed})}
-        onClick={this.onDBClick.bind(this, dbInfo)}
+        key={db.uniqueId}
+        className="col-xs-6"
       >
-        <div className={`db-image ${db.classname}`}></div>
-        <div className="db-info">
-          <div className="db-name">{db.name}</div>
-          {this.renderDBInfo(dbInfo)}
+        <div
+          className={classnames('database-option', {'installed': db.installed})}
+          onClick={this.onDBClick.bind(this, db)}
+        >
+          <div className="db-image-container">
+            <div className={`db-image db-${db.tag}`}></div>
+          </div>
+          <div className="db-info">
+            <div
+              className="db-name"
+              title={db.label}
+            >
+              {db.label}
+            </div>
+            {this.renderDBInfo(db)}
+          </div>
         </div>
       </div>
     );
@@ -215,16 +199,7 @@ export default class DatabaseOptions extends Component {
         </div>
 
         <div className="row">
-          <div className="col-xs-6">
-            {
-              DB_LIST.column1.map((db) => this.renderDBOption(db))
-            }
-          </div>
-          <div className="col-xs-6">
-            {
-              DB_LIST.column2.map((db) => this.renderDBOption(db))
-            }
-          </div>
+          {this.state.drivers.map((db) => this.renderDBOption(db))}
         </div>
 
         {this.renderArtifactUploadWizard()}
