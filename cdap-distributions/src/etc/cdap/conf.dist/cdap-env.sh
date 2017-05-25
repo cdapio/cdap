@@ -43,3 +43,9 @@ TEMP_DIR="/tmp"
 # export KAFKA_JAVA_HEAPMAX="-Xmx1024m"
 # export MASTER_JAVA_HEAPMAX="-Xmx1024m"
 # export ROUTER_JAVA_HEAPMAX="-Xmx1024m"
+
+# Service-specific Java options (added to OPTS, before other options)
+# export AUTH_JAVA_OPTS=""
+# export KAFKA_JAVA_OPTS=""
+# export MASTER_JAVA_OPTS=""
+# export ROUTER_JAVA_OPTS=""
