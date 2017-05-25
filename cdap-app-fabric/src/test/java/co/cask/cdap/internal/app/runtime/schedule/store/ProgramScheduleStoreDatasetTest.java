@@ -60,7 +60,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
   @Test
   public void checkDatasetType() throws DatasetManagementException {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(ProgramScheduleStoreDataset.class.getName())));
+    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(Schedulers.STORE_TYPE_NAME)));
   }
 
   @Test
