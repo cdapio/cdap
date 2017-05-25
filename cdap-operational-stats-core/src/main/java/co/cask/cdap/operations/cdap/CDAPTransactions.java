@@ -16,29 +16,35 @@
 
 package co.cask.cdap.operations.cdap;
 
+import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
+import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.api.metrics.MetricTimeSeries;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.operations.OperationalStats;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.tephra.ChangeId;
+import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.tephra.persist.TransactionSnapshot;
-import org.apache.tephra.snapshot.SnapshotCodecProvider;
 
-import java.io.InputStream;
-import java.util.Set;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * {@link OperationalStats} for reporting CDAP transaction statistics.
  */
 public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransactionsMXBean {
 
+  private static final Map<String, AggregationFunction> METRICS =
+    ImmutableMap.of("system.committing.size", AggregationFunction.LATEST,
+                    "system.committed.size", AggregationFunction.LATEST);
+
   private TransactionSystemClient txClient;
-  private SnapshotCodecProvider codecProvider;
+  private MetricStore metricStore;
   private int numInvalidTx;
-  private long snapshotTime;
   private long readPointer;
   private long writePointer;
-  private long visibilityUpperBound;
   private int numInProgressTx;
   private int numCommittingChangeSets;
   private int numCommittedChangeSets;
@@ -46,17 +52,12 @@ public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransacti
   @Override
   public void initialize(Injector injector) {
     txClient = injector.getInstance(TransactionSystemClient.class);
-    codecProvider = new SnapshotCodecProvider(injector.getInstance(Configuration.class));
+    metricStore = injector.getInstance(MetricStore.class);
   }
 
   @Override
   public String getStatType() {
     return "transactions";
-  }
-
-  @Override
-  public long getSnapshotTime() {
-    return snapshotTime;
   }
 
   @Override
@@ -90,29 +91,25 @@ public class CDAPTransactions extends AbstractCDAPStats implements CDAPTransacti
   }
 
   @Override
-  public long getVisibilityUpperBound() {
-    return visibilityUpperBound;
-  }
-
-  @Override
   public void collect() throws Exception {
-    numInvalidTx = txClient.getInvalidSize();
-    TransactionSnapshot txSnapshot;
-    try (InputStream inputStream = txClient.getSnapshotInputStream()) {
-      txSnapshot = codecProvider.decode(inputStream);
+    Collection<MetricTimeSeries> collection =
+      metricStore.query(new MetricDataQuery(0, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, METRICS,
+                                            Constants.Metrics.TRANSACTION_MANAGER_CONTEXT,
+                                            Collections.<String>emptyList(), null));
+    for (MetricTimeSeries metricTimeSeries : collection) {
+      if (metricTimeSeries.getMetricName().equals("system.committing.size")) {
+        numCommittingChangeSets = (int) aggregateMetricValue(metricTimeSeries);
+      }
+      if (metricTimeSeries.getMetricName().equals("system.committed.size")) {
+        numCommittedChangeSets = (int) aggregateMetricValue(metricTimeSeries);
+      }
     }
-    snapshotTime = txSnapshot.getTimestamp();
-    readPointer = txSnapshot.getReadPointer();
-    writePointer = txSnapshot.getWritePointer();
-    numInProgressTx = txSnapshot.getInProgress().size();
-    numCommittingChangeSets = 0;
-    for (Set<ChangeId> changeIds : txSnapshot.getCommittingChangeSets().values()) {
-      numCommittingChangeSets += changeIds.size();
-    }
-    numCommittedChangeSets = 0;
-    for (Set<ChangeId> changeIds : txSnapshot.getCommittedChangeSets().values()) {
-      numCommittedChangeSets += changeIds.size();
-    }
-    visibilityUpperBound = txSnapshot.getVisibilityUpperBound();
+
+    Transaction transaction = txClient.startShort();
+    readPointer = transaction.getReadPointer();
+    writePointer = transaction.getWritePointer();
+    numInProgressTx = transaction.getInProgress().length;
+    numInvalidTx = transaction.getInvalids().length;
+    txClient.abort(transaction);
   }
 }

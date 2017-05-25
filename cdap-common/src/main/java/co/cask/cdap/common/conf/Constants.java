@@ -579,6 +579,10 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
+    public static final Map<String, String> TRANSACTION_MANAGER_CONTEXT =
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
+
     /**
      * Metric's dataset related constants.
      */

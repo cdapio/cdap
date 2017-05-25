@@ -24,11 +24,6 @@ import javax.management.MXBean;
 public interface CDAPTransactionsMXBean {
 
   /**
-   * Returns the time when the transaction snapshot was taken.
-   */
-  long getSnapshotTime();
-
-  /**
    * Returns the read pointer at the time of the snapshot.
    */
   long getReadPointer();
@@ -57,11 +52,4 @@ public interface CDAPTransactionsMXBean {
    * Returns the number of committed change sets across all write pointers.
    */
   int getNumCommittedChangeSets();
-
-  /**
-   * Returns a transaction id {@code X} such that any of the transactions newer than {@code X} might be invisible to
-   * some of the currently in-progress transactions or to those that will be started
-   * NOTE: the returned tx id can be invalid.
-   */
-  long getVisibilityUpperBound();
 }
