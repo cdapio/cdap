@@ -407,7 +407,7 @@ features:
           datetimePattern: Date Time
           emailPattern: Email
           exampleLabel: 'E.g.'
-          htmlHyperlinkPattern: HTML Hyperlinks
+          htmlHyperlinkPattern: URLs from HTML Anchors
           hidePatternLabel: Hide Pattern
           isbncodePattern: ISBN Codes
           ipv4Pattern: IPv4 Address
@@ -489,6 +489,7 @@ features:
           DASH: Dash
           PERIOD: Period
           PIPE: Pipe
+          SPACE: Space
           UNDERSCORE: Underscore
         duplicate: A column with the same name already exists. Pick a new name, or click “Join” to overwrite.
         newColumn: Name new column
