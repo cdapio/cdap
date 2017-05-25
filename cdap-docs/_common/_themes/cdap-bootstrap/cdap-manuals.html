@@ -1,0 +1,56 @@
+{#
+    cdap-manuals.html
+    =================
+    Sphinx sidebar template: "CDAP Manuals" links.
+
+    To work around the scoping rules of Jinja, use the "set _ = icons.append('')" construct.
+    See http://stackoverflow.com/questions/4870346/can-a-jinja-variables-scope-extend-beyond-in-an-inner-block
+
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache License, Version 2.0
+
+#}
+{%- set sidebar_title = 'CDAP Documentation' %}
+{%- set master_url_root = pathto(master_doc, 1) %}
+{%- if master_url_root == '#' %}{% set master_url_root = '' %}{% endif %}
+{%- if html_short_title_toc != sidebar_title %}{% set master_url_root =  master_url_root + '/..' %}{%- endif %}
+{%- set icons =   [''] + theme_manual_icons %}
+{%- set manual_dirs = [''] + theme_manual_dirs %}
+{%- set hrefs = [ master_url_root + '/../index.html'] %}
+{%- for theme_manual_dir in theme_manual_dirs %}
+    {%- set _ = hrefs.append(master_url_root + '/../'+ theme_manual_dir + '/index.html') %}
+{%- endfor %}
+{%- set titles =  ['Overview'] + theme_manual_titles %}
+{%- for manual_dir, href, title in [('release-notes',     'reference-manual/release-notes.html', 'Release Notes'),
+                                    ('genindex',          'reference-manual/genindex.html',      'Index'),
+                                    ('glossary',          'reference-manual/glossary.html',      'Glossary'),
+                                    ('search',            'search.html',                         'Search'),
+                                   ] %}
+    {% set _ = theme_manuals.append(manual_dir) %}
+    {% set _ = icons.append('') %}
+    {% set _ = manual_dirs.append(manual_dir) %}
+    {% set _ = hrefs.append(master_url_root + '/../'+ href) %}
+    {% set _ = titles.append(title) %}
+{%- endfor %}
+{%- macro build_manuals_list(manuals, doc_set) %}
+    <ul class="this-page-menu">
+    {%- for manual_dir in manual_dirs %}
+      {%- if manual_dir in manuals %}
+      {%- set bold_open = '' %}{% set bold_close = '' %}
+      {%- set title = titles[loop.index0] %}
+      {%- if (title == html_short_title_toc) %}{% set bold_open = '<b>' %}{% set bold_close = '</b>' %}{%- endif %}
+      {%- if manual_dir == pagename %}{% set bold_open = '<b>' %}{% set bold_close = '</b>' %}{%- endif %}
+      {%- if loop.first and html_short_title_toc == doc_set and pagename == 'index' %}{% set bold_open = '<b>' %}{% set bold_close = '</b>' %}{%- endif %}
+      <li><div class="{{ icons[loop.index0] }}"></div>{{ bold_open }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
+      {%- if (title == html_short_title_toc) %}
+      <nav class="pagenav">{{ toctree(titles_only=titles_only_global_toc) }}</nav>
+      {%- endif %}
+      {%- endif %}
+    {%- endfor %}
+    </ul>
+{%- endmacro %}
+
+  <div role="note" aria-label="manuals links">
+    <h3><a href="{{ master_url_root }}{{ _('/../index.html') }}" rel="nofollow">{{ sidebar_title }}</a></h3>
+    {{ build_manuals_list(theme_manuals, sidebar_title) }}
+  </div>

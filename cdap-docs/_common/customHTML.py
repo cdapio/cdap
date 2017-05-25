@@ -32,11 +32,12 @@ class CustomHTMLTranslator(HTMLTranslator):
     A custom HTML translator.
 
     A Docutils translator that revises the handling of title nodes.
-    It reverses the structure so that the permalink precedes the headline text.
+    Removes the trailing pilchard and replaces it with
+    a leading link that can be styled using a 'before' pseudo-element.
 
     :copyright: Copyright 2016-2017 by Cask Data, Inc.
     :license: Apache License, Version 2.0, see http://www.apache.org/licenses/LICENSE-2.0
-    :version: 0.3
+    :version: 0.4
 
     """
 
@@ -63,14 +64,12 @@ class CustomHTMLTranslator(HTMLTranslator):
             # title="Permalink to this headline">¶</a></h1>
             # becomes
             # <h1><a class="headerlink" href="#manual-installation-using-packages"
-            # title="Permalink to this headline">¶</a>Manual Installation using Packages</h1>
+            # title="Permalink to this headline"></a>Manual Installation using Packages</h1>
 
             if close_tag.startswith('</h'):
-                self.body.append(u'<a class="headerlink" href="#%s" ' % aname +
-                                 u'title="%s">%s</a>' % (_('Perma-link to this heading'), self.permalink_text))
+                self.body.append(u'<a class="headerlink" href="#%s" title="%s"></a>' % (aname, _('Perma-link to this heading')))
             elif close_tag.startswith('</a></h'):
-                self.body.append(u'</a><a class="headerlink" href="#%s" ' % aname +
-                                 u'title="%s">%s' % (_('Perma-link to this heading'), self.permalink_text))
+                self.body.append(u'</a><a class="headerlink" href="#%s" title="%s">' % (aname, _('Perma-link to this heading')))
             self.body = self.body + tags
 
         BaseTranslator.depart_title(self, node)

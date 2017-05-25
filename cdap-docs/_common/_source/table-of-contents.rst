@@ -11,6 +11,7 @@ CDAP Documentation Table of Contents
 ====================================
 
 .. toctree::
+   :titlesonly:
 
     Overview </index>
     Introduction to CDAP </introduction/index>

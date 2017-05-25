@@ -28,6 +28,7 @@
 
 import os
 import os.path
+import sphinx_bootstrap_theme
 import subprocess
 import sys
 from datetime import datetime
@@ -144,7 +145,7 @@ extensions = [
 ]
 
 relative_refs = {
-    'javadoc': ('reference-manual/javadocs', 'http://docs.cask.co/cdap/current/en/reference-manual/javadocs/'),
+    'javadoc': ('reference-manual/javadocs', '//docs.cask.co/cdap/current/en/reference-manual/javadocs/'),
 }
 
 # The Inter-Sphinx mapping
@@ -261,7 +262,7 @@ extlinks = {
     'cdap-java-source-github': (cdap_java_source_github_pattern , None),
     'cdap-security-extn-source-github': (cdap_security_extn_github_pattern, None),
     'cask-issue': ('https://issues.cask.co/browse/%s', ''),
-    'cask-repository-parcels-cdap': ("https://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
+    'cask-repository-parcels-cdap': ("http://repository.cask.co/parcels/cdap/%s/%%s" % short_version, None),
     'cdap-guides': (cdap_guides_github_pattern, None),
     'spark-docs': ("https://spark.apache.org/docs/%s/%%s" % spark_version, None),
     'github-hydrator-plugins': (hydrator_plugins_github_pattern, None),
@@ -482,7 +483,10 @@ highlight_language = 'java'
 #html_theme = 'default'
 #html_theme = 'nature'
 #html_style = 'style.css'
-html_theme = 'cdap'
+
+# html_theme = 'bootstrap'
+# html_theme = 'cdap'
+html_theme = 'cdap-bootstrap'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -528,22 +532,24 @@ for m in manuals_list:
     manuals.append(m[0])
 
 html_theme_options = {
-  'manuals': manuals,
-  'docs_url': 'http://docs.cask.co/cdap',
-  'json_versions_js': 'http://docs.cask.co/cdap/json-versions.js',
-  'language': 'en',
-  'manual': '',
-  'manual_dirs': manual_dirs_list,
-  'manual_titles': manual_titles_list,
-  'manual_icons': manual_icons_list,
-  'meta_git':
-    { 'git_hash': git_hash,
-      'git_timestamp': git_timestamp,
-      'git_release': release,
-    },
-  'stickysidebar': True,
-  'release': release,
-  'version': version,
+    'manuals': manuals,
+    'docs_url': '//docs.cask.co/cdap',
+    'json_versions_js': '//docs.cask.co/cdap/json-versions.js',
+    'language': 'en',
+    'manual': '',
+    'manual_dirs': manual_dirs_list,
+    'manual_titles': manual_titles_list,
+    'manual_icons': manual_icons_list,
+    'meta_git':
+        { 'git_hash': git_hash,
+          'git_timestamp': git_timestamp,
+          'git_release': release,
+        },
+    'stickysidebar': True,
+    'release': release,
+    'version': version,
+    # Sphinx-Bootstrap Options
+    'cdap_bootstrap_custom_css': ['_static/cdap-bootstrap.css'],
 }
 
 def get_manual_dirs():
@@ -567,6 +573,8 @@ html_google_tag_manager_code = ''
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['_themes','../../_common/_themes']
+# html_theme_path += sphinx_bootstrap_theme.get_html_theme_path()
+print "Using html_theme_path: %s" % html_theme_path
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -607,12 +615,16 @@ html_static_path = ['../../_common/_static']
 #html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-html_sidebars = {'**': [
-    'manuals.html',
+# html_sidebars = {'**': [
+#     'manuals.html',
 #     'globaltoc.html',
 #     'searchbox.html',
-    'downloads.html',
-    'casksites.html',
+#     'downloads.html',
+#     'casksites.html',
+#      ],}
+
+html_sidebars = {'**': [
+    'cdap-manuals.html',
      ],}
 
 # Additional templates that should be rendered to pages, maps page names to

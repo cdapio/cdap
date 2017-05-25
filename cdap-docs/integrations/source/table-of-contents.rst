@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 ===================================
 CDAP Integrations Table of Contents
 ===================================
 
 .. toctree::
-   :maxdepth: 4
+   :titlesonly:
 
     Introduction <index>
     Cask Market <cask-market>
