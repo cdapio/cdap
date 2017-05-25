@@ -256,24 +256,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         @PathParam("app-id") String appId,
                         @PathParam("program-type") String type,
                         @PathParam("program-id") String programId) throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId);
-    if (SCHEDULES.equals(type)) {
-      JsonObject json = new JsonObject();
-      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
-      responder.sendJson(HttpResponseStatus.OK, json);
-      return;
-    }
-    ProgramType programType;
-    try {
-      programType = ProgramType.valueOfCategoryName(type);
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
-    }
-    ProgramId program = applicationId.program(programType, programId);
-    ProgramStatus programStatus = lifecycleService.getProgramStatus(program);
-
-    Map<String, String> status = ImmutableMap.of("status", programStatus.name());
-    responder.sendJson(HttpResponseStatus.OK, status);
+    getStatus(request, responder, namespaceId, appId, ApplicationId.DEFAULT_VERSION, type, programId);
   }
 
   /**
@@ -290,7 +273,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
     if (SCHEDULES.equals(type)) {
       JsonObject json = new JsonObject();
-      json.addProperty("status", lifecycleService.getScheduleStatus(namespaceId, appId, programId).toString());
+      ScheduleId scheduleId = applicationId.schedule(programId);
+      json.addProperty("status", lifecycleService.getScheduleStatus(scheduleId).toString());
       responder.sendJson(HttpResponseStatus.OK, json);
       return;
     }
@@ -358,8 +342,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doPerformAction(HttpRequest request, HttpResponder responder, String namespaceId, String appId,
                                String appVersion, String type, String programId, String action) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, appId, appVersion);
-    if ("schedules".equals(type)) {
-      lifecycleService.suspendResumeSchedule(namespaceId, appId, programId, action);
+    if (SCHEDULES.equals(type)) {
+      ScheduleId scheduleId = applicationId.schedule(programId);
+      lifecycleService.suspendResumeSchedule(scheduleId, action);
       responder.sendJson(HttpResponseStatus.OK, "OK");
       return;
     }

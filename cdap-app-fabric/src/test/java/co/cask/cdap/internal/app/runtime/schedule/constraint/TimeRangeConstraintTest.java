@@ -76,8 +76,7 @@ public class TimeRangeConstraintTest {
   public void testForwardRange() {
     // 3:24PM PST
     long now = 1494368640000L;
-
-    SimpleJob job = new SimpleJob(SCHEDULE, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER);
+    SimpleJob job = new SimpleJob(SCHEDULE, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // use a TimeRangeConstraint [4:00PM, 5:00PM)
     TimeRangeConstraint timeRangeConstraint = new TimeRangeConstraint("16:00", "17:00", TimeZone.getTimeZone("PST"));
@@ -107,7 +106,7 @@ public class TimeRangeConstraintTest {
     // 3:24PM PST
     long now = 1494368640000L;
 
-    SimpleJob job = new SimpleJob(SCHEDULE, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER);
+    SimpleJob job = new SimpleJob(SCHEDULE, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // use a TimeRangeConstraint [10:00PM, 6:00AM)
     TimeRangeConstraint timeRangeConstraint = new TimeRangeConstraint("22:00", "06:00", TimeZone.getTimeZone("PST"));

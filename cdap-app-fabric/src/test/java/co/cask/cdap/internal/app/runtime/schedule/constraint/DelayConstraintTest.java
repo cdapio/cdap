@@ -51,7 +51,7 @@ public class DelayConstraintTest {
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.<Constraint>of());
-    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER);
+    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // test with 10 minute delay
     DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(TimeUnit.MINUTES.toMillis(10));

@@ -21,8 +21,8 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.notifications.service.NotificationService;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.NotificationFeedId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
@@ -44,11 +44,11 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
   }
 
   @Override
-  protected StreamMetricsPublisher createMetricsPublisher(final Id.Stream streamId) {
+  protected StreamMetricsPublisher createMetricsPublisher(final StreamId streamId) {
     final NotificationFeedId feed = new NotificationFeedId(
-      streamId.getNamespaceId(),
+      streamId.getNamespace(),
       Constants.Notification.Stream.STREAM_FEED_CATEGORY,
-      streamId.getId() + "Size");
+      streamId.getStream() + "Size");
 
     return new StreamMetricsPublisher() {
 
@@ -56,8 +56,8 @@ public class StreamSizeSchedulerTest extends SchedulerTestBase {
 
       @Override
       public void increment(long size) throws Exception {
-        metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                                                        Constants.Metrics.Tag.STREAM, streamId.getId()),
+        metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespace(),
+                                                        Constants.Metrics.Tag.STREAM, streamId.getStream()),
                                         "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                         size, MetricType.COUNTER));
         totalSize += size;

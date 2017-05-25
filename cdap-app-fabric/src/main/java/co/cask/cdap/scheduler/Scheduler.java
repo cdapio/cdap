@@ -18,12 +18,16 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,13 +58,31 @@ public interface Scheduler {
    * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
    * @throws NotFoundException if the schedule with {@link ScheduleId} does not exist in the store
    */
-  void updateSchedule(ProgramSchedule schedule) throws NotFoundException;
+  void updateSchedule(ProgramSchedule schedule) throws NotFoundException, BadRequestException;
+
+  /**
+   * Enables a schedule. The schedule must be currently disabled.
+   *
+   * @param scheduleId the schedule to enable
+   * @throws NotFoundException if the schedule does not exist in the store
+   * @throws ConflictException if the schedule was already enabled
+   */
+  void enableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException;
+
+  /**
+   * Disable a schedule. The schedule must be currently enabled.
+   *
+   * @param scheduleId the schedule to disable
+   * @throws NotFoundException if the schedule does not exist in the store
+   * @throws ConflictException if the schedule was already disabled
+   */
+  void disableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException;
 
   /**
    * Removes a schedule from the store. Succeeds whether the schedule exists or not.
    *
    * @param scheduleId the schedule to delete
-   * @throws NotFoundException if one the schedule does not exist in the store
+   * @throws NotFoundException if the schedule does not exist in the store
    */
   void deleteSchedule(ScheduleId scheduleId) throws NotFoundException;
 
@@ -96,6 +118,15 @@ public interface Scheduler {
   ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException;
 
   /**
+   * Read a schedule's status from the store.
+   *
+   * @param scheduleId the id of the schedule to read
+   * @return the status of the schedule
+   * @throws NotFoundException if the schedule does not exist in the store
+   */
+  ProgramScheduleStatus getScheduleStatus(ScheduleId scheduleId) throws NotFoundException;
+
+  /**
    * Retrieve all schedules for a given application.
    *
    * @param appId the application for which to list the schedules.
@@ -110,4 +141,9 @@ public interface Scheduler {
    * @return a list of schedules for the program; never null
    */
   List<ProgramSchedule> listSchedules(ProgramId programId) throws NotFoundException;
+
+  /**
+   * Find all schedules for a given trigger key
+   */
+  Collection<ProgramScheduleRecord> findSchedules(String triggerKey);
 }
