@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
  * Common utility methods for scheduling.
  */
 public class Schedulers {
-  public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getName();
+  public static final String STORE_TYPE_NAME = ProgramScheduleStoreDataset.class.getSimpleName();
   public static final DatasetId STORE_DATASET_ID = NamespaceId.SYSTEM.dataset("schedule.store");
   public static final DatasetId JOB_QUEUE_DATASET_ID = NamespaceId.SYSTEM.dataset("job.queue");
 
