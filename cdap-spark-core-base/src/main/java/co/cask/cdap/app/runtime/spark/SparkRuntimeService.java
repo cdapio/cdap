@@ -44,13 +44,12 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.common.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
@@ -672,27 +671,40 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
       // Filter out hooks that are defined in the same SparkRunnerClassLoader as this SparkProgramRunner class
       // This is for the case when there are concurrent Spark job running in the same VM
-      List<Runnable> hooks = ImmutableList.copyOf(
-        Iterables.filter(
-          Iterables.filter((Collection<?>) getShutdownHooksInOrder.invoke(manager), Runnable.class),
-          new Predicate<Runnable>() {
-            @Override
-            public boolean apply(Runnable runnable) {
-              return runnable.getClass().getClassLoader() == SparkRuntimeService.this.getClass().getClassLoader();
-            }
-          }
-        )
-      );
-
-      for (Runnable hook : hooks) {
-        LOG.debug("Running Spark shutdown hook {}", hook);
-        hook.run();
-        manager.removeShutdownHook(hook);
+      for (Object hookEntry : (Collection<?>) getShutdownHooksInOrder.invoke(manager)) {
+        Runnable runnable = getShutdownHookRunnable(hookEntry);
+        if (runnable != null && runnable.getClass().getClassLoader() == getClass().getClassLoader()) {
+          LOG.debug("Running Spark shutdown hook {}", runnable);
+          runnable.run();
+          manager.removeShutdownHook(runnable);
+        }
       }
-
     } catch (Exception e) {
       LOG.warn("Failed to cleanup Spark shutdown hooks.", e);
     }
+  }
+
+  @Nullable
+  private Runnable getShutdownHookRunnable(Object hookEntry) {
+    try {
+      // Pre Hadoop-2.8, the entry is the Runnable added to the ShutdownHookManager
+      // Post Hadoop-2.8, the entry is the ShutdownHookManager.HookEntry class
+      if (!(hookEntry instanceof Runnable)) {
+        Field hookField = hookEntry.getClass().getDeclaredField("hook");
+        hookField.setAccessible(true);
+        hookEntry = hookField.get(hookEntry);
+      }
+
+      if (hookEntry instanceof Runnable) {
+        return (Runnable) hookEntry;
+      }
+
+      throw new UnsupportedTypeException("Hook entry is not a Runnable: " + hookEntry.getClass().getName());
+    } catch (Exception e) {
+      LOG.warn("Failed to get Spark shutdown hook Runnable from Hadoop ShutdownHookManager hook entry {} due to {}",
+               hookEntry, e.toString());
+    }
+    return null;
   }
 
   /**
