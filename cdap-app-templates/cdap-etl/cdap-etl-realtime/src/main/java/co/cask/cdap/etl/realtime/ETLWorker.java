@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.realtime;
 
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -69,7 +70,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,8 +192,7 @@ public class ETLWorker extends AbstractWorker {
     stateStoreKey = String.format("%s%s%s%s%s", appName, SEPARATOR, uniqueId, SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
 
-    // Cleanup the rows in statetable for runs with same app name but other runids.
-    getContext().execute(new TxRunnable() {
+    Transactionals.execute(getContext(), new TxRunnable() {
       @Override
       public void run(DatasetContext dsContext) throws Exception {
         KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
@@ -209,7 +208,7 @@ public class ETLWorker extends AbstractWorker {
           }
         }
       }
-    });
+    }, Exception.class);
 
     PipelinePhase pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), PipelinePhase.class);
     Map<String, TransformDetail> transformationMap = new HashMap<>();
@@ -309,21 +308,17 @@ public class ETLWorker extends AbstractWorker {
     Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
-    try {
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
-          byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
-          if (stateBytes != null) {
-            SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
-            currentState.setState(state);
-          }
+    Transactionals.execute(context, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        KeyValueTable stateTable = context.getDataset(ETLRealtimeApplication.STATE_TABLE);
+        byte[] stateBytes = stateTable.read(stateStoreKeyBytes);
+        if (stateBytes != null) {
+          SourceState state = GSON.fromJson(Bytes.toString(stateBytes), SourceState.class);
+          currentState.setState(state);
         }
-      });
-    } catch (TransactionFailureException e) {
-      throw Throwables.propagate(e);
-    }
+      }
+    });
 
     DefaultEmitter<Object> sourceEmitter = new DefaultEmitter<>();
     TrackedEmitter<Object> trackedSourceEmitter =
