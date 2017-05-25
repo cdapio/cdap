@@ -66,9 +66,9 @@ CDAP:
    remove role instances as necessary. Check the :ref:`release-specific upgrade notes
    <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
 
-#. After CDAP services have started, run the *CDAP Post-Upgrade Tasks* to perform any necessary
-   upgrade steps against the running services.  From the CDAP Service page, select "Run CDAP
-   Post-Upgrade Tasks."
+    ..     #. After CDAP services have started, run the *Post-CDAP Upgrade Tasks* to perform any necessary
+    ..        upgrade steps against the running services.  From the CDAP Service page, select "Run Post-CDAP
+    ..        Upgrade Tasks."
 
 #. To upgrade existing pipeline applications created using the |previous-short-version|\.x versions of
    the system artifacts, there are :ref:`separate instructions <cdap-pipelines-operating-upgrading-pipeline>`.
@@ -110,22 +110,9 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 #. After upgrading CDAP, start CDAP and check that it is working correctly.
 
-#. Using Cloudera Manager (CM), stop all CDAP applications and services.
+#. Using the CDAP UI, stop all CDAP applications and services.
 
-#. Disable all CDAP tables; from an HBase shell, run the command::
-
-    > disable_all 'cdap.*'
-
-#. Upgrade to the new version of CDH, following Cloudera's `documentation on upgrading
-   <http://www.cloudera.com/documentation/enterprise/latest/topics/cm_mc_upgrading_cdh.html>`__.
-
-#. Stop all CDAP services, as CM may have auto-started CDAP.
-
-#. Run the *Post-CDH Upgrade Tasks* to upgrade CDAP for the new version of CDH. From the CDAP Service
-   page, select "Run Post-CDH Upgrade Tasks" from the Actions menu.
-
-#. Enable all CDAP tables; from an HBase shell, run this command::
-
-    > enable_all 'cdap.*'
+#. Upgrade to the new version of HDP, following Hortonworks's `documentation on upgrading
+   <http://docs.hortonworks.com/HDPDocuments/Ambari-2.4.0.1/bk_ambari-upgrade/content/upgrading_hdp_stack.html>`__.
 
 #. Start CDAP using Cloudera Manager.
