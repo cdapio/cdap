@@ -76,7 +76,7 @@ that you would like to use (such as ``cdap/4.0`` for CDAP 4.0.x):
 +-------------------------------+-------------------------+
 | CDAP Series or Release        | Hadoop Distributions    |
 +===============================+=========================+
-| CDAP 4.1.1                    | HDP 2.0 through HDP 2.6 |
+| CDAP 4.1.1, 4.2.x             | HDP 2.0 through HDP 2.6 |
 +-------------------------------+-------------------------+
 | CDAP 4.1.0                    | HDP 2.0 through HDP 2.5 |
 +-------------------------------+-------------------------+
@@ -101,7 +101,7 @@ that you would like to use (such as ``cdap/4.0`` for CDAP 4.0.x):
 
 **Notes:**
 
-- The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
+- The CDAP Ambari service has been tested on Ambari Server 2.3 through 2.5, as
   supplied from Hortonworks.
 - To install a version lower than the highest current version (such as *CDAP 4.1.0* when
   *4.1.1* is available), you will need to downgrade your repo after installing it.
