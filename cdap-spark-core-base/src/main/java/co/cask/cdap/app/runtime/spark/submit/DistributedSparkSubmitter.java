@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.twill.filesystem.LocationFactory;
@@ -74,8 +75,9 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
   }
 
   @Override
-  protected String getMaster(Map<String, String> configs) {
-    return "yarn-cluster";
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
+    argBuilder.add("--master").add("yarn")
+      .add("--deploy-mode").add("cluster");
   }
 
   @Override

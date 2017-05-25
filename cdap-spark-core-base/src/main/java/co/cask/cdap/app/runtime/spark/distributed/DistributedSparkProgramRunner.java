@@ -49,6 +49,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -124,6 +125,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     // Update the container hConf
     hConf.setBoolean(SparkRuntimeContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
+    hConf.set("hive.metastore.token.signature", HiveAuthFactory.HS2_CLIENT_TOKEN);
 
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval

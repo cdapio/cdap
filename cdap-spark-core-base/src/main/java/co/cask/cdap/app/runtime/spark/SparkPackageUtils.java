@@ -415,11 +415,14 @@ public final class SparkPackageUtils {
     String sparkYarnJar = sparkConf.getProperty(SPARK_YARN_JAR);
 
     if (sparkYarnJar != null) {
-      Location frameworkLocation = locationFactory.create(URI.create(sparkYarnJar));
-      if (frameworkLocation.exists()) {
-        return new SparkFramework(new LocalizeResource(resolveURI(frameworkLocation), false), SPARK_YARN_JAR);
+      URI sparkYarnJarURI = URI.create(sparkYarnJar);
+      if (locationFactory.getHomeLocation().toURI().getScheme().equals(sparkYarnJarURI.getScheme())) {
+        Location frameworkLocation = locationFactory.create(sparkYarnJarURI);
+        if (frameworkLocation.exists()) {
+          return new SparkFramework(new LocalizeResource(resolveURI(frameworkLocation), false), SPARK_YARN_JAR);
+        }
+        LOG.warn("The location {} set by '{}' does not exist.", frameworkLocation, SPARK_YARN_JAR);
       }
-      LOG.warn("The location {} set by '{}' does not exist.", frameworkLocation, SPARK_YARN_JAR);
     }
 
     // If spark.yarn.jar is not defined or doesn't exists, get the spark-assembly jar from local FS and upload it
@@ -452,11 +455,14 @@ public final class SparkPackageUtils {
     String sparkYarnArchive = sparkConf.getProperty(SPARK_YARN_ARCHIVE);
 
     if (sparkYarnArchive != null) {
-      Location frameworkLocation = locationFactory.create(URI.create(sparkYarnArchive));
-      if (frameworkLocation.exists()) {
-        return new SparkFramework(new LocalizeResource(resolveURI(frameworkLocation), true), SPARK_YARN_ARCHIVE);
+      URI sparkYarnArchiveURI = URI.create(sparkYarnArchive);
+      if (locationFactory.getHomeLocation().toURI().getScheme().equals(sparkYarnArchiveURI.getScheme())) {
+        Location frameworkLocation = locationFactory.create(URI.create(sparkYarnArchive));
+        if (frameworkLocation.exists()) {
+          return new SparkFramework(new LocalizeResource(resolveURI(frameworkLocation), true), SPARK_YARN_ARCHIVE);
+        }
+        LOG.warn("The location {} set by '{}' does not exist.", frameworkLocation, SPARK_YARN_ARCHIVE);
       }
-      LOG.warn("The location {} set by '{}' does not exist.", frameworkLocation, SPARK_YARN_ARCHIVE);
     }
 
     // If spark.yarn.archive is not defined or doesn't exists, build a archive zip from local FS and upload it

@@ -17,6 +17,7 @@
 package co.cask.cdap.app.runtime.spark.submit;
 
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -30,16 +31,19 @@ public class LocalSparkSubmitter extends AbstractSparkSubmitter {
   private static final Pattern LOCAL_MASTER_PATTERN = Pattern.compile("local\\[([0-9]+|\\*)\\]");
 
   @Override
-  protected String getMaster(Map<String, String> configs) {
+  protected void addMaster(Map<String, String> configs, ImmutableList.Builder<String> argBuilder) {
+    // Use at least two threads for Spark Streaming
+    String masterArg = "local[2]";
+
     String master = configs.get("spark.master");
     if (master != null) {
       Matcher matcher = LOCAL_MASTER_PATTERN.matcher(master);
       if (matcher.matches()) {
-        return "local[" + matcher.group(1) + "]";
+        masterArg = "local[" + matcher.group(1) + "]";
       }
     }
-    // Use at least two threads for Spark Streaming
-    return "local[2]";
+
+    argBuilder.add("--master").add(masterArg);
   }
 
   @Override
