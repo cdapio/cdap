@@ -27,6 +27,7 @@ import AccessTokenModal from 'components/Header/ProductDropdown/AccessTokenModal
 import IconSVG from 'components/IconSVG';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import T from 'i18n-react';
+import {getMode} from 'components/Header/ProductDropdown/helper';
 
 require('./ProductDropdown.scss');
 
@@ -94,6 +95,7 @@ export default class ProductDropdown extends Component {
     let administrationURL = `${baseCDAPURL}/administration`;
     let dataprepUrl = `${baseCDAPURL}/ns/${this.state.currentNamespace}/dataprep`;
     let oldUIUrl = `/oldcdap/ns/${this.state.currentNamespace}`;
+    let mode = getMode();
     let userSection;
     if (this.state.username && window.CDAP_CONFIG.securityEnabled) {
       userSection = (
@@ -137,10 +139,18 @@ export default class ProductDropdown extends Component {
           className="product-dropdown"
           toggle={this.toggleCdapMenuDropdown.bind(this)}>
           <DropdownToggle caret>
-            <div className="cdap-logo">
-              <img src="/cdap_assets/img/cdap_logo.png" />
+            <div className="cdap-logo-container">
+              <div className="cdap-logo">
+                <img src="/cdap_assets/img/cdap_logo.png" />
+              </div>
+              <div className="caret-down-container">
+                <IconSVG name="icon-caret-down" />
+              </div>
             </div>
-            <IconSVG name="icon-caret-down" />
+            <div className="secure-mode-icon">
+              <div className="cdap-mode">{mode}</div>
+              <IconSVG name={ window.CDAP_CONFIG.securityEnabled ? "icon-lock_close" : "" } />
+            </div>
           </DropdownToggle>
           <CustomDropdownMenu right>
             <DropdownItem
