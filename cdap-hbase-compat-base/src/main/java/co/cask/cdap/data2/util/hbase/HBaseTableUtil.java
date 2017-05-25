@@ -178,12 +178,7 @@ public abstract class HBaseTableUtil {
   }
 
   protected boolean isCDAPTable(HTableDescriptor hTableDescriptor) {
-    // TODO: Once all system tables are upgraded to have CDAP_VERSION in their descriptor, we can then solely rely on
-    // that key being present in the descriptor to identify a CDAP Table
-    String tableName = hTableDescriptor.getNameAsString();
-    String value = hTableDescriptor.getValue(CDAP_VERSION);
-    return tableName.startsWith(tablePrefix + ".") || tableName.startsWith(tablePrefix + "_") ||
-      !Strings.isNullOrEmpty(value);
+    return !Strings.isNullOrEmpty(hTableDescriptor.getValue(CDAP_VERSION));
   }
 
   public HTableDescriptor setVersion(HTableDescriptor tableDescriptor) {
