@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
@@ -28,6 +29,7 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -57,7 +59,7 @@ public class PropertiesResolver {
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id) throws Exception {
+  public Map<String, String> getSystemProperties(Id.Program id) throws IOException, NamespaceNotFoundException {
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
     systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
