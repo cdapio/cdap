@@ -36,27 +36,15 @@ public class PipeTransformExecutor<IN> implements Destroyable {
   private final Set<String> startingPoints;
   private final Map<String, PipeTransformDetail> transformDetailMap;
 
-  private static final Logger PIPELINE_LOG =
-    new LocationAwareMDCWrapperLogger(LoggerFactory.getLogger(PipeTransformExecutor.class), Constants.EVENT_TYPE_TAG,
-                                      Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
-
   public PipeTransformExecutor(Map<String, PipeTransformDetail> transformDetailMap, Set<String> startingPoints) {
     this.transformDetailMap = transformDetailMap;
     this.startingPoints = startingPoints;
   }
 
-  public void runOneIteration(IN input) throws Exception {
+  public void runOneIteration(IN input) {
     for (String stageName : startingPoints) {
       PipeTransformDetail transformDetail = transformDetailMap.get(stageName);
-      try {
-        transformDetail.process(new KeyValue<String, Object>(stageName, input));
-      } catch (Exception e) {
-        // Catch the exception and Generate a Error Log for the Pipeline User
-        PIPELINE_LOG.error("Failed to execute pipeline stage '{}' with the error: {}. Please review your pipeline " +
-                            "configuration and check the system logs for more details.", stageName,
-                          Throwables.getRootCause(e).getMessage(), Throwables.getRootCause(e));
-        throw e;
-      }
+      transformDetail.process(new KeyValue<String, Object>(stageName, input));
     }
   }
 

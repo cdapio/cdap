@@ -229,8 +229,12 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     ProgramStatus status = getContext().getState().getStatus();
-    WRAPPERLOGGER.info("Pipeline '{}' {}", getContext().getApplicationSpecification().getName(),
-                       status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
+    if (status == ProgramStatus.FAILED) {
+      WRAPPERLOGGER.error("Pipeline '{}' failed.", getContext().getApplicationSpecification().getName());
+    } else {
+      WRAPPERLOGGER.info("Pipeline '{}' {}.", getContext().getApplicationSpecification().getName(),
+                         status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
+    }
   }
 
   private void addPrograms(String node, WorkflowConfigurer configurer) {

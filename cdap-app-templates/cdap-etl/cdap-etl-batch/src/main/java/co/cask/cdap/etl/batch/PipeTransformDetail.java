@@ -21,6 +21,7 @@ import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.batch.mapreduce.PipeEmitter;
 import co.cask.cdap.etl.common.Destroyables;
+import com.google.common.base.Throwables;
 
 
 /**
@@ -49,8 +50,16 @@ public class PipeTransformDetail implements Destroyable {
       } else {
         transformation.transform(value, emitter);
       }
+    } catch (StageFailureException e) {
+      // Another stage has already failed, just throw the exception as-is
+      throw e;
     } catch (Exception e) {
-      throw new RuntimeException(e);
+      Throwable rootCause = Throwables.getRootCause(e);
+      // Create StageFailureException to save the Stage information
+      throw new StageFailureException(
+        String.format("Failed to execute pipeline stage '%s' with the error: %s. Please review your pipeline " +
+                        "configuration and check the system logs for more details.", stageName, rootCause.getMessage()),
+        rootCause);
     }
   }
 
