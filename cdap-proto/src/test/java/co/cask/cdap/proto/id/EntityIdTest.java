@@ -240,6 +240,15 @@ public class EntityIdTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+
+    // test error message
+    try {
+      // missing dataset field
+      DatasetId.fromString("dataset:foo");
+      Assert.fail("Dataset Id creation should fail without dataset name");
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals("Missing field: dataset", e.getCause().getMessage());
+    }
   }
 
   @Test
