@@ -58,11 +58,13 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
+import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
@@ -211,6 +213,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
     Class<? extends Workflow> workflowClass = (Class<? extends Workflow>) clz;
     final Workflow workflow = new InstantiatorFactory(false).get(TypeToken.of(workflowClass)).create();
+    // set metrics
+    Reflections.visit(workflow, workflow.getClass(), new MetricsFieldSetter(basicWorkflowContext.getMetrics()));
     if (!(workflow instanceof ProgramLifecycle)) {
       return workflow;
     }

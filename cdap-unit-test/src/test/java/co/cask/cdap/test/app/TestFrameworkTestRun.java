@@ -353,6 +353,19 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> workflowTableManager = getDataset(AppWithPlugin.WORKFLOW_TABLE);
     String value = Bytes.toString(workflowTableManager.get().read("val"));
     Assert.assertEquals(AppWithPlugin.TEST, value);
+    Map<String, String> workflowTags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE,
+                                                       NamespaceId.DEFAULT.getNamespace(),
+                                                       Constants.Metrics.Tag.APP,
+                                                       "AppWithPlugin",
+                                                       Constants.Metrics.Tag.WORKFLOW,
+                                                       AppWithPlugin.WORKFLOW,
+                                                       Constants.Metrics.Tag.RUN_ID,
+                                                       runRecords.get(0).getPid()
+                                                       );
+
+    getMetricsManager().waitForTotalMetricCount(workflowTags,
+                                                String.format("user.destroy.%s", AppWithPlugin.WORKFLOW),
+                                                1, 60, TimeUnit.SECONDS);
 
     // Testing Spark Plugins. First send some data to stream for the Spark program to process
     StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
