@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.UUID;
 
 /**
  * Store the incoming Purchase objects in the purchases dataset.
@@ -58,7 +59,7 @@ public class PurchaseStore extends AbstractFlowlet {
 
     LOG.info("Purchase info: Customer {}, ProductId {}, CatalogId {}",
              purchase.getCustomer(), purchase.getProduct(), purchase.getCatalogId());
-    store.write(Bytes.toBytes(purchase.getPurchaseTime()), purchase);
+    store.write(Bytes.toBytes(UUID.randomUUID()), purchase);
   }
 
   @Override
