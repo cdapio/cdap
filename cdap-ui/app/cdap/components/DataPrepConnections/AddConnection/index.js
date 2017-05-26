@@ -73,6 +73,7 @@ export default class AddConnection extends Component {
       <ModalElem
         close={this.connectionClickHandler.bind(this, null)}
         onAdd={this.props.onAdd}
+        mode="ADD"
       />
     );
   }

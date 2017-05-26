@@ -20,6 +20,7 @@ import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import {objectQuery} from 'services/helpers';
 
 const CONN_TYPE = {
   basic: 'BASIC',
@@ -40,13 +41,54 @@ export default class DatabaseDetail extends Component {
       name: '',
       host: '',
       port: '',
-      username: '',
+      userName: '',
       password: '',
       database: '',
-      jdbcString: ''
+      connectionString: ''
     };
 
     this.addConnection = this.addConnection.bind(this);
+    this.editConnection = this.editConnection.bind(this);
+  }
+
+  componentWillMount() {
+    if (this.props.mode !== 'ADD') {
+      let namespace = NamespaceStore.getState().selectedNamespace;
+
+      let params = {
+        namespace,
+        connectionId: this.props.connectionId
+      };
+
+      MyDataPrepApi.getConnection(params)
+        .subscribe((res) => {
+          let connInfo = objectQuery(res, 'values', 0);
+
+          let name = this.props.mode === 'EDIT' ? connInfo.name : '';
+
+          let {
+            connectionString = '',
+            password = '',
+            userName = '',
+            hostname = '',
+            port = '',
+            database = ''
+          } = connInfo.properties;
+
+          this.setState({
+            name,
+            connectionString,
+            password,
+            userName,
+            hostname,
+            port,
+            database,
+            connType: connectionString ? CONN_TYPE.advanced : CONN_TYPE.basic
+          });
+        }, (err) => {
+          console.log('err', err);
+        });
+    }
   }
 
   handleChange(key, e) {
@@ -57,31 +99,35 @@ export default class DatabaseDetail extends Component {
     this.setState({connType: type});
   }
 
-  addConnection() {
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
+  constructProperties() {
     let properties;
 
     if (this.state.connType === CONN_TYPE.basic) {
       properties = {
         hostname: this.state.host,
         port: this.state.port,
-        userName: this.state.username,
+        userName: this.state.userName,
         password: this.state.password,
         database: this.state.database
       };
     } else {
       properties = {
-        connectionString: this.state.jdbcString,
-        userName: this.state.username,
+        connectionString: this.state.connectionString,
+        userName: this.state.userName,
         password: this.state.password
       };
     }
 
+    return properties;
+  }
+
+  addConnection() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
     let requestBody = {
       name: this.state.name,
       type: 'DATABASE',
-      properties
+      properties: this.constructProperties()
     };
 
     MyDataPrepApi.createConnection({namespace}, requestBody)
@@ -92,18 +138,51 @@ export default class DatabaseDetail extends Component {
       });
   }
 
+  editConnection() {
+    // needs some work from backend
+    // currently not working
+
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    // let params = {
+    //   namespace,
+    //   connectionId: this.props.connectionId,
+    //   key: 'ssl',
+    //   value: true
+    // };
+
+    // let requestBody = this.constructProperties();
+
+    let params = {
+      namespace,
+      connectionId: this.props.connectionId,
+      key: 'ssl'
+    };
+
+    params = Object.assign(params, this.constructProperties());
+
+    MyDataPrepApi.updateConnection(params)
+      .subscribe((res) => {
+        this.props.onAdd();
+
+        console.log('test', res);
+      }, (err) => {
+        console.log('err', err);
+      });
+  }
+
   renderUsername() {
     return (
       <div className="form-group row">
         <label className={LABEL_COL_CLASS}>
-          {T.translate(`${PREFIX}.username`)}
+          {T.translate(`${PREFIX}.userName`)}
         </label>
         <div className={INPUT_COL_CLASS}>
           <input
             type="text"
             className="form-control"
-            value={this.state.username}
-            onChange={this.handleChange.bind(this, 'username')}
+            value={this.state.userName}
+            onChange={this.handleChange.bind(this, 'userName')}
           />
         </div>
       </div>
@@ -195,8 +274,8 @@ export default class DatabaseDetail extends Component {
             <input
               type="text"
               className="form-control"
-              value={this.state.jdbcString}
-              onChange={this.handleChange.bind(this, 'jdbcString')}
+              value={this.state.connectionString}
+              onChange={this.handleChange.bind(this, 'connectionString')}
             />
           </div>
         </div>
@@ -247,7 +326,13 @@ export default class DatabaseDetail extends Component {
     if (this.state.connType === CONN_TYPE.basic) {
       disabled = disabled || !this.state.host || !this.state.port;
     } else {
-      disabled = disabled || !this.state.jdbcString;
+      disabled = disabled || !this.state.connectionString;
+    }
+
+    let onClickFn = this.addConnection;
+
+    if (this.props.mode === 'EDIT') {
+      onClickFn = this.editConnection;
     }
 
     return (
@@ -255,10 +340,10 @@ export default class DatabaseDetail extends Component {
         <div className="col-xs-8 offset-xs-4">
           <button
             className="btn btn-primary"
-            onClick={this.addConnection}
+            onClick={onClickFn}
             disabled={disabled}
           >
-            {T.translate(`${PREFIX}.addConnectionButton`)}
+            {T.translate(`${PREFIX}.Buttons.${this.props.mode}`)}
           </button>
         </div>
       </div>
@@ -266,6 +351,24 @@ export default class DatabaseDetail extends Component {
   }
 
   render() {
+    let backlink = (
+      <div className="back-link-container">
+        <span
+          className="back-link"
+          onClick={this.props.back}
+        >
+          <span className="fa fa-fw">
+            <IconSVG name="icon-angle-double-left" />
+          </span>
+          <span>{T.translate(`${PREFIX}.backButton`)}</span>
+        </span>
+      </div>
+    );
+
+    if (this.props.mode !== 'ADD') {
+      backlink = null;
+    }
+
     return (
       <div className="database-detail">
         <div>
@@ -322,17 +425,7 @@ export default class DatabaseDetail extends Component {
           {this.renderAddConnectionButton()}
         </div>
 
-        <div className="back-link-container">
-          <span
-            className="back-link"
-            onClick={this.props.back}
-          >
-            <span className="fa fa-fw">
-              <IconSVG name="icon-angle-double-left" />
-            </span>
-            <span>{T.translate(`${PREFIX}.backButton`)}</span>
-          </span>
-        </div>
+        {backlink}
       </div>
     );
   }
@@ -341,6 +434,8 @@ export default class DatabaseDetail extends Component {
 DatabaseDetail.propTypes = {
   back: PropTypes.func,
   db: PropTypes.object,
-  onAdd: PropTypes.func
+  onAdd: PropTypes.func,
+  mode: PropTypes.oneOf(['ADD', 'EDIT', 'DUPLICATE']).isRequired,
+  connectionId: PropTypes.string
 };
 

@@ -58,7 +58,8 @@ const MyDataPrepApi = {
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
   deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
   getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
-  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`)
+  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`),
+  updateConnection: apiCreator(dataSrc, 'PUT', 'REQUEST', `${connectionsPath}/:connectionId/properties`)
 };
 
 export default MyDataPrepApi;

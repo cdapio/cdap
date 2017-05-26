@@ -585,7 +585,7 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
-    sidePanelTooltip: 
+    sidePanelTooltip:
       collapse: Collapse the side panel
       expand: Expand the side panel
     TopPanel:
@@ -621,10 +621,13 @@ features:
     AddConnections:
       Database:
         DatabaseDetail:
-          addConnectionButton: Add Connection
           advanced: Advanced
           backButton: View All Drivers
           basic: Basic
+          Buttons:
+            ADD: Add Connection
+            DUPLICATE: Duplicate Connection
+            EDIT: Save Changes
           connectionString: Connection String
           connType: JDBC Connections
           database: Database
@@ -634,16 +637,30 @@ features:
           password: Password
           port: Port
           required: Required
-          username: Username
+          userName: Username
         DatabaseOptions:
           install: "Install Driver: "
           installedLabel: Driver Installed
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
-        modalHeader: "Add Connection: Database"
+        ModalHeader:
+          ADD: "Add Connection: Database"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
       label: Add Connections
       Popover:
         title: Select a source to connect
+    ConnectionManagement:
+      Confirmations:
+        DatabaseDelete:
+          deleteButton: Delete Connection
+          header: "Delete Connection: {connection}"
+          helper1: You will no longer able to access data from this source.
+          helper2: "You can reconnect to this source at any time by clicking \"Add Connection\""
+          mainMessage: "Are you sure you want to delete connection to {connection}?"
+      delete: Delete
+      duplicate: Duplicate
+      edit: Edit
     database: Database ({count})
     hdfs: HDFS
     title: "Connections in \"{namespace}\""

@@ -29,7 +29,7 @@ export default class ExpandableMenu extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showMenuItems: false
+      showMenuItems: true
     };
     this.toggle = this.toggle.bind(this);
   }
