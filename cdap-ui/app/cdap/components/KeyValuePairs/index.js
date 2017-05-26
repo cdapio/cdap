@@ -16,7 +16,7 @@
 
 import React, {Component, PropTypes} from 'react';
 import {connect , Provider} from 'react-redux';
-import {createKeyValueStore} from './KeyValueStore';
+import KeyValueStore from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
 import KeyValuePair from './KeyValuePair';
 
@@ -73,10 +73,13 @@ export default class KeyValuePairs extends Component {
     this.state = {
         pairs: [...keyValues.pairs]
     };
-    this.keyValueStore = createKeyValueStore({keyValues});
-    this.subscription = this.keyValueStore.subscribe(() => {
-      this.setState(this.keyValueStore.getState().keyValues);
-      onKeyValueChange(this.keyValueStore.getState().keyValues);
+    KeyValueStore.dispatch({
+      type: KeyValueStoreActions.onUpdate,
+      payload: {pairs: keyValues.pairs}
+    });
+    this.subscription = KeyValueStore.subscribe(() => {
+      this.setState(KeyValueStore.getState().keyValues);
+      onKeyValueChange(KeyValueStore.getState().keyValues);
     });
   }
 
@@ -86,7 +89,7 @@ export default class KeyValuePairs extends Component {
 
   componentWillUnmount() {
     this.subscription();
-    this.keyValueStore.dispatch({
+    KeyValueStore.dispatch({
       type: KeyValueStoreActions.onReset
     });
   }
@@ -94,12 +97,6 @@ export default class KeyValuePairs extends Component {
     this.setState({
       pairs: [...nextProps.keyValues.pairs]
     });
-    if (nextProps.resettingFields) {
-      this.keyValueStore.dispatch({
-        type: KeyValueStoreActions.onUpdate,
-        payload: {pairs: nextProps.keyValues.pairs}
-      });
-    }
   }
 
   render() {
@@ -109,7 +106,7 @@ export default class KeyValuePairs extends Component {
         this.state.pairs.map( (pair, index) => {
           return (
             <div key={pair.uniqueId}>
-              <Provider store={this.keyValueStore}>
+              <Provider store={KeyValueStore}>
                 {
                   this.props.getResettedKeyValue ?
                     (
@@ -142,6 +139,5 @@ KeyValuePairs.propTypes = {
     }))
   }),
   onKeyValueChange: PropTypes.func,
-  getResettedKeyValue: PropTypes.func,
-  resettingFields: PropTypes.bool
+  getResettedKeyValue: PropTypes.func
 };

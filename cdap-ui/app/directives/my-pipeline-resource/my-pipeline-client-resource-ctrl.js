@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-function MyPipelineExecutorResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
+function MyPipelineClientResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
   'ngInject';
-  $scope.virtualCores = $scope.store.getVirtualCores();
-  $scope.memoryMB = $scope.store.getMemoryMB();
+  $scope.virtualCores = $scope.store.getClientVirtualCores();
+  $scope.memoryMB = $scope.store.getClientMemoryMB();
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
   $scope.numberConfig = {
     'widget-attributes': {
@@ -26,14 +26,14 @@ function MyPipelineExecutorResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
       convertToInteger: true
     }
   };
-  if (!$scope.isDisabled) {
+  if (!$scope.isDisabled){
     $scope.$watch('memoryMB', function() {
-      $scope.actionCreator.setMemoryMB($scope.memoryMB);
+      $scope.actionCreator.setClientMemoryMB($scope.memoryMB);
     });
     $scope.onVirtualCoresChange = function() {
-      $scope.actionCreator.setVirtualCores($scope.virtualCores);
+      $scope.actionCreator.setClientVirtualCores($scope.virtualCores);
     };
   }
 }
 angular.module(PKG.name + '.commons')
-  .controller('MyPipelineExecutorResourceCtrl', MyPipelineExecutorResourceCtrl);
+  .controller('MyPipelineClientResourceCtrl', MyPipelineClientResourceCtrl);

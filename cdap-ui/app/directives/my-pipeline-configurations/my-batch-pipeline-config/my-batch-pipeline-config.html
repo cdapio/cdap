@@ -1,0 +1,336 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="pipeline-configurations-content">
+  <div class="pipeline-configurations-header">
+    <h3 class="modeless-title">
+      Configure
+      <span ng-if="BatchPipelineConfigCtrl.pipelineName.length > 0">
+        "{{BatchPipelineConfigCtrl.pipelineName}}"
+      </span>
+    </h3>
+    <div class="btn-group">
+      <a class="btn" ng-click="BatchPipelineConfigCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-configurations-body">
+    <div class="configurations-side-panel">
+      <div class="configurations-headers">
+        <div class="configuration-header"
+              ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'}"
+              ng-click="BatchPipelineConfigCtrl.activeTab = 'runtimeArgs'"
+              ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+          Runtime Arguments
+        </div>
+        <div class="configuration-header"
+              ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'previewConfig'}"
+              ng-click="BatchPipelineConfigCtrl.activeTab = 'previewConfig'"
+              ng-if="!BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.showPreviewConfig">
+          Preview Config
+        </div>
+        <div class="configuration-header toggle-advanced-options"
+              ng-click="BatchPipelineConfigCtrl.showAdvanced = !BatchPipelineConfigCtrl.showAdvanced"
+              ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+          <span class="fa"
+                ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showAdvanced, 'fa-caret-right': !BatchPipelineConfigCtrl.showAdvanced}">
+           </span>
+          Advanced options
+        </div>
+        <div class="advanced-options"
+              ng-show="BatchPipelineConfigCtrl.showAdvanced || !BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
+          <div class="configuration-header"
+                ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'}"
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'pipelineConfig'">
+            Pipeline Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'engineConfig'}"
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'engineConfig'">
+            Engine Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'resources', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'resources'">
+            Resources
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'alerts', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'alerts'">
+            Alerts
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="configuration-content">
+
+      <div class="configuration-step-content configuration-content-container runtime-arguments"
+            ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+        <div class="step-content-heading">
+          Specify Runtime Arguments or Update the Ones Derived from Preferences
+        </div>
+        <div class="runtime-arguments-labels key-value-pair-labels">
+          <span class="key-label">Name</span>
+          <span class="value-label">Value</span>
+        </div>
+        <div class="runtime-arguments-values key-value-pair-values">
+          <key-value-pairs
+            key-values="BatchPipelineConfigCtrl.runtimeArguments"
+            on-key-value-change="BatchPipelineConfigCtrl.onRuntimeArgumentsChange"
+            get-resetted-key-value="BatchPipelineConfigCtrl.getResettedRuntimeArgument"
+          ></key-value-pairs>
+        </div>
+      </div>
+
+      <div class="configuration-step-content configuration-content-container preview-config"
+            ng-if="BatchPipelineConfigCtrl.activeTab === 'previewConfig'">
+        <div class="step-content-heading">
+          Set the number of records to preview
+        </div>
+        <div class="label-with-toggle num-records-preview row">
+          <span class="toggle-label col-xs-5">Number of records to preview</span>
+          <my-number-widget
+            ng-model="BatchPipelineConfigCtrl.numRecordsPreview"
+            config="BatchPipelineConfigCtrl.numberConfig"
+          ></my-number-widget>
+          <i class="fa fa-info-circle"
+             uib-tooltip="The number of records to be read during the pipeline preview. For MapReduce, this translates to the number of records that are read by each map task."
+             tooltip-placement="right">
+        </div>
+      </div>
+
+      <fieldset class="configuration-content-container"
+                ng-if="BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== 'previewConfig'"
+                ng-disabled="BatchPipelineConfigCtrl.isDisabled">
+
+        <div class="configuration-step-content pipeline-config"
+              ng-if="BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'">
+          <div class="step-content-heading">
+            Set configurations for this pipeline
+          </div>
+          <div class="label-with-toggle instrumentation row">
+            <span class="toggle-label col-xs-4">Instrumentation</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="BatchPipelineConfigCtrl.instrumentation"
+                is-disabled="BatchPipelineConfigCtrl.isDisabled"
+                on-toggle="BatchPipelineConfigCtrl.instrumentation = !BatchPipelineConfigCtrl.instrumentation"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle stageLogging row">
+            <span class="toggle-label col-xs-4">Stage Level Logging</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="BatchPipelineConfigCtrl.stageLogging"
+                is-disabled="BatchPipelineConfigCtrl.isDisabled"
+                on-toggle="BatchPipelineConfigCtrl.stageLogging = !BatchPipelineConfigCtrl.stageLogging"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+        </div>
+
+        <div class="configuration-step-content engine-config"
+              ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
+          <div class="step-content-heading">
+            Select the type of engine running your batch pipeline
+          </div>
+          <div class="engine-config-radio">
+            <label class="radio-inline radio-spark">
+              <input type="radio"
+                      ng-model="BatchPipelineConfigCtrl.engine"
+                      ng-change="BatchPipelineConfigCtrl.onEngineChange()"
+                      value="spark">
+              Spark
+            </label>
+            <label class="radio-inline radio-mapReduce">
+              <input type="radio"
+                      ng-model="BatchPipelineConfigCtrl.engine"
+                      ng-change="BatchPipelineConfigCtrl.onEngineChange()"
+                      value="mapreduce">
+              MapReduce
+            </label>
+          </div>
+          <div class="add-custom-config">
+            <span ng-if="!BatchPipelineConfigCtrl.isDisabled">
+              <a class="add-custom-config-label"
+                  ng-click="BatchPipelineConfigCtrl.showCustomConfig = !BatchPipelineConfigCtrl.showCustomConfig">
+                  <span class="fa"
+                        ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !BatchPipelineConfigCtrl.showCustomConfig}">
+                   </span>
+                  Add Custom Config
+              </a>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
+                 tooltip-placement="right">
+              </i>
+              <span class="float-xs-right num-rows"
+                    ng-if="BatchPipelineConfigCtrl.showCustomConfig">
+                  {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
+                <span ng-if="BatchPipelineConfigCtrl.customEngineConfig.pairs.length === 1">
+                  custom config
+                </span>
+                <span ng-if="BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 1">
+                  custom configs
+                </span>
+              </span>
+            </span>
+            <span ng-if="(BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.showCustomConfig)">
+              <hr />
+              <span ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0">
+                <label> Custom Config</label>
+                <i class="fa fa-info-circle"
+                   uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
+                   tooltip-placement="right">
+                </i>
+                <span class="float-xs-right num-rows">
+                    {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
+                  <span ng-if="BatchPipelineConfigCtrl.customEngineConfig.pairs.length === 1">
+                    custom config
+                  </span>
+                  <span ng-if="BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 1">
+                    custom configs
+                  </span>
+                </span>
+              </span>
+              <div class="custom-config-labels key-value-pair-labels">
+                <span class="key-label">Name</span>
+                <span class="value-label">Value</span>
+              </div>
+              <div class="custom-config-values key-value-pair-values">
+                <key-value-pairs
+                  key-values="BatchPipelineConfigCtrl.customEngineConfig"
+                  on-key-value-change="BatchPipelineConfigCtrl.onCustomEngineConfigChange"
+                ></key-value-pairs>
+              </div>
+            </span>
+          </div>
+        </div>
+
+        <div class="configuration-step-content resources"
+              ng-if="BatchPipelineConfigCtrl.activeTab === 'resources'">
+          <div class="step-content-heading">
+            Specify the resources for the following processes of the {{ BatchPipelineConfigCtrl.engineForDisplay }} program
+          </div>
+          <div class="col-xs-6 driver">
+            <span class="resource-title">
+              Driver
+            </span>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Resources for the driver process which initializes the pipeline"
+                tooltip-placement="right">
+            </i>
+            <div class="resource-holder">
+              <div
+                action-creator="BatchPipelineConfigCtrl.actionCreator"
+                store="BatchPipelineConfigCtrl.store"
+                resource-type="driverResource"
+                is-disabled="BatchPipelineConfigCtrl.isDisabled"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+          <div class="col-xs-6 executor">
+            <span ng-if="BatchPipelineConfigCtrl.engine === 'mapreduce'"
+                  class="resource-title">
+              Mapper/Reducer
+            </span>
+            <span ng-if="BatchPipelineConfigCtrl.engine === 'spark'"
+                  class="resource-title">
+              Executor
+            </span>
+            <i class="fa fa-info-circle"
+                ng-if="BatchPipelineConfigCtrl.engine === 'mapreduce'"
+                uib-tooltip="Resources for Map and Reduce Tasks of the MapReduce program"
+                tooltip-placement="right">
+            </i>
+            <i class="fa fa-info-circle"
+                ng-if="BatchPipelineConfigCtrl.engine === 'spark'"
+                uib-tooltip="Resources for executor processes which run tasks in an Apache Spark pipeline"
+                tooltip-placement="right">
+            </i>
+            <div class="resource-holder">
+              <div
+                action-creator="BatchPipelineConfigCtrl.actionCreator"
+                store="BatchPipelineConfigCtrl.store"
+                resource-type="executorResource"
+                is-disabled="BatchPipelineConfigCtrl.isDisabled"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="configuration-step-content alerts"
+            ng-if="BatchPipelineConfigCtrl.activeTab === 'alerts'">
+        <div class="step-content-heading">
+          Set alerts for your batch pipeline
+        </div>
+        <my-post-run-actions
+          is-disabled="BatchPipelineConfigCtrl.isDisabled"
+          action-creator="BatchPipelineConfigCtrl.actionCreator"
+          store="BatchPipelineConfigCtrl.store">
+        </my-post-run-actions>
+      </div>
+
+      <div class="configuration-step-navigation">
+        <div class="apply-run-container"
+              ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-run"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
+            Apply &amp; Run
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyConfig()">
+            Apply
+          </button>
+          <span class="num-runtime-args"
+                ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+              {{ BatchPipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <span ng-if="BatchPipelineConfigCtrl.runtimeArguments.pairs.length === 1">
+              runtime argument
+            </span>
+            <span ng-if="BatchPipelineConfigCtrl.runtimeArguments.pairs.length > 1">
+              runtime arguments
+            </span>
+          </span>
+        </div>
+        <div ng-if="!BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-close"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyAndClose()">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

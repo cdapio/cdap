@@ -368,7 +368,7 @@ class HydratorDetailTopPanelController {
               this.$timeout(() => {
                 this.myAlertOnValium.show({
                   type: 'danger',
-                  title: 'Unable to delete Pipeline',
+                  title: 'Unable to delete Pipeline:',
                   content: err.data
                 });
               });
@@ -391,7 +391,7 @@ class HydratorDetailTopPanelController {
       (err) => {
         this.myAlertOnValium.show({
           type: 'danger',
-          title: 'Unable to start a new run',
+          title: 'Unable to start a new run:',
           content: angular.isObject(err) ? err.data: err
         });
       }
@@ -406,7 +406,7 @@ class HydratorDetailTopPanelController {
       (err) => {
         this.myAlertOnValium.show({
           type: 'danger',
-          title: 'Unable to stop the current run',
+          title: 'Unable to stop the current run,',
           content: angular.isObject(err) ? err.data: err
         });
       }
@@ -458,7 +458,7 @@ class HydratorDetailTopPanelController {
           if (!this.macroError) {
             this.myAlertOnValium.show({
               type: 'danger',
-              title: 'Unable to schedule the pipeline',
+              title: 'Unable to schedule the pipeline:',
               content: angular.isObject(err) ? err.data : err
             });
           }
@@ -495,7 +495,7 @@ class HydratorDetailTopPanelController {
         (err) => {
           this.myAlertOnValium.show({
             type: 'danger',
-            title: 'Unable to suspend the pipeline',
+            title: 'Unable to suspend the pipeline::',
             content: angular.isObject(err) ? err.data: err
           });
           this.scheduleLoading = false;

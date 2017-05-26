@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,12 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<fieldset ng-disabled="MyRealtimePipelineSettingsCtrl._isDisabled">
-  <div class="pipeline-settings-content">
-    <my-card data-title="Instances">
-      <div class="instance-wrapper">
-        <input type="number"
-               ng-model="MyRealtimePipelineSettingsCtrl.instance"
-               class="form-control"
-               min="1">
-        <label class="control-label">Instances</label>
-      </div>
-    </my-card>
+
+<div class="toggle-switch-container"
+    ng-class="{'disabled': isDisabled}">
+  <div class="toggle-switch"
+       ng-class="{'on': isOn, 'off': !isOn }"
+       ng-click="onToggle()">
+      <span class="switch-button"></span>
   </div>
-</fieldset>
+</div>

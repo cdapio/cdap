@@ -348,6 +348,43 @@ class HydratorPlusPlusHydratorService {
     return flattendVersion;
   }
 
+  convertMapToKeyValuePairs(obj) {
+    let keyValuePairs = [];
+    keyValuePairs = Object.keys(obj).map(objKey => {
+      return {
+        key: objKey,
+        value: obj[objKey],
+        uniqueId: 'id-' + this.uuid.v4()
+      };
+    });
+    return keyValuePairs;
+  }
+
+  convertKeyValuePairsToMap(keyValues) {
+    let map = {};
+    if (keyValues.pairs) {
+      keyValues.pairs.forEach((currentPair) => {
+        if (currentPair.key.length > 0 && currentPair.key.length > 0) {
+          let key = currentPair.key;
+          map[key] = currentPair.value;
+        }
+      });
+    }
+    return map;
+  }
+
+  keyValuePairsHaveMissingValues(keyValues) {
+    if (keyValues.pairs) {
+      return keyValues.pairs.some((keyValuePair) => {
+        let emptyKeyField = (keyValuePair.key.length === 0);
+        let emptyValueField = (keyValuePair.value.length === 0);
+        // buttons are disabled when either the key or the value of a pair is empty, but not both
+        return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
+      });
+    }
+    return false;
+  }
+
   convertMacrosToRuntimeArguments(macrosMap, userRuntimeArgumentsMap) {
     let runtimeArguments = {};
     let macros = Object.keys(macrosMap).map(macroKey => {
@@ -358,13 +395,7 @@ class HydratorPlusPlusHydratorService {
         notDeletable: true
       };
     });
-    let userRuntimeArguments = Object.keys(userRuntimeArgumentsMap).map(argumentKey => {
-      return {
-        key: argumentKey,
-        value: userRuntimeArgumentsMap[argumentKey],
-        uniqueId: 'id-' + this.uuid.v4()
-      };
-    });
+    let userRuntimeArguments = this.convertMapToKeyValuePairs(userRuntimeArgumentsMap);
     runtimeArguments.pairs = macros.concat(userRuntimeArguments);
     return runtimeArguments;
   }

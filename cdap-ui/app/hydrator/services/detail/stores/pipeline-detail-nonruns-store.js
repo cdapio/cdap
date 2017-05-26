@@ -15,10 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES, MY_CONFIG) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.myHelpers = myHelpers;
+    this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
+
     this.setDefaults = function(app) {
       this.state = {
         scheduleStatus: null,
@@ -138,6 +140,74 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getVirtualCores = function() {
       return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'virtualCores');
     };
+    this.getClientMemoryMB = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'clientResources', 'memoryMB');
+    };
+    this.getClientVirtualCores = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'clientResources', 'virtualCores');
+    };
+    this.getBackpressure = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
+    };
+    this.getCustomConfig = function() {
+      if (this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties')) {
+        let customConfig = {};
+        let currentConfig = this.state.cloneConfig.config;
+        let backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
+        for (let key in currentConfig.properties) {
+          if (currentConfig.properties.hasOwnProperty(key) && backendProperties.indexOf(key) === -1) {
+            customConfig[key] = currentConfig.properties[key];
+          }
+        }
+        return customConfig;
+      } else {
+        return {};
+      }
+    };
+    this.getCustomConfigForDisplay = function() {
+      let currentCustomConfig = this.getCustomConfig();
+      let customConfigForDisplay = {};
+      for (let key in currentCustomConfig) {
+        if (currentCustomConfig.hasOwnProperty(key)) {
+          let newKey = key;
+          if (this.getEngine() === 'mapreduce' && key.startsWith('system.mapreduce.')) {
+            newKey = newKey.slice(17);
+          } else if (key.startsWith('system.spark.')) {
+            newKey = newKey.slice(13);
+          }
+          customConfigForDisplay[newKey] = currentCustomConfig[key];
+        }
+      }
+      return customConfigForDisplay;
+    };
+    this.getNumExecutors = function() {
+      if (this.isDistributed) {
+        return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.executor.instances');
+      } else {
+        // format on standalone is 'local[{number}]'
+        let formattedNum = this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.master');
+        if (formattedNum) {
+          return formattedNum.substring(6, formattedNum.length - 1);
+        } else {
+          return '1';
+        }
+      }
+    };
+    this.getInstrumentation = function() {
+      return this.state.cloneConfig.config.processTimingEnabled;
+    };
+    this.getStageLogging = function() {
+      return this.state.cloneConfig.config.stageLoggingEnabled;
+    };
+    this.getCheckpointing = function() {
+      return this.state.cloneConfig.config.disableCheckpoints;
+    };
+    this.getGracefulStop = function() {
+      return this.state.cloneConfig.config.stopGracefully;
+    };
+    this.getNumRecordsPreview = function() {
+      return this.state.cloneConfig.config.numOfRecordsPreview;
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -183,12 +253,18 @@ angular.module(PKG.name + '.feature.hydrator')
           batchInterval: appConfigClone.configJson.batchInterval,
           resources: appConfigClone.configJson.resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
           driverResources: appConfigClone.configJson.driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+          clientResources: appConfigClone.configJson.clientResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
           postActions: appConfigClone.configJson.postActions,
           engine: appConfigClone.configJson.engine,
-          stages: appConfigClone.configJson.stages
+          stages: appConfigClone.configJson.stages,
+          properties: appConfigClone.configJson.properties,
+          processTimingEnabled: appConfigClone.configJson.processTimingEnabled,
+          stageLoggingEnabled: appConfigClone.configJson.stageLoggingEnabled,
+          disableCheckpoints: appConfigClone.configJson.disableCheckpoints,
+          stopGracefully: appConfigClone.configJson.stopGracefully
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

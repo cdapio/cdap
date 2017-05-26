@@ -18,7 +18,6 @@ function MyPipelineDriverResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
   $scope.virtualCores = $scope.store.getDriverVirtualCores();
   $scope.memoryMB = $scope.store.getDriverMemoryMB();
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
-  $scope.isDisabled = $scope.isDisabled === 'true' ? true : false;
   $scope.numberConfig = {
     'widget-attributes': {
       min: 0,
