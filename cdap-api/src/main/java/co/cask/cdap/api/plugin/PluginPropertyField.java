@@ -18,6 +18,8 @@ package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.util.Objects;
+
 /**
  * Contains information about a property used by a plugin.
  */
@@ -29,8 +31,10 @@ public class PluginPropertyField {
   private final String type;
   private final boolean required;
   private final boolean macroSupported;
+  private final boolean macroEscapingEnabled;
 
-  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
+  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported,
+                             boolean macroEscapingEnabled) {
     if (name == null) {
       throw new IllegalArgumentException("Plugin property name cannot be null");
     }
@@ -46,6 +50,11 @@ public class PluginPropertyField {
     this.type = type;
     this.required = required;
     this.macroSupported = macroSupported;
+    this.macroEscapingEnabled = macroEscapingEnabled;
+  }
+
+  public PluginPropertyField(String name, String description, String type, boolean required, boolean macroSupported) {
+    this(name, description, type, required, macroSupported, false);
   }
 
   /**
@@ -77,6 +86,13 @@ public class PluginPropertyField {
   }
 
   /**
+   * Returns {@code true} if the macro escaping is enabled, {@code false} otherwise.
+   */
+  public boolean isMacroEscapingEnabled() {
+    return macroEscapingEnabled;
+  }
+
+  /**
    * Returns the type of the property.
    */
   public String getType() {
@@ -98,16 +114,12 @@ public class PluginPropertyField {
       && name.equals(that.name)
       && description.equals(that.description)
       && type.equals(that.type)
-      && macroSupported == that.macroSupported;
+      && macroSupported == that.macroSupported
+      && macroEscapingEnabled == that.macroEscapingEnabled;
   }
 
   @Override
   public int hashCode() {
-    int result = name.hashCode();
-    result = 31 * result + description.hashCode();
-    result = 31 * result + type.hashCode();
-    result = 31 * result + (required ? 1 : 0);
-    result = 31 * result + (macroSupported ? 1 : 0);
-    return result;
+    return Objects.hash(name, description, type, required, macroSupported, macroEscapingEnabled);
   }
 }

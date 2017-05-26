@@ -102,9 +102,8 @@ public final class FindPluginHelper {
   }
 
   private static Plugin getPlugin(Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry, PluginProperties properties,
-                           String pluginType, String pluginName, PluginInstantiator pluginInstantiator) {
+                                  String pluginType, String pluginName, PluginInstantiator pluginInstantiator) {
     CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
-    MacroParser parser = new MacroParser(collectMacroEvaluator);
 
     // Just verify if all required properties are provided.
     // No type checking is done for now.
@@ -113,6 +112,7 @@ public final class FindPluginHelper {
                                   "Required property '%s' missing for plugin of type %s, name %s.",
                                   field.getName(), pluginType, pluginName);
       if (field.isMacroSupported()) {
+        MacroParser parser = new MacroParser(collectMacroEvaluator, field.isMacroEscapingEnabled());
         parser.parse(properties.getProperties().get(field.getName()));
       }
     }

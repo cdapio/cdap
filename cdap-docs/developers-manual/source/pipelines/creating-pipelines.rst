@@ -507,16 +507,6 @@ expecting that it would be replaced with::
 
   my-demo-host.example.com:9991
 
-Escaping Macros
----------------
-Macro syntax can be escaped using a backslash (``\``) character. For example::
-
-  ${\${escaped-macro-literal\}}
-  
-will lookup the key ``${escaped-macro-literal}``, which includes the special characters of
-the macro syntax.
-
-
 Validation
 ==========
 From within the CDAP Studio, the validation button will examine the pipeline
