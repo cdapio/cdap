@@ -183,9 +183,16 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
 
     @SuppressWarnings("unused")
     @Provides
-    @Named(Constants.Metrics.MESSAGING_FETCHER_LIMIT)
-    public int providesFetcherPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.MESSAGING_FETCHER_LIMIT);
+    @Named(Constants.Metrics.PROCESSOR_MAX_DELAY_MS)
+    public long providesMadDelay(CConfiguration cConf) {
+      return cConf.getLong(Constants.Metrics.PROCESSOR_MAX_DELAY_MS);
+    }
+
+    @SuppressWarnings("unused")
+    @Provides
+    @Named(Constants.Metrics.QUEUE_SIZE)
+    public int providesQueueSize(CConfiguration cConf) {
+      return cConf.getInt(Constants.Metrics.QUEUE_SIZE);
     }
   }
 }
