@@ -232,8 +232,9 @@ public abstract class ProtoConstraint implements Constraint {
       } catch (ParseException e) {
         throw new IllegalArgumentException(String.format("Failed to parse end time '%s'", endTime), e);
       }
-      if (startDate.compareTo(endDate) >= 0) {
-        throw new IllegalArgumentException("The start time (%s) must be before the end time (%s).");
+      if (startDate.compareTo(endDate) == 0) {
+        throw new IllegalArgumentException(String.format("The start time (%s) must not equal the end time (%s).",
+                                                         startTime, endTime));
       }
       return new ValidationResult(calendar, startDate, endDate);
     }
