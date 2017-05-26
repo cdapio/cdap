@@ -157,7 +157,8 @@ export default class ServiceStatus extends Component {
       _cdapPath : `/system/services/${this.props.name}/logs`
     });
 
-    logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}`;
+    let noLogMessage = encodeURIComponent(`service: '${this.props.name}'`);
+    logUrl = `/downloadLogs?type=raw&backendUrl=${encodeURIComponent(logUrl)}&noLogMessage=${noLogMessage}`;
 
     let provisionBtnClasses = classNames('btn btn-primary set-provision-btn', {'provision-btn-with-warning' : this.state.serviceWarning});
 

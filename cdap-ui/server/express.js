@@ -29,6 +29,7 @@ module.exports = {
 };
 var pkg = require('../package.json');
 var path = require('path');
+var Transform = require('stream').Transform;
 var express = require('express'),
     cookieParser = require('cookie-parser'),
     compression = require('compression'),
@@ -179,6 +180,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
   app.get('/downloadLogs', function(req, res) {
     var url = decodeURIComponent(req.query.backendUrl);
+    var noLogsMessage = decodeURIComponent(req.query.noLogMessage || '');
     var method = (req.query.method || 'GET');
     log.info('Download Logs Start: ', url);
     var customHeaders;
@@ -205,6 +207,21 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       'Cache-Control': 'no-cache, no-store'
     };
 
+    var emptyResponseTransformer = new Transform();
+    var datalength = 0;
+    emptyResponseTransformer._transform = function(data, encoding, done) {
+      if (!datalength && data.length) {
+        datalength = data.length;
+      }
+      this.push(data);
+      done();
+    };
+    emptyResponseTransformer._flush = function(cb) {
+      if (!datalength) {
+        this.push(new Buffer('No Logs found for ' + (!noLogsMessage.length ? url : noLogsMessage), 'utf-8'));
+      }
+      cb();
+    };
     try {
       request(requestObject)
         .on('error', function (e) {
@@ -221,16 +238,16 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
               } else {
                 responseHeaders['Content-Type'] = 'text/plain';
               }
-
               res.set(responseHeaders);
             }
           }
         )
+        .pipe(emptyResponseTransformer)
         .pipe(res)
         .on('error', function (e) {
           log.error('Error downloading logs: ', e);
         });
-    } catch(e) {
+    } catch (e) {
       log.error('Downloading logs failed, ', e);
     }
   });
