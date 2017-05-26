@@ -19,6 +19,7 @@ Examples
    Clicks and Views <clicks-and-views>
    Count Random <count-random>
    Data Cleansing <data-cleansing>
+   Decision Tree Regression <decision-tree-regression>
    FileSet Example <fileset-example>
    Log Analysis <log-analysis>
    Purchase <purchase>
@@ -52,6 +53,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Data Cleansing <data-cleansing>`
     - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
       partitioned fileset using MapReduce.
+  * - :doc:`Decision Tree Regression <decision-tree-regression>`
+    - An application that machine learning model training using a Spark2 program. It trains decision tree regression
+      models from labeled data uploaded through a Service.
   * - :doc:`FileSet Example <fileset-example>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
