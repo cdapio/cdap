@@ -54,8 +54,8 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
       partitioned fileset using MapReduce.
   * - :doc:`Decision Tree Regression <decision-tree-regression>`
-    - An application that machine learning model training using a Spark2 program. It trains decision tree regression
-      models from labeled data uploaded through a Service.
+    - An application demonstrating machine-learning model training using a Spark2 program. It trains decision tree
+      regression models from labeled data uploaded through a Service.
   * - :doc:`FileSet Example <fileset-example>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
