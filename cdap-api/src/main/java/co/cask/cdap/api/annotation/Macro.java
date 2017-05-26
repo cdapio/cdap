@@ -36,6 +36,10 @@ public @interface Macro {
    * keep in mind that an escape enabled macro field will behave differently than a non-macro field.
    * In a non-macro field, '\n' will be evaluated as-is. In an escape enabled macro field, '\n' will evaluate
    * to 'n'.
+   *
+   * When escaping is disabled, certain values cannot be expressed. For example, a literal '${val}' cannot be used,
+   * since it will always be interpreted as a macro lookup. Similarly, '${${val}}' will not be a lookup on
+   * key '${val}', but will be a lookup on whatever '${val}' evaluates to.
    */
   boolean escapingEnabled() default false;
 }
