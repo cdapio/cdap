@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _cdap-building-running:
 
@@ -33,7 +33,7 @@ Building and Running CDAP Applications
 
 .. highlight:: console
 
-In the examples, we refer to the Standalone CDAP as *CDAP*, and the example code that is
+In the examples, we refer to the CDAP Local Sandbox as *CDAP*, and the example code that is
 running on it as an *application*. We'll assume that you are running your application in
 the *default* :ref:`namespace <namespaces>`; if not, you will need to adjust commands
 accordingly. For example, in a URL such as::
@@ -46,20 +46,20 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 
 
 Accessing CLI, curl, and the SDK bin
------------------------------------- 
+------------------------------------
 
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
-  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate. 
+  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
 - If you add the SDK bin directory to your path, you can simplify the commands. From within
   the ``<CDAP-SDK-HOME>`` directory, enter:
-  
+
   .. tabbed-parsed-literal::
-  
+
     .. Linux
 
     $ export PATH=${PATH}:\`pwd\`/bin
@@ -67,10 +67,10 @@ Accessing CLI, curl, and the SDK bin
     .. Windows
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
-  
+
   The Windows path has been augmented with a directory where the SDK includes
   Windows-versions of commands such as ``curl``.
-  
+
 .. include:: /_includes/windows-note.txt
 
 .. _cdap-building-running-example:
@@ -105,7 +105,7 @@ Starting CDAP
 -------------
 
 Before running an example application, check that an instance of CDAP is running and available; if not,
-follow the instructions for :ref:`Starting and Stopping Standalone CDAP. <start-stop-cdap>`
+follow the instructions for :ref:`Starting and Stopping CDAP Local Sandbox <start-stop-cdap>`.
 
 If you can reach the CDAP UI through a browser at :cdap-ui:`http://localhost:11011/ <>`,
 CDAP is running.
@@ -117,7 +117,7 @@ Deploying an Application
 
 Once CDAP is started, you can deploy an application using an example JAR by any of these methods:
 
-- In the CDAP UI, use the *Add App* button |---| found on either the |development|_ or 
+- In the CDAP UI, use the *Add App* button |---| found on either the |development|_ or
   |management|_ pages |---| selecting the *Custom App* menu item, and then browse and upload an
   artifact to create an app:
 
@@ -134,8 +134,8 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
   .. tabbed-parsed-literal::
 
     examples/|example-dir|/target/|example|-|release|.jar
- 
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
+
+- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
   .. tabbed-parsed-literal::
 
@@ -146,12 +146,12 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
       Successfully created application
 
   The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
-  
+
 - Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
   ``libexec\bin\curl.exe``):
 
   .. tabbed-parsed-literal::
-  
+
     $ curl -w"\n" localhost:11015/v3/namespaces/default/artifacts/|example| \
       --data-binary @examples/|example-dir|/target/|example|-|release|.jar
     Artifact added successfully
@@ -170,17 +170,17 @@ Starting an Application's Programs
 Once an application is deployed, there are multiple methods for starting an application's programs:
 
 - You can go to the application's detail page in the CDAP UI by clicking on the
-  application's name in either the |development|_ page or on the |all_apps|_ page. Now you can 
+  application's name in either the |development|_ page or on the |all_apps|_ page. Now you can
   see the status of any of the programs associated with the application and, by clicking
   on them, go to their detail page where you can start or stop them.
-  
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
+
+- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
   (In each CDAP example, the CLI commands for that particular example are provided):
-  
+
   .. tabbed-parsed-literal::
 
     $ cdap cli start <program-type> <app-id.program-id>
-    
+
   .. list-table::
     :widths: 20 80
     :header-rows: 1
@@ -197,11 +197,11 @@ Once an application is deployed, there are multiple methods for starting an appl
 ..
 
 - Use the :ref:`Command Line Interface<cli>` to start all or selected types of programs of an application at once:
-  
+
   .. tabbed-parsed-literal::
 
     $ start app <app-id> programs [of type <program-types>]
-    
+
   .. list-table::
     :widths: 20 80
     :header-rows: 1
@@ -215,9 +215,9 @@ Once an application is deployed, there are multiple methods for starting an appl
         ``spark``, ``worker``, or ``workflow``) which will start all programs of those
         types; for example, specifying ``'flow,workflow'`` will start all flows and
         workflows in the application
-  
+
 ..
-      
+
 - Use the :ref:`Program Lifecycle <http-restful-api-lifecycle-start>` of the Lifecycle
   HTTP RESTful API to start the programs of an application using a program such as ``curl``
 
@@ -230,10 +230,10 @@ Stopping an Application's Programs
 
 Once an application is deployed, use one of these methods for stoping an application's programs:
 
-- On an application's detail page in the CDAP UI, you can click on a program to go 
+- On an application's detail page in the CDAP UI, you can click on a program to go
   to its detail page and then click the *Stop* button there
 
-- From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
+- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
 
   .. tabbed-parsed-literal::
 
@@ -255,11 +255,11 @@ Once an application is deployed, use one of these methods for stoping an applica
 ..
 
 - Use the :ref:`Command Line Interface<cli>` to stop all or selected types of programs of an application at once:
-  
+
   .. tabbed-parsed-literal::
 
     $ stop app <app-id> programs [of type <program-types>]
-    
+
   .. list-table::
     :widths: 20 80
     :header-rows: 1
@@ -275,10 +275,10 @@ Once an application is deployed, use one of these methods for stoping an applica
         workflows in the application
 
 ..
-      
+
 - Use the :ref:`Program Lifecycle <http-restful-api-lifecycle-stop>` of the Lifecycle
   HTTP RESTful API to stop the programs of an application using a program such as ``curl``
-    
+
 .. _cdap-building-running-removing:
 
 Removing an Application
@@ -292,7 +292,7 @@ the application, then click the *Actions* menu on the right side and select *Del
 
 After confirmation, the application will be deleted.
 
-From the Standalone CDAP SDK directory, you can also use the Command Line Interface:
+From the CDAP Local Sandbox home directory, you can also use the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
@@ -300,7 +300,7 @@ From the Standalone CDAP SDK directory, you can also use the Command Line Interf
 
 Note that any storage (datasets) created or used by the application will remain, as they
 are independent of the application. Datasets can be deleted from the |datasets|_ page of
-the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the 
+the CDAP UI, or by using the :ref:`HTTP Restful API <restful-api>`, the
 :ref:`Java Client API <java-client-api>`, or the :ref:`Command Line Interface API <cli>`.
 
 Streams can be either truncated or deleted, using similar methods.

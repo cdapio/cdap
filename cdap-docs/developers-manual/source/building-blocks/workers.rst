@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _workers:
 
@@ -25,8 +25,8 @@ You can add workers to your application by calling the ``addWorker`` method in t
   }
 
 Workers have semantics similar to a Java thread and are run in a thread when CDAP is run in either in-memory
-or standalone modes. In distributed mode, each instance of a worker runs in its own YARN container.
-Their instances may be updated via the :ref:`Command Line Interface <cli-available-commands>` or 
+or local sandbox modes. In distributed mode, each instance of a worker runs in its own YARN container.
+Their instances may be updated via the :ref:`Command Line Interface <cli-available-commands>` or
 a :ref:`RESTful API <http-restful-api-lifecycle>`::
 
   public class ProcessWorker extends AbstractWorker {
@@ -111,7 +111,7 @@ application in the same namespace. ``WorkerContext`` can be used to discover the
   }
 
 
-Writing to Streams 
+Writing to Streams
 ==================
 
 Workers have the ability to write to streams through the ``WorkerContext``. The implementation internally

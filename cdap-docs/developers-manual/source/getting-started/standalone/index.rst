@@ -1,15 +1,15 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: CDAP SDK
+    :description: CDAP Local Sandbox
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
-.. _standalone-index:
+.. _local-sandbox-index:
 
-========
-CDAP SDK
-========
+==================
+CDAP Local Sandbox
+==================
 
 .. toctree::
    :maxdepth: 1
@@ -23,7 +23,7 @@ CDAP SDK
 
 .. rubric:: System Requirements and Dependencies
 
-The CDAP SDK (Software Development Kit) runs on Linux, MacOS, and Windows, and has these
+The CDAP Local Sandbox runs on Linux, MacOS, and Windows, and has these
 requirements:
 
 - `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__
@@ -71,7 +71,7 @@ described in the section on :ref:`development environment setup. <dev-env>`
 
 .. rubric:: Standalone CDAP Download, Installation and Setup
 
-There are three ways to `download <http://cask.co/downloads/#cdap>`__ and install the CDAP SDK:
+There are three ways to `download <http://cask.co/downloads/#cdap>`__ and install the CDAP Local Sandbox:
 
 - as a :doc:`binary zip file <zip>`;
 - as a :doc:`Virtual Machine image <virtual-machine>`; or

@@ -20,13 +20,13 @@ The **artifact version** is of the format ``'[major].[minor].[fix](-\|.)[suffix]
 portions of the version are optional, though it is suggested that you have them conform to
 standard versioning schemes. The major, minor, and fix portions of the version must be numeric.
 The suffix can be any of the acceptable characters. For example, ``'3.2.0-SNAPSHOT'`` is a valid artifact version,
-with a major version of 3, minor version of 2, fix version of 0, and suffix of ``SNAPSHOT``. 
+with a major version of 3, minor version of 2, fix version of 0, and suffix of ``SNAPSHOT``.
 
 The **artifact scope** is either ``'user'`` or ``'system'``. An artifact in the *'user'* scope is added by users
 through the CLI or RESTful API. A *'user'* artifact belongs in a namespace and cannot be accessed in
 another namespace. A *'system'* artifact is an artifact that is available across all namespaces. It
 is added by placing the artifact in a special directory on either the CDAP Master node(s) or the
-Standalone CDAP of the CDAP SDK. 
+CDAP Local Sandbox.
 
 Once added to CDAP, an *Artifact* cannot be modified unless it is a **snapshot artifact.**
 An *Artifact* is a snapshot artifact if the version suffix begins with ``SNAPSHOT``. For example,
@@ -38,7 +38,7 @@ Artifacts are managed using the :ref:`Artifact HTTP RESTful APIs <http-restful-a
 
 Deploying an Artifact
 =====================
-An artifact is deployed through the :ref:`RESTful API <http-restful-api-artifact-add>`. 
+An artifact is deployed through the :ref:`RESTful API <http-restful-api-artifact-add>`.
 If it contains an Application class, the artifact
 can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
 the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
@@ -54,7 +54,7 @@ The artifact exposes a ``batchsource`` interface that it expects others to imple
 The ``core-plugins`` artifact contains several plugins that implement that interface. There is one source
 for databases, another for HDFS files, etc. To make plugins in one artifact available to
 another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
-will then be able to use those plugins. 
+will then be able to use those plugins.
 
 Deleting an Artifact
 ====================
@@ -71,25 +71,25 @@ Normally, an artifact is added to a specific namespace. Users in one namespace c
 artifacts in another namespace. These are referred to as :ref:`user artifacts <plugins-deployment-user>`.
 
 Sometimes there is a need to provide an artifact that can be used across namespaces. One
-example of this are the :ref:`pipeline artifacts <cdap-pipelines-plugins>` shipped with 
-CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` can be used. 
+example of this are the :ref:`pipeline artifacts <cdap-pipelines-plugins>` shipped with
+CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` can be used.
 
 System artifacts cannot be added through the RESTful API, but must be added by placing the
 artifact in a special directory. For Distributed CDAP, this directory is defined by the
 ``app.artifact.dir`` setting in :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories
 can be defined by separating them with a semicolon. It defaults to
-``/opt/cdap/master/artifacts``. For the Standalone CDAP, the directory is set to the
+``/opt/cdap/master/artifacts``. For the CDAP Local Sandbox, the directory is set to the
 ``artifacts`` directory.
 
-Any artifact in the directory will be added to CDAP when it starts up. In addition, a 
+Any artifact in the directory will be added to CDAP when it starts up. In addition, a
 :ref:`RESTful API <http-restful-api-artifact-system-load>`
 call can be made to scan the directory for any new artifacts that may have been added since CDAP
-started. 
+started.
 
 If a system artifact contains plugins that extend another system artifact, a matching
 JSON config file must be provided to specify which artifacts it extends. In addition, if a system
 artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
-file. 
+file.
 
 .. highlight:: json
 
@@ -125,17 +125,17 @@ to a table using a flow. The stream that it reads from |---| and the table that 
 Our development team writes code such as::
 
   public class MyApp extends AbstractApplication<MyApp.MyConfig> {
-  
+
     public static class MyConfig extends Config {
       private String stream;
       private String table;
-  
+
       private MyConfig() {
         this.stream = "A";
         this.table = "X";
       }
     }
-  
+
     public void configure() {
       MyConfig config = getContext().getConfig();
       addStream(new Stream(config.stream));
@@ -143,16 +143,16 @@ Our development team writes code such as::
       addFlow(new MyFlow(config.stream, config.table, config.flowConfig));
     }
   }
-  
+
   public class MyFlow implements AbstractFlow {
     private String stream;
     private String table;
-  
+
     MyFlow(String stream, String table) {
       this.stream = stream;
       this.table = table;
     }
-  
+
     @Override
     public void configure() {
       setName("MyFlow");
@@ -161,21 +161,21 @@ Our development team writes code such as::
       connectStream(stream, "reader");
     }
   }
- 
+
   public class Reader extends AbstractFlowlet {
     @Property
     private String tableName;
     private Table table;
-   
+
     Reader(String tableName) {
       this.tableName = tableName;
-    }  
+    }
 
     @Override
     public void initialize(FlowletContext context) throws Exception {
       table = context.getDataset(tableName);
     }
- 
+
     @ProcessInput
     public void process(StreamEvent event) {
       Put put = new Put(Bytes.toBytes(event.getHeaders().get(config.rowkey)));
@@ -197,7 +197,7 @@ Information about the artifact and the application class in the artifact are now
 through JAR API calls::
 
   curl localhost:11015/v3/namespaces/default/artifacts?scope=user
-  [ 
+  [
     { "name": "myapp", "scope":"USER",  "version": "1.0.0" }
   ]
 
@@ -231,7 +231,7 @@ From this information, we decide to create an application named ``purchaseDump``
 from the ``purchases`` stream and writes to the ``events`` table::
 
   curl -X PUT localhost:11015/v3/namespaces/default/apps/purchaseDump -H 'Content-Type: application/json' -d '
-  { 
+  {
     "artifact": {
       "name": "myapp",
       "version": "1.0.0",
@@ -241,9 +241,9 @@ from the ``purchases`` stream and writes to the ``events`` table::
       "stream": "purchases",
       "table": "events"
     }
-  }' 
+  }'
 
-We can then manage the lifecycle of the flow using the 
+We can then manage the lifecycle of the flow using the
 :ref:`Application Lifecycle RESTful APIs <http-restful-api-lifecycle>`.
 After it has been running for a while, a bug is found in the code. The development team provides
 a fix, and ``myapp-1.0.1.jar`` is released. The artifact is deployed::

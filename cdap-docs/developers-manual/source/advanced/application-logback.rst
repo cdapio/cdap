@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _application-logback:
 
@@ -9,14 +9,14 @@ Application Logback
 ===================
 
 YARN containers launched by a CDAP application use a default container logback file
-|---| ``logback-container.xml`` |---| packaged with CDAP and installed in 
+|---| ``logback-container.xml`` |---| packaged with CDAP and installed in
 the CDAP :ref:`configuration directory <admin-manual-cdap-components>`. This logback does
 log rotation once every day at midnight and deletes logs older than 14 days. Depending on
 the use case, the default configuration may be sufficient. As long as the container is
 running, these policies will apply. (As the lifetime of many containers is often less than
 14 days, these limits may never be reached.)
 
-**Note:** In the case of the CDAP Standalone, the logback file used is ``logback.xml``, located
+**Note:** In the case of the CDAP Local Sandbox, the logback file used is ``logback.xml``, located
 in the ``<cdap-sdk-home>/conf`` directory.
 
 You can specify a custom ``logback.xml`` for a CDAP application by packaging

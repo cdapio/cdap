@@ -326,7 +326,7 @@ function build_license_pdfs() {
   mkdir ${SCRIPT_PATH}/licenses-pdf
   LIC_PDF="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/licenses-pdf"
   LIC_RST="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/${SOURCE}/licenses"
-  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
+  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-local-sandbox-dependencies cdap-ui-dependencies"
   for PDF in ${PDFS}; do
     echo
     echo "Building ${PDF}"
