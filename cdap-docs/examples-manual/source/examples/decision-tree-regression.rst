@@ -17,7 +17,7 @@ Overview
 This example demonstrates a Spark2 application training a machine-learning model using the
 `Decision Tree Regression <https://en.wikipedia.org/wiki/Decision_tree_learning>`__ method.
 
-Labeled data in :ref:`libsvm format <http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`__ is
+Labeled data in `libsvm format <http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`__ is
 uploaded to a CDAP Service by a RESTful call. This data is processed by the
 ``ModelTrainer`` Spark program, which divides the labeled data into a test set and a
 training set. A model is trained using the Decision Tree Regression method, and metadata
