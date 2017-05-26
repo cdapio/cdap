@@ -185,35 +185,47 @@ public class BundleJarUtil {
    */
   public static void createArchive(File input,
                                    OutputSupplier<? extends ZipOutputStream> outputSupplier) throws IOException {
-    final URI baseURI = input.toURI();
     try (ZipOutputStream output = outputSupplier.getOutput()) {
-      Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
-                         new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-          URI uri = baseURI.relativize(dir.toUri());
-          if (!uri.getPath().isEmpty()) {
-            output.putNextEntry(new ZipEntry(uri.getPath()));
-            output.closeEntry();
-          }
-          return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          URI uri = baseURI.relativize(file.toUri());
-          if (uri.getPath().isEmpty()) {
-            // Only happen if the given "input" is a file.
-            output.putNextEntry(new ZipEntry(file.toFile().getName()));
-          } else {
-            output.putNextEntry(new ZipEntry(uri.getPath()));
-          }
-          Files.copy(file, output);
-          output.closeEntry();
-          return FileVisitResult.CONTINUE;
-        }
-      });
+      addToArchive(input, output);
     }
+  }
+
+  /**
+   * Adds file(s) to a zip archive. If the given input file is a directory,
+   * all files under it will be added recursively.
+   *
+   * @param input input directory (or file) whose contents needs to be archived
+   * @param output an opened {@link ZipOutputStream} for the archive content to add to
+   * @throws IOException if there is failure in the archive creation
+   */
+  public static void addToArchive(File input, final ZipOutputStream output) throws IOException {
+    final URI baseURI = input.toURI();
+    Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
+                       Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        URI uri = baseURI.relativize(dir.toUri());
+        if (!uri.getPath().isEmpty()) {
+          output.putNextEntry(new ZipEntry(uri.getPath()));
+          output.closeEntry();
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        URI uri = baseURI.relativize(file.toUri());
+        if (uri.getPath().isEmpty()) {
+          // Only happen if the given "input" is a file.
+          output.putNextEntry(new ZipEntry(file.toFile().getName()));
+        } else {
+          output.putNextEntry(new ZipEntry(uri.getPath()));
+        }
+        Files.copy(file, output);
+        output.closeEntry();
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
   /**

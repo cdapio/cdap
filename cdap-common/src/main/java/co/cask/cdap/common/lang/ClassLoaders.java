@@ -18,20 +18,30 @@ package co.cask.cdap.common.lang;
 
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
  * Utility class for collection of methods for dealing with ClassLoader and loading class.
  */
 public final class ClassLoaders {
+
+  // Class-Path attributed in JAR are " " separated
+  private static final Splitter CLASS_PATH_ATTR_SPLITTER = Splitter.on(" ").omitEmptyStrings();
 
   private ClassLoaders() { }
 
@@ -90,19 +100,48 @@ public final class ClassLoaders {
 
   /**
    * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
-   * given ClassLoader.
+   * given ClassLoader. This is the same as calling {@link #getClassLoaderURLs(ClassLoader, boolean, Collection)} with
+   * {@code childFirst} set to {@code false}.
    *
+   * @param classLoader the {@link ClassLoader} for searching urls
    * @param urls a {@link Collection} for storing the {@link URL}s
    * @return the same {@link Collection} passed from the parameter
    */
   public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader, T urls) {
-    if (classLoader.getParent() != null) {
-      getClassLoaderURLs(classLoader.getParent(), urls);
+    return getClassLoaderURLs(classLoader, false, urls);
+  }
+
+  /**
+   * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
+   * given ClassLoader.
+   *
+   * @param classLoader the {@link ClassLoader} for searching urls
+   * @param childFirst if {@code true}, urls gathered from the lower classloader in the hierarchy will be
+   *                   added before the higher one.
+   * @param urls a {@link Collection} for storing the {@link URL}s
+   * @return the same {@link Collection} passed from the parameter
+   */
+  public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader,
+                                                                         boolean childFirst, T urls) {
+    Deque<ClassLoader> classLoaders = new LinkedList<>();
+    ClassLoader cl = classLoader;
+    while (cl != null) {
+      classLoaders.addFirst(cl);
+      cl = cl.getParent();
     }
 
-    if (classLoader instanceof URLClassLoader) {
-      urls.addAll(Arrays.asList(((URLClassLoader) classLoader).getURLs()));
+    Iterator<ClassLoader> iterator = childFirst ? classLoaders.descendingIterator() : classLoaders.iterator();
+    while (iterator.hasNext()) {
+      cl = iterator.next();
+      if (cl instanceof URLClassLoader) {
+        for (URL url : ((URLClassLoader) cl).getURLs()) {
+          if (urls.add(url) && (url.getProtocol().equals("file"))) {
+            addClassPathFromJar(url, urls);
+          }
+        }
+      }
     }
+
     return urls;
   }
 
@@ -146,5 +185,37 @@ public final class ClassLoaders {
       throw Throwables.propagate(e);
     }
     throw new IllegalStateException("Unsupported class URL: " + classUrl);
+  }
+
+  /**
+   * Extracts the Class-Path attributed from the given jar file and add those classpath urls.
+   */
+  private static <T extends Collection<? super URL>> void addClassPathFromJar(URL url, T urls) {
+    try {
+      File file = new File(url.toURI());
+      try (JarFile jarFile = new JarFile(file)) {
+        // Get the Class-Path attribute
+        Manifest manifest = jarFile.getManifest();
+        if (manifest == null) {
+          return;
+        }
+        Object attr = manifest.getMainAttributes().get(Attributes.Name.CLASS_PATH);
+        if (attr == null) {
+          return;
+        }
+
+        // Add the URL
+        for (String path : CLASS_PATH_ATTR_SPLITTER.split(attr.toString())) {
+          URI uri = new URI(path);
+          if (uri.isAbsolute()) {
+            urls.add(uri.toURL());
+          } else {
+            urls.add(new File(file.getParentFile(), path.replace('/', File.separatorChar)).toURI().toURL());
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Ignore, as there can be jar file that doesn't exist on the FS.
+    }
   }
 }
