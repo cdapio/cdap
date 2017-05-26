@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.Partitioning;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Data Cleansing sample Application.
  */
@@ -44,6 +46,14 @@ public class DataCleansing extends AbstractApplication {
 
     // Process the records from "rawRecords" partitioned file set using MapReduce
     addMapReduce(new DataCleansingMapReduce());
+
+    addWorkflow(new DataCleansingWorkflow());
+
+    // execute DataCleansingWorkflow when 10 partitions arrive to RAW_RECORDS, while ensuring that there is a
+    // 5 minute delay between runs
+    configureWorkflowSchedule("DataSchedule", "DataCleansingWorkflow")
+      .setDurationSinceLastRun(TimeUnit.MINUTES.toMillis(5))
+      .triggerOnPartitions(RAW_RECORDS, 10);
 
     // Store the state of the incrementally processing MapReduce
     createDataset(CONSUMING_STATE, KeyValueTable.class);
