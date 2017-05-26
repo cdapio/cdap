@@ -470,7 +470,7 @@ class HydratorPlusPlusConfigStore {
     angular.extend(this.state.config.properties, newCustomConfig);
   }
   getBackpressure() {
-    return this.getConfig().properties['system.spark.spark.streaming.backpressure.enabled'];
+    return this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
   }
   setBackpressure(val) {
     if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
@@ -479,15 +479,16 @@ class HydratorPlusPlusConfigStore {
   }
   getNumExecutors() {
     if (this.isDistributed) {
-      return this.getConfig().properties['system.spark.spark.executor.instances'].toString();
+      if (this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.executor.instances')) {
+        return this.state.config.properties['system.spark.spark.executor.instances'].toString();
+      }
     } else {
       // format on standalone is 'local[{number}]'
-      let formattedNum = this.getConfig().properties['system.spark.spark.master'];
-      if (formattedNum) {
+      if (this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.master')) {
+        let formattedNum = this.state.config.properties['system.spark.spark.master'];
         return formattedNum.substring(6, formattedNum.length - 1);
-      } else {
-        return '1';
       }
+      return '1';
     }
   }
   setNumExecutors(num) {
