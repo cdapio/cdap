@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip, $uibModal) {
 
     var vm = this;
 
@@ -605,8 +605,19 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
-      DAGPlusPlusNodesActionsFactory.removeNode(node.name);
-      vm.instance.remove(node.name);
+      let modal = $uibModal.open({
+        templateUrl: 'dag-plus/confirm-deletion-modal.html',
+        size: 'sm',
+        backdrop: true,
+        keyboard: true,
+        windowTopClass: 'delete-modal',
+      });
+      modal.result.then((check) => {
+        if (check === 'delete') {
+          DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+          vm.instance.remove(node.name);
+        }
+      });
     };
 
     vm.cleanUpGraph = function () {
