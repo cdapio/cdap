@@ -14,24 +14,29 @@ A Cask Data Application Platform (CDAP) example demonstrating Spark2.
 
 Overview
 ========
-This example demonstrates a Spark2 application training a machine learning model using the Decision Tree Regression method.
+This example demonstrates a Spark2 application training a machine-learning model using the
+`Decision Tree Regression <https://en.wikipedia.org/wiki/Decision_tree_learning>`__ method.
 
-Labeled data in libsvm format is uploaded to a CDAP Service by a RESTful call. This data is
-processed by the ``ModelTrainer`` Spark program, which divides the labeled data into a test set and a training set.
-A model is trained using the Decision Tree Regression method, and metadata about the model, such as the root mean squared
-error, are stored in an ObjectMappedTable dataset.
+Labeled data in :ref:`libsvm format <http://www.csie.ntu.edu.tw/~cjlin/libsvm/>`__ is
+uploaded to a CDAP Service by a RESTful call. This data is processed by the
+``ModelTrainer`` Spark program, which divides the labeled data into a test set and a
+training set. A model is trained using the Decision Tree Regression method, and metadata
+about the model, such as the `root-mean-square error
+<https://en.wikipedia.org/wiki/Root-mean-square_deviation>`__, are stored in an
+ObjectMappedTable dataset.
 
-Once the ``ModelTrainer`` program completes, you can list the models trained so far by querying the ``models`` endpoint
-of the *ModelDataService*. You can fetch metadata about a specific model using the ``models/{model-id}`` endpoint
-of the *ModelDataService*. It will respond with metadata, such as how many data points were tested, how many data points
-were correctly labeled, and the root mean squared error.
+Once the ``ModelTrainer`` program completes, you can list the models trained by
+querying the ``models`` endpoint of the *ModelDataService*. You can fetch metadata about a
+specific model using the ``models/{model-id}`` endpoint of the *ModelDataService*. It will
+respond with metadata, such as how many data points were tested, how many data points were
+correctly labeled, and the root-mean-square error.
 
 Let's look at some of these components, and then run the application and see the results.
 
 The *DecisionTreeRegression* Application
 ----------------------------------------
-As in the other `examples <index.html>`__, the components
-of the application are tied together by the class ``DecisionTreeRegressionApp``:
+As in the other :ref:`examples <examples-index>`, the components of the application are
+tied together by the class ``DecisionTreeRegressionApp``:
 
 .. literalinclude:: /../../../cdap-examples/DecisionTreeRegression/src/main/java/co/cask/cdap/examples/dtree/DecisionTreeRegressionApp.java
    :language: java
@@ -49,10 +54,11 @@ Metadata about trained models are stored in an ObjectMappedTable dataset, *model
 
 The *ModelDataService* Service
 ------------------------------
-This service has three endpoints.
-The ``labels`` endpoint is used to upload labeled data for training and testing.
-The ``models`` endpoint is used to list the ids of all models trained so far.
-The ``models/{model-id}`` endpoint is used to retrieve metadata about a specific model.
+This service has three endpoints:
+
+- ``labels`` endpoint is used to upload labeled data for training and testing
+- ``models`` endpoint is used to list the IDs of all models trained to date
+- ``models/{model-id}`` endpoint is used to retrieve metadata about a specific model
 
 
 .. Building and Starting
@@ -67,10 +73,14 @@ The ``models/{model-id}`` endpoint is used to retrieve metadata about a specific
 Running the Example
 ===================
 
-.. Setting the Spark version
-This example uses Spark2, and the Standalone CDAP SDK must be configured to use the Spark2 runtime instead of Spark1.
-To do this, modify the conf/cdap-site.xml file from the Standalone CDAP SDK directory.
-The 'app.program.spark.compat' setting must be changed to 'spark2_2.11'.  
+Setting the Spark Version
+-------------------------
+
+This example uses **Spark2**, and the CDAP Local Sandbox must be configured to use the
+Spark2 runtime instead of the default of *Spark1*. To do this, modify the
+``conf/cdap-site.xml`` file of the CDAP Local Sandbox. The property
+``app.program.spark.compat`` must be changed to ``spark2_2.11`` and CDAP restarted, if it
+is currently running.
 
 .. Starting the Service
 .. --------------------
@@ -81,13 +91,13 @@ The 'app.program.spark.compat' setting must be changed to 'spark2_2.11'.
 
 Uploading Label Data
 --------------------
-Upload labeled data in libsvm format by running this command from the Standalone CDAP SDK directory,
-using the Command Line Interface:
-  
+Upload labeled data in ``libsvm`` format by running this command from the CDAP Local
+Sandbox home directory, using the CDAP :ref:`Command Line Interface <cli>`:
+
 .. tabbed-parsed-literal::
-  
+
   $ cdap cli call service DecisionTreeRegressionApp.ModelDataService PUT labels body:file examples/DecisionTreeRegression/src/test/resources/sample_libsvm_data.txt
-  
+
 Running the Spark Program
 -------------------------
 There are three ways to start the Spark program:
@@ -95,7 +105,7 @@ There are three ways to start the Spark program:
 1. Go to the |example-italic| :cdap-ui-apps-programs:`application overview page, programs
    tab <DecisionTreeRegressionApp>`, click |example-service-italic| to get to the service detail
    page, then click the *Start* button; or
-   
+
 #. Use the Command Line Interface:
 
    .. tabbed-parsed-literal::
@@ -108,18 +118,18 @@ There are three ways to start the Spark program:
 
     $ curl -w"\n" -X POST \
     "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/spark/ModelTrainer/start"
-    
+
 
 Querying the Results
 --------------------
-To list the ids of trained models using the ``ModelDataService``, you can:
+To list the IDs of trained models using the ``ModelDataService``, you can:
 
-- You can use the Command Line Interface:
+- Use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli call service DecisionTreeRegressionApp.ModelDataService GET models
-    
+
     [ "92f9da09-71c3-45b0-aec5-2eb100cfbbac" ]
 
 - Send a query via an HTTP request using the ``curl`` command. For example:
@@ -127,23 +137,23 @@ To list the ids of trained models using the ``ModelDataService``, you can:
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/services/ModelDataService/methods/models"
-    
+
     [ "92f9da09-71c3-45b0-aec5-2eb100cfbbac" ]
 
-To get metadata about a specific model using the ``ModelDataService``, you can: 
+To retreive metadata about a specific model using the ``ModelDataService``, you can:
 
-- You can use the Command Line Interface:
+- Use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli call service DecisionTreeRegressionApp.ModelDataService GET models/92f9da09-71c3-45b0-aec5-2eb100cfbbac
-    
+
 - Send a query via an HTTP request using the ``curl`` command. For example:
 
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/services/ModelDataService/methods/models/92f9da09-71c3-45b0-aec5-2eb100cfbbac"
-    
+
     {
       "numFeatures": 692,
       "numPredictions": 37,
