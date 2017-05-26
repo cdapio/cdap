@@ -88,27 +88,32 @@ public class ArtifactVersionRange {
     int commaIndex = artifactVersionStr.indexOf(',', 1);
     if (commaIndex < 0) {
       throw new InvalidArtifactRangeException(
-        String.format("Invalid artifact range %s. Could not find ',' separating lower and upper verions.",
+        String.format("Invalid version range %s. Could not find ',' separating lower and upper verions.",
                       artifactVersionStr));
     }
     String lowerStr = artifactVersionStr.substring(1, commaIndex).trim();
     ArtifactVersion lower = new ArtifactVersion(lowerStr);
     if (lower.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower version %s is invalid.", artifactVersionStr, lowerStr));
+        "Invalid version range %s. Lower version %s is invalid.", artifactVersionStr, lowerStr));
     }
 
     // search for the ']' or ')' marking the end of the upper version
     int versionEndIndex = indexOf(artifactVersionStr, ']', ')', commaIndex + 1);
     if (versionEndIndex < 0) {
       throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Could not find enclosing ']' or ')'.", artifactVersionStr));
+        "Invalid version range %s. Could not find enclosing ']' or ')'.", artifactVersionStr));
+    }
+    // if it does not end in ']' or ')'
+    if (versionEndIndex != artifactVersionStr.length() - 1) {
+      throw new InvalidArtifactRangeException(String.format(
+        "Invalid version range %s. There are extra characters after enclosing ']' or ')'.", artifactVersionStr));
     }
     String upperStr = artifactVersionStr.substring(commaIndex + 1, versionEndIndex).trim();
     ArtifactVersion upper = new ArtifactVersion(upperStr);
     if (upper.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Upper version %s is invalid.", artifactVersionStr, upperStr));
+        "Invalid version range %s. Upper version %s is invalid.", artifactVersionStr, upperStr));
     }
     boolean isUpperInclusive = artifactVersionStr.charAt(versionEndIndex) == ']';
 
@@ -116,12 +121,12 @@ public class ArtifactVersionRange {
     int comp = lower.compareTo(upper);
     if (comp > 0) {
       throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower version %s is greater than upper version %s.",
+        "Invalid version range %s. Lower version %s is greater than upper version %s.",
         artifactVersionStr, lowerStr, upperStr));
     } else if (comp == 0 && isLowerInclusive && !isUpperInclusive) {
       // if lower and upper are equal, but lower is inclusive and upper is exclusive, this is also invalid
       throw new InvalidArtifactRangeException(String.format(
-        "Invalid artifact range %s. Lower and upper versions %s are equal, " +
+        "Invalid version range %s. Lower and upper versions %s are equal, " +
           "but lower is inclusive and upper is exclusive.",
         artifactVersionStr, lowerStr));
     }
