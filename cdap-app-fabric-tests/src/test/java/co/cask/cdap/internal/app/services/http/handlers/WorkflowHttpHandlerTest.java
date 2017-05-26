@@ -849,6 +849,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String scheduleName = schedules.get(0).getName();
     Assert.assertFalse(scheduleName.isEmpty());
 
+    // get schedules in backward-compatible ScheduleSpecification form
+    List<ScheduleSpecification> specs = getScheduleSpecs(TEST_NAMESPACE2, appName, workflowName);
+    Assert.assertEquals(1, specs.size());
+    String specName = specs.get(0).getSchedule().getName();
+    Assert.assertEquals(scheduleName, specName);
+
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
     // Assert.assertTrue(previousRuntimes.size() == 0);
