@@ -91,6 +91,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.zookeeper.NodeChildren;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -324,6 +325,7 @@ public class UpgradeTool {
             System.out.println("Starting upgrade ...");
             try {
               startUp(false);
+              checkMasterStopped();
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -358,6 +360,23 @@ public class UpgradeTool {
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       throw e;
+    }
+  }
+
+  /**
+   * checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so throw
+   * exception message with information on where its running.
+   * @throws Exception
+   */
+  private void checkMasterStopped() throws Exception {
+    String appFabricPath = String.format("/cdap/discoverable/%s/", Constants.Service.APP_FABRIC_HTTP);
+    NodeChildren nodeChildren = zkClientService.getChildren(appFabricPath).get();
+    // if no children for appfabric, all master nodes are stopped
+
+    if (!nodeChildren.getChildren().isEmpty()) {
+      throw new Exception(String.format("CDAP Master is still running on %s",
+                                        com.google.common.base.Joiner.on(",").join(nodeChildren.getChildren())));
+
     }
   }
 
