@@ -171,6 +171,7 @@ export default class ParseDirective extends Component {
   renderSimpleDateModal() {
     return (
       <SimpleDateModal
+        source="parse"
         toggle={this.selectParse.bind(this, null)}
         onApply={this.applyDirective.bind(this)}
       />
