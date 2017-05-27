@@ -1,5 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
     :description: Cask Data Application Platform Included or Linked Libraries
 
 .. _cdap-included-libraries:
@@ -8,14 +9,14 @@
 Included or Linked Libraries
 ============================
 
-These libraries are either linked or included in CDAP, and their license agreement requires 
+These libraries are either linked or included in CDAP, and their license agreement requires
 that copyright, a list of conditions, or other information be included in this documentation.
 
 - `antlr-runtime`_
 - `antlr.stringtemplate`_
-- `antlr`_ 
+- `antlr`_
 - `asm-all`_
-- `c3p0`_ 
+- `c3p0`_
 - `d3`_
 - `esprima`_
 - `janino`_
@@ -175,20 +176,20 @@ format, with this `license: <http://asm.ow2.org/license.html>`__
 c3p0
 ----
 The library `c3p0 <https://github.com/swaldman/c3p0>`__ is included in CDAP in binary format,
-with `this license 
+with `this license
 <https://raw.githubusercontent.com/swaldman/c3p0/master/src/dist-static/LICENSE-EPL>`__
 (Eclipse Public License - v 1.0):
 
-  #. On behalf of all Contributors, Cask Data, Inc. disclaims all warranties and 
-     conditions, express and implied, including warranties or conditions of 
-     title and non-infringement, and implied warranties or conditions of 
+  #. On behalf of all Contributors, Cask Data, Inc. disclaims all warranties and
+     conditions, express and implied, including warranties or conditions of
+     title and non-infringement, and implied warranties or conditions of
      merchantability and fitness for a particular purpose;
 
-  #. Cask Data, Inc. excludes on behalf of all Contributors all liability for 
-     damages, including direct, indirect, special, incidental and 
+  #. Cask Data, Inc. excludes on behalf of all Contributors all liability for
+     damages, including direct, indirect, special, incidental and
      consequential damages, such as lost profits;
 
-  #. Any provisions which differ from this Agreement are 
+  #. Any provisions which differ from this Agreement are
      offered by Cask Data, Inc. alone and not by any other party; and
 
   #. Source code for *c3p0* may be obtained at https://github.com/swaldman/c3p0.
@@ -237,7 +238,7 @@ with `this license: <https://github.com/ariya/esprima/blob/master/LICENSE.BSD>`_
 
   * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  
+
   * Redistributions in binary form must reproduce the above copyright
     notice, this list of conditions and the following disclaimer in the
     documentation and/or other materials provided with the distribution.
@@ -378,7 +379,7 @@ with `this license: <http://jcip.net/annotations/doc/index.html>`__
 
 jersey
 ------
-The libraries of `com.sun.jersey: 
+The libraries of `com.sun.jersey:
 <https://github.com/jersey/jersey-1.x-old/tree/tags/jersey-1.9/jersey>`__
 
 - ``com.sun.jersey.contribs.jersey-guice``
@@ -387,7 +388,7 @@ The libraries of `com.sun.jersey:
 - ``com.sun.jersey.jersey-json``
 - ``com.sun.jersey.jersey-server``
 
-are included in CDAP in binary format, with the `CDDL 1.1 license 
+are included in CDAP in binary format, with the `CDDL 1.1 license
 <https://raw.githubusercontent.com/jersey/jersey-1.x-old/tags/jersey-1.9/jersey/license.html>`__.
 
 Source code for ``com.sun.jersey`` may be obtained at
@@ -440,7 +441,7 @@ jsch
 The library `jsch <http://www.jcraft.com/jsch>`__ is included in CDAP in binary format,
 with `this license: <http://www.jcraft.com/jsch/LICENSE.txt>`__
 
-  | Copyright (c) 2002-2015 Atsuhiko Yamanaka, JCraft,Inc. 
+  | Copyright (c) 2002-2015 Atsuhiko Yamanaka, JCraft,Inc.
   | All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
@@ -449,8 +450,8 @@ with `this license: <http://www.jcraft.com/jsch/LICENSE.txt>`__
   1. Redistributions of source code must retain the above copyright notice,
      this list of conditions and the following disclaimer.
 
-  2. Redistributions in binary form must reproduce the above copyright 
-     notice, this list of conditions and the following disclaimer in 
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in
      the documentation and/or other materials provided with the distribution.
 
   3. The names of the authors may not be used to endorse or promote products
@@ -541,7 +542,7 @@ format, with `this license:
   This program and the accompanying materials are dual-licensed under
   the terms of the `Eclipse Public License v1.0 <https://www.eclipse.org/legal/epl-v10.html>`__
   as published by the Eclipse Foundation.
-  
+
 Source code for ``logback`` may be obtained at https://github.com/qos-ch/logback.
 
 oro
@@ -566,20 +567,20 @@ included in CDAP in binary format, with the Apache License, Version 1.1:
 
   3. The end-user documentation included with the redistribution,
      if any, must include the following acknowledgment:
-     
+
         "This product includes software developed by the
         Apache Software Foundation (http://www.apache.org/)."
-         
+
      Alternately, this acknowledgment may appear in the software itself,
      if and wherever such third-party acknowledgments normally appear.
 
-  4. The names "Apache" and "Apache Software Foundation", "Jakarta-Oro" 
+  4. The names "Apache" and "Apache Software Foundation", "Jakarta-Oro"
      must not be used to endorse or promote products derived from this
      software without prior written permission. For written
      permission, please contact apache@apache.org.
 
-  5. Products derived from this software may not be called "Apache" 
-     or "Jakarta-Oro", nor may "Apache" or "Jakarta-Oro" appear in their 
+  5. Products derived from this software may not be called "Apache"
+     or "Jakarta-Oro", nor may "Apache" or "Jakarta-Oro" appear in their
      name, without prior written permission of the Apache Software Foundation.
 
   THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED
@@ -610,11 +611,11 @@ in binary format, with `this license:
 
   1. Redistributions of source code must retain the above copyright
      notice, this list of conditions and the following disclaimer.
-  
+
   2. Redistributions in binary form must reproduce the above copyright
      notice, this list of conditions and the following disclaimer in the
      documentation and/or other materials provided with the distribution.
-  
+
   3. Neither the name of the copyright holders nor the names of its
      contributors may be used to endorse or promote products derived from
      this software without specific prior written permission.
@@ -655,12 +656,12 @@ binary format, with `this license:
 
   * Redistributions of source code must retain the above copyright
     notice, this list of conditions and the following disclaimer.
-  
+
   * Redistributions in binary form must reproduce the above
     copyright notice, this list of conditions and the following disclaimer
     in the documentation and/or other materials provided with the
     distribution.
-  
+
   * Neither the name of Google Inc. nor the names of its
     contributors may be used to endorse or promote products derived from
     this software without specific prior written permission.
@@ -684,7 +685,7 @@ binary format, with `this license:
 
 react
 -----
-The `react <https://facebook.github.io/react/>`__ libraries 
+The `react <https://facebook.github.io/react/>`__ libraries
 
 - react,
 - react-addons-create-fragment,
@@ -735,7 +736,7 @@ with `this license: <http://www.scala-lang.org/license.html>`__
 
   | Copyright (c) 2002-\ |current_year|, EPFL
   | Copyright (c) 2011-\ |current_year|, Typesafe, Inc.
-  
+
   All rights reserved.
 
   Redistribution and use in source and binary forms, with or without

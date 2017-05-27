@@ -81,7 +81,7 @@ started correctly.
 
      $ docker pull caskdata/cdap-local-sandbox:|release|
 
-#. Start the *Standalone CDAP* Docker container with:
+#. Start the *CDAP Local Sandbox* Docker container with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -94,7 +94,7 @@ started correctly.
 
    This will start the container (in the background), name it ``cdap-local-sandbox``, and set the proxying of ports.
 
-#. Start the *Standalone CDAP Docker container* with:
+#. Start the *CDAP Local Sandbox* Docker container with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -121,7 +121,7 @@ started correctly.
 Options Starting CDAP Containers
 --------------------------------
 
-- Starting the Standalone CDAP, in the background (default execution)
+- Starting the CDAP Local Sandbox, in the background (default execution)
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -165,7 +165,7 @@ Options Starting CDAP Containers
 
     $ docker run -it --link cdap-local-sandbox:sdk --name cdap-cli --rm caskdata/cdap-local-sandbox sh -c 'exec cdap cli -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
 
-- Starting the Standalone CDAP, in the foreground, with ports forwarded:
+- Starting the CDAP Local Sandbox, in the foreground, with ports forwarded:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -176,7 +176,7 @@ Options Starting CDAP Containers
 
     $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-local-sandbox caskdata/cdap-local-sandbox cdap sandbox start
 
-- Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled:
+- Starting the CDAP Local Sandbox, in the foreground, with ports forwarded, and with debugging enabled:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -263,7 +263,7 @@ Kitematic and then download, start, and connect to a CDAP container.
    Windows, in ``Start Menu > Docker > Kitematic``.
 
 #. Once Kitematic has started, search for the **CDAP image** by using the search box at the
-   top of the window and entering ``caskdata:cdap-standalone``. Once you have found the page,
+   top of the window and entering ``caskdata:cdap-local-sandbox``. Once you have found the page,
    click on the **repository menu**, circled in red here:
 
      .. figure:: ../../_images/kitematic/kitematic-1-searching.png

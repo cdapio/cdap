@@ -9,8 +9,8 @@ Prerequisites
 - Maven 3.1+
 - Git
 
-Standalone and Distributed CDAP
-===============================
+CDAP Local Sandbox and Distributed CDAP
+=======================================
 
 **Building CDAP with Maven**
 
@@ -22,9 +22,9 @@ Standalone and Distributed CDAP
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -fae
 
-- Run tests skipping repeated compat module tests:: 
+- Run tests skipping repeated compat module tests::
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn test -Pskip-hbase-compat-tests -fae
-    
+
 - Build all modules::
 
     mvn clean package
@@ -52,13 +52,13 @@ Standalone and Distributed CDAP
 
     MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
 
-- Build Standalone distribution ZIP::
+- Build CDAP Local Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
-- Build Standalone distribution ZIP with additional system artifacts::
+- Build CDAP Local Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
@@ -70,7 +70,7 @@ Standalone and Distributed CDAP
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
-    
+
 - Build the limited set of Javadocs, including the ETL Application Templates, included in the CDAP documentation::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean install -P examples,templates,release -DskipTests \
@@ -114,29 +114,29 @@ Standalone and Distributed CDAP
 - Change version::
 
     mvn versions:set -DnewVersion=[new_version] -DgenerateBackupPoms=false -P examples
-    
+
 - Running from IDE (Intellij and Eclipse)::
 
     mvn clean package -pl cdap-ui -am -DskipTests -P dist
-    
+
   (Whenever there is a change in the UI packages.)
-    
-  Then, run standalone from IDE.
-    
+
+  Then, run CDAP Local Sandbox from IDE.
+
 
 License and Trademarks
 ======================
 
-Copyright © 2014-2016 Cask Data, Inc.
+Copyright © 2014-2017 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
 in compliance with the License. You may obtain a copy of the License at
 
 http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed under the 
-License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-either express or implied. See the License for the specific language governing permissions 
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied. See the License for the specific language governing permissions
 and limitations under the License.
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.

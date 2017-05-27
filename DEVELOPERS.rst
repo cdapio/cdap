@@ -18,7 +18,7 @@ Setup for IntelliJ IDEA
 
 First, open the CDAP project in IntelliJ IDEA: ``Select File > Open... > cdap/pom.xml``
 
-Then, configure a run configuration to run CDAP Standalone:
+Then, configure a run configuration to run CDAP Local Sandbox:
 
 - Select Run > Edit Configurations...
 - Add a new "Application" run configuration
@@ -26,11 +26,11 @@ Then, configure a run configuration to run CDAP Standalone:
 - Set "VM options" to ``-Xmx1024m`` (for in-memory Map/Reduce jobs)
 - Click "OK"
 
-You can now use this run configuration to start an instance of CDAP Standalone.
+You can now use this run configuration to start an instance of CDAP Local Sandbox.
 
 
-Build and Run CDAP Standalone in a Docker container
-===================================================
+Build and Run CDAP Local Sandbox in a Docker Container
+======================================================
 
 These instructions assume the user has a working installation of Docker and a working
 understanding of Docker behavior and commands.
@@ -45,6 +45,6 @@ understanding of Docker behavior and commands.
 
 - Run a Docker container from the new image::
 
-    docker run -d -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone
+    docker run -d -p 11011:11011 -p 11015:11015 caskdata/cdap-local-sandbox
 
-You now have a new Docker container running with CDAP Standalone.
+You now have a new Docker container running with CDAP Local Sandbox.

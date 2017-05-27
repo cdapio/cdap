@@ -1382,7 +1382,7 @@
           </exclusion>
           <!--
             Need to exclude this since Spark brings in an older version that makes
-            S3 not work in standalone. This doesn't affect distributed mode.
+            S3 not work in local sandbox. This doesn't affect distributed mode.
           -->
           <exclusion>
             <groupId>net.java.dev.jets3t</groupId>
@@ -1429,7 +1429,7 @@
           </exclusion>
           <!--
             Need to exclude this since Spark brings in an older version that makes
-            S3 not work in standalone. This doesn't affect distributed mode.
+            S3 not work in local sandbox. This doesn't affect distributed mode.
           -->
           <exclusion>
             <groupId>net.java.dev.jets3t</groupId>

@@ -29,10 +29,10 @@ In the configuration file ``cdap-site.xml``, there are numerous properties that 
 IP address where a service is running, such as ``router.server.address``,
 ``metrics.query.bind.address``, ``data.tx.bind.address``, ``app.bind.address``,
 ``router.bind.address``.
-       
+
 Our convention is that:
 
-- *\*.bind.\** properties are what services use during startup to listen on a particular interface/port.  
+- *\*.bind.\** properties are what services use during startup to listen on a particular interface/port.
 - *\*.server.\** properties are used by clients to connect to another (potentially remote) service.
 
 For *\*.bind.address* properties, it is often easiest just to set these to ``'0.0.0.0'``
@@ -51,7 +51,7 @@ How do I use YARN with the Linux Container Executor?
 ----------------------------------------------------
 If you have YARN configured to use ``LinuxContainerExecutor`` (see the setting for
 ``yarn.nodemanager.container-executor.class``):
-  
+
 - The ``cdap`` user needs to be present on all Hadoop nodes.
 
 - When using a ``LinuxContainerExecutor``, if the UID for the ``cdap`` user is less than
@@ -80,25 +80,25 @@ been installed::
 
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
 --------------------------------------------------------------------------------------------------
-If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not pass the 
+If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not pass the
 :ref:`verification step <admin-manual-verification>` or did not startup, check:
 
-- Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for Distributed CDAP or 
-  ``$CDAP_HOME/logs`` for Standalone CDAP)
+- Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for Distributed CDAP or
+  ``$CDAP_HOME/logs`` for CDAP Local Sandbox)
 - If you see an error such as::
 
-    ERROR [main:c.c.c.StandaloneMain@268] - Failed to start Standalone CDAP
-    java.lang.NoSuchMethodError: 
+    ERROR [main:c.c.c.StandaloneMain@268] - Failed to start CDAP Local Sandbox
+    java.lang.NoSuchMethodError:
     co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
 
-  then you have downloaded the standalone version of CDAP, which is not intended
+  then you have downloaded the CDAP Local Sandbox version of CDAP, which is not intended
   to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
   Debian version) from http://cask.co/downloads.
-         
+
 - Check permissions of directories:
 
   - The :ref:`CDAP HDFS User <packages-configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
-  - The :ref:`Kafka Log directory <packages-configuration-options>` (by default, ``/data/cdap/kafka-logs``), 
+  - The :ref:`Kafka Log directory <packages-configuration-options>` (by default, ``/data/cdap/kafka-logs``),
     must be writable by the CDAP UNIX user.
   - The :ref:`temp directories <packages-configuration-tmp-files>` utilized by CDAP must be writable by the CDAP UNIX user.
 
@@ -107,19 +107,19 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 - Check YARN using the YARN Resource Manager UI and see if the CDAP Master services are starting up.
   Log into the cluster at ``http://<host>:8088/cluster/apps/RUNNING``. The CDAP Master
   services should be listed under "RUNNING":
-  
+
   .. image:: _images/yarn-rm-running.png
      :align: center
      :width: 8in
-  
+
 ..
 
 - If CDAP Master has started, query the backend by using a command (substituting for ``<host>`` as appropriate)::
 
     $ curl -w'\n' <host>:11015/v3/system/services/status
-    
+
   The response should be something similar to::
-  
+
     {"dataset.executor":"OK","metrics":"OK","transaction":"OK","appfabric":"OK","metadata.service":"OK",
      "streams":"OK","explore.service":"OK","log.saver":"OK","metrics.processor":"OK"}
 
@@ -139,15 +139,17 @@ This is indicative that the UI cannot connect to the CDAP system service contain
   the others won't be able to start or work correctly. It can take several minutes for everything to start up.
 
 - If this doesn't resolve the issue, then it means the CDAP system services were unable to launch.
-  Ensure :ref:`YARN has enough spare memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.  
+  Ensure :ref:`YARN has enough spare memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
   CDAP attempts to launch between 8 and 11 containers, depending on the configuration. Check
   the master container (Application Master) logs to see if it was able to launch all containers.
 
 - If it was able to launch all containers, then you may need to check the launched container logs for any errors.
   The ``yarn-site.xml`` configuration file determines the container log directory.
-  
-- Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured ``router.server.address`` and 
-  ``router.server.port`` (default 11015) in :ref:`cdap-site.xml file <packages-configuration-options>` corresponds with where the CDAP Router is listening.
+
+- Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured
+  ``router.server.address`` and ``router.server.port`` (default 11015) in
+  :ref:`cdap-site.xml file <packages-configuration-options>` corresponds with where the CDAP
+  Router is listening.
 
 
 I don't see the CDAP Master service on YARN.
@@ -155,7 +157,7 @@ I don't see the CDAP Master service on YARN.
 - Ensure that the node where CDAP is running has a properly configured YARN client.
   Can you log into the cluster at ``http://<host>:8088`` and access the YARN Resource Manager webapp?
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
-- Is the router address properly configured (``router.server.address`` and ``router.server.port`` 
+- Is the router address properly configured (``router.server.address`` and ``router.server.port``
   (default 11015) in :ref:`cdap-site.xml file <packages-configuration-options>`) and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.
 
@@ -181,11 +183,11 @@ In any other cases, the error should show which directory it is attempting to ac
   to hdfs://nameservice/cdap/twill/master.services/b4ce41a5e7e5.../appMaster.37a86cfd-1d88.jar
 	at com.google.common.base.Throwables.propagate(Throwables.java:160) ~[com.google.guava.guava-13.0.1.jar:na]
 	...
-  Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException): 
+  Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException):
   Permission denied: user=yarn, access=WRITE, inode="/":hdfs:supergroup:drwxr-xr-x
   at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkFsPermission(FSPermissionChecker.java:271)
   at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:257)
-  
+
 or::
 
   Deploy failed: Could not create temporary directory at: /var/tmp/cdap/data/namespaces/phoenix/tmp
@@ -197,12 +199,12 @@ The CDAP Master log shows an error about the dataset service not being found.
 -----------------------------------------------------------------------------
 If you see an error such as::
 
-    2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71] 
+    2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71]
     - Failed to access app.meta table co.cask.cdap.api.dataset.DatasetManagementException:
-    Cannot retrieve dataset instance app.meta info, details: Response code: 407, 
-    message:'Proxy Authentication Required', 
+    Cannot retrieve dataset instance app.meta info, details: Response code: 407,
+    message:'Proxy Authentication Required',
     body: '<HTML><HEAD> <TITLE>Access Denied</TITLE> </HEAD>
-    
+
 According to that log, this error can be caused by a proxy setting. CDAP services
 internally makes HTTP requests to each other; one example is the dataset service.
 Depending on your proxy and its settings, these requests can end up being sent to the
@@ -234,13 +236,13 @@ Things to check as possible solutions:
 
 #. Check if the CDAP user is using a :ref:`correct version of the JDK <admin-manual-install-java-runtime>`::
 
-    $ sudo su - <cdap-user> 
+    $ sudo su - <cdap-user>
     $ java -version
-   
+
 #. Run this command to see if all the CDAP classpaths are included::
 
     $ /opt/cdap/master/bin/cdap classpath | tr ':' '\n'
-   
+
    Expect to see (where *<version>* is the appropriate ``hbase-compat`` version)::
 
     /etc/cdap/conf/
@@ -259,7 +261,7 @@ We aren't seeing any Metrics or Logs. What should we do?
 Check that:
 
 - ``cdap_kafka`` is running and listening on the configured port (9092 by default);
-- All nodes of the cluster can successfully connect to the ``cdap_kafka`` host/port; 
+- All nodes of the cluster can successfully connect to the ``cdap_kafka`` host/port;
   use telnet or similar to verify connectivity;
 - The *Kafka* server is running;
 - The local ``kafka.logs.dir`` exists and has full permissions for the ``cdap`` user; and
@@ -355,7 +357,7 @@ In that case, set this configuration property in ``hbase-site.xml``::
 
 and restart the HBase regionservers. This will allow the regionservers to start up
 despite the coprocessor version mismatch. At this point, you should be able to run through
-the upgrade steps successfully. 
+the upgrade steps successfully.
 
 At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
 that data correctness is maintained.

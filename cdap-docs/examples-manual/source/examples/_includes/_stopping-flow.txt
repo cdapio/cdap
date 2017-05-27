@@ -9,11 +9,11 @@
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-flow-italic| to get to the flow detail page, then click the *Stop* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli stop flow |example|.\ |example-flow|
-    
+
     Successfully stopped flow '|example-flow|' of application '|example|'

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
     :description: Cask Data Application Platform Trademarks, Licenses, and Dependencies
 
 ======================================
@@ -12,7 +12,7 @@ Trademarks, Licenses, and Dependencies
 
     <cdap-enterprise-dependencies>
     <cdap-level-1-dependencies>
-    <cdap-standalone-dependencies>
+    <cdap-local-sandbox-dependencies>
     <cdap-ui-dependencies>
     <cdap-included-libraries>
 
@@ -46,7 +46,7 @@ Our logos ("Logos") include any logos or illustrations used on these webpages.
 The unique visual styling of our website and packaging is referred to as the "Trade Dress".
 
 This encompasses all trademarks and service marks, whether Word Marks, Logos or Trade
-Dress, whether registered or not, which are collectively referred to as the “Marks.” 
+Dress, whether registered or not, which are collectively referred to as the “Marks.”
 
 All marks are trademarks of Cask Data, Inc. All rights reserved.
 
@@ -58,18 +58,18 @@ may be the trademarks of their respective owners. Where the ownership or registr
 known, the addition of appropriate symbols has been made.
 
 This product includes software developed by the `Apache Software Foundation <https://www.apache.org>`__.
-         
+
 Apache®, `Apache Hadoop <https://hadoop.apache.org>`__, Hadoop®,
 Avro, `Apache Avro <http://avro.apache.org/>`__,
 `Apache Tephra <http://tephra.incubator.apache.org>`__,
 Spark, `Apache Spark <http://spark.apache.org>`__,
 Twill, `Apache Twill <http://twill.apache.org>`__,
-and `Apache ZooKeeper <https://zookeeper.apache.org/>`__, 
+and `Apache ZooKeeper <https://zookeeper.apache.org/>`__,
 are either registered trademarks or trademarks of the
 Apache Software Foundation in the United States and/or other
 countries.
 
-Cloudera, Cloudera Impala, Cloudera Navigator, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__ 
+Cloudera, Cloudera Impala, Cloudera Navigator, and Impala are trademarks of `Cloudera, Inc. <http://www.cloudera.com>`__
 
 Hortonworks is a registered trademark of `Hortonworks, Inc. <http://hortonworks.com>`__
 
@@ -110,8 +110,8 @@ The Cask Data Application Platform (CDAP) product is copyright and licensed as f
 CDAP Dependent Packages, Licenses, and License URLs
 ---------------------------------------------------
 
-- `CDAP Standalone Dependencies <cdap-standalone-dependencies.html>`_
-  (`PDF <cdap-standalone-dependencies.pdf>`__)
+- `CDAP Local Sandbox Dependencies <cdap-local-sandbox-dependencies.html>`_
+  (`PDF <cdap-local-sandbox-dependencies.pdf>`__)
 - `CDAP Level 1 Dependencies <cdap-level-1-dependencies.html>`_
   (`PDF <cdap-level-1-dependencies.pdf>`__)
 - `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_

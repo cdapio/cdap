@@ -3,8 +3,8 @@
     :description: CDAP Metadata Management
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. |tracker-sdk-url| replace:: http://localhost:11011/tracker/ns/default
-.. |literal-tracker-sdk-url| replace:: ``http://localhost:11011/tracker/ns/default``
+.. |tracker-local-sandbox-url| replace:: http://localhost:11011/tracker/ns/default
+.. |literal-tracker-local-sandbox-url| replace:: ``http://localhost:11011/tracker/ns/default``
 
 .. |tracker-distributed-cdap-url| replace:: http://<host>:<dashboard-bind-port>/tracker/ns/default
 .. |literal-tracker-distributed-cdap-url| replace:: ``http://<host>:<dashboard-bind-port>/tracker/ns/default``
@@ -85,7 +85,7 @@ This can be useful for new team members, allowing them to understand the data st
 - See how your datasets are being created, accessed, and processed.
 
 - Extensible integrations are available with enterprise-grade MDM (master data management)
-  systems such as `Cloudera Navigator <https://www.cloudera.com/products/cloudera-navigator.html>`__ 
+  systems such as `Cloudera Navigator <https://www.cloudera.com/products/cloudera-navigator.html>`__
   for centralizing metadata repository and the delivery of complete, accurate, and correct
   data.
 
@@ -308,20 +308,20 @@ CDAP metadata management consists of an application in CDAP with two programs an
 - ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
 - ``_configurationTable``: A Key-value table containing metadata management configuration options
 
-The metadata management UI is shipped with CDAP, started automatically in standalone CDAP as part of the
+The metadata management UI is shipped with CDAP, started automatically in CDAP Local Sandbox as part of the
 CDAP UI. It is available at:
- 
-  |literal-tracker-sdk-url|
-  
+
+  |literal-tracker-local-sandbox-url|
+
 or (Distributed CDAP):
-  
+
   |literal-tracker-distributed-cdap-url|
 
 The application is built from a system artifact included with CDAP, |literal-cdap-metadata-management-version-jar|.
 
 To administer metadata management, an :ref:`HTTP RESTful API <http-restful-api-metadata-management>` is available.
 
-.. highlight:: xml  
+.. highlight:: xml
 
 Installation
 ------------
@@ -331,7 +331,7 @@ to CDAP; they merely need to enable the application after starting CDAP.
 
 Enabling Metadata Management
 ----------------------------
-Metadata management is enabled automatically in Standalone CDAP and the UI is available at |tracker-sdk-url|.
+Metadata management is enabled automatically in CDAP Local Sandbox and the UI is available at |tracker-local-sandbox-url|.
 In the Distributed version of CDAP, you must manually enable metadata management in each namespace by visiting
 |literal-tracker-distributed-cdap-url| and pressing the ``"Enable"`` button.
 
@@ -348,11 +348,11 @@ If you are enabling metadata management from outside the UI, you will need to fo
 
       |cdap >| load artifact target/|cdap-metadata-management-version-jar|
 
-.. highlight:: json  
+.. highlight:: json
 
 - Create an application configuration file (``appconfig.txt``) that contains the
   Audit Log reader configuration (the property ``auditLogConfig``). For example::
-    
+
     {
       "config": {
         "auditLogConfig" : {
@@ -363,7 +363,7 @@ If you are enabling metadata management from outside the UI, you will need to fo
     }
 
   substituting for ``<audit.topic>`` and ``<zookeeper.quorum>`` with appropriate values from ``cdap-site.xml``.
-  
+
 - Create a CDAP application using the configuration file:
 
   .. container:: highlight

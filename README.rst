@@ -9,13 +9,13 @@ Cask Data Application Platform - CDAP
 
 .. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
     :target: https://cdap-users.herokuapp.com
- 
+
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :target: https://opensource.org/licenses/Apache-2.0
 
 .. image:: https://travis-ci.org/caskdata/cdap.svg?branch=release/4.1
     :target: https://travis-ci.org/caskdata/cdap
-    
+
 
 Introduction
 ============
@@ -48,8 +48,8 @@ transform, and load) pipelines all the way up to complex, enterprise-scale data-
 applications.
 
 Developers can build and test their applications end-to-end in a full-stack, single-node
-installation. CDAP can be run either standalone, deployed within the Enterprise or hosted
-in the Cloud.
+installation. CDAP can be run either as a Local Sandbox, deployed within the Enterprise or
+hosted in the Cloud.
 
 For more information, see our collection of `Developers' Manual and other documentation
 <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
@@ -78,7 +78,7 @@ You can get started with CDAP by building directly from the latest source code::
 
 After the build completes, you will have built all modules for CDAP.
 
-For more build options, please refer to the `build instructions <BUILD.rst>`__.    
+For more build options, please refer to the `build instructions <BUILD.rst>`__.
 
 
 Introductory Tutorial
@@ -86,16 +86,16 @@ Introductory Tutorial
 
 Visit our web site for an `introductory tutorial for developers
 <http://docs.cask.co/cdap/current/en/developers-manual/getting-started/index.html>`__ that
-will guide you through installing CDAP and running an example application.  
+will guide you through installing CDAP and running an example application.
 
 
 Where to Go Next
 ================
 
-Now that you've had a look at the CDAP SDK, take a look at:
+Now that you've had a look at the CDAP Local Sandbox, take a look at:
 
-- Examples, located in the ``cdap-examples`` directory of the CDAP SDK;
-- `Selected Examples <http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html>`__ 
+- Examples, located in the ``cdap-examples`` directory of the CDAP Local Sandbox;
+- `Selected Examples <http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html>`__
   (demonstrating basic features of the CDAP) are located on-line; and
 - Developers' Manual, located in the source distribution in ``cdap-docs/developers-manual/source``
   or `online <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
@@ -116,7 +116,7 @@ Filing Issues: Bug Reports & Feature Requests
 ---------------------------------------------
 Bugs and suggestions should be made by `filing an issue <https://issues.cask.co/browse/cdap>`__.
 
-Existing issues can be browsed at `the CDAP project issues 
+Existing issues can be browsed at `the CDAP project issues
 <https://issues.cask.co/browse/CDAP-8373?jql=project%20%3D%20CDAP>`__.
 
 Pull Requests
@@ -126,7 +126,7 @@ We have a simple pull-based development model with a consensus-building phase, s
 Apache's voting process. If you’d like to help make CDAP better by adding new features,
 enhancing existing features, or fixing bugs, here's how to do it:
 
-1. If you are planning a large change or contribution, discuss your plans on the 
+1. If you are planning a large change or contribution, discuss your plans on the
    `cdap-dev@googlegroups.com <https://groups.google.com/d/forum/cdap-dev>`__ mailing list first.
    This will help us understand your needs and best guide your solution in a way that fits the project.
 2. Fork CDAP into your own GitHub repository.
@@ -167,9 +167,9 @@ in compliance with the License. You may obtain a copy of the License at
 
 http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software distributed under the 
-License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
-either express or implied. See the License for the specific language governing permissions 
+Unless required by applicable law or agreed to in writing, software distributed under the
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+either express or implied. See the License for the specific language governing permissions
 and limitations under the License.
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.

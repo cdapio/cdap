@@ -104,8 +104,8 @@ Running the Example
 Injecting Access Logs
 ---------------------
 Inject a file of Apache access log to the stream *logStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface:
-  
+CDAP Local Sandbox home directory, using the Command Line Interface:
+
 .. tabbed-parsed-literal::
 
   $ cdap cli load stream logStream examples/LogAnalysis/resources/apache.accesslog "text/plain"
@@ -122,13 +122,13 @@ Querying the Results
 --------------------
 - To query the *hitCount* KeyValueTable through the ``HitCounterService``, send a query
   using the Command Line Interface. For example:
-  
+
   .. tabbed-parsed-literal::
 
     $ cdap cli call service |example|.\ |example-service1| POST "hitcount" body '{"url":"/index.html"}'
 
   You can also use the ``curl`` command and an HTTP request:
-  
+
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{"url":"/index.html"}' "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount"
@@ -140,7 +140,7 @@ Querying the Results
   the ``TimePartitionedFileSet``, use either the Command Line Interface or ``curl``:
 
   .. tabbed-parsed-literal::
-  
+
     $ cdap cli call service |example|.\ |example-service3| GET "rescount/200"
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/rescount/200"
@@ -156,7 +156,7 @@ Querying the Results
     $ curl -w"\n" "http://localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/reqcount"
 
   A possible successful response::
-  
+
     ["7/29/15 7:47 PM"...]
 
 - To return a map of all the unique IP addresses with the number of requests made by them, use one of the available partitions,

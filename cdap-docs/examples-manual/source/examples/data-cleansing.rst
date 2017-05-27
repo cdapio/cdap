@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Data Cleansing Application
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _examples-data-cleansing:
 
@@ -113,7 +113,7 @@ example, we'll simply use ``1`` as the value.
   click |example-mapreduce-italic| to get to the MapReduce detail page, set the runtime
   arguments using ``output.partition.key`` as the key and ``1`` as the value, then click
   the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
