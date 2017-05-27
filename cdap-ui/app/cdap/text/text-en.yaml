@@ -357,6 +357,25 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+    DataPrepBrowser:
+      DatabaseBrowser:
+        EmptyMessage:
+          clearLabel: Clear
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        NoPlugin:
+          title: '"mysql" Plugin not installed'
+          suggestion1: Please install "mysql" plugin manually or via market.
+        searchPlaceholder: Search table name
+        table:
+          colcountlabel: NUMBER OF COLUMMNS
+          namecollabel: NAME
+        tableCount:
+          0: No Tables
+          1: '{count} Table'
+          _: "{context.count} Tables"
+        title: Select Table
     Directives:
       apply: Apply
       cancel: Cancel
@@ -592,6 +611,33 @@ features:
       minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
 
   DataPrepConnections:
+    AddConnections:
+      Database:
+        DatabaseDetail:
+          addConnectionButton: Add Connection
+          advanced: Advanced
+          backButton: View All Drivers
+          basic: Basic
+          connectionString: Connection String
+          connType: JDBC Connections
+          database: Database
+          driverInstalled: Driver Installed
+          host: Host
+          name: Name
+          password: Password
+          port: Port
+          required: Required
+          username: Username
+        DatabaseOptions:
+          install: "Install Driver: "
+          installedLabel: Driver Installed
+          optionsTitle: Select the type of database you want to connect to
+          upload: Upload
+        modalHeader: "Add Connection: Database"
+      label: Add Connections
+      Popover:
+        title: Select a source to connect
+    database: Database ({count})
     hdfs: HDFS
     title: "Connections in \"{namespace}\""
     upload: Upload
