@@ -518,6 +518,8 @@ public final class Constants {
     public static final String MEMORY_MB = "metrics.memory.mb";
     public static final String MAX_INSTANCES = "metrics.max.instances";
     public static final String SERVICE_DESCRIPTION = "Service to handle metrics requests.";
+    public static final String PROCESSOR_MAX_DELAY_MS = "metrics.processor.max.delay.ms";
+    public static final String QUEUE_SIZE = "metrics.processor.queue.size";
 
     public static final String ENTITY_TABLE_NAME = "metrics.data.entity.tableName";
     public static final String METRICS_TABLE_PREFIX = "metrics.data.table.prefix";
@@ -544,7 +546,6 @@ public final class Constants {
     public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
-    public static final String MESSAGING_FETCHER_LIMIT = "metrics.messaging.fetcher.limit";
 
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
