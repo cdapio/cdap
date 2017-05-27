@@ -3,11 +3,11 @@ CDAP Integration Test Framework
 ===============================
 
 Users can use ``IntegrationTestBase`` to write tests that run against a framework-provided
-standalone CDAP instance or a remote CDAP instance.
+CDAP Local Sandbox or a remote CDAP instance.
 
 
-Running tests using the framework-provided standalone CDAP instance
-===================================================================
+Running tests using the framework-provided CDAP Local Sandbox instance
+======================================================================
 
 ::
 
@@ -23,7 +23,7 @@ Running tests against a remote CDAP instance
   cd <your-test-module>
   mvn test -DargLine="-DinstanceUri=<instance URI> -Dcdap.username=<username> -Dcdap.password=<password> -Dtest.namespace=<test namespace> -DverifySSL=<verify ssl>"
 
-- ``<instance URI>`` is the URI used to connect to your CDAP router 
+- ``<instance URI>`` is the URI used to connect to your CDAP router
   (for example, ``http://example.com:11015``)
 - ``<username>`` and ``<password>`` are the credentials for your CDAP authentication server by
   **Note:** These are unnecessary in a non-secure CDAP instance.
