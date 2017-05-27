@@ -1939,8 +1939,8 @@
     <name>metrics.processor.queue.size</name>
     <value>20000</value>
     <description>
-      The maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory
-      before persisting them
+      Maximum size of a queue where the metrics processor temporarily stores
+      newly-fetched metrics in-memory before persisting them
     </description>
   </property>
 
@@ -1948,7 +1948,8 @@
     <name>metrics.processor.max.delay.ms</name>
     <value>3000</value>
     <description>
-      The maximum delay allowed between the latest metrics timestamp and the time when it is processed
+      Maximum delay in milliseconds allowed between the latest metrics timestamp and the
+      time when it is processed
     </description>
   </property>
 
