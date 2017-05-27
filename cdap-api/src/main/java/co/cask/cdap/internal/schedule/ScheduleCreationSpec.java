@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.schedule;
 
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 
@@ -24,6 +25,8 @@ import java.util.Map;
 
 /**
  * Information for creating a program schedule.
+ * See {@link co.cask.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
+ * for how to build an instance of this object.
  */
 public class ScheduleCreationSpec {
 
@@ -32,10 +35,10 @@ public class ScheduleCreationSpec {
   private final String programName;
   private final Map<String, String> properties;
   private final Trigger trigger;
-  private final List<Constraint> constraints;
+  private final List<? extends Constraint> constraints;
 
   public ScheduleCreationSpec(String name, String description, String programName, Map<String, String> properties,
-                              Trigger trigger, List<Constraint> constraints) {
+                              Trigger trigger, List<? extends Constraint> constraints) {
     this.name = name;
     this.description = description;
     this.programName = programName;
@@ -64,7 +67,7 @@ public class ScheduleCreationSpec {
     return trigger;
   }
 
-  public List<Constraint> getConstraints() {
+  public List<? extends Constraint> getConstraints() {
     return constraints;
   }
 }

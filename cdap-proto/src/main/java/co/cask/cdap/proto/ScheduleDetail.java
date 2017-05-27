@@ -45,14 +45,14 @@ public class ScheduleDetail {
   private final ScheduleProgramInfo program;
   private final Map<String, String> properties;
   private final Trigger trigger;
-  private final List<Constraint> constraints;
+  private final List<? extends Constraint> constraints;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
                         @Nullable Map<String, String> properties,
                         @Nullable Trigger trigger,
-                        @Nullable List<Constraint> constraints) {
+                        @Nullable List<? extends Constraint> constraints) {
     this.name = name;
     this.description = description;
     this.program = program;
@@ -87,7 +87,7 @@ public class ScheduleDetail {
   }
 
   @Nullable
-  public List<Constraint> getConstraints() {
+  public List<? extends Constraint> getConstraints() {
     return constraints;
   }
 
@@ -128,9 +128,9 @@ public class ScheduleDetail {
       RunConstraints constraints = RunConstraints.NONE;
       if (detail.getConstraints() != null) {
         for (Constraint runConstraint : detail.getConstraints()) {
-          if (runConstraint instanceof ProtoConstraint.ConcurrenyConstraint) {
+          if (runConstraint instanceof ProtoConstraint.ConcurrencyConstraint) {
             constraints = new RunConstraints(
-              ((ProtoConstraint.ConcurrenyConstraint) runConstraint).getMaxConcurrency());
+              ((ProtoConstraint.ConcurrencyConstraint) runConstraint).getMaxConcurrency());
             break;
           }
         }

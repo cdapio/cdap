@@ -38,9 +38,9 @@ public class ConstraintCodecTest {
 
   @Test
   public void testConstraintCodec() {
-    testSerDeser(new ProtoConstraint.ConcurrenyConstraint(3), new ConcurrencyConstraint(3));
+    testSerDeser(new ProtoConstraint.ConcurrencyConstraint(3), new ConcurrencyConstraint(3));
     testSerDeser(new ProtoConstraint.DelayConstraint(300000L), new DelayConstraint(300000L));
-    testSerDeser(new ProtoConstraint.LastRunConstraint(3600000L), new DurationSinceLastRunConstraint(3600000L));
+    testSerDeser(new ProtoConstraint.LastRunConstraint(3600000L), new LastRunConstraint(3600000L));
     testSerDeser(new ProtoConstraint.TimeRangeConstraint("02:00", "06:00", TimeZone.getDefault()),
                  new TimeRangeConstraint("02:00", "06:00", TimeZone.getDefault()));
   }

@@ -14,22 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
-
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.ProtoConstraint;
+package co.cask.cdap.api.app;
 
 /**
- * A constraint which dictates an upper bound on the number of concurrent schedule runs.
+ * Defines types of programs supported by the system.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements CheckableConstraint {
-
-  public ConcurrencyConstraint(int maxConcurrency) {
-    super(maxConcurrency);
-  }
-
-  @Override
-  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    return ConstraintResult.SATISFIED;
-  }
+public enum ProgramType {
+  FLOW,
+  MAPREDUCE,
+  WORKFLOW,
+  SERVICE,
+  SPARK,
+  WORKER
 }

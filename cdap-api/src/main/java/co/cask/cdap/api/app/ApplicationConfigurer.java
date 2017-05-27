@@ -16,16 +16,19 @@
 
 package co.cask.cdap.api.app;
 
+import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleConfigurer;
+import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Workflow;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 
@@ -98,17 +101,28 @@ public interface ApplicationConfigurer extends PluginConfigurer {
    * @param programType the type of the program
    * @param programName the name of the program
    * @param properties the properties for the schedule
+   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
    */
+  @Deprecated
   void addSchedule(Schedule schedule, SchedulableProgramType programType, String programName,
                    Map<String, String> properties);
 
   /**
-   * Schedule the specified {@link Workflow}.
-   *
+   * Get a ScheduleBuilder for the specified program.
    * @param scheduleName the name of the schedule
-   * @param workflowName the name of the Workflow
+   * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be scheduled
+   * @param programName the name of the program
    *
-   * @return The {@link ScheduleConfigurer} used to configure the schedule
+   * @return The {@link ScheduleBuilder} used to build the schedule
    */
-  ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName);
+  ScheduleBuilder buildSchedule(String scheduleName, ProgramType programType,
+                                String programName);
+
+  /**
+   * Schedules a program, using the given scheduleCreationSpec.
+   *
+   * @param scheduleCreationSpec defines the schedule. Can be built using the builder obtained
+   *                             from {@link #buildSchedule(String, ProgramType, String)}
+   */
+  void schedule(ScheduleCreationSpec scheduleCreationSpec);
 }

@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  */
 public class ConstraintResult {
   public static final ConstraintResult SATISFIED = new ConstraintResult(SatisfiedState.SATISFIED, null);
+  public static final ConstraintResult NEVER_SATISFIED = new ConstraintResult(SatisfiedState.NEVER_SATISFIED, null);
 
   enum SatisfiedState {
     SATISFIED, NOT_SATISFIED, NEVER_SATISFIED

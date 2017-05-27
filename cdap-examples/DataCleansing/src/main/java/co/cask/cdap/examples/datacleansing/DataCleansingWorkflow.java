@@ -14,22 +14,19 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
+package co.cask.cdap.examples.datacleansing;
 
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 /**
- * A Constraint which requires a certain duration pass since the last execution of the schedule.
+ * Implements a simple Workflow with to run the DataCleansingMapReduce MapReduce.
  */
-public class DurationSinceLastRunConstraint extends ProtoConstraint.LastRunConstraint implements CheckableConstraint {
-
-  public DurationSinceLastRunConstraint(long millisSinceLastRun) {
-    super(millisSinceLastRun);
-  }
+public class DataCleansingWorkflow extends AbstractWorkflow {
 
   @Override
-  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    return ConstraintResult.SATISFIED;
+  public void configure() {
+    setName("DataCleansingWorkflow");
+    setDescription("Workflow that runs the DataCleansingMapReduce");
+    addMapReduce("DataCleansingMapReduce");
   }
 }

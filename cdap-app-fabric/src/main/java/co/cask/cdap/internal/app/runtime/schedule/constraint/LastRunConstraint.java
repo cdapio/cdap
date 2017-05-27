@@ -20,12 +20,12 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.ProtoConstraint;
 
 /**
- * A constraint which dictates an upper bound on the number of concurrent schedule runs.
+ * A Constraint which requires a certain duration pass since the last execution of the schedule.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements CheckableConstraint {
+public class LastRunConstraint extends ProtoConstraint.LastRunConstraint implements CheckableConstraint {
 
-  public ConcurrencyConstraint(int maxConcurrency) {
-    super(maxConcurrency);
+  public LastRunConstraint(long millisSinceLastRun) {
+    super(millisSinceLastRun);
   }
 
   @Override

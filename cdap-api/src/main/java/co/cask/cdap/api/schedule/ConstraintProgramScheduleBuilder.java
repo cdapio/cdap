@@ -14,22 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.constraint;
-
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import co.cask.cdap.proto.ProtoConstraint;
+package co.cask.cdap.api.schedule;
 
 /**
- * A constraint which dictates an upper bound on the number of concurrent schedule runs.
+ * Similar to {@link ScheduleBuilder}, but allows specifying whether the scheduler should wait until the
+ * configured constraint is met.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements CheckableConstraint {
+public interface ConstraintProgramScheduleBuilder extends ScheduleBuilder {
 
-  public ConcurrencyConstraint(int maxConcurrency) {
-    super(maxConcurrency);
-  }
+  /**
+   * Specifies that the scheduler should wait until the configured constraint is met.
+   */
+  ScheduleBuilder waitUntilMet();
 
-  @Override
-  public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    return ConstraintResult.SATISFIED;
-  }
+  /**
+   * Specifies that the scheduler will abort the schedule execution if the configured constraint is not met.
+   */
+  ScheduleBuilder abortIfNotMet();
 }

@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
 public abstract class ProtoConstraint implements Constraint {
 
   private final Type type;
+  protected boolean waitUntilMet;
 
   /**
    * The type of a run constraint.
@@ -44,12 +45,17 @@ public abstract class ProtoConstraint implements Constraint {
     LAST_RUN
   }
 
-  private ProtoConstraint(Type type) {
+  private ProtoConstraint(Type type, boolean waitUntilMet) {
     this.type = type;
+    this.waitUntilMet = waitUntilMet;
   }
 
   public Type getType() {
     return type;
+  }
+
+  public void setWaitUntilMet(boolean waitUntilMet) {
+    this.waitUntilMet = waitUntilMet;
   }
 
   public abstract void validate();
@@ -57,12 +63,12 @@ public abstract class ProtoConstraint implements Constraint {
   /**
    * Represents a concurrency constraint in REST requests/responses.
    */
-  public static class ConcurrenyConstraint extends ProtoConstraint {
+  public static class ConcurrencyConstraint extends ProtoConstraint {
 
     protected final int maxConcurrency;
 
-    public ConcurrenyConstraint(int maxConcurrency) {
-      super(Type.CONCURRENCY);
+    public ConcurrencyConstraint(int maxConcurrency) {
+      super(Type.CONCURRENCY, false);
       this.maxConcurrency = maxConcurrency;
       validate();
     }
@@ -80,7 +86,7 @@ public abstract class ProtoConstraint implements Constraint {
     public boolean equals(Object o) {
       return this == o || o != null
         && getClass() == o.getClass()
-        && getMaxConcurrency() == ((ConcurrenyConstraint) o).getMaxConcurrency();
+        && getMaxConcurrency() == ((ConcurrencyConstraint) o).getMaxConcurrency();
     }
 
     @Override
@@ -102,7 +108,7 @@ public abstract class ProtoConstraint implements Constraint {
     protected final long millisAfterTrigger;
 
     public DelayConstraint(long millisAfterTrigger) {
-      super(Type.DELAY);
+      super(Type.DELAY, true);
       this.millisAfterTrigger = millisAfterTrigger;
       validate();
     }
@@ -112,7 +118,16 @@ public abstract class ProtoConstraint implements Constraint {
     }
 
     @Override
+    public void setWaitUntilMet(boolean waitUntilMet) {
+      super.setWaitUntilMet(waitUntilMet);
+      validate();
+    }
+
+    @Override
     public void validate() {
+      if (!waitUntilMet) {
+        throw new IllegalArgumentException("DelayConstraint must always wait until met.");
+      }
       validateInRange(millisAfterTrigger, "millisAfterTrigger", 1L, null);
     }
 
@@ -142,7 +157,7 @@ public abstract class ProtoConstraint implements Constraint {
     protected final long millisSinceLastRun;
 
     public LastRunConstraint(long millisSinceLastRun) {
-      super(Type.LAST_RUN);
+      super(Type.LAST_RUN, false);
       this.millisSinceLastRun = millisSinceLastRun;
       validate();
     }
@@ -186,7 +201,7 @@ public abstract class ProtoConstraint implements Constraint {
     public TimeRangeConstraint(String startTime,
                                String endTime,
                                TimeZone timeZone) {
-      super(Type.TIME_RANGE);
+      super(Type.TIME_RANGE, true);
       this.startTime = startTime;
       this.endTime = endTime;
       this.timeZone = timeZone.getID();

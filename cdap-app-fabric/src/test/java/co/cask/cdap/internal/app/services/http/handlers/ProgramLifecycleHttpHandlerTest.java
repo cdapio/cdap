@@ -90,7 +90,6 @@ import org.apache.tephra.TransactionExecutorFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -1390,7 +1389,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE);
     Assert.assertEquals("updatedDescription", schedule.getDescription());
     Assert.assertEquals("0 4 * * *", ((ProtoTrigger.TimeTrigger) schedule.getTrigger()).getCronExpression());
-    Assert.assertEquals(new ProtoConstraint.ConcurrenyConstraint(5), schedule.getConstraints().get(0));
+    Assert.assertEquals(new ProtoConstraint.ConcurrencyConstraint(5), schedule.getConstraints().get(0));
     // the properties should have been replaced
     Assert.assertEquals(2, schedule.getProperties().size());
     Assert.assertEquals("newValue", schedule.getProperties().get("someKey"));
@@ -1412,7 +1411,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, schedule.getProperties().size());
     Assert.assertEquals("newValue", schedule.getProperties().get("someKey"));
     Assert.assertEquals("twoValue", schedule.getProperties().get("twoKey"));
-    Assert.assertEquals(new ProtoConstraint.ConcurrenyConstraint(5), schedule.getConstraints().get(0));
+    Assert.assertEquals(new ProtoConstraint.ConcurrencyConstraint(5), schedule.getConstraints().get(0));
   }
 
   @After

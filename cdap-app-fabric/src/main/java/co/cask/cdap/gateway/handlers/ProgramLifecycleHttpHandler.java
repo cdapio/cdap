@@ -104,7 +104,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -712,7 +711,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
     Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), EMPTY_PROPERTIES);
-    List<Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
+    List<? extends Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
     ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
                                                    scheduleFromRequest.getTrigger(), constraints);
     programScheduler.addSchedule(schedule);
@@ -838,7 +837,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       return null;
     }
     return Collections.<Constraint>singletonList(
-      new ProtoConstraint.ConcurrenyConstraint(runConstraints.getMaxConcurrentRuns()));
+      new ProtoConstraint.ConcurrencyConstraint(runConstraints.getMaxConcurrentRuns()));
   }
 
   private ProgramSchedule combineForUpdate(ScheduleDetail scheduleDetail, ProgramSchedule existing) {
@@ -850,7 +849,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Objects.firstNonNull(scheduleDetail.getProgram().getProgramName(), existing.getProgramId().getProgram()));
     Map<String, String> properties = Objects.firstNonNull(scheduleDetail.getProperties(), existing.getProperties());
     Trigger trigger = Objects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
-    List<Constraint> constraints = Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
+    List<? extends Constraint> constraints =
+      Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
     return new ProgramSchedule(existing.getName(), description, programId, properties, trigger, constraints);
   }
 
