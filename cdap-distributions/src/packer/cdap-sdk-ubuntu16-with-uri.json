@@ -1,5 +1,6 @@
 {
   "variables": {
+    "standalone_vm_name": "cdap-standalone-vm",
     "sdk_version": "DEFINE ME ON COMMAND LINE"
   },
   "builders": [
@@ -54,7 +55,7 @@
         ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
         ["modifyvm", "{{ .Name }}", "--natpf1", "guest_ssh,tcp,127.0.0.1,2222,,22" ]
       ],
-      "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
+      "vm_name": "{{user `standalone_vm_name`}}-{{user `sdk_version`}}",
       "name": "cdap-sdk-vm"
     },
     {
