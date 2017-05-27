@@ -45,6 +45,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -140,7 +141,7 @@ public abstract class AppFabricTestBase {
   protected static final Gson GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
   private static final String API_KEY = "SampleTestApiKey";

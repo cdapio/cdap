@@ -38,11 +38,6 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-
-  }
-
-  @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
 
   }

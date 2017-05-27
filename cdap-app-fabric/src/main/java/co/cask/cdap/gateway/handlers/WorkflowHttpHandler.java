@@ -42,15 +42,15 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoConstraintCodec;
-import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -110,8 +110,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .registerTypeAdapter(WorkflowTokenNodeDetail.class, new WorkflowTokenNodeDetailCodec())
-    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
-    .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
+    .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
 
   private final WorkflowClient workflowClient;

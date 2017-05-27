@@ -42,7 +42,6 @@ import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -225,21 +224,10 @@ public class StreamSizeScheduler implements Scheduler {
 
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
-    Preconditions.checkArgument(schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger,
-                                "Schedule trigger should be of type StreamSizeTrigger");
     ProgramId program = schedule.getProgramId();
     StreamSizeSchedule streamSizeSchedule = Schedulers.toStreamSizeSchedule(schedule);
     scheduleStreamSizeSchedule(program, program.getType().getSchedulableType(),
                                schedule.getProperties(), streamSizeSchedule);
-  }
-
-  @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-    Preconditions.checkArgument(schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger,
-                                "Schedule trigger should be of type StreamSizeTrigger");
-    ProgramId program = schedule.getProgramId();
-    StreamSizeSchedule streamSizeSchedule = Schedulers.toStreamSizeSchedule(schedule);
-    updateSchedule(program, program.getType().getSchedulableType(), streamSizeSchedule, schedule.getProperties());
   }
 
   @Override
