@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,14 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyRealtimePipelineSettingsCtrl', function($scope) {
-    this.instance = this.store.getInstance();
-    this._isDisabled = this.isDisabled === 'true';
-    if (!this._isDisabled) {
-      // Debounce method for setting instance
-      const setInstance = _.debounce( () => {
-        this.actionCreator.setInstance(this.instance);
-      }, 1000);
-      var unsub = $scope.$watch('MyRealtimePipelineSettingsCtrl.instance' , setInstance);
-      $scope.$on('$destroy', unsub);
-    }
+  .directive('myToggleSwitchWidget', function() {
+    return {
+      restrict: 'E',
+      scope: {
+        isOn: '=',
+        isDisabled: '=',
+        onToggle: '&'
+      },
+      templateUrl: 'widget-container/widget-toggle-switch/widget-toggle-switch.html'
+    };
   });

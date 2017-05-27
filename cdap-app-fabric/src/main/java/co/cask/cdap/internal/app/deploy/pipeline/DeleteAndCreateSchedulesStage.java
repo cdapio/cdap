@@ -41,16 +41,12 @@ import java.util.Set;
  * Responsible for deleting dropped or updated schedules and creating new schedules
  */
 public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWithPrograms> {
-  private static final Logger LOG = LoggerFactory.getLogger(DeleteAndCreateSchedulesStage.class);
 
   private final Scheduler programScheduler;
-  private final co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler;
 
-  public DeleteAndCreateSchedulesStage(Scheduler programScheduler,
-                                       co.cask.cdap.internal.app.runtime.schedule.Scheduler scheduler) {
+  public DeleteAndCreateSchedulesStage(Scheduler programScheduler) {
     super(TypeToken.of(ApplicationWithPrograms.class));
     this.programScheduler = programScheduler;
-    this.scheduler = scheduler;
   }
 
   @Override

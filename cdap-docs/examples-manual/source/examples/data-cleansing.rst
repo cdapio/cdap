@@ -30,7 +30,7 @@ of the application are tied together by the class ``DataCleansing``:
 
 .. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
    :language: java
-   :lines: 32-
+   :lines: 33-
 
 Data Storage
 ------------
@@ -84,7 +84,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
   .. Linux
 
   $ cdap cli call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples/DataCleansing/resources/person.json
-  
+
   < 200 OK
   < Content-Length: 0
   < Connection: keep-alive
@@ -93,7 +93,7 @@ Begin by uploading a file containing some newline-separated JSON records into th
   .. Windows
 
   > cdap.bat cli call service DataCleansing.DataCleansingService POST v1/records/raw body:file examples\DataCleansing\resources\person.json
-  
+
   < 200 OK
   < Content-Length: 0
   < Connection: keep-alive
@@ -118,8 +118,8 @@ example, we'll simply use ``1`` as the value.
   .. tabbed-parsed-literal::
 
       $ cdap cli start mapreduce |example|.\ |example-mapreduce| output.partition.key=1
-      
-      Successfully started mapreduce '|example-mapreduce|' of application '|example|' 
+
+      Successfully started mapreduce '|example-mapreduce|' of application '|example|'
       with provided runtime arguments 'output.partition.key=1'
 
 Optionally, to specify a custom schema to match records against, the JSON of the schema can be

@@ -18,8 +18,11 @@ package co.cask.cdap.proto.id;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.element.EntityType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
 import java.util.regex.Pattern;
@@ -158,7 +161,17 @@ public abstract class EntityId implements IdCompatible {
     }
     String idString = typeAndId[1];
     try {
-      return typeFromString.fromIdParts(Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString)));
+      List<String> idParts = Arrays.asList(IDSTRING_PART_SEPARATOR_PATTERN.split(idString));
+      // special case for DatasetId, DatasetModuleId, DatasetTypeId since we allow . in the name
+      if (EnumSet.of(EntityType.DATASET, EntityType.DATASET_MODULE, EntityType.DATASET_TYPE).contains(typeFromString)) {
+        int namespaceSeparatorPos = idString.indexOf(IDSTRING_PART_SEPARATOR);
+        if (namespaceSeparatorPos > 0) {
+          idParts = new ArrayList<>();
+          idParts.add(idString.substring(0, namespaceSeparatorPos));
+          idParts.add(idString.substring(namespaceSeparatorPos + 1));
+        }
+      }
+      return typeFromString.fromIdParts(idParts);
     } catch (IllegalArgumentException e) {
       String message = idClass == null ? String.format("Invalid ID: %s", string) :
         String.format("Invalid ID for type '%s': %s", idClass.getName(), string);

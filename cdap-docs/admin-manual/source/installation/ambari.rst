@@ -4,6 +4,8 @@
 
 :section-numbering: true
 
+.. |su_hdfs| replace:: su hdfs
+
 .. _admin-installation-ambari:
 
 ================================
@@ -63,39 +65,46 @@ The **repository version** (shown in the commands below as |literal-cdap-slash-s
 must match the **CDAP series** which you’d like installed on your cluster. To install the
 **latest** version of the *CDAP 4.1 series,* you would install the *CDAP 4.1 repository.*
 
-Replace |---| in the commands that follow on this page |---| all references to |literal-cdap-slash-short-version|
-with the CDAP Repository from the list below that you would like to use:
+Replace |---| in the commands that follow on this page |---| all references to
+|literal-cdap-slash-short-version| with the CDAP Repository corresponding to the version
+that you would like to use (such as ``cdap/4.0`` for CDAP 4.0.x):
 
 .. _ambari-compatibility-matrix:
 
-+------------------------------------------------------------+
-| Supported Hortonworks Data Platform (HDP) Distributions    |
-+----------------+-----------------+-------------------------+
-| CDAP Series    | CDAP Repository | Hadoop Distributions    |
-+================+=================+=========================+
-| CDAP 4.1.x     | ``cdap/4.1``    | HDP 2.0 through HDP 2.6 |
-+----------------+-----------------+-------------------------+
-| CDAP 4.0.x     | ``cdap/4.0``    | HDP 2.0 through HDP 2.5 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.6.x     | ``cdap/3.6``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.5.x     | ``cdap/3.5``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.4.x     | ``cdap/3.4``    | HDP 2.0 through HDP 2.4 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0 through HDP 2.3 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0 through HDP 2.3 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.1.x     | ``cdap/3.1``    | HDP 2.0 through HDP 2.2 |
-+----------------+-----------------+-------------------------+
-| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0 and HDP 2.1     |
-+----------------+-----------------+-------------------------+
++---------------------------------------------------------+
+| Supported Hortonworks Data Platform (HDP) Distributions |
++-------------------------------+-------------------------+
+| CDAP Series or Release        | Hadoop Distributions    |
++===============================+=========================+
+| CDAP 4.1.1, 4.2.x             | HDP 2.0 through HDP 2.6 |
++-------------------------------+-------------------------+
+| CDAP 4.1.0                    | HDP 2.0 through HDP 2.5 |
++-------------------------------+-------------------------+
+| CDAP 4.0.x                    | HDP 2.0 through HDP 2.5 |
++-------------------------------+-------------------------+
+| CDAP 3.6.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.5.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.4.x                    | HDP 2.0 through HDP 2.4 |
++-------------------------------+-------------------------+
+| CDAP 3.3.x                    | HDP 2.0 through HDP 2.3 |
++-------------------------------+-------------------------+
+| CDAP 3.2.x                    | HDP 2.0 through HDP 2.3 |
++-------------------------------+-------------------------+
+| CDAP 3.1.x                    | HDP 2.0 through HDP 2.2 |
++-------------------------------+-------------------------+
+| CDAP 3.0.x                    | HDP 2.0 and HDP 2.1     |
++-------------------------------+-------------------------+
 
 .. _ambari-compatibility-matrix-end:
 
-**Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
-supplied from Hortonworks.
+**Notes:**
+
+- The CDAP Ambari service has been tested on Ambari Server 2.3 through 2.5, as
+  supplied from Hortonworks.
+- To install a version lower than the highest current version (such as *CDAP 4.1.0* when
+  *4.1.1* is available), you will need to downgrade your repo after installing it.
 
 .. include:: /../target/_includes/ambari-installation.rst
   :start-after: .. _ambari-install-rpm-using-yum:
@@ -162,7 +171,6 @@ Assign CDAP Services to Hosts
    #. **Auth Server:** For managing authentication tokens on CDAP clusters with perimeter security enabled
    #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`CDAP Studio <cdap-studio>`
-      (for CDAP 3.2.x and later installations)
 
    .. figure:: ../_images/ambari/ss03-assign-masters.png
       :figwidth: 100%
@@ -192,22 +200,23 @@ Assign CDAP Services to Hosts
 Customize CDAP
 --------------
 
-6. On the **Customize Services** screen, click the *Advanced* tab to bring up the CDAP configuration.
-   Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
-   and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
+6. On the **Customize Services** screen, you can configure both CDAP features and the
+   environment settings for CDAP and the CDAP services which run on the edge nodes. At the bottom of
+   the *Settings* tab are settings for common CDAP features and Java services.
 
-   .. figure:: ../_images/ambari/ss05-config-cdap-env.png
+   .. figure:: ../_images/ambari/ss05-config-cdap.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image
 
-      **Ambari Dashboard:** Customizing Services 1
+      **Ambari Dashboard:** Customizing Services, CDAP Features and Java Services
 
-#. Under *Advanced cdap-site*, you can configure all options for the operation and running
-   of CDAP and CDAP applications.
+#. On the **Customize Services** screen, click the *Advanced* tab to bring up the complete CDAP configuration.
+   Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
+   and the directories used to store logs and PIDs for the CDAP services which run on the edge nodes.
 
-   .. figure:: ../_images/ambari/ss06-config-cdap-site.png
+   .. figure:: ../_images/ambari/ss06-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -215,16 +224,8 @@ Customize CDAP
 
       **Ambari Dashboard:** Customizing Services 2
 
-#. **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
-   Port* is used by the CDAP UI to connect to the CDAP Router service.
-
-   .. figure:: ../_images/ambari/ss07-config-enable-explore.png
-      :figwidth: 100%
-      :width: 800px
-      :align: center
-      :class: bordered-image
-
-      **Ambari Dashboard:** Enabling *CDAP Explore*
+   Under *Advanced cdap-site*, you can configure all options for the operation and running
+   of CDAP and CDAP applications.
 
    **Additional CDAP configuration properties**, not shown in the web interface, can be
    added using Ambari's advanced custom properties at the end of the page. Documentation
@@ -234,13 +235,7 @@ Customize CDAP
    of cdap-site.xml <appendix-cdap-site.xml>`.
 
    **Additional environment variables** can be set, as required, using Ambari's
-   "Configs > Advanced > Advanced cdap-env".
-
-   .. Environment variables
-   .. ---------------------
-   .. include:: /../target/_includes/ambari-starting.rst
-       :start-after: .. _ambari-starting-services-java-heapmax:
-       :end-before: .. end_of_list
+   *Configs > Advanced > Advanced cdap-env*.
 
    When finished with configuration changes, click *Next*.
 
@@ -250,9 +245,9 @@ Starting CDAP Services
 
 Deploying CDAP
 --------------
-9. Review the desired service layout and click *Deploy* to begin the actual deployment of CDAP.
+8. Review the desired service layout and click *Deploy* to begin the actual deployment of CDAP.
 
-   .. figure:: ../_images/ambari/ss08-review-deploy.png
+   .. figure:: ../_images/ambari/ss07-review-deploy.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -262,7 +257,7 @@ Deploying CDAP
 
 #. Ambari will install CDAP and start the services.
 
-   .. figure:: ../_images/ambari/ss09-install-start-test.png
+   .. figure:: ../_images/ambari/ss08-install-start-test.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -276,7 +271,7 @@ Deploying CDAP
 #. This screen shows a summary of the changes that were made to the cluster. No services
    should need to be restarted following this operation.
 
-   .. figure:: ../_images/ambari/ss10-post-install-summary.png
+   .. figure:: ../_images/ambari/ss09-post-install-summary.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -288,9 +283,9 @@ Deploying CDAP
 
 CDAP Started
 ------------
-14. You should now see **CDAP** listed on the main summary screen for your cluster.
+13. You should now see **CDAP** listed on the main summary screen for your cluster.
 
-   .. figure:: ../_images/ambari/ss11-main-screen.png
+   .. figure:: ../_images/ambari/ss10-main-screen.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -306,10 +301,10 @@ Verification
 Service Checks in Apache Ambari
 -------------------------------
 
-15. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
+14. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
     you to the CDAP service screen.
 
-   .. figure:: ../_images/ambari/ss12-cdap-screen.png
+   .. figure:: ../_images/ambari/ss11-cdap-screen.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -318,7 +313,8 @@ Service Checks in Apache Ambari
       **Ambari Dashboard:** *CDAP* Service Screen
 
 CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
-the address of the node running the CDAP UI service at port 11011.
+the address of the node running the CDAP UI service at port 11011. The drop-down *Quick
+Links* menu has a menu item directly to the CDAP UI.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 

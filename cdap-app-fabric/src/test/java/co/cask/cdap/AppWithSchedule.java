@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -67,10 +68,11 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       scheduleProperties.put("someKey", "someValue");
 
       if (config.addWorkflow && config.addSchedule1) {
-        configureWorkflowSchedule(SCHEDULE, WORKFLOW_NAME)
+        schedule(
+          buildSchedule(SCHEDULE, ProgramType.WORKFLOW, WORKFLOW_NAME)
           .setDescription("Sample schedule")
           .setProperties(scheduleProperties)
-          .triggerByTime("0/15 * * * * ?");
+          .triggerByTime("0/15 * * * * ?"));
       }
       if (config.addWorkflow && config.addSchedule2) {
         scheduleWorkflow(Schedules.builder(SCHEDULE_2)

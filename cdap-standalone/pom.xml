@@ -31,6 +31,10 @@
   <name>CDAP Standalone</name>
   <packaging>jar</packaging>
 
+  <properties>
+    <sdk.hadoop.version>2.8.0</sdk.hadoop.version>
+  </properties>
+
   <dependencies>
     <!-- Added to override the embedded guava class in hive-exec -->
     <dependency>
@@ -157,7 +161,99 @@
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
     </dependency>
-    <!-- Need to have a compile dependency in Standalone, as these dependences are provided only on cluster -->
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-client</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-common</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-server-common</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-api</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-auth</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-annotations</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-common</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-hdfs</artifactId>
+      <version>${sdk.hadoop.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-all</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-core</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-common</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-app</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <!--Below three dependencies are needed for Azure Data Lake File System-->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.8.8</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure-data-lake-store-sdk</artifactId>
+      <version>2.1.5</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-azure-datalake</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-azure</artifactId>
+      <version>${sdk.hadoop.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.microsoft.azure</groupId>
+      <artifactId>azure-storage</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <!-- Need to have a compile dependency in Standalone, as these dependencies are provided only on cluster -->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
@@ -222,7 +318,7 @@
       <id>dist</id>
       <properties>
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
-        <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
+        <stage.opt.dir>${sdk.dir}/cdap-local-sandbox-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
@@ -758,7 +854,7 @@
                   </descriptors>
                   <appendAssemblyId>false</appendAssemblyId>
                   <attach>false</attach>
-                  <finalName>cdap-sdk-${project.version}</finalName>
+                  <finalName>cdap-local-sandbox-${project.version}</finalName>
                 </configuration>
               </execution>
             </executions>
@@ -779,10 +875,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${project.groupId}</groupId>
-                  <artifactId>cdap-sdk</artifactId>
+                  <artifactId>cdap-local-sandbox</artifactId>
                   <packaging>zip</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-sdk-${project.version}.zip</file>
+                  <file>${project.build.directory}/cdap-local-sandbox-${project.version}.zip</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

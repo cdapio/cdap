@@ -18,6 +18,7 @@ package co.cask.cdap.examples.wikipedia;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.spark.AbstractSpark;
+import org.apache.spark.SparkConf;
 
 /**
  * Spark program that executes in a workflow and analyzes wikipedia data
@@ -47,5 +48,10 @@ public class SparkWikipediaClustering extends AbstractSpark {
     setName(NAME + "-" + appConfig.clusteringAlgorithm.toUpperCase());
     setDriverResources(new Resources(1024));
     setExecutorResources(new Resources(1024));
+  }
+
+  @Override
+  protected void initialize() throws Exception {
+    getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
   }
 }

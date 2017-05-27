@@ -22,6 +22,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.gson.Gson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -32,6 +34,7 @@ import javax.annotation.Nullable;
 final class StreamCreator {
   private static final Gson GSON = new Gson();
   private final StreamAdmin streamAdmin;
+  private static final Logger LOG = LoggerFactory.getLogger(StreamCreator.class);
 
   StreamCreator(StreamAdmin streamAdmin) {
     this.streamAdmin = streamAdmin;
@@ -55,7 +58,9 @@ final class StreamCreator {
       if (ownerPrincipal != null) {
         props.put(Constants.Security.PRINCIPAL, ownerPrincipal.getPrincipal());
       }
-      streamAdmin.create(namespaceId.stream(spec.getName()), props);
+      if (streamAdmin.create(namespaceId.stream(spec.getName()), props) != null) {
+        LOG.info("Stream '{}.{}' created successfully.", namespaceId.getNamespace(), spec.getName());
+      }
     }
   }
 }

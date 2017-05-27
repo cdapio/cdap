@@ -43,6 +43,7 @@ public class MacroParserTest {
   @Test
   public void testContainsSimpleEscapedMacro() throws InvalidMacroException {
     assertContainsMacroParsing("$${{\\}}", true);
+    assertSubstitution("\\${val}", "${val}", ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of());
   }
 
   @Test
@@ -486,6 +487,15 @@ public class MacroParserTest {
                        properties, new HashMap<String, String>());
   }
 
+  @Test
+  public void testNoEscape() {
+    MacroParser parser = new MacroParser(new TestMacroEvaluator(ImmutableMap.of("\\a\\b\\c\\", "123", "x", "xyz"),
+                                                                ImmutableMap.of("xyz", "321")),
+                                         false);
+    Assert.assertEquals("123", parser.parse("${\\a\\b\\c\\}"));
+    Assert.assertEquals("321", parser.parse("${test(${x})}"));
+    Assert.assertEquals("\\321", parser.parse("\\${test(xyz)}"));
+  }
 
   // Testing util methods
 

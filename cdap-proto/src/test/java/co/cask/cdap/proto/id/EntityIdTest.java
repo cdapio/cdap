@@ -227,13 +227,27 @@ public class EntityIdTest {
 
   @Test
   public void testDatasetName() {
-    // TODO: CDAP-5730: Even though dots are allowed, if we use it here, id creation will fail.
     DatasetId.fromString("dataset:foo.Zo123_-$$_-");
+    DatasetId dataset = DatasetId.fromString("dataset:foo.app.meta");
+    Assert.assertEquals("foo", dataset.getNamespace());
+    Assert.assertEquals("app.meta", dataset.getDataset());
+    dataset = DatasetId.fromString("dataset:foo.app.meta.second");
+    Assert.assertEquals("app.meta.second", dataset.getDataset());
     try {
       DatasetId.fromString("dataset:i have a space in my name");
+      DatasetId.fromString("dataset:.should.have.a.namespace.name");
       Assert.fail("Dataset Id with space in its name was created successfully while it should have failed.");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+
+    // test error message
+    try {
+      // missing dataset field
+      DatasetId.fromString("dataset:foo");
+      Assert.fail("Dataset Id creation should fail without dataset name");
+    } catch (IllegalArgumentException e) {
+      Assert.assertEquals("Missing field: dataset", e.getCause().getMessage());
     }
   }
 

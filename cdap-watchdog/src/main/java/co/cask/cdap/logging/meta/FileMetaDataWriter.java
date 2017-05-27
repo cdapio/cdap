@@ -17,6 +17,7 @@
 package co.cask.cdap.logging.meta;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -58,15 +59,14 @@ public class FileMetaDataWriter {
                             final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} with startTimeMs {} sequence Id {} and location {}",
               identifier.getRowkey(), eventTimeMs, currentTimeMs, location);
-
-    transactional.execute(new TxRunnable() {
+    Transactionals.execute(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         Table table = LoggingStoreTableUtil.getMetadataTable(context, datasetManager);
         table.put(getRowKey(identifier, eventTimeMs, currentTimeMs),
                   LoggingStoreTableUtil.META_TABLE_COLUMN_KEY, Bytes.toBytes(location.toURI().getPath()));
       }
-    });
+    }, Exception.class);
   }
 
   private byte[] getRowKey(LogPathIdentifier identifier, long eventTime, long currentTime) {

@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDatasetDefinition;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDefinition;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 
 /**
  * The {@link DatasetModule} for adding dataset definitions defined in app-fabric.
@@ -39,6 +40,6 @@ public class AppFabricDatasetModule implements DatasetModule {
 
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
-    registry.add(new ProgramScheduleStoreDefinition(ProgramScheduleStoreDataset.class.getName(), indexedTableDef));
+    registry.add(new ProgramScheduleStoreDefinition(Schedulers.STORE_TYPE_NAME, indexedTableDef));
   }
 }

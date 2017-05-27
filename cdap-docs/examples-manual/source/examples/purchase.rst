@@ -60,7 +60,7 @@ of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
     :language: java
-    :lines: 32-
+    :lines: 33-
 
 Storing Purchases with the *Purchase* ObjectStore Data Storage
 --------------------------------------------------------------
@@ -85,7 +85,7 @@ The memory requirements of the flowlet *PurchaseStore* are set in its ``configur
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
-   :lines: 60-71
+   :lines: 61-72
    :start-after: }
    :end-before:   /**
    :dedent: 2

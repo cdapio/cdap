@@ -27,6 +27,15 @@ public class UncaughtExceptionHandler implements Thread.UncaughtExceptionHandler
 
   @Override
   public void uncaughtException(Thread t, Throwable e) {
+    // If the Throwable is an Error, the system most likely is in unusable state.
+    // Hence we try our best effort to log the message first to at least get some information,
+    // followed by logging the stacktrace (in OOM case, it may fail to get the stacktrace)
+    if (e instanceof Error) {
+      LOG.error("Uncaught error in thread {}, {}", t, e.toString());
+      LOG.error("Stacktrace for uncaught error in thread {}", t, e);
+      return;
+    }
+
     StackTraceElement[] stackTrace = e.getStackTrace();
     if (stackTrace.length > 0) {
       Logger logger = LoggerFactory.getLogger(stackTrace[0].getClassName());

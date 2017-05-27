@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap.etl.batch;
 
-angular.module(PKG.name + '.commons')
-  .directive('myBatchPipelineSettings', function() {
-    return {
-      restrict: 'E',
-      scope: {
-        store: '=',
-        actionCreator: '=',
-        isDisabled: '@'
-      },
-      bindToController: true,
-      templateUrl: 'my-pipeline-settings/my-batch-pipeline-settings/my-batch-pipeline-settings.html',
-      controller: 'MyBatchPipelineSettingsCtrl',
-      controllerAs: 'MyBatchPipelineSettingsCtrl'
-    };
-  });
+/**
+ * Thrown when a pipeline stage fails. The message is supposed to carry stage information.
+ */
+public class StageFailureException extends RuntimeException {
+
+  StageFailureException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+}

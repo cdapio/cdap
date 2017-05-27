@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
@@ -41,8 +42,10 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));
     addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_1));
     addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_2));
-    configureWorkflowSchedule(DATASET_PARTITION_SCHEDULE_1, SOME_WORKFLOW).triggerOnPartitions(DATASET_NAME1, 1);
-    configureWorkflowSchedule(DATASET_PARTITION_SCHEDULE_2, ANOTHER_WORKFLOW).triggerOnPartitions(DATASET_NAME2, 1);
+    schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_1, ProgramType.WORKFLOW, SOME_WORKFLOW)
+               .triggerOnPartitions(DATASET_NAME1, 1));
+    schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
+               .triggerOnPartitions(DATASET_NAME2, 1));
     // Schedule the workflow to run in every min
     scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_1).createTimeSchedule("* * * * *"), SCHEDULED_WORKFLOW_1);
     // Schedule the workflow to run in every min with a different cron expression

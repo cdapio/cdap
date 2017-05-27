@@ -32,9 +32,15 @@ public class MacroParser {
   private static final int MAX_SUBSTITUTION_DEPTH = 10;
 
   private final MacroEvaluator macroEvaluator;
+  private final boolean escapingEnabled;
 
   public MacroParser(MacroEvaluator macroEvaluator) {
+    this(macroEvaluator, true);
+  }
+
+  public MacroParser(MacroEvaluator macroEvaluator, boolean escapingEnabled) {
     this.macroEvaluator = macroEvaluator;
+    this.escapingEnabled = escapingEnabled;
   }
 
   /**
@@ -160,6 +166,9 @@ public class MacroParser {
    * @return if the character at the provided index is escaped
    */
   private boolean isEscaped(int index, String str) {
+    if (!escapingEnabled) {
+      return false;
+    }
     int numPrecedingParens = 0;
     for (int i = index - 1; i >= 0; i--) {
       if (str.charAt(i) == '\\') {
@@ -178,6 +187,9 @@ public class MacroParser {
    * @return the string with no escaped syntax
    */
   private String replaceEscapedSyntax(String str) {
+    if (!escapingEnabled) {
+      return str;
+    }
     StringBuilder syntaxRebuilder = new StringBuilder();
     boolean includeNextConsecutiveBackslash = false;
     for (int i = 0; i < str.length(); i++) {

@@ -22,7 +22,7 @@ import co.cask.cdap.proto.ProtoConstraint;
 /**
  * A constraint which dictates an upper bound on the number of concurrent schedule runs.
  */
-public class ConcurrencyConstraint extends ProtoConstraint.ConcurrenyConstraint implements CheckableConstraint {
+public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint implements CheckableConstraint {
 
   public ConcurrencyConstraint(int maxConcurrency) {
     super(maxConcurrency);

@@ -32,9 +32,7 @@ public class TransactionManagerMetricsCollector extends TxMetricsCollector {
 
   @Inject
   public TransactionManagerMetricsCollector(MetricsCollectionService service) {
-    this.metricsContext = service.getContext(
-      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getEntityName(),
-                      Constants.Metrics.Tag.COMPONENT, "transactions"));
+    this.metricsContext = service.getContext(Constants.Metrics.TRANSACTION_MANAGER_CONTEXT);
   }
 
   // todo: change TxMetricsCollector in Tephra

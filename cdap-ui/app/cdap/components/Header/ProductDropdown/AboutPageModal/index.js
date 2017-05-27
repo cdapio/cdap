@@ -17,12 +17,14 @@
 import React, { PropTypes } from 'react';
 import {Modal, ModalBody} from 'reactstrap';
 import T from 'i18n-react';
+import {getModeWithCloudProvider} from 'components/Header/ProductDropdown/helper';
 
 require('./AboutPageModal.scss');
 
 export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
   let termsConditionsUrl = 'http://cask.co/terms/';
   let privacyPolicyUrl = 'http://cask.co/privacy/';
+  let mode = getModeWithCloudProvider();
   return (
     <Modal
       isOpen={isOpen}
@@ -53,7 +55,7 @@ export default function AboutPageModal({cdapVersion, isOpen, toggle}) {
             <span className="cdap-mode">
               <strong>{T.translate('features.AboutPage.mode')}</strong>
               <span>
-                {window.CDAP_CONFIG.isEnterprise ? 'Distributed' : 'Standalone'}
+                {mode}
               </span>
             </span>
             <br />

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,18 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-angular.module(PKG.name + '.commons')
-  .directive('myDatastreamsPipelineSettings', function() {
-    return {
-      restrict: 'E',
-      scope: {
-        store: '=',
-        actionCreator: '=',
-        isDisabled: '@'
-      },
-      bindToController: true,
-      templateUrl: 'my-pipeline-settings/my-datastreams-pipeline-settings/my-datastreams-pipeline-settings.html',
-      controller: 'MyDataStreamsPipelineSettingsCtrl',
-      controllerAs: 'MyDataStreamsPipelineSettingsCtrl'
-    };
-  });
+
+package co.cask.cdap.api.app;
+
+/**
+ * Defines types of programs supported by the system.
+ */
+public enum ProgramType {
+  FLOW,
+  MAPREDUCE,
+  WORKFLOW,
+  SERVICE,
+  SPARK,
+  WORKER
+}

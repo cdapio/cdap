@@ -719,6 +719,8 @@ cdap_start_java() {
   # Set JAVA_HEAPMAX from variable defined in JAVA_HEAP_VAR, unless defined already
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
+  # Split JVM_OPTS array
+  eval split_jvm_opts ${!JAVA_OPTS_VAR} ${OPTS} ${JAVA_OPTS}
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
@@ -767,7 +769,7 @@ cdap_start_java() {
     __startup_checks=${CDAP_STARTUP_CHECKS:-$(cdap_get_conf "master.startup.checks.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
     if [[ ${__startup_checks} == true ]]; then
       logecho "$(date) Running CDAP Master startup checks -- this may take a few minutes"
-      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
+      "${JAVA}" ${JAVA_HEAPMAX} ${__explore} ${JVM_OPTS[@]} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${__logfile} 2>&1
       if [ $? -ne 0 ]; then
         die "Master startup checks failed. Please check ${__logfile} to address issues."
       fi
@@ -775,7 +777,7 @@ cdap_start_java() {
   fi
   "${JAVA}" -version 2>>${__logfile}
   ulimit -a >>${__logfile}
-  __defines+=" ${OPTS}"
+  __defines+=" ${JVM_OPTS[@]}"
   echo "$(date) Running: ${JAVA} ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@}" >>${__logfile}
   # Start our JVM
   nohup nice -n ${NICENESS} "${JAVA}" ${__defines} -cp ${CLASSPATH} ${MAIN_CLASS} ${MAIN_CLASS_ARGS} ${@} </dev/null >>${__logfile} 2>&1 &
@@ -1058,6 +1060,7 @@ cdap_auth() {
   local readonly MAIN_CLASS=co.cask.cdap.security.runtime.AuthenticationServerMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=AUTH_JAVA_HEAPMAX
+  local readonly JAVA_OPTS_VAR=AUTH_JAVA_OPTS
   local AUTH_JAVA_HEAPMAX=${AUTH_JAVA_HEAPMAX:--Xmx1024m}
   local EXTRA_CLASSPATH="${EXTRA_CLASSPATH}:/etc/hbase/conf/"
   cdap_start_java || die "Failed to start CDAP ${CDAP_SERVICE} service"
@@ -1071,6 +1074,7 @@ cdap_kafka() {
   local readonly MAIN_CLASS=co.cask.cdap.kafka.run.KafkaServerMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=KAFKA_JAVA_HEAPMAX
+  local readonly JAVA_OPTS_VAR=KAFKA_JAVA_OPTS
   local KAFKA_JAVA_HEAPMAX=${KAFKA_JAVA_HEAPMAX:--Xmx1024m}
   cdap_start_java || die "Failed to start CDAP ${CDAP_SERVICE} service"
 }
@@ -1083,6 +1087,7 @@ cdap_master() {
   local readonly MAIN_CLASS=co.cask.cdap.data.runtime.main.MasterServiceMain
   local readonly MAIN_CLASS_ARGS="start"
   local readonly JAVA_HEAP_VAR=MASTER_JAVA_HEAPMAX
+  local readonly JAVA_OPTS_VAR=MASTER_JAVA_OPTS
   local MASTER_JAVA_HEAPMAX=${MASTER_JAVA_HEAPMAX:--Xmx1024m}
   # Assuming update-alternatives convention
   local EXTRA_CLASSPATH="${EXTRA_CLASSPATH}:/etc/hbase/conf/"
@@ -1097,6 +1102,7 @@ cdap_router() {
   local readonly MAIN_CLASS=co.cask.cdap.gateway.router.RouterMain
   local readonly MAIN_CLASS_ARGS=
   local readonly JAVA_HEAP_VAR=ROUTER_JAVA_HEAPMAX
+  local readonly JAVA_OPTS_VAR=ROUTER_JAVA_OPTS
   local ROUTER_JAVA_HEAPMAX=${ROUTER_JAVA_HEAPMAX:--Xmx1024m}
   cdap_start_java || die "Failed to start CDAP ${CDAP_SERVICE} service"
 }

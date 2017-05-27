@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,9 @@ angular.module(PKG.name + '.commons')
     vm.action = vm.action || {};
     if (vm.action && Object.keys(vm.action).length > 1) {
       vm.selectedAction = Object.assign({}, angular.copy(vm.action.plugin), {
-        defaultArtifact: vm.action.plugin.artifact
+        defaultArtifact: vm.action.plugin.artifact,
+        id: vm.action.id,
+        description: vm.action.description
       });
     } else {
       vm.selectedAction = {};
@@ -58,7 +60,8 @@ angular.module(PKG.name + '.commons')
         return;
       }
       vm.confirmedAction = {
-        name: vm.action.name || action.name + uuid.v4(),
+        name: vm.action.name || action.name,
+        id: vm.action.id || action.name + uuid.v4(),
         plugin: {
           name: action.name,
           type: action.type,

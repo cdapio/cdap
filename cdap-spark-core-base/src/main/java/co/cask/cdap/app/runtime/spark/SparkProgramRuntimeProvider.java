@@ -45,6 +45,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -308,10 +309,12 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     // is there
     if (classLoader.getResource("org/apache/spark/SparkContext.class") == null) {
       // The scala from the Spark library should replace the one from the parent classloader
+      // CDH also packages spark-yarn-shuffle.jar linked to spark-<version>-yarn-shuffle.jar in yarn's lib dir
       Iterator<URL> itor = urls.iterator();
       while (itor.hasNext()) {
         URL url = itor.next();
-        if (url.getPath().contains("org.scala-lang")) {
+        String filename = Paths.get(url.getPath()).getFileName().toString();
+        if (filename.startsWith("org.scala-lang") || filename.startsWith("spark-")) {
           itor.remove();
         }
       }
@@ -332,12 +335,14 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
       super(new FilterClassLoader(parent, new FilterClassLoader.Filter() {
         @Override
         public boolean acceptResource(String resource) {
-          return !resource.startsWith("scala/") && !"scala.class".equals(resource);
+          return !resource.startsWith("org/apache/spark/") && !resource.startsWith("org/spark-project/") &&
+            !resource.startsWith("scala/") && !"scala.class".equals(resource);
         }
 
         @Override
         public boolean acceptPackage(String packageName) {
-          return !packageName.startsWith("scala/");
+          return !packageName.startsWith("org/apache/spark") && !packageName.startsWith("org/spark-project/") &&
+            !packageName.startsWith("scala/");
         }
       }));
     }
