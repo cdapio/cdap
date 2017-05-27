@@ -395,6 +395,11 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
   */
   app.post('/login', authentication);
 
+  // CDAP-678, CDAP-8260 This is added for health check on node proxy.
+  app.get('/status', function(req, res) {
+    res.send(200, 'OK');
+  });
+
   app.get('/backendstatus', [
     function (req, res) {
       var protocol,
