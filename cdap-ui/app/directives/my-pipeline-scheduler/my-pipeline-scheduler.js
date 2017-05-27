@@ -15,9 +15,10 @@
   */
 
 class MyPipelineSchedulerCtrl {
-  constructor(moment, myHelpers, CronConverter) {
+  constructor(moment, myHelpers, CronConverter, $scope, myPipelineApi, $state, myAlertOnValium) {
     this.moment = moment;
     this._isDisabled = this.isDisabled === 'true';
+    this.$scope = $scope;
 
     this.INTERVAL_OPTIONS = {
       '5min': 'Every 5 min',
@@ -35,6 +36,9 @@ class MyPipelineSchedulerCtrl {
       minuteOptions.push(i);
     }
 
+    this.myPipelineApi = myPipelineApi;
+    this.myAlertOnValium = myAlertOnValium;
+    this.$state = $state;
     this.MINUTE_OPTIONS = minuteOptions;
     this.HOUR_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
     this.HOUR_OPTIONS_CLOCK = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -43,9 +47,14 @@ class MyPipelineSchedulerCtrl {
     this.AM_PM_OPTIONS = ['AM', 'PM'];
 
     this.initialCron = this.store.getSchedule();
+    if (this.isDisabled) {
+      this.scheduleStatus = this.store.getScheduleStatus();
+    }
     this.cron = this.initialCron;
 
     this.intervalOptionKey = 'Hourly';
+    this.isScheduleChange = false;
+    this.savingSchedule = false;
 
     let defaulTimeOptions = {
       'startingAt': {
@@ -87,18 +96,85 @@ class MyPipelineSchedulerCtrl {
 
     this.switchToDefault = () => {
       this.timeSelections = Object.assign({}, defaulTimeOptions);
+      this.updateCron();
+    };
+
+    this.suspendScheduleAndClose = () => {
+      this.suspendSchedule();
+      this.onClose();
+    };
+
+    this.startScheduleAndClose = () => {
+      if (this.isScheduleChange) {
+        this.saveAndStartSchedule();
+      }
+      this.startSchedule();
+    };
+    this.saveAndStartSchedule = () => {
+      this.saveSchedule()
+        .then(
+          () => {
+            this.startSchedule()
+              .then(() => {
+                this.$state.reload();
+                this.onClose();
+              });
+          },
+          (err) => {
+            this.myAlertOnValium.show({
+              type: 'danger',
+              content: typeof err === 'object' ? err.data : 'Updating pipeline failed: ' + err
+            });
+          }
+        );
     };
 
     this.saveSchedule = () => {
       this.getUpdatedCron();
-      this.actionCreator.setSchedule(this.cron);
-      this.onClose();
+      if (!this.isDisabled) {
+        this.actionCreator.setSchedule(this.cron);
+        this.onClose();
+        return;
+      }
+      this.savingSchedule = true;
+      let pipelineConfig = this.store.getCloneConfig();
+      pipelineConfig.config.schedule = this.cron;
+      return this.myPipelineApi.save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineConfig.name
+        },
+        pipelineConfig
+      )
+        .$promise
+        .then(
+          () => {
+            this.savingSchedule = false;
+            this.onClose();
+          },
+          (err) => {
+            this.savingSchedule = false;
+            this.myAlertOnValium.show({
+              type: 'danger',
+              content: typeof err === 'object' ? err.data : 'Updating pipeline failed: ' + err
+            });
+          }
+        );
     };
 
     this.selectType = (type) => {
       this.scheduleType = type;
     };
 
+    this.updateCron = () => {
+      if (!this.isDisabled) {
+        return;
+      }
+      let cron = this.getUpdatedCron();
+      if (cron !== this.initialCron) {
+        this.isScheduleChange = true;
+      }
+    };
     this.updateSelectedDaysInWeek = () => {
       for (let key in this.timeSelections.repeatEvery.daysOfWeekObj) {
         if (this.timeSelections.repeatEvery.daysOfWeekObj.hasOwnProperty(key)) {
@@ -111,12 +187,13 @@ class MyPipelineSchedulerCtrl {
         }
       }
       this.timeSelections.repeatEvery.daysOfWeek.sort();
+      this.updateCron();
     };
 
     this.getUpdatedCron = () => {
       if (this.scheduleType === 'basic') {
         let convertedHour;
-        switch(this.intervalOptionKey) {
+        switch (this.intervalOptionKey) {
           case '5min':
             this.cron = '*/5 * * * *';
             break;
@@ -153,7 +230,7 @@ class MyPipelineSchedulerCtrl {
   }
 }
 
-MyPipelineSchedulerCtrl.$inject = ['moment', 'myHelpers', 'CronConverter'];
+MyPipelineSchedulerCtrl.$inject = ['moment', 'myHelpers', 'CronConverter', '$scope', 'myPipelineApi', '$state', 'myAlertOnValium'];
   angular.module(PKG.name + '.commons')
   .controller('MyPipelineSchedulerCtrl', MyPipelineSchedulerCtrl)
   .filter('cronDayOfMonth', () => {
@@ -250,7 +327,8 @@ MyPipelineSchedulerCtrl.$inject = ['moment', 'myHelpers', 'CronConverter'];
         pipelineName: '@',
         onClose: '&',
         startSchedule: '&',
-        isDisabled: '@'
+        isDisabled: '@',
+        suspendSchedule: '&'
       },
       bindToController: true,
       controller: 'MyPipelineSchedulerCtrl',

@@ -19,7 +19,11 @@ angular.module(PKG.name + '.commons')
     let attributes = {
       'store': 'store',
       'action-creator': 'actionCreator',
-      'is-disabled': 'isDisabled'
+      'is-disabled': 'isDisabled',
+      'on-memory-change': 'onMemoryChange',
+      'on-core-change': 'onCoreChange',
+      'memory-mb-value': 'memoryMbValue',
+      'virtual-cores-value': 'virtualCoresValue'
     };
     return {
       'driverResource': {

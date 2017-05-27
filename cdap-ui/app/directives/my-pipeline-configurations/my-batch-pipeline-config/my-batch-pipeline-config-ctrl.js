@@ -15,15 +15,27 @@
 */
 
 class MyBatchPipelineConfigCtrl {
-  constructor(uuid, HydratorPlusPlusHydratorService, HYDRATOR_DEFAULT_VALUES) {
+  constructor(uuid, HydratorPlusPlusHydratorService, HYDRATOR_DEFAULT_VALUES, myPipelineApi, $state, myAlertOnValium) {
     this.uuid = uuid;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
+    this.myAlertOnValium = myAlertOnValium;
 
     this.engine = this.store.getEngine();
     this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
     this.instrumentation = this.store.getInstrumentation();
     this.stageLogging = this.store.getStageLogging();
     this.numRecordsPreview = this.store.getNumRecordsPreview();
+    this.startingPipeline = false;
+    this.updatingPipeline = false;
+    this.driverResources = {
+      memoryMB: this.store.getDriverMemoryMB(),
+      virtualCores: this.store.getDriverVirtualCores()
+    };
+    this.executorResources = {
+      memoryMB: this.store.getMemoryMB(),
+      virtualCores: this.store.getVirtualCores()
+    };
+    this.enablePipelineUpdate = false;
     this.numberConfig = {
       'widget-attributes': {
         min: 0,
@@ -56,6 +68,12 @@ class MyBatchPipelineConfigCtrl {
     this.onRuntimeArgumentsChange = this.onRuntimeArgumentsChange.bind(this);
     this.onCustomEngineConfigChange = this.onCustomEngineConfigChange.bind(this);
     this.getResettedRuntimeArgument = this.getResettedRuntimeArgument.bind(this);
+    this.onDriverMemoryChange = this.onDriverMemoryChange.bind(this);
+    this.onDriverCoreChange = this.onDriverCoreChange.bind(this);
+    this.onExecutorCoreChange = this.onExecutorCoreChange.bind(this);
+    this.onExecutorMemoryChange = this.onExecutorMemoryChange.bind(this);
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
   }
 
   onRuntimeArgumentsChange(newRuntimeArguments) {
@@ -104,6 +122,10 @@ class MyBatchPipelineConfigCtrl {
       this.store.setInstrumentation(this.instrumentation);
       this.store.setStageLogging(this.stageLogging);
       this.store.setNumRecordsPreview(this.numRecordsPreview);
+      this.store.setDriverVirtualCores(this.driverResources.virtualCores);
+      this.store.setDriverMemoryMB(this.driverResources.memoryMB);
+      this.store.setMemoryMB(this.executorResources.memoryMB);
+      this.store.setVirtualCores(this.executorResources.virtualCores);
     }
   }
 
@@ -113,8 +135,28 @@ class MyBatchPipelineConfigCtrl {
   }
 
   applyAndRunPipeline() {
-    this.applyConfig();
-    this.runPipeline();
+    const applyAndRun = () => {
+      this.startingPipeline = false;
+      this.applyConfig();
+      this.runPipeline();
+    };
+    this.startingPipeline = true;
+    if (this.enablePipelineUpdate) {
+      this.updatePipeline()
+        .then(
+          applyAndRun.bind(this),
+          (err) => {
+            this.startingPipeline = false;
+            this.myAlertOnValium.show({
+              type: 'danger',
+              content: typeof err === 'object' ? JSON.stringify(err) : 'Updating pipeline failed: '+ err
+            });
+          }
+        );
+    } else {
+      applyAndRun.call(this);
+    }
+
   }
 
   buttonsAreDisabled() {
@@ -127,9 +169,89 @@ class MyBatchPipelineConfigCtrl {
     customConfigMissingValues = this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.customEngineConfig);
     return runtimeArgsMissingValues || customConfigMissingValues;
   }
+
+  onDriverMemoryChange(value) {
+    this.driverResources.memoryMB = value;
+    this.updatePipelineEditStatus();
+  }
+  onDriverCoreChange(value) {
+    this.driverResources.virtualCores = value;
+    this.updatePipelineEditStatus();
+  }
+  onExecutorCoreChange(value) {
+    this.executorResources.virtualCores = value;
+    this.updatePipelineEditStatus();
+  }
+  onExecutorMemoryChange(value) {
+    this.executorResources.memoryMB = value;
+    this.updatePipelineEditStatus();
+  }
+  onToggleInstrumentationChange() {
+    this.instrumentation = !this.instrumentation;
+    this.updatePipelineEditStatus();
+  }
+  onStageLoggingChange() {
+    this.stageLogging = !this.stageLogging;
+    this.updatePipelineEditStatus();
+  }
+  updatePipelineEditStatus() {
+    const isResourcesEqual = (oldvalue, newvalue) => {
+      return oldvalue.memoryMB === newvalue.memoryMB && oldvalue.virtualCores === newvalue.virtualCores;
+    };
+    let oldConfig = this.store.getCloneConfig();
+    let updatedConfig = this.getUpdatedPipelineConfig();
+    let isStageLoggingChanged = updatedConfig.config.stageLoggingEnabled !== oldConfig.config.stageLoggingEnabled;
+    let isResourceModified = !isResourcesEqual(oldConfig.config.resources, updatedConfig.config.resources);
+    let isDriverResourceModidified = !isResourcesEqual(oldConfig.config.driverResources, updatedConfig.config.driverResources);
+    let isProcessTimingModified = oldConfig.config.processTimingEnabled !== updatedConfig.config.processTimingEnabled;
+    this.enablePipelineUpdate = (
+      isStageLoggingChanged ||
+      isResourceModified ||
+      isDriverResourceModidified ||
+      isProcessTimingModified
+    );
+  }
+  getUpdatedPipelineConfig() {
+
+    let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());
+    delete pipelineconfig.__ui__;
+    if (this.instrumentation) {
+      pipelineconfig.config.stageLoggingEnabled = this.instrumentation;
+    }
+    pipelineconfig.config.resources = this.executorResources;
+    pipelineconfig.config.driverResources = this.driverResources;
+    pipelineconfig.config.stageLoggingEnabled = this.stageLogging;
+    pipelineconfig.config.processTimingEnabled = this.instrumentation;
+
+    return pipelineconfig;
+  }
+  updatePipeline() {
+    let pipelineConfig = this.getUpdatedPipelineConfig();
+    this.updatingPipeline = true;
+    return this.myPipelineApi.save(
+      {
+        namespace: this.$state.params.namespace,
+        pipeline: pipelineConfig.name
+      },
+      pipelineConfig
+    )
+      .$promise
+      .then(
+        () => {
+          return this.$state.reload().$promise.then(() => this.updatingPipeline = false);
+        },
+        (err) => {
+          this.updatingPipeline = false;
+          this.myAlertOnValium.show({
+            type: 'danger',
+            content: typeof err === 'object' ? JSON.stringify(err) : 'Updating pipeline failed: '+ err
+          });
+        }
+      );
+  }
 }
 
-MyBatchPipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES'];
+MyBatchPipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'myPipelineApi', '$state', 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
   .directive('keyValuePairs', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValuePairs);

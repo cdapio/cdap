@@ -322,6 +322,9 @@ class HydratorPlusPlusConfigStore {
 
     return angular.copy(state);
   }
+  getCloneConfig() {
+    return this.getConfigForExport();
+  }
   getDisplayConfig() {
     let uniqueNodeNames = {};
     this.HydratorPlusPlusConsoleActions.resetMessages();
