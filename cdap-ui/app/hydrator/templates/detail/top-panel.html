@@ -69,6 +69,7 @@
         <div ng-if="['Deployed', 'Scheduling'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
           <div ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Schedule')"
               class="btn scheduler"
+              ng-class="{'btn-select': TopPanelCtrl.viewScheduler}"
               uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before scheduling the pipeline"
               tooltip-placement="bottom"
               tooltip-class="toppanel-tooltip"
@@ -265,6 +266,7 @@
       pipeline-name="{{TopPanelCtrl.app.name}}"
       on-close="TopPanelCtrl.viewScheduler = false"
       is-disabled="true"
+      suspend-schedule="TopPanelCtrl.suspendPipeline()"
       start-schedule="TopPanelCtrl.schedulePipeline()">
     </my-pipeline-scheduler>
   </div>
