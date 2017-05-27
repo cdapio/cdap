@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
@@ -35,6 +36,7 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.service.Services;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.common.zookeeper.coordination.DiscoverableCodec;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -77,6 +79,8 @@ import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.store.DefaultOwnerStore;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -90,12 +94,17 @@ import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.distributed.TransactionService;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.zookeeper.NodeChildren;
+import org.apache.twill.zookeeper.NodeData;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -105,6 +114,9 @@ import java.util.concurrent.TimeUnit;
 public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Discoverable.class, new DiscoverableCodec())
+    .create();
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -324,6 +336,7 @@ public class UpgradeTool {
             System.out.println("Starting upgrade ...");
             try {
               startUp(false);
+              ensureCDAPMasterStopped();
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -358,6 +371,31 @@ public class UpgradeTool {
     } catch (Exception e) {
       System.out.println(String.format("Failed to perform action '%s'. Reason: '%s'.", action, e.getMessage()));
       throw e;
+    }
+  }
+
+  /**
+   * checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so throw
+   * exception message with information on where its running.
+   * If none of the master service (in HA setup) is running, this method wouldn't throw any exception
+   * @throws Exception
+   */
+  private void ensureCDAPMasterStopped() throws Exception {
+    String appFabricPath = String.format("/discoverable/%s", Constants.Service.APP_FABRIC_HTTP);
+    NodeChildren nodeChildren = zkClientService.getChildren(appFabricPath).get();
+    List<String> runningNodes = new ArrayList<>();
+    // if no children nodes at appfabric path, all master nodes are stopped
+    if (!nodeChildren.getChildren().isEmpty()) {
+      for (String runId : nodeChildren.getChildren()) {
+        // only one children would be present, as only the active master will be registered at this path
+        NodeData nodeData = zkClientService.getData(String.format("%s/%s", appFabricPath, runId)).get();
+        Discoverable discoverable = GSON.fromJson(Bytes.toString(nodeData.getData()), Discoverable.class);
+        runningNodes.add(discoverable.getSocketAddress().getHostName());
+      }
+      String exceptionMessage =
+        String.format("CDAP Master is still running on %s, please stop it before running upgrade.",
+                      com.google.common.base.Joiner.on(",").join(runningNodes));
+      throw new Exception(exceptionMessage);
     }
   }
 
