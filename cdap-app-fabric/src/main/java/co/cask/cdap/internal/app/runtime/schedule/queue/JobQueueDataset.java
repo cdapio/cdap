@@ -134,9 +134,11 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
             // schedule has changed: this job is obsolete
             table.put(getRowKey(job.getJobKey().getScheduleId(), job.getJobKey().getCreationTime()),
                       IS_OBSOLETE_COL, Bytes.toBytes(System.currentTimeMillis()));
+          } else if (System.currentTimeMillis() - job.getCreationTime() > job.getSchedule().getTimeoutMillis()) {
+            // job has timed out; mark it obsolete
+            table.put(getRowKey(job.getJobKey().getScheduleId(), job.getJobKey().getCreationTime()),
+                      IS_OBSOLETE_COL, Bytes.toBytes(System.currentTimeMillis()));
           } else {
-            // TODO (CDAP-11613): only update or delete the job if it has not timed out yet. After time-out,
-            //       the constraint checker might delete this job and that would cause conflicts.
             jobExists = true;
             addNotification(job, notification);
             break;

@@ -36,15 +36,17 @@ public class ScheduleCreationSpec {
   private final Map<String, String> properties;
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
+  private final long timeoutMillis;
 
   public ScheduleCreationSpec(String name, String description, String programName, Map<String, String> properties,
-                              Trigger trigger, List<? extends Constraint> constraints) {
+                              Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
     this.name = name;
     this.description = description;
     this.programName = programName;
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
+    this.timeoutMillis = timeoutMillis;
   }
 
   public String getName() {
@@ -69,5 +71,9 @@ public class ScheduleCreationSpec {
 
   public List<? extends Constraint> getConstraints() {
     return constraints;
+  }
+
+  public long getTimeoutMillis() {
+    return timeoutMillis;
   }
 }

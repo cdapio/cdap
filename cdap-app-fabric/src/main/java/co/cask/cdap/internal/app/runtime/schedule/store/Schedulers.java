@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -68,6 +69,8 @@ public class Schedulers {
 
   public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
   public static final Type SCHEDULE_SPECS_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
+
+  public static final long JOB_QUEUE_TIMEOUT_MILLIS = TimeUnit.DAYS.toMillis(1);
 
   public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
   public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS = 1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
@@ -108,7 +111,7 @@ public class Schedulers {
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
     return new ScheduleCreationSpec(schedule.getName(), schedule.getDescription(), programName,
-                                    properties, trigger, constraints);
+                                    properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
   }
 
   public static ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleSpecification spec) {

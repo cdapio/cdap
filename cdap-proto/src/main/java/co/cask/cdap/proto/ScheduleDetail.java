@@ -46,19 +46,22 @@ public class ScheduleDetail {
   private final Map<String, String> properties;
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
+  private final Long timeoutMillis;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
                         @Nullable Map<String, String> properties,
                         @Nullable Trigger trigger,
-                        @Nullable List<? extends Constraint> constraints) {
+                        @Nullable List<? extends Constraint> constraints,
+                        @Nullable Long timeoutMillis) {
     this.name = name;
     this.description = description;
     this.program = program;
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
+    this.timeoutMillis = timeoutMillis;
   }
 
   @Nullable
@@ -91,6 +94,11 @@ public class ScheduleDetail {
     return constraints;
   }
 
+  @Nullable
+  public Long getTimeoutMillis() {
+    return timeoutMillis;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -105,12 +113,26 @@ public class ScheduleDetail {
       Objects.equals(program, that.program) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(trigger, that.trigger) &&
-      Objects.equals(constraints, that.constraints);
+      Objects.equals(constraints, that.constraints) &&
+      Objects.equals(timeoutMillis, that.timeoutMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, program, properties, trigger, constraints);
+    return Objects.hash(name, description, program, properties, trigger, constraints, timeoutMillis);
+  }
+
+  @Override
+  public String toString() {
+    return "ScheduleDetail{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", program=" + program +
+      ", properties=" + properties +
+      ", trigger=" + trigger +
+      ", constraints=" + constraints +
+      ", timeoutMillis=" + timeoutMillis +
+      '}';
   }
 
   /**

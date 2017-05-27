@@ -28,14 +28,12 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
@@ -223,6 +221,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     }
 
     private void checkAndUpdateJob(JobQueueDataset jobQueue, Job job) {
+      long now = System.currentTimeMillis();
       if (job.isToBeDeleted()) {
         // only delete jobs that are pending trigger or pending constraint. If pending launch, the launcher will delete
         if ((job.getState() == Job.State.PENDING_CONSTRAINT ||
@@ -232,17 +231,21 @@ class ConstraintCheckerService extends AbstractIdleService {
           // - the transaction the marked it as to be deleted
           // - the subscriber's transaction that may not have seen that change
           (job.getState() == Job.State.PENDING_TRIGGER &&
-            System.currentTimeMillis() - job.getToBeDeletedTimestamp()
-              > 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS))) {
+            now - job.getDeleteTimeMillis() > 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS))) {
           jobQueue.deleteJob(job);
         }
         return;
       }
-      // TODO: check (now - jobCreationTime < job timeout), then delete it.
+      if (now - job.getCreationTime() >= job.getSchedule().getTimeoutMillis() +
+        2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS) {
+        LOG.info("Deleted job {}, due to timeout value of {}.", job.getJobKey(), job.getSchedule().getTimeoutMillis());
+        jobQueue.deleteJob(job);
+        return;
+      }
       if (job.getState() != Job.State.PENDING_CONSTRAINT) {
         return;
       }
-      ConstraintResult.SatisfiedState satisfiedState = constraintsSatisfied(job);
+      ConstraintResult.SatisfiedState satisfiedState = constraintsSatisfied(job, now);
       if (satisfiedState == ConstraintResult.SatisfiedState.NOT_SATISFIED) {
         return;
       }
@@ -297,10 +300,10 @@ class ConstraintCheckerService extends AbstractIdleService {
       return false;
     }
 
-    private ConstraintResult.SatisfiedState constraintsSatisfied(Job job) {
+    private ConstraintResult.SatisfiedState constraintsSatisfied(Job job, long now) {
       ConstraintResult.SatisfiedState satisfiedState = ConstraintResult.SatisfiedState.SATISFIED;
 
-      ConstraintContext constraintContext = new ConstraintContext(job, System.currentTimeMillis(), store);
+      ConstraintContext constraintContext = new ConstraintContext(job, now, store);
       for (Constraint constraint : job.getSchedule().getConstraints()) {
         if (!(constraint instanceof CheckableConstraint)) {
           // this shouldn't happen, since all Constraint implementations should extend AbstractConstraint

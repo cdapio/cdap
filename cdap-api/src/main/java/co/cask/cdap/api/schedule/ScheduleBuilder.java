@@ -20,6 +20,7 @@ import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builder for scheduling a program. The schedule must be triggered by a certain event and wait for all constraints to
@@ -48,6 +49,18 @@ public interface ScheduleBuilder {
    * @return {@link ScheduleBuilder} containing the given properties
    */
   ScheduleBuilder setProperties(Map<String, String> properties);
+
+  /**
+   * Sets a timeout on the schedule. Once a scheduled job is created and the specified number of seconds has passed,
+   * the job will be removed without execute.
+   * For instance, if the timeout is 21600 seconds (6 hours), and the configured constraints of the schedule are not met
+   * within 6 hours, then the job will be dropped, without execution.
+   *
+   * @param time the time duration in the given <tt>unit</tt>
+   * @param unit the unit of the <tt>time</tt> argument
+   * @return {@link ScheduleBuilder} containing the given timeout
+   */
+  ScheduleBuilder setTimeout(long time, TimeUnit unit);
 
   /**
    * Set the max number of concurrently runs of the schedule program.

@@ -22,6 +22,7 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstrai
 import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The default implementation of {@link ScheduleBuilder}.
@@ -46,6 +48,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   private final List<ProtoConstraint> constraints;
   private String description;
   private Map<String, String> properties;
+  private long timeoutMillis = Schedulers.JOB_QUEUE_TIMEOUT_MILLIS;
 
   public DefaultScheduleBuilder(String name, NamespaceId namespace, String programName) {
     this.name = name;
@@ -65,6 +68,12 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   @Override
   public ScheduleBuilder setProperties(Map<String, String> properties) {
     this.properties = ImmutableMap.copyOf(properties);
+    return this;
+  }
+
+  @Override
+  public ScheduleBuilder setTimeout(long time, TimeUnit unit) {
+    this.timeoutMillis = unit.toMillis(time);
     return this;
   }
 
@@ -101,14 +110,14 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   @Override
   public ScheduleCreationSpec triggerByTime(String cronExpression) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new TimeTrigger(cronExpression), constraints);
+                                    new TimeTrigger(cronExpression), constraints, timeoutMillis);
   }
 
   @Override
   public ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions) {
     return new ScheduleCreationSpec(name, description, programName, properties,
                                     new PartitionTrigger(namespace.dataset(datasetName), numPartitions),
-                                    constraints);
+                                    constraints, timeoutMillis);
   }
 
   @Override

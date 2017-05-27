@@ -32,7 +32,7 @@ public final class SimpleJob implements Job {
   private final List<Notification> notifications;
   private final State state;
   private final long scheduleLastUpdatedTime;
-  private Long toBeDeletedTimestamp = null;
+  private Long deleteTimeMillis = null;
 
   /**
    * @param scheduleLastUpdatedTime the last modification time of the schedule, at the time this job is created.
@@ -93,12 +93,13 @@ public final class SimpleJob implements Job {
       Objects.equal(this.jobKey, that.jobKey) &&
       Objects.equal(this.notifications, that.notifications) &&
       Objects.equal(this.state, that.state) &&
-      Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime);
+      Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime) &&
+      Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, jobKey, notifications, state, scheduleLastUpdatedTime);
+    return Objects.hashCode(schedule, jobKey, notifications, state, scheduleLastUpdatedTime, deleteTimeMillis);
   }
 
   @Override
@@ -108,21 +109,21 @@ public final class SimpleJob implements Job {
       .add("jobKey", jobKey)
       .add("notifications", notifications)
       .add("state", state)
-      .add("scheduleLastModified", scheduleLastUpdatedTime)
+      .add("scheduleLastUpdatedTime", scheduleLastUpdatedTime)
+      .add("deleteTimeMillis", deleteTimeMillis)
       .toString();
   }
 
   @Override
   public boolean isToBeDeleted() {
-    return toBeDeletedTimestamp != null;
+    return deleteTimeMillis != null;
   }
 
-  @Override
-  public long getToBeDeletedTimestamp() {
-    return toBeDeletedTimestamp == null ? 0L : toBeDeletedTimestamp;
+  public Long getDeleteTimeMillis() {
+    return deleteTimeMillis;
   }
 
   public void setToBeDeleted(long timestamp) {
-    this.toBeDeletedTimestamp = timestamp;
+    this.deleteTimeMillis = timestamp;
   }
 }

@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A scheduled job.
@@ -101,8 +102,9 @@ public interface Job {
   boolean isToBeDeleted();
 
   /**
-   * @return the time at which this job was marked for deletion
+   * @return the time at which this job was marked for deletion, null only if {@link #isToBeDeleted} returns false
    */
-  long getToBeDeletedTimestamp();
+  @Nullable
+  Long getDeleteTimeMillis();
 }
 
