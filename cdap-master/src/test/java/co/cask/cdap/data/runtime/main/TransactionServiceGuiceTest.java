@@ -31,7 +31,7 @@ public class TransactionServiceGuiceTest {
   @Test
   public void testGuiceInjector() {
     Injector injector = TransactionServiceTwillRunnable.createGuiceInjector(CConfiguration.create(),
-                                                                            new Configuration());
+                                                                            new Configuration(), "");
     // get one tx manager
     TransactionManager txManager1 = injector.getInstance(TransactionManager.class);
     // get a second tx manager

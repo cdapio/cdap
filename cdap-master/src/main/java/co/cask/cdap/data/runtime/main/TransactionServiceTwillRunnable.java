@@ -81,7 +81,8 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.TRANSACTION, context.getInstanceId());
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
@@ -94,14 +95,14 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     services.add(injector.getInstance(TransactionService.class));
   }
 
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      createDataFabricModule(),
+      createDataFabricModule(txClientId),
       new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
@@ -123,8 +124,8 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
     );
   }
 
-  private static Module createDataFabricModule() {
-    return Modules.override(new DataFabricModules().getDistributedModules()).with(new AbstractModule() {
+  private static Module createDataFabricModule(String txClientId) {
+    return Modules.override(new DataFabricModules(txClientId).getDistributedModules()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // Bind to provider that create new instances of storage and tx manager every time.

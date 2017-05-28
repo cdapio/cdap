@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
  * Tests for TTL Cleanup logic in LevelDB.
  */
 public class LevelDBTTLCleanupTest extends DataCleanupTest {
+  private static final int CLEANUP_PERIOD_IN_SECS = 1;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -43,7 +44,7 @@ public class LevelDBTTLCleanupTest extends DataCleanupTest {
   @BeforeClass
   public static void init() throws IOException {
     CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY, Long.toString(1));
+    cConf.set(Constants.MessagingSystem.LOCAL_DATA_CLEANUP_FREQUENCY, Integer.toString(CLEANUP_PERIOD_IN_SECS));
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
     tableFactory = new LevelDBTableFactory(cConf);
   }
@@ -51,7 +52,7 @@ public class LevelDBTTLCleanupTest extends DataCleanupTest {
   @Override
   protected void forceFlushAndCompact(Table table) throws Exception {
     // since we have a periodic thread doing the clean up, we don't/can't do much here.
-    TimeUnit.SECONDS.sleep(1);
+    TimeUnit.SECONDS.sleep(CLEANUP_PERIOD_IN_SECS);
   }
 
   @Override
