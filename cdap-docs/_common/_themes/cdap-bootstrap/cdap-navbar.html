@@ -21,7 +21,7 @@
           </button>
           <a class="navbar-brand" href="{{ master_url_root + '/../index.html' }}">
           <span><img alt="CDAP logo" src="{{ pathto('_static/doc_logo.png', 1) }}"/></span></a>
-          <span class="navbar-text navbar-version pull-left">Version {{ version|e }}</span>
+          <span class="navbar-text navbar-version pull-left">v {{ version|e }}</span>
 {%- if pagename != "search" %}
           <form class="navbar-form navbar-right" action="{{ pathto('search') }}" method="get">
             <div class="form-group">
@@ -37,12 +37,13 @@
       <div class="row">
         <div class="collapse navbar-collapse nav-collapse">
           <ul class="nav navbar-nav">
-{%- for manual_title, manual_href in [('Introduction', 'introduction/index.html'),
+{%- for manual_title, manual_href in [('Home',         'index.html'),
+                                      ('Introduction', 'introduction/index.html'),
                                       ('Guides',       'index.html'),
                                       ('Reference',    'reference-manual/index.html'),
                                       ('Help',         'faqs/index.html'),
-                                     ] %}
-            <li class="docsite-nav-tab-container"><a class="docsite-nav-tab-link" href="{{ master_url_root + '/../' + manual_href }}">{{ manual_title }}</a></li>
+                                     ]%}{%- if manual_title|lower == theme_manual_highlight %}{% set highlight_class = 'current' %}{%- else %}{% set highlight_class = '' %}{%- endif %}
+            <li class="docsite-nav-tab-container"><a class="docsite-nav-tab-link {{ highlight_class }}" href="{{ master_url_root + '/../' + manual_href }}">{{ manual_title }}</a></li>
 {%- endfor %}
           </ul>
         </div>

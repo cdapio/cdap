@@ -501,31 +501,31 @@ html_theme = 'cdap-bootstrap'
 #
 # manual_list is an ordered list of the cdap_manuals and cdap_extensions
 #
-# Fields: directory, intersphinx_mapping, manual name, icon
+# Fields: directory, intersphinx_mapping, manual_title, manual_set
 #
-# icon: "" for none, "new-icon" for the ico_new.png
+# manual_set: the set that a manual belongs to and determines the highlighting in the navbar
 
 manuals_list = [
-    ['introduction',        'introduction', 'Introduction to CDAP',            '',],
-    ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
-    ['admin-manual',        'admin',        'Administration Manual',           '',],
-    ['integrations',        'integrations', 'Integrations',                    '',],
-    ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',    'reference',    'Reference Manual',                '',],
-    ['faqs',                'faqs',         'FAQs',                            '',],
+    ['introduction',        'introduction', 'Introduction to CDAP',            'introduction',],
+    ['developers-manual',   'developers',  u'Developers’ Manual',              'guides',],
+    ['admin-manual',        'admin',        'Administration Manual',           'guides',],
+    ['integrations',        'integrations', 'Integrations',                    'guides',],
+    ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', 'guides',],
+    ['reference-manual',    'reference',    'Reference Manual',                'reference',],
+    ['faqs',                'faqs',         'FAQs',                            'help',],
 ]
 
 manual_intersphinx_mapping = {}
 manuals_dict = {}
 manual_titles_list = []
-manual_dirs_list  = []
-manual_icons_list = []
+manual_dirs_list = []
+manual_set_dict = {}
 for m in manuals_list:
     manual_intersphinx_mapping[m[0]] = m[1]
-    manuals_dict[m[0]]= m[2]
+    manuals_dict[m[0]] = m[2]
     manual_dirs_list.append(m[0])
     manual_titles_list.append(m[2])
-    manual_icons_list.append(m[3])
+    manual_set_dict[m[0]] = m[3]
 
 manuals = []
 for m in manuals_list:
@@ -533,13 +533,13 @@ for m in manuals_list:
 
 html_theme_options = {
     'manuals': manuals,
-    'docs_url': '//docs.cask.co/cdap',
-    'json_versions_js': '//docs.cask.co/cdap/json-versions.js',
+    'docs_url': 'https://docs.cask.co/cdap',
+    'json_versions_js': 'https://docs.cask.co/cdap/json-versions.js',
     'language': 'en',
     'manual': '',
     'manual_dirs': manual_dirs_list,
     'manual_titles': manual_titles_list,
-    'manual_icons': manual_icons_list,
+    'manual_highlight': '',
     'meta_git':
         { 'git_hash': git_hash,
           'git_timestamp': git_timestamp,
@@ -862,6 +862,7 @@ def set_conf_for_manual():
     print "set_conf_for_manual: %s" % m
 
     html_theme_options['manual'] = m
+    html_theme_options['manual_highlight'] = manual_set_dict[m]
     html_short_title_toc = manuals_dict[m]
 #     html_short_title = u'CDAP %s' % html_short_title_toc
     html_short_title = html_short_title_toc

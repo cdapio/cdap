@@ -97,6 +97,17 @@
         theme: 'minimal-dark'
     });
 
+    $('.scrollable-y-outside').mCustomScrollbar({
+        axis: 'y',
+        callbacks: {
+            onUpdate: function() {
+                $(this).mCustomScrollbar('scrollTo', 'top');
+            }
+        },
+        scrollbarPosition: 'outside',
+        scrollInertia: 0,
+        theme: 'minimal-dark'
+    });
 
     $('pre').mCustomScrollbar({
         axis: 'x',

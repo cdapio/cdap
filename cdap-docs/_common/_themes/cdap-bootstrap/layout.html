@@ -78,78 +78,6 @@
 {%- endmacro %}
 
 {%- macro css() %}
-<style>
-/* -- Manual Nav Scroll (Left Sidebar) -- */
-
-p {
-	margin: 16px 0;
-	padding: 0;
-}
-
-li, li p {
-    margin: 8px 0;
-    padding: 0;
-}
-
-#sidebar.bs-sidenav {
-	background-color: #F7F7F7;
-	border-radius: 2px;
-	font-size: 13px;
-	line-height: 16px;
-	margin-bottom: 0;
-	margin-top: 0;
-	max-height: calc(100% - 140px - 60px);
-	overflow: auto;
-	padding-bottom: 16px;
-	padding-left: 16px;
-	padding-right: 12px;
-	padding-top: 8px;
-}
-
-#sidebar h3 {
-	border-bottom-color: rgb(207, 216, 220);
-	border-bottom-style: solid;
-	border-bottom-width: 1px;
-	font-size: 13px;
-	font-weight: 500;
-	line-height: 16px;
-	margin-bottom: 8px;
-	margin-top: 8px;
-	padding-bottom: 8px;
-}
-
-#sidebar a {
-	color: #212121;
-	padding: 5px 20px;
-	padding-left: 0;
-	padding-right: 0;
-}
-
-#sidebar a:hover {
-	background-color: transparent;
-	border-right: 0;
-	color: #FF6600;
-	text-decoration: none;
-}
-
-.nav {
-    padding-left:0;
-    margin-bottom:0;
-    list-style:none;
-}
-
-nav.pagenav,
-.toctree-l2,
-.toctree-l3 {
-    padding-left: 10px;
-}
-
-.toctree-l1.current > a.reference.internal,
-.toctree-l2.current > a.reference.internal,
-.toctree-l3.current > a.reference.internal {
-    font-weight: bold;
-}
-</style>
     <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
     <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
     {%- for cssfile in css_files %}
@@ -219,7 +147,7 @@ nav.pagenav,
 {%- macro left_sidebar() %}
     {%- if render_sidebar %}
     <div class="{{ bs_span_prefix }}2">
-      <div id="sidebar" class="bs-sidenav scrollable-y" role="complementary">
+      <div id="sidebar" class="bs-sidenav scrollable-y-outside" role="complementary">
         {%- for sidebartemplate in sidebars %}
           {%- include sidebartemplate %}
         {%- endfor %}

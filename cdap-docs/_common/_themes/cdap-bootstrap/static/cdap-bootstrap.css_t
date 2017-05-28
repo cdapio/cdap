@@ -49,13 +49,13 @@ background for Left Sidebar
 }
 
 body,html {
-	-moz-osx-font-smoothing: grayscale;
-	-ms-text-size-adjust: 100%;
-	-webkit-font-smoothing: antialiased;
-	-webkit-text-size-adjust: 100%;
-	color: #212121;
-	font: 400 16px/24px Roboto, sans-serif;
-	text-size-adjust: 100%;
+    -moz-osx-font-smoothing: grayscale;
+    -ms-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    color: #212121;
+    font: 400 16px/24px Roboto, sans-serif;
+    text-size-adjust: 100%;
 }
 
 a {
@@ -63,8 +63,8 @@ a {
 }
 
 p {
-	margin: 16px 0;
-	padding: 0;
+    margin: 16px 0;
+    padding: 0;
 }
 
 li, li p {
@@ -85,49 +85,60 @@ div.row > div.content > div.section > ul.simple {
 /* -- Header -- */
 
 .navbar-inverse {
-	background-color: #666666;
-	background-image: none;
-	border-color: #666666;
-	box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+    background-color: #666666;
+    background-image: none;
+    border-bottom: 0;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
 }
 
 /* -- Header First Row -- */
 
 .navbar-header {
-	margin-bottom: 0px;
-	width: 100%;
+    margin-bottom: 0;
+    width: 100%;
 }
 
 .navbar-text.navbar-version.pull-left {
-	color: white;
-	font: 16px/42px Roboto, sans-serif;
-	letter-spacing: 0;
-	margin-bottom: 0px;
-	margin-top: 5px;
+    color: white;
+    font: 14px/16px Roboto, sans-serif;
+    letter-spacing: 0;
+    margin-bottom: 0;
+    margin-top: 26px;
+    margin-left: 10px;
 }
 
 .navbar-brand {
-	padding-top: 8px;
-	padding-right: 0px;
+    padding-right: 0;
+    padding-top: 8px;
+    margin-top: 10px;
 }
 
 .navbar-brand img {
-	height: 120%;
-	vertical-align: bottom;
+    height: 30px;
+}
+
+a.navbar-brand {
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-top: 10px;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
 }
 
 .form-control {
-	border: #999999;
-	border-radius: 2px;
-	color: white;
+    border: #999999;
+    border-radius: 2px;
+    color: white;
 }
 
 .navbar-search-image {
-	color: white;
-	left: 36px;
-	position: relative;
-	transition: color .2s;
-	vertical-align: middle;
+    color: white;
+    left: 36px;
+    position: relative;
+    transition: color .2s;
+    vertical-align: middle;
 }
 
 .navbar-search-image:before {
@@ -138,6 +149,12 @@ form.navbar-form.navbar-right input.form-control {
     padding-left: 36px;
 }
 
+@media (min-width: 768px) {
+    .navbar > .container .navbar-brand, .navbar > .container-fluid .navbar-brand {
+        margin-left: 0;
+    }
+}
+
 .form-control {
     background: #999999;
 }
@@ -145,95 +162,104 @@ form.navbar-form.navbar-right input.form-control {
 /* -- Placeholder color -- */
 
 .form-control::-webkit-input-placeholder {
-	color: white;
-	transition: color .2s;
+    color: white;
+    transition: color .2s;
 }
 
 .form-control::-moz-placeholder {
-	color: white;
-	transition: color .2s;
+    color: white;
+    transition: color .2s;
 }
 
 .form-control:-moz-placeholder {
-	color: white;
-	transition: color .2s;
+    color: white;
+    transition: color .2s;
 }
 
 .form-control:-ms-input-placeholder {
-	color: white;
-	transition: color .2s;
+    color: white;
+    transition: color .2s;
 }
 
 /* -- Header Second Row -- */
 
 .docsite-nav-tab-link {
-	border-bottom: 2px solid transparent;
-	border-top: 2px solid transparent;
-	display: inline-block;
-	font: 500 14px/44px Roboto, sans-serif;
-	margin: 0;
-	padding: 0 24px;
-	padding-top: 0px;
-	text-transform: uppercase;
-	transition: color .2s;
+    border-bottom: 2px solid transparent;
+    border-top: 2px solid transparent;
+    display: inline-block;
+    font: 500 14px/44px Roboto, sans-serif;
+    margin: 0;
+    padding: 0 24px;
+    padding-top: 0px;
+    text-transform: uppercase;
+    transition: color .2s;
+    border-bottom-width: 4px;
 }
 
-.docsite-nav-tab-link:hover,.docsite-nav-tab-link:focus {
-	color: white;
-	text-decoration: none;
-}
-
-.docsite-nav-tab-link-active {
-	border-bottom-color: white;
-	color: white;
+.docsite-nav-tab-link:hover,
+.docsite-nav-tab-link:focus {
+    color: white;
+    text-decoration: none;
 }
 
 .navbar-inverse .navbar-nav > li > a {
-	color: rgba(255,255,255,.7);
-	padding-bottom: 11px;
-	padding-top: 11px;
+    color: rgba(255,255,255,.7);
+    padding-bottom: 11px;
+    padding-top: 11px;
+}
+
+.navbar-inverse .navbar-nav > li > a.current {
+    color: white;
+    border-bottom-color: #FF6600;
+/*
+    padding-bottom: 9px;
+ */
+}
+
+li.docsite-nav-tab-container {
+    margin: 0 0;
 }
 
 /* -- Manual Nav Scroll (Left Sidebar) -- */
 
 #sidebar.bs-sidenav {
-	background-color: #F7F7F7;
-	border-radius: 2px;
-	font-size: 13px;
-	line-height: 16px;
-	margin-bottom: 0;
-	margin-top: 0;
-	max-height: calc(100% - 140px - 60px);
-	overflow: auto;
-	padding-bottom: 16px;
-	padding-left: 16px;
-	padding-right: 12px;
-	padding-top: 8px;
+    background-color: #F7F7F7;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 16px;
+    margin-bottom: 0;
+    margin-top: 0;
+    max-height: calc(100% - 140px - 60px);
+    overflow: auto;
+    padding-bottom: 16px;
+    padding-left: 16px;
+    padding-right: 12px;
+    padding-top: 8px;
 }
 
 #sidebar h3 {
-	border-bottom-color: rgb(207, 216, 220);
-	border-bottom-style: solid;
-	border-bottom-width: 1px;
-	font-size: 13px;
-	font-weight: 500;
-	line-height: 16px;
-	margin-bottom: 8px;
-	margin-top: 8px;
-	padding-bottom: 8px;
+    border-bottom-color: rgb(207, 216, 220);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 16px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+    padding-bottom: 8px;
 }
 
 #sidebar a {
-	color: #212121;
-	padding-left: 0;
-	padding-right: 0;
+    color: #212121;
+    padding-left: 0;
+    padding-right: 0;
 }
 
 #sidebar a:hover {
-	background-color: transparent;
-	border-right: 0;
-	color: #FF6600;
-	text-decoration: none;
+    background-color: transparent;
+    border-right: 0;
+    color: #FF6600;
+    text-decoration: none;
 }
 
 nav.pagenav,
@@ -252,6 +278,14 @@ nav.pagenav,
 /* -- Calc max height less top space less bottom space -- */
 
 /* -- See cdap-dynamicscrollspy-4.css -- */
+
+/* -- Main Section -- */
+/* -- Add space on left side to allow for permalink icons to show up in -- */
+
+#main-content {
+    padding-right: 0;
+    padding-left: 30px;
+}
 
 /* -- Footer -- */
 
@@ -281,7 +315,7 @@ h3:hover .headerlink:before,
 h4:hover .headerlink:before,
 h5:hover .headerlink:before,
 h6:hover .headerlink:before {
-	visibility: visible;
+    visibility: visible;
 }
 
 a.headerlink {
@@ -289,48 +323,48 @@ a.headerlink {
 }
 
 a.headerlink:before {
-	content: '\1F517';
-	font: 16px/20px Roboto, sans-serif;
-	margin-left: -24px;
-	padding-right: 3px;
-	visibility: hidden;
+    content: '\1F517';
+    font: 16px/20px Roboto, sans-serif;
+    margin-left: -24px;
+    padding-right: 3px;
+    visibility: hidden;
 }
 
 /* -- Page Section Heads -- */
 
 h1 {
-	color: #757575;
-	font: 300 34px/40px Roboto, sans-serif;
-	letter-spacing: -.01em;
+    color: #757575;
+    font: 300 34px/40px Roboto, sans-serif;
+    letter-spacing: -.01em;
 }
 
 h2 {
-	border-bottom: 1px solid #ebebeb;
-	font: 300 24px/32px Roboto, sans-serif;
-	letter-spacing: -.01em;
-	margin: 40px 0 20px;
-	padding-bottom: 3px;
+    border-bottom: 1px solid #ebebeb;
+    font: 300 24px/32px Roboto, sans-serif;
+    letter-spacing: -.01em;
+    margin: 40px 0 20px;
+    padding-bottom: 3px;
 }
 
 h3 {
-	border-bottom: 1px dashed #ebebeb;
-	font: 400 20px/32px Roboto, sans-serif;
-	margin: 32px 0 16px;
+    border-bottom: 1px dashed #ebebeb;
+    font: 400 20px/32px Roboto, sans-serif;
+    margin: 32px 0 16px;
 }
 
 h4 {
-	font: 400 18px/32px Roboto, sans-serif;
-	margin: 32px 0 16px;
+    font: 400 18px/32px Roboto, sans-serif;
+    margin: 32px 0 16px;
 }
 
 h5 {
-	font: 700 16px/24px Roboto, sans-serif;
-	margin: 32px 0 16px;
+    font: 700 16px/24px Roboto, sans-serif;
+    margin: 32px 0 16px;
 }
 
 h6 {
-	font: 500 16px/24px Roboto, sans-serif;
-	margin: 32px 0 16px;
+    font: 500 16px/24px Roboto, sans-serif;
+    margin: 32px 0 16px;
 }
 
 /* -- Literals ------------------------------------------ */
@@ -339,30 +373,30 @@ h6 {
 /* -- was background-color: #F0F0F0;                   -- */
 
 .docutils.literal {
-	background: #F0F0F0;
-	border-radius: 3px;
-	color: #37474f;
+    background: #F0F0F0;
+    border-radius: 3px;
+    color: #37474f;
     font: 100%/1 monospace;
-	padding: 1px 4px;
+    padding: 1px 4px;
 }
 
 td .docutils.literal {
-	background: #F0F0F0;
-	border: 0;
-	border-radius: 0;
-	padding: 0;
+    background: #F0F0F0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
 }
 
 pre {
-	background-color: #F1F6F8;
-	border-radius: 2px;
-	border: none;
-	color: #37474f;
-	font: 14px/20px monospace;
-	margin: 16px 0;
-	overflow-x: auto;
-	padding: 8px;
-	position: relative;
+    background-color: #F1F6F8;
+    border-radius: 2px;
+    border: none;
+    color: #37474f;
+    font: 14px/20px monospace;
+    margin: 16px 0;
+    overflow-x: auto;
+    padding: 8px;
+    position: relative;
     white-space: pre;
     word-break: keep-all;
     word-wrap: normal;
@@ -375,10 +409,10 @@ code.docutils.literal {
 }
 
 tt {
-	color: #37474F;
-	font-family: monospace;
-	font-size: 1.2em;
-	font: 100%/1 monospace;
+    color: #37474F;
+    font-family: monospace;
+    font-size: 1.2em;
+    font: 100%/1 monospace;
 }
 
 .copyable.copyable-text.container,
@@ -397,8 +431,8 @@ td > code.docutils.literal {
 /* -- Images -- */
 
 .bordered-image {
-	border: 1px solid #ccc;
-	width: 100%;
+    border: 1px solid #ccc;
+    width: 100%;
 }
 
 .bordered-image.reference.internal.image-reference {
@@ -406,9 +440,9 @@ td > code.docutils.literal {
 }
 
 .figure.align-center {
-	margin: 1em 0;
-	padding: 0 0;
-	width: 100%;
+    margin: 1em 0;
+    padding: 0 0;
+    width: 100%;
 }
 
 /* --  Admin Manual Installation Images -- */
@@ -527,7 +561,7 @@ div.table-block.container {
     border-style: solid;
     border-width: 1px;
     margin-bottom: 40px;
-    margin-left: 15px;
+    margin-left: 0;
     margin-top: 20px;
     width:100%;
 }
