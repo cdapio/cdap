@@ -606,7 +606,7 @@ public abstract class HBaseTableUtil {
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
         TableName tableName = HRegionInfo.getTable(regionLoad.getName());
-        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+        HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
         if (!isCDAPTable(tableDescriptor)) {
           continue;
         }
