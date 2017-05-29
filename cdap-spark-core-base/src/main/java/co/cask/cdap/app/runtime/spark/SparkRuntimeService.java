@@ -108,6 +108,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   private static final String CDAP_LAUNCHER_JAR = "cdap-spark-launcher.jar";
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
+  private static final String CDAP_METRICS_PROPERTIES = "metrics.properties";
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
 
@@ -172,7 +173,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);
 
-        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
+        File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
         metricsConfPath = metricsConf.getAbsolutePath();
       } else {
         // Localize all user requested files in distributed mode
@@ -199,8 +200,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Create metrics conf file in the current directory since
         // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
         // Also localize the metrics conf file to the executor nodes
-        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties",
-                                                                            new File(System.getProperty("user.dir"))));
+        File metricsConf = SparkMetricsSink.writeConfig(new File(CDAP_METRICS_PROPERTIES));
         metricsConfPath = metricsConf.getName();
         localizeResources.add(new LocalizeResource(metricsConf));
 
@@ -225,7 +225,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(sparkJar, true));
 
         // Localize logback if there is one. It is placed at the beginning of the classpath
-        File logbackJar = ProgramRunners.createLogbackJar(tempDir);
+        File logbackJar = ProgramRunners.createLogbackJar(new File(tempDir, "logback.xml.jar"));
         if (logbackJar != null) {
           localizeResources.add(new LocalizeResource(logbackJar));
           classpath = joiner.join(Paths.get("$PWD", logbackJar.getName()), classpath);
