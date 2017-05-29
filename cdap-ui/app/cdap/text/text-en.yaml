@@ -829,18 +829,19 @@ features:
   MarketEntityModal:
     version: "Version :"
   Navbar:
+    dataprepLabel: Data Preparation
     metadataLabel: Metadata
     Metadata:
-      searchLabel: Search
-      integrationsLabel: Integrations
-      tagsLabel: Tags
       dictionaryLabel: Dictionary
+      integrationsLabel: Integrations
+      searchLabel: Search
+      tagsLabel: Tags
     NamespaceDropdown:
-      applications: Applications
-      namespaceLabel: Namespace
-      datasets: Datasets
-      streams: Streams
       addNS: "Add Namespace"
+      applications: Applications
+      datasets: Datasets
+      namespaceLabel: Namespace
+      streams: Streams
     overviewLabel: Overview
     pipelinesLabel: Pipelines
     ProductDropdown:

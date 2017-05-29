@@ -130,6 +130,22 @@ function addCustomQueryParams(url, params = {}) {
   return url;
 }
 
+window.getDataPrepUrl = function(navigationObj = {}) {
+  let {stateName, stateParams} = navigationObj;
+
+  let uiApp = 'cdap';
+  let baseUrl = `${location.protocol}//${location.host}/${uiApp}/ns/:namespace`;
+
+  let stateToUrlMap = {
+    'connections': '/connections',
+    'workspaces': '/dataprep'
+  };
+
+  let url = baseUrl + stateToUrlMap[stateName || 'workspaces'];
+  url = buildCustomUrl(url, stateParams);
+  return url;
+};
+
 window.getTrackerUrl = function(navigationObj = {}) {
   let {stateName, stateParams} = navigationObj;
   let uiApp = 'metadata';
