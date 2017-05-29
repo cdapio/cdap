@@ -9,89 +9,68 @@
     :copyright: Copyright 2017 Cask Data, Inc.
     :license: Apache License, Version 2.0
 #}
-{%- set sidebar_title = 'CDAP Documentation' -%}
-{%- set master_url_root = pathto(master_doc, 1) -%}
-{%- if master_url_root == '#' -%}{% set master_url_root = '' -%}{% endif -%}
-{%- if html_short_title_toc != sidebar_title -%}{% set master_url_root =  master_url_root + '/..' -%}{%- endif -%}
-{%- set manual_dirs = [''] + theme_manual_dirs -%}
-{%- set hrefs = [ master_url_root + '/../index.html'] -%}
-{%- for theme_manual_dir in theme_manual_dirs -%}
-    {%- set _ = hrefs.append(master_url_root + '/../'+ theme_manual_dir + '/index.html') -%}
-{%- endfor -%}
-{%- set titles =  ['Overview'] + theme_manual_titles -%}
-{%- for manual_dir, href, title in [('release-notes',     'reference-manual/release-notes.html', 'Release Notes'),
-                                    ('genindex',          'reference-manual/genindex.html',      'Index'),
-                                    ('glossary',          'reference-manual/glossary.html',      'Glossary'),
-                                    ('search',            'search.html',                         'Search'),
-                                   ] -%}
-    {%- set _ = theme_manuals.append(manual_dir) -%}
-    {%- set _ = manual_dirs.append(manual_dir) -%}
-    {%- set _ = hrefs.append(master_url_root + '/../'+ href) -%}
-    {%- set _ = titles.append(title) -%}
-{%- endfor %}
-
-<!-- theme_manual_complete: {{ theme_manual_complete }} -->
 <!-- theme_manual: {{ theme_manual }} -->
 <!-- theme_manual_highlight: {{ theme_manual_highlight }} -->
-
-<!-- example theme_manual_complete: {'introduction': [['introduction', 'index.html', 'Introduction to CDAP']], 'guides': [['developers-manual', 'index.html', u'Developer\u2019s Manual'], ['admin-manual', 'index.html', 'Administration Manual'], ['integrations', 'index.html', 'Integrations'], ['examples-manual', 'index.html', 'Examples, Guides, and Tutorials']], 'reference': [['reference-manual', 'index.html', 'Reference Manual'], ['reference-manual', 'release-notes.html', 'Release Notes'], ['reference-manual', 'genindex.html', 'Index'], ['reference-manual', 'glossary.html', 'Glossary']], 'help': [['faqs', 'faqs', 'FAQs']]} -->
-<!-- example theme_manual_highlight: guides -->
-<!-- example 'guides': [['developers-manual', 'index.html', u'Developer\u2019s Manual'], ['admin-manual', 'index.html', 'Administration Manual'], ['integrations', 'index.html', 'Integrations'], ['examples-manual', 'index.html', 'Examples, Guides, and Tutorials']] -->
 
 {%- if theme_manual_highlight == '' %}{% set theme_manual_highlight = pagename %}{% endif -%}
 {%- set sidebar_title = theme_manual_highlight|capitalize -%}
 {%- set master_url_root = pathto(master_doc, 1) -%}
+{%- if theme_manual_highlight == 'guides' -%}
+  {%- set sidebar_title_link = master_url_root + '/../../' + theme_manual_highlight + '.html' -%}
+{%- else -%}
+  {%- set sidebar_title_link = sidebar_title -%}
+{%- endif -%}
 {%- if master_url_root == '#' -%}{% set master_url_root = '' -%}{% endif %}
-
-<!-- master_url_root: {{ master_url_root }} -->
+<!-- sidebar_title_link: {{ sidebar_title_link }} -->
 
   <div role="note" aria-label="manuals links">
+    {%- if theme_manual_highlight == 'guides' -%}
+    <h3><a href="{{ sidebar_title_link }}">{{ sidebar_title }}</a></h3>
+    {%- else -%}
     <h3>{{ sidebar_title }}</h3>
-    <ul class="this-page-menu">
-    {%- for manual in theme_manual_complete[theme_manual_highlight] %}
-        {%- set bold_open = '' -%}{% set bold_close = '' %}
-        {%- set title = manual['title'] %}
-        {%- if theme_manual == '' -%}
-        {%- set href = master_url_root + '/../' + manual['directory'] +'/' + manual['href'] %}
-        {%- else -%}
-        {%- set href = master_url_root + '/../../' + manual['directory'] +'/' + manual['href'] %}
-        {%- endif -%}
-        {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
-        {%- if loop.first and html_short_title_toc == doc_set %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
-      <li>{{ bold_open }}<a href="{{ href }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
-<!-- title: {{ title }} -->
-<!-- html_short_title_toc: {{ html_short_title_toc }} -->
+    {%- endif %}
 
-        {%- if (title == html_short_title_toc) %}
+    {%- if theme_manual_highlight == 'reference' -%}
+    <ul class="reference-page-menu">
+    {%- for manual in theme_manuals_complete[theme_manual_highlight] %}
+      {%- set bold_open = '' -%}{% set bold_close = '' %}
+      {%- set title = manual['title'] %}
+      {%- if theme_manual == '' -%}
+      {%- set href = master_url_root + '/../' + manual['directory'] +'/' + manual['href'] %}
+      {%- else -%}
+      {%- set href = master_url_root + '/../../' + manual['directory'] +'/' + manual['href'] %}
+      {%- endif -%}
+      {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
+      {%- if loop.first and html_short_title_toc == doc_set %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
+      {%- if (title == html_short_title_toc) %}
       <nav class="pagenav">
       {{ toctree(titles_only=true, collapse=false, maxdepth=manual['expansion']) }}</nav>
-        {%- endif %}
-    {%- endfor %}
-    </ul>
-  </div>
-
-<!--
-{%- macro build_manuals_list(manuals, doc_set) %}
-    <ul class="this-page-menu">
-    {%- for manual_dir in manual_dirs %}
-      {%- if manual_dir in manuals %}
-        {%- set bold_open = '' -%}{% set bold_close = '' %}
-        {%- set title = titles[loop.index0] %}
-        {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
-        {%- if manual_dir == pagename %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
-        {%- if loop.first and html_short_title_toc == doc_set and pagename == 'index' %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
-      <li>{{ bold_open }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
-        {%- if (title == html_short_title_toc) %}
-      <nav class="pagenav">
-      {{ toctree(titles_only=titles_only_global_toc) }}</nav>
-        {%- endif %}
+      {%- else -%}
+      <li class="toctree-l1">{{ bold_open }}<a href="{{ href }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
       {%- endif %}
     {%- endfor %}
     </ul>
-{%- endmacro %}
 
-  <div role="note" aria-label="manuals links">
-    <h3><a href="{{ master_url_root }}{{ _('/../index.html') }}" rel="nofollow">{{ sidebar_title }}</a></h3>
-    {{ build_manuals_list(theme_manuals, sidebar_title) }}
+    {%- else -%}
+
+    <ul class="this-page-menu">
+    {%- for manual in theme_manuals_complete[theme_manual_highlight] %}
+      {%- set bold_open = '' -%}{% set bold_close = '' %}
+      {%- set title = manual['title'] %}
+      {%- if theme_manual == '' -%}
+      {%- set href = master_url_root + '/../' + manual['directory'] +'/' + manual['href'] %}
+      {%- else -%}
+      {%- set href = master_url_root + '/../../' + manual['directory'] +'/' + manual['href'] %}
+      {%- endif -%}
+      {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
+      {%- if loop.first and html_short_title_toc == doc_set %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
+      <li class="toctree-l1">{{ bold_open }}<a href="{{ href }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
+      {%- if (title == html_short_title_toc) %}
+      <nav class="pagenav">
+      {{ toctree(titles_only=true, collapse=false, maxdepth=manual['expansion']) }}</nav>
+      {%- endif %}
+    {%- endfor %}
+    </ul>
+
+    {%- endif %}
   </div>
--->
