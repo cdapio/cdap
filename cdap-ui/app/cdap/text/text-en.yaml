@@ -365,7 +365,6 @@ features:
           suggestion1: your search
           title: 'No match found for "{searchText}"'
         searchPlaceholder: Search table name
-        searchPlaceholder: Search table name
         table:
           colcountlabel: NUMBER OF COLUMNS
           namecollabel: NAME
