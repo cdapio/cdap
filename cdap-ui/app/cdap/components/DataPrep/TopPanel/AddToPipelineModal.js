@@ -168,42 +168,29 @@ export default class AddToHydratorModal extends Component {
     if (!dbInfo) { return null; }
 
     let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
-    let pluginName = 'Database';
 
-    try {
-      let parsedProperties = JSON.parse(dbInfo.databaseConfig);
+    let plugin = objectQuery(dbInfo, 'values', 0, 'Database');
 
-      let pluginInfo = {
-        name: pluginName,
-        label: pluginName,
-        type: 'batchsource',
-        artifact: batchArtifact,
-        properties: {
-          referenceName: pluginName,
-          jdbcPluginName: 'mysql',
-          jdbcPluginType: 'jdbc',
-          connectionString: parsedProperties.connectionString,
-          user: parsedProperties.userName,
-          password: parsedProperties.password,
-          importQuery: dbInfo.name
-        }
-      };
+    let pluginInfo = {
+      name: 'Database',
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: plugin.properties
+    };
 
-      let batchStage = {
-        name: pluginName,
-        plugin: pluginInfo
-      };
+    let batchStage = {
+      name: plugin.name,
+      plugin: pluginInfo
+    };
 
-      return {
-        batchSource: batchStage,
-        connections: [{
-          from: pluginName,
-          to: 'Wrangler'
-        }]
-      };
-    } catch (e) {
-      console.log('properties parse error', e);
-    }
+    return {
+      batchSource: batchStage,
+      connections: [{
+        from: plugin.name,
+        to: 'Wrangler'
+      }]
+    };
   }
 
   constructProperties(pluginVersion) {
@@ -231,6 +218,14 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getSpecification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 'database') {
+      let specParams = {
+        namespace,
+        connectionId: state.workspaceInfo.properties.connectionid,
+        tableId: state.workspaceInfo.properties.id
+      };
+
+      rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -283,8 +278,8 @@ export default class AddToHydratorModal extends Component {
         let sourceConfigs;
         if (state.workspaceInfo.properties.connection === 'file') {
           sourceConfigs = this.constructFileSource(res[0], res[2]);
-        } else if (state.workspaceInfo.properties.databaseConfig) {
-          sourceConfigs = this.constructDatabaseSource(res[0], state.workspaceInfo.properties);
+        } else if (state.workspaceInfo.properties.connection === 'database') {
+          sourceConfigs = this.constructDatabaseSource(res[0], res[2]);
         }
 
         if (sourceConfigs) {
@@ -319,7 +314,7 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
-        if (state.workspaceInfo.properties.databaseConfig) {
+        if (state.workspaceInfo.properties.connection === 'database') {
           realtimeUrl = null;
         }
 
@@ -342,6 +337,8 @@ export default class AddToHydratorModal extends Component {
         });
 
       }, (err) => {
+        console.log('err', err);
+
         this.setState({
           error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
           loading: false

@@ -76,13 +76,16 @@ export default class FilePath extends Component {
         return directory.length > 0;
       });
 
-    let paths = [];
+    let paths = [{
+      id: shortid.generate(),
+      name: 'Root',
+      link: `${this.props.baseStatePath}/`
+    }];
 
     splitPath.forEach((value, index) => {
-      let link = this.props.baseStatePath;
-
       let directoryPath = splitPath.slice(0, index+1).join('/');
 
+      let link = this.props.baseStatePath;
       link = `${link}/${directoryPath}`;
 
       paths.push({

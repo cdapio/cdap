@@ -31,7 +31,7 @@ import isEmpty from 'lodash/isEmpty';
 
 require('./FileBrowser.scss');
 
-const BASEPATH = '/Users';
+const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
 
 export default class FileBrowser extends Component {
@@ -109,7 +109,8 @@ export default class FileBrowser extends Component {
 
     MyDataPrepApi.explorer({
       namespace,
-      path
+      path,
+      hidden: true
     }).subscribe((res) => {
       this.setState({
         loading: false,
@@ -118,9 +119,11 @@ export default class FileBrowser extends Component {
         search: ''
       });
     }, (err) => {
+      console.log('err', err);
+
       this.setState({
         loading: false,
-        error: err.response,
+        error: err.response.message || err.response,
         search: ''
       });
     });

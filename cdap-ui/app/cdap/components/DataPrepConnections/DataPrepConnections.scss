@@ -68,6 +68,13 @@ $gutter-width: 15px;
     }
 
     .connections-menu {
+      position: absolute;
+      top: 45px;
+      left: 0;
+      right: 0;
+      bottom: 70px;
+      overflow-y: auto;
+
       .menu-item {
         padding: 10px 15px 10px 35px;
         cursor: pointer;

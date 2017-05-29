@@ -18,12 +18,13 @@ import React, {Component, PropTypes} from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DataPrepApi from 'api/dataprep';
 import isNil from 'lodash/isNil';
-import isEmpty from 'lodash/isEmpty';
 import NamespaceStore from 'services/NamespaceStore';
 import T from 'i18n-react';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
+import ee from 'event-emitter';
+import {objectQuery} from 'services/helpers';
 
 require('./DatabaseBrowser.scss');
 
@@ -35,17 +36,23 @@ export default class DatabaseBrowser extends Component {
     let store = DataPrepBrowserStore.getState();
     this.state = {
       properties: store.database.properties,
+      connectionId: store.database.connectionId,
       tables: [],
       loading: true,
       search: '',
       searchFocus: true,
       error: null
     };
+
+    this.eventEmitter = ee(ee);
     this.fetchTables = this.fetchTables.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
     this.prepTable = this.prepTable.bind(this);
-    this.fetchTables();
+    this.eventBasedFetchTable = this.eventBasedFetchTable.bind(this);
+
+    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
   }
+
   componentDidMount() {
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
       let {database, activeBrowser} = DataPrepBrowserStore.getState();
@@ -58,31 +65,41 @@ export default class DatabaseBrowser extends Component {
         });
         return;
       }
+
       this.setState({
         properties: database.properties,
+        connectionId: database.connectionId,
         error: database.error
       }, this.fetchTables);
     });
   }
+
+  componentWillUnmount() {
+    this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
+  }
+
+  eventBasedFetchTable(connectionId) {
+    if (this.state.connectionId === connectionId) {
+      this.fetchTables();
+    }
+  }
+
   handleSearch(e) {
     this.setState({
       search: e.target.value
     });
   }
-  prepTable(tableName) {
-     let {userName, password, connectionString} = this.state.properties;
-     let {selectedNamespace: namespace} = NamespaceStore.getState();
-     let params = {
-      namespace
+
+  prepTable(tableId) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let params = {
+      namespace,
+      connectionId: this.state.connectionId,
+      tableId,
+      lines: 100
     };
-     let requestBody = {
-       userName,
-       password,
-       connectionString,
-       query: `SELECT * FROM ${tableName}`
-     };
-    DataPrepApi
-      .readTable(params, requestBody)
+
+    DataPrepApi.readTable(params)
       .subscribe(
         (res) => {
           let workspaceId = res.values[0].id;
@@ -97,48 +114,48 @@ export default class DatabaseBrowser extends Component {
         }
       );
   }
+
   fetchTables() {
-    let {userName, password, connectionString} = this.state.properties;
-    if (isEmpty(userName) || isEmpty(password) || isEmpty(connectionString)) {
-      return;
-    }
-    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    if (!this.state.connectionId) { return null; }
+
+    let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
-      namespace
+      namespace,
+      connectionId: this.state.connectionId
     };
-    DataPrepApi
-      .listTables(params, {userName, password, connectionString})
+
+    DataPrepApi.listTables(params)
       .subscribe(
         (res) => {
           this.setState({
-            tables: res,
+            tables: res.values,
             loading: false
           });
         },
         (err) => {
+          let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
+
           this.setState({
-            error: typeof err === 'object' ? err.response : err,
+            error: errorMessage,
             loading: false
           });
         }
       );
   }
+
   render() {
-    // FIXME: This should be going away as user wouldn't even be reaching here if plugin is not installed
-    const renderNoPluginMessage = () => {
+    const renderNoPluginMessage = (error) => {
       return (
          <div className="empty-search-container">
             <div className="empty-search">
-              <strong>{T.translate(`${PREFIX}.NoPlugin.title`)}</strong>
-              <hr />
-              <span>{T.translate(`${PREFIX}.NoPlugin.suggestion1`)}</span>
+              <strong>{error}</strong>
             </div>
           </div>
       );
     };
     const renderContents = (tables) => {
       if (this.state.error) {
-        return renderNoPluginMessage();
+        return renderNoPluginMessage(this.state.error);
       }
       if (!tables.length) {
         return (
@@ -183,17 +200,17 @@ export default class DatabaseBrowser extends Component {
           </div>
           <div className="database-content-body">
             {
-              filteredTables.map(table => {
+              tables.map(table => {
                 return (
                   <div
                     className="row content-row"
-                    onClick={this.prepTable.bind(this, table.tableName)}
+                    onClick={this.prepTable.bind(this, table.name)}
                   >
                     <div className="col-xs-8">
-                      <span>{table.tableName}</span>
+                      <span>{table.name}</span>
                     </div>
                     <div className="col-xs-4">
-                      <span>{table.columnCount}</span>
+                      <span>{table.count}</span>
                     </div>
                   </div>
                 );
@@ -211,7 +228,7 @@ export default class DatabaseBrowser extends Component {
     }
     let filteredTables = this.state.tables;
     if (this.state.search) {
-      filteredTables = this.state.tables.filter(table => table.tableName.indexOf(this.state.search) !== -1);
+      filteredTables = this.state.tables.filter(table => table.name.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
     }
     return (
       <div className="database-browser">

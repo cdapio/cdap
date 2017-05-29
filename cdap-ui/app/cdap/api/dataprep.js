@@ -50,16 +50,23 @@ const MyDataPrepApi = {
   getSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/explorer/fs/specification`),
 
   // Database Browser
-  listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/list`),
-  readTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/execute`),
+  listTables: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables`),
+  readTable: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables/:tableId/read`),
+  getDatabaseSpecification: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/tables/:tableId/specification`),
+
+  // JDBC
+  jdbcDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/drivers`),
+  jdbcAllowed: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/allowed`),
+  jdbcTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/connections/jdbc/test`),
 
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),
+  updateConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/update`),
   deleteConnection: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${connectionsPath}/:connectionId`),
   getConnection: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId`),
-  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`),
-  updateConnection: apiCreator(dataSrc, 'PUT', 'REQUEST', `${connectionsPath}/:connectionId/properties`)
+  listDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/list/drivers`)
+
 };
 
 export default MyDataPrepApi;

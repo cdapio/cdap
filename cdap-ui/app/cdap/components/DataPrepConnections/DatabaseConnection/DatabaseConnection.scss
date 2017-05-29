@@ -41,18 +41,31 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 }
 
 .database-options {
-  .db-image,
+  .db-image-container,
   .db-info {
     display: inline-block;
     vertical-align: middle;
   }
 
+  .db-image-container {
+    width: 50px;
+    height: 50px;
+    margin-right: 15px;
+  }
+
   .db-image {
-    transform: scale(0.5);
+    transform: scale(0.5) translate(-50%, -50%);
+  }
+
+  .db-info {
+    width: calc(100% - 65px);
   }
 
   .db-name {
-    font-size: 18px;
+    font-size: 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .db-installed {
@@ -71,6 +84,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   }
 
   .database-option {
+    padding: 10px;
+
     &.installed {
       cursor: pointer;
     }
@@ -104,6 +119,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
       }
     }
   }
+
+  .connection-check { margin-left: 10px; }
 
   .col-form-label {
     font-weight: 500;
@@ -156,7 +173,7 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   @include db-image(0);
 }
 
-.db-oracle12c {
+.db-oracle {
   @include db-image(1);
 }
 
@@ -176,7 +193,7 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   @include db-image(5);
 }
 
-.db-postgres {
+.db-postgresql {
   @include db-image(6);
 }
 

@@ -27,14 +27,10 @@ const Actions = {
 export {Actions} ;
 
 const defaultDatabaseValue = {
-  properties: {
-    connectionString: '',
-    userName: '',
-    password: '',
-    databasename: ''
-  },
+  properties: {},
   loading: false,
-  error: null
+  error: null,
+  connectionId: ''
 };
 
 const defaultActiveBrowser = {
@@ -46,6 +42,7 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
     case Actions.SET_DATABASE_PROPERTIES:
       return Object.assign({}, state, {
         properties: objectQuery(action, 'payload', 'properties') || state.properties,
+        connectionId: objectQuery(action, 'payload', 'connectionId'),
         error: null
       });
     case Actions.SET_DATABASE_LOADING:

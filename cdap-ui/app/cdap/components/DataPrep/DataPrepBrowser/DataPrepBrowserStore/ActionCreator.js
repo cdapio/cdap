@@ -55,7 +55,8 @@ const setDatabaseAsActiveBrowser = (payload) => {
       let properties = objectQuery(res, 'values', 0, 'properties');
 
       setDatabaseProperties({
-        properties
+        properties,
+        connectionId: params.connectionId
       });
 
     }, (err) => {
