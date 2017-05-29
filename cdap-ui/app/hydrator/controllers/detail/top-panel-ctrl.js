@@ -103,12 +103,10 @@ class HydratorDetailTopPanelController {
       this.fetchMacros();
     }
 
-    this.viewInCdapLink = window.getOldCDAPUrl({
-      stateName: 'apps.detail.overview.status',
-      stateParams: {
-        namespace: $state.params.namespace,
-        appId: this.app.name
-      }
+    this.viewInCdapLink = window.getAbsUIUrl({
+      namespaceId: $state.params.namespace,
+      entityType: 'apps',
+      entityId: this.app.name
     });
 
     this.$scope.$on('$destroy', () => {
