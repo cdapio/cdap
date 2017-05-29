@@ -507,7 +507,7 @@ html_theme = 'cdap-bootstrap'
 
 manuals_list = [
     ['introduction',        'introduction', 'Introduction to CDAP',            'introduction',],
-    ['developers-manual',   'developers',  u'Developers’ Manual',              'guides',],
+    ['developers-manual',   'developers',  u'Developer’s Manual',              'guides',],
     ['admin-manual',        'admin',        'Administration Manual',           'guides',],
     ['integrations',        'integrations', 'Integrations',                    'guides',],
     ['examples-manual',     'examples',     'Examples, Guides, and Tutorials', 'guides',],
@@ -515,17 +515,56 @@ manuals_list = [
     ['faqs',                'faqs',         'FAQs',                            'help',],
 ]
 
+# Fields:
+#     directory,           href,                 title,                             set,            expansion
+manuals_complete_list = [
+    ['introduction',      'index.html',         'Introduction to CDAP',            'introduction', -1],
+    ['developers-manual', 'index.html',        u'Developer’s Manual',              'guides',       -1],
+    ['admin-manual',      'index.html',         'Administration Manual',           'guides',       -1],
+    ['integrations',      'index.html',         'Integrations',                    'guides',       -1],
+    ['examples-manual',   'index.html',         'Examples, Guides, and Tutorials', 'guides',       -1],
+    ['reference-manual',  'index.html',         'Reference Manual',                'reference',    -1],
+    ['reference-manual',  'release-notes.html', 'Release Notes',                   'reference',    -1],
+    ['reference-manual',  'genindex.html',      'Index',                           'reference',    -1],
+    ['reference-manual',  'glossary.html',      'Glossary',                        'reference',    -1],
+    ['faqs',              'index.html',         'FAQs',                            'help',          1],
+]
+
 manual_intersphinx_mapping = {}
 manuals_dict = {}
 manual_titles_list = []
 manual_dirs_list = []
+manual_sets_list = []
 manual_set_dict = {}
 for m in manuals_list:
     manual_intersphinx_mapping[m[0]] = m[1]
     manuals_dict[m[0]] = m[2]
     manual_dirs_list.append(m[0])
     manual_titles_list.append(m[2])
+    manual_sets_list.append(m[3])
     manual_set_dict[m[0]] = m[3]
+
+def create_manual(m):
+    manual = {
+        'directory': m[0],
+        'href': m[1],
+        'title': m[2],
+        'set': m[3],
+        'expansion': m[4],
+        }
+    return manual
+
+manuals_complete_dict = {}
+for m in manuals_complete_list:
+    manual = create_manual(m)
+    if manual['set'] in manuals_complete_dict.keys():
+        manuals_complete_dict[manual['set']].append(manual)
+    else:
+        manuals_complete_dict[manual['set']] = [manual]
+#     if m[3] in manuals_complete_dict.keys():
+#         manuals_complete_dict[m[3]].append(m[:-1])
+#     else:
+#         manuals_complete_dict[m[3]] = [m[:-1]]
 
 manuals = []
 for m in manuals_list:
@@ -539,6 +578,7 @@ html_theme_options = {
     'manual': '',
     'manual_dirs': manual_dirs_list,
     'manual_titles': manual_titles_list,
+    'manual_complete': manuals_complete_dict,
     'manual_highlight': '',
     'meta_git':
         { 'git_hash': git_hash,
@@ -863,6 +903,7 @@ def set_conf_for_manual():
 
     html_theme_options['manual'] = m
     html_theme_options['manual_highlight'] = manual_set_dict[m]
+
     html_short_title_toc = manuals_dict[m]
 #     html_short_title = u'CDAP %s' % html_short_title_toc
     html_short_title = html_short_title_toc

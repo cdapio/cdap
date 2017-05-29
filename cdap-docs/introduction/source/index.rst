@@ -4,6 +4,7 @@
     :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-relations: true
+:hide-left-sidebar: true
 
 .. _introduction-to-cdap:
 

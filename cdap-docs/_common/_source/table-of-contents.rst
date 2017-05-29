@@ -3,7 +3,6 @@
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-relations: true
-
 :hide-global-toc: true
 
 ====================================
@@ -14,6 +13,7 @@ CDAP Documentation Table of Contents
    :titlesonly:
 
     Overview </index>
+    Guides </guides>
     Introduction to CDAP </introduction/index>
     Developers’ Manual </developers-manual/index>
     Administration Manual </admin-manual/index>
