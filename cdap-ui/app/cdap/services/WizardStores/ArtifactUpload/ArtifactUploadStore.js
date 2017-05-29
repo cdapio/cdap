@@ -103,6 +103,12 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
         type: action.payload.type
       });
       break;
+    case ArtifactUploadActions.setNameAndClass:
+      stateCopy = Object.assign({}, state, {
+        name: action.payload.name,
+        classname: action.payload.classname
+      });
+      break;
     case ArtifactUploadActions.onReset:
       return defaultConfigureState;
     default:

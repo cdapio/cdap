@@ -25,6 +25,7 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
+import isNil from 'lodash/isNil';
 
 require('./TopPanel.scss');
 
@@ -161,6 +162,17 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         );
+      } else if (info.properties.connection === 'database') {
+        return (
+          <div className="data-prep-name">
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.database')}
+            </div>
+            <div className="title">
+              SELECT * FROM {info.properties.name}
+            </div>
+          </div>
+        );
       }
     }
 
@@ -217,7 +229,7 @@ export default class DataPrepTopPanel extends Component {
             <button
               className="btn btn-primary"
               onClick={this.onSubmit.bind(this)}
-              disabled={this.state.onSubmitLoading ? 'disabled' : null}
+              disabled={this.state.onSubmitLoading || isNil(this.state.workspaceInfo) ? 'disabled' : false}
             >
               {
                 this.state.onSubmitLoading ?
@@ -233,6 +245,7 @@ export default class DataPrepTopPanel extends Component {
           <button
             className="btn btn-link"
             onClick={this.toggleSchemaModal}
+            disabled={isNil(this.state.workspaceInfo) ? 'disabled' : false}
           >
             {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
           </button>

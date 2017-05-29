@@ -26,6 +26,7 @@ import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
+import classnames from 'classnames';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -118,7 +119,7 @@ export default class AddToHydratorModal extends Component {
     return returnArtifact;
   }
 
-  constructSource(artifactsList, properties) {
+  constructFileSource(artifactsList, properties) {
     if (!properties) { return null; }
 
     let plugin = objectQuery(properties, 'values', '0');
@@ -162,6 +163,36 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
+  // Need to be modified once backend is complete
+  constructDatabaseSource(artifactsList, dbInfo) {
+    if (!dbInfo) { return null; }
+
+    let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
+
+    let plugin = objectQuery(dbInfo, 'values', 0, 'Database');
+
+    let pluginInfo = {
+      name: 'Database',
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: batchArtifact,
+      properties: plugin.properties
+    };
+
+    let batchStage = {
+      name: plugin.name,
+      plugin: pluginInfo
+    };
+
+    return {
+      batchSource: batchStage,
+      connections: [{
+        from: plugin.name,
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -187,6 +218,14 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getSpecification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 'database') {
+      let specParams = {
+        namespace,
+        connectionId: state.workspaceInfo.properties.connectionid,
+        tableId: state.workspaceInfo.properties.id
+      };
+
+      rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -236,7 +275,13 @@ export default class AddToHydratorModal extends Component {
         let realtimeStages = [wranglerStage];
         let batchStages = [wranglerStage];
 
-        let sourceConfigs = this.constructSource(res[0], res[2]);
+        let sourceConfigs;
+        if (state.workspaceInfo.properties.connection === 'file') {
+          sourceConfigs = this.constructFileSource(res[0], res[2]);
+        } else if (state.workspaceInfo.properties.connection === 'database') {
+          sourceConfigs = this.constructDatabaseSource(res[0], res[2]);
+        }
+
         if (sourceConfigs) {
           realtimeStages.push(sourceConfigs.realtimeSource);
           batchStages.push(sourceConfigs.batchSource);
@@ -269,6 +314,10 @@ export default class AddToHydratorModal extends Component {
           }
         });
 
+        if (state.workspaceInfo.properties.connection === 'database') {
+          realtimeUrl = null;
+        }
+
         let batchUrl = window.getHydratorUrl({
           stateName: 'hydrator.create',
           stateParams: {
@@ -288,6 +337,8 @@ export default class AddToHydratorModal extends Component {
         });
 
       }, (err) => {
+        console.log('err', err);
+
         this.setState({
           error: objectQuery(err, 'response', 'message')  || T.translate('features.DataPrep.TopPanel.PipelineModal.defaultErrorMessage'),
           loading: false
@@ -323,6 +374,12 @@ export default class AddToHydratorModal extends Component {
         </div>
       );
     } else {
+      let realtimeDisabledTooltip;
+
+      if (!this.state.realtimeUrl) {
+        realtimeDisabledTooltip = T.translate('features.DataPrep.TopPanel.realtimeDisabledTooltip');
+      }
+
       content = (
         <div>
           <div className="message">
@@ -341,10 +398,14 @@ export default class AddToHydratorModal extends Component {
             </a>
             <a
               href={this.state.realtimeUrl}
-              className="btn btn-secondary"
+              className={classnames('btn btn-secondary', {
+                'inactive': !this.state.realtimeUrl
+              })}
               onClick={(() => {
+                if (!this.state.realtimeUrl) { return; }
                 window.localStorage.setItem(this.state.workspaceId, JSON.stringify(this.state.realtimeConfig));
               }).bind(this)}
+              title={realtimeDisabledTooltip}
             >
               <i className="fa icon-sparkstreaming"/>
               <span>Realtime Pipeline</span>

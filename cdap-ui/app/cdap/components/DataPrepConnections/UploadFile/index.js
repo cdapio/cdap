@@ -87,8 +87,9 @@ export default class ConnectionsUpload extends Component {
           let parsed = JSON.parse(res);
           let workspaceId = parsed.values[0].id;
 
-          let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
-          window.location.href = navigatePath;
+          if (this.props.onWorkspaceCreate) {
+            this.props.onWorkspaceCreate(workspaceId);
+          }
         } catch (e) {
           console.log('error', e);
         }
@@ -193,5 +194,6 @@ export default class ConnectionsUpload extends Component {
 }
 
 ConnectionsUpload.propTypes = {
-  toggle: PropTypes.func
+  toggle: PropTypes.func,
+  onWorkspaceCreate: PropTypes.func
 };

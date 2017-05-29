@@ -32,7 +32,6 @@ $gutter-width: 15px;
 
   .sub-panel {
     padding: 0 $gutter-width;
-    height: $subpanel-height;
 
     .path-container {
       line-height: $subpanel-height;
@@ -40,7 +39,6 @@ $gutter-width: 15px;
 
     .search-container,
     .info {
-      display: inline-block;
       float: left;
       width: 200px;
       padding-left: $gutter-width;
@@ -68,6 +66,8 @@ $gutter-width: 15px;
       border-top: 1px solid $border-color;
       background-color: $table-header-color;
       line-height: 36px;
+      height: 36px;
+      overflow: hidden;
       font-weight: 600;
 
       span { cursor: pointer; }
@@ -77,7 +77,7 @@ $gutter-width: 15px;
     }
 
     .content-body {
-      height: calc(100% - 38px);
+      max-height: calc(100% - 38px);
       overflow-y: auto;
 
       .row-container { cursor: pointer; }

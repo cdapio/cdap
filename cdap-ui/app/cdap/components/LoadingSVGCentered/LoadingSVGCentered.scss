@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -12,16 +12,26 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
-const ArtifactUploadActions = {
-  setName: 'SET-ARTIFACT-NAME',
-  setDescription: 'SET-ARTIFACT-DESCRIPTION',
-  setClassname: 'SET-ARTIFACT-CLASSNAME',
-  setType: 'SET-ARTIFACT-TYPE',
-  setFilePath: 'SET-ARTIFACT-PATH',
-  setNameAndClass: 'SET-ARTIFACT-NAME-AND-CLASSNAME',
-  onReset: 'RESET-STORE'
-};
+.loading-svg-centered {
+  position: absolute;
+  top: 50px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  color: #666666;
+  font-size: 72px;
+  z-index: 1000;
 
-export default ArtifactUploadActions;
+  > .loading-bar {
+    position: absolute;
+    top: 35%;
+    transform: translateY(-50%) scale(1.7);
+
+    rect {
+      fill: #ff6600;
+    }
+  }
+}

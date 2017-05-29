@@ -29,11 +29,12 @@ import ee from 'event-emitter';
 import NamespaceStore from 'services/NamespaceStore';
 import {setWorkspace, getWorkspaceList} from 'components/DataPrep/store/DataPrepActionCreator';
 import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
-import {Link} from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
 import LoadingSVG from 'components/LoadingSVG';
+import T from 'i18n-react';
+import isEmpty from 'lodash/isEmpty';
 
 require('./DataPrep.scss');
 
@@ -48,10 +49,13 @@ export default class DataPrep extends Component {
     this.state = {
       backendDown: false,
       loading: true,
-      onSubmitError: null
+      onSubmitError: null,
+      currentWorkspace: null,
+      sidePanelToggle: false
     };
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
+    this.onSidePanelToggle = this.onSidePanelToggle.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
@@ -83,7 +87,7 @@ export default class DataPrep extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (this.props.workspaceId !== nextProps.workspaceId) {
+    if (this.state.currentWorkspace !== nextProps.workspaceId) {
       this.init(nextProps);
     }
   }
@@ -97,6 +101,9 @@ export default class DataPrep extends Component {
       type: DataPrepActions.reset
     });
     this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+    if (this.dataprepStoreSubscription) {
+      this.dataprepStoreSubscription();
+    }
   }
 
   checkBackendUp() {
@@ -141,7 +148,10 @@ export default class DataPrep extends Component {
   setCurrentWorkspace(workspaceId) {
     setWorkspace(workspaceId)
       .subscribe(() => {
-        this.setState({loading: false});
+        this.setState({
+          loading: false,
+          currentWorkspace: workspaceId
+        });
       }, () => {
         this.setState({loading: false});
 
@@ -162,6 +172,18 @@ export default class DataPrep extends Component {
     this.setCurrentWorkspace(workspaceId);
   }
 
+  onSidePanelToggle() {
+    if (isEmpty(this.state.currentWorkspace)) {
+      return;
+    }
+    this.setState({
+      sidePanelToggle: !this.state.sidePanelToggle
+    });
+    if (this.props.onConnectionsToggle) {
+      this.props.onConnectionsToggle();
+    }
+  }
+
   renderBackendDown() {
     return (
       <DataPrepServiceControl
@@ -175,7 +197,8 @@ export default class DataPrep extends Component {
 
     return (
       <WorkspaceTabs
-        workspaceId={this.props.workspaceId}
+        workspaceId={this.state.currentWorkspace}
+        onWorkspaceDelete={this.props.onWorkspaceDelete}
       />
     );
   }
@@ -192,29 +215,30 @@ export default class DataPrep extends Component {
   }
 
   renderTogglePanel() {
-    if (this.props.singleWorkspaceMode) {
-      return (
-        <div className="panel-toggle float-xs-left text-xs-center">
-          <span className="panel-button">
-            <IconSVG
-              name="icon-chevron-left"
-            />
-          </span>
-        </div>
-      );
-    }
-    let namespace = NamespaceStore.getState().selectedNamespace;
-
+    let prefix = `features.DataPrep.sidePanelTooltip`;
+    let tooltip = this.state.sidePanelToggle ? T.translate(`${prefix}.collapse`) : T.translate(`${prefix}.expand`);
     return (
-      <div className="panel-toggle float-xs-left text-xs-center">
-        <Link
-          to={`/ns/${namespace}/connections`}
+      <div
+        className={classnames("panel-toggle float-xs-left text-xs-center", {
+          'disabled': isEmpty(this.state.currentWorkspace)
+        })}
+        onClick={this.onSidePanelToggle}
+      >
+        <span
           className="panel-button"
+          title={tooltip}
         >
-          <IconSVG
-            name="icon-chevron-left"
-          />
-        </Link>
+          {
+            this.state.sidePanelToggle ?
+              <IconSVG
+                name="icon-chevron-left"
+              />
+            :
+              <IconSVG
+                name="icon-chevron-right"
+              />
+          }
+        </span>
       </div>
     );
   }
@@ -266,5 +290,7 @@ export default class DataPrep extends Component {
 DataPrep.propTypes = {
   singleWorkspaceMode: PropTypes.bool,
   workspaceId: PropTypes.string,
-  onSubmit: PropTypes.func
+  onSubmit: PropTypes.func,
+  onConnectionsToggle: PropTypes.func.isRequired,
+  onWorkspaceDelete: PropTypes.func
 };
