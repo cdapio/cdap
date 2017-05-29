@@ -541,6 +541,9 @@ features:
           SIMPLEDATE:
             customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
             label: Simple Date
+            ModalHeader:
+              parse: Parse as {parser}
+              format: Format Date and Time
             modalTitle: Please select the date format
             Options:
               CUSTOM: Custom Format
