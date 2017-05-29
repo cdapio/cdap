@@ -114,21 +114,22 @@ public final class ProgramRunners {
   /**
    * Same as {@link #createLogbackJar(Location)} except this method uses local {@link File} instead.
    */
-  public static File createLogbackJar(File targetDir) throws IOException {
-    Location logbackJar = createLogbackJar(Locations.toLocation(targetDir));
+  @Nullable
+  public static File createLogbackJar(File targetFile) throws IOException {
+    Location logbackJar = createLogbackJar(Locations.toLocation(targetFile));
     return logbackJar == null ? null : new File(logbackJar.toURI());
   }
 
   /**
-   * Creates a jar in the given directory that contains a logback.xml configured for the current process
+   * Creates a jar that contains a logback.xml configured for the current process
    *
-   * @param targetDir directory where the jar should be created in
-   * @return the {@link Location} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
+   * @param targetLocation the jar location
+   * @return the {@link Location} where the jar was created to or {@code null} if "logback.xml" is not found
    *         in the current ClassLoader.
    * @throws IOException if failed in reading the logback xml or writing out the jar
    */
   @Nullable
-  public static Location createLogbackJar(Location targetDir) throws IOException {
+  public static Location createLogbackJar(Location targetLocation) throws IOException {
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof Context)) {
       return null;
@@ -140,12 +141,11 @@ public final class ProgramRunners {
     }
 
     try (InputStream input = logbackURL.openStream()) {
-      Location logbackJar = targetDir.append("logback").getTempFile(".jar");
-      try (JarOutputStream output = new JarOutputStream(logbackJar.getOutputStream())) {
+      try (JarOutputStream output = new JarOutputStream(targetLocation.getOutputStream())) {
         output.putNextEntry(new JarEntry("logback.xml"));
         ByteStreams.copy(input, output);
       }
-      return logbackJar;
+      return targetLocation;
     }
   }
 
