@@ -35,19 +35,19 @@ public class ConstraintResult {
     SATISFIED, NOT_SATISFIED, NEVER_SATISFIED
   }
   private final SatisfiedState satisfiedState;
-  private final Long millisBeforeNextRetry;
+  private final Long nextCheckTime;
 
   ConstraintResult(SatisfiedState satisfiedState) {
     this(satisfiedState, null);
   }
 
-  ConstraintResult(SatisfiedState satisfiedState, Long millisBeforeNextRetry) {
+  ConstraintResult(SatisfiedState satisfiedState, Long nextCheckTime) {
     if (satisfiedState == SatisfiedState.NOT_SATISFIED) {
       // if a constraint is NOT_SATISFIED, there must be a duration specified for the next retry
-      Preconditions.checkNotNull(millisBeforeNextRetry);
+      Preconditions.checkNotNull(nextCheckTime);
     }
     this.satisfiedState = satisfiedState;
-    this.millisBeforeNextRetry = millisBeforeNextRetry;
+    this.nextCheckTime = nextCheckTime;
   }
 
   public SatisfiedState getSatisfiedState() {
@@ -55,7 +55,7 @@ public class ConstraintResult {
   }
 
   @Nullable
-  public Long getMillisBeforeNextRetry() {
-    return millisBeforeNextRetry;
+  public Long getNextCheckTime() {
+    return nextCheckTime;
   }
 }

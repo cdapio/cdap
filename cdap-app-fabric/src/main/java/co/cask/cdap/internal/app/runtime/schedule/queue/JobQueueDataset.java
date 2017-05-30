@@ -42,6 +42,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +62,7 @@ import javax.annotation.Nullable;
  *     'M':<topic>
  */
 public class JobQueueDataset extends AbstractDataset implements JobQueue {
+  private static final Logger LOG = LoggerFactory.getLogger(JobQueueDataset.class);
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
   private static final Gson GSON =
@@ -230,6 +233,11 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
     }
     byte[] stopKey = Bytes.stopKeyForPrefix(jobRowPrefix);
     return createCloseableIterator(table.scan(startKey, stopKey));
+  }
+
+  // full scan of JobQueueDataset
+  public CloseableIterator<Job> fullScan() {
+    return createCloseableIterator(table.scan(null, null));
   }
 
   private CloseableIterator<Job> createCloseableIterator(final Scanner scanner) {

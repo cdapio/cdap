@@ -45,7 +45,7 @@ public class DelayConstraintTest {
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   @Test
-  public void test() {
+  public void testDelayConstraint() {
     long now = System.currentTimeMillis();
     ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
                                                    ImmutableMap.of("prop3", "abc"),
@@ -56,15 +56,16 @@ public class DelayConstraintTest {
     // test with 10 minute delay
     DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(10, TimeUnit.MINUTES);
     // a check against 12 minutes after 'now' will return SATISFIED
-    ConstraintResult result =
-      tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12), null));
+    ConstraintContext constraintContext = new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12), null);
+    ConstraintResult result = tenMinuteDelayConstraint.check(schedule, constraintContext);
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
 
     // a check against 9 minutes after 'now' will return NOT_SATISFIED, with 1 minute to wait until next retry
-    result = tenMinuteDelayConstraint.check(schedule,
-                                            new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9), null));
+    constraintContext = new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9), null);
+    result = tenMinuteDelayConstraint.check(schedule, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), (long) result.getMillisBeforeNextRetry());
+    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.MINUTES.toMillis(1),
+                        (long) result.getNextCheckTime());
   }
 
 }

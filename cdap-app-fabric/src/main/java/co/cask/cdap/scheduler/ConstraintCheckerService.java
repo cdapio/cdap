@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -47,6 +48,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,13 +178,8 @@ class ConstraintCheckerService extends AbstractIdleService {
           }
         });
 
-        Transactions.execute(transactional, new TxCallable<Boolean>() {
-          @Override
-          public Boolean call(DatasetContext context) throws Exception {
-            // run any ready jobs
-            return runReadyJobs(context);
-          }
-        });
+        // run any ready jobs
+        runReadyJobs();
         failureCount = 0;
       } catch (Exception e) {
         LOG.warn("Failed to check Job constraints. Will retry in next run", e);
@@ -196,7 +193,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       }
 
       // Sleep for 2 seconds if there's no jobs in the queue
-      return emptyFetch ? 2000L : 0L;
+      return emptyFetch && readyJobs.isEmpty() ? 2000L : 0L;
     }
 
     private boolean checkJobConstraints() throws Exception {
@@ -256,47 +253,54 @@ class ConstraintCheckerService extends AbstractIdleService {
       readyJobs.add(job);
     }
 
-    private boolean runReadyJobs(DatasetContext context) throws Exception {
-      Iterator<Job> readyJobsIter = readyJobs.iterator();
+    private void runReadyJobs() {
+      final Iterator<Job> readyJobsIter = readyJobs.iterator();
       while (readyJobsIter.hasNext() && !stopping) {
-        Job job = readyJobsIter.next();
+        final Job job = readyJobsIter.next();
+        try {
+          Transactions.execute(transactional, new TxCallable<Void>() {
+            @Override
+            public Void call(DatasetContext context) throws Exception {
+              if (runReadyJob(job)) {
+                readyJobsIter.remove();
+              }
+              return null;
+            }
+          });
 
-        // We should check the stored job's state (whether it actually is PENDING_LAUNCH), because
-        // the schedule could have gotten deleted in the meantime or the transaction that marked it as PENDING_LAUNCH
-        // may have failed / rolled back.
-        Job storedJob = jobQueue.getJob(job.getJobKey());
-        if (storedJob == null) {
-          readyJobsIter.remove();
-          continue;
-        }
-        if (job.isToBeDeleted()) {
-          // If this is true, that means the schedule was deleted/updated before the state transition from
-          // PENDING_CONSTRAINT to PENDING_LAUNCH is committed. We can just remove the job without launching it.
-          // If job.isToBeDeleted() is false, that means this job is in PENDING_LAUNCH state before the schedule
-          // is deleted/updated. We can still launch it.
-          readyJobsIter.remove();
-          jobQueue.deleteJob(job);
-          return true;
-        }
-
-        if (storedJob.getState() == Job.State.PENDING_LAUNCH) {
-          try {
-            taskRunner.launch(job);
-          } catch (Exception e) {
-            LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
-                     job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
-            // don't delete the job, as it will be retried in some later iteration over the JobQueue
-            continue;
-          }
-
-          // this should not have a conflict, because any updates to the job will first check to make sure that
-          // it is not PENDING_LAUNCH
-          readyJobsIter.remove();
-          jobQueue.deleteJob(job);
-          return true;
+        } catch (TransactionFailureException e) {
+          LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
+                   job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
+          // don't delete the job or remove it from 'readyJobs', as it will be retried in some later iteration
         }
       }
-      return false;
+    }
+
+    // return whether or not the job should be removed from the readyJobs in-memory Deque
+    private boolean runReadyJob(Job job) throws Exception {
+      // We should check the stored job's state (whether it actually is PENDING_LAUNCH), because
+      // the schedule could have gotten deleted in the meantime or the transaction that marked it as PENDING_LAUNCH
+      // may have failed / rolled back.
+      Job storedJob = jobQueue.getJob(job.getJobKey());
+      if (storedJob == null) {
+        return true;
+      }
+      if (storedJob.isToBeDeleted() || storedJob.getState() != Job.State.PENDING_LAUNCH) {
+        // If the storedJob.isToBeDeleted(), that means the schedule was deleted/updated before the state transition
+        // from PENDING_CONSTRAINT to PENDING_LAUNCH is committed. We can just remove the job without launching it.
+        // If job.isToBeDeleted() is false, that means this job is in PENDING_LAUNCH state before the schedule
+        // is deleted/updated. We can still launch it.
+        // The storedJob state could be something other than PENDING_LAUNCH, if the transaction aborted after added
+        // the job to readyJobs (in-memory queue)
+        jobQueue.deleteJob(job);
+        return true;
+      }
+
+      taskRunner.launch(job);
+      // this should not have a conflict, because any updates to the job will first check to make sure that
+      // it is not PENDING_LAUNCH
+      jobQueue.deleteJob(job);
+      return true;
     }
 
     private ConstraintResult.SatisfiedState constraintsSatisfied(Job job, long now) {
