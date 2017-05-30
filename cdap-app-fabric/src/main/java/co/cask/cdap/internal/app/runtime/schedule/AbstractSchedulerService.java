@@ -126,6 +126,23 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     }
   }
 
+  @Override
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
+      timeScheduler.suspendProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+      streamSizeScheduler.suspendProgramSchedule(schedule);
+    }
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
+      timeScheduler.resumeProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+      streamSizeScheduler.resumeProgramSchedule(schedule);
+    }
+  }
 
   @Override
   public void schedule(ProgramId programId, SchedulableProgramType programType, Schedule schedule)
