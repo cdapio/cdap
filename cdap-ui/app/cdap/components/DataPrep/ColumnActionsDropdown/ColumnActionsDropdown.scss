@@ -14,28 +14,43 @@
  * the License.
  */
 
+$border-shadow-color: #cccccc;
+$dropdown-expanded-caret-bg-color: #999999;
+$action-item-bg-color: white;
+$action-item-hover-color: #eeeeee;
+$action-item-active-color: #dddddd;
+$action-item-action-font-color: #333333;
+$action-item-font-family: Helvetica, Arial, sans-serif;
+
 .column-actions-dropdown-container {
   > .fa.fa-caret-down {
     padding: 3px 5px;
 
     &.expanded {
-      background-color: #999999;
+      background-color: $dropdown-expanded-caret-bg-color;
     }
   }
 }
 
 .dataprep-columns-action-dropdown {
   width: 200px;
-  background-color: white;
+  background-color: $action-item-bg-color;
   font-weight: 500;
 
   .popover-content {
     padding: 0;
-    box-shadow: 1px 1px 5px #cccccc;
+    box-shadow: 1px 1px 5px $border-shadow-color;
 
     .disabled {
       pointer-events: none;
       opacity: 0.5;
+    }
+
+    .column-action-divider {
+      hr {
+        margin: 0 15px;
+        border-color: $border-shadow-color;
+      }
     }
   }
 
@@ -43,13 +58,15 @@
     padding: 10px 15px;
     cursor: pointer;
     position: relative;
+    font-family: $action-item-font-family;
+    font-size: 13px;
 
     &:hover:not(.active) {
-      background-color: #eeeeee;
+      background-color: $action-item-hover-color;
     }
 
     &.active {
-      background-color: #dddddd;
+      background-color: $action-item-active-color;
     }
 
     .second-level-popover {
@@ -57,14 +74,14 @@
       top: 0;
       left: 100%;
       background-color: white;
-      border: 1px solid #cccccc;
+      border: 1px solid $border-shadow-color;
       padding: 10px;
       width: 200px;
       font-size: 0.875rem;
       font-weight: 400;
       line-height: 2;
       cursor: initial;
-      box-shadow: 1px 1px 5px #cccccc;
+      box-shadow: 1px 1px 5px $border-shadow-color;
 
       .warning-container {
         margin-bottom: -5px;
@@ -84,7 +101,7 @@
       }
 
       hr {
-        border-color: #cccccc;
+        border-color: $border-shadow-color;
         margin-left: -10px;
         margin-right: -10px;
       }
@@ -94,7 +111,7 @@
       }
 
       .btn-link {
-        color: #333333;
+        color: $action-item-action-font-color;
       }
     }
   }

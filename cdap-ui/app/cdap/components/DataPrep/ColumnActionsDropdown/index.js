@@ -66,8 +66,24 @@ export default class ColumnActionsDropdown extends Component {
     this.directives = [
       {
         id: shortid.generate(),
+        tag: ParseDirective,
+        requiredColCount: 1
+      },
+      {
+        tag: 'divider'
+      },
+      {
+        id: shortid.generate(),
+        tag: Format,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
         tag: FilterDirective,
         requiredColCount: 1
+      },
+      {
+        tag: 'divider'
       },
       {
         id: shortid.generate(),
@@ -95,6 +111,9 @@ export default class ColumnActionsDropdown extends Component {
         requiredColCount: 2
       },
       {
+        tag: 'divider'
+      },
+      {
         id: shortid.generate(),
         tag: FindAndReplaceDirective,
         requiredColCount: 1
@@ -107,16 +126,6 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: ExtractFields,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
-        tag: ParseDirective,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
-        tag: Format,
         requiredColCount: 1
       },
       {
@@ -199,8 +208,8 @@ export default class ColumnActionsDropdown extends Component {
     let tableContainer = document.getElementById('dataprep-table-id');
 
     const tetherOption = {
-      attachment: 'top left',
-      targetAttachment: 'bottom right',
+      attachment: 'top right',
+      targetAttachment: 'bottom left',
       constraints: [
         {
           to: tableContainer,
@@ -211,7 +220,7 @@ export default class ColumnActionsDropdown extends Component {
 
     return (
       <Popover
-        placement="bottom right"
+        placement="bottom left"
         isOpen={this.state.dropdownOpen}
         target={`dataprep-action-${this.dropdownId}`}
         className="dataprep-columns-action-dropdown"
@@ -221,6 +230,13 @@ export default class ColumnActionsDropdown extends Component {
           <div>
             {
               this.directives.map((directive) => {
+                if (directive.tag === 'divider') {
+                  return (
+                    <div className="column-action-divider">
+                      <hr />
+                    </div>
+                  );
+                }
                 let Tag = directive.tag;
                 let disabled = false;
                 let column = this.props.column;

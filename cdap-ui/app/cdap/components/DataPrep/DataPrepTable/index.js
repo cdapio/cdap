@@ -217,6 +217,12 @@ export default class DataPrepTable extends Component {
                   <div
                     className="clearfix column-wrapper"
                   >
+                    <span className="directives-dropdown-button">
+                      <ColumnActionsDropdown
+                        column={head.name}
+                        dropdownOpened={this.columnDropdownOpened}
+                      />
+                    </span>
                     {
                       !head.edit ?
                         <span
@@ -259,12 +265,6 @@ export default class DataPrepTable extends Component {
                           }
                         </div>
                     }
-                    <span className="float-xs-right directives-dropdown-button">
-                      <ColumnActionsDropdown
-                        column={head.name}
-                        dropdownOpened={this.columnDropdownOpened}
-                      />
-                    </span>
                     <span
                       onClick={this.toggleColumnSelect.bind(this, head.name)}
                       className={classnames('float-xs-right fa column-header-checkbox', {

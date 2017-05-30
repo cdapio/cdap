@@ -63,6 +63,7 @@ $header-bg-color: #eeeeee;
         border-right: 1px solid #cccccc;
         border-top: 0;
         position: relative;
+        padding: 0.5rem 0.75rem;
 
         .quality-bar {
           position: absolute;
@@ -75,6 +76,7 @@ $header-bg-color: #eeeeee;
           display: inline-flex;
           align-items: center;
           width: 100%;
+          margin-top: 7px;
 
           .header-text {
             width: 100%;
