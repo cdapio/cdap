@@ -43,7 +43,8 @@
   <logger name="org.quartz.core" level="WARN"/>
   <logger name="org.eclipse.jetty" level="WARN"/>
   <logger name="io.netty.util.internal" level="WARN"/>
-
+  <logger name="WriteAheadLogManager " level="WARN"/>
+  <logger name="org.apache.kafka.common.config.AbstractConfig" level="WARN"/>
   <logger name="org.apache.twill" level="INFO"/>
   <logger name="org.apache.twill.internal.kafka.client.SimpleKafkaConsumer" level="WARN"/>
   <logger name="co.cask.cdap" level="INFO"/>
