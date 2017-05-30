@@ -1,0 +1,54 @@
+{#
+    search.html
+    ~~~~~~~~~~~
+
+    Template for the search page.
+
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache 2.0 License, see LICENSE for details.
+#}
+{%- extends "layout.html" %}
+{% set title = _('Search') %}
+{% block extrahead %}
+{# Google search result CSS #}
+  <link rel="stylesheet" href="{{ pathto('_static/css/cdap-google-search.css', 1) }}" type="text/css" />
+{# this is used when loading the search index using $.ajax fails, such as on Chrome for documents on localhost #}
+  <script type="text/javascript" id="searchindexloader"></script>
+  {{ super() }}
+{% endblock %}
+{% block body %}
+  <h1 id="search-documentation">{{ _('Search') }}</h1>
+  <div id="fallback" class="admonition warning">
+  <script type="text/javascript">$('#fallback').hide();</script>
+  <p>
+    {% trans %}Please activate JavaScript to enable the search
+    functionality.{% endtrans %}
+  </p>
+  </div>
+  <p>
+  Enter your search term(s) to search the documentation:
+  </p>
+  <div id="google-search-results">
+<script>
+  (function() {
+    var cx;
+    try {
+      cx = localStorage.gcseID;
+    } catch(e) {
+      console.log("Unable to set Google Custom Search Engine from local storage");
+      return;
+    }
+    if ( cx === "DEFAULT_GCSE_ID") {
+      cx = "002451258715120217843:nkzqh6x__gy";
+    }
+    var gcse = document.createElement('script');
+    gcse.type = 'text/javascript';
+    gcse.async = true;
+    gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(gcse, s);
+  })();
+</script>
+<gcse:search></gcse:search>
+  </div>
+{% endblock %}

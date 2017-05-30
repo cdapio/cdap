@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 ======================================================
 CDAP Examples, Guides, and Tutorials Table of Contents
 ======================================================
 
 .. toctree::
-   :maxdepth: 3
+   :titlesonly:
 
    Introduction </index>
    Examples </examples/index>

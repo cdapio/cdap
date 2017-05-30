@@ -17,30 +17,30 @@
 """Simple, inelegant Sphinx extension which adds a directive for a set of
 tabbed parsed-literals that may be switched between in HTML.
 
-version: 0.4.2
+version: 0.4.3
 
 The directive adds these parameters, both optional:
 
     :languages: comma-separated list of Pygments languages; default "console"
 
     :tabs: comma-separated list of tabs; default "Linux,Windows"
-    
+
     :mapping: comma-separated list of linked-tabs; default "Linux,Windows"
 
     :copyable: flag to indicate that all text can be "copied"
-    
+
     :single: flag to indicate that only one tab should be used, with no label (not yet implemented)
 
     :independent: flag to indicate that this tab set does not link to another tabs
-    
+
     :dependent: name of tab set this tab belongs to; default "linux-windows"
-    
+
     :keepslashes: flag to indicate that slashes should not be changed from forward to backward
 
 Separate the code blocks with matching comment lines. Tabs must follow in order of :tabs:
 option. Comment labels are for convenience, and don't need to match. Note example uses a
 tab label with a space in it, and is enclosed in quotes. Note that the comma-separated
-lists must not have spaces in them (outside of quotes); ie, use "java,scala", not 
+lists must not have spaces in them (outside of quotes); ie, use "java,scala", not
 "java, scala".
 
 The mapping maps a tab that is displayed to the trigger that will display it.
@@ -49,7 +49,7 @@ For example, you could have a set of tabs:
     :tabs: "Mac OS X",Windows
     :mapping: linux,windows
     :dependent: linux-windows
-    
+
 Clicking on a "Linux" tab in another tab-set would activate the "Mac OS X" tab in this tab set.
 The mappings can not use special characters. If a tab uses a special character, a mapping is required.
 An error is raised, as it cannot be resolved using the defaults.
@@ -62,7 +62,7 @@ If there is only one tab, the node is set to "independent" automatically, as the
 nothing to switch. If :languages: is not supplied for the single tab, "shell-session" is
 used.
 
-Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command 
+Lines that begin with "$", "#", ">", "&gt;", "cdap >", "cdap &gt;" are treated as command
 lines and the text following is auto-selected for copying on mouse-over. (On Safari,
 command-V is still required for copying; other browser support click-copying to the
 clipboard.)
@@ -74,20 +74,20 @@ Examples:
 .. tabbed-parsed-literal::
     :languages: console,shell-session
     :tabs: "Linux or OS/X",Windows
-    
+
     .. Linux
 
     $ cdap cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
-    
-    $ curl -o /etc/yum.repos.d/cask.repo https://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
-    
+
+    $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
+
     .. Windows
-    
+
     > cdap.bat cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
-    > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'https://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
+    > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
 
 If you pass a single set of commands, without comments, the directive will create a
 two-tabbed "Linux" and "Windows" with a generated Windows-equivalent command set. Check
@@ -99,15 +99,15 @@ strings in the commands must be on a single line to convert successfully.
 
     $ cdap cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
-    
-    $ curl -o /etc/yum.repos.d/cask.repo https://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
-    
+
+    $ curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo
+
 .. tabbed-parsed-literal::
     :copyable:
     :single:
-    
+
     SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
-    
+
 Tab sets are either independent or dependent. Independent tabs do not participate in page or site tab setting.
 In other words, clicking on a tab does not change any other tabs. Dependent tabs do. Clicking on the "Linux"
 tab will change all other tabs to "Linux". You may need to include a mapping listing the relationship, such as this:
@@ -118,7 +118,7 @@ tab will change all other tabs to "Linux". You may need to include a mapping lis
   :languages: console,shell-session,console
 
     ...
-    
+
 This maps the tab "Distributed CDAP" to the other "Linux" tabs on the site. Clicking that
 tab would change other tabs to the "linux" tab. (Changing to "linux" from another tab will
 cause the first "linux" tab to be selected.)
@@ -143,57 +143,65 @@ TPL_COUNTER = 0
 # Sets the handlers for the tabs used by a particular instance of tabbed parsed literal
 # Note doubled {{ to pass them through formatting
 DEPENDENT_JS_TPL = """\
+
 <script type="text/javascript">
 
-$(function {div_name}() {{
-  var tabs = {tab_links};
-  var mapping = {mapping};
-  var tabSetID = {tabSetID};
-  for (var i = 0; i < tabs.length; i++) {{
-    var tab = tabs[i];
-    $("#{div_name} .example-tab-" + tab).click(changeExampleTab(tab, mapping, "{div_name}", tabSetID));
-  }}
-}});
+  $(function {div_name}() {{
+    var tabs = {tab_links};
+    var mapping = {mapping};
+    var tabSetID = {tabSetID};
+    for (var i = 0; i < tabs.length; i++) {{
+      var tab = tabs[i];
+      $("#{div_name} .example-tab-" + tab).click(changeExampleTab(tab, mapping, "{div_name}", tabSetID));
+    }}
+  }});
 
 </script>
 """
 
 # Note doubled {{ to pass them through formatting
 INDEPENDENT_JS_TPL = """\
+
 <script type="text/javascript">
 
-function change_{div_name}_ExampleTab(tab) {{
-  return function(e) {{
-    e.preventDefault();
-    var scrollOffset = $(this).offset().top - $(document).scrollTop();
-    $("#{div_name} .tab-pane").removeClass("active");
-    $("#{div_name} .tab-pane-" + tab).addClass("active");
-    $("#{div_name} .example-tab").removeClass("active");
-    $("#{div_name} .example-tab-" + tab).addClass("active");
-    $(document).scrollTop($(this).offset().top - scrollOffset);
+  function change_{div_name}_ExampleTab(tab) {{
+    return function(e) {{
+      e.preventDefault();
+      var scrollOffset = $(this).offset().top - $(document).scrollTop();
+      $("#{div_name} .tab-pane").removeClass("active");
+      $("#{div_name} .tab-pane-" + tab).addClass("active");
+      $("#{div_name} .example-tab").removeClass("active");
+      $("#{div_name} .example-tab-" + tab).addClass("active");
+      $(document).scrollTop($(this).offset().top - scrollOffset);
+    }}
   }}
-}}
 
-$(function() {{
-  var tabs = {tab_links};
-  for (var i = 0; i < tabs.length; i++) {{
-    var tab = tabs[i];
-    $("#{div_name} .example-tab-" + tab).click(change_{div_name}_ExampleTab(tab));
-  }}
-}});
+  $(function() {{
+    var tabs = {tab_links};
+    for (var i = 0; i < tabs.length; i++) {{
+      var tab = tabs[i];
+      $("#{div_name} .example-tab-" + tab).click(change_{div_name}_ExampleTab(tab));
+    }}
+  }});
 
 </script>
 """
 
-DIV_START = """
+DIV_START = """\
 <div id="{div_name}" class="{class}">
 """
 
-NAV_TABS = """
-<ul class="nav nav-tabs">
+# NAV_TABS = """\
+# <ul class="nav nav-tabs">
+# %s</ul>
+#
+# """
+NAV_TABS = """\
+<ul class="tabbed-parsed-literal nav-tabs">
 %s</ul>
 
 """
+
 
 NAV_TABS_ENTRY = """\
 <li class="example-tab example-tab-{tab_link} {active}"><a href="#">{tab_name}</a></li>
@@ -204,7 +212,7 @@ TAB_CONTENT_START = """\
 
 """
 
-DIV_END = """
+DIV_END = """\
 </div>
 """
 
@@ -213,7 +221,7 @@ TAB_CONTENT_ENTRY_START = """\
 <div class="code code-tab">
 """
 
-DIV_DIV_END = """
+DIV_DIV_END = """\
 </div>
 </div>
 """
@@ -228,7 +236,7 @@ def dequote(text):
     if (text[0] == text[-1]) and text.startswith(("'", '"')):
         return text[1:-1]
     return text
-    
+
 def clean_alphanumeric(text):
     """
     If text has any non-alphanumeric characters, replace them with a hyphen.
@@ -237,7 +245,7 @@ def clean_alphanumeric(text):
     for charc in text:
         text_clean += charc if charc.isalnum() else '-'
     return text_clean
-    
+
 def convert(c, state={}, keep_slashes=False):
     """
     Converts a Linux command to a Windows-equivalent following a few simple rules:
@@ -272,14 +280,14 @@ def convert(c, state={}, keep_slashes=False):
     IN_CURL_HEADER_ARTIFACT = False
     STATE_KEYS = ['IN_CLI', 'IN_CURL', 'IN_CURL_DATA', 'IN_CURL_DATA_JSON', 'IN_CURL_HEADER', 'IN_CURL_HEADER_ARTIFACT']
     JSON_OPEN_CLOSE = {
-        "open_array":"'[", 
-        "open_array_win": "\"[", 
-        "open_object":"'{", 
-        "open_object_win": "\"{", 
-        "open-artifact": "'Artifact-", 
-        "close_array": "]'", 
+        "open_array":"'[",
+        "open_array_win": "\"[",
+        "open_object":"'{",
+        "open_object_win": "\"{",
+        "open-artifact": "'Artifact-",
+        "close_array": "]'",
         "close_array_win": "]\"",
-        "close_object": "}'", 
+        "close_object": "}'",
         "close_object_win": "}\"",
         }
     # Passed state
@@ -316,7 +324,7 @@ def convert(c, state={}, keep_slashes=False):
             w.append('^')
             if IN_CLI:
                 state['IN_CLI'] = True
-            if IN_CURL: 
+            if IN_CURL:
                 state['IN_CURL'] = True
             if DEBUG: print "w.append('^')"
             continue
@@ -360,7 +368,7 @@ def convert(c, state={}, keep_slashes=False):
             continue
         if IN_CURL and IN_CURL_HEADER:
             if DEBUG: print "IN_CURL and IN_CURL_HEADER"
-            state['IN_CURL'] = True        
+            state['IN_CURL'] = True
             if v.startswith(JSON_OPEN_CLOSE["open-artifact"]):
                 if DEBUG: print "Start of json"
                 IN_CURL_HEADER_ARTIFACT = True
@@ -373,7 +381,7 @@ def convert(c, state={}, keep_slashes=False):
                 if DEBUG: print "json...escaping double-quotes and replacing single-quotes"
                 w.append(v.replace('"', '\\"').replace("'", '"'))
             else:
-                # Currently, won't reach this, as once IN_CURL_HEADER_ARTIFACT we never leave until end-of-line 
+                # Currently, won't reach this, as once IN_CURL_HEADER_ARTIFACT we never leave until end-of-line
                 if DEBUG: print "data..."
                 w.append(v)
             continue
@@ -383,7 +391,7 @@ def convert(c, state={}, keep_slashes=False):
             continue
         if not keep_slashes and v.find('/') != -1:
             if DEBUG: print "found slash: IN_CLI: %s v: %s" % (IN_CLI, v)
-            if (v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:') 
+            if (v.startswith('localhost') or v.startswith('"localhost') or v.startswith('"http:')
                     or v.startswith('"https:') or v.startswith('http:') or v.startswith('https:')):
                 if DEBUG: print "v.startswith..."
                 w.append(v)
@@ -398,7 +406,7 @@ def convert(c, state={}, keep_slashes=False):
         else:
             if DEBUG: print "didn't find slash"
             w.append(v)
-   
+
     if DEBUG: print "converted to: %s\npassing state: %s" % (leading_whitespace + ' '.join(w), state)
     return leading_whitespace + ' '.join(w), state
 
@@ -437,7 +445,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         """
         content = self.content
         text_block = '\n'.join(content)
-        
+
         if not text_block.startswith('.. ') or text_block.index('\n.. ') == -1:
             # There are no comments... generating a Windows-equivalent code
             LINUX = ['.. Linux', '']
@@ -479,9 +487,9 @@ class TabbedParsedLiteral(ParsedLiteral):
                 block += '\n'
             lines.append(block)
             line_counts.append(block.count('\n') +1)
-    
+
         return line_counts, lines
-    
+
     def cleanup_option(self, option, default, aphanumeric_only=False):
         """Removes leading or trailing quotes or double-quotes from a string option."""
         _option = self.options.get(option,'')
@@ -505,9 +513,9 @@ class TabbedParsedLiteral(ParsedLiteral):
                 s = dequote(s)
                 s = clean_alphanumeric(s) if aphanumeric_only else s
                 s = s.lower() if lower else s
-                _options.append(str(s))         
+                _options.append(str(s))
             return _options
-                    
+
     def run(self):
         set_classes(self.options)
         self.assert_has_content()
@@ -516,7 +524,7 @@ class TabbedParsedLiteral(ParsedLiteral):
         text = '\n'.join(lines)
         # Sending text to state machine for inline text replacement
         text_nodes, messages = self.state.inline_text(text, self.lineno)
- 
+
 # Debugging Code start
 #         if messages:
 #             print "text:\n%s" % text
@@ -527,7 +535,7 @@ class TabbedParsedLiteral(ParsedLiteral):
 #             for m in messages:
 #                 print m
 # Debugging Code end
-        
+
         node = TabbedParsedLiteralNode(text, '', *text_nodes, **self.options)
         node.cleanup()
         node.line = self.content_offset + 1
@@ -565,9 +573,9 @@ class TabbedParsedLiteral(ParsedLiteral):
                 node['mapping'] = [DEFAULT_TABS[0]] * tab_count
         if tab_count > len(node['line_counts']):
             print "Warning: number of tabs (%s) is greater than the number of elements in the line_counts (%s)" % (node['tabs'], node['line_counts'])
-                
+
         return [node] + messages
-        
+
 def visit_tpl_html(self, node):
     """Visit a Tabbed Parsed Literal node"""
     global TPL_COUNTER
@@ -596,7 +604,7 @@ def visit_tpl_html(self, node):
         new_highlighted = ['','<!-- tabbed-parsed-literal start -->',]
         if lang in ['console', 'shell-session', 'ps1', 'powershell']:
 
-#             print "highlighted (before):\n%s" % highlighted 
+#             print "highlighted (before):\n%s" % highlighted
             # Console-specific highlighting
             new_highlighted = ['','<!-- tabbed-parsed-literal start -->',]
             continuing_line = False # Indicates current line continues to next
@@ -615,29 +623,29 @@ def visit_tpl_html(self, node):
                 else:
                     continuing_line = False
                     if l:
-                        continuing_line = l.endswith('\\</span>') or l.endswith('^</span>')    
+                        continuing_line = l.endswith('\\</span>') or l.endswith('^</span>')
     #                 print "continuing_line: %s continued_line: %s l: %s" % (continuing_line, continued_line, l)
-                
+
                     for p in ['$', '#', '>', '&gt;', 'cdap >', 'cdap &gt;']:
                         if l.startswith(p):
                             l = "<span class=\"gp\">%s</span><span class=\"copyable copyable-text\">%s" % (p, l[1:])
                             copyable_text = True
                             break
-                        
+
                         t = "<pre>%s " % p
                         i = l.find(t)
                         if i != -1:
                             l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span \"copyable-text\">%s" % (l[:i], p, l[len(t)+i:])
                             copyable_text = True
                             break
-                                                
+
                         t = "<pre><span class=\"go\">%s " % p
                         i = l.find(t)
                         if i != -1:
                             l = "%s<pre class=\"copyable\"><span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (l[:i], p, l[len(t)+i:])
                             copyable_text = True
                             break
-                    
+
                         t = "<pre><span class=\"gp\">%s</span> " % p
                         i = l.find(t)
                         if i != -1:
@@ -653,10 +661,10 @@ def visit_tpl_html(self, node):
                                 l = "<span class=\"gp\">%s </span><span class=\"copyable-text\"><span class=\"go\">%s" % (p, l[len(t):])
                                 copyable_text = True
                             break
-                        
+
                         t = "<span class=\"gp\">%s</span> " % p
                         if l.startswith(t):
-                            if continued_line:                    
+                            if continued_line:
                                 l = "<span class=\"gp\">%s </span>%s" % (p, l[len(t):])
                             else:
                                 l = "<span class=\"gp\">%s </span><span class=\"copyable-text\">%s" % (p, l[len(t):])
@@ -669,17 +677,17 @@ def visit_tpl_html(self, node):
                         # End the copyable-text
                         l += "</span>"
                         copyable_text = False
-                    
+
                 new_highlighted.append(l)
                 # Set next line status
                 continued_line = continuing_line
         else:
             new_highlighted += highlighted.splitlines()
 
-        new_highlighted.append('<!-- tabbed-parsed-literal end -->')                
+        new_highlighted.append('<!-- tabbed-parsed-literal end -->')
 #         print "\nhighlighted (after):\n%s\n\n" % '\n'.join(new_highlighted)
         return '\n'.join(new_highlighted)
-    
+
     nav_tabs_html = ''
     tab_content_html = ''
     languages = node.get('languages')
@@ -704,19 +712,19 @@ def visit_tpl_html(self, node):
     else:
         # Independent tabs use the tab for the link
         clean_tab_links = tabs
-    
+
     div_name = 'tabbedparsedliteral{0}'.format(TPL_COUNTER)
     fill_div_options = {'div_name': div_name}
-    
+
     if node.get('independent'):
         # Independent node, doesn't participate in clicks with other nodes and has no mapping
-        fill_div_options['class'] = 'independent'
+        fill_div_options['class'] = 'tabbed-parsed-literal independent'
         js_options = {'tab_links':clean_tab_links, 'div_name':div_name}
         js_tpl = INDEPENDENT_JS_TPL
     else:
         # Dependent node
-        fill_div_options['class'] = "dependent-%s" % dependent
-        js_options = {'tab_links':clean_tab_links, 
+        fill_div_options['class'] = "tabbed-parsed-literal dependent-%s" % dependent
+        js_options = {'tab_links':clean_tab_links,
                       'mapping':repr(mapping),
                       'div_name':div_name,
                       'tabSetID':repr(dependent),
@@ -752,7 +760,7 @@ def visit_tpl_html(self, node):
             tab_entry_start = TAB_CONTENT_ENTRY_START.format(**tab_options)
             tab_content_html += tab_entry_start + start_tag + highlighted + DIV_END + DIV_DIV_END
         else:
-            raise Exception('visit_tpl_html', 
+            raise Exception('visit_tpl_html',
                     "Warning: Index %d exceeds length of languages (%d) and/or line_counts (%d)" % (index, len(languages), len(line_counts)))
 
     nav_tabs_html = NAV_TABS % nav_tabs_html

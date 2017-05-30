@@ -4,7 +4,6 @@
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-nav: true
-:orphan:
 
 .. _overview_release-notes:
 

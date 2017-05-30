@@ -7,7 +7,7 @@ FAQs Table of Contents
 ======================
 
 .. toctree::
-   :maxdepth: 2
+   :titlesonly:
 
     Overview <index>
     General Questions<general>

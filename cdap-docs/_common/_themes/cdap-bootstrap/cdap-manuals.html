@@ -1,0 +1,77 @@
+{#
+    cdap-manuals.html
+    =================
+    Sphinx left-sidebar template: "CDAP Manuals" links.
+
+    To work around the scoping rules of Jinja, use the "set _ = titles.append(title)" construct.
+    See http://stackoverflow.com/questions/4870346/can-a-jinja-variables-scope-extend-beyond-in-an-inner-block
+
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache License, Version 2.0
+#}
+<!-- theme_manual: {{ theme_manual }} -->
+<!-- theme_manual_highlight: {{ theme_manual_highlight }} -->
+
+{%- if theme_manual_highlight == '' %}{% set theme_manual_highlight = pagename %}{% endif -%}
+{%- set sidebar_title = theme_manual_highlight|capitalize -%}
+{%- set master_url_root = pathto(master_doc, 1) -%}
+{%- if theme_manual_highlight == 'guides' -%}
+  {%- set sidebar_title_link = master_url_root + '/../../' + theme_manual_highlight + '.html' -%}
+{%- else -%}
+  {%- set sidebar_title_link = sidebar_title -%}
+{%- endif -%}
+{%- if master_url_root == '#' -%}{% set master_url_root = '' -%}{% endif %}
+<!-- sidebar_title_link: {{ sidebar_title_link }} -->
+
+  <div role="note" aria-label="manuals links">
+    {%- if theme_manual_highlight == 'guides' -%}
+    <h3><a href="{{ sidebar_title_link }}">{{ sidebar_title }}</a></h3>
+    {%- else -%}
+    <h3>{{ sidebar_title }}</h3>
+    {%- endif %}
+
+    {%- if theme_manual_highlight == 'reference' %}
+    <ul class="reference-page-menu">
+    {%- for manual in theme_manuals_complete[theme_manual_highlight] %}
+      {%- set bold_open = '' -%}{% set bold_close = '' %}
+      {%- set title = manual['title'] %}
+      {%- if theme_manual == '' -%}
+      {%- set href = master_url_root + '/../' + manual['directory'] +'/' + manual['href'] %}
+      {%- else -%}
+      {%- set href = master_url_root + '/../../' + manual['directory'] +'/' + manual['href'] %}
+      {%- endif -%}
+      {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
+      {%- if loop.first and html_short_title_toc == doc_set %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
+      {%- if (title == html_short_title_toc) %}
+      <nav class="pagenav">
+      {{ toctree(titles_only=true, collapse=false, maxdepth=manual['expansion']) }}</nav>
+      {%- else -%}
+      <li class="toctree-l1">{{ bold_open }}<a href="{{ href }}" rel="nofollow">{{ title }}</a>{{ bold_close }}</li>
+      {%- endif %}
+    {%- endfor %}
+    </ul>
+
+    {%- else %}
+
+    <ul class="this-page-menu">
+    {%- for manual in theme_manuals_complete[theme_manual_highlight] %}
+      {%- set bold_open = '' -%}{% set bold_close = '' %}
+      {%- set title = manual['title'] %}
+      {%- if theme_manual == '' -%}
+      {%- set href = master_url_root + '/../' + manual['directory'] +'/' + manual['href'] %}
+      {%- else -%}
+      {%- set href = master_url_root + '/../../' + manual['directory'] +'/' + manual['href'] %}
+      {%- endif -%}
+      {%- if (title == html_short_title_toc) %}{%- set bold_open = '<b>' -%}{%- set bold_close = '</b>' -%}{%- endif -%}
+      {%- if loop.first and html_short_title_toc == doc_set %}{%- set bold_open = '<b>' %}{%- set bold_close = '</b>' %}{%- endif %}
+      <li class="toctree-l1">{{ bold_open }}<a href="{{ href }}" rel="nofollow">{{ title }}</a>{{ bold_close }}
+      {%- if (title == html_short_title_toc) %}
+      <nav class="pagenav">
+      {{ toctree(titles_only=true, collapse=false, maxdepth=manual['expansion']) }}</nav>
+      {%- endif %}
+      </li>
+    {%- endfor %}
+    </ul>
+
+    {%- endif %}
+  </div>
