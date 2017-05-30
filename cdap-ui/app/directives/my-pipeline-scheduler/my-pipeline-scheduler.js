@@ -45,6 +45,7 @@ class MyPipelineSchedulerCtrl {
     this.DAY_OF_MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
     this.MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     this.AM_PM_OPTIONS = ['AM', 'PM'];
+    this.CONCURRENT_RUNS_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
     this.initialCron = this.store.getSchedule();
     if (this.isDisabled) {
@@ -53,6 +54,7 @@ class MyPipelineSchedulerCtrl {
     this.cron = this.initialCron;
 
     this.intervalOptionKey = 'Hourly';
+    this.maxConcurrentRuns = this.store.getMaxConcurrentRuns();
     this.isScheduleChange = false;
     this.savingSchedule = false;
 
@@ -85,13 +87,17 @@ class MyPipelineSchedulerCtrl {
 
     this.scheduleType = 'basic';
 
-    // '0 * * * *' is default cron
-    if (this.cron !== '0 * * * *') {
+    this.getCronValues = () => {
       let convertedCronValues = CronConverter.convert(this.cron);
       this.advancedScheduleValues = convertedCronValues.cronObj;
       this.intervalOptionKey = convertedCronValues.intervalOption;
       this.timeSelections = convertedCronValues.humanReadableObj;
       this.scheduleType = convertedCronValues.scheduleType;
+    };
+
+    // '0 * * * *' is default cron
+    if (this.cron !== '0 * * * *') {
+      this.getCronValues();
     }
 
     this.switchToDefault = () => {
@@ -133,6 +139,7 @@ class MyPipelineSchedulerCtrl {
       this.getUpdatedCron();
       if (!this.isDisabled) {
         this.actionCreator.setSchedule(this.cron);
+        this.actionCreator.setMaxConcurrentRuns(this.maxConcurrentRuns);
         this.onClose();
         return;
       }
@@ -141,6 +148,7 @@ class MyPipelineSchedulerCtrl {
       pipelineConfig.config.schedule = this.cron;
       // This is needed to make sure the backend updates the schedule on updating app spec
       pipelineConfig['app.deploy.update.schedules'] = true;
+      pipelineConfig.config.maxConcurrentRuns = this.maxConcurrentRuns;
       return this.myPipelineApi.save(
         {
           namespace: this.$state.params.namespace,
@@ -165,6 +173,8 @@ class MyPipelineSchedulerCtrl {
     };
 
     this.selectType = (type) => {
+      this.getUpdatedCron();
+      this.getCronValues();
       this.scheduleType = type;
     };
 

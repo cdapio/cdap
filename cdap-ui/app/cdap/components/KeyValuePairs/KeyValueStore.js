@@ -1,5 +1,5 @@
 /*
-* Copyright © 2016 Cask Data, Inc.
+* Copyright © 2016-2017 Cask Data, Inc.
 *
 * Licensed under the Apache License, Version 2.0 (the "License"); you may not
 * use this file except in compliance with the License. You may obtain a copy of
@@ -44,12 +44,20 @@ const keyValues = (state = initialState, action = defaultAction) => {
       }
       stateCopy.pairs[action.payload.index].value = action.payload.value;
       return stateCopy;
+    case KeyValueStoreActions.setEnabled:
+      stateCopy = Object.assign({}, state);
+      if (action.payload.enabled === null || typeof action.payload.enabled === 'undefined') {
+        return stateCopy;
+      }
+      stateCopy.pairs[action.payload.index].enabled = action.payload.enabled;
+      return stateCopy;
     case KeyValueStoreActions.addPair:
       stateCopy = Object.assign({}, state);
       stateCopy.pairs.splice(action.payload.index + 1, 0, {
         key : '',
         value: '',
-        uniqueId: shortid.generate()
+        uniqueId: shortid.generate(),
+        enabled: true
       });
       return stateCopy;
     case KeyValueStoreActions.deletePair:
@@ -59,7 +67,8 @@ const keyValues = (state = initialState, action = defaultAction) => {
         stateCopy.pairs.push({
           key : '',
           value : '',
-          uniqueId: shortid.generate()
+          uniqueId: shortid.generate(),
+          enabled: true
         });
       }
       return stateCopy;

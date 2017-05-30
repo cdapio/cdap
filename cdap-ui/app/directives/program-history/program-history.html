@@ -50,7 +50,7 @@
             <span ng-show="run.end"> {{ (run.end - run.start) * 1000  | amDurationFormat}}</span>
             <span ng-hide="run.end"> &mdash; </span>
           </td>
-          <td> {{run.status}}</td>
+          <td> {{run.displayStatus}}</td>
         </tr>
       </tbody>
     </table>

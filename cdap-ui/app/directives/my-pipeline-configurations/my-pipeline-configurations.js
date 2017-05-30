@@ -24,6 +24,7 @@ angular.module(PKG.name + '.commons')
         applyRuntimeArguments: '&',
         convertRuntimeArgsToMacros: '&',
         pipelineName: '@',
+        pipelineAction: '@',
         runPipeline: '&',
         onClose: '&',
         namespace: '@namespaceId',
