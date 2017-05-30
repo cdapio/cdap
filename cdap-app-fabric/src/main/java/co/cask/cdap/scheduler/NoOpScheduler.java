@@ -17,12 +17,16 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -41,6 +45,16 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public void updateSchedule(ProgramSchedule schedule) throws NotFoundException {
+
+  }
+
+  @Override
+  public void enableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException {
+
+  }
+
+  @Override
+  public void disableSchedule(ScheduleId scheduleId) throws NotFoundException, ConflictException {
 
   }
 
@@ -70,12 +84,22 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
+  public ProgramScheduleStatus getScheduleStatus(ScheduleId scheduleId) throws NotFoundException {
+    return null;
+  }
+
+  @Override
   public List<ProgramSchedule> listSchedules(ApplicationId appId) {
     return null;
   }
 
   @Override
   public List<ProgramSchedule> listSchedules(ProgramId programId) {
+    return null;
+  }
+
+  @Override
+  public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
     return null;
   }
 }

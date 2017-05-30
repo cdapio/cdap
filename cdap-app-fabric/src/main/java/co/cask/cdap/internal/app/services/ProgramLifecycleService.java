@@ -21,14 +21,12 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
@@ -47,8 +45,8 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -67,6 +65,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -75,7 +74,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -724,197 +722,45 @@ public class ProgramLifecycleService extends AbstractIdleService {
   /**
    * Gets the state of the given schedule
    *
-   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
-   * @param appId {@link ApplicationId} to which schedule belongs to
-   * @param scheduleName name of the schedule
-   * @return {@link Scheduler.ScheduleState} of the given schedule
+   * @return the status of the given schedule
    * @throws Exception if failed to get the state of the schedule
    */
-  public Scheduler.ScheduleState getScheduleStatus(String namespaceId, String appId, String scheduleName)
+  public ProgramScheduleStatus getScheduleStatus(ScheduleId scheduleId)
     throws Exception {
-    ApplicationId applicationId = new ApplicationId(namespaceId, appId);
+    ApplicationId applicationId = scheduleId.getParent();
     ApplicationSpecification appSpec = store.getApplication(applicationId);
     if (appSpec == null) {
       throw new NotFoundException(applicationId);
     }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(scheduleName, String.format("Schedule: %s for application: %s",
-                                                              scheduleName, applicationId));
-    }
-
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    ProgramId programId = new ProgramId(namespaceId, appId, programType, programName);
-    ensureAccess(programId);
-    return scheduler.scheduleState(programId, programId.getType().getSchedulableType(), scheduleName);
+    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+    ensureAccess(schedule.getProgramId());
+    return scheduler.getScheduleStatus(scheduleId);
   }
 
   /**
    * Performs an action (suspend/resume) on the given schedule
    *
-   * @param namespaceId {@link NamespaceId} to which the schedule belongs to
-   * @param appId {@link ApplicationId} to which schedule belongs to
-   * @param scheduleName name of the schedule
+   * @param scheduleId Id of the schedule
    * @param action the action to perform
    * @throws Exception if the given action is invalid or failed to perform a valid action on the schedule
    */
-  public void suspendResumeSchedule(String namespaceId, String appId, String scheduleName,
-                                     String action) throws Exception {
-    if (!action.equals("suspend") && !action.equals("resume")) {
-      throw new BadRequestException("Schedule can only be suspended or resumed.");
+  public void suspendResumeSchedule(ScheduleId scheduleId, String action) throws Exception {
+    boolean doEnable;
+    if (action.equals("disable") || action.equals("suspend")) {
+      doEnable = false;
+    } else if (action.equals("enable") || action.equals("resume")) {
+      doEnable = true;
+    } else {
+      throw new BadRequestException(
+        "Action for schedules may only be 'enable', 'disable', 'suspend', or 'resume' but is'" + action + "'");
     }
-
-    ApplicationSpecification appSpec = store.getApplication(new ApplicationId(namespaceId, appId));
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(new ApplicationId(namespaceId, appId));
+    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+    authorizationEnforcer.enforce(schedule.getProgramId(), authenticationContext.getPrincipal(), Action.EXECUTE);
+    if (doEnable) {
+      scheduler.enableSchedule(scheduleId);
+    } else {
+      scheduler.disableSchedule(scheduleId);
     }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(new ScheduleId(namespaceId, appId, scheduleName));
-    }
-
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    ProgramId programId = new ProgramId(namespaceId, appId, programType, programName);
-    // to resume or stop a schedule we want to ensure that the user has EXECUTE privilege on the program. See CDAP-7404
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
-    Scheduler.ScheduleState state = scheduler.scheduleState(programId,
-                                                            scheduleSpec.getProgram().getProgramType(), scheduleName);
-    switch (state) {
-      case NOT_FOUND:
-        throw new NotFoundException(new ScheduleId(namespaceId, appId, scheduleName));
-      case SCHEDULED:
-        if (action.equals("suspend")) {
-          scheduler.suspendSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-        } else {
-          // attempt to resume already resumed schedule
-          throw new ConflictException("Schedule already resumed");
-        }
-        break;
-      case SUSPENDED:
-        if (action.equals("suspend")) {
-          // attempt to suspend already suspended schedule
-          throw new ConflictException("Schedule already suspended");
-        } else {
-          scheduler.resumeSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-        }
-        break;
-    }
-  }
-
-  /**
-   * Add a schedule to an application.
-   *
-   * @param applicationId the application id for which the schedule needs to be added
-   * @param scheduleSpec the schedule specification
-   * @throws NotFoundException when application is not found
-   * @throws SchedulerException on an exception when updating the schedule
-   * @throws BadRequestException if the program type is not workflow
-   */
-  public void addSchedule(ApplicationId applicationId, ScheduleSpecification scheduleSpec)
-    throws NotFoundException, SchedulerException, AlreadyExistsException, BadRequestException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(applicationId);
-    }
-
-    String scheduleName = scheduleSpec.getSchedule().getName();
-    ScheduleSpecification existingScheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (existingScheduleSpec != null) {
-      throw new AlreadyExistsException(
-        new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(), scheduleName));
-    }
-
-    ProgramType programType = getSchedulableProgramType(scheduleSpec);
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramId programId = applicationId.program(programType, programName);
-
-    if (!programType.equals(ProgramType.WORKFLOW)) {
-      throw new BadRequestException("Only workflows can be scheduled");
-    }
-
-    // TODO: CDAP-8907 Make the scheduler update and store update transactional
-    // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    try {
-      scheduler.schedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleSpec.getSchedule(),
-                         scheduleSpec.getProperties());
-    } catch (IllegalArgumentException e) {
-      throw new BadRequestException(e);
-    }
-    store.addSchedule(programId, scheduleSpec, false);
-  }
-
-  /**
-   * Delete a given schedule in an application.
-   *
-   * @param applicationId the application containing the schedule
-   * @param scheduleName the schedule name to be deleted
-   * @throws NotFoundException when application is not found, or when the schdule is not found
-   * @throws SchedulerException on an exception when updating the schedule
-   */
-  public void deleteSchedule(ApplicationId applicationId, String scheduleName)
-    throws NotFoundException, SchedulerException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(applicationId);
-    }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
-                                                 scheduleName));
-    }
-
-    ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    String programName = scheduleSpec.getProgram().getProgramName();
-    ProgramId programId = applicationId.program(programType, programName);
-
-    // TODO: CDAP-8907 Make the scheduler update and store update transactional
-    // TODO: CDAP-8908 reduce redundant parameters in the scheduler call
-    scheduler.deleteSchedule(programId, scheduleSpec.getProgram().getProgramType(), scheduleName);
-    store.deleteSchedule(programId, scheduleName);
-  }
-
-  /**
-   * Gets a given schedule in an application.
-   *
-   * @param applicationId the application containing the schedule
-   * @param scheduleName the name of the schedule
-   * @return {@link ScheduleSpecification} of the given schedule
-   * @throws NotFoundException when application is not found, or when the schedule is not found
-   */
-  public ScheduleSpecification getSchedule(ApplicationId applicationId, String scheduleName)
-    throws NotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(applicationId);
-    }
-
-    ScheduleSpecification scheduleSpec = appSpec.getSchedules().get(scheduleName);
-    if (scheduleSpec == null) {
-      throw new NotFoundException(new ScheduleId(applicationId.getNamespace(), applicationId.getApplication(),
-                                                 scheduleName));
-    }
-    return scheduleSpec;
-  }
-
-  /**
-   * Gets all of the schedules in a application.
-   *
-   * @param applicationId the application id
-   * @return list of {@link ScheduleSpecification} of all the schedules in the application
-   * @throws NotFoundException when application if is not found
-   */
-  public List<ScheduleSpecification> getAllSchedules(ApplicationId applicationId)
-    throws NotFoundException {
-    ApplicationSpecification appSpec = store.getApplication(applicationId);
-    if (appSpec == null) {
-      throw new ApplicationNotFoundException(applicationId);
-    }
-    return ImmutableList.copyOf(appSpec.getSchedules().values());
   }
 
   /**
@@ -952,17 +798,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
       }
     }
     return programRecords;
-  }
-
-  private ProgramType getSchedulableProgramType(ScheduleSpecification scheduleSpec) throws BadRequestException {
-    try {
-      return ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-    } catch (IllegalArgumentException e) {
-      // the ProgramType.valueOfSchedulableType throws IllegalArgumentException if the given program type is not in
-      // SchedulableProgramType just wrap it in BadRequest to send proper error code to user if this call is made from
-      // user request
-      throw new BadRequestException(e);
-    }
   }
 
   private void createProgramRecords(NamespaceId namespaceId, String appId, ProgramType type,

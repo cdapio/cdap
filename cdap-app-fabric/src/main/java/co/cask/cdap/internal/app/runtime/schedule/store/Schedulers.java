@@ -68,6 +68,9 @@ public class Schedulers {
 
   public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
 
+  public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
+  public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS = 1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
+
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
@@ -80,7 +83,6 @@ public class Schedulers {
       throw Throwables.propagate(e);
     }
   }
-
 
   public static ProgramScheduleStoreDataset getScheduleStore(DatasetContext context, DatasetFramework dsFramework) {
     try {

@@ -23,6 +23,9 @@ import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
@@ -72,10 +75,10 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
 
   private static final Job SCHED1_JOB = new SimpleJob(SCHED1, System.currentTimeMillis(),
                                                       Lists.<Notification>newArrayList(),
-                                                      Job.State.PENDING_TRIGGER);
+                                                      Job.State.PENDING_TRIGGER, 0L);
   private static final Job SCHED2_JOB = new SimpleJob(SCHED2, System.currentTimeMillis(),
                                                       Lists.<Notification>newArrayList(),
-                                                      Job.State.PENDING_TRIGGER);
+                                                      Job.State.PENDING_TRIGGER, 0L);
 
   private TransactionExecutor txExecutor;
   private JobQueueDataset jobQueue;
@@ -85,8 +88,7 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
     TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
     TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
-    jobQueue = dsFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID,
-                                                            new HashMap<String, String>(), null);
+    jobQueue = dsFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<String, String>(), null);
     Assert.assertNotNull(jobQueue);
     this.txExecutor =
       txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) jobQueue));
@@ -97,7 +99,7 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        for (Job job : getAllJobs(jobQueue)) {
+        for (Job job : getAllJobs(jobQueue, true)) {
           jobQueue.deleteJob(job);
         }
       }
@@ -169,8 +171,8 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
         Assert.assertEquals(ImmutableSet.of(SCHED1_JOB, SCHED2_JOB), getAllJobs(jobQueue));
         Assert.assertEquals(ImmutableSet.of(SCHED2_JOB), toSet(jobQueue.getJobsForSchedule(SCHED2.getScheduleId())));
 
-        // delete job for SCHED1 and assert that it is no longer in 'getJobs'
-        jobQueue.deleteJobs(SCHED1.getScheduleId());
+        // mark job for SCHED1 for deletion and assert that it is no longer in 'getJobs'
+        jobQueue.markJobsForDeletion(SCHED1.getScheduleId(), System.currentTimeMillis());
       }
     });
 
@@ -179,6 +181,28 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
       @Override
       public void apply() throws Exception {
         Assert.assertEquals(ImmutableSet.of(SCHED2_JOB), getAllJobs(jobQueue));
+        Assert.assertEquals(0, toSet(jobQueue.getJobsForSchedule(SCHED1.getScheduleId())).size());
+        Assert.assertEquals(ImmutableSet.of(SCHED2_JOB), toSet(jobQueue.getJobsForSchedule(SCHED2.getScheduleId())));
+      }
+    });
+
+    // now actually delete all jobs that are marked for deletion
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (Job job : getAllJobs(jobQueue, true)) {
+          if (job.isToBeDeleted()) {
+            jobQueue.deleteJob(job);
+          }
+        }
+      }
+    });
+
+    // and validate that the job is completely gone
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        Assert.assertEquals(ImmutableSet.of(SCHED2_JOB), getAllJobs(jobQueue, true));
         Assert.assertEquals(0, toSet(jobQueue.getJobsForSchedule(SCHED1.getScheduleId())).size());
         Assert.assertEquals(ImmutableSet.of(SCHED2_JOB), toSet(jobQueue.getJobsForSchedule(SCHED2.getScheduleId())));
       }
@@ -225,7 +249,7 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
                                                          new PartitionTrigger(DATASET_ID, 1),
                                                          ImmutableList.<Constraint>of());
           Job job = new SimpleJob(schedule, now + i, ImmutableList.<Notification>of(),
-                                  Job.State.PENDING_TRIGGER);
+                                  Job.State.PENDING_TRIGGER, 0L);
           jobsByPartition.put(jobQueue.getPartition(schedule.getScheduleId()), job);
           jobQueue.put(job);
         }
@@ -264,7 +288,7 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
       @Override
       public void apply() throws Exception {
         // should be 0 jobs in the JobQueue to begin with
-        Assert.assertEquals(0, getAllJobs(jobQueue).size());
+        Assert.assertEquals(0, getAllJobs(jobQueue, false).size());
 
         // Construct a partition notification with DATASET_ID
         Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.<PartitionKey>of());
@@ -276,27 +300,40 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
 
         // Since notification and SCHED1 have the same dataset id DATASET_ID, notification will be added to
         // SCHED1_JOB, which is a job in SCHED1
-        jobQueue.addNotification(SCHED1, notification);
+        jobQueue.addNotification(
+          new ProgramScheduleRecord(SCHED1, new ProgramScheduleMeta(ProgramScheduleStatus.SCHEDULED, 0L)),
+          notification);
         Assert.assertEquals(ImmutableList.of(notification), jobQueue.getJob(SCHED1_JOB.getJobKey()).getNotifications());
       }
     });
   }
 
   private Set<Job> getAllJobs(JobQueueDataset jobQueue) {
+    return getAllJobs(jobQueue, false);
+  }
+
+  private Set<Job> getAllJobs(JobQueueDataset jobQueue, boolean includeToBeDeleted) {
     Set<Job> jobs = new HashSet<>();
     for (int i = 0; i < jobQueue.getNumPartitions(); i++) {
       try (CloseableIterator<Job> allJobs = jobQueue.getJobs(i, null)) {
-        jobs.addAll(toSet(allJobs));
+        jobs.addAll(toSet(allJobs, includeToBeDeleted));
       }
     }
     return jobs;
   }
 
   private Set<Job> toSet(CloseableIterator<Job> jobIter) {
+    return toSet(jobIter, false);
+  }
+
+  private Set<Job> toSet(CloseableIterator<Job> jobIter, boolean includeToBeDeleted) {
     try {
       Set<Job> jobList = new HashSet<>();
       while (jobIter.hasNext()) {
-        jobList.add(jobIter.next());
+        Job job = jobIter.next();
+        if (includeToBeDeleted || !job.isToBeDeleted()) {
+          jobList.add(job);
+        }
       }
       return jobList;
     } finally {
