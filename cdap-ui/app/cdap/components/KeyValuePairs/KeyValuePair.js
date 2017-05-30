@@ -51,6 +51,7 @@ class KeyValuePair extends Component {
           onChange={this.props.onChange.bind(null, 'value')}
           placeholder={T.translate('commons.keyValPairs.valuePlaceholder')}
           className="form-control value-input"
+          disabled={this.props.enabled === false}
         />
         <button
           type="submit"
@@ -59,24 +60,34 @@ class KeyValuePair extends Component {
         >
           <i className="fa fa-plus" />
         </button>
-        <button
-          type="submit"
-          className={classnames("btn remove-row-btn btn-link", {"hidden": notDeletableCondition})}
-          onClick={this.props.removeRow}
-        >
-          <i className="fa fa-trash" />
-        </button>
         {
           notDeletableCondition ?
             (
-              <span
-                className={classnames("reset-action", {"hidden": !this.props.showReset})}
-                onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
-              >
-                {T.translate('commons.keyValPairs.reset')}
+              <span>
+                <input
+                  type="checkbox"
+                  checked={this.props.enabled}
+                  onChange={this.props.onEnabled}
+                  className="form-control enabled-input"
+                />
+                <span
+                  className={classnames("reset-action", {"hidden": !this.props.showReset})}
+                  onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
+                >
+                  {T.translate('commons.keyValPairs.reset')}
+                </span>
               </span>
             )
-          : null
+          :
+            (
+              <button
+                type="submit"
+                className={classnames("btn remove-row-btn btn-link", {"hidden": notDeletableCondition})}
+                onClick={this.props.removeRow}
+              >
+                <i className="fa fa-trash" />
+              </button>
+            )
         }
       </div>
     );
@@ -89,10 +100,12 @@ KeyValuePair.propTypes = {
   value: PropTypes.string,
   index: PropTypes.number,
   notDeletable: PropTypes.bool,
+  enabled: PropTypes.bool,
   showReset: PropTypes.bool,
   onChange: PropTypes.func,
   addRow: PropTypes.func,
   removeRow: PropTypes.func,
+  onEnabled: PropTypes.func,
   getResettedKeyValue: PropTypes.func
 };
 

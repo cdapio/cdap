@@ -45,6 +45,7 @@ class MyPipelineSchedulerCtrl {
     this.DAY_OF_MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
     this.MONTH_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
     this.AM_PM_OPTIONS = ['AM', 'PM'];
+    this.CONCURRENT_RUNS_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
     this.initialCron = this.store.getSchedule();
     if (this.isDisabled) {
@@ -53,6 +54,7 @@ class MyPipelineSchedulerCtrl {
     this.cron = this.initialCron;
 
     this.intervalOptionKey = 'Hourly';
+    this.maxConcurrentRuns = this.store.getMaxConcurrentRuns();
     this.isScheduleChange = false;
     this.savingSchedule = false;
 
@@ -133,12 +135,14 @@ class MyPipelineSchedulerCtrl {
       this.getUpdatedCron();
       if (!this.isDisabled) {
         this.actionCreator.setSchedule(this.cron);
+        this.actionCreator.setMaxConcurrentRuns(this.maxConcurrentRuns);
         this.onClose();
         return;
       }
       this.savingSchedule = true;
       let pipelineConfig = this.store.getCloneConfig();
       pipelineConfig.config.schedule = this.cron;
+      pipelineConfig.config.maxConcurrentRuns = this.maxConcurrentRuns;
       return this.myPipelineApi.save(
         {
           namespace: this.$state.params.namespace,

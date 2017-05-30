@@ -125,7 +125,7 @@ body.theme-cdap {
 
         .configuration-content {
           width: 100%;
-          margin: 16px 50px 40px 50px;
+          margin: 16px 30px 40px 50px;
           font-size: @regular-font;
           position: relative;
 
@@ -145,6 +145,11 @@ body.theme-cdap {
             .step-content-heading {
               font-weight: bold;
               margin-bottom: 16px;
+
+              .step-content-subtitle {
+                font-weight: initial;
+                font-size: 12px;
+              }
             }
 
             .label-with-toggle {
@@ -176,7 +181,7 @@ body.theme-cdap {
               .key-label,
               .value-label {
                 display: inline-block;
-                width: 40%;
+                width: 37%;
                 font-weight: 500;
               }
 
@@ -192,18 +197,27 @@ body.theme-cdap {
                 margin-bottom: 16px;
                 justify-content: initial;
 
-                input {
+                input[type="text"] {
                   border: 1px solid @border-color;
                   font-size: @regular-font;
+                  width: 37%;
 
                   &:focus {
                     border-color: @input-box-focus-color;
                   }
                 }
 
+                input[type="checkbox"] {
+                  width: 12px;
+                  height: 12px;
+                  display: inline-block;
+                  margin: 0 20px 0 10px;
+                }
+
                 .btn-link {
                   color: @action-button-color;
                   font-size: @regular-font;
+                  padding: 6px 10px;
                 }
               }
             }
@@ -221,9 +235,9 @@ body.theme-cdap {
               }
 
               .runtime-arguments-values {
-                /* 240px = 32px (height of input box) * 5
-                         + 16px (margin between each boxes) * 5 */
-                max-height: 240px;
+                /* 192px = 32px (height of input box) * 4
+                         + 16px (margin between each boxes) * 4 */
+                max-height: 192px;
                 overflow-x: hidden;
                 overflow-y: auto;
               }

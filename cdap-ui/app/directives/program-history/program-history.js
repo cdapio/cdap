@@ -25,8 +25,7 @@ angular.module(PKG.name + '.commons')
         programId: '='
       },
       templateUrl: 'program-history/program-history.html',
-      controller: function ($scope, $state) {
-
+      controller: function ($scope, $state, MyPipelineStatusMapper) {
         $scope.appId = $scope.appId || $state.params.appId;
         $scope.programId = $scope.programId || $state.params.programId;
 
@@ -59,7 +58,8 @@ angular.module(PKG.name + '.commons')
                     programId: $scope.programId,
                     runId: run.runid
                   }
-                })
+                }),
+                displayStatus: MyPipelineStatusMapper.lookupDisplayStatus(run.status)
               }, run);
             });
         });

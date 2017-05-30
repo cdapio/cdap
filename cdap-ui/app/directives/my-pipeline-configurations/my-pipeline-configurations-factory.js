@@ -22,6 +22,7 @@ angular.module(PKG.name + '.commons')
       'apply-runtime-arguments': 'applyRuntimeArguments()',
       'convert-runtime-args-to-macros': 'convertRuntimeArgsToMacros()',
       'pipeline-name': '{{::pipelineName}}',
+      'pipeline-action': '{{::pipelineAction}}',
       'run-pipeline': 'runPipeline()',
       'on-close': 'onClose()',
       'namespace': 'namespace',

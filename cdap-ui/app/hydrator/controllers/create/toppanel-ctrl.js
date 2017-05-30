@@ -420,7 +420,7 @@ class HydratorPlusPlusTopPanelCtrl {
                 this.previewActions.setMacros(this.macrosMap)
               );
             }
-            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
             this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
@@ -435,7 +435,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setMacros(this.macrosMap)
       );
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
       this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
@@ -449,14 +449,18 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   startOrStopPreview() {
-    this.getRuntimeArguments()
-    .then(() => {
-      if (this.previewRunning) {
-        this.stopPreview();
-      } else {
-        this.onPreviewStart();
-      }
-    });
+    if (this.validToStartPreview) {
+      this.getRuntimeArguments()
+      .then(() => {
+        if (this.previewRunning) {
+          this.stopPreview();
+        } else {
+          this.onPreviewStart();
+        }
+      });
+    } else {
+      this.toggleConfig();
+    }
   }
 
   toggleScheduler() {
@@ -475,16 +479,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   isValidToStartPreview() {
-    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
-    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
-    if (hasMissingValues.res) {
-      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
-      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
-    } else {
-      this.notValidRuntimeArgsString = '';
-    }
-
-    return !hasMissingValues.res;
+    return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
   onPreviewStart() {
