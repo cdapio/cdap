@@ -77,6 +77,9 @@
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
+          <div class="step-content-subtitle">
+            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+          </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
@@ -326,7 +329,8 @@
       </fieldset>
 
       <div class="configuration-step-navigation">
-        <div ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+        <div class="apply-run-container"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-run"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled() || RealtimePipelineConfigCtrl.startingPipeline"
@@ -349,6 +353,16 @@
             ng-click="RealtimePipelineConfigCtrl.applyConfig()">
             Save
           </button>
+          <span class="num-runtime-args"
+                ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
+              {{ RealtimePipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length === 1">
+              runtime argument
+            </span>
+            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length > 1">
+              runtime arguments
+            </span>
+          </span>
         </div>
         <div ng-if="!RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
@@ -426,6 +440,9 @@
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
+          <div class="step-content-subtitle">
+            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+          </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
@@ -707,13 +724,13 @@
             class="btn btn-primary apply-run"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
-            Apply &amp; Run
+            Save &amp; Run
           </button>
           <button
             class="btn btn-secondary"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyConfig()">
-            Apply
+            Save
           </button>
           <span class="num-runtime-args"
                 ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
@@ -731,7 +748,7 @@
             class="btn btn-primary apply-close"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
-            Apply
+            Save
           </button>
         </div>
       </div>

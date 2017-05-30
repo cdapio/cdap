@@ -83,6 +83,9 @@
               ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
           <div class="step-content-heading">
             Specify Runtime Arguments or Update the Ones Derived from Preferences
+            <div class="step-content-subtitle">
+              Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+            </div>
           </div>
           <div class="runtime-arguments-labels key-value-pair-labels">
             <span class="key-label">Name</span>
@@ -264,32 +267,44 @@
 
         <div class="configuration-step-navigation">
           <div ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
-            <button
-              class="btn btn-primary apply-run"
-              ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline"
-              ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
-              <span>Save &amp; Run</span>
-              <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
-            </button>
-            <button
-              class="btn btn-secondary"
-              ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
-              ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
-              ng-click="BatchPipelineConfigCtrl.applyAndClose()">
-              Save
-            </button>
-            <button
-              class="btn btn-secondary"
-              ng-if="BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
-              ng-click="BatchPipelineConfigCtrl.updatePipeline()"
-              ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline"
-            >
-             <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
-             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">Saving</span>
-             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
-               <span class="fa fa-spinner fa-spin"></span>
-             </span>
-            </button>
+            <div class="apply-run-container">
+              <button
+                class="btn btn-primary apply-run"
+                ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline"
+                ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
+                <span>Save &amp; Run</span>
+                <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
+              </button>
+              <button
+                class="btn btn-secondary"
+                ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+                ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
+                ng-click="BatchPipelineConfigCtrl.applyAndClose()">
+                Save
+              </button>
+              <button
+                class="btn btn-secondary"
+                ng-if="BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
+                ng-click="BatchPipelineConfigCtrl.updatePipeline()"
+                ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline"
+              >
+               <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
+               <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">Saving</span>
+               <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
+                 <span class="fa fa-spinner fa-spin"></span>
+               </span>
+              </button>
+              <span class="num-runtime-args"
+                    ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+                  {{ BatchPipelineConfigCtrl.runtimeArguments.pairs.length }}
+                <span ng-if="BatchPipelineConfigCtrl.runtimeArguments.pairs.length === 1">
+                  runtime argument
+                </span>
+                <span ng-if="BatchPipelineConfigCtrl.runtimeArguments.pairs.length > 1">
+                  runtime arguments
+                </span>
+              </span>
+            </div>
           </div>
           <div ng-if="!BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
             <button
@@ -374,6 +389,9 @@
             ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
+          <div class="step-content-subtitle">
+            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+          </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
@@ -603,13 +621,13 @@
             class="btn btn-primary apply-run"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
-            Apply &amp; Run
+            Save &amp; Run
           </button>
           <button
             class="btn btn-secondary"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyConfig()">
-            Apply
+            Save
           </button>
           <span class="num-runtime-args"
                 ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
@@ -627,7 +645,7 @@
             class="btn btn-primary apply-close"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndClose()">
-            Apply
+            Save
           </button>
         </div>
       </div>
