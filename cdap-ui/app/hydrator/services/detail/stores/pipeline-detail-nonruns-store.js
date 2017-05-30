@@ -208,6 +208,9 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getNumRecordsPreview = function() {
       return this.state.cloneConfig.config.numOfRecordsPreview;
     };
+    this.getMaxConcurrentRuns = function() {
+      return this.state.cloneConfig.config.maxConcurrentRuns;
+    };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -264,7 +267,8 @@ angular.module(PKG.name + '.feature.hydrator')
           processTimingEnabled: appConfigClone.configJson.processTimingEnabled,
           stageLoggingEnabled: appConfigClone.configJson.stageLoggingEnabled,
           disableCheckpoints: appConfigClone.configJson.disableCheckpoints,
-          stopGracefully: appConfigClone.configJson.stopGracefully
+          stopGracefully: appConfigClone.configJson.stopGracefully,
+          maxConcurrentRuns: appConfigClone.configJson.maxConcurrentRuns,
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

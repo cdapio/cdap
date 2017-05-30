@@ -89,6 +89,9 @@ class HydratorPlusPlusConfigActions {
   deletePostAction(config) {
     this.dispatcher.dispatch('onDeletePostAction', config);
   }
+  setMaxConcurrentRuns(num) {
+    this.dispatcher.dispatch('onSetMaxConcurrentRuns', num);
+  }
   publishPipeline() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let error = this.HydratorPlusPlusConfigStore.validateState(true);

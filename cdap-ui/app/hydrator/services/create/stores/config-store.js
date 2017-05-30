@@ -54,6 +54,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetMaxConcurrentRuns', this.setMaxConcurrentRuns.bind(this));
   }
   registerOnChangeListener(callback) {
     // index of the listener to be removed while un-subscribing
@@ -96,6 +97,7 @@ class HydratorPlusPlusConfigStore {
       this.setCheckpointing(this.state.config.disableCheckpoints);
       this.setGracefulStop(this.state.config.stopGracefully);
       this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
+      this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -116,7 +118,8 @@ class HydratorPlusPlusConfigStore {
       properties: {},
       processTimingEnabled: true,
       stageLoggingEnabled: true,
-      numOfRecordsPreview: 100
+      numOfRecordsPreview: 100,
+      maxConcurrentRuns: 1
     };
   }
 
@@ -303,6 +306,7 @@ class HydratorPlusPlusConfigStore {
     });
 
     config.postActions = postActions;
+    config.maxConcurrentRuns = this.getMaxConcurrentRuns();
 
     return config;
   }
@@ -961,6 +965,12 @@ class HydratorPlusPlusConfigStore {
   }
   getPostActions() {
     return this.getState().config.postActions;
+  }
+  getMaxConcurrentRuns() {
+    return this.getState().config.maxConcurrentRuns;
+  }
+  setMaxConcurrentRuns(num=1) {
+    this.state.config.maxConcurrentRuns = num;
   }
 
   saveAsDraft() {
