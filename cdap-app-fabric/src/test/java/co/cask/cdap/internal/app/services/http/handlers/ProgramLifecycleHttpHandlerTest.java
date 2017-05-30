@@ -984,12 +984,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     deleteApp(appDefault, 200);
 
-    // Schedule spec of app1 from versioned API
+    // Schedule of app1 from versioned API
     List<ScheduleDetail> someSchedules1 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
                                                        VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
     Assert.assertEquals(2, someSchedules1.size());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(0).getProgram().getProgramName());
     Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(1).getProgram().getProgramName());
+    // validate backward-compatible API
+    List<ScheduleSpecification> someSpecs1 = getScheduleSpecs(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
+                                                              VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    Assert.assertEquals(2, someSpecs1.size());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSpecs1.get(0).getProgram().getProgramName());
+    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSpecs1.get(1).getProgram().getProgramName());
 
     deleteApp(app1, 200);
 
@@ -1128,6 +1134,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
     Assert.assertEquals(1, schedulesForApp.size());
     Assert.assertEquals(schedules, schedulesForApp);
+    // validate backward compatible api
+    List<ScheduleSpecification> specsForApp = listScheduleSpecs(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
+    Assert.assertEquals(1, specsForApp.size());
+    ScheduleSpecification spec = specsForApp.get(0);
+    Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, spec.getProgram().getProgramName());
+    Assert.assertTrue(spec.getSchedule() instanceof TimeSchedule);
+    Assert.assertEquals("0/15 * * * * ?", ((TimeSchedule) spec.getSchedule()).getCronEntry());
 
     List<ScheduleDetail> schedules2 =
       getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, AppWithSchedule.WORKFLOW_NAME);
@@ -1312,6 +1325,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
     Assert.assertEquals("schedule-100", detail100.getName());
+    // test backward-compatible api
+    ScheduleSpecification spec100 = getScheduleSpec(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
+    Assert.assertEquals(detail100.toScheduleSpec(), spec100);
   }
 
   private void testDeleteSchedule(ApplicationId appV2Id, String scheduleName) throws Exception {

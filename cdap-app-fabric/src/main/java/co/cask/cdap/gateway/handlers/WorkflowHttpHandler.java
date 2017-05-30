@@ -32,6 +32,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -40,10 +41,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.dataset.DatasetCreationSpec;
@@ -51,7 +50,6 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -260,11 +258,11 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-id}/schedules")
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("workflow-id") String workflowId) throws NotFoundException {
-    ApplicationId application = new ApplicationId(namespaceId, appId);
-    respondWorkflowSchedules(responder, application, workflowId);
+                                   @PathParam("namespace-id") String namespace,
+                                   @PathParam("app-id") String application,
+                                   @PathParam("workflow-id") String workflow,
+                                   @QueryParam("format") String format) throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, format);
   }
 
   /**
@@ -273,24 +271,12 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   @GET
   @Path("/apps/{app-id}/versions/{app-version}/workflows/{workflow-id}/schedules")
   public void getWorkflowSchedules(HttpRequest request, HttpResponder responder,
-                                   @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("app-id") String appId,
-                                   @PathParam("app-version") String appVersion,
-                                   @PathParam("workflow-id") String workflowId) throws NotFoundException {
-    ApplicationId application = new ApplicationId(namespaceId, appId, appVersion);
-    respondWorkflowSchedules(responder, application, workflowId);
-  }
-
-  private void respondWorkflowSchedules(HttpResponder responder, ApplicationId application, String workflow)
-    throws NotFoundException {
-
-    ApplicationSpecification appSpec = store.getApplication(application);
-    if (appSpec == null) {
-      throw new NotFoundException(application);
-    }
-    List<ProgramSchedule> schedules = programScheduler.listSchedules(application.workflow(workflow));
-    responder.sendJson(HttpResponseStatus.OK, Schedulers.toScheduleDetails(schedules),
-                       new TypeToken<List<ScheduleDetail>>() { }.getType(), GSON);
+                                   @PathParam("namespace-id") String namespace,
+                                   @PathParam("app-id") String application,
+                                   @PathParam("app-version") String version,
+                                   @PathParam("workflow-id") String workflow,
+                                   @QueryParam("format") String format) throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespace, application, version, workflow, format);
   }
 
   @GET

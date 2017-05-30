@@ -87,6 +87,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.HttpResponder;
@@ -157,6 +158,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = ApplicationSpecificationAdapter
     .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .registerTypeAdapter(Trigger.class, new TriggerCodec())
+    .registerTypeAdapter(Constraint.class, new ConstraintCodec())
+    .create();
+
+  // the CaseInsensitiveEnumTypeAdapterFactory breaks schedule deserialization in clients
+  private static final Gson GSON_FOR_SCHEDULES = ApplicationSpecificationAdapter
+    .addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ConstraintCodec())
     .create();
@@ -596,9 +604,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getSchedule(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
-                          @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, SchedulerException {
-    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName);
+                          @PathParam("schedule-name") String scheduleName,
+                          @QueryParam("format") String format)
+    throws NotFoundException, SchedulerException, BadRequestException {
+    doGetSchedule(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, scheduleName, format);
   }
 
   @GET
@@ -607,25 +616,40 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                           @PathParam("namespace-id") String namespaceId,
                           @PathParam("app-name") String appName,
                           @PathParam("app-version") String appVersion,
-                          @PathParam("schedule-name") String scheduleName)
-    throws NotFoundException, SchedulerException {
-    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName);
+                          @PathParam("schedule-name") String scheduleName,
+                          @QueryParam("format") String format)
+    throws NotFoundException, SchedulerException, BadRequestException {
+    doGetSchedule(responder, namespaceId, appName, appVersion, scheduleName, format);
   }
 
-  private void doGetSchedule(HttpResponder responder, String namespace, String app, String version, String scheduleName)
-    throws NotFoundException {
+  private void doGetSchedule(HttpResponder responder, String namespace,
+                             String app, String version, String scheduleName, String format)
+    throws NotFoundException, BadRequestException {
+
+    boolean asScheduleSpec = returnScheduleAsSpec(format);
     ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
     ProgramSchedule schedule = programScheduler.getSchedule(scheduleId);
-    responder.sendJson(HttpResponseStatus.OK, schedule.toScheduleDetail(), ScheduleDetail.class, GSON);
+    ScheduleDetail detail = schedule.toScheduleDetail();
+    if (asScheduleSpec) {
+      ScheduleSpecification spec = detail.toScheduleSpec();
+      if (spec == null) {
+        // this is for supporting old-style schedules. If the schedule has a trigger that can't be expressed
+        // then this application must be using new APIs and the schedule can't be returned in old form.
+        throw new NotFoundException(scheduleId);
+      }
+      responder.sendJson(HttpResponseStatus.OK, spec, ScheduleSpecification.class, GSON);
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, detail, ScheduleDetail.class, GSON);
+    }
   }
 
   @GET
   @Path("apps/{app-name}/schedules")
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
-                              @PathParam("app-name") String appName)
-    throws NotFoundException, SchedulerException {
-    doGetAllSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION);
+                              @PathParam("app-name") String appName,
+                              @QueryParam("format") String format) throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format);
   }
 
   @GET
@@ -633,17 +657,37 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
-                              @PathParam("app-version") String appVersion)
-    throws NotFoundException, SchedulerException {
-    doGetAllSchedules(responder, namespaceId, appName, appVersion);
+                              @PathParam("app-version") String appVersion,
+                              @QueryParam("format") String format) throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespaceId, appName, appVersion, null, format);
   }
 
-  private void doGetAllSchedules(HttpResponder responder, String namespace, String app, String version)
-    throws NotFoundException {
+  protected void doGetSchedules(HttpResponder responder, String namespace, String app, String version,
+                                @Nullable String workflow, @Nullable String format)
+    throws NotFoundException, BadRequestException {
+    boolean asScheduleSpec = returnScheduleAsSpec(format);
     ApplicationId applicationId = new ApplicationId(namespace, app, version);
-    List<ProgramSchedule> schedules = programScheduler.listSchedules(applicationId);
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new NotFoundException(applicationId);
+    }
+    List<ProgramSchedule> schedules;
+    if (workflow != null) {
+      WorkflowId workflowId = applicationId.workflow(workflow);
+      if (appSpec.getWorkflows().get(workflow) == null) {
+        throw new NotFoundException(workflowId);
+      }
+      schedules = programScheduler.listSchedules(workflowId);
+    } else {
+      schedules = programScheduler.listSchedules(applicationId);
+    }
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
-    responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON);
+    if (asScheduleSpec) {
+      List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
+      responder.sendJson(HttpResponseStatus.OK, specs, Schedulers.SCHEDULE_SPECS_TYPE, GSON_FOR_SCHEDULES);
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON_FOR_SCHEDULES);
+    }
   }
 
   @PUT
@@ -1861,4 +1905,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     return namespaceId;
   }
+
+  /**
+   * Parses the URL parameter "format" to determine whether schedules should be returned as {@link ScheduleDetail}
+   * or as {@link ScheduleSpecification}, for backward-compatible response format.
+   */
+  protected boolean returnScheduleAsSpec(@Nullable String format) throws BadRequestException {
+    if (format == null || "detail".equals(format)) {
+      return false;
+    }
+    if ("spec".equals(format)) {
+      return true;
+    }
+    throw new BadRequestException("Parameter 'format' must be 'spec' or 'detail' but is '" + format + "'");
+  }
+
 }

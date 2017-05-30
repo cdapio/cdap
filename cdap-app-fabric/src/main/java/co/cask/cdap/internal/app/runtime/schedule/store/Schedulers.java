@@ -67,6 +67,7 @@ public class Schedulers {
   public static final DatasetId JOB_QUEUE_DATASET_ID = NamespaceId.SYSTEM.dataset("job.queue");
 
   public static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
+  public static final Type SCHEDULE_SPECS_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
   public static final int SUBSCRIBER_TX_TIMEOUT_SECONDS = 30;
   public static final long SUBSCRIBER_TX_TIMEOUT_MILLIS = 1000 * (long) SUBSCRIBER_TX_TIMEOUT_SECONDS;
