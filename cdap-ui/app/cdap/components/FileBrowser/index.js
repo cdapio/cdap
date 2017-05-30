@@ -22,15 +22,16 @@ import classnames from 'classnames';
 import moment from 'moment';
 import {Link} from 'react-router-dom';
 import FilePath from 'components/FileBrowser/FilePath';
-import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL, preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import IconSVG from 'components/IconSVG';
-import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import isEmpty from 'lodash/isEmpty';
 
 require('./FileBrowser.scss');
 
-const BASEPATH = '/Users';
+const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
 
 export default class FileBrowser extends Component {
@@ -40,7 +41,7 @@ export default class FileBrowser extends Component {
     this.state = {
       contents: [],
       path: '',
-      statePath: this.props.match.url,
+      statePath: objectQuery(this.props, 'match', 'url') || '',
       error: null,
       loading: true,
       search: '',
@@ -49,14 +50,37 @@ export default class FileBrowser extends Component {
     };
 
     this.handleSearch = this.handleSearch.bind(this);
+    this.preventPropagation = this.preventPropagation.bind(this);
+    this.goToPath = this.goToPath.bind(this);
   }
 
   componentWillMount() {
-    this.fetchDirectory(this.props);
+    if (!this.props.enableRouting) {
+      // When routing is disabled location, match are not entirely right.
+      let path = isEmpty(this.state.path) ? BASEPATH : this.state.path;
+      this.goToPath(path);
+    } else {
+      this.fetchDirectory(this.props);
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    this.fetchDirectory(nextProps);
+    if (!this.props.enableRouting) {
+      // When routing is disabled location, match are not entirely right.
+      let path = isEmpty(this.state.path) ? BASEPATH : this.state.path;
+      this.goToPath(path);
+    } else {
+      this.fetchDirectory(nextProps);
+    }
+  }
+
+
+  preventPropagation(e) {
+    if (this.props.enableRouting) {
+      return;
+    }
+    preventPropagationService(e);
+
   }
 
   fetchDirectory(props) {
@@ -85,7 +109,8 @@ export default class FileBrowser extends Component {
 
     MyDataPrepApi.explorer({
       namespace,
-      path
+      path,
+      hidden: true
     }).subscribe((res) => {
       this.setState({
         loading: false,
@@ -94,9 +119,11 @@ export default class FileBrowser extends Component {
         search: ''
       });
     }, (err) => {
+      console.log('err', err);
+
       this.setState({
         loading: false,
-        error: err.response,
+        error: err.response.message || err.response,
         search: ''
       });
     });
@@ -151,6 +178,10 @@ export default class FileBrowser extends Component {
       .subscribe((res) => {
         let workspaceId = res.values[0].id;
 
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+          return;
+        }
         let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         window.location.href = navigatePath;
       });
@@ -209,7 +240,7 @@ export default class FileBrowser extends Component {
   }
 
   renderDirectory(content) {
-    if (this.props.noState) {
+    if (this.props.noState || !this.props.enableRouting) {
       return (
         <div
           className="row-container"
@@ -221,9 +252,10 @@ export default class FileBrowser extends Component {
     }
 
     let linkPath = `${this.state.statePath}${content.path}`;
-
     return (
-      <Link to={linkPath}>
+      <Link
+        to={linkPath}
+      >
         {this.renderRowContent(content)}
       </Link>
     );
@@ -255,10 +287,7 @@ export default class FileBrowser extends Component {
       // NEED TO REPLACE WITH ACTUAL LOADING ICON
 
       return (
-        <div className="loading-container text-xs-center">
-          <br />
-          <LoadingSVG />
-        </div>
+        <LoadingSVGCentered />
       );
     }
 
@@ -391,6 +420,8 @@ export default class FileBrowser extends Component {
             <FilePath
               baseStatePath={this.state.statePath}
               fullpath={this.state.path}
+              enableRouting={this.props.enableRouting}
+              onPathChange={this.goToPath}
             />
           </div>
 
@@ -419,10 +450,16 @@ export default class FileBrowser extends Component {
   }
 }
 
+FileBrowser.defaultProps = {
+  enableRouting: true
+};
+
 FileBrowser.propTypes = {
   location: PropTypes.object,
   match: PropTypes.object,
   initialDirectoryPath: PropTypes.string,
   noState: PropTypes.bool,
-  toggle: PropTypes.func.isRequired
+  toggle: PropTypes.func.isRequired,
+  enableRouting: PropTypes.bool,
+  onWorkspaceCreate: PropTypes.func
 };

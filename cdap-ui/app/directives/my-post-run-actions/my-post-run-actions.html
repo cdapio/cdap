@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -15,52 +15,51 @@
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions.length">
   <div class="well well-sm text-center empty-table"
-       ng-if="!MyPostRunActionsCtrl._isDisabled"
+       ng-if="!MyPostRunActionsCtrl.isDisabled"
        ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
     <h1>+</h1>
   </div>
   <div class="well well-sm text-center empty-table disabled"
-       ng-if="MyPostRunActionsCtrl._isDisabled">
-    <h2>No Post Run Actions Added</h2>
+       ng-if="MyPostRunActionsCtrl.isDisabled">
+    <h2>No alerts configured for this pipeline</h2>
   </div>
 </div>
-<table class="table table-bordered" ng-if="MyPostRunActionsCtrl.actions.length">
-  <thead>
-    <tr>
-      <th>Action</th>
-      <th>Event</th>
-      <th></th>
-      <th ng-if="!MyPostRunActionsCtrl._isDisabled"></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
-      <td>{{action.plugin.name}}</td>
-      <td>{{action.plugin.properties.runCondition}}</td>
-      <td ng-if="!MyPostRunActionsCtrl._isDisabled" class="text-center">
-        <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'edit', action)">
-          <span class="fa fa-pencil"></span>
-        </a>
-      </td>
-      <td ng-if="!MyPostRunActionsCtrl._isDisabled" class="text-center">
-        <a href ng-click="MyPostRunActionsCtrl.deletePostRunAction(action)">
-          <span class="fa text-danger fa-trash"></span>
-        </a>
-      </td>
-      <td ng-if="MyPostRunActionsCtrl._isDisabled" class="text-center">
-        <a href ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'view', action)">
-          View
-        </a>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="4">
-        <div class="well well-sm text-center"
-             ng-if="!MyPostRunActionsCtrl._isDisabled"
-             ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
-          <h1>+</h1>
-        </div>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div ng-if="MyPostRunActionsCtrl.actions.length">
+  <h2>Saved Alerts</h2>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Alert</th>
+        <th>Event</th>
+        <th></th>
+        <th ng-if="!MyPostRunActionsCtrl.isDisabled"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="action in MyPostRunActionsCtrl.actions">
+        <td>{{action.plugin.name}}</td>
+        <td>{{action.plugin.properties.runCondition}}</td>
+        <td ng-if="!MyPostRunActionsCtrl.isDisabled" class="text-center">
+          <a href="" ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'edit', action)">
+            <span class="fa fa-pencil"></span>
+          </a>
+        </td>
+        <td ng-if="!MyPostRunActionsCtrl.isDisabled" class="text-center">
+          <a href ng-click="MyPostRunActionsCtrl.deletePostRunAction(action)">
+            <span class="fa text-danger fa-trash"></span>
+          </a>
+        </td>
+        <td ng-if="MyPostRunActionsCtrl.isDisabled" class="text-center">
+          <a href ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'view', action)">
+            View
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="well well-sm text-center"
+       ng-if="!MyPostRunActionsCtrl.isDisabled"
+       ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
+    <h1>+</h1>
+  </div>
+</div>

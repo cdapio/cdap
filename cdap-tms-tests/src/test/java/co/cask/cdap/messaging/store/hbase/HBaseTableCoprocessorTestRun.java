@@ -75,7 +75,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
   private static final int GENERATION = 1;
-  private static final long CACHE_EXPIRY = 1;
 
   // 8 versions, 1 hour apart, latest is current ts.
   private static final long[] V;
@@ -113,7 +112,8 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     cConf.set(Constants.CFG_HDFS_NAMESPACE, cConf.get(Constants.CFG_LOCAL_DATA_DIR));
     cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     // Reduce the metadata cache refresh frequency for unit tests
-    cConf.set(Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS, Long.toString(1L));
+    cConf.set(Constants.MessagingSystem.COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS,
+              Integer.toString(METADATA_CACHE_EXPIRY));
 
     hBaseAdmin = HBASE_TEST_BASE.getHBaseAdmin();
     hBaseAdmin.getConfiguration().set(HBaseTableUtil.CFG_HBASE_TABLE_COMPRESSION,
@@ -181,7 +181,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
       metadataTable.deleteTopic(topicId);
 
       // Sleep so that the metadata cache expires
-      TimeUnit.SECONDS.sleep(CACHE_EXPIRY);
+      TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.MESSAGE);
 
       // Test deletion of messages from a deleted topic

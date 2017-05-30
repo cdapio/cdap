@@ -67,12 +67,12 @@ export default class UsingPatternsModal extends Component {
       },
       {
         label: T.translate(`${PREFIX}.emailPattern`),
-        value: `([a-zA-Z0-9!#$%&*+/=?^_\`'{|}~-]+@[a-zA-Z0-9\\.-]+(?:\\.[a-zA-Z]{2,6})?)`,
+        value: `([a-zA-Z0-9!#$%&*+/=?^_\`'{|}~-]+@(?!.*\\.{2})[a-zA-Z0-9\\.-]+(?:\\.[a-zA-Z]{2,6})?)`,
         patternName: 'email'
       },
       {
         label: T.translate(`${PREFIX}.htmlHyperlinkPattern`),
-        value: `<[aA](?:\\s+[a-zA-Z]+=".*?")*\\s+[hH][rR][eE][fF]="(.*?)"(?:\\s+[a-zA-Z]+=".*?")*>(.*)<\/[aA]>`,
+        value: `<[aA](?:\\s+[a-zA-Z]+=".*?")*\\s+[hH][rR][eE][fF]="(.*?)"(?:\\s+[a-zA-Z]+=".*?")*>(?:.*)<\/[aA]>`,
         patternName: 'htmlhyperlink'
       },
       {

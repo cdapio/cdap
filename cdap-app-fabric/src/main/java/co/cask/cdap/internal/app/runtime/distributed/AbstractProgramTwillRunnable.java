@@ -176,7 +176,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
       ProgramId programId = GSON.fromJson(cmdLine.getOptionValue(RunnableOptions.PROGRAM_ID), ProgramId.class);
 
-      Injector injector = Guice.createInjector(createModule(context, programId, principal));
+      String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+      String runId = programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+      Injector injector = Guice.createInjector(createModule(context, programId, runId, instanceId, principal));
 
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
@@ -411,8 +413,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     }
   }
 
-  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
-    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, programId, principal);
+  protected Module createModule(TwillContext context, ProgramId programId, String runId, String instanceId,
+                                @Nullable String principal) {
+    return new DistributedProgramRunnableModule(cConf, hConf).createModule(context, programId, runId,
+                                                                           instanceId, principal);
   }
 
   /**

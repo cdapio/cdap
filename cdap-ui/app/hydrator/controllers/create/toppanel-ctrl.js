@@ -124,6 +124,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewMode = state.isPreviewModeEnabled;
       this.macrosMap = state.macros;
       this.userRuntimeArgumentsMap = state.userRuntimeArguments;
+      this.timeoutInMinutes = state.timeoutInMinutes;
     });
 
     this.macrosMap = this.previewStore.getState().preview.macros;
@@ -368,6 +369,7 @@ class HydratorPlusPlusTopPanelCtrl {
         value: '',
         uniqueId: 'id-' + this.uuid.v4()
       }];
+      this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
 
@@ -631,17 +633,10 @@ class HydratorPlusPlusTopPanelCtrl {
         if (pipelineName.length > 0) {
           pipelinePreviewPlaceholder += ` "${pipelineName}"`;
         }
-        if (res.status === 'COMPLETED') {
+        if (res.status === 'COMPLETED' || res.status === 'KILLED_BY_TIMER') {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
-          });
-        } else if (res.status === 'KILLED_BY_TIMER') {
-          // TODO: Remove this when we allow users to specify the timeout
-          let minute = this.timeoutInMinutes <= 1 ? 'minute' : 'minutes';
-          this.myAlertOnValium.show({
-            type: 'success',
-            content: `${pipelinePreviewPlaceholder} has completed successfully after ${this.timeoutInMinutes} ${minute}.`
           });
         } else if (res.status === 'STOPPED' || res.status === 'KILLED') {
           this.myAlertOnValium.show({

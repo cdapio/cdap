@@ -26,7 +26,7 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +38,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class AppWithStreamSizeSchedule extends AbstractApplication {
 
+  public static final Map<String, String> SCHEDULE_PROPS = ImmutableMap.of(
+      "oneKey", "oneValue",
+      "anotherKey", "anotherValue",
+      "someKey", "someValue");
+
   @Override
   public void configure() {
     try {
@@ -48,15 +53,10 @@ public class AppWithStreamSizeSchedule extends AbstractApplication {
       addWorkflow(new SampleWorkflow());
       addStream(new Stream("stream"));
 
-      Map<String, String> scheduleProperties = Maps.newHashMap();
-      scheduleProperties.put("oneKey", "oneValue");
-      scheduleProperties.put("anotherKey", "anotherValue");
-      scheduleProperties.put("someKey", "someValue");
-
       scheduleWorkflow(Schedules.builder("SampleSchedule1").createDataSchedule(Schedules.Source.STREAM, "stream", 1),
-                       "SampleWorkflow", scheduleProperties);
+                       "SampleWorkflow", SCHEDULE_PROPS);
       scheduleWorkflow(Schedules.builder("SampleSchedule2").createDataSchedule(Schedules.Source.STREAM, "stream", 2),
-                       "SampleWorkflow", scheduleProperties);
+                       "SampleWorkflow", SCHEDULE_PROPS);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

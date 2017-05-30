@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
 -->
 <fieldset
   ng-if="!WizardConfigureConfirmStepCtrl.loadingPlugin"
-  ng-disabled="WizardConfigureConfirmStepCtrl._isDisabled">
+  ng-disabled="WizardConfigureConfirmStepCtrl.isDisabled">
   <div class="confirm-step-content">
     <div ng-repeat="group in WizardConfigureConfirmStepCtrl.groupsConfig.groups">
       <div class="widget-group-container">
@@ -57,18 +57,18 @@
 </h3>
 <div class="pull-right">
   <div class="btn btn-grey-cancel"
-       ng-if="WizardConfigureConfirmStepCtrl.mode === 'create' || (WizardConfigureConfirmStepCtrl.mode === 'edit' && WizardConfigureConfirmStepCtrl._isDisabled)"
+       ng-if="WizardConfigureConfirmStepCtrl.mode === 'create' || (WizardConfigureConfirmStepCtrl.mode === 'edit' && WizardConfigureConfirmStepCtrl.isDisabled)"
        ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
     Back
   </div>
 
   <div class="btn btn-blue"
-       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl._isDisabled"
+       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
       Next
   </div>
   <div class="btn btn-blue"
-       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl._isDisabled"
+       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
       Confirm
   </div>

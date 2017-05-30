@@ -16,6 +16,9 @@
 
 @import '../../styles/variables.scss';
 
+$beta-badge-font-color: white;
+$beta-badge-bg-color: $cdap-orange;
+
 .global-navbar {
   height: 50px;
   background: $navbar-bg;
@@ -36,6 +39,10 @@
     &:hover,
     &:active {
       color: $cdap-light-orange;
+
+      .beta-badge {
+        background-color: $cdap-light-orange;
+      }
     }
     .active {
       color: $cdap-orange;
@@ -180,5 +187,16 @@
         }
       }
     }
+  }
+
+  .beta-badge {
+    font-size: 10px;
+    border-radius: 5px;
+    color: $beta-badge-font-color;
+    background-color: $beta-badge-bg-color;
+    margin-left: 4px;
+    padding: 0 4px 1px 4px;
+    position: relative;
+    top: -1px;
   }
 }

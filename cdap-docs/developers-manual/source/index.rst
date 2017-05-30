@@ -6,16 +6,16 @@
 .. _developer-index:
 
 =======================
-CDAP Developers’ Manual
+CDAP Developer’s Manual
 =======================
 
 .. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html
 
 - |getting-started|_ **A quick, hands-on introduction to developing with CDAP,**  which guides you through
-  installing the CDAP SDK, setting up your development environment, starting and stopping CDAP, 
+  installing the CDAP SDK, setting up your development environment, starting and stopping CDAP,
   and building and running example applications.
-  
+
 
 .. |overview| replace:: **Overview:**
 .. _overview: overview/index.html
@@ -42,7 +42,7 @@ CDAP Developers’ Manual
   **how data is flowing** into and out of datasets, streams, and stream views.
   :ref:`Audit logging <audit-logging>` provides a chronological ledger containing evidence
   of operations or changes on CDAP entities.
-  
+
 
 .. |pipelines| replace:: **Pipelines:**
 .. _pipelines: pipelines/index.html
@@ -69,7 +69,7 @@ CDAP Developers’ Manual
 .. _ingesting-tools: ingesting-tools/index.html
 
 - |ingesting-tools|_ CDAP comes with a number of tools to make a developer’s life easier. These
-  tools help with **ingesting data into CDAP** using Java, Python, and Ruby APIs, 
+  tools help with **ingesting data into CDAP** using Java, Python, and Ruby APIs,
   and include an Apache Flume Sink implementation.
 
 

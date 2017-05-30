@@ -18,22 +18,24 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -48,6 +50,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -56,9 +59,9 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class SchedulerTestBase {
 
-  protected static final CConfiguration CCONF = CConfiguration.create();
+  static final CConfiguration CCONF = CConfiguration.create();
 
-  private static StreamSizeScheduler streamSizeScheduler;
+  private static Scheduler scheduler;
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
   private static ProgramRuntimeService runtimeService;
@@ -69,11 +72,12 @@ public abstract class SchedulerTestBase {
   private static final ProgramId PROGRAM_ID = APP_ID.workflow("SampleWorkflow");
   private static final String SCHEDULE_NAME_1 = "SampleSchedule1";
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
-  private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
-  private static final Id.Stream STREAM_ID = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
-  private static final Schedule UPDATE_SCHEDULE_2 = Schedules.builder(SCHEDULE_NAME_2)
-    .setDescription("Every 1M")
-    .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 1);
+  private static final ScheduleId SCHEDULE_ID_1 = APP_ID.schedule(SCHEDULE_NAME_1);
+  private static final ScheduleId SCHEDULE_ID_2 = APP_ID.schedule(SCHEDULE_NAME_2);
+  private static final StreamId STREAM_ID = NamespaceId.DEFAULT.stream("stream");
+  private static final ProgramSchedule UPDATE_SCHEDULE_2 =
+    new ProgramSchedule(SCHEDULE_NAME_2, "Every 1M", PROGRAM_ID, AppWithStreamSizeSchedule.SCHEDULE_PROPS,
+                        new StreamSizeTrigger(STREAM_ID, 1), Collections.<Constraint>emptyList());
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -93,12 +97,12 @@ public abstract class SchedulerTestBase {
     void increment(long size) throws Exception;
   }
 
-  protected abstract StreamMetricsPublisher createMetricsPublisher(Id.Stream streamId);
+  protected abstract StreamMetricsPublisher createMetricsPublisher(StreamId streamId);
 
   @BeforeClass
   public static void init() throws Exception {
     injector = AppFabricTestHelper.getInjector(CCONF);
-    streamSizeScheduler = injector.getInstance(StreamSizeScheduler.class);
+    scheduler = injector.getInstance(Scheduler.class);
     store = injector.getInstance(Store.class);
     metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
@@ -110,16 +114,12 @@ public abstract class SchedulerTestBase {
   public void testStreamSizeSchedule() throws Exception {
     // Test the StreamSizeScheduler behavior using notifications
     AppFabricTestHelper.deployApplicationWithManager(AppWithStreamSizeSchedule.class, TEMP_FOLDER_SUPPLIER);
-    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
-    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
-    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
-    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1));
-    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED, scheduler.getScheduleStatus(SCHEDULE_ID_1));
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED, scheduler.getScheduleStatus(SCHEDULE_ID_2));
+    scheduler.enableSchedule(SCHEDULE_ID_1);
+    scheduler.enableSchedule(SCHEDULE_ID_2);
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(SCHEDULE_ID_1));
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(SCHEDULE_ID_2));
     int runs = store.getRuns(PROGRAM_ID, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 100).size();
     Assert.assertEquals(0, runs);
 
@@ -135,20 +135,28 @@ public abstract class SchedulerTestBase {
     waitForRuns(store, PROGRAM_ID, 3, 15);
 
     // Suspend a schedule multiple times, and make sur that it doesn't mess up anything
-    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    scheduler.disableSchedule(SCHEDULE_ID_2);
+    try {
+      scheduler.disableSchedule(SCHEDULE_ID_2);
+      Assert.fail("disable() should have failed because schedule was already disabled");
+    } catch (ConflictException e) {
+      // expected
+    }
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED, scheduler.getScheduleStatus(SCHEDULE_ID_2));
 
     // Since schedule 2 is suspended, only the first schedule should get triggered
     metricsPublisher.increment(1024 * 1024);
     waitForRuns(store, PROGRAM_ID, 4, 15);
 
     // Resume schedule 2
-    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    streamSizeScheduler.resumeSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
-    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED,
-                        streamSizeScheduler.scheduleState(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2));
+    scheduler.enableSchedule(SCHEDULE_ID_2);
+    try {
+      scheduler.enableSchedule(SCHEDULE_ID_2);
+      Assert.fail("enable() should have failed because schedule was already enabled");
+    } catch (ConflictException e) {
+      // expected
+    }
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(SCHEDULE_ID_2));
 
     // Both schedules should be trigger. In particular, the schedule that has just been resumed twice should
     // only trigger once
@@ -157,12 +165,12 @@ public abstract class SchedulerTestBase {
 
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
-    streamSizeScheduler.updateSchedule(PROGRAM_ID, PROGRAM_TYPE, UPDATE_SCHEDULE_2);
+    scheduler.updateSchedule(UPDATE_SCHEDULE_2);
     metricsPublisher.increment(1024 * 1024);
     waitForRuns(store, PROGRAM_ID, 8, 15);
 
-    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_1);
-    streamSizeScheduler.suspendSchedule(PROGRAM_ID, PROGRAM_TYPE, SCHEDULE_NAME_2);
+    scheduler.disableSchedule(SCHEDULE_ID_1);
+    scheduler.disableSchedule(SCHEDULE_ID_2);
     waitUntilFinished(runtimeService, PROGRAM_ID, 10);
   }
 

@@ -42,6 +42,43 @@ public class TriggerCodecTest {
     .create();
 
   @Test
+  public void testTimeTriggerValidation() {
+    // Cron with wrong number of parts
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ?"));
+    // Quartz doesn't support '?' in both day-of-the-month and day-of-the-week
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * ? 1 ?"));
+    // Quartz doesn't support wild-card '*' in day-of-the-month or day-of-the-week if neither of them is '?'
+    // Cron entry with resolution in minutes will have wild-card '*' in day-of-the-month or day-of-the-week
+    // replaced by '?' if neither of them is '?', before it's parsed by Quartz
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * 1 *"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * 1 1 *"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * 1 1"), Trigger.class);
+    // Cron entry with resolution in seconds will be parsed directly by Quartz
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 *"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * * 1 1"));
+    assertDeserializeFail(new ProtoTrigger.TimeTrigger("* * * 1 1 *"));
+
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * ? 1 1"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * 1 ?"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * ? 1 *"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * ? 1 1"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * * 1 ?"), Trigger.class);
+    GSON.toJson(new ProtoTrigger.TimeTrigger("* * * ? 1 *"), Trigger.class);
+  }
+
+  private void assertDeserializeFail(ProtoTrigger.TimeTrigger trigger) {
+    // ProtoTriggerCodec only checks whether TimeTrigger contains null cron entry
+    GSON_PROTO.toJson(trigger, ProtoTrigger.class);
+    try {
+      // TriggerCodec checks whether the cron entry in TimeTrigger can be converted to correct Quartz cron format
+      GSON.fromJson(GSON.toJson(trigger, Trigger.class), Trigger.class);
+      Assert.fail(String.format("Deserializing invalid trigger %s should fail.", trigger));
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+  }
+
+  @Test
   public void testTriggerCodec() {
     testSerDeserYieldsTrigger(new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4),
                               new PartitionTrigger(new DatasetId("test", "myds"), 4));

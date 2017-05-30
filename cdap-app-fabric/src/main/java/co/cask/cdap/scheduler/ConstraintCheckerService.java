@@ -18,7 +18,6 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,17 +30,18 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Stopwatch;
@@ -59,7 +59,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -194,7 +193,7 @@ class ConstraintCheckerService extends AbstractIdleService {
           @Override
           public Boolean call(DatasetContext context) throws Exception {
             // run any ready jobs
-            return runReadyJobs();
+            return runReadyJobs(context);
           }
         });
         failureCount = 0;
@@ -235,6 +234,22 @@ class ConstraintCheckerService extends AbstractIdleService {
     }
 
     private void checkAndUpdateJob(JobQueueDataset jobQueue, Job job) {
+      if (job.isToBeDeleted()) {
+        // only delete jobs that are pending trigger or pending constraint. If pending launch, the launcher will delete
+        if ((job.getState() == Job.State.PENDING_CONSTRAINT ||
+          // if pending trigger, we need to check if now - deletionTime > 2 * txTimeout. Otherwise the subscriber thread
+          // might update this job concurrently (because its tx does not see the delete flag) and cause a conflict.
+          // It's 2 * txTimeout for:
+          // - the transaction the marked it as to be deleted
+          // - the subscriber's transaction that may not have seen that change
+          (job.getState() == Job.State.PENDING_TRIGGER &&
+            System.currentTimeMillis() - job.getToBeDeletedTimestamp()
+              > 2 * Schedulers.SUBSCRIBER_TX_TIMEOUT_MILLIS))) {
+          jobQueue.deleteJob(job);
+        }
+        return;
+      }
+      // TODO: check (now - jobCreationTime < job timeout), then delete it.
       if (job.getState() != Job.State.PENDING_CONSTRAINT) {
         return;
       }
@@ -245,7 +260,7 @@ class ConstraintCheckerService extends AbstractIdleService {
       readyJobs.add(job);
     }
 
-    private boolean runReadyJobs() throws Exception {
+    private boolean runReadyJobs(DatasetContext context) throws Exception {
       Iterator<Job> readyJobsIter = readyJobs.iterator();
       while (readyJobsIter.hasNext() && !stopping) {
         Job job = readyJobsIter.next();
@@ -255,7 +270,19 @@ class ConstraintCheckerService extends AbstractIdleService {
         // may have failed / rolled back.
         Job storedJob = jobQueue.getJob(job.getJobKey());
         if (storedJob == null) {
+          readyJobsIter.remove();
           continue;
+        }
+        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
+        ProgramScheduleMeta meta = store.getScheduleMeta(job.getSchedule().getScheduleId());
+        if (job.isToBeDeleted()) {
+          // If this is true, that means the schedule was deleted/updated before the state transition from
+          // PENDING_CONSTRAINT to PENDING_LAUNCH is committed. We can just remove the job without launching it.
+          // If job.isToBeDeleted() is false, that means this job is in PENDING_LAUNCH state before the schedule
+          // is deleted/updated. We can still launch it.
+          readyJobsIter.remove();
+          jobQueue.deleteJob(job);
+          return true;
         }
 
         if (storedJob.getState() == Job.State.PENDING_LAUNCH) {

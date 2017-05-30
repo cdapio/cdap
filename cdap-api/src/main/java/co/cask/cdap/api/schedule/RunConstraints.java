@@ -26,7 +26,10 @@ import javax.annotation.Nullable;
  *
  * Currently only contains the maximum number of concurrent runs. In the future, other checks may be added,
  * such as the amount of available memory in the YARN cluster.
+ *
+ * @deprecated as of 4.2.0. Use {@link co.cask.cdap.internal.schedule.constraint.Constraint} instead.
  */
+@Deprecated
 public class RunConstraints {
   public static final RunConstraints NONE = new RunConstraints(null);
   private final Integer maxConcurrentRuns;

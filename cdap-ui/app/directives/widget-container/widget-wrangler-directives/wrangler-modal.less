@@ -23,6 +23,24 @@ body.state-hydrator-create.state-hydrator {
       margin-top: 0;
       margin-bottom: 0;
 
+      .dataprephome-wrapper {
+        .dataprep-connections-container {
+          .connections-content {
+            .loading-svg-centered {
+              top: 0;
+            }
+          }
+          .top-panel {
+            height: 50px;
+            .title {
+              > h5 {
+                margin-top: 0;
+                line-height: 50px;
+              }
+            }
+          }
+        }
+      }
       dataprep .dataprep-container {
         .dataprep-loading {
           z-index: 1063;
@@ -55,6 +73,9 @@ body.state-hydrator-create.state-hydrator {
           }
           .action-buttons {
             min-width: auto;
+            .secondary-actions {
+              vertical-align: middle;
+            }
           }
         }
         .dataprep-main {

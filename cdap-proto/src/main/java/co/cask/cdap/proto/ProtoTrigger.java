@@ -59,6 +59,7 @@ public abstract class ProtoTrigger implements Trigger {
     public TimeTrigger(String cronExpression) {
       super(Type.TIME);
       this.cronExpression = cronExpression;
+      validate();
     }
 
     public String getCronExpression() {
@@ -101,6 +102,7 @@ public abstract class ProtoTrigger implements Trigger {
       super(Type.PARTITION);
       this.dataset = dataset;
       this.numPartitions = numPartitions;
+      validate();
     }
 
     public DatasetId getDataset() {
@@ -140,7 +142,7 @@ public abstract class ProtoTrigger implements Trigger {
   }
 
   /**
-   * Represents a partition trigger in REST requests/responses.
+   * Represents a stream size trigger in REST requests/responses.
    */
   public static class StreamSizeTrigger extends ProtoTrigger {
 
@@ -151,6 +153,7 @@ public abstract class ProtoTrigger implements Trigger {
       super(Type.STREAM_SIZE);
       this.stream = stream;
       this.triggerMB = triggerMB;
+      validate();
     }
 
     public StreamId getStream() {

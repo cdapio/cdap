@@ -1,0 +1,99 @@
+/*
+ * cdap-google-search.css_t
+ *
+ * :copyright: Copyright 2017 Cask Data, Inc.
+ * :license: Apache 2.0 License, see LICENSE for details.
+ *
+ */
+
+div.gcsc-branding,
+div.gsc-control-cse.gsc-control-cse-en,
+div.gsc-thumbnail-inside,
+div.gsc-url-top,
+table.gsc-table-result {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+a.gsst_a {
+    padding-top: 7px;
+}
+
+td.gsib_a {
+    padding-left: 4px;
+}
+
+input#gsc-i-id1.gsc-input {
+    font-size: 1.0em;
+}
+
+div.gsc-result-info {
+    padding-left: 0px;
+}
+div.gsc-orderby {
+    text-align: right;
+}
+
+a.gs-title,
+div.gcsc-branding-text,
+div.gsc-cursor-page,
+div.gsc-orderby-label.gsc-inline-block,
+div.gsc-result-info,
+table.gsc-table-result,
+td.gcsc-branding-text {
+    font-family: Roboto, sans-serif;
+}
+
+.gs-title {
+    line-height: 1em;
+}
+
+#gsc-iw-id1 {
+    height: 40px;
+}
+
+#gs_tti50 {
+    font: 400 16px/24px Roboto, sans-serif;
+}
+
+input#gsc-i-id1.gsc-input {
+    height: 2em;
+}
+
+.gsib_b {
+    padding-top: 4px;
+    text-align: left;
+    width: 28px;
+}
+
+.gsc-search-button {
+    border-collapse: separate;
+    text-align: left;
+    width: 10%;
+}
+
+.gsc-search-button.gsc-search-button-v2 {
+    box-sizing: content-box;
+}
+
+.gsc-table-cell-thumbnail.gsc-thumbnail {
+    border-collapse: separate;
+    box-sizing: content-box;
+}
+.gs-bidi-start-align.gs-visibleUrl.gs-visibleUrl-long {
+    font-family: Roboto, sans-serif;
+    word-break: break-all;
+}
+
+.gs-bidi-start-align.gs-snippet {
+    font-family: Roboto, sans-serif;
+}
+/*
+For landscape 80 but for portrait 60
+td.gsc-table-cell-thumbnail.gsc-thumbnail:not([style="display:none"]) + td div.gs-bidi-start-align.gs-snippet {
+    margin-left: 60px;
+}
+ */
+td.gsc-table-cell-thumbnail.gsc-thumbnail:not([style="display:none"]) + td div.gs-bidi-start-align.gs-snippet {
+    margin-left: 80px;
+}

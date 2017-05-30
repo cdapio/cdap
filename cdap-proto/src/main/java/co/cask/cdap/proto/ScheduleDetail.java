@@ -45,14 +45,14 @@ public class ScheduleDetail {
   private final ScheduleProgramInfo program;
   private final Map<String, String> properties;
   private final Trigger trigger;
-  private final List<Constraint> constraints;
+  private final List<? extends Constraint> constraints;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
                         @Nullable Map<String, String> properties,
                         @Nullable Trigger trigger,
-                        @Nullable List<Constraint> constraints) {
+                        @Nullable List<? extends Constraint> constraints) {
     this.name = name;
     this.description = description;
     this.program = program;
@@ -87,7 +87,7 @@ public class ScheduleDetail {
   }
 
   @Nullable
-  public List<Constraint> getConstraints() {
+  public List<? extends Constraint> getConstraints() {
     return constraints;
   }
 
@@ -114,6 +114,36 @@ public class ScheduleDetail {
   }
 
   /**
+   * Return an equivalent schedule specification, or null if there is no equivalent one.
+   */
+  @Deprecated
+  @Nullable
+  public ScheduleSpecification toScheduleSpec() {
+    RunConstraints constraints = RunConstraints.NONE;
+    if (getConstraints() != null) {
+      for (Constraint runConstraint : getConstraints()) {
+        if (runConstraint instanceof ProtoConstraint.ConcurrencyConstraint) {
+          constraints = new RunConstraints(
+            ((ProtoConstraint.ConcurrencyConstraint) runConstraint).getMaxConcurrency());
+          break;
+        }
+      }
+    }
+    Schedule schedule;
+    if (getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+      ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) getTrigger());
+      schedule = new TimeSchedule(getName(), getDescription(), trigger.getCronExpression(), constraints);
+    } else if (getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+      ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) getTrigger();
+      schedule = new StreamSizeSchedule(getName(), getDescription(),
+                                        trigger.getStream().getStream(), trigger.getTriggerMB(), constraints);
+    } else {
+      return null;
+    }
+    return new ScheduleSpecification(schedule, getProgram(), getProperties());
+  }
+
+  /**
    * Convert a list of schedule details to a list of schedule specifications, for backward compatibility.
    *
    * Schedules with triggets other than time or stream size triggers are ignored, so are run constraints
@@ -125,34 +155,10 @@ public class ScheduleDetail {
   public static List<ScheduleSpecification> toScheduleSpecs(List<ScheduleDetail> details) {
     List<ScheduleSpecification> specs = new ArrayList<>();
     for (ScheduleDetail detail : details) {
-      RunConstraints constraints = RunConstraints.NONE;
-      if (detail.getConstraints() != null) {
-        for (Constraint runConstraint : detail.getConstraints()) {
-          if (runConstraint instanceof ProtoConstraint.ConcurrenyConstraint) {
-            constraints = new RunConstraints(
-              ((ProtoConstraint.ConcurrenyConstraint) runConstraint).getMaxConcurrency());
-            break;
-          }
-        }
+      ScheduleSpecification spec = detail.toScheduleSpec();
+      if (spec != null) {
+        specs.add(spec);
       }
-      Schedule schedule;
-      if (detail.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-        ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) detail.getTrigger());
-        schedule = new TimeSchedule(detail.getName(),
-                                    detail.getDescription(),
-                                    trigger.getCronExpression(),
-                                    constraints);
-      } else if (detail.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
-        ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) detail.getTrigger();
-        schedule = new StreamSizeSchedule(detail.getName(),
-                                          detail.getDescription(),
-                                          trigger.getStream().getStream(),
-                                          trigger.getTriggerMB(),
-                                          constraints);
-      } else {
-        continue;
-      }
-      specs.add(new ScheduleSpecification(schedule, detail.getProgram(), detail.getProperties()));
     }
     return specs;
   }

@@ -23,7 +23,11 @@ const defaultAction = {
   payload: {}
 };
 
-const keyValues = (state = [], action=defaultAction) => {
+const initialState = {
+  pairs: []
+};
+
+const keyValues = (state = initialState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case KeyValueStoreActions.setKey:
@@ -70,12 +74,10 @@ const keyValues = (state = [], action=defaultAction) => {
   }
 };
 
-const createKeyValueStore = (initialState = []) => {
-  return createStore(
-    combineReducers({keyValues}),
-    initialState,
-    window.devToolsExtension ? window.devToolsExtension() : f => f
-  );
-};
+const KeyValueStore = createStore(
+  combineReducers({keyValues}),
+  {keyValues: initialState},
+  window.devToolsExtension ? window.devToolsExtension() : f => f
+);
 
-export { createKeyValueStore };
+export default KeyValueStore;

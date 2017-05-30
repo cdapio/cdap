@@ -357,6 +357,22 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+    DataPrepBrowser:
+      DatabaseBrowser:
+        EmptyMessage:
+          clearLabel: Clear
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        searchPlaceholder: Search table name
+        table:
+          colcountlabel: NUMBER OF COLUMNS
+          namecollabel: NAME
+        tableCount:
+          0: No Tables
+          1: '{count} Table'
+          _: "{count} Tables"
+        title: Select Table
     Directives:
       apply: Apply
       cancel: Cancel
@@ -407,7 +423,7 @@ features:
           datetimePattern: Date Time
           emailPattern: Email
           exampleLabel: 'E.g.'
-          htmlHyperlinkPattern: HTML Hyperlinks
+          htmlHyperlinkPattern: URLs from HTML Anchors
           hidePatternLabel: Hide Pattern
           isbncodePattern: ISBN Codes
           ipv4Pattern: IPv4 Address
@@ -489,6 +505,7 @@ features:
           DASH: Dash
           PERIOD: Period
           PIPE: Pipe
+          SPACE: Space
           UNDERSCORE: Underscore
         duplicate: A column with the same name already exists. Pick a new name, or click “Join” to overwrite.
         newColumn: Name new column
@@ -540,6 +557,9 @@ features:
           SIMPLEDATE:
             customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
             label: Simple Date
+            ModalHeader:
+              parse: Parse as {parser}
+              format: Format Date and Time
             modalTitle: Please select the date format
             Options:
               CUSTOM: Custom Format
@@ -564,10 +584,14 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    sidePanelTooltip:
+      collapse: Collapse the side panel
+      expand: Expand the side panel
     TopPanel:
       applyBtnLabel: Apply
-      addToPipelineBtnLabel: Add to Pipeline
-      file: HDFS
+      addToPipelineBtnLabel: Create Pipeline
+      database: Database
+      file: File System
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -577,9 +601,37 @@ features:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
+      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       title: Data Preparation
       upgradeBtnLabel: Upgrade
       viewSchemaBtnLabel: View Schema
+      copyToCDAPDatasetBtn:
+        uploadDisabledMessage: Copying to a dataset is not supported for uploaded files.
+        btnLabel: Make a Copy
+        createBtnLabel: Copy Data
+        copyingSteps:
+          Step1: 'Preparing to copy...'
+          Step1Error: 'Unable to copy data.'
+          Step2: 'Submitting copy task...'
+          Step2Error: 'Unable to submit copy task.'
+        description: You are creating a new Dataset, select a type and enter information about this new entity
+        Form:
+          datasetNameLabel: Dataset Name
+          datasetTooltip: Name of the dataset to copy to
+          fileSetBtnlabel: Fileset
+          formatLabel: Format
+          formatTooltip: Format of data
+          requiredLabel: Required
+          rowKeyLabel: Row Key
+          rowKeyTooltip: Its a rowkey
+          typeLabel: Type
+          tableBtnlabel: Table
+        Formats:
+          avro: Avro
+          orc: ORC
+          parquet: Parquet
+        modalTitle: Make a Copy
+        monitorBtnLabel: Monitor Data Copy
       WorkspaceModal:
         create: Create
         createModalTitle: Create Workspace
@@ -589,10 +641,61 @@ features:
         uploadSubTitle: Select the file to be uploaded to the workspace
         uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version 1.3.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
-
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version 2.0.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+    WorkspaceTabs:
+      DeleteModal:
+        cancelButton: No, keep tab open
+        confirmButton: Yes, close tab
+        header: Close Tab
+        helperMessage: Any directives you have applied in this tab will be lost.
+        mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
-    hdfs: HDFS
+    AddConnections:
+      Database:
+        DatabaseDetail:
+          advanced: Advanced
+          backButton: View All Drivers
+          basic: Basic
+          Buttons:
+            ADD: Add Connection
+            DUPLICATE: Duplicate Connection
+            EDIT: Save Changes
+          connectionString: Connection String
+          connType: JDBC Connections
+          database: Database
+          defaultTestErrorMessage: Error connecting to database
+          driverInstalled: Driver Installed
+          hostname: Host
+          name: Name
+          password: Password
+          port: Port
+          required: Required
+          username: Username
+        DatabaseOptions:
+          install: "Install Driver: "
+          installedLabel: Driver Installed
+          optionsTitle: Select the type of database you want to connect to
+          upload: Upload
+        ModalHeader:
+          ADD: "Add Connection: Database"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+      label: Add Connection
+      Popover:
+        title: Select a source to connect
+    ConnectionManagement:
+      Confirmations:
+        DatabaseDelete:
+          deleteButton: Delete Connection
+          header: "Delete Connection: {connection}"
+          helper1: You will no longer able to access data from this source.
+          helper2: "You can reconnect to this source at any time by clicking \"Add Connection\""
+          mainMessage: "Are you sure you want to delete connection to {connection}?"
+      delete: Delete
+      duplicate: Duplicate
+      edit: Edit
+    database: Database ({count})
+    hdfs: File System
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
@@ -627,7 +730,7 @@ features:
     TopPanel:
       directoryMetrics: "{count} Files and Folders"
       searchPlaceholder: Search this directory
-      selectData: "Select HDFS File/Directory to Preview"
+      selectData: "Select File/Directory to Preview"
 
   FileDataUpload:
     click: "Click "
@@ -759,18 +862,19 @@ features:
   MarketEntityModal:
     version: "Version :"
   Navbar:
+    dataprepLabel: Data Preparation
     metadataLabel: Metadata
     Metadata:
-      searchLabel: Search
-      integrationsLabel: Integrations
-      tagsLabel: Tags
       dictionaryLabel: Dictionary
+      integrationsLabel: Integrations
+      searchLabel: Search
+      tagsLabel: Tags
     NamespaceDropdown:
-      applications: Applications
-      namespaceLabel: Namespace
-      datasets: Datasets
-      streams: Streams
       addNS: "Add Namespace"
+      applications: Applications
+      datasets: Datasets
+      namespaceLabel: Namespace
+      streams: Streams
     overviewLabel: Overview
     pipelinesLabel: Pipelines
     ProductDropdown:

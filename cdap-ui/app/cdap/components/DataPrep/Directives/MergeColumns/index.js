@@ -32,7 +32,8 @@ const DELIMITER_MAP = {
   'COLON': ':',
   'PERIOD': '.',
   'DASH': '-',
-  'UNDERSCORE': '_'
+  'UNDERSCORE': '_',
+  'SPACE': `' '`
 };
 
 export default class MergeColumnsDirective extends Component {

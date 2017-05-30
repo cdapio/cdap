@@ -31,7 +31,6 @@ import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.HttpURLConnection;

@@ -4,6 +4,7 @@
     :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-relations: true
+:hide-left-sidebar: true
 
 .. _introduction-to-cdap:
 
@@ -60,7 +61,7 @@ Installation
        -
 
   .. list-table::
-     :widths: 15 85
+     :widths: 20 80
      :class: triple-table
      :stub-columns: 1
 
@@ -70,8 +71,11 @@ Installation
      * - Using CDAP
        - - Install **CDAP** by `downloading <http://cask.co/downloads/>`_ a zipfile, unzipping, and starting the **CDAP Server**
 
-     * -
-       - .. tabbed-parsed-literal::
+  .. list-table::
+     :widths: 99 1
+     :stub-columns: 1
+
+     * - .. tabbed-parsed-literal::
 
             .. Linux
 
@@ -93,6 +97,8 @@ Installation
             CDAP Local Sandbox started successfully.
             Connect to the CDAP UI at http://localhost:11011
 
+       -
+
 
 .. container:: table-block
 
@@ -104,7 +110,7 @@ Installation
        -
 
   .. list-table::
-     :widths: 15 85
+     :widths: 20 80
      :class: triple-table
      :stub-columns: 1
 

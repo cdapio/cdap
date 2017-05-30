@@ -471,7 +471,7 @@ public class StandaloneMain {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new DataFabricModules().getStandaloneModules(),
+      new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),

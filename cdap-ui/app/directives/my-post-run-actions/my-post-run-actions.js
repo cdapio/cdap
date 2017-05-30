@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,12 +21,11 @@ angular.module(PKG.name + '.commons')
       scope: {
         actionCreator: '=',
         store: '=',
-        isDisabled: '@'
+        isDisabled: '='
       },
       templateUrl: 'my-post-run-actions/my-post-run-actions.html',
       bindToController: true,
       controller: ['$scope', 'myPostRunActionWizardService', 'myAlertOnValium', function($scope, myPostRunActionWizardService, myAlertOnValium) {
-        this._isDisabled = this.isDisabled === 'true';
         $scope.myPostRunActionWizardService = myPostRunActionWizardService;
         var sub = this.store.registerOnChangeListener(() => {
           this.actions = this.store.getPostActions();
