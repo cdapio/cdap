@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.spark
 
+import java.io.IOException
+
 import co.cask.cdap.api._
 import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
@@ -25,6 +27,7 @@ import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.security.store.SecureStore
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import org.apache.spark.SparkContext
@@ -274,4 +277,14 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
     * @throws TransactionFailureException always
     */
   def execute(timeoutInSeconds: Int, runnable: TxRunnable): Unit
+
+  /**
+    * Creates a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]] for Scala code compilation and
+    * interpretation.
+    *
+    * @return a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
+    * @throws java.io.IOException if failed to create a local directory for storing the compiled class files
+    */
+  @throws(classOf[IOException])
+  def createInterpreter(): SparkInterpreter
 }

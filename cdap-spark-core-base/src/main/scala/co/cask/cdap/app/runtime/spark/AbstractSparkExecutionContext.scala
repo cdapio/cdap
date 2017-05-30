@@ -20,6 +20,7 @@ import java.io._
 import java.net.URI
 import java.util
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
@@ -32,17 +33,21 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler}
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
-import co.cask.cdap.common.conf.ConfigurationUtil
+import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
+import co.cask.cdap.common.utils.DirUtils
 import co.cask.cdap.data.LineageDatasetContext
 import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
+import co.cask.cdap.internal.lang.CallerClassSecurityManager
 import co.cask.cdap.proto.id.StreamId
 import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
@@ -57,6 +62,7 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
+import scala.tools.nsc.Settings
 
 /**
   * Default implementation of [[co.cask.cdap.api.spark.SparkExecutionContext]].
@@ -65,12 +71,14 @@ import scala.reflect.ClassTag
   * @param localizeResources a Map from name to local file that the user requested to localize during the
   *                          beforeSubmit call.
   */
-abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext,
+abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
                                              localizeResources: util.Map[String, File])
   extends SparkExecutionContext with AutoCloseable {
 
   // Import the companion object for static fields
   import AbstractSparkExecutionContext._
+
+  protected val runtimeContext = sparkClassLoader.getRuntimeContext
 
   private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
@@ -78,15 +86,25 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
                                                      runtimeContext.getRetryStrategy)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
   private val sparkTxHandler = new SparkTransactionHandler(runtimeContext.getTransactionSystemClient)
+  private val sparkClassFileHandler = new SparkClassFileHandler
   private val sparkDriveHttpService = new SparkDriverHttpService(runtimeContext.getProgramName,
                                                                  runtimeContext.getHostname,
-                                                                 sparkTxHandler)
+                                                                 sparkTxHandler, sparkClassFileHandler)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
+  private val interpreterCount = new AtomicInteger(0)
 
   // Start the Spark driver http service
   sparkDriveHttpService.startAndWait()
+
+  // Set the spark.repl.class.uri that points to the http service if spark-repl is present
+  try {
+    sparkClassLoader.loadClass(SparkRuntimeContextProvider.EXECUTOR_CLASSLOADER_NAME)
+    SparkRuntimeEnv.setProperty("spark.repl.class.uri", sparkDriveHttpService.getBaseURI.toString)
+  } catch {
+    case _: ClassNotFoundException => // no-op
+  }
 
   // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
   SparkRuntimeEnv.addSparkListener(new SparkListener {
@@ -166,6 +184,44 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
 
   override def execute(timeout: Int, runnable: TxRunnable): Unit = {
     transactional.execute(timeout, runnable)
+  }
+
+  override def createInterpreter(): SparkInterpreter = {
+    val callerClasses = CallerClassSecurityManager.getCallerClasses
+    var callerClassLoader: ClassLoader = null
+
+    // We expect 0 as this class, 1 as the CallerClassSecurityManager and 2 is the caller class
+    if (callerClasses.length < 3) {
+      // This shouldn't happen. If it does, use the program classloader as the caller classloader
+      callerClassLoader = runtimeContext.getProgram.getClassLoader
+    } else {
+      callerClassLoader = callerClasses(2).getClassLoader
+    }
+
+    // Create the class directory
+    val cConf = runtimeContext.getCConfiguration
+    val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile
+    val classDir = new File(tempDir, runtimeContext.getProgramRunId + "-classes-" + interpreterCount.incrementAndGet())
+    if (!DirUtils.mkdirs(classDir)) {
+      throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
+    }
+
+    // Setup classpath
+    val settings = AbstractSparkCompiler.setClassPath(new Settings(), callerClassLoader)
+
+    // Setup classloader
+    settings.embeddedDefaults(sparkClassLoader)
+
+    sparkClassFileHandler.addClassDir(classDir)
+    createInterpreter(settings, classDir, () => {
+      sparkClassFileHandler.removeClassDir(classDir)
+      try {
+        DirUtils.deleteDirectoryContents(classDir, true)
+      } catch {
+        case e: IOException => LOG.warn("Failed to delete class directory {}", classDir, e: Any)
+      }
+    })
   }
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
@@ -365,8 +421,20 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
     }
   }
 
+  /**
+    * Saves a [[org.apache.spark.rdd.RDD]] to a dataset.
+    */
   protected def saveAsNewAPIHadoopDataset[K: ClassTag, V: ClassTag](sc: SparkContext, conf: Configuration,
                                                                     rdd: RDD[(K, V)]): Unit
+
+  /**
+    * Creates a new [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]].
+    *
+    * @param settings settings for the interpreter created. It has the classpath property being populated already.
+    * @param classDir the directory to write the compiled class files
+    * @return a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
+    */
+  protected def createInterpreter(settings: Settings, classDir: File, onClose: () => Unit): SparkInterpreter
 }
 
 /**

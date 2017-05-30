@@ -28,6 +28,7 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
@@ -86,6 +87,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   override def execute(runnable: TxRunnable): Unit = sec.execute(runnable)
 
   override def execute(timeout: Int, runnable: TxRunnable): Unit = sec.execute(timeout, runnable)
+
+  override def createInterpreter(): SparkInterpreter = sec.createInterpreter()
 
   override def fromDataset[K, V](datasetName: String, arguments: util.Map[String, String],
                                  splits: java.lang.Iterable[_ <: Split]): JavaPairRDD[K, V] = {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.common.HttpExceptionHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -35,6 +36,7 @@ final class SparkDriverHttpService extends AbstractIdleService {
   SparkDriverHttpService(String programName, String hostname, HttpHandler...handlers) {
     this.httpServer = NettyHttpService.builder(programName + "-http-service")
       .addHttpHandlers(Arrays.asList(handlers))
+      .setExceptionHandler(new HttpExceptionHandler())
       .setHost(hostname)
       .build();
   }

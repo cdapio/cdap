@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.ProgramStatus
 import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
@@ -25,6 +24,7 @@ import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
+import co.cask.cdap.api.{Config, ProgramStatus}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -32,7 +32,7 @@ import scala.collection.JavaConversions._
 /**
   * An application for SparkTestRun.
   */
-class TestSparkApp extends AbstractApplication {
+class TestSparkApp extends AbstractApplication[Config] {
 
   override def configure() = {
     addStream(new Stream("SparkStream"))
@@ -58,6 +58,8 @@ class TestSparkApp extends AbstractApplication {
     addSpark(new ScalaStreamFormatSpecSpark)
 
     addSpark(new KafkaSparkStreaming)
+
+    addSpark(new ScalaDynamicSpark)
 
     addSpark(new ForkSpark("ForkSpark1"))
     addSpark(new ForkSpark("ForkSpark2"))

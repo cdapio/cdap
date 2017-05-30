@@ -66,6 +66,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
+  private static final Type SPARK_EXECUTOR_CLASSLOADER_TYPE =
+    Type.getObjectType("org/apache/spark/repl/ExecutorClassLoader");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
   private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
@@ -123,6 +125,11 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
       // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
       return rewriteDStreamGraph(input);
+    }
+    if (className.equals(SPARK_EXECUTOR_CLASSLOADER_TYPE.getClassName())) {
+      // Rewrite the Spark repl ExecutorClassLoader to call `super(null)` so that it won't use the system classloader
+      // as parent
+      return rewriteExecutorClassLoader(input);
     }
     if (className.equals(AKKA_REMOTING_TYPE.getClassName())) {
       // Define the akka.remote.Remoting class to avoid thread leakage
@@ -194,6 +201,61 @@ public class SparkClassRewriter implements ClassRewriter {
               && returnType.getClassName().equals("scala.collection.parallel.mutable.ParArray")) {
               super.visitMethodInsn(Opcodes.INVOKESTATIC, SPARK_RUNTIME_UTILS_TYPE.getInternalName(),
                                     "setTaskSupport", Type.getMethodDescriptor(returnType, returnType), false);
+            }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the ExecutorClassLoader so that it won't use system classloader as parent.
+   */
+  private byte[] rewriteExecutorClassLoader(InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      private final Type classloaderType = Type.getType(ClassLoader.class);
+      private boolean needRewrite;
+
+      @Override
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        // Only generate
+        if (classloaderType.getInternalName().equals(superName)) {
+          needRewrite = true;
+        }
+        super.visit(version, access, name, signature, superName, interfaces);
+      }
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        if (!needRewrite) {
+          return mv;
+        }
+
+        if (!"<init>".equals(name)) {
+          return mv;
+        }
+        return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
+
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            // If there is a call to `super()`, skip that instruction and have the onMethodEnter generate the call
+            if (opcode == Opcodes.INVOKESPECIAL
+                && Type.getObjectType(owner).equals(classloaderType)
+                && name.equals("<init>")
+                && Type.getArgumentTypes(desc).length == 0
+                && Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
+              // Generate `super(null)`. The `this` is already in the stack, so no need to `loadThis()`
+              push((Type) null);
+              invokeConstructor(classloaderType, new Method("<init>", Type.VOID_TYPE, new Type[] { classloaderType }));
+            } else {
+              super.visitMethodInsn(opcode, owner, name, desc, itf);
             }
           }
         };

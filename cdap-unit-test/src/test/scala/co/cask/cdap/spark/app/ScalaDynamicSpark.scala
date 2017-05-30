@@ -16,7 +16,9 @@
 
 package co.cask.cdap.spark.app
 
+import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import org.apache.spark.SparkContext
 
 /**
   *
@@ -28,6 +30,39 @@ class ScalaDynamicSpark extends AbstractSpark with SparkMain {
   }
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
+    val sc = new SparkContext
 
+    val interpreter = sec.createInterpreter()
+    try {
+      val classSource =
+        """
+           import co.cask.cdap.api.common._
+           import co.cask.cdap.api.spark._
+           import org.apache.spark._
+
+           object Compute {
+             def run(sc: SparkContext, sparkMain: SparkMain)(implicit sec: SparkExecutionContext) {
+               import sparkMain._
+
+               val args = sec.getRuntimeArguments()
+               sc.fromStream[String](args.get("input"))
+                 .flatMap(_.split("\\s+"))
+                 .map((_, 1))
+                 .reduceByKey(_ + _)
+                 .map(t => (Bytes.toBytes(t._1), Bytes.toBytes(t._2)))
+                 .saveAsDataset(args.get("output")
+               )
+             }
+           }
+        """
+      interpreter.compile(classSource)
+
+      interpreter.bind("sc", sc)
+      interpreter.bind("sparkMain", this)
+      interpreter.bind("sec", sec)
+      interpreter.interpret("Compute.run(sc, sparkMain)(sec)");
+    } finally {
+      interpreter.close()
+    }
   }
 }

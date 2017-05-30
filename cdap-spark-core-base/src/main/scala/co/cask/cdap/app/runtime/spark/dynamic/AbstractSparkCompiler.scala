@@ -152,13 +152,6 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
       errors.mkString(System.getProperty("line.separator"))
     }
   }
-
-  /**
-    * Trait for the ability to add [[java.net.URL]]s.
-    */
-  trait URLAdder {
-    def addURLs(urls: URL*): Unit
-  }
 }
 
 /**
