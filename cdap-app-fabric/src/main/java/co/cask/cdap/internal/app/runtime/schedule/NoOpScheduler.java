@@ -43,6 +43,16 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+
+  }
+
+  @Override
   public void schedule(ProgramId program, SchedulableProgramType programType,
                        Schedule schedule) throws SchedulerException {
 

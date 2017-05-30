@@ -40,10 +40,8 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -236,11 +234,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           if (ProgramScheduleStatus.SUSPENDED != record.getMeta().getStatus()) {
             throw new ConflictException("Schedule '" + scheduleId + "' is already enabled");
           }
-          Trigger trigger = record.getSchedule().getTrigger();
-          if (trigger instanceof ProtoTrigger.TimeTrigger || trigger instanceof ProtoTrigger.StreamSizeTrigger) {
-            ProgramId programId = record.getSchedule().getProgramId();
-            scheduler.resumeSchedule(programId, programId.getType().getSchedulableType(), scheduleId.getSchedule());
-          }
+          scheduler.resumeProgramSchedule(record.getSchedule());
           store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SCHEDULED);
           return null;
         }
@@ -266,11 +260,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
           if (ProgramScheduleStatus.SCHEDULED != record.getMeta().getStatus()) {
             throw new ConflictException("Schedule '" + scheduleId + "' is already disabled");
           }
-          Trigger trigger = record.getSchedule().getTrigger();
-          if (trigger instanceof ProtoTrigger.TimeTrigger || trigger instanceof ProtoTrigger.StreamSizeTrigger) {
-            ProgramId programId = record.getSchedule().getProgramId();
-            scheduler.suspendSchedule(programId, programId.getType().getSchedulableType(), scheduleId.getSchedule());
-          }
+          scheduler.suspendProgramSchedule(record.getSchedule());
           store.updateScheduleStatus(scheduleId, ProgramScheduleStatus.SUSPENDED);
           queue.markJobsForDeletion(scheduleId, System.currentTimeMillis());
           return null;

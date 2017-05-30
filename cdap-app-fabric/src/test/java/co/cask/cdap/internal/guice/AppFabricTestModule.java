@@ -143,6 +143,18 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
+      public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+      }
+
+      @Override
+      public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+      }
+
+      @Override
+      public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+      }
+
+      @Override
       public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
       }
 
@@ -190,10 +202,6 @@ public final class AppFabricTestModule extends AbstractModule {
       @Override
       public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                                  Map<String, String> properties) {
-      }
-
-      @Override
-      public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
       }
 
       @Override

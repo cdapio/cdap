@@ -176,6 +176,18 @@ public final class TimeScheduler implements Scheduler {
                    schedule.getName());
   }
 
+  @Override
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    suspendSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                    schedule.getName());
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    resumeSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
+  }
+
   /**
    * Assert the schedule with a given name and of a given program does not exist
    *

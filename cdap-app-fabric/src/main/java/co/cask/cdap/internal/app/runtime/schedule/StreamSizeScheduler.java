@@ -237,6 +237,18 @@ public class StreamSizeScheduler implements Scheduler {
   }
 
   @Override
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    suspendSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                    schedule.getName());
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    resumeSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
+  }
+
+  @Override
   public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
     throws SchedulerException {
     schedule(program, programType, schedule, ImmutableMap.<String, String>of());
