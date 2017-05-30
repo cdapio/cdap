@@ -348,9 +348,9 @@
     <name>app.program.spark.compat</name>
     <value>spark1_2.10</value>
     <description>
-      The Spark compatibility version, if Spark is available. Must be 'spark1_2.10' or 'spark2_2.11'.
-      In distributed mode, this will be overridden by the detected Spark version.
-      In standalone mode, this can be set to the desired version of Spark.
+      The Spark compatibility version, if Spark is available. Must be either 'spark1_2.10'
+      or 'spark2_2.11'. In distributed mode, this will be overridden by the detected Spark
+      version. In standalone mode, this can be set to the desired version of Spark.
     </description>
   </property>
 
@@ -697,7 +697,7 @@
     <name>data.tx.grace.period</name>
     <value>86400</value>
     <description>
-      The time in seconds used to pad transaction max lifetime while pruning.
+      Time in seconds used to pad transaction maximum lifetime while pruning
     </description>
     <final>true</final>
   </property>
@@ -1507,7 +1507,7 @@
     <value>30</value>
     <description>
       Memory in megabytes for the cache size used by the messaging service
-      for caching recently published messages. Currently, only topics listed
+      for caching recently-published messages. Currently, only topics listed
       in the ${messaging.system.topics} configuration have caching enabled.
       Set it to 0 to disable caching.
     </description>
@@ -1994,8 +1994,8 @@
     <name>metrics.processor.queue.size</name>
     <value>20000</value>
     <description>
-      The maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory
-      before persisting them
+      Maximum size of a queue where the metrics processor temporarily stores
+      newly-fetched metrics in-memory before persisting them
     </description>
   </property>
 
@@ -2003,7 +2003,8 @@
     <name>metrics.processor.max.delay.ms</name>
     <value>3000</value>
     <description>
-      The maximum delay allowed between the latest metrics timestamp and the time when it is processed
+      Maximum delay in milliseconds allowed between the latest metrics timestamp and the
+      time when it is processed
     </description>
   </property>
 
@@ -2718,7 +2719,8 @@
     <name>security.authorization.cache.max.entries</name>
     <value>100000</value>
     <description>
-      Number of entries to hold in the container authorization cache. If this is set to 0 then no caching will be done.
+      Number of entries to hold in the container authorization cache. If set to 0, no
+      caching will be performed.
     </description>
   </property>
 
@@ -2758,12 +2760,11 @@
     <name>security.authorization.propagate.privileges</name>
     <value>true</value>
     <description>
-      Allows propagation of privileges to descendants. If this is set to true
-      then having a privilege on an entity will allow the user to perform that
-      action on all the descendants of that entity. For example, if this is true
-      having READ on namespace will allow an user to READ all datasets in that
-      namespace. If this is set to false then the users will need privileges on
-      the entity the action is being performed on.
+      Allows the propagation of privileges to descendants. If set to 'true', then having a
+      privilege on an entity will allow the user to perform actions on all the descendants
+      of that entity. For example, if set to 'true', then having READ on a namespace will
+      allow a user to READ all datasets in that namespace. If set to 'false', then users
+      will need privileges on each entity an action is performed on.
     </description>
   </property>
 
