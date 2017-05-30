@@ -103,7 +103,7 @@ div.row > div.content > div.section > ul.simple {
     font: 14px/16px Roboto, sans-serif;
     letter-spacing: 0;
     margin-bottom: 0;
-    margin-top: 26px;
+    margin-top: 22px;
     margin-left: 10px;
 }
 
@@ -114,7 +114,7 @@ div.row > div.content > div.section > ul.simple {
 }
 
 .navbar-brand img {
-    height: 30px;
+    height: 26px;
 }
 
 a.navbar-brand {
