@@ -35,3 +35,12 @@
 */
         margin: 0 0;
     }
+
+
+	.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_draggerContainer { /* contains the draggable element and dragger rail markup */
+		padding-top: 6px;
+	}
+
+	.mCSB_scrollTools.mCSB_scrollTools_vertical .mCSB_draggerContainer { /* contains the draggable element and dragger rail markup */
+		padding-left: 8px;
+	}
