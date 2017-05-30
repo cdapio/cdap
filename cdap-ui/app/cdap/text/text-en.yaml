@@ -591,7 +591,7 @@ features:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Add to Pipeline
       database: Database
-      file: HDFS
+      file: File System
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
       invalidFieldNameRemedies2: "You can try to "
@@ -615,7 +615,13 @@ features:
         uploadBtnLabel: Upload
     Upgrade:
       minimumVersionError: "Data Preparation requires wrangler-service artifact version 2.0.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
-
+    WorkspaceTabs:
+      DeleteModal:
+        cancelButton: No, keep tab open
+        confirmButton: Yes, close tab
+        header: Close Tab
+        helperMessage: Any directives you have applied in this tab will be lost.
+        mainMessage: Are you sure you want to close {workspace}?
   DataPrepConnections:
     AddConnections:
       Database:
@@ -697,7 +703,7 @@ features:
     TopPanel:
       directoryMetrics: "{count} Files and Folders"
       searchPlaceholder: Search this directory
-      selectData: "Select HDFS File/Directory to Preview"
+      selectData: "Select File/Directory to Preview"
 
   FileDataUpload:
     click: "Click "
