@@ -503,20 +503,20 @@ cdap_set_spark() {
       # If there is no valid SPARK_HOME, we should unset the existing one if it is set
       # Otherwise the spark-shell won't run correctly
       unset SPARK_HOME
-      local __spark_shell=$(which spark-shell)
+      local __spark_shell=$(which spark-shell 2>/dev/null)
       local __spark_client_version=None
       for __dist in hdp iop; do
         if [[ $(which ${__dist}-select 2>/dev/null) ]]; then
           __spark_client_version=$(${__dist}-select status spark-client | awk '{print $3}')
-        fi
-        if [[ ${__spark_client_version} == 'None' ]]; then # defaults None, we're hoping for a version
-          logecho "$(date) Spark client not installed via ${__dist}-select detection"
-          return 1
-        elif [[ -x /usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell ]]; then
-          __spark_shell=/usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell
-        else
-          logecho "$(date) Spark client not installed via on-disk detection"
-          return 1
+          if [[ ${__spark_client_version} == 'None' ]]; then # defaults None, we're hoping for a version
+            logecho "$(date) Spark client not installed via ${__dist}-select detection"
+            return 1
+          elif [[ -x /usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell ]]; then
+            __spark_shell=/usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell
+          else
+            logecho "$(date) Spark client not installed via on-disk detection"
+            return 1
+          fi
         fi
       done
       ERR_FILE=$(mktemp)
