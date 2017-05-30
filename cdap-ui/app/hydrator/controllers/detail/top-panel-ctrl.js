@@ -236,16 +236,7 @@ class HydratorDetailTopPanelController {
   }
 
   isValidToStartOrSchedule() {
-    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
-    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
-    if (hasMissingValues.res) {
-      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
-      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
-    } else {
-      this.notValidRuntimeArgsString = '';
-    }
-
-    return !hasMissingValues.res;
+    return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
   setState() {
@@ -317,7 +308,7 @@ class HydratorDetailTopPanelController {
   }
   do(action) {
     switch(action) {
-      case 'Start':
+      case 'Run':
         this.getRuntimeArguments()
           .then(() => {
             this.startPipeline();
@@ -367,6 +358,14 @@ class HydratorDetailTopPanelController {
               });
             }
           );
+    }
+  }
+  doStartScheduleOrConfig(action) {
+    if (this.validToStartOrSchedule) {
+      this.do(action);
+    } else {
+      this.pipelineAction = action;
+      this.do('Config');
     }
   }
   startPipeline() {

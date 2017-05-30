@@ -272,7 +272,7 @@
                 class="btn btn-primary apply-run"
                 ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline"
                 ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
-                <span>Save &amp; Run</span>
+                <span>Save &amp; {{ BatchPipelineConfigCtrl.pipelineAction }}</span>
                 <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
               </button>
               <button

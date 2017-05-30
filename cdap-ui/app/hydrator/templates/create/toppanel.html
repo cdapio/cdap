@@ -174,12 +174,8 @@
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning"
-          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.validToStartPreview && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
-          uib-tooltip="Please provide values for runtime arguments {{ HydratorPlusPlusTopPanelCtrl.notValidRuntimeArgsString }}, before running the pipeline"
-          tooltip-placement="bottom"
-          tooltip-class="toppanel-tooltip"
-          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.validToStartPreview"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.validToStartPreview">
+          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
       <div class="btn-container">
         <span class="fa fa-play text-success"></span>
         <div class="button-label">Run</div>

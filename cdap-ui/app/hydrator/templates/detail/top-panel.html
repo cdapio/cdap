@@ -67,14 +67,14 @@
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Deployed', 'Scheduling'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
-          <div ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Schedule')"
+          <div ng-click="TopPanelCtrl.doStartScheduleOrConfig('Schedule')"
               class="btn scheduler"
               ng-class="{'btn-select': TopPanelCtrl.viewScheduler}"
               uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before scheduling the pipeline"
               tooltip-placement="bottom"
               tooltip-class="toppanel-tooltip"
               tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
-              ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error || !TopPanelCtrl.validToStartOrSchedule">
+              ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error">
             <div class="btn-container">
               <span class="double-line" ng-if="(TopPanelCtrl.scheduleStatus === 'Deployed' || TopPanelCtrl.scheduleStatus.error) && !TopPanelCtrl.scheduleLoading">
                 <span class="fa icon-runtimestarttime"></span>
@@ -104,13 +104,9 @@
       </div>
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
-          <div ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Start')"
+          <div ng-click="TopPanelCtrl.doStartScheduleOrConfig('Run')"
                class="btn"
-               uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before running the pipeline"
-               tooltip-placement="bottom"
-               tooltip-class="toppanel-tooltip"
-               tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
-               ng-disabled="TopPanelCtrl.appStatus === 'Starting' || !TopPanelCtrl.validToStartOrSchedule">
+               ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <div class="btn-container">
               <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
                 <span class="fa fa-play text-success"></span>
@@ -145,12 +141,8 @@
       <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Stopped', 'Succeeded', 'Failed', 'Starting', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
-            ng-click="!TopPanelCtrl.validToStartOrSchedule || TopPanelCtrl.do('Start')"
-            uib-tooltip="Please provide values for runtime arguments {{ TopPanelCtrl.notValidRuntimeArgsString }}, before running the pipeline"
-            tooltip-placement="bottom"
-            tooltip-class="toppanel-tooltip"
-            tooltip-enable="!TopPanelCtrl.validToStartOrSchedule"
-            ng-disabled="TopPanelCtrl.appStatus === 'Starting' || !TopPanelCtrl.validToStartOrSchedule">
+            ng-click="TopPanelCtrl.doStartScheduleOrConfig('Run')"
+            ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <div class="btn-container">
               <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
                 <span class="fa fa-play text-success"></span>
@@ -278,6 +270,7 @@
       convert-runtime-args-to-macros="TopPanelCtrl.convertRuntimeArgsToMacros()"
       pipeline-name="{{TopPanelCtrl.app.name}}"
       run-pipeline="TopPanelCtrl.startPipeline()"
+      pipeline-action="{{TopPanelCtrl.pipelineAction}}"
       on-close="TopPanelCtrl.viewConfig = false"
       namespace-id="{{TopPanelCtrl.$state.params.namespace}}"
       store="TopPanelCtrl.HydratorPlusPlusDetailNonRunsStore"
