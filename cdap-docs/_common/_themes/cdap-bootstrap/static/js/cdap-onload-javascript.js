@@ -14,10 +14,10 @@
 
     function sidebar_scrollbar_adjust() {
         // Bootstrap break points
-        if (window.matchMedia("(min-width: 992px)").matches) {
-            $('#sidebar').mCustomScrollbar("update");
+        if (window.matchMedia('(min-width: 992px)').matches) {
+            $('#sidebar').mCustomScrollbar('update');
         } else {
-            $('#sidebar').mCustomScrollbar("disable", true);
+            $('#sidebar').mCustomScrollbar('disable', true);
         }
     }
 
@@ -29,7 +29,7 @@
         var s_position = 'relative';
         var s_width = '100%';
         // Bootstrap break point
-        if (window.matchMedia("(min-width: 992px)").matches) {
+        if (window.matchMedia('(min-width: 992px)').matches) {
             s_margin_left = '-16px';
             s_position = 'fixed';
             s_width = parseInt($('div.main-container.container > .row').width() * 0.1666666667) + 'px';
@@ -63,6 +63,12 @@
         offset: {
             top: 0
         }
+    });
+
+    // Add collapsible menus to left  sidebar
+
+    $(document).ready(function() {
+            $('#sidebar nav.pagenav ul.current').abixTreeList();
     });
 
     $('#localtoc-scrollspy').DynamicScrollSpy({
@@ -122,74 +128,74 @@
     });
 
     // Load Google Search Data
+
     function load_google_version() {
         var versionsURL = 'http://docs.cask.co/cdap/';
 
-        window.versionscallback = (function(data){
-          var ess;
-          if (data) {
-            document.write('<li class="versionsmenu">');
-            document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
-          }
-
-          if (Array.isArray(data.development) && data.development.length && data.development[0].length) {
-            ess = (data.development.length == 1) ? "" : "s" ;
-            document.write('<optgroup label="Development Release' + ess +'">');
-            var i;
-            var d;
-            for (i in data.development) {
-              d = data.development[i];
-              if (d.length === 2 || (d.length > 2 && parseInt(d[3]) === 1)) {
-                writeVersionLink(d[0], d[1]);
-              }
+        window.versionscallback = (function(data) {
+            var ess;
+            if (data) {
+                document.write('<li class="versionsmenu">');
+                document.write('<select id="' + versionID + '" onmousedown="window.currentversion=this.value;" onchange="window.gotoVersion(\'' + versionID + '\')">');
             }
-            document.write('</optgroup>');
-          } else {
-            writeLink('develop', 'Develop');
-          }
 
-          document.write('<optgroup label="Current Release">');
-          if (Array.isArray(data.current) && data.current.length && data.current[0].length) {
-            writeVersionLink(data.current[0], data.current[1]);
-          } else {
-            writeLink('current', 'Current');
-          }
-          document.write('</optgroup>');
-
-          if (Array.isArray(data.older) && data.older.length && data.older[0].length) {
-            ess = (data.older.length == 1) ? "" : "s" ;
-            document.write('<optgroup label="Older Release' + ess + '">');
-            var j;
-            var r;
-            for (j in data.older) {
-              r = data.older[j];
-              if (parseInt(r[3]) === 1) {
-                if (r.length === 4 || (r.length > 4 && !parseInt(r[4]) === 0)) {
-                  writeVersionLink(r[0], r[1]);
+            if (Array.isArray(data.development) && data.development.length && data.development[0].length) {
+                ess = (data.development.length == 1) ? '' : 's';
+                document.write('<optgroup label="Development Release' + ess + '">');
+                var i;
+                var d;
+                for (i in data.development) {
+                    d = data.development[i];
+                    if (d.length === 2 || (d.length > 2 && parseInt(d[3]) === 1)) {
+                        writeVersionLink(d[0], d[1]);
+                    }
                 }
-              }
+                document.write('</optgroup>');
+            } else {
+                writeLink('develop', 'Develop');
             }
-            document.write('<option value="' + versionsURL + '">All Releases</option>');
+
+            document.write('<optgroup label="Current Release">');
+            if (Array.isArray(data.current) && data.current.length && data.current[0].length) {
+                writeVersionLink(data.current[0], data.current[1]);
+            } else {
+                writeLink('current', 'Current');
+            }
             document.write('</optgroup>');
-          }
 
-          if (data) {
-            document.write('</select>');
-          }
+            if (Array.isArray(data.older) && data.older.length && data.older[0].length) {
+                ess = (data.older.length == 1) ? '' : 's';
+                document.write('<optgroup label="Older Release' + ess + '">');
+                var j;
+                var r;
+                for (j in data.older) {
+                    r = data.older[j];
+                    if (parseInt(r[3]) === 1) {
+                        if (r.length === 4 || (r.length > 4 && !parseInt(r[4]) === 0)) {
+                            writeVersionLink(r[0], r[1]);
+                        }
+                    }
+                }
+                document.write('<option value="' + versionsURL + '">All Releases</option>');
+                document.write('</optgroup>');
+            }
 
-          var gcseID = 'DEFAULT_GCSE_ID';
-          if (data && data.gcse) {
-            var v = window.DOCUMENTATION_OPTIONS.VERSION;
-            if (!(data.gcse[v]) && v.endsWith('-SNAPSHOT')) {
-                v = v.replace('-SNAPSHOT', '');
+            if (data) {
+                document.write('</select>');
             }
-            if (data.gcse[v]) {
-              gcseID = data.gcse[v];
+
+            var gcseID = 'DEFAULT_GCSE_ID';
+            if (data && data.gcse) {
+                var v = window.DOCUMENTATION_OPTIONS.VERSION;
+                if (!(data.gcse[v]) && v.endsWith('-SNAPSHOT')) {
+                    v = v.replace('-SNAPSHOT', '');
+                }
+                if (data.gcse[v]) {
+                    gcseID = data.gcse[v];
+                }
             }
-          }
-          localStorage.setItem("gcseID", gcseID);
+            localStorage.setItem('gcseID', gcseID);
         });
-
     }
 
 }(window.$jqTheme || window.jQuery));
