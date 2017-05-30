@@ -15,8 +15,9 @@
 */
 function MyPipelineClientResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
   'ngInject';
-  $scope.virtualCores = $scope.store.getClientVirtualCores();
-  $scope.memoryMB = $scope.store.getClientMemoryMB();
+  $scope.virtualCores = $scope.virtualCoresValue || $scope.store.getClientVirtualCores();
+  $scope.memoryMB = $scope.memoryMbValue || $scope.store.getClientMemoryMB();
+
   $scope.cores = Array.apply(null, {length: 20}).map((ele, index) => index+1);
   $scope.numberConfig = {
     'widget-attributes': {
@@ -26,14 +27,33 @@ function MyPipelineClientResourceCtrl($scope, HYDRATOR_DEFAULT_VALUES) {
       convertToInteger: true
     }
   };
-  if (!$scope.isDisabled){
-    $scope.$watch('memoryMB', function() {
-      $scope.actionCreator.setClientMemoryMB($scope.memoryMB);
-    });
-    $scope.onVirtualCoresChange = function() {
-      $scope.actionCreator.setClientVirtualCores($scope.virtualCores);
-    };
-  }
+  $scope.$watch('memoryMB', function(oldValue, newValue) {
+    if (oldValue === newValue) {
+      return;
+    }
+    if ($scope.onMemoryChange && typeof $scope.onMemoryChange === 'function') {
+      var fn = $scope.onMemoryChange();
+      if ('undefined' !== typeof fn) {
+        fn.call()($scope.memoryMB);
+      }
+    } else {
+      if (!$scope.isDisabled) {
+        $scope.actionCreator.setClientMemoryMB($scope.memoryMB);
+      }
+    }
+  });
+  $scope.onVirtualCoresChange = function() {
+    if ($scope.onCoreChange && typeof $scope.onCoreChange === 'function') {
+      var fn = $scope.onCoreChange();
+      if ('undefined' !== typeof fn) {
+        fn.call()($scope.virtualCores);
+      }
+    } else {
+      if (!$scope.isDisabled){
+        $scope.actionCreator.setClientVirtualCores($scope.virtualCores);
+      }
+    }
+  };
 }
 angular.module(PKG.name + '.commons')
   .controller('MyPipelineClientResourceCtrl', MyPipelineClientResourceCtrl);

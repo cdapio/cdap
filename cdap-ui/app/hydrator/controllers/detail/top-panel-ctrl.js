@@ -311,14 +311,9 @@ class HydratorDetailTopPanelController {
     }
   }
   exportConfig() {
-    let config = angular.copy(this.HydratorPlusPlusDetailNonRunsStore.getConfigJson());
-    config.stages = config.stages.map( stage => ({
-      name: stage.name,
-      plugin: stage.plugin
-    }));
     let exportConfig = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
     delete exportConfig.__ui__;
-    this.myPipelineExportModalService.show(config, exportConfig);
+    this.myPipelineExportModalService.show(exportConfig, exportConfig);
   }
   do(action) {
     switch(action) {
@@ -341,7 +336,7 @@ class HydratorDetailTopPanelController {
           });
         break;
       case 'Suspend':
-        this.suspendPipeline();
+        this.viewScheduler = true;
         break;
       case 'Stop':
         this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STOPPING');
