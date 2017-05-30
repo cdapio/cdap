@@ -20,13 +20,13 @@
 #
 # REQUIRES PYTHON 2.7.x
 #
-# Currently, uses rst2pdf to generate PDFs. 
+# Currently, uses rst2pdf to generate PDFs.
 # To be enhanced later to include using landslide to generate slides.
-# 
+#
 # PDF Generation
 # --------------
 # Pre-processes the .rst file into a temp file, and then runs the temp file through rst2pdf.
-# The pre-processing allows custom hints to be placed in the .rst file that can specify 
+# The pre-processing allows custom hints to be placed in the .rst file that can specify
 # and control the PDF output.
 #
 # Current hints are listed below in section marked "Current Hints".
@@ -39,7 +39,7 @@
 # PDF generation examples:
 # python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-enterprise-dependencies.pdf ../developers-manual/source/licenses/cdap-enterprise-dependencies.rst
 # python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-level-1-dependencies.pdf    ../developers-manual/source/licenses/cdap-level-1-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-standalone-dependencies.pdf ../developers-manual/source/licenses/cdap-standalone-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-local-sandbox-dependencies.pdf ../developers-manual/source/licenses/cdap-local-sandbox-dependencies.rst
 #
 
 VERSION = "0.0.4"
@@ -56,7 +56,7 @@ RST2PDF_CONFIG          = ".. rst2pdf: config " # Sets the config file used
 RST2PDF_NAME            = ".. rst2pdf: name " # Sets the output file name
 RST2PDF_STYLESHEETS     = ".. rst2pdf: stylesheets " # Sets the stylesheet used
 RST2PDF_CUT_START       = ".. rst2pdf: CutStart" # Marks the start of an ignored section
-RST2PDF_CUT_STOP        = ".. rst2pdf: CutStop" # Marks the end of an ignored section 
+RST2PDF_CUT_STOP        = ".. rst2pdf: CutStop" # Marks the end of an ignored section
 RST2PDF_PAGE_BREAK      = ".. rst2pdf: PageBreak" # Marks the insertion of pagebreak
 RST2PDF_PAGE_BREAK_TEXT = """.. raw:: pdf
 
@@ -109,7 +109,7 @@ def parse_options():
     (options, args) = parser.parse_args()
 
     options.generate = options.generate.lower()
-    
+
     if options.version:
         print "Version: %s" % VERSION
         sys.exit(1)
@@ -174,29 +174,29 @@ def process_pdf(input_file, options):
             lines.append(line_right_end(line, RST2PDF))
         else:
             lines.append(line.strip('\n'))
-            
+
     # Set paths
     source_path = os.path.dirname(os.path.abspath(__file__))
-    
+
     if not os.path.isabs(input_file):
         input_file = os.path.join(source_path, input_file)
         if not os.path.isfile(input_file):
             raise Exception(func_name, '"input_file" not a valid path: %s' % input_file)
-            
+
     if options.output_file: # If output file specified on command line, use it
         output = options.output_file
     elif output and name: # If output file name and build location specified in file, use them
         output = os.path.join(output, name)
-        
+
     output = get_absolute_path(output, "output", input_file, func_name)
     config = get_absolute_path(config, "config", input_file, func_name)
     stylesheets = get_absolute_path(stylesheets, "stylesheets", input_file, func_name)
-                
+
     # Write output to temp file
     temp_file = input_file+TEMP_FILE_SUFFIX
     if not os.path.isabs(temp_file):
-        raise Exception(func_name, '"temp_file" not a valid path: %s' % temp_file)    
-    temp = open(temp_file,'w')    
+        raise Exception(func_name, '"temp_file" not a valid path: %s' % temp_file)
+    temp = open(temp_file,'w')
     for line in lines:
         temp.write(line+'\n')
     if options.build_version: # If a build version was specified on command-line, use it
@@ -206,10 +206,10 @@ def process_pdf(input_file, options):
     print "Completed parsing input file"
 
     # Generate PDF
-#     rst2pdf 
-#     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config" 
-#     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet" 
-#     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf" 
+#     rst2pdf
+#     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config"
+#     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet"
+#     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf"
 #     "/Users/*/*/cdap/docs/developers-manual/source/rest.rst_temp”
 
     command = 'rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
@@ -218,12 +218,12 @@ def process_pdf(input_file, options):
         output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT,)
     except:
         raise Exception(func_name, 'output: %s' % output)
-        
+
     if len(output)==0:
         os.remove(temp_file)
     else:
         print output
-        
+
     print "Completed %s" % func_name
 
 #
@@ -236,7 +236,7 @@ def line_starts_with(line, left):
 
 def line_right_end(line, left):
     # Given a line of text (that may end with a carriage return)
-    # and a snip at the start, 
+    # and a snip at the start,
     # return everything from the end of snip onwards, except for the trailing return
     t = line[len(left):]
     return t.strip('\n')

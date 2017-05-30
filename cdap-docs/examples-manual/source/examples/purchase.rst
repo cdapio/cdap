@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Purchase Application
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _examples-purchase:
 
@@ -25,7 +25,7 @@ and write to an ``ObjectStore`` dataset.
     You can send sentences either by using a ``curl`` call, the CDAP CLI, or the CDAP UI.
   - The *PurchaseFlow* reads the *purchaseStream* and converts every input string into a
     Purchase object and stores the object in the *purchases* dataset.
-  - The *PurchaseStore* flowlet demonstrates the setting of memory used by its YARN container. 
+  - The *PurchaseStore* flowlet demonstrates the setting of memory used by its YARN container.
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
     then stored in the *userProfiles* dataset.
   - The *CatalogLookup* service fetches the catalog id for a given product. The *CatalogLookup* service
@@ -39,9 +39,9 @@ and write to an ``ObjectStore`` dataset.
     the *UserProfileService* and creates a purchase history. It stores the purchase history in the
     history dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
     is ingested by the *purchaseStream* using a data schedule.
-  - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the 
+  - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the
     ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the history dataset.
-  - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both 
+  - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both
     as default values and as runtime arguments.
   - Use the *PurchaseHistoryService* to retrieve from the history dataset the purchase history of a user.
   - Execute a SQL query over the history dataset. You can do this using a series of curl
@@ -78,7 +78,7 @@ dataset with each purchase's timestamp and the ``Purchase`` Object.
 
 The purchase history for each customer is compiled by the *PurchaseHistoryWorkflow*, which uses a
 MapReduce |---| ``PurchaseHistoryBuilder`` |---| to aggregate all purchases into a per-customer purchase
-history. It writes to the *history* dataset, a custom dataset that embeds an ``ObjectStore`` and 
+history. It writes to the *history* dataset, a custom dataset that embeds an ``ObjectStore`` and
 implements the ``RecordScannable`` interface to allow SQL queries over the dataset.
 
 The memory requirements of the flowlet *PurchaseStore* are set in its ``configure`` method:
@@ -128,7 +128,7 @@ A ``user/{id}`` endpoint to obtain profile information for a specified user:
 .. tabbed-parsed-literal::
 
   $ cdap cli call service PurchaseHistory.UserProfileService GET user/Alice
-  
+
   < 200 OK
   < Content-Length: 79
   < Connection: keep-alive
@@ -171,25 +171,25 @@ Running the Example
 
 Add A Profile
 -------------
-Add a *User Profile* for the user *Alice*, by running this command from the Standalone
-CDAP SDK directory, using the Command Line Interface:
+Add a *User Profile* for the user *Alice*, by running this command from the
+CDAP Local Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
   $ cdap cli call service PurchaseHistory.UserProfileService POST user body \
     '{"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}'
-    
+
   Successfully connected to CDAP instance at http://localhost:11015/default
   < 200 OK
 
 Injecting Sentences
 -------------------
-Inject a file of sentences by running this command from the Standalone
-CDAP SDK directory, using the Command Line Interface:
+Inject a file of sentences by running this command from the
+CDAP Local Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli load stream purchaseStream examples/Purchase/resources/purchases.txt 
+  $ cdap cli load stream purchaseStream examples/Purchase/resources/purchases.txt
   Successfully loaded file to stream 'purchaseStream'
 
 .. Starting the Workflow
@@ -206,7 +206,7 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button; or
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
@@ -230,9 +230,9 @@ Exploring the Results using SQL
 You can use SQL to formulate ad-hoc queries over the *history* and *purchases* datasets.
 This is done by a series of ``curl`` calls, as described in the :ref:`RESTful API
 <http-restful-api-query>` section of the :ref:`CDAP Reference Manual <reference-index>`.
-For your convenience, the SDK's Command Line Interface can execute the series of calls.
+For your convenience, the CDAP Local Sancbox's Command Line Interface can execute the series of calls.
 
-From within the SDK root directory:
+From within the CDAP Local Sandbox home directory:
 
 .. tabbed-parsed-literal::
 
@@ -279,10 +279,10 @@ First, submit the query for execution:
   "http://localhost:11015/v3/namespaces/default/data/explore/queries"
 
   .. Windows
-  
+
   > curl -X POST -d "{\"query\": \"SELECT * FROM dataset_history WHERE customer IN (\'Alice\',\'Bob\')\"}" ^
   "http://localhost:11015/v3/namespaces/default/data/explore/queries"
-  
+
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
 

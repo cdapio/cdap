@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2017 Cask Data, Inc.
-    :version: 4.1.0
+    :version: 4.2.0
 
 =================================================
 Cask Data Application Platform |version|
 =================================================
 
-Cask Data Application Platform Standalone Dependencies
+Cask Data Application Platform Local Sandbox Dependencies
 --------------------------------------------------------------------------------
 
 .. rst2pdf: PageBreak
@@ -17,7 +17,7 @@ Cask Data Application Platform Standalone Dependencies
 .. rst2pdf: config ../../../_common/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
-.. csv-table:: **Cask Data Application Platform Standalone Dependencies**
+.. csv-table:: **Cask Data Application Platform Local Sandbox Dependencies**
    :header: "Package","Version","Classifier","License","License URL"
    :widths: 20, 10, 10, 20, 30
 

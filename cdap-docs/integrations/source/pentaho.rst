@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _pentaho-integration:
 
@@ -11,14 +11,14 @@ Pentaho Data Integration
 transformations of data coming from various sources. Let's see how to connect it to
 CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
-#. Before opening the *Pentaho Data Integration* application, copy the 
+#. Before opening the *Pentaho Data Integration* application, copy the
    ``co.cask.cdap.cdap-explore-jdbc-``\ |literal-release|\ ``.jar``
    file to the ``lib`` directory of *Pentaho Data Integration*, located at the root of the application's directory.
 #. Open *Pentaho Data Integration*.
 #. In the toolbar, select ``File -> New -> Database Connection...``.
-#. In the ``General`` section, select a ``Connection Name``, such as ``CDAP Standalone``. For the ``Connection Type``, select
+#. In the ``General`` section, select a ``Connection Name``, such as ``CDAP Local Sandbox``. For the ``Connection Type``, select
    ``Generic database``. Select ``Native (JDBC)`` for the ``Access`` field. In this example, where we connect to
-   a standalone instance of CDAP, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:11015``.
+   a CDAP Local Sandbox, our ``Custom Connection URL`` will then be ``jdbc:cdap://localhost:11015``.
    In the field ``Custom Driver Class Name``, enter ``co.cask.cdap.explore.jdbc.ExploreDriver``.
 
    .. image:: _images/jdbc/pentaho_add_connection.png
@@ -33,7 +33,7 @@ CDAP datasets using the :ref:`CDAP JDBC driver <cdap-jdbc>`.
 
 #. Right-click on ``Table input`` in your transformation and select ``Edit step``. You can specify an appropriate name
    for this input such as ``CDAP datasets query``. Under ``Connection``, select the newly created database connection;
-   in this example, ``CDAP Standalone``. Enter a valid SQL query in the main ``SQL`` field. This will define the data
+   in this example, ``CDAP Local Sandbox``. Enter a valid SQL query in the main ``SQL`` field. This will define the data
    available to your transformation.
 
    .. image:: _images/jdbc/pentaho_modify_input.png

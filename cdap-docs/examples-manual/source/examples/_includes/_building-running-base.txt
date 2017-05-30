@@ -13,21 +13,21 @@ Building and Starting
 
 .. highlight:: console
 
-- You can build the example as described in :ref:`Building an Example Application 
-  <cdap-building-running-example>` 
-  
-- Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`). 
+- You can build the example as described in :ref:`Building an Example Application
+  <cdap-building-running-example>`.
+
+- Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`).
 
 - Deploy the application, as described in :ref:`Deploying an Application <cdap-building-running-deploying>`.
-  For example, from the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
+  For example, from the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
-    
+
     Successfully added artifact with name '|example-artifact|'
 
     $ cdap cli create app |example| |example-artifact| |release| user
-    
+
     Successfully created application
-  
+

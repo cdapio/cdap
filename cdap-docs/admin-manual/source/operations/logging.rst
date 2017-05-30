@@ -14,13 +14,13 @@ well as analyzing their performance. CDAP gives access to its logs, metrics, and
 monitoring information through RESTful APIs, the CDAP UI, as well as a Java Client.
 
 In Hadoop clusters, the programs running inside their containers generate individual log files as
-part of the container. 
+part of the container.
 As an application can consist of
 multiple  programs distributed across the nodes of a cluster, the complete logs for the
 application may similarly be distributed.
 As these files generally do not persist beyond the life of the
 container, they are volatile and not very useful for post-mortem diagnostics and
-troubleshooting, or for analyzing performance. 
+troubleshooting, or for analyzing performance.
 
 To address these issues, the CDAP log framework was designed:
 
@@ -45,7 +45,7 @@ This diagram shows the steps CDAP follows when logging a program of an applicati
   - Logs are collected from an individual program running in a YARN container.
 
   - YARN writes the log messages emitted by containers to files inside the container.
-  
+
   - In addition, CDAP programs publish these messages to Kafka.
 
   - The CDAP Log Saver Service is configured to read log messages from Kafka.
@@ -59,7 +59,7 @@ This diagram shows the steps CDAP follows when logging a program of an applicati
   - In addition to persisting logs to files, the Log.saver also emits metrics about the
     number of log messages emitted by each program. These metrics can be retrieved by
     querying the :ref:`CDAP metrics system <http-restful-api-metrics>`.
-   
+
   - For security, the files written out to persistent storage in HDFS have permissions set
     such that they are accessible only by the ``cdap`` user.
 
@@ -126,7 +126,7 @@ The log messages emitted by your application code can be retrieved by:
       :align: center
       :class: bordered-image
 
-      **CDAP UI:** *Log* icon, enabled if there are logs available for viewing 
+      **CDAP UI:** *Log* icon, enabled if there are logs available for viewing
 
   The logs will be displayed in the log viewer:
 
@@ -141,15 +141,15 @@ The log messages emitted by your application code can be retrieved by:
 Program Log File Locations
 --------------------------
 Program logs are stored in locations specified by properties in the
-:ref:`cdap-site.xml <appendix-cdap-default-logging>` file depending on the mode 
-of CDAP (Standalone or Distributed):
+:ref:`cdap-site.xml <appendix-cdap-default-logging>` file depending on the mode
+of CDAP (Local Sandbox or Distributed):
 
-- For **Standalone CDAP:** the property ``log.collection.root`` (default
+- For **CDAP Local Sandbox:** the property ``log.collection.root`` (default
   ``${local.data.dir}/logs``) is the root location for collecting program logs when in
-  Standalone CDAP.
+  CDAP Local Sandbox.
 
 - For **Distributed CDAP:** the property ``hdfs.namespace`` (default ``/cdap``) is the
-  base directory in HDFS; program logs are stored in ``${hdfs.namespace}/logs`` (by default, 
+  base directory in HDFS; program logs are stored in ``${hdfs.namespace}/logs`` (by default,
   ``/cdap/logs``).
 
 .. _configuring-user-application-program-logging:
@@ -164,7 +164,7 @@ for the modified logback file to take effect. Changing the ``logback-container.x
 only affect programs that are started after the change; existing running programs will not
 be affected.
 
-- For **Standalone CDAP:** As the entire Standalone CDAP runs in a single JVM, the
+- For **CDAP Local Sandbox:** As the entire CDAP Local Sandbox runs in a single JVM, the
   ``logback.xml`` file, located in  ``<cdap-sdk-home>/conf``, configures both "container"
   and CDAP system service logging.
 - For **Distributed CDAP:** the ``logback-container.xml`` file is located in ``/etc/cdap/conf``.
@@ -191,7 +191,7 @@ their preferences before the program starts.
 - To configure the log level before an application starts, you can add the logger name as the
   key and log level as the value in the :ref:`preferences <http-restful-api-preferences>`,
   using the :ref:`CDAP UI <cdap-ui>`, :ref:`CDAP CLI <cdap-cli>`, or other command line
-  tools. The logger name should be prefixed with ``system.log.level``. 
+  tools. The logger name should be prefixed with ``system.log.level``.
 
   For example, if you want to set the log level of the ``HelloWorld`` class of the
   :ref:`Hello World example <examples-hello-world>` to ``DEBUG``, you would use
@@ -206,7 +206,7 @@ their preferences before the program starts.
 **Note:** The :ref:`Logging HTTP RESTful API
 <http-restful-api-logging-changing-program-log-levels>` for changing program log levels
 can only be used with programs that are running under Distributed CDAP. For changing the log
-levels of programs run under Standalone CDAP, you either modify the ``logback.xml`` file,
+levels of programs run under CDAP Local Sandbox, you either modify the ``logback.xml`` file,
 or you :ref:`provide a "logback.xml" <application-logback>` with your application
 before it is deployed.
 
@@ -216,7 +216,7 @@ before it is deployed.
 CDAP System Services Logs
 =========================
 As CDAP system services run either on cluster edge nodes or in YARN containers, their
-logging and :ref:`its configuration <logging-monitoring-system-services-logs-configuration>` 
+logging and :ref:`its configuration <logging-monitoring-system-services-logs-configuration>`
 depends on the service and where it is located.
 
 Retrieving Log Messages from a System Service
@@ -226,7 +226,7 @@ The log messages emitted by CDAP system services can be retrieved by:
 - Using the :ref:`restful-api`: the :ref:`Logging HTTP RESTful API
   <http-restful-api-logging>` details :ref:`downloading the logs
   <http-restful-api-logging-downloading-system-logs>` emitted by a system service.
-  
+
 - Log messages of system services can be viewed in the :ref:`CDAP UI <cdap-ui>`. In the
   *Administration* page (accessible through the *CDAP* menu on the far-right) click either
   a *Logs* icon (such as the *HBase* log icon circled in red, in the *Component Overview*
@@ -253,10 +253,10 @@ The log messages emitted by CDAP system services can be retrieved by:
 
 System Service Log File Locations
 ---------------------------------
-The location of CDAP system service logs depends on the mode of CDAP (Standalone or
+The location of CDAP system service logs depends on the mode of CDAP (Local Sandbox or
 Distributed) and the Hadoop distribution:
 
-- For **Standalone CDAP:** system logs are located in ``<CDAP-SDK-HOME>/logs``.
+- For **CDAP Local Sandbox:** system logs are located in ``<CDAP-SDK-HOME>/logs``.
 
 - For **Distributed CDAP:** system logs are located in ``/var/log/cdap`` (with the
   exception of Cloudera Manager-based clusters). With Cloudera Manager installations, system
@@ -275,8 +275,8 @@ Configuring System Service Logs
   the service(s) affected will need to be restarted for the modified "logback" file to
   take effect.
 
-  - For **Standalone CDAP:** the ``logback.xml`` file is located in ``/etc/cdap/conf``.
-  - For **Distributed CDAP:** the file ``logback.xml`` file, located in 
+  - For **CDAP Local Sandbox:** the ``logback.xml`` file is located in ``/etc/cdap/conf``.
+  - For **Distributed CDAP:** the file ``logback.xml`` file, located in
     ``<cdap-sdk-home>/conf``, configures both "container" and CDAP system service logging.
 
 Changing System Service Log Levels
@@ -292,13 +292,13 @@ what they were originally by using the :ref:`reset endpoint
 
 The REST endpoints can be applied to all system services listed at :ref:`Logging HTTP
 RESTful API <http-restful-api-logging-changing-system-service-log-levels>`. However, since
-``appfabric`` and ``dataset.service`` are running on the same node, changing log levels of the 
+``appfabric`` and ``dataset.service`` are running on the same node, changing log levels of the
 ``appfabric`` service **will also** change the log levels of the ``dataset.service``.
 
 **Note:** The :ref:`Logging HTTP RESTful API
 <http-restful-api-logging-changing-system-service-log-levels>` for changing system service
 log levels can only be used with system services that are running under Distributed CDAP.
-For changing the log levels of system services under Standalone CDAP, you need to modify
+For changing the log levels of system services under CDAP Local Sandbox, you need to modify
 the ``logback.xml`` file and restart CDAP.
 
 
@@ -360,7 +360,7 @@ Configuration properties for logging and :ref:`custom log pipelines
 The **CDAP log pipeline** is configured by settings in the :ref:`cdap-site.xml
 <appendix-cdap-site.xml>` file.
 
-**Custom log pipelines** are configured by a combination of the settings in the 
+**Custom log pipelines** are configured by a combination of the settings in the
 :ref:`cdap-site.xml <appendix-cdap-site.xml>` file and a "logback" file used
 to specify the custom pipeline. The XML file is placed in the
 ``log.process.pipeline.config.dir``, a local directory on the CDAP Master node that is scanned
@@ -392,7 +392,7 @@ Logging Framework
 
 This diagram shows in greater detail the components and steps CDAP follows when logging
 programs of an application and system services with the logging framework:
-      
+
 .. figure:: /_images/logging/logging-framework.png
     :figwidth: 100%
     :width: 800px
@@ -415,7 +415,7 @@ programs of an application and system services with the logging framework:
   ``logs.user-v2`` Kafka topic (set by the property ``log.kafka.topic``). The number of
   log saver instances can be scaled to process the Kafka partitions in parallel, if
   needed.
-  
+
   Log saver, by default, runs only the CDAP Log Pipeline: it reads the messages from
   Kafka, groups them by program or application, buffers and sorts them in memory, and
   finally persists them to files in HDFS. Each of these files corresponds to one program
@@ -426,7 +426,7 @@ programs of an application and system services with the logging framework:
   *Note:* These files are configured to rotate based on time and size; they can be
   changed using the properties ``log.pipeline.cdap.file.max.size.bytes`` and
   ``log.pipeline.cdap.file.max.lifetime.ms`` in the :ref:`cdap-site.xml
-  <appendix-cdap-default-logging>` file as described in 
+  <appendix-cdap-default-logging>` file as described in
   :ref:`logging-monitoring-log-pipeline-configuration`.
 
 - For security, the files written out to persistent storage in HDFS have permissions set
@@ -434,15 +434,15 @@ programs of an application and system services with the logging framework:
 
 - In addition, custom log pipelines can be configured by adding an XML file in a
   prescribed location. Each pipeline buffers log messages in memory and sorts them based
-  on their timestamp. 
- 
+  on their timestamp.
+
 - In addition to persisting logs to files, the log saver also emits metrics about the
   number of log messages emitted by each program. These metrics can be retrieved by
   querying the :ref:`CDAP metrics system <http-restful-api-metrics>`.
-  
+
   These tables list the metrics from the section :ref:`available-system-metrics` of the
   :ref:`http-restful-api-metrics`. See that section for further information.
-  
+
   .. These tables are copied from cdap-docs/reference-manual/source/http-restful-api/metrics.rst
   .. and are not guarded.
 
@@ -487,8 +487,8 @@ Configuring Custom Log Pipelines
 CDAP looks for "logback" files located in a directory as set by the property
 ``log.process.pipeline.config.dir`` in the :ref:`cdap-site.xml
 <appendix-cdap-default-logging>` file. In the default configuration, this is:
-  
-- For **Standalone CDAP:** ``<cdap-sdk-home>/ext/logging/config``
+
+- For **CDAP Local Sandbox:** ``<cdap-sdk-home>/ext/logging/config``
 - For **Distributed CDAP:** ``/opt/cdap/master/ext/logging/config``
 
 .. _logging-monitoring-custom-logging-example:
@@ -512,15 +512,15 @@ Here is an example "logback" file, using two appenders (``STDOUT`` and
     <property name="cdap.log.saver.instance.id" value="instanceId"/>
 
     <appender name="rollingAppender" class="co.cask.cdap.logging.plugins.RollingLocationLogAppender">
-  
+
       <!-- log file path will be created by the appender as: <basePath>/<namespace-id>/<application-id>/<filePath> -->
       <basePath>plugins/applogs</basePath>
       <filePath>securityLogs/logFile-${cdap.log.saver.instance.id}.log</filePath>
-    
+
       <!-- cdap is the owner of the log files directory, so cdap will get read/write/execute permissions.
       Log files will be read-only for others. -->
       <dirPermissions>744</dirPermissions>
-    
+
       <!-- cdap is the owner of the log files, so cdap will get read/write permissions.
       Log files will be read-only for others -->
       <filePermissions>644</filePermissions>
@@ -564,7 +564,7 @@ Custom Log Appender
 -------------------
 You can use any existing `logback <https://logback.qos.ch/manual/appenders.html>`__
 appender. The ``RollingLocationLogAppender`` |---| an extension of the Logback
-``FileAppender`` |---| lets you use HDFS locations in your log pipelines. 
+``FileAppender`` |---| lets you use HDFS locations in your log pipelines.
 
 If you need an appender beyond what is available through Logback or CDAP, you can write
 and implement your own custom appender. See the `Logback documentation

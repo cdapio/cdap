@@ -29,9 +29,9 @@ technologies required, and then show an equivalent CDAP command with the resulti
 from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
 as required.)
 
-To try this yourself, :ref:`download a copy of the CDAP SDK <standalone-index>`,
-:ref:`install it <standalone-index>`,
-and then use the resources in its ``examples`` directory as you follow along.
+To try this yourself, :ref:`download <local-sandbox-index>` a copy of the CDAP Local
+Sandbox, :ref:`install it <local-sandbox-index>`, and then use the resources in its
+``examples`` directory as you follow along.
 
 We'll look at these areas:
   - `Installation`_
@@ -47,7 +47,7 @@ We'll look at these areas:
 
 Installation
 ============
-- Download and install CDAP to run in standalone mode on a laptop
+- Download and install CDAP to run in local sandbox mode on a laptop
 - Startup CDAP
 - Startup CDAP Command Line Interface
 
@@ -79,22 +79,22 @@ Installation
 
             .. Linux
 
-            $ unzip cdap-sdk-|release|.zip
-            $ cd cdap-sdk-|release|
-            $ ./bin/cdap sdk start
+            $ unzip cdap-local-sandbox-|release|.zip
+            $ cd cdap-local-sandbox-|release|
+            $ ./bin/cdap sandbox start
 
-            Starting Standalone CDAP ................
-            Standalone CDAP started successfully.
+            Starting CDAP Local Sandbox ................
+            CDAP Local Sandbox started successfully.
             Connect to the CDAP UI at http://localhost:11011
 
             .. Windows
 
-            > jar xf cdap-sdk-|release|.zip
-            > cd cdap-sdk-|release|
-            > .\bin\cdap sdk start
+            > jar xf cdap-local-sandbox-|release|.zip
+            > cd cdap-local-sandbox-|release|
+            > .\bin\cdap sandbox start
 
-            Starting Standalone CDAP ................
-            Standalone CDAP started successfully.
+            Starting CDAP Local Sandbox ................
+            CDAP Local Sandbox started successfully.
             Connect to the CDAP UI at http://localhost:11011
 
        -
@@ -1251,11 +1251,11 @@ Building Real World Applications
          - Write an application to serve the data
 
      * - Using CDAP
-       - Download the Wise app and unzip into the ``examples`` directory of your CDAP SDK:
+       - Download the Wise app and unzip into the ``examples`` directory of your CDAP Local Sandbox:
 
          .. tabbed-parsed-literal::
 
-            $ cd cdap-sdk-|release|/examples
+            $ cd cdap-local-sandbox-|release|/examples
             $ curl -O https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
             $ unzip cdap-wise-|cdap-apps-version|.zip
 

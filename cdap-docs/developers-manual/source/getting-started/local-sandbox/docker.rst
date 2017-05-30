@@ -11,8 +11,8 @@ Docker Image
 
 
 Docker is one of the easiest ways to start working with CDAP without having to manually
-configure anything. A Docker image with the CDAP SDK pre-installed is available on the Docker Hub
-for download.
+configure anything. A Docker image with the CDAP Local Sandbox pre-installed is available
+on the Docker Hub for download.
 
 To use the **Docker image**, you can either start the container from :ref:`a command line
 <docker-command-line>` or use Docker's :ref:`Kitematic <docker-kitematic>` (on Mac OS X
@@ -79,22 +79,9 @@ started correctly.
      :languages: console,shell-session
      :keepslashes:
 
-     $ docker pull caskdata/cdap-standalone:|release|
+     $ docker pull caskdata/cdap-local-sandbox:|release|
 
-#. Start the *Standalone CDAP* Docker container with:
-
-   .. tabbed-parsed-literal::
-     :tabs: "Linux or Mac OS X",Windows
-     :mapping: linux,windows
-     :dependent: linux-windows
-     :languages: console,shell-session
-     :keepslashes:
-
-     $ docker run -d --name cdap-sdk -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release|
-
-   This will start the container (in the background), name it ``cdap-sdk``, and set the proxying of ports.
-
-#. Start the *Standalone CDAP Docker container* with:
+#. Start the *CDAP Local Sandbox* Docker container with:
 
    .. tabbed-parsed-literal::
      :tabs: "Linux or Mac OS X",Windows
@@ -103,10 +90,23 @@ started correctly.
      :languages: console,shell-session
      :keepslashes:
 
-     $ docker run -it --name cdap-sdk-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-standalone:|release| cdap sdk start --enable-debug
+     $ docker run -d --name cdap-local-sandbox -p 11011:11011 -p 11015:11015 caskdata/cdap-local-sandbox:|release|
+
+   This will start the container (in the background), name it ``cdap-local-sandbox``, and set the proxying of ports.
+
+#. Start the *CDAP Local Sandbox* Docker container with:
+
+   .. tabbed-parsed-literal::
+     :tabs: "Linux or Mac OS X",Windows
+     :mapping: linux,windows
+     :dependent: linux-windows
+     :languages: console,shell-session
+     :keepslashes:
+
+     $ docker run -it --name cdap-sandbox-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-local-sandbox:|release| cdap sandbox start --enable-debug
 
    This will start the container (in the foreground, the default), :ref:`enable debugging
-   <debugging-standalone>`, name it ``cdap-sdk-debugging``, and set the proxying of ports.
+   <debugging-local-sandbox>`, name it ``cdap-sandbox-debugging``, and set the proxying of ports.
 
 #. CDAP will start automatically once the container starts. CDAP’s software
    directory is under ``/opt/cdap/sdk``.
@@ -121,7 +121,7 @@ started correctly.
 Options Starting CDAP Containers
 --------------------------------
 
-- Starting the Standalone CDAP, in the background (default execution)
+- Starting the CDAP Local Sandbox, in the background (default execution)
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -130,9 +130,9 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -d --name cdap-sdk caskdata/cdap-standalone
+    $ docker run -d --name cdap-local-sandbox caskdata/cdap-local-sandbox
 
-- Use the CDAP CLI within the above *cdap-sdk* container:
+- Use the CDAP CLI within the above *cdap-local-sandbox* container:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -141,7 +141,7 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker exec -it cdap-sdk cdap cli
+    $ docker exec -it cdap-local-sandbox cdap cli
 
 - Use the CDAP CLI in its own container (*cdap-cli*), against a remote CDAP instance at ``${CDAP_HOST}``:
 
@@ -152,20 +152,9 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -it --name cdap-cli --rm caskdata/cdap-standalone cdap cli -u http://${CDAP_HOST}:11015
+    $ docker run -it --name cdap-cli --rm caskdata/cdap-local-sandbox cdap cli -u http://${CDAP_HOST}:11015
 
-- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-sdk* container using container linking:
-
-  .. tabbed-parsed-literal::
-    :tabs: "Linux or Mac OS X",Windows
-    :mapping: linux,windows
-    :dependent: linux-windows
-    :languages: console,shell-session
-    :keepslashes:
-
-    $ docker run -it --link cdap-sdk:sdk --name cdap-cli --rm caskdata/cdap-standalone sh -c 'exec cdap cli -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
-
-- Starting the Standalone CDAP, in the foreground, with ports forwarded:
+- Use the CDAP CLI in its own container (*cdap-cli*), against the above *cdap-local-sandbox* container using container linking:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -174,9 +163,9 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap sdk start
+    $ docker run -it --link cdap-local-sandbox:sdk --name cdap-cli --rm caskdata/cdap-local-sandbox sh -c 'exec cdap cli -u http://${SDK_PORT_11011_TCP_ADDR}:${SDK_PORT_11011_TCP_PORT}'
 
-- Starting the Standalone CDAP, in the foreground, with ports forwarded, and with debugging enabled:
+- Starting the CDAP Local Sandbox, in the foreground, with ports forwarded:
 
   .. tabbed-parsed-literal::
     :tabs: "Linux or Mac OS X",Windows
@@ -185,7 +174,18 @@ Options Starting CDAP Containers
     :languages: console,shell-session
     :keepslashes:
 
-    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-sdk caskdata/cdap-standalone cdap sdk start --enable-debug
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-local-sandbox caskdata/cdap-local-sandbox cdap sandbox start
+
+- Starting the CDAP Local Sandbox, in the foreground, with ports forwarded, and with debugging enabled:
+
+  .. tabbed-parsed-literal::
+    :tabs: "Linux or Mac OS X",Windows
+    :mapping: linux,windows
+    :dependent: linux-windows
+    :languages: console,shell-session
+    :keepslashes:
+
+    $ docker run -it -p 11015:11015 -p 11011:11011 --name cdap-local-sandbox caskdata/cdap-local-sandbox cdap sandbox start --enable-debug
 
 - For information on mounting volumes and sharing data with the container, see the
   examples in Docker's documentation on `data volumes
@@ -210,14 +210,14 @@ Controlling the CDAP Instance
     :dependent: linux-windows
     :languages: console,shell-session
 
-    $ docker exec -d cdap-sdk cdap sdk <command>
+    $ docker exec -d cdap-local-sandbox cdap sandbox <command>
 
-    $ docker exec -d cdap-sdk cdap sdk start
-    $ docker exec -d cdap-sdk cdap sdk restart
-    $ docker exec -d cdap-sdk cdap sdk stop
+    $ docker exec -d cdap-local-sandbox cdap sandbox start
+    $ docker exec -d cdap-local-sandbox cdap sandbox restart
+    $ docker exec -d cdap-local-sandbox cdap sandbox stop
 
     # To see the status:
-    $ docker exec -it cdap-sdk cdap sdk status
+    $ docker exec -it cdap-local-sandbox cdap sandbox status
 
 - When you are finished, stop CDAP and then shutdown the Docker machine:
 
@@ -227,7 +227,7 @@ Controlling the CDAP Instance
     :dependent: linux-windows
     :languages: console,shell-session
 
-    $ docker exec -d cdap-sdk cdap sdk stop
+    $ docker exec -d cdap-local-sandbox cdap sandbox stop
     $ docker-machine stop cdap
 
 Docker Resources
@@ -263,7 +263,7 @@ Kitematic and then download, start, and connect to a CDAP container.
    Windows, in ``Start Menu > Docker > Kitematic``.
 
 #. Once Kitematic has started, search for the **CDAP image** by using the search box at the
-   top of the window and entering ``caskdata:cdap-standalone``. Once you have found the page,
+   top of the window and entering ``caskdata:cdap-local-sandbox``. Once you have found the page,
    click on the **repository menu**, circled in red here:
 
      .. figure:: ../../_images/kitematic/kitematic-1-searching.png

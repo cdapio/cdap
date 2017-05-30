@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform Clicks and Views Application
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _examples-clicks-and-views:
 
@@ -71,7 +71,7 @@ to know which source each record came from. This is possible by calling the ``ge
 - Once the application has been deployed, `run the example <#running-the-example>`__.
 
 - When finished, you can `remove the application <#removing-the-application>`__.
-  
+
 Running the Example
 ===================
 
@@ -82,7 +82,7 @@ Begin by uploading a file containing newline-separated records representing view
 .. tabbed-parsed-literal::
 
   $ cdap cli load stream views examples/ClicksAndViews/resources/views.txt
-  
+
   Successfully loaded file to stream 'views'
 
 Then, upload records representing click events into the *clicks* stream:
@@ -104,12 +104,12 @@ The MapReduce will write to a partition based upon its logical start time when i
 - Using the CDAP UI, go to the |application-overview|,
   click |example-mapreduce-italic| to get to the MapReduce detail page, then click
   the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
       $ cdap cli start mapreduce |example|.\ |example-mapreduce|
-      
+
       Successfully started mapreduce '|example-mapreduce|' of application '|example|'
       with stored runtime arguments '{}'
 
@@ -117,7 +117,7 @@ Querying the Results
 --------------------
 .. highlight:: console
 
-Once the MapReduce job has completed, you can sample the *joined* ``PartitionedFileSet``, 
+Once the MapReduce job has completed, you can sample the *joined* ``PartitionedFileSet``,
 by executing an explore query using the CDAP CLI:
 
 .. tabbed-parsed-literal::

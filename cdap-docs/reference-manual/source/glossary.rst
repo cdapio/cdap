@@ -71,7 +71,7 @@ Glossary
 
    Secure Storage
       Encrypted storage for sensitive data using :term:`Secure Keys <Secure Key>`. CDAP supports :ref:`File-backed
-      <admin-secure-storage-file>` (for :term:`Standalone CDAP`) as well as :ref:`Apache Hadoop KMS-backed
+      <admin-secure-storage-file>` (for :term:`CDAP Local Sandbox`) as well as :ref:`Apache Hadoop KMS-backed
       <admin-secure-storage-kms>` (for :term:`Distributed CDAP`) Secure Storage.
 
    Spark
@@ -92,7 +92,7 @@ Glossary
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
       Each instance of a worker runs either in its own YARN container (Distributed CDAP mode) or
-      a single thread (Standalone CDAP or in-memory mode) and the number of instances may be updated
+      a single thread (CDAP Local Sandbox or in-memory mode) and the number of instances may be updated
       via RESTful APIs or the CLI. Datasets can be accessed from inside workers.
 
    Data Abstraction
@@ -114,12 +114,16 @@ Glossary
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.
 
-   Standalone CDAP
-      A version of the Cask Data Application Platform, supplied as a downloadable SDK,
+   CDAP Local Sandbox
+      A version of the Cask Data Application Platform, supplied as a downloadable archive,
       that runs on a single machine in a single Java Virtual Machine (JVM). It provides
       all of the CDAP APIs without requiring a Hadoop cluster, using alternative,
       fully-functional implementations of CDAP features. For example, application
-      containers are implemented as Java threads instead of YARN containers.
+      containers are implemented as Java threads instead of YARN containers. Formerly
+      known as the :term:`Standalone CDAP`.
+
+   Standalone CDAP
+      See :term:`CDAP Local Sandbox`.
 
    Distributed CDAP
       A version of the Cask Data Application Platform, supplied as either Yum ``.rpm`` or

@@ -24,7 +24,7 @@ in the CDAP UI, such as entering events into a stream and exploring a dataset:
 Install CDAP
 ============
 
-- If you haven't already, :ref:`download and install the CDAP SDK <standalone-index>`.
+- If you haven't already, :ref:`download and install the CDAP Local Sandbox <local-sandbox-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
 .. _cdap-pipelines-getting-started-start:
@@ -55,10 +55,10 @@ Start CDAP Studio
   - Click the *+* button to add a new pipeline;
   - Click the tool bar label *Studio* (to the left of the label *Pipelines*); or
   - Go to the :cdap-studio-artifact:`CDAP Studio URL <cdap-data-pipeline>`
-  
+
   Studio will start and you will be creating a new pipeline, by default the first
   pipeline type in the menu, a *Data Pipeline - Batch*, which is a batch-type pipeline:
-  
+
   .. figure:: _images/cdap-studio-empty.png
      :figwidth: 100%
      :width: 6in
@@ -140,13 +140,13 @@ parses them into separate fields, and writes them as individual records to a tab
    *Sinks*, and then click the *Table* transform to add another icon to the canvas.
 
    Your canvas should look like this:
- 
+
    .. figure:: _images/cdap-pipelines-gs-1-1-icons.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
- 
+
       **CDAP Studio:** Showing icons
 
 
@@ -159,9 +159,9 @@ parses them into separate fields, and writes them as individual records to a tab
       :width: 6in
       :align: center
       :class: bordered-image
- 
+
       **CDAP Studio:** Showing a connection
-      
+
 #. Similarly, connect the *LogParser* to the *Table* to complete the connections. Your
    canvas should now look like this, showing that there are a number of properties to
    be completed on each plugin:
@@ -171,14 +171,14 @@ parses them into separate fields, and writes them as individual records to a tab
       :width: 6in
       :align: center
       :class: bordered-image
- 
+
       **CDAP Studio:** Showing connections
-      
+
    (If you make a mistake or need to remove a connection, click and drag on the white
    circle just to the right of the connection arrow you'd like to disconnect. When you
    drag off that circle and release the mouse, the connection will be deleted and
-   disappear.) 
-      
+   disappear.)
+
 #. To set properties of a plugin, click on each icon in turn. When you click an icon, a dialog box
    comes up, showing the properties available for each plugin. Any **required** properties
    are indicated with a red asterisk after the label. In this case, the *Stream* icon has
@@ -190,29 +190,29 @@ parses them into separate fields, and writes them as individual records to a tab
       :width: 6in
       :align: center
       :class: bordered-image
- 
+
       **CDAP Studio:** Showing editing of the Stream plugin properties
-      
+
    Enter a stream name, such as *demoStream*, and a duration, such as *1d*. As the changes
-   are automatically saved, you can just close the dialog by either hitting the close button (an *X* in 
+   are automatically saved, you can just close the dialog by either hitting the close button (an *X* in
    the upper-right corner), the *escape* key on your keyboard, or clicking outside the dialog box.
 
 #. In a similar fashion, edit the *LogParser*, setting the *Input Name* as *body*, and
    accepting the default *Log Format* of *CLF*.
-   
+
    Edit the *Table*, and set the *Name* as *demoTable* and the *Row Field* as *ts* (for timestamp).
-   
+
    You might notice that the schema displayed has changed as you move from the stream to
    the table; the *LogParser* modifies the schema, breaking the *body* into the separate
    fields we require in the table.
-   
+
 #. When you are finished, all icons should show that all required fields have been completed
    by the absence of yellow circles on the icons.
 
    Name your pipeline by clicking on the text (what else!) *Name your pipeline* above the
    canvas area, and enter a name such as *demoPipeline*. No spaces are allowed in pipeline
    names.
-   
+
    To check that everything is complete, click the *Validate* button, located in the buttons
    above the canvas area. These controls are available in the upper-right:
 
@@ -223,33 +223,33 @@ parses them into separate fields, and writes them as individual records to a tab
      :class: bordered-image
 
      **CDAP Studio:** Button labels, upper-right toolbar
-      
+
    Clicking the *Validate* button should produce a banner message similar to::
-   
+
       Validation success! Pipeline demoPipeline is valid.
 
-#. If there are any errors, correct them before continuing. 
+#. If there are any errors, correct them before continuing.
 
    Otherwise, click the *Publish* button: the pipeline configuration will be saved; a CDAP
    application will be created, based on the configuration you have set, complete with a
    stream and dataset table; and the application will be ready to run.
-  
+
    Note that errors can occur at the publishing phase that were not caught during
    validation; resolve those, if any, before continuing.
-   
+
    The view changes to show the completed application:
-   
+
    .. figure:: _images/cdap-pipelines-gs-1-6-pipeline.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** Demo pipeline
 
    Though this pipeline view is not editable, clicking the icons will bring up the same dialogs
    as before, showing which values have been configured for each stage of the pipeline.
-   
+
 #. The pipeline view has controls for launching and managing the physical
    application; important buttons to note are *Run* (on the left) and *View in
    CDAP* (on the right):
@@ -259,43 +259,43 @@ parses them into separate fields, and writes them as individual records to a tab
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** Control buttons, pipeline view
 
 #. Before we can run the pipeline, we need to put data into the stream for the application to
    act on. Navigate to the stream by clicking on the *View in CDAP* button, then the
    *Datasets* button, and then the *demoStream* button:
-   
+
     .. figure:: _images/cdap-pipelines-gs-1-7-stream.png
       :figwidth: 100%
       :width: 6in
       :align: center
       :class: bordered-image
-   
+
       **CDAP demoStream:** Status page, with *Actions* menu for sending events
-      
+
    We can send events to the stream by clicking the *Actions* menu, selecting *Send
    Events*, and then clicking *Upload* in the dialog that follows. Navigate on your drive
    to your CDAP home directory, and locate the file ``examples/resources/accesslog.txt``
-   included in your CDAP SDK. This file contains 10,000 records in CLF format.
+   included in your CDAP Local Sandbox. This file contains 10,000 records in CLF format.
 
    Once the file has been uploaded successfully by CDAP, you should see the *Total Events*
    for the stream change by 10,000.
 
    Return to *CDAP Pipelines* by clicking your browser back-button.
-  
+
 #. You can now run the pipeline. Click the *Run* button, located in the upper-left. (No
    runtime arguments are required; you can click *Start Now* in the dialog that appears.)
 
    The pipeline should start running, as indicated by the green *Running* text indicating
    the status:
-   
+
    .. figure:: _images/cdap-pipelines-gs-1-9-pipeline-running.png
      :figwidth: 100%
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** A *Running* pipeline
 
 #. The number of records processed will, in time, change from zero to 10,000.
@@ -307,9 +307,9 @@ parses them into separate fields, and writes them as individual records to a tab
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** Completed run of *demoPipeline*
-      
+
 #. You can now check the results by looking at the contents of the *demoTable*. Rather
    than using the *View in CDAP* button, we'll use a faster method to find the dataset.
    Click on the icon representing the table, to bring up the table configuration. In the
@@ -322,12 +322,12 @@ parses them into separate fields, and writes them as individual records to a tab
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** *Jump* button in the pipeline configuration dialog
 
    Navigate to the *demoTable* dataset, and run a default *Explore* query that selects the first
    five records, by:
-   
+
    - clicking *Explore* and then
    - clicking *Execute SQL*:
 
@@ -336,11 +336,11 @@ parses them into separate fields, and writes them as individual records to a tab
      :width: 6in
      :align: center
      :class: bordered-image
-  
+
      **CDAP Pipelines:** Results of exploring the *demoTable*
-         
+
    Here you can see that the log records have been successfully loaded into the stream,
    parsed by the log parser, and then saved as parsed records to the table. This data is
    now available for further analysis, such looking for unique records, sorting, etc.
-      
-This completes the *Getting Started* for CDAP Pipelines. 
+
+This completes the *Getting Started* for CDAP Pipelines.

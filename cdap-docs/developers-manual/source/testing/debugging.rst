@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _debugging-cdap:
 
@@ -8,15 +8,15 @@
 Debugging a CDAP Application
 ============================
 
-.. _debugging-standalone:
+.. _debugging-local-sandbox:
 
-Debugging an Application in Standalone CDAP
-===========================================
-Any CDAP application can be debugged in the Standalone CDAP
+Debugging an Application in CDAP Local Sandbox
+==============================================
+Any CDAP application can be debugged in the CDAP Local Sandbox
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
-#. Start the Standalone CDAP with ``--enable-debug``, optionally specifying a port (default is ``5005``).
+#. Start the CDAP Local Sandbox with ``--enable-debug``, optionally specifying a port (default is ``5005``).
 
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.

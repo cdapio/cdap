@@ -14,18 +14,18 @@ as the schedule is in a *suspended* state when the application is deployed.
 
 - Using the CDAP UI, go to the |application-overview|,
 
-  - click |example-workflow-italic| to get to the workflow detail page, 
-  - click on the *More* button in the upper-right to display an additional menu, 
-  - click on the *Schedules* menu-item to show the schedule, and then 
+  - click |example-workflow-italic| to get to the workflow detail page,
+  - click on the *More* button in the upper-right to display an additional menu,
+  - click on the *Schedules* menu-item to show the schedule, and then
   - click the *Play* button (**>**) so that the status shows as *scheduled*; or
-  
+
 ..
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli resume schedule |example|.\ |example-schedule|
-    
+
     Successfully resumed schedule '|example-schedule|' in app '|example|'
-      
+

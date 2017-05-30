@@ -10,13 +10,13 @@ Starting the Workflow
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-workflow-italic| to get to the workflow detail page, then click the *Start* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli start workflow |example|.\ |example-workflow|
-    
+
     Successfully started workflow '|example-workflow|' of application '|example|' with stored runtime arguments '{}'
 
 - Or, send a query via an HTTP request using the ``curl`` command:

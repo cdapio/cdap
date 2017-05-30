@@ -72,7 +72,7 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for Standalone CDAP and the CDAP Master process in
+      Data directory for CDAP Local Sandbox and the CDAP Master process in
       Distributed CDAP
     </description>
   </property>
@@ -126,7 +126,7 @@
       ${master.startup.checks.packages} and ${master.startup.checks.classes}
       settings. If any checks fail, the CDAP Master will fail to start
       instead of waiting for the problem to be fixed. This setting only
-      affects Distributed CDAP. It does not apply to Standalone CDAP.
+      affects Distributed CDAP. It does not apply to CDAP Local Sandbox.
     </description>
   </property>
 
@@ -350,7 +350,7 @@
     <description>
       The Spark compatibility version, if Spark is available. Must be either 'spark1_2.10'
       or 'spark2_2.11'. In distributed mode, this will be overridden by the detected Spark
-      version. In standalone mode, this can be set to the desired version of Spark.
+      version. In CDAP Local Sandbox, this can be set to the desired version of Spark.
     </description>
   </property>
 
@@ -538,8 +538,7 @@
     <name>data.local.storage</name>
     <value>${local.data.dir}/ldb</value>
     <description>
-      Database directory for LevelDB, used for data fabric in Standalone
-      CDAP
+      Database directory for LevelDB, used for data fabric in CDAP Local Sandbox
     </description>
   </property>
 
@@ -547,7 +546,7 @@
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>
-      Block size in bytes for data fabric when in Standalone CDAP
+      Block size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -555,7 +554,7 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in Standalone CDAP
+      Cache size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -759,7 +758,7 @@
     <value>${local.data.dir}/tx.snapshot</value>
     <description>
       Storage directory on the local filesystem of snapshot and logs of
-      transaction state when in Standalone CDAP
+      transaction state when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -949,7 +948,7 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for the CDAP Explore service when in Standalone CDAP
+      Data directory for the CDAP Explore service when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -1140,7 +1139,7 @@
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
-      In Standalone CDAP, the local directory under which the system log pipeline saves
+      In CDAP Local Sandbox, the local directory under which the system log pipeline saves
       log files
     </description>
   </property>
@@ -1614,7 +1613,7 @@
     <value>3600</value>
     <description>
       Scheduling frequency of time-to-live cleanup thread in seconds (only
-      used in Standalone CDAP)
+      used in CDAP Local Sandbox)
     </description>
   </property>
 
@@ -1623,7 +1622,7 @@
     <value>${local.data.dir}/messaging</value>
     <description>
       Local storage directory for the messaging system (used only in
-      Standalone CDAP)
+      CDAP Local Sandbox)
     </description>
   </property>
 
@@ -2772,7 +2771,7 @@
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
-      Path to the secret key file (only used in Standalone CDAP)
+      Path to the secret key file (only used in CDAP Local Sandbox)
     </description>
   </property>
 
@@ -2979,7 +2978,7 @@
     <value>1</value>
     <description>
       Number of YARN container instances for the stream handler; in
-      Standalone CDAP, it is always one
+      CDAP Local Sandbox, it is always one
     </description>
   </property>
 

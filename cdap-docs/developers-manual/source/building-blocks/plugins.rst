@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015-2016 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _plugins:
 
@@ -108,7 +108,7 @@ specified when the *Plugin* was registered. In this example, if we want the mess
   }
 
 - The ``@Nullable`` annotation tells CDAP that the field is not required. Without that annotation,
-  CDAP will complain if no plugin property for ``delimiter`` is given. 
+  CDAP will complain if no plugin property for ``delimiter`` is given.
 - Configuration fields can be annotated with an ``@Description`` that will be returned by the
   :ref:`Artifact HTTP RESTful API <http-restful-api-artifact-plugin-detail>` *Plugin Detail*.
 - The ``@Macro`` annotation makes the field ``message`` *macro-enabled*; this allows the value of
@@ -138,17 +138,17 @@ Or, using the CDAP CLI:
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
- 
+
     |cdap >| load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json
-    
-    
+
+
 where ``config.json`` contains:
 
 .. highlight:: xml
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ],
       "plugins": [
@@ -170,7 +170,7 @@ Plugin Deployment
 
 To make plugins available to another artifact (and thus available to any application
 created from one of the artifacts), the plugins must first be packaged in a JAR file.
-After that, the JAR file must be deployed either as a :ref:`system artifact 
+After that, the JAR file must be deployed either as a :ref:`system artifact
 <plugins-deployment-system>` or a :ref:`user artifact <plugins-deployment-user>`.
 
 A system artifact is available to users across any namespace. A user artifact is available
@@ -218,9 +218,9 @@ Deploying as a System Artifact
 To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
 must be placed in the appropriate directory.
 
-- **Standalone mode:** ``$CDAP_INSTALL_DIR/artifacts``
+- **CDAP Local Sandbox:** ``$CDAP_INSTALL_DIR/artifacts``
 
-- **Distributed mode:** The plugin JARs should be placed in the local file system and the path
+- **Distributed CDAP:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
   :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories can be defined by separating
   them with a semicolon. The default path is ``/opt/cdap/master/artifacts``.
@@ -236,7 +236,7 @@ and ``cdap-data-streams`` artifacts, ``custom-transforms-1.0.0.json`` would cont
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "cdap-data-pipeline[|version|,\ |version|]", "cdap-data-streams[|version|,\ |version|]" ]
     }
@@ -248,7 +248,7 @@ an exclusive version. For example:
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "cdap-data-pipeline[3.5.0,4.0.0)", "cdap-data-streams[3.5.0,4.0.0)" ]
     }
@@ -263,7 +263,7 @@ list them in the configuration:
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "cdap-data-pipeline[3.5.0,4.0.0)", "cdap-data-streams[3.5.0,4.0.0)" ],
       "plugins": [
@@ -275,20 +275,20 @@ list them in the configuration:
       ]
     }
 
-Once your JARs and matching configuration files are in place, a CDAP CLI command (``load artifact``) or 
+Once your JARs and matching configuration files are in place, a CDAP CLI command (``load artifact``) or
 a HTTP RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
 can be made to load the artifacts. As described in the documentation on :ref:`artifacts`, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.
 
-Alternatively, the Standalone CDAP should be restarted for this change to take effect in Standalone
+Alternatively, the CDAP Local Sandbox should be restarted for this change to take effect in local sandbox
 mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 .. _plugins-deployment-user:
 
 Deploying as a User Artifact
 ----------------------------
-To deploy the artifact as a user artifact, use the :ref:`Artifact HTTP RESTful API 
-<http-restful-api-artifact-add>` *Add Artifact* or the CLI. 
+To deploy the artifact as a user artifact, use the :ref:`Artifact HTTP RESTful API
+<http-restful-api-artifact-add>` *Add Artifact* or the CLI.
 
 When using the HTTP RESTful API, you will need to specify the ``Artifact-Extends`` header.
 Unless the artifact's version is defined in the manifest file of the JAR file you upload,
@@ -309,7 +309,7 @@ Using the CLI:
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
- 
+
     |cdap >| load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
@@ -318,7 +318,7 @@ where ``config.json`` contains:
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "system:cdap-data-pipeline[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ]
     }
@@ -348,7 +348,7 @@ Using the CLI (note that the artifact version, if not explicitly set, is derived
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
- 
+
     |cdap >| load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
@@ -357,7 +357,7 @@ where ``config.json`` contains:
 
 .. container:: highlight
 
-  .. parsed-literal:: 
+  .. parsed-literal::
     {
       "parents": [ "system:cdap-data-pipeline\[|version|,\ |version|]", "system:cdap-data-streams[|version|,\ |version|]" ],
       "plugins": [
@@ -385,9 +385,9 @@ Using the CLI:
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
- 
+
     |cdap >| describe artifact properties custom-transforms 1.0.0 [system | user]
-    
+
 If you deployed the ``custom-transforms`` artifact as a system artifact, the scope is ``system``.
 If you deployed the ``custom-transforms`` artifact as a user artifact, the scope is ``user``.
 
@@ -404,9 +404,9 @@ Using the CLI:
 
 .. tabbed-parsed-literal::
     :tabs: "CDAP CLI"
- 
+
     |cdap >| list artifact plugins cdap-data-pipeline |version| transform system
-    
+
 You can then check the list returned to see if your transforms are in the list. Note that
 the scope here refers to the scope of the parent artifact. In this example it is the ``system``
 scope because ``cdap-data-pipeline`` is a system artifact. This is true even if you deployed
@@ -488,7 +488,7 @@ We then create an application from that artifact:
 
   $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/basicwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" } }'
-    
+
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
 instead of words? Or what if we want to filter out common words such as ``'the'`` and ``'a'``? We would not want
 to copy and paste our application class and then make just small tweaks.
@@ -503,7 +503,7 @@ stopwords, we want to be able to create it through a configuration:
 
   $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/stopwordcount" -H "Content-Type: application/json" \
   -d '{ "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }, "config": { "tokenizer": "stopword" } }'
-  
+
 Similarly, we want to be able to create an application that counts phrases through a configuration:
 
 .. tabbed-parsed-literal::
@@ -779,7 +779,7 @@ Now we can create an application that uses a comma instead of a space to split t
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X PUT "localhost:11015/v3/namespaces/default/apps/wordcount2" -H "Content-Type: application/json" \
-    -d '{ 
+    -d '{
       "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
       "config": { "tokenizer": "default", "tokenizerProperties": { "delimiter": "," }
       }

@@ -1,16 +1,16 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
-============================================
+=====================
 Testing and Debugging
-============================================
+=====================
 
 .. toctree::
    :maxdepth: 1
-   
+
     Testing a CDAP Application <testing>
     Debugging <debugging>
     Troubleshooting <troubleshooting>
@@ -23,7 +23,7 @@ help with testing and debugging CDAP applications:
 .. _testing-cdap: testing.html
 
 - |testing-cdap|_ Strategies and approaches for **testing CDAP applications**, including
-  testing flows, Map Reduce and Spark programs, and artifacts.  
+  testing flows, Map Reduce and Spark programs, and artifacts.
 
 
 .. |test-framework| replace:: **Test Framework:**
@@ -37,7 +37,7 @@ help with testing and debugging CDAP applications:
 .. |debugging| replace:: **Debugging:**
 .. _debugging: debugging.html
 
-- |debugging|_ How you can **debug CDAP applications** in Standalone CDAP mode and application
+- |debugging|_ How you can **debug CDAP applications** in CDAP Local Sandbox mode and application
   containers in Distributed CDAP mode.
 
 

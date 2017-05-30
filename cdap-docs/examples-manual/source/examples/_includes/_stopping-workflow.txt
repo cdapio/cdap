@@ -9,11 +9,11 @@
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-workflow-italic| to get to the workflow detail page, then click the *Stop* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli stop workflow |example|.\ |example-workflow|
-    
+
     Successfully stopped workflow '|example-workflow|' of application '|example|'

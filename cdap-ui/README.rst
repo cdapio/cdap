@@ -2,7 +2,7 @@
 CDAP UI Pack 3
 ==============
 
-The CDAP UI Pack is a UI-only release that can be applied on top of an existing CDAP installation. 
+The CDAP UI Pack is a UI-only release that can be applied on top of an existing CDAP installation.
 The CDAP UI Pack 3 applies on CDAP 4.1.1.
 
 Details
@@ -16,13 +16,13 @@ Installation
 
 UNIX/Linux Flavors
 ------------------
-**Standalone CDAP**
+**CDAP Local Sandbox**
 ::
 
   $ cd <CDAP_HOME>
-  $ ./bin/cdap sdk stop
+  $ ./bin/cdap sandbox stop
   $ ./bin/cdap apply-pack /path/to/download/cdap-ui-pack-4.1.1_p3.zip
-  $ ./bin/cdap sdk start
+  $ ./bin/cdap sandbox start
 
 
 **Distributed CDAP**
@@ -30,11 +30,11 @@ UNIX/Linux Flavors
 *Note:* In the instructions below, ``<CDAP_HOME>`` is either:
 
 - ``/opt/cdap`` on RPM (manual or Apache Ambari) installations; or
-- the **CDAP** sub-directory of the **Parcel Directory** on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
+- the *CDAP* sub-directory of the *Parcel Directory* on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
 
 ::
 
-  $ cd <CDAP_HOME>                         
+  $ cd <CDAP_HOME>
   $ /etc/init.d/cdap-ui stop
   $ cdap apply-pack /path/to/download/cdap-ui-pack-4.1.1_p3.zip
   $ /etc/init.d/cdap-ui start
@@ -47,9 +47,9 @@ Windows
 ::
 
   > cd <CDAP_HOME>
-  > bin\cdap sdk stop
+  > bin\cdap sandbox stop
   > bin\cdap apply-pack \path\to\download\cdap-ui-pack-4.1.1_p3.zip
-  > bin\cdap sdk start
+  > bin\cdap sandbox start
 
 
 Release Notes
@@ -88,7 +88,7 @@ Bug Fixes
 ==============
 CDAP UI Pack 2
 ==============
-CDAP UI Pack 2 was not released separately. The features in CDAP UI Pack 2 were released as part of CDAP 4.1.1. Please refer to the 
+CDAP UI Pack 2 was not released separately. The features in CDAP UI Pack 2 were released as part of CDAP 4.1.1. Please refer to the
 release notes of CDAP 4.1.1 for details about these features.
 
 
@@ -112,14 +112,14 @@ These steps will be automated in a later CDAP release.
 
 UNIX/Linux Flavors
 ------------------
-**Standalone CDAP**
+**CDAP Local Sandbox**
 ::
 
   $ cd <CDAP_HOME>
-  $ ./bin/cdap sdk stop
+  $ ./bin/cdap sandbox stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack.zip
-  $ ./bin/cdap sdk start
+  $ ./bin/cdap sandbox start
 
 
 **Distributed CDAP**
@@ -127,11 +127,11 @@ UNIX/Linux Flavors
 *Note:* In the instructions below, ``<CDAP_HOME>`` is either:
 
 - ``/opt/cdap`` on RPM (manual or Apache Ambari) installations; or
-- the **CDAP** sub-directory of the **Parcel Directory** on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
+- the *CDAP* sub-directory of the *Parcel Directory* on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
 
 ::
 
-  $ cd <CDAP_HOME>                         
+  $ cd <CDAP_HOME>
   $ /etc/init.d/cdap-ui stop
   $ zip -m -r ui-backup.zip ui
   $ unzip /path/to/download/cdap-ui-pack-4.1.0_p1.zip
@@ -141,30 +141,30 @@ UNIX/Linux Flavors
 
 Windows
 -------
-1. Using the command prompt, stop the CDAP SDK::
+1. Using the command prompt, stop the CDAP Local Sandbox::
 
     > cd <CDAP_HOME>
-    > bin\cdap sdk stop
+    > bin\cdap sandbox stop
 
 2. Open the ``<CDAP_HOME>`` directory in Explorer
 3. Compress the ``ui`` to save a backup, by right-clicking on the ``ui`` directory and
-   choosing **Send To** -> **Compressed (zipped) folder**
+   choosing *Send To* -> Compressed (zipped) folder*
 4. Delete the ``ui`` directory after the backup is completed
 5. Extract the UI pack (cdap-ui-pack-4.1.0_p1.zip) in the ``<CDAP_HOME>`` directory, by right-clicking on the file,
-   choosing **Extract All**, and specifying the path to the ``<CDAP_HOME>`` directory
+   choosing *Extract All*, and specifying the path to the ``<CDAP_HOME>`` directory
 6. A new ``ui`` directory should be created
-7. Using the command prompt, start the CDAP SDK::
+7. Using the command prompt, start the CDAP Local Sandbox::
 
     > cd <CDAP_HOME>
-    > bin\cdap sdk start
+    > bin\cdap sandbox start
 
 
 Steps to Update Data Preparation Capability
 ===========================================
 1. After installing the CDAP UI Pack and restarting CDAP, from within the CDAP UI go to the Cask Market
-2. From the **Solutions** category, follow the steps for the **Data Preparation** solution
+2. From the *Solutions* category, follow the steps for the *Data Preparation* solution
 3. Go to *Data Preparation* by clicking on the CDAP menu and then choosing *Data Preparation*
-4. If a newer version of the *Data Preparation* libraries has been installed, the UI will show an **Update** button
+4. If a newer version of the *Data Preparation* libraries has been installed, the UI will show an *Update* button
 5. Click the *Update* button to update to the newer version of *Data Preparation*
 
 
