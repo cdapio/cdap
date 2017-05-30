@@ -166,12 +166,10 @@ angular.module(PKG.name + '.feature.tracker')
             let topOffset = y(index) + margin.top + (y.rangeBand()/2);
 
             if (scope.type === 'applications') {
-              scope.programsPath = window.getOldCDAPUrl({
-                stateName: 'apps.detail.overview.programs',
-                stateParams: {
-                  namespace: $state.params.namespace,
-                  appId: result.entityName
-                }
+              scope.programsPath = window.getAbsUIUrl({
+                namespaceId: $state.params.namespace,
+                entityType: 'apps',
+                entityId: result.entityName
               });
             } else if (scope.type === 'programs') {
               let programType = myLineageService.parseProgramType(result.programType);

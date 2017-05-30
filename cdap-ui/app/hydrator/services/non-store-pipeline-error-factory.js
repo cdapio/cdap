@@ -317,6 +317,14 @@ let hasValidDriverResources = (config, cb) => {
     cb('INVALID-DRIVERRESOURCES');
   }
 };
+let hasValidClientResources = (config, cb) => {
+  let {clientResources} = config;
+  if (isInvalidResource(clientResources)) {
+    cb('MISSING-CLIENTRESOURCES');
+  } else if (!isPipelineResourcesPositive(clientResources)) {
+    cb('INVALID-CLIENTRESOURCES');
+  }
+};
 let validateImportJSON = (myHelpers, GLOBALS, config) => {
   let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
   let validations = [
@@ -348,6 +356,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasValidName: hasValidName,
     hasValidResources: hasValidResources,
     hasValidDriverResources: hasValidDriverResources,
+    hasValidClientResources: hasValidClientResources,
     hasAtleastOneSource: hasAtleastOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),

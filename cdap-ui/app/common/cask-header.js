@@ -19,7 +19,7 @@
  var Store = require('../cdap/services/NamespaceStore').default;
  var Header = require('../cdap/components/Header').default;
  var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
- var DataPrep = require('../cdap/components/DataPrep').default;
+ var DataPrepHome = require('../cdap/components/DataPrepHome').default;
  var DataPrepHelper = require('../cdap/components/DataPrep/helper');
  var globalEvents = require('../cdap/services/global-events').default;
  var ee = require('event-emitter');
@@ -28,10 +28,13 @@
  var Version = require('../cdap/services/VersionRange/Version').default;
  var VersionRange = require('../cdap/services/VersionRange').default;
  var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
+ var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
+ var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
+
  export {
   Store,
   Header,
-  DataPrep,
+  DataPrepHome,
   DataPrepHelper,
   globalEvents,
   ee,
@@ -40,5 +43,7 @@
   VersionRange,
   Version,
   ResourceCenterButton,
-  KeyValuePairs
+  KeyValuePairs,
+  KeyValueStore,
+  KeyValueStoreActions
 };

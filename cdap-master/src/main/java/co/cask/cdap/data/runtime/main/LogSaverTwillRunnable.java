@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
@@ -92,6 +93,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
 
   @VisibleForTesting
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, TwillContext twillContext) {
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.LOGSAVER, twillContext.getInstanceId());
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -101,7 +103,7 @@ public final class LogSaverTwillRunnable extends AbstractMasterTwillRunnable {
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new DistributedLogFrameworkModule(twillContext),
       new LoggingModules().getDistributedModules(),

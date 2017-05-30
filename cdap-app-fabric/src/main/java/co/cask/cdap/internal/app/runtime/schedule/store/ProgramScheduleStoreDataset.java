@@ -33,6 +33,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -44,6 +47,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -83,9 +87,18 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramScheduleStoreDataset.class);
 
   private static final String SCHEDULE_COLUMN = "sch";
-  private static final byte[] SCHEDULE_COLUMN_BYTES = Bytes.toBytes(SCHEDULE_COLUMN);
+  private static final String UPDATED_COLUMN = "upd";
+  private static final String STATUS_COLUMN = "sts";
   private static final String TRIGGER_KEY_COLUMN = "tk"; // trigger key
+  private static final char TRIGGER_SEPARATOR = '@';
+  private static final String ROW_KEY_SEPARATOR = ":";
+
+  private static final byte[] SCHEDULE_COLUMN_BYTES = Bytes.toBytes(SCHEDULE_COLUMN);
+  private static final byte[] UPDATED_COLUMN_BYTES = Bytes.toBytes(UPDATED_COLUMN);
+  private static final byte[] STATUS_COLUMN_BYTES = Bytes.toBytes(STATUS_COLUMN);
   private static final byte[] TRIGGER_KEY_COLUMN_BYTES = Bytes.toBytes(TRIGGER_KEY_COLUMN);
+  private static final byte[] TRIGGER_SEPARATOR_BYTES = Bytes.toBytes("" + TRIGGER_SEPARATOR);
+
   private static final byte[] MIGRATION_COMPLETE_NAMESPACE_ROW_BYTES = Bytes.toBytes("migration.ns");
   private static final byte[] MIGRATION_COMPLETE_NAMESPACE_COLUMN_BYTES = Bytes.toBytes("ns");
   private static final byte[] MIGRATION_COMPLETE_ROW_BYTES = Bytes.toBytes("migration.complete");
@@ -155,55 +168,81 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   public boolean isMigrationComplete() {
     Row row = store.get(MIGRATION_COMPLETE_ROW_BYTES);
-    if (row.isEmpty()) {
-      return false;
-    }
-    return Bytes.toBoolean(row.get(MIGRATION_COMPLETE_COLUMN_BYTES));
+    return !row.isEmpty() && Bytes.toBoolean(row.get(MIGRATION_COMPLETE_COLUMN_BYTES));
   }
 
   /**
    * Add a schedule to the store.
    *
    * @param schedule the schedule to add
+   * @return the new schedule's last modified timestamp
    * @throws AlreadyExistsException if the schedule already exists
    */
-  public void addSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
-    addSchedules(Collections.singleton(schedule));
+  public long addSchedule(ProgramSchedule schedule) throws AlreadyExistsException {
+    return addSchedules(Collections.singleton(schedule));
   }
 
   /**
    * Add one or more schedules to the store.
    *
    * @param schedules the schedules to add
+   * @return the new schedules' last modified timestamp
    * @throws AlreadyExistsException if one of the schedules already exists
    */
-  public void addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
+  public long addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
+    long currentTime = System.currentTimeMillis();
     for (ProgramSchedule schedule : schedules) {
-      String scheduleKey = rowKeyForSchedule(schedule.getProgramId().getParent(), schedule.getName());
+      byte[] scheduleKey = rowKeyBytesForSchedule(schedule.getProgramId().getParent().schedule(schedule.getName()));
       if (!store.get(new Get(scheduleKey)).isEmpty()) {
         throw new AlreadyExistsException(schedule.getProgramId().getParent().schedule(schedule.getName()));
       }
-      store.put(new Put(scheduleKey, SCHEDULE_COLUMN, GSON.toJson(schedule)));
+      Put schedulePut = new Put(scheduleKey);
+      schedulePut.add(SCHEDULE_COLUMN_BYTES, GSON.toJson(schedule));
+      schedulePut.add(UPDATED_COLUMN_BYTES, currentTime);
+      schedulePut.add(STATUS_COLUMN_BYTES, ProgramScheduleStatus.SUSPENDED.toString()); // initially suspended
+      store.put(schedulePut);
       int count = 0;
       for (String triggerKey : extractTriggerKeys(schedule)) {
-        String triggerRowKey = rowKeyForTrigger(scheduleKey, count++);
-        store.put(new Put(triggerRowKey, TRIGGER_KEY_COLUMN, triggerKey));
+        byte[] triggerRowKey = rowKeyBytesForTrigger(scheduleKey, count++);
+        store.put(new Put(triggerRowKey, TRIGGER_KEY_COLUMN_BYTES, triggerKey));
       }
     }
+    return currentTime;
+  }
+
+  /**
+   * Update the status of a schedule. This also updates the last-updated timestamp.
+   * @return the updated schedule's last modified timestamp
+   */
+  public long updateScheduleStatus(ScheduleId scheduleId, ProgramScheduleStatus newStatus) throws NotFoundException {
+    long currentTime = System.currentTimeMillis();
+    String scheduleKey = rowKeyForSchedule(scheduleId);
+    Row row = store.get(new Get(scheduleKey));
+    if (row.isEmpty()) {
+      throw new NotFoundException(scheduleId);
+    }
+    Put updatePut = new Put(scheduleKey);
+    updatePut.add(UPDATED_COLUMN_BYTES, currentTime); // record current time
+    updatePut.add(STATUS_COLUMN_BYTES, newStatus.toString());
+    store.put(updatePut);
+    return currentTime;
   }
 
   /**
    * Update an existing schedule in the store.
    *
    * @param schedule the schedule to update
+   * @return the updated schedule's last modified timestamp
    * @throws NotFoundException if one of the schedules already exists
    */
-  public void updateSchedule(ProgramSchedule schedule) throws NotFoundException {
-    deleteSchedules(schedule.getScheduleId());
+  public long updateSchedule(ProgramSchedule schedule) throws NotFoundException {
+    deleteSchedule(schedule.getScheduleId());
     try {
-      addSchedule(schedule);
+      return addSchedule(schedule);
     } catch (AlreadyExistsException e) {
-      // Should never reach here
+      // Should never reach here because we just deleted it
+      throw new IllegalStateException(
+        "Schedule '" + schedule.getScheduleId() + "' already exists despite just being deleted.");
     }
   }
 
@@ -213,7 +252,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param scheduleId the schedule to delete
    * @throws NotFoundException if the schedule does not exist in the store
    */
-  public void deleteSchedules(ScheduleId scheduleId) throws NotFoundException {
+  public void deleteSchedule(ScheduleId scheduleId) throws NotFoundException {
     deleteSchedules(Collections.singleton(scheduleId));
   }
 
@@ -244,8 +283,10 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * Removes all schedules for a specific application from the store.
    *
    * @param appId the application id for which to delete the schedules
+   * @return the IDs of the schedules that were deleted
    */
-  public void deleteSchedules(ApplicationId appId) {
+  public List<ScheduleId> deleteSchedules(ApplicationId appId) {
+    List<ScheduleId> deleted = new ArrayList<>();
     // since all trigger row keys are prefixed by <scheduleRowKey>@,
     // a scan for that prefix finds exactly the schedules and all of its triggers
     byte[] prefix = keyPrefixForApplicationScan(appId);
@@ -253,16 +294,20 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       Row row;
       while ((row = scanner.next()) != null) {
         store.delete(row.getRow());
+        deleted.add(rowKeyToScheduleId(row.getRow()));
       }
     }
+    return deleted;
   }
 
   /**
    * Removes all schedules for a specific program from the store.
    *
    * @param programId the program id for which to delete the schedules
+   * @return the IDs of the schedules that were deleted
    */
-  public void deleteSchedules(ProgramId programId) {
+  public List<ScheduleId> deleteSchedules(ProgramId programId) {
+    List<ScheduleId> deleted = new ArrayList<>();
     // since all trigger row keys are prefixed by <scheduleRowKey>@,
     // a scan for that prefix finds exactly the schedules and all of its triggers
     byte[] prefix = keyPrefixForApplicationScan(programId.getParent());
@@ -274,10 +319,12 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
           ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
           if (programId.equals(schedule.getProgramId())) {
             store.delete(row.getRow());
+            deleted.add(schedule.getScheduleId());
           }
         }
       }
     }
+    return deleted;
   }
 
   /**
@@ -294,6 +341,39 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       throw new NotFoundException(scheduleId);
     }
     return GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+  }
+
+  /**
+   * Read the meta data for a schedule from the store.
+   *
+   * @param scheduleId the id of the schedule to read
+   * @return the stored meta data for the schedule, or null if the schedule does not exist
+   * @throws NotFoundException if the schedule does not exist in the store
+   */
+  public @Nullable ProgramScheduleMeta getScheduleMeta(ScheduleId scheduleId) throws NotFoundException {
+    Row row = store.get(new Get(rowKeyBytesForSchedule(scheduleId), UPDATED_COLUMN_BYTES, STATUS_COLUMN_BYTES));
+    if (row.isEmpty()) {
+      return null;
+    }
+    return extractMetaFromRow(scheduleId, row);
+  }
+
+  /**
+   * Read all information about a schedule from the store.
+   *
+   * @param scheduleId the id of the schedule to read
+   * @return the schedule record from the store
+   * @throws NotFoundException if the schedule does not exist in the store
+   */
+  public ProgramScheduleRecord getScheduleRecord(ScheduleId scheduleId) throws NotFoundException {
+    Row row = store.get(new Get(rowKeyForSchedule(scheduleId)));
+    byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
+    if (serialized == null) {
+      throw new NotFoundException(scheduleId);
+    }
+    ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+    ProgramScheduleMeta meta = extractMetaFromRow(scheduleId, row);
+    return new ProgramScheduleRecord(schedule, meta);
   }
 
   /**
@@ -322,19 +402,26 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param triggerKey the trigger key to look up
    * @return a list of all schedules that are triggered by this key; never null
    */
-  public Collection<ProgramSchedule> findSchedules(String triggerKey) {
-    Map<ScheduleId, ProgramSchedule> schedulesFound = new HashMap<>();
+  public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
+    Map<ScheduleId, ProgramScheduleRecord> schedulesFound = new HashMap<>();
     try (Scanner scanner = store.readByIndex(TRIGGER_KEY_COLUMN_BYTES, Bytes.toBytes(triggerKey))) {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        String triggerRowKey = Bytes.toString(row.getRow());
+      Row triggerRow;
+      while ((triggerRow = scanner.next()) != null) {
+        String triggerRowKey = Bytes.toString(triggerRow.getRow());
         try {
           ScheduleId scheduleId = extractScheduleIdFromTriggerKey(triggerRowKey);
           if (schedulesFound.containsKey(scheduleId)) {
             continue;
           }
-          ProgramSchedule schedule = getSchedule(scheduleId);
-          schedulesFound.put(scheduleId, schedule);
+          Row row = store.get(new Get(rowKeyForSchedule(scheduleId)));
+          byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
+          if (serialized == null) {
+            throw new NotFoundException(scheduleId);
+          }
+          ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+          ProgramScheduleMeta meta = extractMetaFromRow(scheduleId, row);
+          ProgramScheduleRecord record = new ProgramScheduleRecord(schedule, meta);
+          schedulesFound.put(scheduleId, record);
         } catch (IllegalArgumentException | NotFoundException e) {
           // the only exceptions we know to be thrown here are IllegalArgumentException (ill-formed key) or
           // NotFoundException (if the schedule does not exist). Both should never happen, so we warn and ignore.
@@ -368,6 +455,25 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Reads the meta data from a row in the schedule store.
+   *
+   * @throws IllegalStateException if one of the expected fields is missing or ill-formed.
+   */
+  private ProgramScheduleMeta extractMetaFromRow(ScheduleId scheduleId, Row row) {
+    Long updatedTime = row.getLong(UPDATED_COLUMN_BYTES);
+    String statusString = row.getString(STATUS_COLUMN_BYTES);
+    try {
+      Preconditions.checkArgument(updatedTime != null, "Last-updated timestamp is null");
+      Preconditions.checkArgument(statusString != null, "schedule status is null");
+      ProgramScheduleStatus status = ProgramScheduleStatus.valueOf(statusString);
+      return new ProgramScheduleMeta(status, updatedTime);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalStateException(
+        String.format("Unexpected stored meta data for schedule %s: %s", scheduleId, e.getMessage()));
+    }
+  }
+
+  /**
    * This method extracts all trigger keys from a schedule. These are the keys for which we need to index
    * the schedule, so that we can do a reverse lookup for an event received.
    * <p>
@@ -383,24 +489,28 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     return Collections.emptyList();
   }
 
-  private static String rowKeyForSchedule(ApplicationId appId, String scheduleName) {
-    return rowKeyForSchedule(appId.schedule(scheduleName));
+  private static String rowKeyForSchedule(ScheduleId scheduleId) {
+    return Joiner.on(ROW_KEY_SEPARATOR).join(scheduleId.toIdParts());
   }
 
-  private static String rowKeyForSchedule(ScheduleId scheduleId) {
-    return Joiner.on('.').join(scheduleId.toIdParts());
+  private static byte[] rowKeyBytesForSchedule(ScheduleId scheduleId) {
+    return Bytes.toBytes(rowKeyForSchedule(scheduleId));
+  }
+
+  private static ScheduleId rowKeyToScheduleId(byte[] rowKey) {
+    return rowKeyToScheduleId(Bytes.toString(rowKey));
   }
 
   private static ScheduleId rowKeyToScheduleId(String rowKey) {
-    return ScheduleId.fromIdParts(Lists.newArrayList(rowKey.split("\\.")));
+    return ScheduleId.fromIdParts(Lists.newArrayList(rowKey.split(ROW_KEY_SEPARATOR)));
   }
 
-  private static String rowKeyForTrigger(String scheduleRowKey, int count) {
-    return scheduleRowKey + '@' + count;
+  private static byte[] rowKeyBytesForTrigger(byte[] scheduleRowKey, int count) {
+    return Bytes.add(scheduleRowKey, TRIGGER_SEPARATOR_BYTES, Bytes.toBytes(Integer.toString(count)));
   }
 
   private static ScheduleId extractScheduleIdFromTriggerKey(String triggerRowKey) {
-    int index = triggerRowKey.lastIndexOf('@');
+    int index = triggerRowKey.lastIndexOf(TRIGGER_SEPARATOR);
     if (index > 0) {
       return rowKeyToScheduleId(triggerRowKey.substring(0, index));
     }
@@ -413,6 +523,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   private static byte[] keyPrefixForApplicationScan(ApplicationId appId) {
-    return Bytes.toBytes(appId.getNamespace() + '.' + appId.getApplication() + '.' + appId.getVersion() + '.');
+    return Bytes.toBytes(
+      Joiner.on(ROW_KEY_SEPARATOR).join(appId.getNamespace(), appId.getApplication(), appId.getVersion(), ""));
   }
 }

@@ -17,16 +17,12 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -35,16 +31,15 @@ import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
@@ -87,24 +82,22 @@ class NotificationSubscriberService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final CConfiguration cConf;
-  private final Store store;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping = false;
 
 
   @Inject
   NotificationSubscriberService(MessagingService messagingService,
-                                CConfiguration cConf, Store store,
+                                CConfiguration cConf,
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txClient) {
     this.cConf = cConf;
-    this.store = store;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
       NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, messagingContext);
     this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(multiThreadDatasetCache),
+      Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.datasetFramework = datasetFramework;
@@ -243,7 +236,7 @@ class NotificationSubscriberService extends AbstractIdleService {
           jobQueue.persistSubscriberState(topic, messageId);
         }
       } catch (ServiceUnavailableException | TopicNotFoundException e) {
-        SAMPLING_LOG.info("Failed to fetch from TMS. Will retry later.", e);
+        SAMPLING_LOG.warn("Failed to fetch from TMS. Will retry later.", e);
         failureCount++;
       }
       return emptyFetch;
@@ -270,15 +263,15 @@ class NotificationSubscriberService extends AbstractIdleService {
         return;
       }
       ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
-      ProgramSchedule schedule;
+      ProgramScheduleRecord record;
       try {
-        schedule = getScheduleDataset(context).getSchedule(scheduleId);
+        record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
       } catch (NotFoundException e) {
         LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
                  scheduleId, properties, e);
         return;
       }
-      jobQueue.addNotification(schedule, notification);
+      jobQueue.addNotification(record, notification);
     }
   }
 
@@ -296,20 +289,17 @@ class NotificationSubscriberService extends AbstractIdleService {
         return;
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
-      for (ProgramSchedule schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
-        jobQueue.addNotification(schedule, notification);
+      for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
+        // ignore disabled schedules
+        if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
+          jobQueue.addNotification(schedule, notification);
+        }
       }
     }
   }
 
-  private Collection<ProgramSchedule> getSchedules(DatasetContext context, String triggerKey)
+  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, String triggerKey)
     throws IOException, DatasetManagementException {
-    return getScheduleDataset(context).findSchedules(triggerKey);
-  }
-
-  private ProgramScheduleStoreDataset getScheduleDataset(DatasetContext context)
-    throws IOException, DatasetManagementException {
-    return DatasetsUtil.getOrCreateDataset(context, datasetFramework, Schedulers.STORE_DATASET_ID,
-                                           Schedulers.STORE_TYPE_NAME, DatasetProperties.EMPTY);
+    return Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey);
   }
 }

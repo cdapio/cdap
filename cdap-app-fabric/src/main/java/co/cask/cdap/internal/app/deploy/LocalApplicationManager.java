@@ -38,7 +38,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Context;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
@@ -73,7 +72,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
-  private final Scheduler scheduler;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
@@ -91,7 +89,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Store store, OwnerAdmin ownerAdmin, StreamConsumerFactory streamConsumerFactory,
                           QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                           @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                          StreamAdmin streamAdmin, Scheduler scheduler,
+                          StreamAdmin streamAdmin,
                           @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                           UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                           MetadataStore metadataStore, PrivilegesManager privilegesManager,
@@ -107,7 +105,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.datasetFramework = datasetFramework;
     this.inMemoryDatasetFramework = inMemoryDatasetFramework;
     this.streamAdmin = streamAdmin;
-    this.scheduler = scheduler;
     this.metricStore = metricStore;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
@@ -130,7 +127,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                                     metricStore, metadataStore, privilegesManager, impersonator));
     pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
-    pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler, scheduler));
+    pipeline.addLast(new DeleteAndCreateSchedulesStage(programScheduler));
     pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

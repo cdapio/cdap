@@ -21,6 +21,7 @@ import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
@@ -39,8 +40,11 @@ import org.apache.tephra.TransactionSystemClient;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This tests the indexing of the schedule store. Adding, retrieving. listing, deleting schedules is tested
@@ -50,9 +54,11 @@ import java.util.HashMap;
 public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
-  private static final ApplicationId APP1_ID = NS_ID.app("app1");
+  private static final ApplicationId APP1_ID = NS_ID.app("app1", "1");
+  private static final ApplicationId APP11_ID = NS_ID.app("app1", "1.1");
   private static final ApplicationId APP2_ID = NS_ID.app("app2");
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
+  private static final WorkflowId PROG11_ID = APP11_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
@@ -60,7 +66,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
   @Test
   public void checkDatasetType() throws DatasetManagementException {
     DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(ProgramScheduleStoreDataset.class.getName())));
+    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(Schedulers.STORE_TYPE_NAME)));
   }
 
   @Test
@@ -106,10 +112,10 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
       public void apply() throws Exception {
         // event for DS1 should trigger only sched11
         Assert.assertEquals(ImmutableSet.of(sched11),
-                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
+                            toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
         // event for DS2 triggers only sched12 and sched22
         Assert.assertEquals(ImmutableSet.of(sched12, sched22),
-                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
+                            toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
       }
     });
     final ProgramSchedule sched11New = new ProgramSchedule(sched11.getName(), "time schedule", PROG1_ID,
@@ -137,11 +143,19 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
       public void apply() throws Exception {
         // event for DS1 should trigger only sched12New after update
         Assert.assertEquals(ImmutableSet.of(sched12New),
-                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
+                            toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
         // event for DS2 triggers no schedule after update
         Assert.assertEquals(ImmutableSet.<ProgramSchedule>of(),
-                            ImmutableSet.copyOf(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
+                            toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
       }
     });
+  }
+
+  private Set<ProgramSchedule> toScheduleSet(Collection<ProgramScheduleRecord> records) {
+    Set<ProgramSchedule> set = new HashSet<>();
+    for (ProgramScheduleRecord record : records) {
+      set.add(record.getSchedule());
+    }
+    return set;
   }
 }

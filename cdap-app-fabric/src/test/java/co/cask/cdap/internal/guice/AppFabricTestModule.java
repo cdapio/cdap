@@ -143,11 +143,6 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-
-      }
-
-      @Override
       public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
       }
 

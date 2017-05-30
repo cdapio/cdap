@@ -65,7 +65,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -231,7 +230,6 @@ public class PluginInstantiator implements Closeable {
     // create macro evaluator and parser based on if it is config or runtime
     boolean configTime = (macroEvaluator == null);
     TrackingMacroEvaluator trackingMacroEvaluator = new TrackingMacroEvaluator();
-    MacroParser macroParser = new MacroParser(configTime ? trackingMacroEvaluator : macroEvaluator);
 
     for (Map.Entry<String, String> property : plugin.getProperties().getProperties().entrySet()) {
       PluginPropertyField field = pluginPropertyFieldMap.get(property.getKey());
@@ -240,10 +238,12 @@ public class PluginInstantiator implements Closeable {
         // TODO: cleanup after endpoint to get plugin details is merged (#6089)
         if (configTime) {
           // parse for syntax check and check if trackingMacroEvaluator finds macro syntax present
+          MacroParser macroParser = new MacroParser(trackingMacroEvaluator, field.isMacroEscapingEnabled());
           macroParser.parse(propertyValue);
           propertyValue = getOriginalOrDefaultValue(propertyValue, property.getKey(), field.getType(),
                                                     trackingMacroEvaluator);
         } else {
+          MacroParser macroParser = new MacroParser(macroEvaluator, field.isMacroEscapingEnabled());
           propertyValue = macroParser.parse(propertyValue);
         }
       }
@@ -277,12 +277,13 @@ public class PluginInstantiator implements Closeable {
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
 
     TrackingMacroEvaluator trackingMacroEvaluator = new TrackingMacroEvaluator();
-    MacroParser macroParser = new MacroParser(trackingMacroEvaluator);
 
     for (Map.Entry<String, PluginPropertyField> pluginEntry : pluginPropertyFieldMap.entrySet()) {
-      if (pluginEntry.getValue() != null && pluginEntry.getValue().isMacroSupported()) {
+      PluginPropertyField pluginField = pluginEntry.getValue();
+      if (pluginEntry.getValue() != null && pluginField.isMacroSupported()) {
         String macroValue = plugin.getProperties().getProperties().get(pluginEntry.getKey());
         if (macroValue != null) {
+          MacroParser macroParser = new MacroParser(trackingMacroEvaluator, pluginField.isMacroEscapingEnabled());
           macroParser.parse(macroValue);
           if (trackingMacroEvaluator.hasMacro()) {
             macroFields.add(pluginEntry.getKey());

@@ -71,6 +71,11 @@ public interface Job {
   ProgramSchedule getSchedule();
 
   /**
+   * Returns the last modification time of the schedule. It represents the schedule at the time this job was created.
+   */
+  long getScheduleLastUpdatedTime();
+
+  /**
    * Returns the creation time of this Job.
    */
   long getCreationTime();
@@ -90,4 +95,14 @@ public interface Job {
    */
   JobKey getJobKey();
 
+  /**
+   * Whether the job is marked for deletion.
+   */
+  boolean isToBeDeleted();
+
+  /**
+   * @return the time at which this job was marked for deletion
+   */
+  long getToBeDeletedTimestamp();
 }
+

@@ -19,6 +19,7 @@ package co.cask.cdap.internal;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -58,6 +59,7 @@ import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -299,7 +301,12 @@ public class AppFabricClient {
     String uri = String.format("%s/apps/%s/workflows/%s/schedules",
                                getNamespacePath(namespace), app, workflow);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow);
+    try {
+      workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow, null);
+    } catch (BadRequestException e) {
+      // cannot happen
+      throw Throwables.propagate(e);
+    }
 
     List<ScheduleDetail> schedules = responder.decodeResponseContent(SCHEDULE_DETAILS_TYPE, GSON);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow schedules failed");

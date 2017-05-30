@@ -18,6 +18,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -38,6 +39,7 @@ import java.util.Map;
 public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConfig> {
 
   public static final String NAME = "AppWithSchedule";
+  public static final String STREAM = "SampleStream";
   public static final String WORKFLOW_NAME = "SampleWorkflow";
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
@@ -50,6 +52,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       setDescription("Sample application");
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
+      addStream(STREAM);
       AppConfig config = getConfig();
       // if add workflow is false, we want to add a flow, so the app will have at least one program, for testing deploy
       if (!config.addWorkflow) {
@@ -67,10 +70,11 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
       scheduleProperties.put("someKey", "someValue");
 
       if (config.addWorkflow && config.addSchedule1) {
-        configureWorkflowSchedule(SCHEDULE, WORKFLOW_NAME)
+        schedule(
+          buildSchedule(SCHEDULE, ProgramType.WORKFLOW, WORKFLOW_NAME)
           .setDescription("Sample schedule")
           .setProperties(scheduleProperties)
-          .triggerByTime("0/15 * * * * ?");
+          .triggerByTime("0/15 * * * * ?"));
       }
       if (config.addWorkflow && config.addSchedule2) {
         scheduleWorkflow(Schedules.builder(SCHEDULE_2)

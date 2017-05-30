@@ -18,11 +18,15 @@ package co.cask.cdap.internal.app.runtime.schedule.queue;
 
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -32,6 +36,19 @@ public class JobQueueDatasetDefinition extends CompositeDatasetDefinition<JobQue
 
   public JobQueueDatasetDefinition(String name, DatasetDefinition<? extends Table, ?> tableDef) {
     super(name, JobQueueDataset.EMBEDDED_TABLE_NAME, tableDef);
+  }
+
+  @Override
+  public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    TableProperties.Builder tableProps = TableProperties.builder();
+    tableProps.addAll(properties.getProperties());
+    tableProps.setConflictDetection(ConflictDetection.COLUMN);
+    DatasetSpecification tableSpec = super.getDelegate(JobQueueDataset.EMBEDDED_TABLE_NAME).configure(
+      JobQueueDataset.EMBEDDED_TABLE_NAME, tableProps.build());
+    return DatasetSpecification.builder(instanceName, getName())
+      .properties(properties.getProperties())
+      .datasets(Collections.singletonList(tableSpec))
+      .build();
   }
 
   @Override

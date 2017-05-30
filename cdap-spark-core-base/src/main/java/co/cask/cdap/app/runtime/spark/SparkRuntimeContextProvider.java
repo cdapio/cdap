@@ -263,7 +263,10 @@ public final class SparkRuntimeContextProvider {
   private static Injector createInjector(CConfiguration cConf, Configuration hConf,
                                          ProgramId programId, ProgramOptions programOptions) {
     String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId, principal));
+    String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+    String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId, runId,
+                                                                                                instanceId, principal));
   }
 
   /**

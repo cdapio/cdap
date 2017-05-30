@@ -20,6 +20,7 @@ const ArtifactUploadActions = {
   setClassname: 'SET-ARTIFACT-CLASSNAME',
   setType: 'SET-ARTIFACT-TYPE',
   setFilePath: 'SET-ARTIFACT-PATH',
+  setNameAndClass: 'SET-ARTIFACT-NAME-AND-CLASSNAME',
   onReset: 'RESET-STORE'
 };
 

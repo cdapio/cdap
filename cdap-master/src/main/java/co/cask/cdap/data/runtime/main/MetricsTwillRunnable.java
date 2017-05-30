@@ -77,7 +77,8 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
     getCConfiguration().set(Constants.Metrics.ADDRESS, context.getHost().getCanonicalHostName());
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS, context.getInstanceId());
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
 
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
@@ -92,14 +93,14 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
       new ZKClientModule(),
       new KafkaClientModule(),
       new MessagingClientModule(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),

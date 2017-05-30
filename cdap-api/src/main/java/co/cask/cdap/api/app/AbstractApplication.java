@@ -21,7 +21,7 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleConfigurer;
+import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -29,6 +29,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Collections;
 import java.util.Map;
@@ -156,7 +157,9 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * Schedules the specified {@link Workflow}
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
+   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
    */
+  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
     scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
   }
@@ -167,20 +170,33 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
    * @param properties properties to be added for the Schedule
+   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
    */
+  @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
     configurer.addSchedule(schedule, SchedulableProgramType.WORKFLOW, workflowName, properties);
   }
 
+  /**
+   * Get a ScheduleBuilder for the specified program.
+   * @param scheduleName the name of the schedule
+   * @param programType the type of the program; currently, only ProgramType.WORKFLOW can be scheduled
+   * @param programName the name of the program
+   *
+   * @return The {@link ScheduleBuilder} used to build the schedule
+   */
+  protected ScheduleBuilder buildSchedule(String scheduleName, ProgramType programType,
+                                          String programName) {
+    return configurer.buildSchedule(scheduleName, programType, programName);
+  }
 
   /**
-   * Schedule the specified {@link Workflow}
-   * @param scheduleName the name of the schedule
-   * @param workflowName the name of the Workflow
+   * Schedules a program, using the given scheduleCreationSpec.
    *
-   * @return The {@link ScheduleConfigurer} used to configure the schedule
+   * @param scheduleCreationSpec defines the schedule. Can be built using the builder obtained
+   *                             from {@link #buildSchedule(String, ProgramType, String)}
    */
-  protected ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
-    return configurer.configureWorkflowSchedule(scheduleName, workflowName);
+  protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
+    configurer.schedule(scheduleCreationSpec);
   }
 }

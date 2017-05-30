@@ -38,8 +38,9 @@ final class WebappTwillRunnable extends AbstractProgramTwillRunnable<WebappProgr
   }
 
   @Override
-  protected Module createModule(TwillContext context, ProgramId programId, @Nullable String principal) {
-    return Modules.combine(super.createModule(context, programId, principal), new AbstractModule() {
+  protected Module createModule(TwillContext context, ProgramId programId, String runId, String instanceId,
+                                @Nullable String principal) {
+    return Modules.combine(super.createModule(context, programId, runId, instanceId, principal), new AbstractModule() {
       @Override
       protected void configure() {
         // Create webapp http handler factory.

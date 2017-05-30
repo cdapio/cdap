@@ -21,7 +21,7 @@ angular.module(PKG.name + '.commons')
     scope: {
       store: '=',
       actionCreator: '=',
-      isDisabled: '@',
+      isDisabled: '=',
       resourceType: '@'
     },
     link: function(scope, element) {
@@ -52,7 +52,7 @@ angular.module(PKG.name + '.commons')
     scope: {
       actionCreator: '=',
       store: '=',
-      isDisabled: '@'
+      isDisabled: '='
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineDriverResourceCtrl'
@@ -64,9 +64,21 @@ angular.module(PKG.name + '.commons')
     scope: {
       actionCreator: '=',
       store: '=',
-      isDisabled: '@'
+      isDisabled: '='
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineExecutorResourceCtrl'
+  };
+})
+.directive('myPipelineClientResource', function() {
+  return {
+    restrict: 'E',
+    scope: {
+      actionCreator: '=',
+      store: '=',
+      isDisabled: '='
+    },
+    templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
+    controller: 'MyPipelineClientResourceCtrl'
   };
 });

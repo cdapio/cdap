@@ -31,16 +31,17 @@ import java.util.Map;
  * A schedule for a program.
  */
 public class ProgramSchedule {
+
   private final String description;
   private final ProgramId programId;
   private final ScheduleId scheduleId;
   private final Map<String, String> properties;
   private final Trigger trigger;
-  private final List<Constraint> constraints;
+  private final List<? extends Constraint> constraints;
 
   public ProgramSchedule(String name, String description,
                          ProgramId programId, Map<String, String> properties,
-                         Trigger trigger, List<Constraint> constraints) {
+                         Trigger trigger, List<? extends Constraint> constraints) {
     this.description = description;
     this.programId = programId;
     this.scheduleId = programId.getParent().schedule(name);
@@ -69,7 +70,7 @@ public class ProgramSchedule {
     return trigger;
   }
 
-  public List<Constraint> getConstraints() {
+  public List<? extends Constraint> getConstraints() {
     return constraints;
   }
 

@@ -75,7 +75,7 @@ export default class ArtifactUploadWizard extends Component {
   // TODO: shouldn't do this, replace in 4.2
   getChildContext() {
     return {
-      isMarket: this.props.buildSuccessInfo
+      isMarket: !this.props.hideUploadHelper && this.props.buildSuccessInfo
     };
   }
   buildSuccessInfo() {
@@ -145,5 +145,6 @@ ArtifactUploadWizard.propTypes = {
   isOpen: PropTypes.bool,
   input: PropTypes.any,
   onClose: PropTypes.func,
-  buildSuccessInfo: PropTypes.func
+  buildSuccessInfo: PropTypes.func,
+  hideUploadHelper: PropTypes.bool
 };

@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 # Copyright © 2014-2017 Cask Data, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-  
+
 # Build script for docs
 
 source ../vars
@@ -27,7 +27,7 @@ function download_readme_file_and_test() {
   # Uses md5 hashes to monitor if any files have changed.
 
   local file_name='README.rst'
-  
+
   local includes_dir=${1}
   local source_url=${2}
   local md5_hash=${3}
@@ -44,7 +44,7 @@ function download_readme_file_and_test() {
 function download_includes() {
   echo "Calling sourced pipelines_download_includes"
   pipelines_download_includes ${1}
-  
+
   echo "Downloading source files to be included from GitHub..."
   local github_url="https://raw.githubusercontent.com/caskdata"
   local includes_dir=${1}
@@ -65,7 +65,7 @@ function download_includes() {
 
   download_readme_file_and_test ${includes_dir} ${clients_url} 9bdc7d9ab874bfb6ec044964d3df804e cdap-authentication-clients/java
   download_readme_file_and_test ${includes_dir} ${clients_url} 6f937cbf71ed2312a4893cba27e6145f cdap-authentication-clients/python
-  
+
 # cdap-ingest
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
   local ingest_url="${github_url}/cdap-ingest/${ingest_branch}"
@@ -76,14 +76,14 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} b798091f24f6ecfe05d614f1dd1f7a03 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-  
+
   test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
 
   test_an_include cb9f3b1968418ed32176dc070946d104 ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
 
   test_an_include bb7344dd2c55c5ef70653ff0b5fcd6df ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
-  test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
 
   test_an_include f9acd1e2ed73ba5e83b9a0cd6c75f988 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 

@@ -88,7 +88,9 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS_PROCESSOR,
+                                      context.getInstanceId());
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId);
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
@@ -104,7 +106,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -117,7 +119,7 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MetricsProcessorModule(),
       new MetricsProcessorStatusServiceModule(),

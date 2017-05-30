@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.purchase;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -68,11 +69,11 @@ public class PurchaseApp extends AbstractApplication {
     addService(new CatalogLookupService());
 
     // Schedule the workflow
-    scheduleWorkflow(
-      Schedules.builder("DailySchedule")
-        .setMaxConcurrentRuns(1)
-        .createTimeSchedule("0 4 * * *"),
-      "PurchaseHistoryWorkflow");
+    schedule(
+      buildSchedule("DailySchedule", ProgramType.WORKFLOW, "PurchaseHistoryWorkflow")
+      .withConcurrency(1)
+      .triggerByTime("0 4 * * *")
+    );
 
     // Schedule the workflow based on the data coming in the purchaseStream stream
     scheduleWorkflow(
