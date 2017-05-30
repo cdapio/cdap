@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
 # Copyright © 2016-2017 Cask Data, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-  
+
 # Build script for docs
 
 # source ../vars
@@ -58,18 +58,18 @@ function download_md_file() {
   local append_file="${3}"
   local plugin_type="${4}" # NOTE: singular types: "sink", not "sinks"
   local target_file_name="${5}"
-  
+
   local source_url="${CDAP_PIPELINES_SOURCE}/${source_dir}/docs/${source_file_name}"
 
   local source_name="${source_file_name%-*}"
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
   type="${type%.md}" # strip suffix
-  
+
   local type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
   if [[ "x${target_file_name}" == "x" ]]; then
     local target_file_name=$(echo "${source_file_name}" | tr [:upper:] [:lower:]) # cassandra-batchsink.md
   fi
-  
+
   # Determine from name of the plugin file the:
   # type (source, sink, transform, shared-plugin, postaction)
   # Defining this in the parameters overrides this
@@ -97,7 +97,7 @@ function download_md_file() {
       plugin_type="transform"
     fi
   fi
-  
+
   local target_dir="${plugin_type}s"
 
   echo ${NON_TRANSFORM_TYPES} | grep -q ${plugin_type}
@@ -180,7 +180,7 @@ function extract_table() {
 function pipelines_download_includes() {
   echo_red_bold "Checking Plugin Archetypes"
   local cdap_app_templates="cdap-app-templates/cdap-etl/cdap-etl-archetypes/cdap-data-pipeline-plugins-archetype/src/main/resources/archetype-resources/src/main/java"
-  
+
   test_an_include 88ef4c43707322f700ccd7a1b445100f ../../${cdap_app_templates}/FilesetMoveAction.java
   test_an_include 83c6e8e47dff67a8fd5d744ac81f4ee3 ../../${cdap_app_templates}/FilesetDeletePostAction.java
   test_an_include 4b1ec5f3df66e8242bffe5ca13d55668 ../../${cdap_app_templates}/TextFileSetSource.java
@@ -216,19 +216,19 @@ function pipelines_download_includes() {
   BASE_TARGET="${1}/${plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${plugins}" "${1}"
 #   cp -R "${SCRIPT_PATH}/source/pipelines/_includes/${plugins}" "${1}"
-  
+
   echo_red_bold "Using ${CDAP_PIPELINES_SOURCE}"
   get_pipelines_version ${BASE_TARGET} ${CDAP_PIPELINES_SOURCE}
-  
+
   # Uses: $BASE_TARGET  $CDAP_PIPELINES_SOURCE
   # Parameter      1                 2                         3 (optional)  4 (optional)  5 (optional)
   # Definition     source_dir        source_file_name          append_file   target_file   target_dir
-  
+
   download_md_file cassandra-plugins Cassandra-batchsink.md
-  download_md_file cassandra-plugins Cassandra-batchsource.md 
-  download_md_file cassandra-plugins Cassandra-realtimesink.md 
+  download_md_file cassandra-plugins Cassandra-batchsource.md
+  download_md_file cassandra-plugins Cassandra-realtimesink.md
   download_md_file core-plugins AmazonSQS-realtimesource.md
-  download_md_file core-plugins AzureBlobStore-batchsource.md
+#   download_md_file core-plugins AzureBlobStore-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
   download_md_file core-plugins Cube-batchsink.md
   download_md_file core-plugins Cube-realtimesink.md
   download_md_file core-plugins DataGenerator-realtimesource.md
@@ -250,9 +250,9 @@ function pipelines_download_includes() {
   download_md_file core-plugins Projection-transform.md
   download_md_file core-plugins PythonEvaluator-transform.md
   download_md_file core-plugins RowDenormalizer-batchaggregator.md '' "analytic"
-  download_md_file core-plugins S3-batchsource.md
-  download_md_file core-plugins S3Avro-batchsink.md
-  download_md_file core-plugins S3Parquet-batchsink.md
+#   download_md_file core-plugins S3-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
+#   download_md_file core-plugins S3Avro-batchsink.md # Moved to https://github.com/hydrator/amazon-s3-plugins
+#   download_md_file core-plugins S3Parquet-batchsink.md # Moved to https://github.com/hydrator/amazon-s3-plugins
   download_md_file core-plugins SnapshotAvro-batchsink.md
   download_md_file core-plugins SnapshotAvro-batchsource.md
   download_md_file core-plugins SnapshotParquet-batchsink.md
