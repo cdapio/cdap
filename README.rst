@@ -48,8 +48,8 @@ transform, and load) pipelines all the way up to complex, enterprise-scale data-
 applications.
 
 Developers can build and test their applications end-to-end in a full-stack, single-node
-installation. CDAP can be run either as a Local Sandbox, deployed within the Enterprise or
-hosted in the Cloud.
+installation. CDAP can be run either as a Local Sandbox, deployed within the Enterprise 
+on-premises or hosted in the Cloud.
 
 For more information, see our collection of `Developers' Manual and other documentation
 <http://docs.cask.co/cdap/current/en/developers-manual/index.html>`__.
