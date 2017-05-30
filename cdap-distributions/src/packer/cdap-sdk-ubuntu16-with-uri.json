@@ -1,5 +1,6 @@
 {
   "variables": {
+    "standalone_node_env": "local",
     "standalone_vm_name": "cdap-standalone-vm",
     "sdk_version": "DEFINE ME ON COMMAND LINE",
     "azure_client_id": "{{env `ARM_CLIENT_ID`}}",
@@ -181,7 +182,10 @@
           "version": "4.2.0-1",
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
-            "url": "file:///tmp/cdap-sdk.zip"
+            "url": "file:///tmp/cdap-sdk.zip",
+            "profile_d": {
+              "node_env": "{{user `standalone_node_env`}}"
+            }
           }
         },
         "java": {
