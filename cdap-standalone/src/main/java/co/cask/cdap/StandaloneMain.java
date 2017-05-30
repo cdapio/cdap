@@ -128,6 +128,7 @@ public class StandaloneMain {
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
   private final TrackerAppCreationService trackerAppCreationService;
+  private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
@@ -151,6 +152,7 @@ public class StandaloneMain {
       trackerAppCreationService = null;
     }
 
+    wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
@@ -268,6 +270,7 @@ public class StandaloneMain {
       trackerAppCreationService.startAndWait();
     }
 
+    wranglerAppCreationService.startAndWait();
     remoteSystemOperationsService.startAndWait();
 
     operationalStatsService.startAndWait();
@@ -292,6 +295,7 @@ public class StandaloneMain {
         userInterfaceService.stopAndWait();
       }
 
+      wranglerAppCreationService.stopAndWait();
       if (trackerAppCreationService != null) {
         trackerAppCreationService.stopAndWait();
       }
