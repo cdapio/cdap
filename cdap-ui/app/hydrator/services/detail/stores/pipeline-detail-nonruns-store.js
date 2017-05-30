@@ -202,9 +202,6 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getCheckpointing = function() {
       return this.state.cloneConfig.config.disableCheckpoints;
     };
-    this.getGracefulStop = function() {
-      return this.state.cloneConfig.config.stopGracefully;
-    };
     this.getNumRecordsPreview = function() {
       return this.state.cloneConfig.config.numOfRecordsPreview;
     };

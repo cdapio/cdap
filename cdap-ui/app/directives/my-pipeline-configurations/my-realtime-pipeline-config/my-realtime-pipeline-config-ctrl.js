@@ -29,7 +29,6 @@ class MyRealtimePipelineConfigCtrl {
     this.instrumentation = this.store.getInstrumentation();
     this.stageLogging = this.store.getStageLogging();
     this.checkpointing = this.store.getCheckpointing();
-    this.gracefulStop = this.store.getGracefulStop();
     this.batchInterval = this.store.getBatchInterval();
     this.batchIntervalTime = this.batchInterval.substring(0, this.batchInterval.length - 1);
     this.batchIntervalUnit = this.batchInterval.charAt(this.batchInterval.length - 1);
@@ -150,7 +149,6 @@ class MyRealtimePipelineConfigCtrl {
       this.store.setInstrumentation(this.instrumentation);
       this.store.setStageLogging(this.stageLogging);
       this.store.setCheckpointing(this.checkpointing);
-      this.store.setGracefulStop(this.gracefulStop);
       this.store.setBatchInterval(this.batchIntervalTime + this.batchIntervalUnit);
       this.store.setClientVirtualCores(this.clientResources.virtualCores);
       this.store.setClientMemoryMB(this.clientResources.memoryMB);
@@ -245,11 +243,6 @@ class MyRealtimePipelineConfigCtrl {
     this.updatePipelineEditStatus();
   }
 
-  onGracefulStopChange() {
-    this.gracefulStop = !this.gracefulStop;
-    this.updatePipelineEditStatus();
-  }
-
   getUpdatedPipelineConfig() {
 
     let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());
@@ -264,7 +257,6 @@ class MyRealtimePipelineConfigCtrl {
     pipelineconfig.config.disableCheckpoints = this.checkpointing;
     pipelineconfig.config.processTimingEnabled = this.instrumentation;
     pipelineconfig.config.stageLoggingEnabled = this.stageLogging;
-    pipelineconfig.config.stopGracefully = this.gracefulStop;
     return pipelineconfig;
   }
 
@@ -281,7 +273,6 @@ class MyRealtimePipelineConfigCtrl {
     let isDisableCheckpointModified = oldConfig.config.disableCheckpoints !== updatedConfig.config.disableCheckpoints;
     let isProcessTimingModified = oldConfig.config.processTimingEnabled !== updatedConfig.config.processTimingEnabled;
     let isStageLoggingModified = oldConfig.config.stageLoggingEnabled !== updatedConfig.config.stageLoggingEnabled;
-    let isStopGracefullyModified = oldConfig.config.stopGracefully !== updatedConfig.config.stopGracefully;
 
     this.enablePipelineUpdate = (
       isResourceModified ||
@@ -289,8 +280,7 @@ class MyRealtimePipelineConfigCtrl {
       isClientResourceModified ||
       isDisableCheckpointModified ||
       isProcessTimingModified ||
-      isStageLoggingModified ||
-      isStopGracefullyModified
+      isStageLoggingModified
     );
   }
   updatePipeline() {
@@ -317,7 +307,7 @@ class MyRealtimePipelineConfigCtrl {
   }
 }
 
-MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state', 
+MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state',
 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
   .directive('keyValuePairs', function(reactDirective) {

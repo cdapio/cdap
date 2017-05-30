@@ -169,19 +169,6 @@
             </i>
           </div>
         </div>
-        <div class="label-with-toggle graceful-stop row">
-          <span class="toggle-label col-xs-4">Graceful Stop</span>
-          <div class="col-xs-7 toggle-container">
-            <my-toggle-switch-widget
-              is-on="RealtimePipelineConfigCtrl.gracefulStop"
-              on-toggle="RealtimePipelineConfigCtrl.onGracefulStopChange()"
-            ></my-toggle-switch-widget>
-            <i class="fa fa-info-circle"
-                uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
-                tooltip-placement="right">
-            </i>
-          </div>
-        </div>
       </div>
       <div class="configuration-step-content resources"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'resources'">
@@ -535,20 +522,6 @@
               ></my-toggle-switch-widget>
               <i class="fa fa-info-circle"
                  uib-tooltip="Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources."
-                 tooltip-placement="right">
-              </i>
-            </div>
-          </div>
-          <div class="label-with-toggle graceful-stop row">
-            <span class="toggle-label col-xs-4">Graceful Stop</span>
-            <div class="col-xs-7 toggle-container">
-              <my-toggle-switch-widget
-                is-on="RealtimePipelineConfigCtrl.gracefulStop"
-                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
-                on-toggle="RealtimePipelineConfigCtrl.gracefulStop = !RealtimePipelineConfigCtrl.gracefulStop"
-              ></my-toggle-switch-widget>
-              <i class="fa fa-info-circle"
-                 uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
                  tooltip-placement="right">
               </i>
             </div>
