@@ -184,7 +184,7 @@ export default class ConnectionPopover extends Component {
     };
 
     return (
-      <span className="expanded-menu-popover-icon text-xs-center">
+      <span className="expanded-menu-popover-icon text-xs-center float-xs-right">
         <UncontrolledPopover
           icon="fa-ellipsis-v"
           tetherOption={tetherConfig}

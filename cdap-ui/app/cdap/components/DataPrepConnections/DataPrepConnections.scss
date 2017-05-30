@@ -25,6 +25,7 @@ $gutter-width: 15px;
 
 .dataprep-connections-container {
   height: calc(100vh - 104px);
+  border-right: 1px solid $connections-panel-border-color;
 
   .top-panel {
     height: $top-panel-height;
@@ -110,8 +111,11 @@ $gutter-width: 15px;
         }
 
         .menu-item-expanded-list {
-          padding: 10px 27px;
+          padding: 10px 27px 10px 54px;
           width: calc(100% - 25px);
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
 
         .expanded-menu-popover-icon > .fa {

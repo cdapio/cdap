@@ -357,16 +357,18 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+      emptyWorkspace: No data
+      noData: No data. Try removing some directives.
     DataPrepBrowser:
       DatabaseBrowser:
         EmptyMessage:
           clearLabel: Clear
+          emptyDatabase: 'No tables in connection _{connectionName}_'
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
         searchPlaceholder: Search table name
         table:
-          colcountlabel: NUMBER OF COLUMNS
           namecollabel: NAME
         tableCount:
           0: No Tables
@@ -591,6 +593,7 @@ features:
       applyBtnLabel: Apply
       addToPipelineBtnLabel: Create Pipeline
       database: Database
+      databaseTitle: "Table: {name}"
       file: File System
       invalidFieldNameMessage: Invalid column name "{fieldName}"
       invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
@@ -604,6 +607,7 @@ features:
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       title: Data Preparation
       upgradeBtnLabel: Upgrade
+      upload: File Upload
       viewSchemaBtnLabel: View Schema
       copyToCDAPDatasetBtn:
         uploadDisabledMessage: Copying to a dataset is not supported for uploaded files.
@@ -662,9 +666,14 @@ features:
             EDIT: Save Changes
           connectionString: Connection String
           connType: JDBC Connections
+          customLabel: "Other..."
           database: Database
           defaultTestErrorMessage: Error connecting to database
           driverInstalled: Driver Installed
+          ErrorMessages:
+            ADD: Failed to add connection
+            DUPLICATE: Failed to duplicate connection
+            EDIT: Failed to edit connection
           hostname: Host
           name: Name
           password: Password
@@ -718,7 +727,11 @@ features:
 
   FileBrowser:
     directory: Directory
-    emptySearch: "There is no file or directory matching \"{searchTerm}\""
+    EmptyMessage:
+      clearLabel: Clear
+      suggestion1: your search
+      suggestionTitle: "You can try to:"
+      title: 'No match found for "{searchText}"'
     Table:
       group: Group
       last-modified: Last Modified

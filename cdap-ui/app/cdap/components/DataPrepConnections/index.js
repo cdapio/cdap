@@ -77,7 +77,7 @@ export default class DataPrepConnections extends Component {
 
     let {workspaceInfo} = DataPrepStore.getState().dataprep;
     this.state = {
-      sidePanelExpanded: true,
+      sidePanelExpanded: this.props.enableRouting ? true : false,
       backendChecking: true,
       backendDown: false,
       connectionsList: [],
@@ -184,7 +184,7 @@ export default class DataPrepConnections extends Component {
 
     MyDataPrepApi.listConnections({
       namespace,
-      type: '*'
+      type: 'database' // currently only going to fetch database connection
     }).subscribe((res) => {
       // need to group by connection type
 
@@ -215,7 +215,11 @@ export default class DataPrepConnections extends Component {
       <div>
         {this.state.connectionsList.map((database) => {
           return (
-            <div key={database.id}>
+            <div
+              key={database.id}
+              title={database.name}
+              className="clearfix"
+            >
               <NavLinkWrapper
                 to={`${baseLinkPath}/database/${database.id}`}
                 activeClassName="active"

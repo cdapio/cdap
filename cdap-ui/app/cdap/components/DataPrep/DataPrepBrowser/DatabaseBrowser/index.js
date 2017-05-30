@@ -37,6 +37,7 @@ export default class DatabaseBrowser extends Component {
     this.state = {
       properties: store.database.properties,
       connectionId: store.database.connectionId,
+      connectionName: '',
       tables: [],
       loading: true,
       search: '',
@@ -125,11 +126,13 @@ export default class DatabaseBrowser extends Component {
     };
 
     DataPrepApi.listTables(params)
+      .combineLatest(DataPrepApi.getConnection(params))
       .subscribe(
         (res) => {
           this.setState({
-            tables: res.values,
-            loading: false
+            tables: res[0].values,
+            loading: false,
+            connectionName: objectQuery(res, 1, 'values', 0, 'name')
           });
         },
         (err) => {
@@ -141,6 +144,48 @@ export default class DatabaseBrowser extends Component {
           });
         }
       );
+  }
+
+  renderEmpty() {
+    if (this.state.search.length !== 0) {
+      return (
+        <div className="empty-search-container">
+          <div className="empty-search">
+            <strong>
+              {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+            </strong>
+            <hr />
+            <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+            <ul>
+              <li>
+                <span
+                  className="link-text"
+                  onClick={() => {
+                    this.setState({
+                      search: '',
+                      searchFocus: true
+                    });
+                  }}
+                >
+                  {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+                </span>
+                <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search text-xs-center">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.emptyDatabase`, {connectionName: this.state.connectionName})}
+          </strong>
+        </div>
+      </div>
+    );
   }
 
   render() {
@@ -158,43 +203,14 @@ export default class DatabaseBrowser extends Component {
         return renderNoPluginMessage(this.state.error);
       }
       if (!tables.length) {
-        return (
-          <div className="empty-search-container">
-            <div className="empty-search">
-              <strong>
-                {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
-              </strong>
-              <hr />
-              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
-              <ul>
-                <li>
-                  <span
-                    className="link-text"
-                    onClick={() => {
-                      this.setState({
-                        search: '',
-                        searchFocus: true
-                      });
-                    }}
-                  >
-                    {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
-                  </span>
-                  <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        );
+        return this.renderEmpty();
       }
       return (
         <div className="database-content-table">
           <div className="database-content-header">
             <div className="row">
-              <div className="col-xs-8">
+              <div className="col-xs-12">
                 <span>{T.translate(`${PREFIX}.table.namecollabel`)}</span>
-              </div>
-              <div className="col-xs-4">
-                <span>{T.translate(`${PREFIX}.table.colcountlabel`)}</span>
               </div>
             </div>
           </div>
@@ -206,11 +222,8 @@ export default class DatabaseBrowser extends Component {
                     className="row content-row"
                     onClick={this.prepTable.bind(this, table.name)}
                   >
-                    <div className="col-xs-8">
+                    <div className="col-xs-12">
                       <span>{table.name}</span>
-                    </div>
-                    <div className="col-xs-4">
-                      <span>{table.count}</span>
                     </div>
                   </div>
                 );

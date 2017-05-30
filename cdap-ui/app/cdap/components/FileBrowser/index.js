@@ -49,7 +49,8 @@ export default class FileBrowser extends Component {
       loading: true,
       search: '',
       sort: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
+      searchFocus: true
     };
 
     this.handleSearch = this.handleSearch.bind(this);
@@ -213,7 +214,37 @@ export default class FileBrowser extends Component {
 
   }
 
+  renderCollapsedContent(row) {
+    return (
+      <div
+        key={row.uniqueId}
+        className={classnames('row content-row', {
+          'disabled': !row.directory && !row.wrangle
+        })}
+      >
+        <div className="col-xs-8 name">
+          <span
+            className={classnames('type-icon fa fa-fw', {
+              'folder-icon fa-folder-o': row.directory,
+              'file-icon fa-file-o': !row.directory
+            })}
+          />
+          <span title={row.name}>{row.name}</span>
+        </div>
+        <div className="col-xs-4">
+          <span title={row.type}>
+            {row.type}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   renderRowContent(row) {
+    if (this.props.noState || !this.props.enableRouting) {
+      return this.renderCollapsedContent(row);
+    }
+
     return (
       <div
         key={row.uniqueId}
@@ -307,6 +338,35 @@ export default class FileBrowser extends Component {
     }
   }
 
+  renderEmptySearch() {
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+          </strong>
+          <hr />
+          <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+          <ul>
+            <li>
+              <span
+                className="link-text"
+                onClick={() => {
+                  this.setState({
+                    search: ''
+                  });
+                }}
+              >
+                {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+              </span>
+              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   renderContent() {
     if (this.state.loading) {
       // NEED TO REPLACE WITH ACTUAL LOADING ICON
@@ -344,14 +404,7 @@ export default class FileBrowser extends Component {
       });
 
       if (displayContent.length === 0) {
-        return (
-          <div className="empty-container">
-            <br />
-            <h4 className="text-xs-center">
-              {T.translate(`${PREFIX}.emptySearch`, { searchTerm: this.state.search })}
-            </h4>
-          </div>
-        );
+        return this.renderEmptySearch();
       }
     }
 
@@ -374,7 +427,16 @@ export default class FileBrowser extends Component {
       permission: 'col-xs-2'
     };
 
-    const COLUMN_HEADERS = Object.keys(TABLE_COLUMNS_PROPERTIES);
+    let columnProperties = TABLE_COLUMNS_PROPERTIES;
+
+    if (this.props.noState || !this.props.enableRouting) {
+      columnProperties = {
+        name: 'col-xs-8',
+        type: 'col-xs-4'
+      };
+    }
+
+    const COLUMN_HEADERS = Object.keys(columnProperties);
 
     return (
       <div className="directory-content-table">
@@ -384,7 +446,7 @@ export default class FileBrowser extends Component {
               return (
                 <div
                   key={head}
-                  className={TABLE_COLUMNS_PROPERTIES[head]}
+                  className={columnProperties[head]}
                 >
                   <span
                     onClick={this.orderBy.bind(this, head)}
@@ -464,6 +526,7 @@ export default class FileBrowser extends Component {
                 placeholder={T.translate(`${PREFIX}.TopPanel.searchPlaceholder`)}
                 value={this.state.search}
                 onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
               />
             </div>
           </div>

@@ -26,6 +26,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 }
 
 .modal-dialog.database-connection-modal {
+  .modal-content { border-radius: 0; }
+
   .modal-header {
     border-bottom: none;
     background-color: $modal-header-bg-color;
@@ -95,13 +97,34 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
 }
 
 .database-detail {
+  .database-detail-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 50px;
+  }
+
+  .image-container {
+    height: 50px;
+    width: 50px;
+    display: inline-block;
+    margin-right: 10px;
+  }
+
   .db-image {
-    transform: scale(0.7) translateY(-30%);
+    transform: scale(0.5) translate(-50%, -50%);
+    margin-right: 0;
+  }
+
+  .db-label {
+    display: inline-block;
+    max-width: calc(100% - 60px);
+    margin-top: 10px;
+    vertical-align: top;
   }
 
   .driver-info {
     height: 70px;
-    line-height: 70px;
 
     > div:first-child {
       height: 70px;
@@ -112,6 +135,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
     }
 
     .driver-detail {
+      margin-top: 12px;
+
       .fa.fa-fw {
         margin-left: 5px;
         margin-right: 5px;
@@ -120,7 +145,11 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
     }
   }
 
-  .connection-check { margin-left: 10px; }
+  .connection-check,
+  .loading-indicator {
+    margin-left: 10px;
+    vertical-align: middle;
+  }
 
   .col-form-label {
     font-weight: 500;
@@ -133,6 +162,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
       left: 2px;
     }
   }
+
+  .custom-input { margin-top: 5px; }
 
   .asterisk {
     color: $asterisk-color;
@@ -154,12 +185,14 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   }
 
   .back-link-container {
-    margin-top: 40px;
+    margin-top: 30px;
 
     .back-link {
       cursor: pointer;
     }
   }
+
+  .error-container { margin: 10px -15px -15px -16px; }
 }
 
 .db-image {

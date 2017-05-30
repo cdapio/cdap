@@ -60,6 +60,10 @@ $action-btn-inactive-color: #aaaaaa;
         .connection-type {
           font-size: 13px;
           color: $top-panel-connection-color;
+
+          .connection-name {
+            margin-left: 5px;
+          }
         }
       }
 
