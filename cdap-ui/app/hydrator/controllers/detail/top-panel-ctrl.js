@@ -98,6 +98,7 @@ class HydratorDetailTopPanelController {
     this.runtimeArguments = {};
     this.resolvedMacros = {};
     this.validToStartOrSchedule = true;
+    this.pipelineAction = 'Run';
 
     if (Object.keys(this.macrosMap).length === 0) {
       this.fetchMacros();
@@ -366,6 +367,15 @@ class HydratorDetailTopPanelController {
     } else {
       this.pipelineAction = action;
       this.do('Config');
+    }
+  }
+  startOrSchedulePipeline() {
+    if (this.pipelineAction === 'Run') {
+      this.startPipeline();
+    } else if (this.pipelineAction === 'Schedule') {
+      this.viewConfig = false;
+      this.pipelineAction = 'Run';
+      this.viewScheduler = true;
     }
   }
   startPipeline() {
