@@ -52,15 +52,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 /**
- * Unit tests for the {@link SparkTransactionService}.
+ * Unit tests for the {@link SparkTransactionHandler}.
  */
-public class SparkTransactionServiceTest {
+public class SparkTransactionHandlerTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionServiceTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionHandlerTest.class);
 
   private static TransactionManager txManager;
   private static TransactionSystemClient txClient;
-  private static SparkTransactionService sparkTxService;
+  private static SparkTransactionHandler sparkTxHandler;
+  private static SparkDriverHttpService httpService;
   private static SparkTransactionClient sparkTxClient;
 
   @BeforeClass
@@ -70,16 +71,17 @@ public class SparkTransactionServiceTest {
 
     txClient = new InMemoryTxSystemClient(txManager);
 
-    sparkTxService = new SparkTransactionService(txClient, InetAddress.getLoopbackAddress().getCanonicalHostName(),
-                                                 "test");
-    sparkTxService.startAndWait();
+    sparkTxHandler = new SparkTransactionHandler(txClient);
+    httpService = new SparkDriverHttpService("test", InetAddress.getLoopbackAddress().getCanonicalHostName(),
+                                             sparkTxHandler);
+    httpService.startAndWait();
 
-    sparkTxClient = new SparkTransactionClient(sparkTxService.getBaseURI());
+    sparkTxClient = new SparkTransactionClient(httpService.getBaseURI());
   }
 
   @AfterClass
   public static void finish() {
-    sparkTxService.stopAndWait();
+    httpService.stopAndWait();
     txManager.stopAndWait();
   }
 
@@ -176,25 +178,26 @@ public class SparkTransactionServiceTest {
     };
     txManager.startAndWait();
     try {
-      SparkTransactionService sparkTxService = new SparkTransactionService(
-        new InMemoryTxSystemClient(txManager), InetAddress.getLoopbackAddress().getCanonicalHostName(), "test");
-      sparkTxService.startAndWait();
+      SparkTransactionHandler txHandler = new SparkTransactionHandler(new InMemoryTxSystemClient(txManager));
+      SparkDriverHttpService httpService = new SparkDriverHttpService(
+        "test", InetAddress.getLoopbackAddress().getCanonicalHostName(), txHandler);
+      httpService.startAndWait();
       try {
         // Start a job
-        sparkTxService.jobStarted(1, ImmutableSet.of(2));
+        txHandler.jobStarted(1, ImmutableSet.of(2));
 
         // Make a call to the stage transaction endpoint, it should throw TransactionFailureException
         try {
-          new SparkTransactionClient(sparkTxService.getBaseURI()).getTransaction(2, 1, TimeUnit.SECONDS);
+          new SparkTransactionClient(httpService.getBaseURI()).getTransaction(2, 1, TimeUnit.SECONDS);
           Assert.fail("Should failed to get transaction");
         } catch (TransactionFailureException e) {
           // expected
         }
 
         // End the job
-        sparkTxService.jobEnded(1, false);
+        txHandler.jobEnded(1, false);
       } finally {
-        sparkTxService.stopAndWait();
+        httpService.stopAndWait();
       }
     } finally {
       txManager.stopAndWait();
@@ -212,14 +215,14 @@ public class SparkTransactionServiceTest {
     Executors.newSingleThreadScheduledExecutor().schedule(new Runnable() {
       @Override
       public void run() {
-        sparkTxService.jobStarted(1, stages);
+        sparkTxHandler.jobStarted(1, stages);
       }
     }, 3, TimeUnit.SECONDS);
 
     // Should be able to get the transaction, hence no exception
     sparkTxClient.getTransaction(2, 10, TimeUnit.SECONDS);
 
-    sparkTxService.jobEnded(1, true);
+    sparkTxHandler.jobEnded(1, true);
   }
 
   /**
@@ -253,9 +256,9 @@ public class SparkTransactionServiceTest {
 
     // Now start the job
     if (explicitTransaction == null) {
-      sparkTxService.jobStarted(jobId, stages);
+      sparkTxHandler.jobStarted(jobId, stages);
     } else {
-      sparkTxService.jobStarted(jobId, stages, new TransactionInfo() {
+      sparkTxHandler.jobStarted(jobId, stages, new TransactionInfo() {
         @Override
         public Transaction getTransaction() {
           return explicitTransaction;
@@ -301,7 +304,7 @@ public class SparkTransactionServiceTest {
     }
 
     // Now finish the job
-    sparkTxService.jobEnded(jobId, jobSucceeded);
+    sparkTxHandler.jobEnded(jobId, jobSucceeded);
 
     // After job finished, no transaction will be associated with the stages
     verifyStagesTransactions(stages, new ClientTransactionVerifier() {

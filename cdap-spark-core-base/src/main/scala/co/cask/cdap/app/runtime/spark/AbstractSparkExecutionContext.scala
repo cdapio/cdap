@@ -77,14 +77,16 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
                                                      runtimeContext.getDatasetCache,
                                                      runtimeContext.getRetryStrategy)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
-  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient,
-                                                           runtimeContext.getHostname, runtimeContext.getProgramName)
+  private val sparkTxHandler = new SparkTransactionHandler(runtimeContext.getTransactionSystemClient)
+  private val sparkDriveHttpService = new SparkDriverHttpService(runtimeContext.getProgramName,
+                                                                 runtimeContext.getHostname,
+                                                                 sparkTxHandler)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
 
-  // Start the Spark TX service
-  sparkTxService.startAndWait()
+  // Start the Spark driver http service
+  sparkDriveHttpService.startAndWait()
 
   // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
   SparkRuntimeEnv.addSparkListener(new SparkListener {
@@ -100,18 +102,18 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
       sparkTransaction.fold({
         LOG.debug("Spark program={}, runId={}, jobId={} starts without transaction",
                   runtimeContext.getProgram.getId, getRunId, jobId)
-        sparkTxService.jobStarted(jobId, stageIds)
+        sparkTxHandler.jobStarted(jobId, stageIds)
       })(info => {
         LOG.debug("Spark program={}, runId={}, jobId={} starts with auto-commit={} on transaction {}",
                   runtimeContext.getProgram.getId, getRunId, jobId,
                   info.commitOnJobEnded().toString, info.getTransaction)
-        sparkTxService.jobStarted(jobId, stageIds, info)
+        sparkTxHandler.jobStarted(jobId, stageIds, info)
         info.onJobStarted()
       })
     }
 
     override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
-      sparkTxService.jobEnded(jobEnd.jobId, jobEnd.jobResult == JobSucceeded)
+      sparkTxHandler.jobEnded(jobEnd.jobId, jobEnd.jobResult == JobSucceeded)
     }
   })
 
@@ -121,7 +123,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
       // This make sure all jobs' transactions are committed/invalidated
       SparkRuntimeEnv.stop().foreach(sc => applicationEndLatch.await())
     } finally {
-      sparkTxService.stopAndWait()
+      sparkDriveHttpService.stopAndWait()
     }
   }
 
@@ -171,7 +173,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
     new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, getNamespace, datasetName,
-      arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+      arguments, splits, getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI))
   }
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
@@ -180,7 +182,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
     new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, namespace,
-      datasetName, arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+      datasetName, arguments, splits, getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI))
   }
 
   override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
@@ -272,7 +274,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
               saveAsNewAPIHadoopDataset(sc, conf, rdd)
 
             case batchWritable: BatchWritable[K, V] =>
-              val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
+              val txServiceBaseURI = getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI)
               sc.runJob(rdd, BatchWritableFunc.create(namespace, datasetName, arguments, txServiceBaseURI))
 
             case _ =>
@@ -373,19 +375,19 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
 object AbstractSparkExecutionContext {
 
   private val LOG = LoggerFactory.getLogger(classOf[AbstractSparkExecutionContext])
-  private var txServiceBaseURI: Option[Broadcast[URI]] = None
+  private var driverHttpServiceBaseURI: Option[Broadcast[URI]] = None
 
   /**
     * Creates a [[org.apache.spark.broadcast.Broadcast]] for the base URI
-    * of the [[co.cask.cdap.app.runtime.spark.SparkTransactionService]]
+    * of the [[co.cask.cdap.app.runtime.spark.SparkDriverHttpService]]
     */
-  private def getTxServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
+  private def getDriveHttpServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
     this.synchronized {
-      this.txServiceBaseURI match {
+      this.driverHttpServiceBaseURI match {
         case Some(uri) => uri
         case None =>
           val broadcast = sc.broadcast(baseURI)
-          txServiceBaseURI = Some(broadcast)
+          driverHttpServiceBaseURI = Some(broadcast)
           broadcast
       }
     }
