@@ -22,6 +22,7 @@ let appPath = `${basepath}/:appId`;
 
 export const MyAppApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  deployApp: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   getVersions: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}/versions`),
   getDeployedApp: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
