@@ -227,22 +227,25 @@ class MyBatchPipelineConfigCtrl {
     pipelineconfig.config.stageLoggingEnabled = this.stageLogging;
     pipelineconfig.config.processTimingEnabled = this.instrumentation;
 
+
     return pipelineconfig;
   }
   updatePipeline(updatingPipeline = true) {
     let pipelineConfig = this.getUpdatedPipelineConfig();
     this.updatingPipeline = updatingPipeline;
-    return this.myPipelineApi.save(
-      {
-        namespace: this.$state.params.namespace,
-        pipeline: pipelineConfig.name
-      },
-      pipelineConfig
-    )
+    this.updatingPipeline = updatingPipeline;
+    return this.myPipelineApi
+      .save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineConfig.name
+        },
+        pipelineConfig
+      )
       .$promise
       .then(
         () => {
-          return this.$state.reload().$promise.then(() => this.updatingPipeline = false);
+          return this.$state.reload().then(() => this.updatingPipeline = false);
         },
         (err) => {
           this.updatingPipeline = false;
