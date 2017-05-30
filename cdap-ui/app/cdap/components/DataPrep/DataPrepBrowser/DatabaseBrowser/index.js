@@ -143,6 +143,48 @@ export default class DatabaseBrowser extends Component {
       );
   }
 
+  renderEmpty(tables) {
+    if (tables.length === 0 && this.state.search.length !== 0) {
+      return (
+        <div className="empty-search-container">
+          <div className="empty-search">
+            <strong>
+              {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+            </strong>
+            <hr />
+            <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+            <ul>
+              <li>
+                <span
+                  className="link-text"
+                  onClick={() => {
+                    this.setState({
+                      search: '',
+                      searchFocus: true
+                    });
+                  }}
+                >
+                  {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+                </span>
+                <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search text-xs-center">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.emptyDatabase`)}
+          </strong>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const renderNoPluginMessage = (error) => {
       return (
@@ -158,33 +200,7 @@ export default class DatabaseBrowser extends Component {
         return renderNoPluginMessage(this.state.error);
       }
       if (!tables.length) {
-        return (
-          <div className="empty-search-container">
-            <div className="empty-search">
-              <strong>
-                {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
-              </strong>
-              <hr />
-              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
-              <ul>
-                <li>
-                  <span
-                    className="link-text"
-                    onClick={() => {
-                      this.setState({
-                        search: '',
-                        searchFocus: true
-                      });
-                    }}
-                  >
-                    {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
-                  </span>
-                  <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        );
+        return this.renderEmpty(tables);
       }
       return (
         <div className="database-content-table">

@@ -111,9 +111,12 @@ $tab-active-color: #ff6600;
       border-bottom-color: $tab-active-bg-color;
     }
 
-    .display-name {
+    .display-name,
+    .original-name {
       color: $tab-active-color;
+    }
 
+    .display-name {
       .overflow-layer {
         background-color: $tab-active-bg-color;
       }

@@ -46,7 +46,8 @@ export default class FileBrowser extends Component {
       loading: true,
       search: '',
       sort: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
+      searchFocus: true
     };
 
     this.handleSearch = this.handleSearch.bind(this);
@@ -282,6 +283,35 @@ export default class FileBrowser extends Component {
     }
   }
 
+  renderEmptySearch() {
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+          </strong>
+          <hr />
+          <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+          <ul>
+            <li>
+              <span
+                className="link-text"
+                onClick={() => {
+                  this.setState({
+                    search: ''
+                  });
+                }}
+              >
+                {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+              </span>
+              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   renderContent() {
     if (this.state.loading) {
       // NEED TO REPLACE WITH ACTUAL LOADING ICON
@@ -319,14 +349,7 @@ export default class FileBrowser extends Component {
       });
 
       if (displayContent.length === 0) {
-        return (
-          <div className="empty-container">
-            <br />
-            <h4 className="text-xs-center">
-              {T.translate(`${PREFIX}.emptySearch`, { searchTerm: this.state.search })}
-            </h4>
-          </div>
-        );
+        return this.renderEmptySearch();
       }
     }
 
@@ -439,6 +462,7 @@ export default class FileBrowser extends Component {
                 placeholder={T.translate(`${PREFIX}.TopPanel.searchPlaceholder`)}
                 value={this.state.search}
                 onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
               />
             </div>
           </div>

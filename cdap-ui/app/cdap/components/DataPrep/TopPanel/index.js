@@ -169,9 +169,22 @@ export default class DataPrepTopPanel extends Component {
           <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
               {T.translate('features.DataPrep.TopPanel.database')}
+              <span className="connection-name">{info.properties.connectionid}</span>
             </div>
             <div className="title">
-              SELECT * FROM {info.properties.name}
+              {info.properties.name}
+            </div>
+          </div>
+        );
+      } else if (info.properties.connection === 'upload') {
+        return (
+          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.upload')}
+              <span className="connection-name">{info.properties.connectionid}</span>
+            </div>
+            <div className="title">
+              {info.properties.name}
             </div>
           </div>
         );
