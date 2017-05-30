@@ -2636,6 +2636,16 @@
   </property>
 
   <property>
+    <name>security.delegation.token.renew.beforehand.ms</name>
+    <value>3600000</value>
+    <description>
+      The amount of time to renew delegation tokens for YARN applications that are launched by CDAP
+      in advance before the earliest expiration of delegation tokens'. The larger this value is,
+      more often delegation tokens are renewed; Defaults to 1 hour in milliseconds
+    </description>
+  </property>
+
+  <property>
     <name>security.auth.server.announce.urls</name>
     <value></value>
     <description>

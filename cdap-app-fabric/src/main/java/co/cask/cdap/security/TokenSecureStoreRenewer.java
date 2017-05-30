@@ -61,6 +61,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   private final LocationFactory locationFactory;
   private final SecureStore secureStore;
   private final boolean secureExplore;
+  private final long renewTokenBeforehandMillis;
   private Long updateInterval;
 
   @Inject
@@ -72,6 +73,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
     this.secureStore = secureStore;
     this.secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
       && UserGroupInformation.isSecurityEnabled();
+    this.renewTokenBeforehandMillis = cConf.getLong(Constants.Security.DELEGATION_TOKEN_RENEW_BEFOREHAND_MS);
   }
 
   /**
@@ -187,8 +189,8 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
     // Set the update interval to the shortest update interval of all required renewals.
     Long minimumInterval = Collections.min(renewalTimes);
-    // Schedule it 1 hour before it expires
-    long delay = minimumInterval - TimeUnit.HOURS.toMillis(1);
+    // Schedule it with the configured amount of time before it expires
+    long delay = minimumInterval - renewTokenBeforehandMillis;
     // Safeguard: In practice, the value can't be that small, otherwise nothing would work.
     if (delay <= 0) {
       delay = (minimumInterval <= 2) ? 1 : minimumInterval / 2;

@@ -817,6 +817,8 @@ public final class Constants {
     public static final String KERBEROS_ENABLED = "kerberos.auth.enabled";
     /** Kerberos keytab relogin interval. */
     public static final String KERBEROS_KEYTAB_RELOGIN_INTERVAL = "kerberos.auth.relogin.interval.seconds";
+    /** The amount of time to renew delegation tokens before their earliest expiration. */
+    public static final String DELEGATION_TOKEN_RENEW_BEFOREHAND_MS = "security.delegation.token.renew.beforehand.ms";
     /** Algorithm used to generate the digest for access tokens. */
     public static final String TOKEN_DIGEST_ALGO = "security.token.digest.algorithm";
     /** Key length for secret key used by token digest algorithm. */
