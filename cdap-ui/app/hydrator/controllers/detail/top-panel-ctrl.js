@@ -186,7 +186,7 @@ class HydratorDetailTopPanelController {
             // if the higher level preferences have changed, or if this.resolvedMacros is empty
             if (!angular.equals(newResolvedMacros, this.resolvedMacros)) {
               if (Object.keys(this.resolvedMacros).length === 0) {
-                this.macrosMap = Object.assign({}, newResolvedMacros);
+                this.macrosMap = Object.assign(this.macrosMap, newResolvedMacros);
               } else {
                 let newPrefs = {};
                 for (let macroKey in newResolvedMacros) {
@@ -210,7 +210,7 @@ class HydratorDetailTopPanelController {
             }
 
             if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
-              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
             }
             this.validToStartOrSchedule = this.isValidToStartOrSchedule();
             return this.runtimeArguments;
@@ -220,7 +220,7 @@ class HydratorDetailTopPanelController {
 
     // if there are zero macros, but there are user-set runtime arguments
     } else {
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
       this.validToStartOrSchedule = this.isValidToStartOrSchedule();
       return this.$q.when(this.runtimeArguments);
     }

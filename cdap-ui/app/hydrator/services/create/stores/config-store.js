@@ -939,6 +939,9 @@ class HydratorPlusPlusConfigStore {
   }
 
   addPostAction(config) {
+    if (!this.state.config.postActions) {
+      this.state.config.postActions = [];
+    }
     this.state.config.postActions.push(config);
     this.emitChange();
   }

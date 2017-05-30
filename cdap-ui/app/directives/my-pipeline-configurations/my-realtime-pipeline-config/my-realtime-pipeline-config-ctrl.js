@@ -115,12 +115,16 @@ class MyRealtimePipelineConfigCtrl {
     let runtimeArgumentsPairs = runtimeArguments.pairs;
     for (let i = 0; i < runtimeArgumentsPairs.length; i++) {
       if (runtimeArgumentsPairs[i].notDeletable) {
-        let runtimeArgKey = runtimeArgumentsPairs[i].key;
-        if (this.resolvedMacros.hasOwnProperty(runtimeArgKey)) {
-          if (this.resolvedMacros[runtimeArgKey] !== runtimeArgumentsPairs[i].value) {
-            runtimeArgumentsPairs[i].showReset = true;
-          } else {
-            runtimeArgumentsPairs[i].showReset = false;
+        if (!runtimeArgumentsPairs[i].enabled) {
+          runtimeArgumentsPairs[i].showReset = false;
+        } else {
+          let runtimeArgKey = runtimeArgumentsPairs[i].key;
+          if (this.resolvedMacros.hasOwnProperty(runtimeArgKey)) {
+            if (this.resolvedMacros[runtimeArgKey] !== runtimeArgumentsPairs[i].value) {
+              runtimeArgumentsPairs[i].showReset = true;
+            } else {
+              runtimeArgumentsPairs[i].showReset = false;
+            }
           }
         }
       }

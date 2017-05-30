@@ -420,7 +420,7 @@ class HydratorPlusPlusTopPanelCtrl {
                 this.previewActions.setMacros(this.macrosMap)
               );
             }
-            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
             this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
@@ -435,7 +435,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setMacros(this.macrosMap)
       );
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
       this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
