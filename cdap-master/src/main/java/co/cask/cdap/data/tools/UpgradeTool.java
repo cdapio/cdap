@@ -374,10 +374,12 @@ public class UpgradeTool {
     // if no children for appfabric, all master nodes are stopped
 
     if (!nodeChildren.getChildren().isEmpty()) {
-      throw new Exception(String.format("CDAP Master is still running on %s",
+      LOG.info(String.format("CDAP Master is still running on %s",
                                         com.google.common.base.Joiner.on(",").join(nodeChildren.getChildren())));
-
+    } else {
+      LOG.info("CDAP Master is not running");
     }
+    throw new Exception("Master Stop Check Complete");
   }
 
   private String getResponse(boolean interactive) {
