@@ -64,7 +64,7 @@ public class LastRunConstraintTest {
     SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // require 1 hour since last run
-    LastRunConstraint lastRunConstraint = new LastRunConstraint(TimeUnit.HOURS.toSeconds(1));
+    LastRunConstraint lastRunConstraint = new LastRunConstraint(1, TimeUnit.HOURS);
     ConstraintContext constraintContext = new ConstraintContext(job, now, store);
 
     // there's been no runs, so the constraint is satisfied by default

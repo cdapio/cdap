@@ -30,15 +30,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class LastRunConstraint extends ProtoConstraint.LastRunConstraint implements CheckableConstraint {
 
-  public LastRunConstraint(long secsSinceLastRun) {
-    super(secsSinceLastRun);
+  public LastRunConstraint(long durationSinceLastRun, TimeUnit unit) {
+    super(durationSinceLastRun, unit);
   }
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    long startTime = TimeUnit.MILLISECONDS.toSeconds(context.getCheckTimeMillis()) - secsSinceLastRun;
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(context.getCheckTimeMillis() - millisSinceLastRun);
     // We only need to check program runs within recent history, adding a buffer of 1 day, because the time range
-    // is for the start time of the program. It may start before `secsSinceLastRun`, but complete after it.
+    // is for the start time of the program. It may start before `millisSinceLastRun`, but complete after it.
     // Note: this will miss out on active workflow runs that started more than ~1day ago (suspended/lengthy workflows)
     Iterable<RunRecordMeta> runRecords =
       context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.ALL,

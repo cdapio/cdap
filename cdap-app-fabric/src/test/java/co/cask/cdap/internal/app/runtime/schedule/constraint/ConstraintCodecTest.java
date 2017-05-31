@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 public class ConstraintCodecTest {
 
@@ -39,8 +40,10 @@ public class ConstraintCodecTest {
   @Test
   public void testConstraintCodec() {
     testSerDeser(new ProtoConstraint.ConcurrencyConstraint(3), new ConcurrencyConstraint(3));
-    testSerDeser(new ProtoConstraint.DelayConstraint(300000L), new DelayConstraint(300000L));
-    testSerDeser(new ProtoConstraint.LastRunConstraint(3600000L), new LastRunConstraint(3600000L));
+    testSerDeser(new ProtoConstraint.DelayConstraint(300000L, TimeUnit.MILLISECONDS),
+                 new DelayConstraint(300000L, TimeUnit.MILLISECONDS));
+    testSerDeser(new ProtoConstraint.LastRunConstraint(3600000L, TimeUnit.MILLISECONDS),
+                 new LastRunConstraint(3600000L, TimeUnit.MILLISECONDS));
     testSerDeser(new ProtoConstraint.TimeRangeConstraint("02:00", "06:00", TimeZone.getDefault()),
                  new TimeRangeConstraint("02:00", "06:00", TimeZone.getDefault()));
   }

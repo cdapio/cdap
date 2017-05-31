@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The default implementation of {@link ScheduleBuilder}.
@@ -75,8 +76,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   @Override
-  public ScheduleBuilder withDelay(long delayMillis) {
-    constraints.add(new DelayConstraint(delayMillis));
+  public ScheduleBuilder withDelay(long delay, TimeUnit timeUnit) {
+    constraints.add(new DelayConstraint(delay, timeUnit));
     return this;
   }
 
@@ -93,8 +94,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   @Override
-  public ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delaySecs) {
-    constraints.add(new LastRunConstraint(delaySecs));
+  public ConstraintProgramScheduleBuilder withDurationSinceLastRun(long duration, TimeUnit unit) {
+    constraints.add(new LastRunConstraint(duration, unit));
     return this;
   }
 

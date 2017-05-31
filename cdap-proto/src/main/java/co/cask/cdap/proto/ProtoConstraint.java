@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -107,9 +108,9 @@ public abstract class ProtoConstraint implements Constraint {
 
     protected final long millisAfterTrigger;
 
-    public DelayConstraint(long millisAfterTrigger) {
+    public DelayConstraint(long delayAfterTrigger, TimeUnit unit) {
       super(Type.DELAY, true);
-      this.millisAfterTrigger = millisAfterTrigger;
+      this.millisAfterTrigger = unit.toMillis(delayAfterTrigger);
       validate();
     }
 
@@ -154,38 +155,38 @@ public abstract class ProtoConstraint implements Constraint {
    */
   public static class LastRunConstraint extends ProtoConstraint {
 
-    protected final long secsSinceLastRun;
+    protected final long millisSinceLastRun;
 
-    public LastRunConstraint(long secsSinceLastRun) {
+    public LastRunConstraint(long durationSinceLastRun, TimeUnit unit) {
       super(Type.LAST_RUN, false);
-      this.secsSinceLastRun = secsSinceLastRun;
+      this.millisSinceLastRun = unit.toMillis(durationSinceLastRun);
       validate();
     }
 
-    public long getSecsSinceLastRun() {
-      return secsSinceLastRun;
+    public long getMillisSinceLastRun() {
+      return millisSinceLastRun;
     }
 
     @Override
     public void validate() {
-      validateInRange(secsSinceLastRun, "secsSinceLastRun", 1L, null);
+      validateInRange(millisSinceLastRun, "millisSinceLastRun", 1L, null);
     }
 
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
         && getClass() == o.getClass()
-        && getSecsSinceLastRun() == ((LastRunConstraint) o).getSecsSinceLastRun();
+        && getMillisSinceLastRun() == ((LastRunConstraint) o).getMillisSinceLastRun();
     }
 
     @Override
     public int hashCode() {
-      return (int) (getSecsSinceLastRun() ^ (getSecsSinceLastRun() >>> 32));
+      return (int) (getMillisSinceLastRun() ^ (getMillisSinceLastRun() >>> 32));
     }
 
     @Override
     public String toString() {
-      return String.format("LastRun(%d ms)", getSecsSinceLastRun());
+      return String.format("LastRun(%d ms)", getMillisSinceLastRun());
     }
   }
 
