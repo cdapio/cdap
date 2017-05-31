@@ -289,17 +289,18 @@ class MyRealtimePipelineConfigCtrl {
   updatePipeline(updatingPipeline = true) {
     let pipelineConfig = this.getUpdatedPipelineConfig();
     this.updatingPipeline = updatingPipeline;
-    return this.myPipelineApi.save(
-      {
-        namespace: this.$state.params.namespace,
-        pipeline: pipelineConfig.name
-      },
-      pipelineConfig
-    )
+    return this.myPipelineApi
+      .save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineConfig.name
+        },
+        pipelineConfig
+      )
       .$promise
       .then(
         () => {
-          return this.$state.reload().$promise.then(() => this.updatingPipeline = false);
+          return this.$state.reload().then(() => this.updatingPipeline = false);
         },
         (err) => {
           this.updatingPipeline = false;
@@ -312,7 +313,7 @@ class MyRealtimePipelineConfigCtrl {
   }
 }
 
-MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state',
+MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state', 
 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
   .directive('keyValuePairs', function(reactDirective) {

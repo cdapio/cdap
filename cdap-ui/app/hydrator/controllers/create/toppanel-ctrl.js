@@ -209,7 +209,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.metadataExpanded = false;
     } else if (event.keyCode === 27) {
       // Reset if the user hits ESC key.
-      this.resetMetadata();
+      this.resetMetadata(event);
     }
   }
 
