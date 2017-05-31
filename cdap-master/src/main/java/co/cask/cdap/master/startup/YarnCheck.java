@@ -180,11 +180,7 @@ class YarnCheck extends AbstractMasterCheck {
 
     int availableMemoryMB = memoryCapacity - memoryUsed;
     int availableVCores = vcoresCapacity - vcoresUsed;
-    try {
-      checkResources(requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores, "available");
-    } catch (Exception e) {
-      LOG.warn(e.getMessage());
-    }
+    checkResources(requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores, "available");
 
     LOG.info("  YARN resources successfully verified.");
   }
