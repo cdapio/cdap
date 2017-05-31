@@ -154,38 +154,38 @@ public abstract class ProtoConstraint implements Constraint {
    */
   public static class LastRunConstraint extends ProtoConstraint {
 
-    protected final long millisSinceLastRun;
+    protected final long secsSinceLastRun;
 
-    public LastRunConstraint(long millisSinceLastRun) {
+    public LastRunConstraint(long secsSinceLastRun) {
       super(Type.LAST_RUN, false);
-      this.millisSinceLastRun = millisSinceLastRun;
+      this.secsSinceLastRun = secsSinceLastRun;
       validate();
     }
 
-    public long getMillisSinceLastRun() {
-      return millisSinceLastRun;
+    public long getSecsSinceLastRun() {
+      return secsSinceLastRun;
     }
 
     @Override
     public void validate() {
-      validateInRange(millisSinceLastRun, "millisSinceLastRun", 1L, null);
+      validateInRange(secsSinceLastRun, "secsSinceLastRun", 1L, null);
     }
 
     @Override
     public boolean equals(Object o) {
       return this == o || o != null
         && getClass() == o.getClass()
-        && getMillisSinceLastRun() == ((LastRunConstraint) o).getMillisSinceLastRun();
+        && getSecsSinceLastRun() == ((LastRunConstraint) o).getSecsSinceLastRun();
     }
 
     @Override
     public int hashCode() {
-      return (int) (getMillisSinceLastRun() ^ (getMillisSinceLastRun() >>> 32));
+      return (int) (getSecsSinceLastRun() ^ (getSecsSinceLastRun() >>> 32));
     }
 
     @Override
     public String toString() {
-      return String.format("LastRun(%d ms)", getMillisSinceLastRun());
+      return String.format("LastRun(%d ms)", getSecsSinceLastRun());
     }
   }
 

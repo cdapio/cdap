@@ -30,7 +30,7 @@ public class DelayConstraint extends ProtoConstraint.DelayConstraint implements 
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    long elapsedTime = context.getCheckTime() - context.getJob().getCreationTime();
+    long elapsedTime = context.getCheckTimeMillis() - context.getJob().getCreationTime();
     if (elapsedTime >= millisAfterTrigger) {
       return ConstraintResult.SATISFIED;
     }

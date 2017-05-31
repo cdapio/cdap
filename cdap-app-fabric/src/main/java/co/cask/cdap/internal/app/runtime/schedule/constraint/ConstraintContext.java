@@ -24,24 +24,23 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Context object, exposing information that may be useful during checking constraints.
  */
 public final class ConstraintContext {
   private final Job job;
-  private final long checkTime;
+  private final long checkTimeMillis;
   private final Store store;
 
-  public ConstraintContext(Job job, long checkTime, Store store) {
+  public ConstraintContext(Job job, long checkTimeMillis, Store store) {
     this.job = job;
-    this.checkTime = checkTime;
+    this.checkTimeMillis = checkTimeMillis;
     this.store = store;
   }
 
-  public long getCheckTime() {
-    return checkTime;
+  public long getCheckTimeMillis() {
+    return checkTimeMillis;
   }
 
   public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status, int limit) {
