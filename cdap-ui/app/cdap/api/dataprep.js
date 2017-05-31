@@ -58,6 +58,7 @@ const MyDataPrepApi = {
   jdbcDrivers: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/drivers`),
   jdbcAllowed: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/jdbc/allowed`),
   jdbcTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/connections/jdbc/test`),
+  getDatabaseList: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/databases`),
 
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),

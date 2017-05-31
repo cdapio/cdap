@@ -239,6 +239,7 @@ export default class DataPrepTable extends Component {
                             onChange={this.handleSaveEditedColumnName.bind(this, index)}
                             value={head.name}
                             onWarning={this.showWarningMessage.bind(this, index)}
+                            allowSpace={false}
                           />
                           {
                             head.showWarning ?
@@ -323,19 +324,21 @@ export default class DataPrepTable extends Component {
       return (
         <div className="dataprep-table empty">
           {
-            this.state.directivesLength === 0 ? (
-              <div>
-                <h5 className="text-xs-center">Start by uploading data to this workspace</h5>
-                <div className="button-container text-xs-center">
-                  <button
-                    className="btn btn-primary"
-                    onClick={this.openUploadData}
-                  >
-                    Upload
-                  </button>
+            this.state.directivesLength === 0 ?
+              (
+                <div>
+                  <h5 className="text-xs-center">
+                    {T.translate('features.DataPrep.DataPrepTable.emptyWorkspace')}
+                  </h5>
                 </div>
-              </div>
-            ) : null
+              ) :
+              (
+                <div>
+                  <h5 className="text-xs-center">
+                    {T.translate('features.DataPrep.DataPrepTable.noData')}
+                  </h5>
+                </div>
+              )
           }
         </div>
       );

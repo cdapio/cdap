@@ -76,11 +76,12 @@ $header-bg-color: #eeeeee;
           display: inline-flex;
           align-items: center;
           width: 100%;
-          margin-top: 7px;
+          margin-top: 5px;
 
           .header-text {
             width: 100%;
             cursor: initial;
+            margin-right: 5px;
 
             span {
               margin-left: 3px;
@@ -97,7 +98,6 @@ $header-bg-color: #eeeeee;
           }
 
           .column-header-checkbox {
-            margin-right: 5px;
             width: 12px;
           }
 
