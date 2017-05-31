@@ -31,6 +31,8 @@ import AddConnection from 'components/DataPrepConnections/AddConnection';
 import isNil from 'lodash/isNil';
 import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
 import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
+import DataPrepStore from 'components/DataPrep/store';
+import {objectQuery} from 'services/helpers';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -73,11 +75,14 @@ export default class DataPrepConnections extends Component {
   constructor(props) {
     super(props);
 
+    let {workspaceInfo} = DataPrepStore.getState().dataprep;
     this.state = {
       sidePanelExpanded: true,
       backendChecking: true,
       backendDown: false,
       connectionsList: [],
+      activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
+      activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
     };
 
@@ -92,8 +97,24 @@ export default class DataPrepConnections extends Component {
     if (isNil(this.props.match) || this.props.match.path.indexOf('connections') === -1) {
       setActiveBrowser({name: 'file'});
     }
+    if (!this.props.enableRouting) {
+      this.dataprepSubscription = DataPrepStore.subscribe(() => {
+        let {workspaceInfo} = DataPrepStore.getState().dataprep;
+        if (workspaceInfo.properties.connectionid !== this.state.activeConnectionid || workspaceInfo.properties.id !== this.state.activeConnectionid) {
+          this.setState({
+            activeConnectionid: workspaceInfo.properties.connectionid || workspaceInfo.properties.id,
+            activeConnectionType: workspaceInfo.properties.connection
+          });
+        }
+      });
+    }
   }
 
+  componentWillUnmount() {
+    if (this.dataprepSubscription) {
+      this.dataprepSubscription();
+    }
+  }
   checkBackendUp() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -137,14 +158,20 @@ export default class DataPrepConnections extends Component {
       });
       return;
     }
+    let activeConnectionType, activeConnectionid;
     if (browserName === 'file') {
       setActiveBrowser({name: 'file'});
+      activeConnectionType = 'file';
     } else if (typeof browserName === 'object' && browserName.type === 'DATABASE') {
       setDatabaseAsActiveBrowser({name: 'database', id: browserName.id});
+      activeConnectionType = 'database';
+      activeConnectionid = browserName.id;
     }
 
     this.setState({
-      showUpload: false
+      showUpload: false,
+      activeConnectionType,
+      activeConnectionid
     });
   }
 
@@ -347,6 +374,11 @@ export default class DataPrepConnections extends Component {
     }
     let {enableRouting, ...attributes} = this.props;
     enableRouting = this.props.singleWorkspaceMode ? false : this.props.enableRouting;
+    if (this.state.activeConnectionType === 'database') {
+      setDatabaseAsActiveBrowser({name: 'database', id: this.state.activeConnectionid});
+    } else if (this.state.activeConnectionType === 'file') {
+      setActiveBrowser({name: 'file'});
+    }
     return (
       <DataPrepBrowser
         match={this.props.match}
