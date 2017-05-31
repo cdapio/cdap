@@ -375,10 +375,9 @@ public class UpgradeTool {
   }
 
   /**
-   * checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so throw
+   * Checks for appfabric service path on zookeeper, if they exist, CDAP master is still running, so throw
    * exception message with information on where its running.
-   * If none of the master service (in HA setup) is running, this method wouldn't throw any exception
-   * @throws Exception
+   * @throws Exception if at least one master is running
    */
   private void ensureCDAPMasterStopped() throws Exception {
     String appFabricPath = String.format("/discoverable/%s", Constants.Service.APP_FABRIC_HTTP);
@@ -397,6 +396,8 @@ public class UpgradeTool {
                       com.google.common.base.Joiner.on(",").join(runningNodes));
       throw new Exception(exceptionMessage);
     }
+    // CDAP-11733 As a future improvement, the upgrade tool can register as a CDAP master to become the leader
+    // and prevent other masters from starting.
   }
 
   private String getResponse(boolean interactive) {
