@@ -29,18 +29,19 @@ import org.apache.spark.executor.InputMetrics
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionAware
 
+import scala.annotation.meta.param
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 /**
   * A [[org.apache.spark.rdd.RDD]] implementation that reads data through [[co.cask.cdap.api.data.batch.BatchReadable]].
   */
-class BatchReadableRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
-                                                 @transient batchReadable: BatchReadable[K, V],
+class BatchReadableRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkContext,
+                                                 @(transient @param) batchReadable: BatchReadable[K, V],
                                                  namespace: String,
                                                  datasetName: String,
                                                  arguments: Map[String, String],
-                                                 @transient splits: Option[Iterable[_ <: Split]],
+                                                 @(transient @param) splits: Option[Iterable[_ <: Split]],
                                                  txServiceBaseURI: Broadcast[URI]) extends RDD[(K, V)](sc, Nil) {
 
   override protected def getPartitions: Array[Partition] = {
