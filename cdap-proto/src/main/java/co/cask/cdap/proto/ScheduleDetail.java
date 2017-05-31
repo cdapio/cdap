@@ -158,7 +158,7 @@ public class ScheduleDetail {
     } else if (getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
       ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) getTrigger();
       schedule = new StreamSizeSchedule(getName(), getDescription(),
-                                        trigger.getStream().getStream(), trigger.getTriggerMB(), constraints);
+                                        trigger.getStreamId().getStream(), trigger.getTriggerMB(), constraints);
     } else {
       return null;
     }

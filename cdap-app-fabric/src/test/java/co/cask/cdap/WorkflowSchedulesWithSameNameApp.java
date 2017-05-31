@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -30,11 +31,11 @@ public class WorkflowSchedulesWithSameNameApp extends AbstractApplication {
     setName("WorkflowSchedulesWithSameNameApp");
     setDescription("Application with Workflow containing multiple schedules with the same name");
     addWorkflow(new WorkflowSchedulesWithSameName());
-    scheduleWorkflow(Schedules.builder("DailySchedule").createTimeSchedule("0 4 * * *"),
-                     "WorkflowSchedulesWithSameName");
+    schedule(buildSchedule("DailySchedule", ProgramType.WORKFLOW, "WorkflowSchedulesWithSameName")
+               .triggerByTime("0 4 * * *"));
     // configuring Workflow with the same schedule name again should fail
-    scheduleWorkflow(Schedules.builder("DailySchedule").createTimeSchedule("0 5 * * *"),
-                     "WorkflowSchedulesWithSameName");
+    schedule(buildSchedule("DailySchedule", ProgramType.WORKFLOW, "WorkflowSchedulesWithSameName")
+               .triggerByTime("0 5 * * *"));
   }
 
   /**

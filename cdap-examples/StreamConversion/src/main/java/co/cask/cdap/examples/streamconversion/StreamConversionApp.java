@@ -17,6 +17,7 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -41,10 +42,9 @@ public class StreamConversionApp extends AbstractApplication {
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
     addWorkflow(new StreamConversionWorkflow());
-    scheduleWorkflow(Schedules.builder("every5min")
-                       .setDescription("runs every 5 minutes")
-                       .createTimeSchedule("*/5 * * * *"),
-                     "StreamConversionWorkflow");
+    schedule(buildSchedule("every5min", ProgramType.WORKFLOW, "StreamConversionWorkflow")
+               .setDescription("runs every 5 minutes")
+               .triggerByTime("*/5 * * * *"));
 
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()

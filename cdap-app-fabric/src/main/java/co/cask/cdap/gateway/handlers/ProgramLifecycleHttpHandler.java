@@ -881,7 +881,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       // if the existing trigger is StreamSizeTrigger, use the field in the existing trigger if the corresponding field
       // in schedule update detail is null
       StreamSizeTrigger existingTrigger = (StreamSizeTrigger) existing.getTrigger();
-      String streamName = Objects.firstNonNull(scheduleUpdate.getStreamName(), existingTrigger.getStream().getStream());
+      String streamName = Objects.firstNonNull(scheduleUpdate.getStreamName(),
+                                               existingTrigger.getStreamId().getStream());
       int dataTriggerMB = Objects.firstNonNull(scheduleUpdate.getDataTriggerMB(), existingTrigger.getTriggerMB());
       trigger = new StreamSizeTrigger(namespaceId.stream(streamName), dataTriggerMB);
     } else if (scheduleUpdate.getStreamName() != null && scheduleUpdate.getDataTriggerMB() != null) {

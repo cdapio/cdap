@@ -17,6 +17,7 @@
 package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
@@ -45,8 +46,8 @@ public class AppWithSchedule extends AbstractApplication {
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       addWorkflow(new SampleWorkflow());
-      scheduleWorkflow(Schedules.builder(SCHEDULE_NAME).createTimeSchedule("0/1 * * * * ?"),
-                       SampleWorkflow.class.getSimpleName());
+      schedule(buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, SampleWorkflow.class.getSimpleName())
+                 .triggerByTime("0/1 * * * * ?"));
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

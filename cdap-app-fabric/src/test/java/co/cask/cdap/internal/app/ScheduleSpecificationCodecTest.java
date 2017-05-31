@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
@@ -100,6 +101,8 @@ public class ScheduleSpecificationCodecTest {
     Application app = new AbstractApplication() {
       @Override
       public void configure() {
+        // intentionally use the deprecated scheduleWorkflow method to for timeSchedule
+        // to test TimeSchedule deserialization
         scheduleWorkflow(Schedules.builder("timeSchedule").createTimeSchedule("0 * * * *"), "workflow");
         scheduleWorkflow(Schedules.builder("streamSizeSchedule")
                            .createDataSchedule(Schedules.Source.STREAM, "stream", 1),

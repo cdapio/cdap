@@ -97,7 +97,7 @@ public class ScheduleClientTestRun extends ClientTestBase {
     Assert.assertEquals(FakeApp.SCHEDULE_CRON, timeTrigger.getCronExpression());
 
     Assert.assertEquals(FakeApp.STREAM_SCHEDULE_NAME, streamSchedule.getName());
-    Assert.assertEquals(FakeApp.STREAM_NAME, streamSizeTrigger.getStream().getStream());
+    Assert.assertEquals(FakeApp.STREAM_NAME, streamSizeTrigger.getStreamId().getStream());
     Assert.assertEquals(FakeApp.STREAM_TRIGGER_MB, streamSizeTrigger.getTriggerMB());
 
     String status = scheduleClient.getStatus(schedule);

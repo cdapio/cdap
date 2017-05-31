@@ -24,6 +24,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.DatasetContext;
@@ -142,10 +143,9 @@ public class AllProgramsApp extends AbstractApplication {
     addWorker(new NoOpWorker());
     addSpark(new NoOpSpark());
     addService(new NoOpService());
-    scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
-                       .setDescription(SCHEDULE_DESCRIPTION)
-                       .createTimeSchedule("* * * * *"),
-                     NoOpWorkflow.NAME);
+    schedule(buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, NoOpWorkflow.NAME)
+               .setDescription(SCHEDULE_DESCRIPTION)
+               .triggerByTime("* * * * *"));
     try {
       createDataset(DS_WITH_SCHEMA_NAME, ObjectMappedTable.class,
                     ObjectMappedTableProperties.builder()

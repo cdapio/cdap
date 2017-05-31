@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -31,11 +32,9 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
     setDescription("Application to test the deletion of the Schedules after unrecoverable reset");
     addWorkflow(new DummyWorkflow());
     addMapReduce(new DummyMR());
-    scheduleWorkflow(
-      Schedules.builder("Every5HourSchedule")
-        .setDescription("Every 5 hour schedule")
-        .createTimeSchedule("0 */5 * * *"),
-      "DummyWorkflow");
+    schedule(buildSchedule("Every5HourSchedule", ProgramType.WORKFLOW, "DummyWorkflow")
+               .setDescription("Every 5 hour schedule")
+               .triggerByTime("0 */5 * * *"));
   }
 
   /**
