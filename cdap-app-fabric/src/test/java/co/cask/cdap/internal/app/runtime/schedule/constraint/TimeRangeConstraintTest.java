@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TimeRangeConstraintTest {
 
-  private static final NamespaceId TEST_NS = new NamespaceId("DelayConstraintTest");
+  private static final NamespaceId TEST_NS = new NamespaceId("TimeRangeConstraintTest");
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
   private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
@@ -80,22 +80,22 @@ public class TimeRangeConstraintTest {
 
     // use a TimeRangeConstraint [4:00PM, 5:00PM)
     TimeRangeConstraint timeRangeConstraint = new TimeRangeConstraint("16:00", "17:00", TimeZone.getTimeZone("PST"));
-    ConstraintResult result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, now));
+    ConstraintResult result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 36 minutes till 4PM
     Assert.assertEquals(TimeUnit.MINUTES.toMillis(36), (long) result.getMillisBeforeNextRetry());
 
     result = timeRangeConstraint.check(SCHEDULE,
-                                       new ConstraintContext(job, now + result.getMillisBeforeNextRetry() - 1));
+                                       createConstraintContext(job, now + result.getMillisBeforeNextRetry() - 1));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     Assert.assertEquals(1L, (long) result.getMillisBeforeNextRetry());
 
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(36)));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now + TimeUnit.MINUTES.toMillis(36)));
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
 
     // 5:00PM PST
     long fivePM = 1494374400000L;
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, fivePM));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, fivePM));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 23 hours until the next time its 4PM again
     Assert.assertEquals(TimeUnit.HOURS.toMillis(23), (long) result.getMillisBeforeNextRetry());
@@ -110,7 +110,7 @@ public class TimeRangeConstraintTest {
 
     // use a TimeRangeConstraint [10:00PM, 6:00AM)
     TimeRangeConstraint timeRangeConstraint = new TimeRangeConstraint("22:00", "06:00", TimeZone.getTimeZone("PST"));
-    ConstraintResult result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, now));
+    ConstraintResult result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 6 hours + 36 minutes till 4PM
     long sixHoursAnd36Minutes = TimeUnit.HOURS.toMillis(6) + TimeUnit.MINUTES.toMillis(36);
@@ -118,38 +118,43 @@ public class TimeRangeConstraintTest {
                         (long) result.getMillisBeforeNextRetry());
 
     result = timeRangeConstraint.check(SCHEDULE,
-                                       new ConstraintContext(job, now + result.getMillisBeforeNextRetry() - 1));
+                                       createConstraintContext(job, now + result.getMillisBeforeNextRetry() - 1));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     Assert.assertEquals(1L, (long) result.getMillisBeforeNextRetry());
 
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, now + sixHoursAnd36Minutes));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now + sixHoursAnd36Minutes));
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
 
     // 5:00PM PST
     long fivePM = 1494374400000L;
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, fivePM));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, fivePM));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 5 hours until the next time its 10PM again
     Assert.assertEquals(TimeUnit.HOURS.toMillis(5), (long) result.getMillisBeforeNextRetry());
 
     // 5:00AM PST
     long fiveAM = 1494331200000L;
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, fiveAM));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, fiveAM));
     Assert.assertEquals(ConstraintResult.SatisfiedState.SATISFIED, result.getSatisfiedState());
 
     // 6:00AM PST - not satisfied, because the end range is exclusive
     long sixAM = 1494334800000L;
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, sixAM));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, sixAM));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 16 hours until the next time its 10PM
     Assert.assertEquals(TimeUnit.HOURS.toMillis(16), (long) result.getMillisBeforeNextRetry());
 
     // 7:00AM PST
     long sevenAM = 1494338400000L;
-    result = timeRangeConstraint.check(SCHEDULE, new ConstraintContext(job, sevenAM));
+    result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, sevenAM));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 15 hours until the next time its 10PM
     Assert.assertEquals(TimeUnit.HOURS.toMillis(15), (long) result.getMillisBeforeNextRetry());
+  }
+
+  private ConstraintContext createConstraintContext(Job job, long checkTime) {
+    // should be fine to pass in null as the Store parameter, since its not used in this test
+    return new ConstraintContext(job, checkTime, null);
   }
 
 }

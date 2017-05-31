@@ -16,12 +16,14 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
-import co.cask.cdap.proto.Notification;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 
-import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -30,24 +32,25 @@ import javax.annotation.Nullable;
 public final class ConstraintContext {
   private final Job job;
   private final long checkTime;
+  private final Store store;
 
-  public ConstraintContext(Job job, long checkTime) {
+  public ConstraintContext(Job job, long checkTime, Store store) {
     this.job = job;
     this.checkTime = checkTime;
+    this.store = store;
   }
 
   public long getCheckTime() {
     return checkTime;
   }
 
-  public List<RunRecord> getProgramRuns(@Nullable ProgramRunStatus status) {
-    // TODO: implement
-    throw new UnsupportedOperationException();
+  public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status, int limit) {
+    return store.getRuns(programId, status, 0, Long.MAX_VALUE, limit);
   }
 
-  public List<RunRecord> getProgramRuns(@Nullable ProgramRunStatus status, long startTime, long endTime, int limit) {
-    // TODO: implement
-    throw new UnsupportedOperationException();
+  public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status,
+                                                         long startTime, long endTime, int limit) {
+    return store.getRuns(programId, status, startTime, endTime, limit);
   }
 
   public Job getJob() {

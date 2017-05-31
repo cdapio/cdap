@@ -21,13 +21,8 @@ import javax.annotation.Nullable;
 
 /**
  * Defines constraints that must be met at runtime in order for the scheduler to launch a run.
- * If a constraints is not met, the run will be skipped.
- * The run is not deferred until the constraints are met, it is skipped.
  *
- * Currently only contains the maximum number of concurrent runs. In the future, other checks may be added,
- * such as the amount of available memory in the YARN cluster.
- *
- * @deprecated as of 4.2.0. Use {@link co.cask.cdap.internal.schedule.constraint.Constraint} instead.
+ * @deprecated As of CDAP 4.2.0, use {@link ScheduleBuilder#withConcurrency(int)}.
  */
 @Deprecated
 public class RunConstraints {
@@ -39,6 +34,9 @@ public class RunConstraints {
    * before launching a run.
    *
    * @param maxConcurrentRuns the maximum number of concurrent active runs for a schedule.
+   *                          When a schedule is triggered, the scheduler will look up all active runs for the scheduled
+   *                          program. If that number is equal to or greater than this maximum number, the scheduled
+   *                          program will not be launched.
    *                          If null, no limit is enforced.
    */
   public RunConstraints(@Nullable Integer maxConcurrentRuns) {
@@ -46,9 +44,7 @@ public class RunConstraints {
   }
 
   /**
-   * @return the maximum number of concurrent runs for a schedule.
-   *         When a schedule is triggered, the scheduler will look up all active runs for the scheduled program.
-   *         If that number is equal to or greater than the max, the run will be skipped.
+   * @return the maximum number of concurrent runs.
    */
   @Nullable
   public Integer getMaxConcurrentRuns() {

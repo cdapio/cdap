@@ -28,8 +28,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
@@ -43,27 +41,21 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -72,9 +64,6 @@ import java.util.concurrent.TimeUnit;
  */
 class ConstraintCheckerService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ConstraintCheckerService.class);
-
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Transactional transactional;
   private final DatasetFramework datasetFramework;
@@ -115,7 +104,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     LOG.info("Starting ConstraintCheckerService.");
     taskExecutorService = MoreExecutors.listeningDecorator(
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task").build()));
-    taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
+    taskRunner = new ScheduleTaskRunner(lifecycleService, propertiesResolver,
                                         taskExecutorService, namespaceQueryAdmin, cConf);
 
     int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework).getNumPartitions();
@@ -253,7 +242,12 @@ class ConstraintCheckerService extends AbstractIdleService {
       if (job.getState() != Job.State.PENDING_CONSTRAINT) {
         return;
       }
-      if (!constraintsSatisfied(job)) {
+      ConstraintResult.SatisfiedState satisfiedState = constraintsSatisfied(job);
+      if (satisfiedState == ConstraintResult.SatisfiedState.NOT_SATISFIED) {
+        return;
+      }
+      if (satisfiedState == ConstraintResult.SatisfiedState.NEVER_SATISFIED) {
+        jobQueue.deleteJob(job);
         return;
       }
       jobQueue.transitState(job, Job.State.PENDING_LAUNCH);
@@ -273,8 +267,6 @@ class ConstraintCheckerService extends AbstractIdleService {
           readyJobsIter.remove();
           continue;
         }
-        ProgramScheduleStoreDataset store = Schedulers.getScheduleStore(context, datasetFramework);
-        ProgramScheduleMeta meta = store.getScheduleMeta(job.getSchedule().getScheduleId());
         if (job.isToBeDeleted()) {
           // If this is true, that means the schedule was deleted/updated before the state transition from
           // PENDING_CONSTRAINT to PENDING_LAUNCH is committed. We can just remove the job without launching it.
@@ -286,34 +278,15 @@ class ConstraintCheckerService extends AbstractIdleService {
         }
 
         if (storedJob.getState() == Job.State.PENDING_LAUNCH) {
-          ProgramSchedule schedule = job.getSchedule();
-          ProgramId programId = schedule.getProgramId();
-          Map<String, String> userArgs = Maps.newHashMap();
-          Map<String, String> systemArgs = Maps.newHashMap();
-          Map<String, String> notificationProperties = job.getNotifications().get(0).getProperties();
-          String userOverridesString = notificationProperties.get(ProgramOptionConstants.USER_OVERRIDES);
-          if (userOverridesString != null) {
-            Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
-            userArgs.putAll(userOverrides);
-          }
-          userArgs.putAll(schedule.getProperties());
-          userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
-
-          String systemOverridesString = notificationProperties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-          if (systemOverridesString != null) {
-            Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
-            systemArgs.putAll(systemOverrides);
-          }
-          systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
           try {
-            taskRunner.execute(programId, systemArgs, userArgs);
-            LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+            taskRunner.launch(job);
           } catch (Exception e) {
             LOG.warn("Failed to run program {} in schedule {}. Skip running this program.",
-                     schedule.getProgramId(), schedule.getName(), e);
+                     job.getSchedule().getProgramId(), job.getSchedule().getName(), e);
             // don't delete the job, as it will be retried in some later iteration over the JobQueue
             continue;
           }
+
           // this should not have a conflict, because any updates to the job will first check to make sure that
           // it is not PENDING_LAUNCH
           readyJobsIter.remove();
@@ -324,24 +297,28 @@ class ConstraintCheckerService extends AbstractIdleService {
       return false;
     }
 
-    private boolean constraintsSatisfied(Job job) {
-      ConstraintContext constraintContext = new ConstraintContext(job, System.currentTimeMillis());
+    private ConstraintResult.SatisfiedState constraintsSatisfied(Job job) {
+      ConstraintResult.SatisfiedState satisfiedState = ConstraintResult.SatisfiedState.SATISFIED;
+
+      ConstraintContext constraintContext = new ConstraintContext(job, System.currentTimeMillis(), store);
       for (Constraint constraint : job.getSchedule().getConstraints()) {
         if (!(constraint instanceof CheckableConstraint)) {
           // this shouldn't happen, since all Constraint implementations should extend AbstractConstraint
           throw new IllegalArgumentException("Implementation of Constraint must extend AbstractConstraint");
         }
+
         CheckableConstraint abstractConstraint = (CheckableConstraint) constraint;
         ConstraintResult result = abstractConstraint.check(job.getSchedule(), constraintContext);
-        if (result != ConstraintResult.SATISFIED) {
-          // if any of the constraints are unsatisfied, return false
-          return false;
+        if (result.getSatisfiedState() == ConstraintResult.NEVER_SATISFIED.getSatisfiedState()) {
+          // if any of the constraints are NEVER_SATISFIED, return NEVER_SATISFIED
+          return ConstraintResult.NEVER_SATISFIED.getSatisfiedState();
         }
-
+        if (result.getSatisfiedState() == ConstraintResult.SatisfiedState.NOT_SATISFIED) {
+          satisfiedState = ConstraintResult.SatisfiedState.NOT_SATISFIED;
+        }
       }
-      return true;
+      return satisfiedState;
     }
 
   }
-
 }
