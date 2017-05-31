@@ -288,10 +288,12 @@ ul.reference-page-menu nav.pagenav {
 /* -- Main Section -- */
 /* -- Add space on left side to allow for permalink icons to show up in -- */
 
-#main-content {
+#main-content.col-md-08.content,
+#main-content.col-md-10.content {
     padding-right: 0;
     padding-left: 30px;
 }
+
 
 /* -- Footer -- */
 

@@ -6,6 +6,8 @@
 :hide-relations: true
 :hide-global-toc: true
 :hide-nav: true
+:hide-left-sidebar: true
+:hide-right-sidebar: true
 :orphan:
 
 .. _404:
@@ -44,16 +46,16 @@ Here's what we can offer in the way of help:
 .. |glossary| replace:: **Glossary**
 .. _glossary: reference-manual/glossary.html
 
-.. |faq| replace:: **FAQ**
-.. _faq: reference-manual/faq.html
+.. |faqs| replace:: **FAQs**
+.. _faqs: faqs/index.html
 
 - |developers-manual|_
-- |admin-manual|_ 
+- |admin-manual|_
 - |examples-manual|_
 - |reference-manual|_
-- |release-notes|_ 
-- |glossary|_ 
-- |faq|_ 
+- |release-notes|_
+- |glossary|_
+- |faqs|_
 
 
 .. rubric:: Try the Homepage
@@ -63,7 +65,7 @@ The **main page for the documentation:** :ref:`CDAP Documentation <documentation
 
 .. rubric:: Search
 
-The site has a **Quick Search**, located in the left sidebar and on the 
+The site has a **Quick Search**, located in the left sidebar and on the
 `Search page <search.html>`__.
 
 *Quick Search* is a local keyword search; not as comprehensive as an external search
