@@ -163,7 +163,6 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
-  // Need to be modified once backend is complete
   constructDatabaseSource(artifactsList, dbInfo) {
     if (!dbInfo) { return null; }
 

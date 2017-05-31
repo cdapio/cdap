@@ -189,6 +189,7 @@ export default class DataPrepTopPanel extends Component {
   }
 
   render() {
+    let makeACopyDisabledState = isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload';
     return (
       <div className="row top-panel clearfix">
         <div className="left-title">
@@ -250,7 +251,7 @@ export default class DataPrepTopPanel extends Component {
                 null
               :
                 <CreateDatasetBtn
-                  disabledState={isNil(this.state.workspaceInfo) || !objectQuery(this.state, 'workspaceInfo', 'properties', 'path')}
+                  disabledState={makeACopyDisabledState}
                   title={!objectQuery(this.state, 'workspaceInfo', 'properties', 'path') ? T.translate('features.DataPrep.TopPanel.copyToCDAPDatasetBtn.uploadDisabledMessage') : null}
                 />
             }

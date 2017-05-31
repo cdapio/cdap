@@ -128,22 +128,14 @@ function constructDatabaseSource(artifactsList, dbInfo) {
   let pluginName = 'Database';
 
   try {
-    let parsedProperties = JSON.parse(dbInfo.databaseConfig);
+    let plugin = objectQuery(dbInfo, 'values', 0, 'Database');
 
     let pluginInfo = {
-      name: pluginName,
-      label: pluginName,
+      name: 'Database',
+      label: plugin.name,
       type: 'batchsource',
       artifact: batchArtifact,
-      properties: {
-        referenceName: pluginName,
-        jdbcPluginName: 'mysql',
-        jdbcPluginType: 'jdbc',
-        connectionString: parsedProperties.connectionString,
-        user: parsedProperties.userName,
-        password: parsedProperties.password,
-        importQuery: dbInfo.name
-      }
+      properties: plugin.properties
     };
 
     let batchStage = {
@@ -189,6 +181,15 @@ function constructProperties(workspaceInfo, pluginVersion) {
     };
 
     rxArray.push(MyDataPrepApi.getSpecification(specParams));
+  } else if (state.workspaceInfo.properties.connection === 'database') {
+    let specParams = {
+      namespace,
+      connectionId: state.workspaceInfo.properties.connectionid,
+      tableId: state.workspaceInfo.properties.id
+    };
+    rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
+    let requestBody = directiveRequestBodyCreator([]);
+    rxArray.push(MyDataPrepApi.getSchema(requestObj, requestBody));
   }
 
   try {
@@ -244,8 +245,13 @@ function constructProperties(workspaceInfo, pluginVersion) {
       let sourceConfigs;
       if (state.workspaceInfo.properties.connection === 'file') {
         sourceConfigs = constructFileSource(res[0], res[2]);
-      } else if (state.workspaceInfo.properties.databaseConfig) {
-        sourceConfigs = constructDatabaseSource(res[0], state.workspaceInfo.properties);
+      } else if (state.workspaceInfo.properties.connection === 'database') {
+        sourceConfigs = constructDatabaseSource(res[0], res[2]);
+        sourceConfigs.batchSource.plugin.properties.schema = JSON.stringify({
+          name: 'avroSchema',
+          type: 'record',
+          fields: res[3]
+        });
       }
 
       if (sourceConfigs) {
