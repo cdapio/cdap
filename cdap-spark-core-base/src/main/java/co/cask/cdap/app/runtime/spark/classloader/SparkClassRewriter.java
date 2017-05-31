@@ -66,6 +66,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
+  private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
   private static final Type SPARK_EXECUTOR_CLASSLOADER_TYPE =
     Type.getObjectType("org/apache/spark/repl/ExecutorClassLoader");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
@@ -125,6 +127,11 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
       // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
       return rewriteDStreamGraph(input);
+    }
+    if (className.equals(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE.getClassName())) {
+      // Rewrite BatchedWriteAheadLog to register it in SparkRuntimeEnv so that we can free up the batch writer thread
+      // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935)
+      return rewriteBatchedWriteAheadLog(input);
     }
     if (className.equals(SPARK_EXECUTOR_CLASSLOADER_TYPE.getClassName())) {
       // Rewrite the Spark repl ExecutorClassLoader to call `super(null)` so that it won't use the system classloader
@@ -208,6 +215,22 @@ public class SparkClassRewriter implements ClassRewriter {
     }, ClassReader.EXPAND_FRAMES);
 
     return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the BatchedWriteAheadLog class to register itself to SparkRuntimeEnv so that the write ahead log thread
+   * can be shutdown when the Spark program finished.
+   */
+  private byte[] rewriteBatchedWriteAheadLog(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addBatchedWriteAheadLog", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Object.class) }));
+      }
+    });
   }
 
   /**
