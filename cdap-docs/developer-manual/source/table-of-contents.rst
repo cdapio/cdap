@@ -2,9 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
-=========================================
-CDAP Developers’ Manual Table of Contents
-=========================================
+=======================================
+CDAP Developer Manual Table of Contents
+=======================================
 
 .. toctree::
    :titlesonly:

@@ -15,7 +15,7 @@ Use the CDAP Workflow HTTP RESTful API to access workflow tokens; list and delet
 datasets used in a workflow; retrieve the state of nodes that were executed; and retrieve
 statistics across *successful* runs of a workflow.
 
-Additional details and examples are found in the :ref:`Developers' Manual: Workflows <developers:workflows>`.
+Additional details and examples are found in the :ref:`Developer Manual: Workflows <developer:workflows>`.
 
 .. Base URL explanation
 .. --------------------

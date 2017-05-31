@@ -19,8 +19,8 @@ processed asynchronously; to obtain query results, perform these steps:
 - once finished, retrieve the **result schema** and the **results**;
 - finally, **close the query** to free the resources that it holds.
 
-Additional details on querying can be found in the :ref:`Developers' Manual: Data
-Exploration <developers:data-exploration>`.
+Additional details on querying can be found in the :ref:`Developer Manual: Data
+Exploration <developer:data-exploration>`.
 
 .. Base URL explanation
 .. --------------------

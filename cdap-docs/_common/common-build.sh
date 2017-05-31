@@ -1,17 +1,17 @@
 # Copyright © 2014-2017 Cask Data, Inc.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-  
+
 # Common code for Build script for docs
 # Not called directly; included in either the main build.sh or the individual manual's build.sh
 #
@@ -133,7 +133,7 @@ function build_docs() {
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
-  fi  
+  fi
   build_extras
   consolidate_messages
   add_html_redirect
@@ -243,20 +243,20 @@ function test_an_include() {
   local location=${3}
   local new_md5_hash
   local m
-  local m_display  
-  
+  local m_display
+
   if [[ -n ${target} ]]; then
     local file_name=$(basename ${target})
-  
+
     if [[ ${OSTYPE} == "darwin"* ]]; then
       new_md5_hash=$(md5 -q ${target})
     else
       new_md5_hash=$(md5sum ${target} | awk '{print $1}')
     fi
-    
+
     # If the new_md5_hash is in the NOT_FOUND_HASHES, it will set as the not_found_hash
     local not_found_hash=`echo ${NOT_FOUND_HASHES[@]} | grep -o "${new_md5_hash}"`
-  
+
     if [[ ${new_md5_hash} == ${not_found_hash} ]]; then
       m="${WARNING} ${RED_BOLD}${file_name} not found!${NO_COLOR}"
       m="${m}\nfile: ${target}"
@@ -268,7 +268,7 @@ function test_an_include() {
         m="${m}\nHash location: ${location}"
       fi
     fi
-  else  
+  else
     m="No target is set for test_an_include"
   fi
   if [[ -n ${m} ]]; then
@@ -296,7 +296,7 @@ function download_file() {
   else
     local target=${includes_dir}/${file_name}
   fi
-  
+
   if [[ ! -d ${includes_dir} ]]; then
     mkdir ${includes_dir}
     echo "Creating Includes Directory: ${includes_dir}"
@@ -392,7 +392,7 @@ function set_version() {
   fi
   popd > /dev/null
   IFS="${OIFS}"
-  
+
   if [[ ${GIT_BRANCH_TYPE:0:7} == "develop" ]]; then
     GIT_BRANCH_CDAP_PIPELINES="develop"
     GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
@@ -427,7 +427,7 @@ function display_version() {
 }
 
 function print_version() {
-  cd ${SCRIPT_PATH}/developers-manual
+  cd ${SCRIPT_PATH}/developer-manual
   ./build.sh display-version
 }
 
@@ -453,7 +453,7 @@ function get_cdap_metadata_management_version() {
     CDAP_METADATA_MANAGEMENT_VERSION="0.2.0-SNAPSHOT"
     echo "Using default CDAP_METADATA_MANAGEMENT_VERSION ${CDAP_METADATA_MANAGEMENT_VERSION}"
   fi
-  export CDAP_METADATA_MANAGEMENT_VERSION 
+  export CDAP_METADATA_MANAGEMENT_VERSION
 }
 
 function clear_messages_file() {
@@ -494,7 +494,7 @@ function consolidate_messages() {
   local m="Warning Messages for \"${MANUAL}\":"
   local l="--------------------------------------------------------"
   if [[ -n ${MESSAGES} ]]; then
-    echo_red_bold "Consolidating messages" 
+    echo_red_bold "Consolidating messages"
     echo >> ${TMP_MESSAGES_FILE}
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
     echo ${l} >> ${TMP_MESSAGES_FILE}
@@ -503,7 +503,7 @@ function consolidate_messages() {
     unset -v MESSAGES
   fi
   if [[ -s ${TARGET}/${SPHINX_MESSAGES} ]]; then
-    echo_red_bold "Consolidating Sphinx messages" 
+    echo_red_bold "Consolidating Sphinx messages"
     m="Sphinx ${m}"
     echo >> ${TMP_MESSAGES_FILE}
     echo_red_bold "${m}" >> ${TMP_MESSAGES_FILE}
@@ -519,16 +519,16 @@ function consolidate_messages() {
 function display_messages() {
   local warnings=0
   if [[ -n ${TMP_MESSAGES_FILE} && -s ${TMP_MESSAGES_FILE} ]]; then
-    echo 
+    echo
     echo "--------------------------------------------------------"
     echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"
     echo "--------------------------------------------------------"
-    echo 
+    echo
     cat ${TMP_MESSAGES_FILE} | while read line
     do
       echo "${line}"
     done
-    echo 
+    echo
     echo "--------------------------------------------------------"
     echo_red_bold "End Warning Messages"
     echo "--------------------------------------------------------"
@@ -557,7 +557,7 @@ function rewrite() {
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
         echo "Could not sed ${sub_string} ${rewrite_source}"
-        return ${errors}   
+        return ${errors}
     fi
     if [[ $(uname) == "Darwin" ]]; then
       rm ${rewrite_source}.bak
@@ -574,7 +574,7 @@ function rewrite() {
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
         echo "Could not sed ${sub_string} ${rewrite_source}"
-        return ${errors}   
+        return ${errors}
     fi
     if [[ $(uname) == "Darwin" ]]; then
       rm ${rewrite_source}.bak
@@ -590,7 +590,7 @@ function rewrite() {
     errors=$?
     if [[ ${errors} -ne 0 ]]; then
         echo "Could not sed ${sub_string} ${rewrite_source} ${rewrite_target}"
-        return ${errors}   
+        return ${errors}
     fi
   fi
   popd  > /dev/null

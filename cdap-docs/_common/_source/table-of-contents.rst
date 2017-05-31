@@ -12,10 +12,9 @@ CDAP Documentation Table of Contents
 .. toctree::
    :titlesonly:
 
-    Overview </index>
+    Introduction </index>
     Guides </guides>
-    Introduction to CDAP </introduction/index>
-    Developers’ Manual </developers-manual/index>
+    Developer Manual </developer-manual/index>
     Administration Manual </admin-manual/index>
     Integrations </integrations/index>
     Examples, Guides, and Tutorials </examples-manual/index>

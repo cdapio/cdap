@@ -22,7 +22,7 @@ Complete the requirements and instructions below prior to installing the CDAP co
 Hardware Requirements
 =====================
 Systems hosting the :ref:`CDAP components <admin-manual-cdap-components>`
-must meet these hardware specifications, in addition to having 
+must meet these hardware specifications, in addition to having
 **CPUs with a minimum speed of 2 GHz**:
 
 +----------------------------+-------------------+--------------------+-----------------------------------------+
@@ -50,7 +50,7 @@ must meet these hardware specifications, in addition to having
 
 Memory and Core Requirements
 ============================
-Memory and core requirements are governed by two sources: *CDAP* and *YARN*. 
+Memory and core requirements are governed by two sources: *CDAP* and *YARN*.
 
 The **default settings for CDAP** are found in the :ref:`cdap-defaults.xml
 <appendix-cdap-default.xml>`, and are overridden in particular instances by the
@@ -90,7 +90,7 @@ You'll need this software installed:
   Hive installed. See the section on :ref:`Hadoop Compatibility <admin-manual-hadoop-compatibility-matrix>`.
 - If Hive is **not** going to be installed, you will need to disable the CDAP Explore
   Service, as by default it is enabled. The installation instructions describe how to configure this.
-- CDAP nodes require Hadoop and HBase client installation and configuration. 
+- CDAP nodes require Hadoop and HBase client installation and configuration.
   *Note:* No Hadoop services need actually be running.
 - We recommend installing an :ref:`NTP (Network Time Protocol) <admin-manual-install-ntp>`
   daemon on all nodes of the cluster, including those with CDAP components.
@@ -107,8 +107,8 @@ for Linux, Windows, or Mac OS X must be installed in your environment; we recomm
 To check the Java version installed, run the command::
 
   $ java -version
-  
-CDAP is tested with both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__ and the 
+
+CDAP is tested with both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__ and the
 `Open JDK <http://openjdk.java.net>`__; it may work with other JDKs but it has not been tested with them.
 
 Once you have installed the JDK, you'll need to set the JAVA_HOME environment variable.
@@ -144,7 +144,7 @@ NTP (Network Time Protocol)
 #. Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server::
 
     $ sudo hwclock --systohc
-  
+
 **Installing NTP on Debian using APT**
 
 #. Install the NTP service and dependencies::
@@ -192,7 +192,7 @@ ports which can be opened to provide external access:
 
 **Listen Ports for External Access**
 
-.. csv-table:: 
+.. csv-table::
    :header: "Description", "Governing Configuration", "Default Value in Packages/MapR", "Default Value in Ambari/Cloudera Manager"
    :widths: 25, 25, 25, 25
 
@@ -206,7 +206,7 @@ ports which can be opened to provide external access:
 The exact configuration and ports required will vary depending on your use of firewalls
 and your specific configuration. This diagram shows a likely scenario that you could use:
 
-.. image:: ../../developers-manual/source/_images/arch_components_view.png
+.. image:: ../../developer-manual/source/_images/arch_components_view.png
    :width: 6in
    :align: center
 

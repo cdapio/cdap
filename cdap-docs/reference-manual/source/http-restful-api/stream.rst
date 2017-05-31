@@ -11,13 +11,13 @@ Stream HTTP RESTful API
 
 .. highlight:: console
 
-Use the CDAP Stream HTTP RESTful API to create a :ref:`stream <developers:streams>`; send,
+Use the CDAP Stream HTTP RESTful API to create a :ref:`stream <developer:streams>`; send,
 read, and truncate events sent to and from a stream; and set the TTL property of a stream.
 
 Streams may have multiple consumers (for example, multiple flows), each of which may be a
 group of different agents (for example, multiple instances of a flowlet).
 
-Additional details and examples are found in the :ref:`Developers' Manual: Streams <developers:streams>`.
+Additional details and examples are found in the :ref:`Developer Manual: Streams <developer:streams>`.
 
 .. Base URL explanation
 .. --------------------
@@ -61,7 +61,7 @@ A stream can be created with an HTTP PUT method to the URL::
    * - HTTP Method
      - ``PUT /v3/namespaces/default/streams/mystream``
    * - Description
-     - Create a new stream named *mystream* in the namespace *default* 
+     - Create a new stream named *mystream* in the namespace *default*
 
 .. rubric:: Comments
 
@@ -69,8 +69,8 @@ A stream can be created with an HTTP PUT method to the URL::
 - If the stream already exists, no error is returned, and the existing stream remains in place.
 
 Optionally, properties for the stream can be set by providing them in the body of the
-request. These properties can later be 
-:ref:`retrieved <http-restful-api-stream-getting-properties>` or 
+request. These properties can later be
+:ref:`retrieved <http-restful-api-stream-getting-properties>` or
 :ref:`modified <http-restful-api-stream-setting-properties>` (with the exception of the ``principal``)
 using :ref:`appropriate calls  <http-restful-api-stream-getting-setting-properties>`.
 
@@ -218,11 +218,11 @@ types are supported:
      - ``Content-type: text/csv``
    * - POST Body
      - A comma-separated record per line::
-     
+
         1,Sam,Smith,18
         2,Max,Johnson,28
         3,Bill,Jones,20
-        
+
    * - Description
      - Writes three comma-separated events to the stream named *mystream* in the namespace *default*
 
@@ -282,9 +282,9 @@ Reading events from an existing stream is performed with an HTTP GET method to t
 
 The response body is a JSON array with the stream event objects as array elements::
 
-   [ 
-     {"timestamp" : ... , "headers": { ... }, "body" : ... }, 
-     {"timestamp" : ... , "headers": { ... }, "body" : ... } 
+   [
+     {"timestamp" : ... , "headers": { ... }, "body" : ... },
+     {"timestamp" : ... , "headers": { ... }, "body" : ... }
    ]
 
 .. highlight:: console
@@ -447,12 +447,12 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
 
    * - HTTP Method
      - ``GET /v3/namespaces/default/streams/who``
-     
+
        .. highlight:: json-ellipsis
-       
+
        ::
 
-         { 
+         {
            "ttl" : 9223372036854775,
            "format": {
              "name": "text",
@@ -469,9 +469,9 @@ Stream properties can be retrieved with an HTTP PUT method to the URL::
            "description" : "Web access logs",
            "principal" : "user/example.net@examplekdc.net"
          }
-     
+
    * - Description
-     - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`. 
+     - Retrieves the properties of the ``who`` stream of the :ref:`HelloWorld example <examples-hello-world>`.
 
 .. highlight:: console
 
@@ -506,7 +506,7 @@ New properties are passed in the JSON request body.
      - Number of seconds that an event will be valid for, since it was ingested
    * - ``format``
      - JSON Object describing the format name, schema, and settings. Accepted formats are
-       ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``, 
+       ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``,
        ``grok``, and ``syslog``.
    * - ``notification.threshold.mb``
      - Increment of data, in MB, that a stream has to receive before
@@ -514,7 +514,7 @@ New properties are passed in the JSON request body.
    * - ``description``
      - Description of the stream
    * - ``principal``
-     - The Kerberos principal of a stream cannot be updated. This should be the same as 
+     - The Kerberos principal of a stream cannot be updated. This should be the same as
        the existing principal or absent.
 
 If a property is not given in the request body, no change will be made to the value.
@@ -546,12 +546,12 @@ the stream and re-create it with the new schema.
 
    * - HTTP Method
      - ``PUT /v3/namespaces/default/streams/mystream/properties``
-     
+
        .. highlight:: json-ellipsis
-       
+
        ::
 
-         { 
+         {
            "ttl" : 86400,
            "format": {
              "name": "csv",
@@ -568,11 +568,11 @@ the stream and re-create it with the new schema.
            },
            "notification.threshold.mb" : 1000
          }
-     
+
    * - Description
      - Change the TTL property of the stream named *mystream* in the namespace *default* to 1 day,
        and the format to CSV (comma-separated values) with a three field schema
-       that uses a space delimiter instead of a comma delimiter. 
+       that uses a space delimiter instead of a comma delimiter.
 
 .. highlight:: console
 
@@ -607,7 +607,7 @@ Streams used by a Program
 =========================
 You can retrieve a list of streams used by a program by issuing a HTTP GET request to the URL::
 
-  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/streams 
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/<program-type>/<program-id>/streams
 
 .. list-table::
    :widths: 20 80
@@ -634,7 +634,7 @@ You can retrieve a list of streams used by a program by issuing a HTTP GET reque
    * - ``200 OK``
      - Request was successful
 
-Programs using a Stream 
+Programs using a Stream
 ========================
 You can retrieve a list of programs that are using a stream by issuing a HTTP GET request to the URL::
 

@@ -51,7 +51,7 @@ Follow these steps:
 Online, we have additional resources ranging from :ref:`user groups <faq-cdap-user-groups>` to these manuals,
 examples, guides, and tutorials:
 
-- :ref:`Developers’ Manual: <developer-index>` Getting Started and Writing Applications with CDAP
+- :ref:`Developer Manual: <developer-index>` Getting Started and Writing Applications with CDAP
 - :ref:`Reference Manual: <reference:reference-index>` APIs, Licenses and Dependencies
 - :ref:`Administration Manual: <admin:admin-index>` Installation and Operation of Distributed CDAP installations
 - :ref:`Examples, How-To Guides, and Tutorials <examples:examples-introduction-index>`

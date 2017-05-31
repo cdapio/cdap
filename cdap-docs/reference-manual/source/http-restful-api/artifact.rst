@@ -14,7 +14,7 @@ Artifact HTTP RESTful API
 Use the CDAP Artifact HTTP RESTful API to deploy artifacts, list available artifacts, and
 retrieve information about plugins available to artifacts. Artifacts, their use, and
 examples of using them, are described in the
-:ref:`Developers' Manual: Artifacts <artifacts>`.
+:ref:`Developer Manual: Artifacts <artifacts>`.
 
 
 .. Base URL explanation

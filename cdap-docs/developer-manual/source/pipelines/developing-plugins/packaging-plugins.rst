@@ -26,18 +26,16 @@ accessible to other plugins or applications, see :ref:`these instructions
 
 ..   - UI
 ..   - REST
-..   - CLI 
+..   - CLI
 
 .. Plugin Packaging
 .. ----------------
 .. _cdap-pipelines-packaging-plugins-packaging:
 
-.. .. include:: /../../developers-manual/source/building-blocks/plugins.rst
-
 .. include:: /building-blocks/plugins.rst
    :start-after: .. _plugins-deployment-packaging:
    :end-before:  .. _plugins-deployment-system:
-   
+
 By using one of the available :ref:`Maven archetypes
 <cdap-pipelines-developing-plugin-basics-maven-archetypes>`, your project will be set up to
 generate the required JAR manifest. If you move the plugin class to a different Java

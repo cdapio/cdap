@@ -75,7 +75,7 @@ In the examples and commands that follow, for brevity we will use these conventi
   The Windows path has been augmented with a directory where the CDAP Local Sandbox includes
   Windows-versions of commands such as ``curl``.
 
-.. include:: ../../../developers-manual/source/_includes/windows-note.txt
+.. include:: ../../../developer-manual/source/_includes/windows-note.txt
 
 .. highlight:: console
 
@@ -373,8 +373,7 @@ Here’s what to note about the ``PageViewCounterFlowlet`` flowlet class:
   running, all ``LogInfo`` objects with the same IP address information will be sent to
   the same flowlet instance. This prevents two flowlet instances from writing to the same
   row key of the *pageViewStore* dataset at the same time, which would cause a transaction
-  conflict. (See the `CDAP Developers’ Manual: Transaction System
-  <http://docs.cask.co/cdap/current/en/developers-manual/building-blocks/transaction-system.html>`__
+  conflict. (See the :ref:`CDAP Developer Manual: Transaction System <transaction-system>`
   for more information about transactions and conflicts.)
 
 Building the WiseFlow

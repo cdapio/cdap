@@ -15,7 +15,7 @@ Use the CDAP Route Config HTTP RESTful API to create, fetch, and delete route
 configurations (also known as *route configs*), which allocate requests between different
 versions of a service.
 
-Additional details on using route configurations with services are found in the :ref:`Developers'
+Additional details on using route configurations with services are found in the :ref:`Developer
 Manual: Service Routing <services-routing>`.
 
 

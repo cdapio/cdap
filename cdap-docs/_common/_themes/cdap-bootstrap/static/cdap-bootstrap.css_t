@@ -276,9 +276,11 @@ nav.pagenav,
 
 /* -- Reference Manual Left Sidebar --*/
 
+/*
 ul.reference-page-menu nav.pagenav {
     padding-left: 0;
 }
+ */
 
 /* -- Page Nav Scroll Spy (Right Sidebar)             -- */
 /* -- Calc max height less top space less bottom space -- */

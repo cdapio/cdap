@@ -13,15 +13,13 @@ Test Framework for Plugins
 
 .. highlight:: java
 
-.. .. include:: /../../developers-manual/source/testing/testing.rst
-
 .. include:: /testing/testing.rst
    :start-after: .. _test-framework-strategies-artifacts:
    :end-before:  .. _test-framework-validating-sql:
 
 CDAP Pipelines Test Module
 ==========================
-Additional information on unit testing with CDAP is in the Developers’ Manual section
+Additional information on unit testing with CDAP is in the Developer Manual section
 on :ref:`Testing a CDAP Application <test-framework>`.
 
 .. highlight:: xml

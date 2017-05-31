@@ -54,7 +54,7 @@ CDAP provides several ways to authenticate a client's identity:
 - :ref:`installation-basic-authentication`
 - :ref:`installation-ldap-authentication`
 - :ref:`installation-jaspi-authentication`
-- :ref:`Custom Authentication <developers-custom-authentication>`
+- :ref:`Custom Authentication <developer-custom-authentication>`
 
 To configure security, see the Administration Manual's :ref:`configuration-security`.
 
@@ -63,7 +63,7 @@ Obtaining an Access Token
 Obtain a new access token by calling::
 
    GET <base-auth-url>/token
-   
+
 The ``<base-auth-url>`` can be found either by making a request and retrieving the
 authentication URI (``auth_uri``) in the response body or by knowing the configuration of
 the CDAP server for the ``security.auth.server.announce.address`` and port, as described in the

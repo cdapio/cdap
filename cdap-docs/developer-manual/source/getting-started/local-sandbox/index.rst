@@ -6,6 +6,7 @@
 :hide-toc: true
 
 .. _local-sandbox-index:
+.. _local-sandbox:
 
 ==================
 CDAP Local Sandbox
@@ -41,7 +42,7 @@ platforms.
 
 .. include:: /_includes/windows-note.txt
 
-.. _developers-manual-install-node.js:
+.. _developer-manual-install-node.js:
 
 .. rubric:: Node.js Runtime
 
