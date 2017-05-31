@@ -139,6 +139,8 @@ class MyPipelineSchedulerCtrl {
       this.savingSchedule = true;
       let pipelineConfig = this.store.getCloneConfig();
       pipelineConfig.config.schedule = this.cron;
+      // This is needed to make sure the backend updates the schedule on updating app spec
+      pipelineConfig['app.deploy.update.schedules'] = true;
       return this.myPipelineApi.save(
         {
           namespace: this.$state.params.namespace,
