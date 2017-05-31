@@ -154,6 +154,7 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 # Mapping keys must be alpha-numeric only
 intersphinx_mapping_cdap_manuals = {
   'introduction': ('../../introduction/',        os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'user':         ('../../user-guide/',          os.path.abspath(_intersphinx_mapping % 'user-guide')),
   'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
   'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
@@ -282,6 +283,10 @@ rst_epilog = """
 
 .. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
+
+.. |br| raw:: html
+
+   <br />
 
 .. |http:| replace:: http:
 .. |https:| replace:: https:
@@ -503,6 +508,7 @@ html_theme = 'cdap'
 
 manuals_list = [
     ['introduction',        'introduction', 'Introduction to CDAP',            '',],
+    ['user-guide',          'user',         'User Guide',                      '',],
     ['developers-manual',   'developers',  u'Developers’ Manual',              '',],
     ['admin-manual',        'admin',        'Administration Manual',           '',],
     ['integrations',        'integrations', 'Integrations',                    '',],
