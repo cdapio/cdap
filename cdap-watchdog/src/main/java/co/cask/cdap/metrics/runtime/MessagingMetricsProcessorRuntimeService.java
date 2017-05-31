@@ -24,6 +24,7 @@ import co.cask.cdap.metrics.process.MessagingMetricsProcessorService;
 import co.cask.cdap.metrics.process.MessagingMetricsProcessorServiceFactory;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.zookeeper.ZKClient;
@@ -40,6 +41,7 @@ public final class MessagingMetricsProcessorRuntimeService extends ResourceBalan
 
   private final MessagingMetricsProcessorServiceFactory factory;
   private final MetricsCollectionService metricsCollectionService;
+  private final Integer instanceId;
 
   @Inject
   MessagingMetricsProcessorRuntimeService(CConfiguration conf,
@@ -47,16 +49,18 @@ public final class MessagingMetricsProcessorRuntimeService extends ResourceBalan
                                           DiscoveryService discoveryService,
                                           DiscoveryServiceClient discoveryServiceClient,
                                           MetricsCollectionService metricsCollectionService,
-                                          MessagingMetricsProcessorServiceFactory metricsProcessorFactory) {
+                                          MessagingMetricsProcessorServiceFactory metricsProcessorFactory,
+                                          @Named(Constants.Metrics.TWILL_INSTANCE_ID) Integer instanceId) {
     super(SERVICE_NAME, conf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM),
           zkClient, discoveryService, discoveryServiceClient);
     this.factory = metricsProcessorFactory;
     this.metricsCollectionService = metricsCollectionService;
+    this.instanceId = instanceId;
   }
 
   @Override
   protected Service createService(Set<Integer> topicNumbers) {
     return factory.create(topicNumbers,
-                          metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT));
+                          metricsCollectionService.getContext(Constants.Metrics.METRICS_PROCESSOR_CONTEXT), instanceId);
   }
 }

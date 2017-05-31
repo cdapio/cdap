@@ -69,7 +69,8 @@ public class TwillRunnableTest {
 
   @Test
   public void testMetricsProcessorTwillRunnableInjector() {
-    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "");
+    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "",
+                                                      new MockTwillContext());
   }
 
   @Test

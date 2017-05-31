@@ -575,6 +575,8 @@ public final class Constants {
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 
+    public static final String TWILL_INSTANCE_ID = "metrics.twill.instance.id";
+
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
