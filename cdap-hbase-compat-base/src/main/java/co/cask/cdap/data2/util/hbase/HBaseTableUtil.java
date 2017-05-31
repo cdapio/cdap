@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.RegionLoad;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -606,7 +607,15 @@ public abstract class HBaseTableUtil {
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
         TableName tableName = HRegionInfo.getTable(regionLoad.getName());
-        HTableDescriptor tableDescriptor = admin.getTableDescriptor(tableName);
+        HTableDescriptor tableDescriptor;
+        try {
+          tableDescriptor = admin.getTableDescriptor(tableName);
+        } catch (TableNotFoundException exception) {
+          // this can happen if the table has been deleted; the region stats get removed afterwards
+          LOG.warn("Table not found for table name {}. Skipping collecting stats for it. Reason: {}",
+                   tableName, exception.getMessage());
+          continue;
+        }
         if (!isCDAPTable(tableDescriptor)) {
           continue;
         }
