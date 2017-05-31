@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * The {@link TwillApplication} for running programs in distributed mode.
@@ -123,10 +124,16 @@ public final class ProgramTwillApplication implements TwillApplication {
   public static final class RunnableResource {
     private final TwillRunnable runnable;
     private final ResourceSpecification resources;
+    private final Integer maxRetries;
 
     public RunnableResource(TwillRunnable runnable, ResourceSpecification resources) {
+      this(runnable, resources, null);
+    }
+
+    public RunnableResource(TwillRunnable runnable, ResourceSpecification resources, @Nullable Integer maxRetries) {
       this.runnable = runnable;
       this.resources = resources;
+      this.maxRetries = maxRetries;
     }
 
     public TwillRunnable getRunnable() {
@@ -135,6 +142,11 @@ public final class ProgramTwillApplication implements TwillApplication {
 
     public ResourceSpecification getResources() {
       return resources;
+    }
+
+    @Nullable
+    public Integer getMaxRetries() {
+      return maxRetries;
     }
   }
 }

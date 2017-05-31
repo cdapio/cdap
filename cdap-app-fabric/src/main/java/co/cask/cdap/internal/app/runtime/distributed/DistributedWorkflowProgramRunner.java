@@ -152,7 +152,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                               program.getApplicationSpecification().getMapReduce(), spec);
 
     resources = SystemArguments.getResources(options.getUserArguments(), resources);
-    launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), resources, 1);
+    launchConfig.addRunnable(spec.getName(), new WorkflowTwillRunnable(spec.getName()), resources, 1, 0);
   }
 
   /**
