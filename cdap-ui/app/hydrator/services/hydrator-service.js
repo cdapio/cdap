@@ -388,22 +388,22 @@ class HydratorPlusPlusHydratorService {
 
   convertMacrosToRuntimeArguments(currentRuntimeArgs, macrosMap, userRuntimeArgumentsMap) {
     let runtimeArguments = {};
-    let disabledMacros = {};
+    let enabledMacros = {};
 
-    // holds disable macros in an object here even though we don't need the value,
+    // holds enabled macros in an object here even though we don't need the value,
     // because object hash is faster than Array.indexOf
     if (currentRuntimeArgs.pairs) {
       currentRuntimeArgs.pairs.forEach((currentPair) => {
         let key = currentPair.key;
-        if (currentPair.notDeletable && !currentPair.enabled) {
-          disabledMacros[key] = currentPair.value;
+        if (currentPair.notDeletable && currentPair.enabled) {
+          enabledMacros[key] = currentPair.value;
         }
       });
     }
     let macros = Object.keys(macrosMap).map(macroKey => {
-      let enabled = true;
-      if (disabledMacros.hasOwnProperty(macroKey)) {
-        enabled = false;
+      let enabled = false;
+      if (enabledMacros.hasOwnProperty(macroKey)) {
+        enabled = true;
       }
       return {
         key: macroKey,
