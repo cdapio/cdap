@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
  * {@link UserGroupInformation}.
  */
 public abstract class AbstractCachedUGIProvider implements UGIProvider {
-
+  
   protected final CConfiguration cConf;
   private final LoadingCache<ImpersonationRequest, UGIWithPrincipal> ugiCache;
 
@@ -50,6 +50,9 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    if (impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
+      return createUGI(impersonationRequest);
+    }
     try {
       return ugiCache.get(impersonationRequest);
     } catch (ExecutionException e) {
