@@ -75,6 +75,7 @@
     "lodash-webpack-plugin": "0.10.0",
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
+    "node-dir": "0.1.16",
     "node-sass": "4.3.0",
     "parallel-webpack": "1.6.0",
     "postcss-loader": "1.1.1",
