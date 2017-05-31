@@ -50,10 +50,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link JobQueueDataset}.
@@ -304,6 +308,72 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
           new ProgramScheduleRecord(SCHED1, new ProgramScheduleMeta(ProgramScheduleStatus.SCHEDULED, 0L)),
           notification);
         Assert.assertEquals(ImmutableList.of(notification), jobQueue.getJob(SCHED1_JOB.getJobKey()).getNotifications());
+      }
+    });
+  }
+
+  @Test
+  public void testJobTimeout() throws Exception {
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // should be 0 jobs in the JobQueue to begin with
+        Assert.assertEquals(0, getAllJobs(jobQueue, false).size());
+
+        // Construct a partition notification with DATASET_ID
+        Notification notification = Notification.forPartitions(DATASET_ID, ImmutableList.<PartitionKey>of());
+
+        Assert.assertNull(jobQueue.getJob(SCHED1_JOB.getJobKey()));
+
+        ProgramSchedule scheduleWithTimeout = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
+                                                                  ImmutableMap.of("prop3", "abc"),
+                                                                  new PartitionTrigger(DATASET_ID, 1),
+                                                                  ImmutableList.<Constraint>of());
+
+        Job jobWithTimeout = new SimpleJob(scheduleWithTimeout,
+                                           System.currentTimeMillis() - Schedulers.JOB_QUEUE_TIMEOUT_MILLIS,
+                                           Lists.<Notification>newArrayList(),
+                                           Job.State.PENDING_TRIGGER, 0L);
+        jobQueue.put(jobWithTimeout);
+        Assert.assertEquals(jobWithTimeout, jobQueue.getJob(jobWithTimeout.getJobKey()));
+
+        // before adding the notification, there should just be the job we added
+        Assert.assertEquals(1, toSet(jobQueue.getJobsForSchedule(scheduleWithTimeout.getScheduleId()), true).size());
+
+        // adding a notification will ignore the existing job (because it is timed out). It will create a new job
+        // and add the notification to that new job
+        jobQueue.addNotification(
+          new ProgramScheduleRecord(SCHED1, new ProgramScheduleMeta(ProgramScheduleStatus.SCHEDULED, 0L)),
+          notification);
+
+        List<Job> jobs = new ArrayList<>(toSet(jobQueue.getJobsForSchedule(scheduleWithTimeout.getScheduleId()), true));
+        // sort by creation time (oldest will be first in the list)
+        Collections.sort(jobs, new Comparator<Job>() {
+          @Override
+          public int compare(Job o1, Job o2) {
+            return Long.valueOf(o1.getCreationTime()).compareTo(o2.getCreationTime());
+          }
+        });
+
+        Assert.assertEquals(2, jobs.size());
+
+        Job firstJob = jobs.get(0);
+        // first job should have the same creation timestamp as the initially added job
+        Assert.assertEquals(jobWithTimeout.getCreationTime(), firstJob.getCreationTime());
+        // the notification we added shouldn't be in the first job
+        Assert.assertEquals(0, firstJob.getNotifications().size());
+        // first job should be marked to be deleted because it timed out
+        Assert.assertTrue(firstJob.isToBeDeleted());
+
+        Job secondJob = jobs.get(1);
+        // first job should not have the same creation timestamp as the initially added job
+        Assert.assertNotEquals(jobWithTimeout.getCreationTime(), secondJob.getCreationTime());
+        // the notification we added shouldn't be in the first job
+        Assert.assertEquals(1, secondJob.getNotifications().size());
+        Assert.assertEquals(notification, secondJob.getNotifications().get(0));
+        // first job should not be marked to be deleted, since it was just created by our call to
+        // JobQueue#addNotification
+        Assert.assertFalse(secondJob.isToBeDeleted());
       }
     });
   }

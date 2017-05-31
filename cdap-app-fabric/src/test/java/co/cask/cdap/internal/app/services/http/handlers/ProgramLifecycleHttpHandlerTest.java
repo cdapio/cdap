@@ -47,6 +47,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.TimeSchedule;
@@ -1254,7 +1255,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail detail = new ScheduleDetail(scheduleName, specification.getSchedule().getDescription(),
                                                specification.getProgram(), specification.getProperties(),
                                                new TimeTrigger(timeSchedule.getCronEntry()),
-                                               Collections.<Constraint>emptyList());
+                                               Collections.<Constraint>emptyList(),
+                                               Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", specification);
@@ -1320,11 +1322,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Add a schedule with no schedule name in spec
     ScheduleDetail detail2 = new ScheduleDetail(null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
-                                                Collections.<Constraint>emptyList());
+                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6));
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
     Assert.assertEquals("schedule-100", detail100.getName());
+    Assert.assertEquals(detail2.getTimeoutMillis(), detail100.getTimeoutMillis());
     // test backward-compatible api
     ScheduleSpecification spec100 = getScheduleSpec(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
     Assert.assertEquals(detail100.toScheduleSpec(), spec100);

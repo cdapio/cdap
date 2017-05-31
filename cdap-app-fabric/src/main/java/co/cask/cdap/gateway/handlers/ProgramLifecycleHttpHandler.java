@@ -749,8 +749,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String description = Objects.firstNonNull(scheduleFromRequest.getDescription(), "");
     Map<String, String> properties = Objects.firstNonNull(scheduleFromRequest.getProperties(), EMPTY_PROPERTIES);
     List<? extends Constraint> constraints = Objects.firstNonNull(scheduleFromRequest.getConstraints(), NO_CONSTRAINTS);
+    long timeoutMillis =
+      Objects.firstNonNull(scheduleFromRequest.getTimeoutMillis(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
     ProgramSchedule schedule = new ProgramSchedule(scheduleName, description, programId, properties,
-                                                   scheduleFromRequest.getTrigger(), constraints);
+                                                   scheduleFromRequest.getTrigger(), constraints, timeoutMillis);
     programScheduler.addSchedule(schedule);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -856,13 +858,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     List<Constraint> runConstraints = toConstraints(scheduleSpec.getSchedule().getRunConstraints());
     return new ScheduleDetail(scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
-                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints);
+                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints, null);
   }
 
   private ScheduleDetail toScheduleDetail(ScheduleUpdateDetail updateDetail, ProgramSchedule existing) {
     ScheduleUpdateDetail.Schedule scheduleUpdate = updateDetail.getSchedule();
     if (scheduleUpdate == null) {
-      return new ScheduleDetail(null, null, null, updateDetail.getProperties(), null, null);
+      return new ScheduleDetail(null, null, null, updateDetail.getProperties(), null, null, null);
     }
     Trigger trigger = null;
     if (scheduleUpdate.getCronExpression() != null
@@ -894,7 +896,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
     List<Constraint> constraints = toConstraints(scheduleUpdate.getRunConstraints());
     return new ScheduleDetail(null, scheduleUpdate.getDescription(), null,
-                              updateDetail.getProperties(), trigger, constraints);
+                              updateDetail.getProperties(), trigger, constraints, null);
   }
 
   private List<Constraint> toConstraints(RunConstraints runConstraints) {
@@ -923,7 +925,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Trigger trigger = Objects.firstNonNull(scheduleDetail.getTrigger(), existing.getTrigger());
     List<? extends Constraint> constraints =
       Objects.firstNonNull(scheduleDetail.getConstraints(), existing.getConstraints());
-    return new ProgramSchedule(existing.getName(), description, programId, properties, trigger, constraints);
+    Long timeoutMillis = Objects.firstNonNull(scheduleDetail.getTimeoutMillis(), existing.getTimeoutMillis());
+    return new ProgramSchedule(existing.getName(), description, programId, properties, trigger, constraints,
+                               timeoutMillis);
   }
 
   @DELETE

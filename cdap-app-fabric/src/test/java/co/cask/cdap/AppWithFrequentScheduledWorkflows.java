@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
+  public static final String NAME = "AppWithFrequentScheduledWorkflows";
   public static final String SOME_WORKFLOW = "SomeWorkflow";
   public static final String ANOTHER_WORKFLOW = "AnotherWorkflow";
   public static final String DATASET_PARTITION_SCHEDULE_1 = "DataSetPartionSchedule1";
@@ -36,7 +37,7 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("AppWithMultipleWorkflows");
+    setName(NAME);
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new DummyWorkflow(SOME_WORKFLOW));
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));

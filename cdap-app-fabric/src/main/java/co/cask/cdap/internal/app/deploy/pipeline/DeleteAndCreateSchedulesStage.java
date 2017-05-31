@@ -17,22 +17,17 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
-import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -92,12 +87,11 @@ public class DeleteAndCreateSchedulesStage extends AbstractStage<ApplicationWith
     ProgramId programId = appId.workflow(scheduleCreationSpec.getProgramName());
     Trigger trigger = scheduleCreationSpec.getTrigger();
     return new ProgramSchedule(scheduleCreationSpec.getName(), scheduleCreationSpec.getDescription(), programId,
-                               scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints());
+                               scheduleCreationSpec.getProperties(), trigger, scheduleCreationSpec.getConstraints(),
+                               scheduleCreationSpec.getTimeoutMillis());
   }
 
-  private void addSchedule(ProgramSchedule programSchedule)
-    throws AlreadyExistsException, BadRequestException, SchedulerException {
-
+  private void addSchedule(ProgramSchedule programSchedule) throws AlreadyExistsException, BadRequestException {
     programScheduler.addSchedule(programSchedule);
   }
 }

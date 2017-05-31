@@ -118,20 +118,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   private static Scheduler scheduler;
 
-  private TransactionExecutor txExecutor;
-  private JobQueueDataset jobQueue;
-
-  @Before
-  public void before() throws Exception {
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
-    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
-    jobQueue = dsFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<String, String>(), null);
-    Assert.assertNotNull(jobQueue);
-    this.txExecutor =
-      txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) jobQueue));
-  }
-
   @BeforeClass
   public static void beforeClass() throws Throwable {
     AppFabricTestBase.beforeClass();
@@ -251,12 +237,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
-    // Deploy an app with default version
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithfrequentschedules", VERSION1);
-    addAppArtifact(artifactId, AppWithFrequentScheduledWorkflows.class);
-    AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    deploy(APP_ID, appRequest);
+
+    deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Resume the schedule because schedules are initialized as paused
     enableSchedule(AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_1);
