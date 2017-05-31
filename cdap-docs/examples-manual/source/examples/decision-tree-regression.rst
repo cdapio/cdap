@@ -96,39 +96,43 @@ Sandbox home directory, using the CDAP :ref:`Command Line Interface <cli>`:
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli call service DecisionTreeRegressionApp.ModelDataService PUT labels body:file examples/DecisionTreeRegression/src/test/resources/sample_libsvm_data.txt
+  $ cdap cli call service DecisionTreeRegression.ModelDataService PUT labels body:file examples/DecisionTreeRegression/src/test/resources/sample_libsvm_data.txt
 
 Running the Spark Program
 -------------------------
 There are three ways to start the Spark program:
 
 1. Go to the |example-italic| :cdap-ui-apps-programs:`application overview page, programs
-   tab <DecisionTreeRegressionApp>`, click |example-service-italic| to get to the service detail
+   tab <DecisionTreeRegression>`, click |example-service-italic| to get to the service detail
    page, then click the *Start* button; or
 
 #. Use the Command Line Interface:
 
    .. tabbed-parsed-literal::
 
-    $ cdap cli start spark DecisionTreeRegressionApp.ModelTrainer
+    $ cdap cli start spark DecisionTreeRegression.ModelTrainer
 
 #. Send a query via an HTTP request using the ``curl`` command:
 
    .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST \
-    "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/spark/ModelTrainer/start"
+    "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegression/spark/ModelTrainer/start"
 
 
 Querying the Results
 --------------------
+Once the trainer has completed, you can retrieve the ID of the trained model. (If it has
+not completed, the examples in this section will return no results, and can be retried
+until they return results.)
+
 To list the IDs of trained models using the ``ModelDataService``, you can:
 
 - Use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
-    $ cdap cli call service DecisionTreeRegressionApp.ModelDataService GET models
+    $ cdap cli call service DecisionTreeRegression.ModelDataService GET models
 
     [ "92f9da09-71c3-45b0-aec5-2eb100cfbbac" ]
 
@@ -136,7 +140,7 @@ To list the IDs of trained models using the ``ModelDataService``, you can:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/services/ModelDataService/methods/models"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegression/services/ModelDataService/methods/models"
 
     [ "92f9da09-71c3-45b0-aec5-2eb100cfbbac" ]
 
@@ -146,13 +150,13 @@ To retreive metadata about a specific model using the ``ModelDataService``, you 
 
   .. tabbed-parsed-literal::
 
-    $ cdap cli call service DecisionTreeRegressionApp.ModelDataService GET models/92f9da09-71c3-45b0-aec5-2eb100cfbbac
+    $ cdap cli call service DecisionTreeRegression.ModelDataService GET models/92f9da09-71c3-45b0-aec5-2eb100cfbbac
 
 - Send a query via an HTTP request using the ``curl`` command. For example:
 
   .. tabbed-parsed-literal::
 
-    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegressionApp/services/ModelDataService/methods/models/92f9da09-71c3-45b0-aec5-2eb100cfbbac"
+    $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/DecisionTreeRegression/services/ModelDataService/methods/models/92f9da09-71c3-45b0-aec5-2eb100cfbbac"
 
     {
       "numFeatures": 692,
