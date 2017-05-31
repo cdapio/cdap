@@ -141,6 +141,8 @@ function download_includes() {
   test_an_include 263e7d702cf431068bfbae5ef7274fc7 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
   test_an_include cc6989fe673cd88545d73cdaffad1bb1 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
+  test_an_include ce5a99853f6e2d2298888fdf15d3cfb7 ../../cdap-examples/DecisionTreeRegression/src/main/java/co/cask/cdap/examples/dtree/DecisionTreeRegressionApp.java
+
   test_an_include fe679b53a1dc757a15fd3fcafc2046fd ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
   test_an_include 8fdb325ac2ad92bca959bd2f12fc91d7 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
   test_an_include 4107ad528a3e9ca569a0cdee43b189c5 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
