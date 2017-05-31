@@ -120,6 +120,7 @@ function build_docs_check() {
   USE_SPHINX_BUILD="${FALSE}"
   export USE_SPHINX_BUILD
   build_docs_only
+  check_build_rst
 }
 
 function build_docs_set() {
