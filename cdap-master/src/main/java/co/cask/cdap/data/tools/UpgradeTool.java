@@ -206,7 +206,6 @@ public class UpgradeTool {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
@@ -219,6 +218,7 @@ public class UpgradeTool {
       new AuthorizationEnforcementModule().getMasterModule(),
       new SecureStoreModules().getDistributedModules(),
       new DataFabricModules(UpgradeTool.class.getName()).getDistributedModules(),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
