@@ -28,6 +28,13 @@
   <name>Spark Page Rank</name>
   <packaging>jar</packaging>
 
+  <repositories>
+    <repository>
+        <id>twttr</id>
+        <url>http://maven.twttr.com/</url>
+    </repository>
+  </repositories>
+
   <properties>
     <app.main.class>co.cask.cdap.examples.sparkpagerank.SparkPageRankApp</app.main.class>
   </properties>
@@ -37,6 +44,10 @@
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.hadoop.gplcompression</groupId>
+      <artifactId>hadoop-lzo</artifactId>
     </dependency>
   </dependencies>
 </project>

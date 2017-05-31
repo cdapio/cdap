@@ -65,6 +65,10 @@
      <id>snapshot</id>
      <url>https://repository.apache.org/content/repositories/snapshots/</url>
    </repository>
+    <repository>
+      <id>twttr</id>
+      <url>http://maven.twttr.com/</url>
+    </repository>
   </repositories>
 
 
@@ -81,6 +85,10 @@
       <id>cask</id>
       <url>http://cask.co</url>
     </site>
+    <repository>
+      <id>twttr</id>
+      <url>http://maven.twttr.com/</url>
+    </repository>
   </distributionManagement>
 
   <properties>
@@ -249,6 +257,11 @@
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>com.hadoop.gplcompression</groupId>
+        <artifactId>hadoop-lzo</artifactId>
+        <version>0.4.19</version>
       </dependency>
       <dependency>
         <groupId>org.apache.tephra</groupId>

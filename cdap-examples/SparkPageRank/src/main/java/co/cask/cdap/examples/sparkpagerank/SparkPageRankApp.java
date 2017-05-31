@@ -69,6 +69,7 @@ public class SparkPageRankApp extends AbstractApplication {
 
     // Run a Spark program on the acquired data
     addSpark(new PageRankSpark());
+    addSpark(new LZOSpark());
 
     // Runs MapReduce program on data emitted by Spark program
     addMapReduce(new RanksCounter());
@@ -116,6 +117,22 @@ public class SparkPageRankApp extends AbstractApplication {
     public void configure() {
       setDescription("Spark page rank program");
       setMainClass(SparkPageRankProgram.class);
+      setDriverResources(new Resources(1024));
+      setExecutorResources(new Resources(1024));
+    }
+
+    @Override
+    public void initialize() throws Exception {
+      getContext().setSparkConf(new SparkConf().set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m"));
+    }
+  }
+
+  public static final class LZOSpark extends AbstractSpark {
+
+    @Override
+    public void configure() {
+      setDescription("Spark LZO program");
+      setMainClass(SparkLZOProgram.class);
       setDriverResources(new Resources(1024));
       setExecutorResources(new Resources(1024));
     }
