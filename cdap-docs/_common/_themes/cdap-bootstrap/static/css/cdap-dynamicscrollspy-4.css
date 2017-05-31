@@ -68,6 +68,8 @@ ul.nav.dynamic-scrollspy {
 h3.nav.dynamic-scrollspy-title > a {
     margin: 8px 0 0;
     padding-right: 6px;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* All anchors hover: must precede active! */
@@ -95,27 +97,42 @@ h3.nav.dynamic-scrollspy-heading > a:hover,
 /* First level */
 .nav li.dynamic-scrollspy-heading > a,
 .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
     padding-left: 12px;
+    padding-top: 0;
 }
 
 /* Second level */
 .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
     padding-left: 24px;
+    padding-top: 0;
 }
 
 /* Third level */
 .nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
     padding-left: 36px;
+    padding-top: 0;
 }
 
 /* Fourth level */
 .nav .nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
     padding-left: 48px;
+    padding-top: 0;
 }
 
 /* Fifth level */
 .nav .nav .nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
     padding-left: 60px;
+    padding-top: 0;
 }
 
 /* Active link */
