@@ -98,6 +98,7 @@ class HydratorDetailTopPanelController {
     this.runtimeArguments = {};
     this.resolvedMacros = {};
     this.validToStartOrSchedule = true;
+    this.pipelineAction = 'Run';
 
     if (Object.keys(this.macrosMap).length === 0) {
       this.fetchMacros();
@@ -186,7 +187,7 @@ class HydratorDetailTopPanelController {
             // if the higher level preferences have changed, or if this.resolvedMacros is empty
             if (!angular.equals(newResolvedMacros, this.resolvedMacros)) {
               if (Object.keys(this.resolvedMacros).length === 0) {
-                this.macrosMap = Object.assign({}, newResolvedMacros);
+                this.macrosMap = Object.assign(this.macrosMap, newResolvedMacros);
               } else {
                 let newPrefs = {};
                 for (let macroKey in newResolvedMacros) {
@@ -210,7 +211,7 @@ class HydratorDetailTopPanelController {
             }
 
             if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
-              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
             }
             this.validToStartOrSchedule = this.isValidToStartOrSchedule();
             return this.runtimeArguments;
@@ -220,7 +221,7 @@ class HydratorDetailTopPanelController {
 
     // if there are zero macros, but there are user-set runtime arguments
     } else {
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
       this.validToStartOrSchedule = this.isValidToStartOrSchedule();
       return this.$q.when(this.runtimeArguments);
     }
@@ -236,16 +237,7 @@ class HydratorDetailTopPanelController {
   }
 
   isValidToStartOrSchedule() {
-    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
-    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
-    if (hasMissingValues.res) {
-      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
-      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
-    } else {
-      this.notValidRuntimeArgsString = '';
-    }
-
-    return !hasMissingValues.res;
+    return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
   setState() {
@@ -317,7 +309,7 @@ class HydratorDetailTopPanelController {
   }
   do(action) {
     switch(action) {
-      case 'Start':
+      case 'Run':
         this.getRuntimeArguments()
           .then(() => {
             this.startPipeline();
@@ -367,6 +359,23 @@ class HydratorDetailTopPanelController {
               });
             }
           );
+    }
+  }
+  doStartScheduleOrConfig(action) {
+    if (this.validToStartOrSchedule) {
+      this.do(action);
+    } else {
+      this.pipelineAction = action;
+      this.do('Config');
+    }
+  }
+  startOrSchedulePipeline() {
+    if (this.pipelineAction === 'Run') {
+      this.startPipeline();
+    } else if (this.pipelineAction === 'Schedule') {
+      this.viewConfig = false;
+      this.pipelineAction = 'Run';
+      this.viewScheduler = true;
     }
   }
   startPipeline() {

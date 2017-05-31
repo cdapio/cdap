@@ -217,6 +217,19 @@
                 </span>
               </div>
             </div>
+            <div class="form-group row max-concurrent-runs">
+              <label class="col-xs-3 control-label">
+                Max concurrent runs
+              </label>
+              <div class="col-xs-4 schedule-values-container">
+                <span class="schedule-values">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.maxConcurrentRuns"
+                          ng-options="option as option for option in SchedulerCtrl.CONCURRENT_RUNS_OPTIONS">
+                  </select>
+                </span>
+              </div>
+            </div>
             <div class="form-group row summary">
               <label class="col-xs-3 control-label">
                 Summary
@@ -288,6 +301,14 @@
                     <span>
                       at {{ SchedulerCtrl.timeSelections.startingAt.hour }}:{{ SchedulerCtrl.timeSelections.startingAt.min | displayTwoDigitNumber }}{{ SchedulerCtrl.timeSelections.startingAt.am_pm | lowercase }}
                     </span>
+                  </span>
+                </div>
+                <div>
+                  <span ng-if="SchedulerCtrl.maxConcurrentRuns === 1">
+                    The pipeline cannot have concurrent runs
+                  </span>
+                  <span ng-if="SchedulerCtrl.maxConcurrentRuns > 1">
+                    The pipeline can have {{ SchedulerCtrl.maxConcurrentRuns }} concurrent runs
                   </span>
                 </div>
               </div>

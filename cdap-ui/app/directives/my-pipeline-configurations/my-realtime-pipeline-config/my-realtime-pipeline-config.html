@@ -77,6 +77,9 @@
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
+          <div class="step-content-subtitle">
+            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+          </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
@@ -164,19 +167,6 @@
             ></my-toggle-switch-widget>
             <i class="fa fa-info-circle"
                 uib-tooltip="Allows logs from each stage in the pipeline to be queried individually."
-                tooltip-placement="right">
-            </i>
-          </div>
-        </div>
-        <div class="label-with-toggle graceful-stop row">
-          <span class="toggle-label col-xs-4">Graceful Stop</span>
-          <div class="col-xs-7 toggle-container">
-            <my-toggle-switch-widget
-              is-on="RealtimePipelineConfigCtrl.gracefulStop"
-              on-toggle="RealtimePipelineConfigCtrl.onGracefulStopChange()"
-            ></my-toggle-switch-widget>
-            <i class="fa fa-info-circle"
-                uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
                 tooltip-placement="right">
             </i>
           </div>
@@ -328,7 +318,8 @@
       </fieldset>
 
       <div class="configuration-step-navigation">
-        <div ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+        <div class="apply-run-container"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-run"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled() || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline "
@@ -354,6 +345,15 @@
                <span class="fa fa-spinner fa-spin"></span>
              </span>
           </button>
+          <span class="num-runtime-args"
+                ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
+              {{ RealtimePipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <ng-pluralize
+              count="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length"
+              when="{'one': 'runtime argument',
+                    'other': 'runtime arguments'}">
+            </ng-pluralize>
+          </span>
         </div>
         <div ng-if="!RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
           <button
@@ -431,6 +431,9 @@
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
+          <div class="step-content-subtitle">
+            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+          </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
@@ -527,20 +530,6 @@
               </i>
             </div>
           </div>
-          <div class="label-with-toggle graceful-stop row">
-            <span class="toggle-label col-xs-4">Graceful Stop</span>
-            <div class="col-xs-7 toggle-container">
-              <my-toggle-switch-widget
-                is-on="RealtimePipelineConfigCtrl.gracefulStop"
-                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
-                on-toggle="RealtimePipelineConfigCtrl.gracefulStop = !RealtimePipelineConfigCtrl.gracefulStop"
-              ></my-toggle-switch-widget>
-              <i class="fa fa-info-circle"
-                 uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
-                 tooltip-placement="right">
-              </i>
-            </div>
-          </div>
         </div>
 
         <div class="configuration-step-content engine-config"
@@ -609,12 +598,11 @@
                 </i>
                 <span class="float-xs-right num-rows">
                     {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
-                  <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length === 1">
-                    custom config
-                  </span>
-                  <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 1">
-                    custom configs
-                  </span>
+                  <ng-pluralize
+                    count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
+                    when="{'one': 'custom config',
+                          'other': 'custom configs'}">
+                  </ng-pluralize>
                 </span>
               </span>
               <div class="custom-config-labels key-value-pair-labels">
@@ -712,23 +700,22 @@
             class="btn btn-primary apply-run"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
-            Apply &amp; Run
+            Save &amp; Run
           </button>
           <button
             class="btn btn-secondary"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyConfig()">
-            Apply
+            Save
           </button>
           <span class="num-runtime-args"
                 ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
               {{ RealtimePipelineConfigCtrl.runtimeArguments.pairs.length }}
-            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length === 1">
-              runtime argument
-            </span>
-            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length > 1">
-              runtime arguments
-            </span>
+            <ng-pluralize
+              count="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length"
+              when="{'one': 'runtime argument',
+                    'other': 'runtime arguments'}">
+            </ng-pluralize>
           </span>
         </div>
         <div ng-if="!RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
@@ -736,7 +723,7 @@
             class="btn btn-primary apply-close"
             ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
-            Apply
+            Save
           </button>
         </div>
       </div>
