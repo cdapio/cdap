@@ -38,8 +38,10 @@ public class Principal {
 
   private final String name;
   private final PrincipalType type;
-  private final int hashCode;
   private final String kerberosPrincipal;
+  // This needs to be transient because we don't want this to be populated during deserialization since that
+  // value will not be provided by the client.
+  private transient int hashCode;
 
   public Principal(String name, PrincipalType type) {
     this(name, type, null);
@@ -49,7 +51,6 @@ public class Principal {
     this.name = name;
     this.type = type;
     this.kerberosPrincipal = kerberosPrincipal;
-    this.hashCode = Objects.hash(name, type, kerberosPrincipal);
   }
 
   public String getName() {
@@ -83,6 +84,12 @@ public class Principal {
 
   @Override
   public int hashCode() {
+    // There is a one in a Integer.MAX_VALUE chance of the actual hash code being 0. The cache won't work in that case
+    // but we are ok with these odds.
+    if (hashCode != 0) {
+      return hashCode;
+    }
+    hashCode = Objects.hash(name, type, kerberosPrincipal);
     return hashCode;
   }
 
