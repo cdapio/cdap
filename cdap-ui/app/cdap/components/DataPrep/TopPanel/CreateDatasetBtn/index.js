@@ -88,6 +88,9 @@ export default class CreateDatasetBtn extends Component {
       datasetName: '',
       copyingSteps: [...copyingSteps],
       copyInProgress: false,
+      // This is to enable closing the modal on workflow start.
+      // Ideally users won't wait till the dataset is created (till pipeline runs successfully and creates the dataset)
+      copyTaskStarted: false,
       datasetUrl: null,
       error: null
     };
@@ -174,6 +177,7 @@ export default class CreateDatasetBtn extends Component {
     let {workspaceInfo, directives, headers} = DataPrepStore.getState().dataprep;
     let pipelineConfig = cloneDeep(this.state.batchPipelineConfig);
     let wranglerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Wrangler');
+    let dbStage = pipelineConfig.config.stages.find(stage => stage.name === 'Database');
     let databaseConfig = objectQuery(workspaceInfo, 'properties', 'databaseConfig');
     let macroMap = {};
     if (databaseConfig) {
@@ -186,10 +190,14 @@ export default class CreateDatasetBtn extends Component {
     }
     return Object.assign({}, macroMap, {
       datasetName: this.state.datasetName,
-      filename: workspaceInfo.properties.path,
+      filename: objectQuery(workspaceInfo, 'properties', 'path') || '',
       directives: directives.join('\n'),
-      schema: wranglerStage.plugin.properties.schema,
-      schemaRowField: isNil(this.state.rowKey) ? headers[0] : this.state.rowKey
+      schema: objectQuery(wranglerStage, 'plugin', 'properties', 'schema') || '',
+      schemaRowField: isNil(this.state.rowKey) ? headers[0] : this.state.rowKey,
+      query: objectQuery(dbStage, 'plugin', 'properties', 'importQuery') || '',
+      connectionString: objectQuery(dbStage, 'plugin', 'properties', 'connectionString') || '',
+      password: objectQuery(dbStage, 'plugin', 'properties', 'password') || '',
+      userName: objectQuery(dbStage, 'plugin', 'properties', 'user') || ''
     });
   }
 
@@ -221,8 +229,6 @@ export default class CreateDatasetBtn extends Component {
         connectionString: '${connectionString}',
         user: '${userName}',
         password: '${password}',
-        jdbcPluginName: 'mysql',
-        jdbcPluginType: 'jdbc',
         importQuery: '${query}'
       },
       'TPFSOrc': dataFormatProperties,
@@ -231,7 +237,7 @@ export default class CreateDatasetBtn extends Component {
     };
     pipelineConfig.config.stages = pipelineConfig.config.stages.map(stage => {
       if (!isNil(pluginsMap[stage.name])) {
-        stage.plugin.properties = Object.assign({}, pluginsMap[stage.name]);
+        stage.plugin.properties = Object.assign({}, stage.plugin.properties, pluginsMap[stage.name]);
       }
       return stage;
     });
@@ -270,6 +276,8 @@ export default class CreateDatasetBtn extends Component {
 
   submitForm() {
     let steps = cloneDeep(copyingSteps);
+    let {dataprep} = DataPrepStore.getState();
+    let workspaceProps = objectQuery(dataprep, 'workspaceInfo', 'properties');
     steps[0].status = 'running';
     this.setState({
       copyInProgress: true,
@@ -277,11 +285,21 @@ export default class CreateDatasetBtn extends Component {
     });
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let pipelineName;
+    // FIXME: We need to fix backend to enable adding macro to pluginType and name in database.
+    // Right now we don't support it and hence UI creates new pipeline based on jdbc plugin name.
+    let dbStage = this.state.batchPipelineConfig.config.stages.find(dataType => dataType.name === 'Database');
     if (this.state.inputType === 'fileset') {
       pipelineName = `one_time_copy_to_fs_${this.state.format}`;
+      if (workspaceProps.connection === 'database') {
+        pipelineName = `one_time_copy_to_fs_from_${dbStage.plugin.properties.jdbcPluginName}`;
+      }
     } else {
       pipelineName = `one_time_copy_to_table`;
+      if (workspaceProps.connection === 'database') {
+        pipelineName = `one_time_copy_to_table_from_${dbStage.plugin.properties.jdbcPluginName}`;
+      }
     }
+
     pipelineName = pipelineName.replace('TPFS', '');
     pipelineName = pipelineName.toLowerCase();
     let pipelineconfig, macroMap;
@@ -330,6 +348,9 @@ export default class CreateDatasetBtn extends Component {
       )
       .flatMap(
         () => {
+          this.setState({
+            copyTaskStarted: true
+          });
           let count = 1;
           const getDataset = (callback, errorCallback, count) => {
             let params = {
@@ -670,9 +691,9 @@ export default class CreateDatasetBtn extends Component {
 
             <div
               className={classnames("close-section float-xs-right", {
-                "disabled": this.state.copyInProgress && !this.state.datasetUrl && !this.state.error
+                "disabled": this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error
               })}
-              onClick={this.state.copyInProgress && !this.state.datasetUrl && !this.state.error? () => {} : this.toggleModal}
+              onClick={this.state.copyInProgress && !this.state.copyTaskStarted && !this.state.error? () => {} : this.toggleModal}
             >
               <span className="fa fa-times" />
             </div>
