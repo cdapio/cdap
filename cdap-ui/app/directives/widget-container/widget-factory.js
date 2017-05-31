@@ -112,6 +112,16 @@ angular.module(PKG.name + '.commons')
           placeholder: '{{::myconfig["widget-attributes"].default}}'
         }
       },
+      'scala-editor': {
+        element: '<div my-ace-editor></div>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'mode': 'scala',
+          'disabled': 'disabled',
+          placeholder: '{{::myconfig["widget-attributes"].default}}'
+        }
+      },
       'schema': {
         element: '<my-schema-editor></my-schema-editor>',
         attributes: {
