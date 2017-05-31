@@ -41,5 +41,6 @@ public class AppFabricDatasetModule implements DatasetModule {
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
     registry.add(new ProgramScheduleStoreDefinition(Schedulers.STORE_TYPE_NAME, indexedTableDef));
+    registry.add(new ProgramScheduleStoreDefinition(ProgramScheduleStoreDataset.class.getName(), indexedTableDef));
   }
 }
