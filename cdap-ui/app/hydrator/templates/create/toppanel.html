@@ -174,8 +174,14 @@
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning"
-          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading &&
+          HydratorPlusPlusTopPanelCtrl.hasNodes &&
+          HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+          uib-tooltip="Start building a pipeline before starting preview"
+          tooltip-placement="bottom"
+          tooltip-class="toppanel-tooltip"
+          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes">
       <div class="btn-container">
         <span class="fa fa-play text-success"></span>
         <div class="button-label">Run</div>

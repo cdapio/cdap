@@ -94,6 +94,15 @@ body.theme-cdap {
           &.margin-left {
             margin-left: 2px;
           }
+
+          &[disabled] {
+            opacity: 1;
+
+            span.fa,
+            .button-label {
+              opacity: 0.65;
+            }
+          }
         }
 
         > span:first-child {
