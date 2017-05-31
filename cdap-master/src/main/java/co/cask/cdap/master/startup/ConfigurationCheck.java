@@ -18,6 +18,7 @@ package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.logging.appender.kafka.LogPartitionType;
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Joiner;
@@ -26,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import kafka.common.Topic;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +46,12 @@ import javax.annotation.Nullable;
 @SuppressWarnings("unused")
 class ConfigurationCheck extends AbstractMasterCheck {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationCheck.class);
+  private final Configuration hConf;
 
   @Inject
-  private ConfigurationCheck(CConfiguration cConf) {
+  private ConfigurationCheck(CConfiguration cConf, Configuration hConf) {
     super(cConf);
+    this.hConf = hConf;
   }
 
   // TODO: (CDAP-4517) add more checks, like zookeeper settings.
@@ -63,11 +67,23 @@ class ConfigurationCheck extends AbstractMasterCheck {
     checkMessagingTopics(problemKeys);
     checkLogPartitionKey(problemKeys);
     checkPruningAndReplication(problemKeys);
+    checkHBaseDDLExtension(problemKeys);
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
     }
     LOG.info("  Configuration successfully verified.");
+  }
+
+  // Make sure that HBaseDDLExecutor extension is present if the configurations are provided
+  private void checkHBaseDDLExtension(Set<String> problemKeys) {
+    HBaseDDLExecutorFactory factory = new HBaseDDLExecutorFactory(cConf, hConf);
+    try {
+      factory.get();
+    } catch (Exception e) {
+      LOG.error(e.getMessage());
+      problemKeys.add(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    }
   }
 
   // tx invalid list pruning is not allowed with replication
