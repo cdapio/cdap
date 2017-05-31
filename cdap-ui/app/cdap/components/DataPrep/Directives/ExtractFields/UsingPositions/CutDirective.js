@@ -89,7 +89,7 @@ export default class CutDirective extends Component {
   applyDirective() {
     let {start, end} = this.state.textSelectionRange;
     if (!isNil(start) && !isNil(end)) {
-      let directive = `cut-character ${this.props.columns[0]} ${this.newColName} ${start + 1}-${end + 1}`;
+      let directive = `cut-character ${this.props.columns[0]} ${this.newColName} ${start + 1}-${end}`;
       execute([directive])
         .subscribe(() => {
           this.props.onClose();
@@ -182,7 +182,7 @@ export default class CutDirective extends Component {
           onClick={this.preventPropagation}
         >
           <span className={CELLHIGHLIGHTCLASSNAME}>
-            {T.translate(`${PREFIX}.extractDescription`, {range: `${start + 1}-${end + 1}`})}
+            {T.translate(`${PREFIX}.extractDescription`, {range: `${start + 1}-${end}`})}
           </span>
           <div className={classnames("col-input-container", CELLHIGHLIGHTCLASSNAME)}>
             <strong className={CELLHIGHLIGHTCLASSNAME}>{T.translate(`${PREFIX}.inputLabel`)}</strong>
