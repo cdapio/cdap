@@ -93,8 +93,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   @Override
-  public ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delayMillis) {
-    constraints.add(new LastRunConstraint(delayMillis));
+  public ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delaySecs) {
+    constraints.add(new LastRunConstraint(delaySecs));
     return this;
   }
 

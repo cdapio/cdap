@@ -91,11 +91,11 @@ public interface ScheduleBuilder {
   /**
    * Set a certain duration passed since the last launching of the program before launching the program again.
    *
-   * @param delayMillis duration in milliseconds to wait after the last launch of the program
-   *                    before launching the program
+   * @param delaySecs duration in seconds to wait after the last launch of the program
+   *                  before launching the program
    * @return {@link ConstraintProgramScheduleBuilder} containing the given duration
    */
-  ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delayMillis);
+  ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delaySecs);
 
   /**
    * Create a schedule which is triggered based upon the given cron expression.

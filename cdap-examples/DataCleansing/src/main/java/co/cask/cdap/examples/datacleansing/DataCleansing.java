@@ -54,7 +54,7 @@ public class DataCleansing extends AbstractApplication {
     // 5 minute delay between runs
     schedule(
       buildSchedule("DataSchedule", ProgramType.WORKFLOW, "DataCleansingWorkflow")
-      .withDurationSinceLastRun(TimeUnit.MINUTES.toMillis(5)).waitUntilMet()
+      .withDurationSinceLastRun(TimeUnit.MINUTES.toSeconds(5)).waitUntilMet()
       .triggerOnPartitions(RAW_RECORDS, 10)
     );
 
