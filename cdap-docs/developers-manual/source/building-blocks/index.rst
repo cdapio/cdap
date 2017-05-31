@@ -12,7 +12,7 @@ Building Blocks
 
 .. toctree::
    :maxdepth: 1
-   
+
     Core Abstractions <core>
     Applications <applications>
     Streams <streams>
@@ -65,7 +65,7 @@ write data through the data abstraction layer in CDAP.
 **Additional abstractions** include:
 
 - An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
-  as any other classes and libraries needed to create and run an Application. 
+  as any other classes and libraries needed to create and run an Application.
 
 - All of the program building blocks follow a :doc:`Program Lifecycle <program-lifecycle>`.
 
@@ -73,10 +73,10 @@ write data through the data abstraction layer in CDAP.
   or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, datasets, streams, and views.
   These can be retrieved and searched, and the metadata used to discover CDAP entities.
   Access of these entities is tracked, and you can view the :ref:`lineage <metadata-lineage>` of datasets and streams.
-  With a lineage diagram, you can then drill down into the metadata of its nodes. 
+  With a lineage diagram, you can then drill down into the metadata of its nodes.
 
 - :ref:`Audit Logging <audit-logging>` provides a chronological ledger containing evidence of operations or
-  changes on CDAP entities. This information can be used to capture a trail of the activities that 
+  changes on CDAP entities. This information can be used to capture a trail of the activities that
   determined the state of an entity at a given point in time.
 
 - A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
@@ -89,7 +89,7 @@ write data through the data abstraction layer in CDAP.
 
 - The :doc:`Transactional Messaging System <transactional-messaging-system>` is a CDAP service
   that provides a "publish-and-subscribe" messaging system that understands transactions.
-  
+
 - :doc:`Secure Keys <secure-keys>` allows users to store and retrieve sensitive information such
   as passwords from secure and encrypted storage.
 
@@ -98,5 +98,5 @@ platform :doc:`overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
 the code in the :ref:`examples <examples-index>` directory, both of which are available at the
-`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP SDK
+`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP Local Sandbox
 installation directory.

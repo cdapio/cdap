@@ -12,7 +12,7 @@ Plugin Reference
 
 .. toctree::
    :maxdepth: 1
-   
+
     Action Plugins <actions/index>
     Source Plugins <sources/index>
     Transform Plugins <transforms/index>
@@ -23,7 +23,7 @@ Plugin Reference
 
 
 These plugins (from CDAP Pipelines Version |cdap-pipelines-version|) are shipped with CDAP, both in the
-SDK and Distributed CDAP:
+CDAP Local Sandbox and Distributed CDAP:
 
 - :doc:`Action Plugins <actions/index>`
 - :doc:`Source Plugins <sources/index>`
@@ -33,7 +33,7 @@ SDK and Distributed CDAP:
 - :doc:`Shared Plugins <shared-plugins/index>`
 
   - :doc:`CoreValidator Plugin <shared-plugins/core>`
-  
+
 - :doc:`Post-run Plugins <post-run-plugins/index>`
 
 .. rubric:: Plugin Notes
@@ -46,8 +46,8 @@ SDK and Distributed CDAP:
 - The *batch sources* can write to any *batch sinks* that are available and *real-time sources*
   can write to any *real-time sinks*. *Transformations* work with either *sinks* or *sources*.
   Transformations can use *validators* to test data and check that it follows user-specified
-  rules. 
-  
+  rules.
+
   Other plugin types may be restricted as to which plugin (and artifact) that they work
   with, depending on the particular functionality they provide. For instance, certain
   *model* (the *NaiveBayesTrainer*) and *compute* (the *NaiveBayesClassifier*) plugins

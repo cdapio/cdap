@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Examples
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -32,8 +32,8 @@ Examples
    Wikipedia Pipeline <wikipedia-data-pipeline>
    Word Count <word-count>
 
-In addition to the :ref:`Getting Started's <getting-started-index>` 
-:ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
+In addition to the :ref:`Getting Started's <getting-started-index>`
+:ref:`Quick Start/Web Log Analytics example, <quick-start>` the CDAP Local Sandbox includes these examples:
 
 .. list-table::
   :widths: 15 60
@@ -103,7 +103,7 @@ You can learn more about developing data application using CDAP by:
 - Look at our :ref:`How-To Guides<guides-index>` and
   :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
   longer tutorials covering a complete range of Big Data application topics.
-- Exploring the web analytics application :doc:`source code.<web-analytics>` It includes 
+- Exploring the web analytics application :doc:`source code.<web-analytics>` It includes
   test cases that show unit-testing an application.
-- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and 
+- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and
   :ref:`Building Blocks <building-blocks>` sections.

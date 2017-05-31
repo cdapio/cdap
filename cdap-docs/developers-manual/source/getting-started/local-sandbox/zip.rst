@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: CDAP SDK Zip
+    :description: CDAP Local Sandbox, Binary Zip File
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. highlight:: console

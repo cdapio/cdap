@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _custom-dataset-exploration:
 
@@ -273,7 +273,7 @@ defining::
     return Scannables.valueRecordScanner(table.createSplitReader(split));
   }
 
-An example demonstrating an implementation of ``RecordScannable`` is included in the Cask Data Application Platform SDK in the
+An example demonstrating an implementation of ``RecordScannable`` is included in the CDAP Local Sandbox in the
 directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL

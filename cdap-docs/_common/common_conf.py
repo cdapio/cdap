@@ -33,7 +33,7 @@ import subprocess
 import sys
 from datetime import datetime
 
-def get_sdk_version():
+def get_cdap_version():
     # Sets the Build Version
     version = None
     short_version = None
@@ -68,12 +68,12 @@ def get_sdk_version():
         pass
     return version, short_version, full_version, version_tuple
 
-def print_sdk_version():
-    version, short_version, full_version = get_sdk_version()
+def print_cdap_version():
+    version, short_version, full_version = get_cdap_version()
     if version == full_version:
-        print "SDK Version: %s" % version
+        print "CDAP Version: %s" % version
     elif version and full_version:
-        print "SDK Version: %s (%s)" % (version, full_version)
+        print "CDAP Version: %s (%s)" % (version, full_version)
         print "Version tuple: %s" % (version_tuple)
     else:
         print "Could not get version (%s), full version (%s) from grep" % (version, full_version)
@@ -207,7 +207,7 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 # The X.Y.Z version
 # The X.Y short-version
 # The "full" version, which includes any alpha/beta/rc/SNAPSHOT tags, also called the "release" version.
-version, short_version, release, version_tuple = get_sdk_version()
+version, short_version, release, version_tuple = get_cdap_version()
 spark_version = get_spark_version()
 
 # The GIT info and GIT environment variables for the build

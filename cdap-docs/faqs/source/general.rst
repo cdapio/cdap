@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :titles-only-global-toc: true
 
@@ -11,20 +11,20 @@
 FAQs: General Questions
 =======================
 
-What is available in the CDAP SDK?
-----------------------------------
-The CDAP SDK includes:
+What is available in the CDAP Local Sandbox?
+--------------------------------------------
+The CDAP Local Sandbox includes:
 
 - Local instance of the CDAP Server;
 - CDAP APIs for building applications;
-- CDAP UI and CDAP CLI for interacting with CDAP; and
+- The CDAP UI and CDAP CLI for interacting with CDAP; and
 - Examples for getting started with CDAP.
 
 
-What platforms are supported by the Cask Data Application Platform SDK?
------------------------------------------------------------------------
-The CDAP SDK has been extensively tested on Mac OS X and Linux. CDAP on Windows has not
-been extensively tested. If you have any issues with CDAP on Windows, help us by 
+What platforms are supported by the CDAP Local Sandbox?
+-------------------------------------------------------
+The CDAP Local Sandbox has been extensively tested on Mac OS X and Linux. CDAP on Windows
+has not been as extensively tested. If you have any issues with CDAP on Windows, help us by
 `filing a ticket <https://issues.cask.co/browse/CDAP>`__.
 
 What programming languages are supported by CDAP?
@@ -34,7 +34,7 @@ CDAP currently supports Java for developing applications.
 What version of Java SDK is required by CDAP?
 ---------------------------------------------
 The latest version of the JDK or JRE version 7 or version 8 must be installed in your
-environment. CDAP is tested on both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__ 
+environment. CDAP is tested on both the `Oracle JDK <http://www.java.com/en/download/manual.jsp>`__
 and the `OpenJDK <http://openjdk.java.net/>`__.
 
 What version of Node.js is required by CDAP?
@@ -49,11 +49,11 @@ Yes. You can install Distributed CDAP on your Hadoop cluster. See the :ref:`Inst
 
 What Hadoop distributions can CDAP run on?
 ------------------------------------------
-CDAP |version| has been tested on and supports CDH |cdh-versions|, HDP |hdp-versions|, 
-MapR |mapr-versions|, Amazon Hadoop (EMR) |emr-versions|, and Apache Bigtop 1.0. 
+CDAP |version| has been tested on and supports CDH |cdh-versions|, HDP |hdp-versions|,
+MapR |mapr-versions|, Amazon Hadoop (EMR) |emr-versions|, and Apache Bigtop 1.0.
 
-I'm seeing log messages about the failure to send audit log message while running the SDK. What's wrong?
---------------------------------------------------------------------------------------------------------
+I'm seeing log messages about the failure to send audit log message while running the Local Sandbox. What's wrong?
+------------------------------------------------------------------------------------------------------------------
 If your computer goes into sleep mode, then you may see these messages after the machine
 is restored from sleep mode, as the audit logs are not getting delivered while the machine
 sleeps. You may need to restart CDAP to restore its state depending on how long it has

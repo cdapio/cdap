@@ -1,5 +1,7 @@
-.. :author: Cask Data, Inc.
-   :copyright: Copyright © 2014-2017 Cask Data, Inc.
+.. meta::
+    :author: Cask Data, Inc.
+    :description: Starting and Stopping CDAP Local Sandbox
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 ========================================
 Starting and Stopping CDAP Local Sandbox
@@ -11,9 +13,9 @@ Starting and Stopping CDAP Local Sandbox
 
 .. highlight:: console
 
-Use the ``cdap sandbox`` script (or, if you are using Windows, use ``cdap.bat sandbox``) to start and
-stop the CDAP Local Sandbox (the location will vary depending on where the CDAP SDK is
-installed):
+Use the ``cdap sandbox`` script (or, if you are using Windows, use ``cdap.bat sandbox``)
+to start and stop the CDAP Local Sandbox (the location will vary depending on where the
+CDAP Local Sandbox is installed):
 
 .. tabbed-parsed-literal::
 
