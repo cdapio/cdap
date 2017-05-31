@@ -106,7 +106,7 @@ trait SparkMain extends Serializable {
     * @tparam K key type
     * @tparam V value type
     */
-  protected implicit class SparkProgramRDDFunctions[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)]) {
+  implicit class SparkProgramRDDFunctions[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)]) {
 
     /**
       * Saves the given [[org.apache.spark.rdd.RDD]] to the given [[co.cask.cdap.api.dataset.Dataset]].
@@ -166,7 +166,7 @@ trait SparkMain extends Serializable {
     *
     * @param sc the [[org.apache.spark.SparkContext]]
     */
-  protected implicit class SparkProgramContextFunctions(sc: SparkContext) {
+  implicit class SparkProgramContextFunctions(sc: SparkContext) {
 
     /**
       * Creates a [[org.apache.spark.rdd.RDD]] from the given [[co.cask.cdap.api.dataset.Dataset]].
@@ -440,7 +440,7 @@ trait SparkMain extends Serializable {
   /**
     * Provides functional syntax to execute a function with a Transaction.
     */
-  protected object Transaction extends Serializable {
+  object Transaction extends Serializable {
 
     /**
       * Executes the given function in a single transaction.
@@ -472,13 +472,13 @@ trait SparkMain extends Serializable {
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] to a
     * [[scala.Tuple2]] of (eventTimestamp, UTF-8 decoded body string).
     */
-  protected implicit val timestampStringStreamDecoder: (StreamEvent) => (Long, String) = (e: StreamEvent) => {
+  implicit val timestampStringStreamDecoder: (StreamEvent) => (Long, String) = (e: StreamEvent) => {
     (e.getTimestamp, Charset.forName("UTF-8").decode(e.getBody).toString)
   }
 
   /**
     * An implicit object that transforms [[co.cask.cdap.api.flow.flowlet.StreamEvent]] body to a UTF-8 string.
     */
-  protected implicit val stringStreamDecoder: (StreamEvent) => String = (e: StreamEvent) =>
+  implicit val stringStreamDecoder: (StreamEvent) => String = (e: StreamEvent) =>
     timestampStringStreamDecoder(e)._2
 }
