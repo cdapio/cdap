@@ -103,13 +103,27 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
     overflow-x: hidden;
   }
 
+  .image-container {
+    height: 50px;
+    width: 50px;
+    display: inline-block;
+    margin-right: 10px;
+  }
+
   .db-image {
-    transform: scale(0.7) translateY(-30%);
+    transform: scale(0.5) translate(-50%, -50%);
+    margin-right: 0;
+  }
+
+  .db-label {
+    display: inline-block;
+    max-width: calc(100% - 60px);
+    margin-top: 10px;
+    vertical-align: top;
   }
 
   .driver-info {
     height: 70px;
-    line-height: 70px;
 
     > div:first-child {
       height: 70px;
@@ -120,6 +134,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
     }
 
     .driver-detail {
+      margin-top: 12px;
+
       .fa.fa-fw {
         margin-left: 5px;
         margin-right: 5px;

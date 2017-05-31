@@ -483,8 +483,12 @@ export default class DatabaseDetail extends Component {
     return (
       <div className="row driver-info">
         <div className="col-xs-4 text-xs-right">
-          <div className={`db-image db-${db.name}`}></div>
-          <span>{db.label}</span>
+          <div className="image-container">
+            <div className={`db-image db-${db.tag}`}></div>
+          </div>
+          <div className="db-label">
+            <span>{db.label}</span>
+          </div>
         </div>
 
         <div className="col-xs-8 driver-detail">
