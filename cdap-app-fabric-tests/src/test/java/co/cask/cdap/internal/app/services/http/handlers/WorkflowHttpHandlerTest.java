@@ -86,7 +86,7 @@ import javax.annotation.Nullable;
 /**
  * Tests for {@link WorkflowHttpHandler}
  */
-public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
+public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
@@ -828,9 +828,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // 6. Resume the schedule
     // 7. Verify there are runs after the resume by looking at the history
 
-    String appName = "AppWithSchedule";
-    String workflowName = "SampleWorkflow";
-    String sampleSchedule = "SampleSchedule";
+    String appName = AppWithSchedule.NAME;
+    String workflowName = AppWithSchedule.WORKFLOW_NAME;
+    String sampleSchedule = AppWithSchedule.SCHEDULE;
 
     // deploy app with schedule in namespace 2
     HttpResponse response = deploy(AppWithSchedule.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
@@ -848,6 +848,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getName();
     Assert.assertFalse(scheduleName.isEmpty());
+
+    // get schedules in backward-compatible ScheduleSpecification form
+    List<ScheduleSpecification> specs = getScheduleSpecs(TEST_NAMESPACE2, appName, workflowName);
+    Assert.assertEquals(1, specs.size());
+    String specName = specs.get(0).getSchedule().getName();
+    Assert.assertEquals(scheduleName, specName);
 
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
@@ -1013,10 +1019,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName1));
 
-    assertRunHistory(programId, "completed", workflowRunsAfterSuspend, 60, TimeUnit.SECONDS);
-
     //check scheduled state
     assertSchedule(programId, scheduleName1, true, 30, TimeUnit.SECONDS);
+
+    // an additional run should execute and complete after resuming the schedule
+    assertRunHistory(programId, "completed", 1 + workflowRunsAfterSuspend, 60, TimeUnit.SECONDS);
 
     //Check status of a non existing schedule
     try {

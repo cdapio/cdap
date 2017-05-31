@@ -24,7 +24,7 @@ The best way to start developing a CDAP application is by using the Maven archet
 .. ifconfig:: snapshot_version
 
   .. tabbed-parsed-literal::
-  
+
     $ mvn archetype:generate \
         -DarchetypeGroupId=co.cask.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
@@ -36,7 +36,7 @@ The best way to start developing a CDAP application is by using the Maven archet
 .. ifconfig:: not snapshot_version
 
   .. tabbed-parsed-literal::
-  
+
     $ mvn archetype:generate \
         -DarchetypeGroupId=co.cask.cdap \
         -DarchetypeArtifactId=cdap-app-archetype \
@@ -71,13 +71,13 @@ Complete examples for each archetype:
   .. MapReduce Program
 
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-mapreduce-archetype |archetype-repository-version|
-  
+
   .. Spark Program (Java)
 
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-java-archetype |archetype-repository-version|
-  
+
   .. Spark Program (Scala)
-  
+
   $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-spark-scala-archetype |archetype-repository-version|
 
 When prompted, complete the values for *groupId* and *artifactId* parameters. Enter for the *groupId* parameter your
@@ -92,7 +92,7 @@ Using IntelliJ
 
    - If at the starting IntelliJ dialog, click on *Import Project*; or
    - If an existing project is open, go to the menu item *File -> Open...*
-   
+
 #. Navigate to and select the ``pom.xml`` in the Maven project's directory.
 #. In the *Import Project from Maven* dialog, select the *Import Maven projects automatically* and *Automatically
    download: Sources, Documentation* boxes.
@@ -120,26 +120,26 @@ To do so, follow these steps:
 #. Either clone the CDAP repo or download a ZIP of the source:
 
    - Clone the CDAP repository using |git-clone-command|
-   
+
    - Download the source as a ZIP from |source-link| and unpack the ZIP in a suitable location
 
-#. In your IDE, install the Scala plugin (for 
+#. In your IDE, install the Scala plugin (for
    `IntelliJ <https://confluence.jetbrains.com/display/SCA/Scala+Plugin+for+IntelliJ+IDEA>`__
    or `Eclipse <http://scala-ide.org>`__) as there is Scala code in the project.
 #. Open the CDAP project in the IDE as an existing project by finding and opening the ``cdap/pom.xml``.
 #. Resolve dependencies: this can take quite a while, as there are numerous downloads required.
-#. Before starting CDAP, disable audit logs by changing the ``audit.enabled`` setting in 
+#. Before starting CDAP, disable audit logs by changing the ``audit.enabled`` setting in
    ``cdap-default.xml`` to ``false``. Otherwise, due to :cask-issue:`CDAP-5864`, Kafka
    errors will appear in the logs.
-#. In the case of IntelliJ, you can create a run configuration to run Standalone CDAP:
+#. In the case of IntelliJ, you can create a run configuration to run CDAP Local Sandbox:
 
    1. Select ``Run > Edit`` Configurations...
    #. Add a new "Application" run configuration.
    #. Set "Main class" to be ``co.cask.cdap.StandaloneMain``.
    #. Set "VM options" to ``-Xmx1024m -XX:MaxPermSize=128m`` (for in-memory MapReduce jobs).
    #. Click "OK".
-   #. You can now use this run configuration to start an instance of Standalone CDAP.
-   
+   #. You can now use this run configuration to start an instance of CDAP Local Sandbox.
+
 This will allow you to start CDAP and access it from either the command line (:ref:`CLI <cli>`)
 or through the :ref:`HTTP RESTful API <http-restful-api>`. To start the CLI, you can either start
 it from a shell using the ``cdap`` script or run the ``CLIMain`` class from the IDE.

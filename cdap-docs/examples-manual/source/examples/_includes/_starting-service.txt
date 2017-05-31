@@ -10,11 +10,11 @@ Starting the Service
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service-italic| to get to the service detail page, then click the *Start* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli start service |example|.\ |example-service|
-    
+
     Successfully started service '|example-service|' of application '|example|' with stored runtime arguments '{}'

@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
@@ -69,6 +70,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
 
   // simply serialize the entire Job into one column
   private static final byte[] COL = new byte[] {'C'};
+  private static final byte[] TO_DELETE_COL = new byte[] {'D'};
+  private static final byte[] IS_OBSOLETE_COL = new byte[] {'O'};
   private static final byte[] JOB_ROW_PREFIX = new byte[] {'J'};
   private static final byte[] ROW_KEY_SEPARATOR = new byte[] {':'};
   private static final byte[] MESSAGE_ID_ROW_PREFIX = new byte[] {'M'};
@@ -106,23 +109,38 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   public Job transitState(Job job, Job.State state) {
     // assert that the job state transition is valid
     job.getState().checkTransition(state);
-    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), job.getNotifications(), state);
+    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), job.getNotifications(), state,
+                               job.getScheduleLastUpdatedTime());
     put(newJob);
     return newJob;
   }
 
   @Override
-  public void addNotification(ProgramSchedule schedule, Notification notification) {
+  public void addNotification(ProgramScheduleRecord record, Notification notification) {
     boolean jobExists = false;
+    ProgramSchedule schedule = record.getSchedule();
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {
       while (jobs.hasNext()) {
-        jobExists = true;
         Job job = jobs.next();
         if (job.getState() == Job.State.PENDING_TRIGGER) {
           // only update the job's notifications if it is in PENDING_TRIGGER, so as to avoid conflict with the
           // ConstraintCheckerService
-          addNotification(job, notification);
-          break;
+          if (job.isToBeDeleted()) {
+            // ignore, it will be deleted by ConstraintCheckerService
+            continue;
+          }
+          long scheduleLastUpdated = record.getMeta().getLastUpdated();
+          if (job.getScheduleLastUpdatedTime() != scheduleLastUpdated) {
+            // schedule has changed: this job is obsolete
+            table.put(getRowKey(job.getJobKey().getScheduleId(), job.getJobKey().getCreationTime()),
+                      IS_OBSOLETE_COL, Bytes.toBytes(System.currentTimeMillis()));
+          } else {
+            // TODO (CDAP-11613): only update or delete the job if it has not timed out yet. After time-out,
+            //       the constraint checker might delete this job and that would cause conflicts.
+            jobExists = true;
+            addNotification(job, notification);
+            break;
+          }
         }
       }
     }
@@ -131,7 +149,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
       List<Notification> notifications = Collections.singletonList(notification);
       Job.State jobState = isTriggerSatisfied(schedule.getTrigger(), notifications)
         ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
-      put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState));
+      put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState,
+                        record.getMeta().getLastUpdated()));
     }
   }
 
@@ -144,7 +163,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
       newState = Job.State.PENDING_CONSTRAINT;
       job.getState().checkTransition(newState);
     }
-    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), notifications, newState);
+    Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), notifications, newState,
+                               job.getScheduleLastUpdatedTime());
     put(newJob);
   }
 
@@ -167,12 +187,17 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   }
 
   @Override
-  public void deleteJobs(ScheduleId scheduleId) {
+  public void markJobsForDeletion(ScheduleId scheduleId, long markedTime) {
     byte[] keyPrefix = getRowKeyPrefix(scheduleId);
     Row row;
     try (Scanner scanner = table.scan(keyPrefix, Bytes.stopKeyForPrefix(keyPrefix))) {
       while ((row = scanner.next()) != null) {
-        table.delete(row.getRow());
+        Job job = fromRow(row);
+        // only mark jobs that are not marked yet to avoid chance of conflict with concurrent delete
+        if (job.getState() != Job.State.PENDING_LAUNCH && row.get(TO_DELETE_COL) == null) {
+          // jobs that are pending launch will be deleted by the launcher anyway
+          table.put(row.getRow(), TO_DELETE_COL, Bytes.toBytes(markedTime));
+        }
       }
     }
   }
@@ -225,7 +250,15 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
 
   private Job fromRow(Row row) {
     String jobJsonString = Bytes.toString(row.get(COL));
-    return GSON.fromJson(jobJsonString, SimpleJob.class);
+    SimpleJob job = GSON.fromJson(jobJsonString, SimpleJob.class);
+    Long toBeDeletedTime = row.getLong(TO_DELETE_COL);
+    Long isObsoleteTime = row.getLong(IS_OBSOLETE_COL);
+    Long timeToSet = toBeDeletedTime == null ? isObsoleteTime :
+      isObsoleteTime == null ? toBeDeletedTime : new Long(Math.min(isObsoleteTime, toBeDeletedTime));
+    if (timeToSet != null) {
+      job.setToBeDeleted(timeToSet);
+    }
+    return job;
   }
 
   private Put toPut(Job job) {

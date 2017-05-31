@@ -100,7 +100,7 @@ public class ScheduleSpecificationCodecTest {
     Application app = new AbstractApplication() {
       @Override
       public void configure() {
-        scheduleWorkflow(Schedules.builder("timeSchedule").createTimeSchedule("cronEntry"), "workflow");
+        scheduleWorkflow(Schedules.builder("timeSchedule").createTimeSchedule("0 * * * *"), "workflow");
         scheduleWorkflow(Schedules.builder("streamSizeSchedule")
                            .createDataSchedule(Schedules.Source.STREAM, "stream", 1),
                          "workflow");
@@ -113,7 +113,7 @@ public class ScheduleSpecificationCodecTest {
     String jsonStr = gsonAdapater.toJson(specification);
 
     ApplicationSpecification deserializedSpec = gsonAdapater.fromJson(jsonStr);
-    Assert.assertEquals(new TimeSchedule("timeSchedule", "", "cronEntry"),
+    Assert.assertEquals(new TimeSchedule("timeSchedule", "", "0 * * * *"),
                         deserializedSpec.getSchedules().get("timeSchedule").getSchedule());
     Assert.assertEquals(new StreamSizeSchedule("streamSizeSchedule", "", "stream", 1),
                         deserializedSpec.getSchedules().get("streamSizeSchedule").getSchedule());

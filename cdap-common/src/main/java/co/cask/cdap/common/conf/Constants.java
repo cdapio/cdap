@@ -575,6 +575,8 @@ public final class Constants {
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 
+    public static final String TWILL_INSTANCE_ID = "metrics.twill.instance.id";
+
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
@@ -802,6 +804,9 @@ public final class Constants {
     public static final String TAG_WORKFLOW_MAP_REDUCE_ID = ".workflowMapReduceId";
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
+
+    public static final String EVENT_TYPE_TAG = "MDC:eventType";
+    public static final String USER_LOG_TAG_VALUE = "userLog";
 
     // cut-off time discount from actual transaction timeout
     public static final int TX_TIMEOUT_DISCOUNT_SECS = 5;

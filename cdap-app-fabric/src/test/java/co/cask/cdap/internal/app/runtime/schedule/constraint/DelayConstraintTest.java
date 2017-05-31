@@ -51,17 +51,18 @@ public class DelayConstraintTest {
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.<Constraint>of());
-    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER);
+    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // test with 10 minute delay
     DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(TimeUnit.MINUTES.toMillis(10));
     // a check against 12 minutes after 'now' will return SATISFIED
     ConstraintResult result =
-      tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12)));
+      tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12), null));
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
 
     // a check against 9 minutes after 'now' will return NOT_SATISFIED, with 1 minute to wait until next retry
-    result = tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9)));
+    result = tenMinuteDelayConstraint.check(schedule,
+                                            new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9), null));
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), (long) result.getMillisBeforeNextRetry());
   }

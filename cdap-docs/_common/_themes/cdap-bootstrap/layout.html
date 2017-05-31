@@ -1,0 +1,263 @@
+{#  layout.html
+    ===========
+    CDAP-bootstrap theme, uses Bootstrap version 3; Master layout template for Sphinx theme.
+    :copyright: Copyright 2017 Cask Data, Inc.
+    :license: Apache License, Version 2.0
+#}
+{%- set sidebar_title = 'CDAP Documentation' -%}
+{%- set master_url_root = pathto(master_doc, 1) -%}
+{%- if master_url_root == '#' -%}{% set master_url_root = '' -%}{% endif -%}
+{%- if html_short_title_toc != sidebar_title -%}{% set master_url_root =  master_url_root + '/..' -%}{%- endif -%}
+{% set bootstrap_version = "3.3.6" -%}
+{% set bs_span_prefix = "col-md-" -%}
+{% set theme_css_files = [
+    '_static/bootstrap-' + bootstrap_version + '/css/bootstrap.min.css',
+    '_static/bootstrap-' + bootstrap_version + '/css/bootstrap-theme.min.css',
+    '_static/css/bootstrap-sphinx.css',
+    '_static/css/cdap-dynamicscrollspy-4.css',
+    '_static/css/jquery.mCustomScrollbar.css',
+    '_static/css/cdap-jquery.mCustomScrollbar.css'
+ ] -%}
+{# Hide table-of-contents on pages, by setting in the top field list :hide-toc: true #}
+    {%- set hidetoc = '' -%}{%- set hidetoc_key = 'hide-toc' -%}
+{# Number sections on pages, by setting in the top field list :section-numbering: true #}
+    {%- set section_numbering = '' -%}{%- set section_numbering_key = 'section-numbering' -%}
+{# Disable rendering of left sidebar, by setting in the top field list :hide-left-sidebar: true #}
+    {%- set hide_left_sidebar = false -%}{%- set hide_left_sidebar_key = 'hide-left-sidebar' -%}
+{# Disable rendering of right sidebar, by setting in the top field list :hide-right-sidebar: true #}
+    {%- set hide_right_sidebar = false -%}{%- set hide_right_sidebar_key = 'hide-right-sidebar' -%}
+{%- if meta is defined -%}
+    {%- if hidetoc_key in meta -%}
+        {%- set hidetoc = meta[hidetoc_key] -%}
+    {%- endif -%}
+    {%- if section_numbering_key in meta -%}
+        {%- set section_numbering = meta[section_numbering_key] -%}
+    {%- endif -%}
+    {%- if hide_left_sidebar_key in meta -%}
+        {%- set hide_left_sidebar = meta[hide_left_sidebar_key] -%}
+    {%- endif -%}
+    {%- if hide_right_sidebar_key in meta -%}
+        {%- set hide_right_sidebar = meta[hide_right_sidebar_key] -%}
+    {%- endif -%}
+{%- endif -%}
+
+{% if theme_cdap_bootstrap_custom_css is not defined -%}
+  {% set theme_cdap_bootstrap_custom_css = [] -%}
+{% endif -%}
+{%- if hidetoc -%}
+    {% set theme_cdap_bootstrap_custom_css = theme_cdap_bootstrap_custom_css + ['_static/css/cdap-hide-toc.css'] -%}
+{%- endif -%}
+{%- if section_numbering -%}
+    {% set theme_cdap_bootstrap_custom_css = theme_cdap_bootstrap_custom_css + ['_static/css/cdap-section-numbering.css'] -%}
+{%- endif -%}
+
+{% set css_files = css_files + theme_css_files + theme_cdap_bootstrap_custom_css -%}
+{% set end_script_files = [
+    '_static/bootstrap-' + bootstrap_version + '/js/bootstrap.min.js',
+    '_static/js/bootstrap-sphinx.js',
+    '_static/js/cdap-dynamicscrollspy-4.js',
+    '_static/js/cdap-version-menu.js',
+    '_static/js/copy-to-clipboard.js',
+    '_static/js/jquery.mousewheel.min.js',
+    '_static/js/jquery.mCustomScrollbar.js',
+    '_static/js/js.cookie.js',
+    '_static/js/tabbed-parsed-literal-0.2.js',
+    '_static/js/cdap-onload-javascript.js'
+] -%}
+{%- set render_sidebar = (not embedded) and (not theme_nosidebar|tobool) and sidebars -%}
+{%- if render_sidebar -%}
+    {%- if hide_left_sidebar == 'true' and hide_right_sidebar == 'true' -%}
+        {%- set bs_content_width = "12" -%}
+    {%- elif hide_left_sidebar == 'true' or hide_right_sidebar == 'true' -%}
+        {%- set bs_content_width = "10" -%}
+    {%- else -%}
+        {%- set bs_content_width = "8" -%}
+    {%- endif -%}
+{% else -%}
+    {%- set bs_content_width = "12" -%}
+{%- endif -%}
+
+{%- macro google_tagmanager() -%}{%- if html_google_tag_manager_code is defined -%}
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','{{ html_google_tag_manager_code }}');</script>
+    <!-- End Google Tag Manager -->
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro google_tagmanager_body() -%}{%- if html_google_tag_manager_code is defined -%}
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ html_google_tag_manager_code }}"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro css() %}
+    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
+    <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
+    {%- for cssfile in css_files %}
+    <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
+    {%- endfor %}
+{%- endmacro %}
+
+{%- macro scripts() %}
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '{{ url_root }}',
+        VERSION:     '{{ release|e }}',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '{{ '' if no_search_suffix else file_suffix }}',
+        HAS_SOURCE:  {{ has_source|lower }}
+      };
+    </script>
+    {%- for scriptfile in script_files %}
+    <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
+    {%- endfor %}
+{%- endmacro -%}
+
+{%- macro end_scripts() -%}
+    {%- for scriptfile in end_script_files -%}
+    <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
+    {%- endfor -%}
+    <script type="text/javascript" src="{{ pathto('_static/js/cdap-version-menu.js', 1) }}"></script>
+    <script src="{{ theme_json_versions_js }}"/></script>
+{%- endmacro -%}
+
+{%- macro headerlinktags() -%}
+    {%- if favicon %}
+    <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}"/>
+    {%- endif %}
+    {%- if hasdoc('about') %}
+    <link rel="author" title="{{ _('About these documents') }}" href="{{ pathto('about') }}" />
+    {%- endif -%}
+    {%- if hasdoc('genindex') %}
+    <link rel="index" title="{{ _('Index') }}" href="{{ pathto('genindex') }}" />
+    {%- endif %}
+    {%- if hasdoc('search') %}
+    <link rel="search" title="{{ _('Search') }}" href="{{ pathto('search') }}" />
+    {%- endif -%}
+    {%- if hasdoc('copyright') %}
+    <link rel="copyright" title="{{ _('Copyright') }}" href="{{ pathto('copyright') }}" />
+    {%- endif %}
+    <link rel="top" title="{{ docstitle|e }}" href="{{ pathto('index') }}" />
+    {%- if parents %}
+    <link rel="up" title="{{ parents[-1].title|striptags|e }}" href="{{ parents[-1].link|e }}" />
+    {%- endif %}
+    {%- if next %}
+    <link rel="next" title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />
+    {%- endif %}
+    {%- if prev %}
+    <link rel="prev" title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />
+    {%- endif %}
+    <!-- block extrahead -->
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- block extrahead end -->
+{%- endmacro -%}
+
+{%- macro left_sidebar() -%}
+    {%- if hide_left_sidebar == false -%}
+    <div class="{{ bs_span_prefix }}2">
+      <div id="sidebar" class="bs-sidenav scrollable-y-outside" role="complementary">
+        {%- for sidebartemplate in sidebars -%}
+          {%- include sidebartemplate -%}
+        {%- endfor -%}
+      </div>
+    </div>
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro right_sidebar() -%}
+    {%- if hide_right_sidebar == false -%}
+    <div class="{{ bs_span_prefix }}2">
+      <div id="right-sidebar" class="bs-sidenav scrollable-y" role="complementary">
+        <div id="localtoc-scrollspy">
+        </div>
+      </div>
+    </div>
+    {%- endif -%}
+{%- endmacro -%}
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+{{ google_tagmanager() }}
+    <meta http-equiv="Content-Type" content="text/html; charset={{ encoding }}" />
+    {{ metatags }}
+{# Code to add custom theme values as meta_tags; used to add the Git release, hash, timestamp values #}
+{%- for tag, tag_value in theme_meta_git.iteritems() %}
+    <meta name="{{ tag }}" content="{{ tag_value }}">
+{%- endfor %}
+{%- block htmltitle %}
+    <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
+{%- endblock %}
+{{ css() }}
+{{ scripts() }}
+{{ headerlinktags() }}
+{% block extrahead -%}{% endblock -%}{# Block overshadowed in other layouts to add headers #}
+</head>
+<body role="document">
+{{ google_tagmanager_body() }}
+<!-- block navbar -->
+{% include "cdap-navbar.html" -%}
+<!-- block navbar end -->
+<!-- block main content -->
+<div class="main-container container">
+  <div class="row">
+    {%- block sidebar1 -%}{{ left_sidebar() }}{% endblock -%}
+    <div class="{{ bs_span_prefix }}{{ bs_content_width }} content" id="main-content">
+    {% block body -%}{% endblock -%}
+    </div>
+    {% block sidebar2 -%}{{ right_sidebar() }}{% endblock -%}
+  </div>
+</div>
+<!-- block main content end -->
+<!-- block footer -->
+{#  Code to check relations, controlled by setting in the field list at the top :hide-relations: true #}
+{%- set hiderel = '' -%}
+{%- set hiderel_key = 'hide-relations' -%}
+{%- if meta is defined -%}
+    {%- if hiderel_key in meta -%}
+        {%- set hiderel = meta[hiderel_key] -%}
+    {%- endif -%}
+{%- endif -%}
+    <footer class="footer">
+      <div class="container">
+        <div class="row">
+          <div class="{{ bs_span_prefix }}2 footer-left">
+            {%- if not hiderel -%}
+            {%- if prev and prev.title|striptags|e != '&lt;no title&gt;' -%}
+            <a title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />Previous</a>
+            {%- else -%}
+            &mdash;
+            {%- endif -%}
+            {%- endif -%}
+          </div>
+          <div class="{{ bs_span_prefix }}8 footer-center">
+{%- set zip_archive = "cdap-docs-" ~ release ~ "-web.zip" -%}
+<a class="footer-tab-link" href="{{ master_url_root + '/../reference-manual/licenses/index.html' }}">Copyright</a> &copy; {% trans copyright=copyright|e -%}{{ copyright }}{% endtrans -%}
+&bull; <a class="footer-tab-link" href="//docs.cask.co/cdap/{{ release }}/{{ zip_archive }}" rel="nofollow">Download</a> an archive or
+<a class="footer-tab-link" href="//docs.cask.co/cdap">switch the version</a> of the documentation
+          </div>
+          <div class="{{ bs_span_prefix }}2 footer-right">
+            {%- if not hiderel -%}
+            {%- if next and next.title|striptags|e != '&lt;no title&gt;' -%}
+            <a title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />Next</a>
+            {%- else -%}
+            &mdash;
+            {%- endif -%}
+            {%- endif -%}
+          </div>
+        </div>
+      </div>
+    </footer>
+<!-- block footer end -->
+{{ end_scripts() }}
+  </body>
+</html>

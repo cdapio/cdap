@@ -289,7 +289,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add(launcherJar.getName());
 
         // Localize logback.xml
-        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation);
+        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation.append("logback.xml.jar"));
         if (logbackLocation != null) {
           job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());

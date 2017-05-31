@@ -18,6 +18,7 @@
 @import '../../bower_components/bootstrap/less/mixins.less';
 @import '../styles/themes/cdap/mixins.less';
 @height-of-toppanel: 43px;
+@btn-border-color: #999999;
 
 body.theme-cdap {
   &.state-hydrator {
@@ -68,9 +69,33 @@ body.theme-cdap {
         border-top: 1px solid transparent;
         border-right: 1px solid transparent;
         border-bottom: 1px solid transparent;
-        border-left: 1px solid @table-border-color;
         transition: all 0.2s ease;
-        width: 55px;
+        width: 60px;
+
+        .btn-container {
+          border-left: 1px solid @btn-border-color;
+        }
+
+        &.border-right {
+          .btn-container {
+            border-right: 1px solid @btn-border-color;
+          }
+        }
+
+        &.no-border-left {
+          .btn-container {
+            border-left: 0;
+          }
+        }
+
+        + .btn {
+          margin-left: 0;
+
+          &.margin-left {
+            margin-left: 2px;
+          }
+        }
+
         > span:first-child {
           line-height: 15px;
         }
@@ -94,7 +119,6 @@ body.theme-cdap {
           background-color: #ebebeb;
           border-top: 1px solid #ebebeb;
           border-right: 1px solid #ebebeb;
-          border-left: 1px solid @table-border-color;
           border-bottom: 1px solid #ebebeb;
         }
         &:active {
@@ -105,7 +129,7 @@ body.theme-cdap {
           color: white;
           box-shadow: inset 0 0 20px 0 rgba(0, 0, 0, 0.25);
         }
-        + .btn { margin-left: 0; }
+
         [class*="fa-"] { font-size: 16px; }
         .fa-sliders { transform: rotate(90deg); }
 
@@ -118,11 +142,16 @@ body.theme-cdap {
 
         &.run-time {
           cursor: default;
-          > span {
-            font-size: 18px;
-            font-weight: 500;
-            color: @hydrator-blue;
+
+          .btn-container {
+            > span {
+              font-size: 18px;
+              line-height: 15px;
+              font-weight: 500;
+              color: @hydrator-blue;
+            }
           }
+
           &:hover { background-color: white; }
           &:active,
           &:focus {
@@ -439,7 +468,7 @@ body.theme-cdap {
       }
     }
     .action-buttons {
-      min-width: 400px;
+      min-width: 430px;
       .btn {
         &.ng-animate.ng-leave {
           display: none;
@@ -579,13 +608,9 @@ body.theme-cdap {
           display: flex;
           min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
           position: relative;
-          .btn.log-viewer,
-          .btn.scheduler {
-            border-right: 1px solid #dddddd;
-          }
+
           .btn.scheduler {
             width: 70px; // to accomadate Unscheduled. 0-0
-            padding-top: 0;
           }
         }
         .last-run { margin: 3px 3px 3px 0; }
@@ -593,7 +618,6 @@ body.theme-cdap {
       div.btn {
         align-items: center;
         height: 45px;
-        padding: 5px 0;
 
         .fa.fa-caret-down {
           position: absolute;
@@ -608,17 +632,16 @@ body.theme-cdap {
             // This will cause this icon alone to be rendered differently compared to the icons from font-awesome which occupies
             // its full width. So to compensate that this hack.
             font-size: 24px;
-            line-height: 29px;
-            padding-bottom: 5px;
+            line-height: 20px;
           }
 
           .button-label {
             line-height: 10px;
-            margin-top: -6px;
+            margin-top: -2px;
           }
 
           .fa-spinner {
-            line-height: 40px;
+            line-height: 34px;
           }
         }
       }

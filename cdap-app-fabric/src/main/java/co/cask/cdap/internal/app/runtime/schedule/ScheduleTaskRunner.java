@@ -16,11 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -29,21 +26,23 @@ import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -55,63 +54,50 @@ import javax.annotation.Nullable;
 public final class ScheduleTaskRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+
   private final ProgramLifecycleService lifecycleService;
-  private final Store store;
-  private final ListeningExecutorService executorService;
   private final PropertiesResolver propertiesResolver;
-  private final RunConstraintsChecker requirementsChecker;
+  private final ListeningExecutorService executorService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
 
-  public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
-                            PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor,
+  public ScheduleTaskRunner(ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
+                            ListeningExecutorService taskExecutor,
                             NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
-    this.store = store;
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
-    this.requirementsChecker = new RunConstraintsChecker(store);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.cConf = cConf;
   }
 
-  /**
-   * Checks if all schedule requirements are satisfied,
-   * then executes the given program without blocking until its completion.
-   *
-   * @param programId Program Id
-   * @param systemOverrides Arguments that would be supplied as system runtime arguments for the program.
-   * @param userOverrides Arguments to add to the user runtime arguments for the program.
-   * @return a {@link ListenableFuture} object that completes when the program completes
-   * @throws TaskExecutionException if program is already running or program is not found.
-   * @throws IOException if program failed to start.
-   */
-  public ListenableFuture<?> run(ProgramId programId, Map<String, String> systemOverrides,
-                                 Map<String, String> userOverrides) throws Exception {
+  public void launch(Job job) throws Exception {
+    ProgramSchedule schedule = job.getSchedule();
+    ProgramId programId = schedule.getProgramId();
     Map<String, String> userArgs = Maps.newHashMap();
     Map<String, String> systemArgs = Maps.newHashMap();
-
-    String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
-    ApplicationSpecification appSpec = store.getApplication(programId.getParent());
-    if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
-      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
-                                       false);
-    }
-
-    ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
-    if (!requirementsChecker.checkSatisfied(programId, spec.getSchedule())) {
-      return Futures.<Void>immediateFuture(null);
-    }
-
-    // Schedule properties are overridden by resolved preferences
-    userArgs.putAll(spec.getProperties());
+    // notificationProperties is present only in jobs containing schedules with TimeTrigger and StreamSizeTrigger.
+    // Since both triggers are satisfied by the first notification, there can be only one notification in in the job
+    Map<String, String> notificationProperties = job.getNotifications().get(0).getProperties();
+    userArgs.putAll(schedule.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
-    userArgs.putAll(userOverrides);
+    String userOverridesString = notificationProperties.get(ProgramOptionConstants.USER_OVERRIDES);
+    if (userOverridesString != null) {
+      Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
+      userArgs.putAll(userOverrides);
+    }
 
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
-    systemArgs.putAll(systemOverrides);
+    String systemOverridesString = notificationProperties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+    if (systemOverridesString != null) {
+      Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
+      systemArgs.putAll(systemOverrides);
+    }
 
-    return execute(programId, systemArgs, userArgs);
+    execute(programId, systemArgs, userArgs);
+    LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
   }
 
   /**
@@ -120,7 +106,7 @@ public final class ScheduleTaskRunner {
    * @return a {@link ListenableFuture} object that completes when the program completes
    */
   public ListenableFuture<?> execute(final ProgramId id, Map<String, String> sysArgs,
-                                      Map<String, String> userArgs) throws Exception {
+                                     Map<String, String> userArgs) throws Exception {
     ProgramRuntimeService.RuntimeInfo runtimeInfo;
     String originalUserId = SecurityRequestContext.getUserId();
     try {

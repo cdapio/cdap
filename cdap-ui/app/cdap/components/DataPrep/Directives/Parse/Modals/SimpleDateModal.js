@@ -109,7 +109,7 @@ export default class SimpleDateModal extends Component {
       >
         <ModalHeader>
           <span>
-            {T.translate(`${PREFIX}.modalTitle`, {parser: 'Simple Date'})}
+            {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.ModalHeader.${this.props.source}`, {parser: 'Simple Date'})}
           </span>
 
           <div
@@ -175,6 +175,7 @@ export default class SimpleDateModal extends Component {
 
 
 SimpleDateModal.propTypes = {
+  source: PropTypes.string,
   toggle: PropTypes.func,
   onApply: PropTypes.func,
 };

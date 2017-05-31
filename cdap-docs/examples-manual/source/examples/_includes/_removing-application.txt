@@ -12,8 +12,8 @@ You can now remove the application as described in :ref:`Removing an Application
   click the *Actions* menu on the right side and select *Manage* to go to the Management
   pane for the application, then click the *Actions* menu on the right side and select
   *Delete* to delete the application; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 

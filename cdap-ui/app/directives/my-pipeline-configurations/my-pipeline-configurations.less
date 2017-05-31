@@ -14,10 +14,11 @@
  * the License.
  */
 
+@import "../../styles/variables.less";
+
 @text-color: #333333;
 @border-color: #cccccc;
-@active-tab-color: #fb8c00;
-@active-bg-color: #dbdbdb;
+@active-bg-color: #eeeeee;
 @input-box-focus-color: #66afe9;
 @input-label-color: #999999;
 @action-button-color: #666666;
@@ -84,8 +85,6 @@ body.theme-cdap {
           border-top: 1px solid @border-color;
 
           .configurations-headers {
-            border-bottom: 1px solid @border-color;
-
             .configuration-header {
               height: 40px;
               display: flex;
@@ -94,11 +93,21 @@ body.theme-cdap {
               font-size: @regular-font;
               cursor: pointer;
               width: @side-panel-width;
+              border-bottom: 1px solid @border-color;
+
+              &:hover {
+                color: @cdap-orange;
+              }
 
               &.active {
-                color: @active-tab-color;
                 background-color: @active-bg-color;
+                color: @cdap-orange;
                 font-weight: bold;
+              }
+
+              &.disabled {
+                pointer-events: none;
+                color: lighten(@text-color, 60%);
               }
 
               &.toggle-advanced-options {
@@ -111,13 +120,6 @@ body.theme-cdap {
                 }
               }
             }
-
-            .advanced-options {
-              .configuration-header {
-                pointer-events: none;
-                color: @input-label-color;
-              }
-            }
           }
         }
 
@@ -127,25 +129,54 @@ body.theme-cdap {
           font-size: @regular-font;
           position: relative;
 
-          .configuration-step-content {
-            border-bottom: 1px solid @border-color;
-
+          .configuration-content-container {
             /* 50px: height from bottom of buttons to horizontal line */
             height: ~"calc(100% - 50px)";
             height: ~"-moz-calc(100% - 50px)";
             height: ~"-webkit-calc(100% - 50px)";
+            border-bottom: 1px solid @border-color;
 
-            .runtime-arguments-text {
+            .configuration-step-content {
+              height: 100%;
+            }
+          }
+
+          .configuration-step-content {
+            .step-content-heading {
               font-weight: bold;
               margin-bottom: 16px;
             }
 
-            .runtime-arguments-labels {
+            .label-with-toggle {
+              margin-bottom: 15px;
+              display: flex;
+              align-items: center;
+
+              .toggle-label {
+                text-align: right;
+                padding-right: 0;
+              }
+
+              .toggle-container {
+                display: flex;
+                align-items: center;
+
+                .fa.fa-info-circle {
+                  margin-left: 10px;
+                }
+              }
+
+              .small-dropdown {
+                width: 65px;
+                display: inline-block;
+              }
+            }
+
+            .key-value-pair-labels {
               .key-label,
               .value-label {
                 display: inline-block;
                 width: 40%;
-                color: @input-label-color;
                 font-weight: 500;
               }
 
@@ -154,14 +185,8 @@ body.theme-cdap {
               }
             }
 
-            .runtime-arguments-values {
+            .key-value-pair-values {
               margin-top: 10px;
-
-              /* 240px = 32px (height of input box) * 5
-                       + 16px (margin between each boxes) * 5 */
-              max-height: 240px;
-              overflow-x: hidden;
-              overflow-y: auto;
 
               .key-value-pair-preference {
                 margin-bottom: 16px;
@@ -182,17 +207,140 @@ body.theme-cdap {
                 }
               }
             }
+
+            .fa.fa-info-circle {
+              margin-left: 5px;
+            }
+
+            &.runtime-arguments {
+              .runtime-arguments-labels {
+                .key-label,
+                .value-label {
+                  color: @input-label-color;
+                }
+              }
+
+              .runtime-arguments-values {
+                /* 240px = 32px (height of input box) * 5
+                         + 16px (margin between each boxes) * 5 */
+                max-height: 240px;
+                overflow-x: hidden;
+                overflow-y: auto;
+              }
+            }
+
+            &.engine-config {
+              .engine-config-radio {
+                padding-top: 10px;
+                margin-bottom: 25px;
+
+                .radio-spark {
+                  margin-right: 80px;
+                }
+              }
+
+              .add-custom-config {
+                margin-top: 25px;
+
+                a {
+                  cursor: pointer;
+
+                  &.add-custom-config-label {
+                    margin-top: 5px;
+                  }
+
+                  .fa.fa-caret-down,
+                  .fa.fa-caret-right {
+                    width: 8px;
+                    color: @text-color;
+                  }
+                }
+
+                hr {
+                  margin-bottom: 12px;
+                }
+
+                .custom-config-values {
+                  /* 144px = 32px (height of input box) * 3
+                           + 16px (margin between each boxes) * 3 */
+                  max-height: 144px;
+                  overflow-x: hidden;
+                  overflow-y: auto;
+                }
+
+                .num-rows {
+                  color: @input-label-color;
+                }
+              }
+            }
+
+            &.resources {
+              .client,
+              .driver,
+              .executor {
+                padding-left: 0;
+              }
+
+              .client,
+              .driver {
+                border-right: 1px solid @input-label-color;
+              }
+
+              .resource-title {
+                font-weight: 500;
+              }
+
+              .resource-holder {
+                .resource-group {
+                  display: flex;
+                  align-items: center;
+                  margin-top: 15px;
+
+                  .small-dropdown,
+                  my-number-widget input {
+                    width: 60px;
+                    padding-right: 0;
+                    padding-left: 5px;
+                  }
+
+                  .control-label {
+                    text-align: right;
+                    padding-right: 0;
+                    margin-right: 10px;
+
+                    &.mb {
+                      margin-left: 5px;
+                    }
+                  }
+                }
+              }
+            }
           }
 
           .configuration-step-navigation {
             position: absolute;
             bottom: 0;
+            width: 100%;
 
             .btn {
               font-size: @regular-font;
 
               &.apply-run {
                 margin-right: 16px;
+              }
+
+              &.apply-close {
+                width: 100px;
+              }
+            }
+
+            .apply-run-container {
+              display: flex;
+              align-items: center;
+
+              .num-runtime-args {
+                color: @input-label-color;
+                margin-left: auto;
               }
             }
           }

@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.PipelineConfigurer;
 import org.apache.spark.SparkConf;
 
 /**
@@ -27,7 +28,15 @@ public interface SparkPluginContext extends BatchContext {
 
   /**
    * Sets a {@link SparkConf} to be used for the Spark execution.
+   *
+   * If your configuration will not change between pipeline runs,
+   * use {@link PipelineConfigurer#setPipelineProperties}
+   * instead. This method should only be used when you need different
+   * configuration settings for each run.
+   *
+   * Due to limitations in Spark Streaming, this method cannot be used
+   * in realtime data pipelines. Calling this method will throw an
+   * {@link UnsupportedOperationException} in realtime pipelines.
    */
   void setSparkConf(SparkConf sparkConf);
-
 }

@@ -24,6 +24,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -106,10 +107,9 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
   }
 
   private void addSchedules(ImmutableMap.Builder<String, String> properties) {
-    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      Schedule schedule = scheduleSpec.getSchedule();
-      properties.put("schedule" + MetadataDataset.KEYVALUE_SEPARATOR + schedule.getName(),
-                     schedule.getName() + MetadataDataset.KEYVALUE_SEPARATOR + schedule.getDescription());
+    for (ScheduleCreationSpec creationSpec : appSpec.getProgramSchedules().values()) {
+      properties.put("schedule" + MetadataDataset.KEYVALUE_SEPARATOR + creationSpec.getName(),
+                     creationSpec.getName() + MetadataDataset.KEYVALUE_SEPARATOR + creationSpec.getDescription());
     }
   }
 }

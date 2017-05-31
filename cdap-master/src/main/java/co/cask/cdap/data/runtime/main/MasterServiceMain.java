@@ -560,7 +560,7 @@ public class MasterServiceMain extends DaemonMain {
       new KafkaClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules("cdap.master").getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),

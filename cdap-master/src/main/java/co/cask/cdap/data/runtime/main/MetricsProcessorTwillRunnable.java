@@ -63,6 +63,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.TwillContext;
 import org.slf4j.Logger;
@@ -88,7 +89,10 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
     // Set the hostname of the machine so that cConf can be used to start internal services
     LOG.info("{} Setting host name to {}", name, context.getHost().getCanonicalHostName());
 
-    injector = createGuiceInjector(getCConfiguration(), getConfiguration());
+    String txClientId = String.format("cdap.service.%s.%d", Constants.Service.METRICS_PROCESSOR,
+                                      context.getInstanceId());
+    injector = createGuiceInjector(getCConfiguration(), getConfiguration(), txClientId, context);
+
     injector.getInstance(LogAppenderInitializer.class).initialize();
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
@@ -104,7 +108,8 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   }
 
   @VisibleForTesting
-  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf) {
+  static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId,
+                                      TwillContext twillContext) {
     return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(),
@@ -117,9 +122,9 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       new LoggingModules().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(txClientId).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
-      new MetricsProcessorModule(),
+      new MetricsProcessorModule(twillContext),
       new MetricsProcessorStatusServiceModule(),
       new AuditModule().getDistributedModules(),
       new AuthorizationEnforcementModule().getDistributedModules(),
@@ -136,20 +141,30 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
   }
 
   static final class MetricsProcessorModule extends PrivateModule {
+    final Integer instanceId;
+
+    MetricsProcessorModule(TwillContext twillContext) {
+      this.instanceId = twillContext.getInstanceId();
+    }
+
     @Override
     protected void configure() {
       // Single MetricDatasetFactory used by both KafkaMetricsProcessorService and MessagingMetricsProcessorService
       bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
       bind(MessageCallbackFactory.class).to(MetricsMessageCallbackFactory.class);
+      bind(Integer.class).annotatedWith(Names.named(Constants.Metrics.TWILL_INSTANCE_ID)).toInstance(instanceId);
+
       install(new FactoryModuleBuilder()
                 .build(KafkaMetricsProcessorServiceFactory.class));
-
-      expose(KafkaMetricsProcessorServiceFactory.class);
 
       install(new FactoryModuleBuilder()
                 .build(MessagingMetricsProcessorServiceFactory.class));
 
-      expose(MessagingMetricsProcessorServiceFactory.class);
+      bind(MessagingMetricsProcessorRuntimeService.class);
+      expose(MessagingMetricsProcessorRuntimeService.class);
+
+      bind(KafkaMetricsProcessorRuntimeService.class);
+      expose(KafkaMetricsProcessorRuntimeService.class);
     }
 
     @SuppressWarnings("unused")

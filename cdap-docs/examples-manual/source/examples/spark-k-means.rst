@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform SparkKMeans Application
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _examples-spark-k-means:
 
@@ -77,12 +77,12 @@ Running the Example
 Injecting Points Data
 ---------------------
 Inject a file of points data to the stream *pointsStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface:
-  
+CDAP Local Sandbox home directory, using the Command Line Interface:
+
 .. tabbed-parsed-literal::
-  
+
   $ cdap cli load stream pointsStream examples/SparkKMeans/resources/points.txt
-  
+
   Successfully loaded file to stream 'pointsStream'
 
 Running the Spark Program
@@ -92,7 +92,7 @@ There are three ways to start the Spark program:
 1. Go to the |example-italic| :cdap-ui-apps-programs:`application overview page, programs
    tab <SparkKMeans>`, click |example-service-italic| to get to the service detail
    page, then click the *Start* button; or
-   
+
 #. Use the Command Line Interface:
 
    .. tabbed-parsed-literal::
@@ -105,7 +105,7 @@ There are three ways to start the Spark program:
 
     $ curl -w"\n" -X POST -d '{args="3"}' \
     "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start"
-    
+
 
 Querying the Results
 --------------------
@@ -116,7 +116,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
   .. tabbed-parsed-literal::
 
     $ cdap cli call service SparkKMeans.CentersService GET centers/1
-    
+
     306.52261306532665,306.52261306532665,793.7956448911223
 
 - Send a query via an HTTP request using the ``curl`` command. For example:
@@ -124,7 +124,7 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1"
-    
+
     306.52261306532665,306.52261306532665,793.7956448911223
 
 .. Stopping and Removing the Application

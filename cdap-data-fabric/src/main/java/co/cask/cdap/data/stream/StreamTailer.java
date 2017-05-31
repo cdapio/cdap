@@ -58,8 +58,9 @@ public class StreamTailer {
     CConfiguration cConf = CConfiguration.create();
     Configuration hConf = new Configuration();
 
+    String txClientId = StreamTailer.class.getName();
     Injector injector = Guice.createInjector(new ConfigModule(cConf, hConf),
-                                             new DataFabricModules().getDistributedModules(),
+                                             new DataFabricModules(txClientId).getDistributedModules(),
                                              new DataSetsModules().getDistributedModules(),
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new ExploreClientModule(),

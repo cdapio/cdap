@@ -15,6 +15,7 @@
  */
 
 $panel-toggle-bg-color: #999999;
+$toggle-btn-disabled-bg-color: #cccccc;
 
 .dataprep-container {
   overflow: hidden;
@@ -47,6 +48,10 @@ $panel-toggle-bg-color: #999999;
       line-height: 80px;
       background-color: $panel-toggle-bg-color;
 
+      &.disabled {
+        cursor: not-allowed;
+        background: $toggle-btn-disabled-bg-color;
+      }
       .panel-button {
         display: inline-block;
         width: 100%;

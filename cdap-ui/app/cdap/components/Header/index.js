@@ -97,6 +97,29 @@ export default class Header extends Component {
       }
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+
+    let dataprepUrl = window.getDataPrepUrl({
+      stateName: 'workspaces',
+      stateParams: {
+        namespace: this.state.currentNamespace
+      }
+    });
+
+    const isCDAPActive = (match, location) => {
+      if (!match) { return false; }
+
+      const basepath = `/ns/${this.state.currentNamespace}`;
+
+      let connections = `${basepath}/connections`;
+      let workspaces = `${basepath}/dataprep`;
+
+      if (location.pathname.startsWith(connections) || location.pathname.startsWith(workspaces)) {
+        return false;
+      }
+
+      return true;
+    };
+
     return (
       <div className="global-navbar">
         <div
@@ -131,6 +154,7 @@ export default class Header extends Component {
                 <NavLink
                   activeClassName="active"
                   to={`/ns/${this.state.currentNamespace}`}
+                  isActive={isCDAPActive}
                 >
                   {T.translate('features.Navbar.overviewLabel')}
                 </NavLink>
@@ -138,6 +162,28 @@ export default class Header extends Component {
                 <a href={overviewUrl}>
                   {T.translate('features.Navbar.overviewLabel')}
                 </a>
+            }
+          </li>
+          <li>
+            {
+              !this.props.nativeLink ?
+                (
+                  <NavLink
+                    activeClassName="active"
+                    to={`/ns/${this.state.currentNamespace}/dataprep`}
+                    isActive={!isCDAPActive}
+                  >
+                    {T.translate('features.Navbar.dataprepLabel')}
+                    <span className="beta-badge">BETA</span>
+                  </NavLink>
+                )
+              :
+                (
+                  <a href={dataprepUrl}>
+                    {T.translate('features.Navbar.dataprepLabel')}
+                    <span className="beta-badge">BETA</span>
+                  </a>
+                )
             }
           </li>
           <li>

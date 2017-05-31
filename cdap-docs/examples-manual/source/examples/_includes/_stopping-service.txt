@@ -9,11 +9,11 @@
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service-italic| to get to the service detail page, then click the *Stop* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli stop service |example|.\ |example-service|
-    
+
     Successfully stopped service '|example-service|' of application '|example|'

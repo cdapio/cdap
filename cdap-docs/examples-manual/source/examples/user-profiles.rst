@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform WordCount Application
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _examples-user-profiles:
 
@@ -19,7 +19,7 @@ This application demonstrates the use of the column-level conflict detection in 
 through the example of an application that manages user profiles in a Table.
 The fields of a user profile are updated in different ways:
 
-  - Attributes such as name and email address are changed through a RESTful call when the 
+  - Attributes such as name and email address are changed through a RESTful call when the
     user updates their profile.
   - The time of the last login is updated by a sign-on service every
     time the user logs in, also through a RESTful call.
@@ -39,7 +39,7 @@ of the application are tied together by a class ``UserProfiles``:
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
     :language: java
     :lines: 34-
-    
+
 This application uses a Table with conflict detection either at the row level or
 at the column level.
 
@@ -74,7 +74,7 @@ This application uses:
 The ``UserProfileService`` is a service for creating and modifying user profiles. It has
 handlers to create, update, and retrieve user profiles.
 
-A script (``add-users.sh``) is used to populate the ``profiles`` dataset. Two additional 
+A script (``add-users.sh``) is used to populate the ``profiles`` dataset. Two additional
 scripts (``update-login.sh`` and ``send-events.sh``) are used to create a conflict by attempting
 to write to two different columns of the same row at the same time.
 
@@ -93,12 +93,12 @@ Running the Example
 
 Observing Conflict Detection
 ----------------------------
-To observe conflict detection at both the row-level and column-level, you will need to modify 
+To observe conflict detection at both the row-level and column-level, you will need to modify
 and build this example twice:
 
 - The first time, you will use row-level conflict detection, and see errors appearing in a log;
 - The second time, you will use column-level conflict detection and see the scripts complete successfully without errors.
-  
+
 #. Build the Application with Row-level Conflict Detection
 
    Before building the application, set the ``ConflictDetection`` appropriately in the class ``UserProfiles``:
@@ -110,7 +110,7 @@ and build this example twice:
 
    - The first time you build the application, set the ``Table.PROPERTY_CONFLICT_LEVEL`` to
      ``ConflictDetection.ROW``.
- 
+
    - Build the example (as described :ref:`Building an Example Application <cdap-building-running-example>`).
    - Start CDAP, deploy and start the application and its component.
      Make sure you start the flow and service as described below.
@@ -124,7 +124,7 @@ and build this example twice:
      either through the CDAP Command Line Interface or by making a ``curl`` call.
    - Now, rebuild the application, setting the ``Table.PROPERTY_CONFLICT_LEVEL`` back to its
      original value, ``ConflictDetection.COLUMN``.
-   - Re-deploy and re-run the application. You should not see any errors in the log.    
+   - Re-deploy and re-run the application. You should not see any errors in the log.
 
 .. Starting the Flow
 .. -----------------
@@ -142,7 +142,7 @@ and build this example twice:
 
 Populate the *profiles* Table
 -----------------------------
-Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use:
+Populate the ``profiles`` table with users using a script. From the CDAP Local Sandbox home directory, use:
 
 .. tabbed-parsed-literal::
 
@@ -156,27 +156,27 @@ Now, from two different terminals, run the following commands concurrently
 - To randomly update the time of last login for users:
 
   .. tabbed-parsed-literal::
-  
+
     .. Linux
 
     $ ./examples/UserProfiles/bin/update-login.sh
-    
+
     .. Windows
-    
+
     > .\examples\UserProfiles\bin\update-login.bat 100 1
-    
+
 - To generate random user activity events and send them to the stream:
 
   .. tabbed-parsed-literal::
-  
+
     .. Linux
 
     $ ./examples/UserProfiles/bin/send-events.sh
-    
+
     .. Windows
-    
+
     > .\examples\UserProfiles\bin\send-events.bat 100 1
-    
+
 If both scripts are running at the same time, then some user profiles will be updated at
 the same time by the service and by the flow. With row-level conflict detection, you would
 see transaction conflicts in the logs. But when the ``profiles`` table uses
@@ -190,10 +190,10 @@ stop when a conflict occurs. You can stop the other one at that time.)
 For example, such a conflict would show as (reformatted to fit)::
 
   2015-XX-XX 13:22:30,520 - ERROR [executor-
-  7:c.c.c.e.p.UserProfileService$UserProfileServiceHandlera910e557f239fd6b95a3ded5c922df3a@-1] - Transaction Failure: 
-  co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1432066950514000002. at 
-  co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:174) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at 
-  co.cask.tephra.TransactionContext.finish(TransactionContext.java:79) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at 
+  7:c.c.c.e.p.UserProfileService$UserProfileServiceHandlera910e557f239fd6b95a3ded5c922df3a@-1] - Transaction Failure:
+  co.cask.tephra.TransactionConflictException: Conflict detected for transaction 1432066950514000002. at
+  co.cask.tephra.TransactionContext.checkForConflicts(TransactionContext.java:174) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at
+  co.cask.tephra.TransactionContext.finish(TransactionContext.java:79) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at
   . . .
 
 (The log file is located at ``<CDAP-SDK-HOME>/logs/cdap-debug.log``. You should also see
@@ -226,7 +226,7 @@ or by making a ``curl`` call:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X DELETE "http://localhost:11015/v3/namespaces/default/data/datasets/profiles"
-  
+
 Then re-deploy the application.
 
 .. Stopping and Removing the Application

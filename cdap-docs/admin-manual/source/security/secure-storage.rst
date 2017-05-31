@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _admin-secure-storage:
 
@@ -43,7 +43,7 @@ CDAP provides two different implementations of secure storage, depending on the 
 File-backed Secure Storage
 --------------------------
 File-backed secure storage is available for use with in-memory CDAP (unit-test) and
-standalone CDAP (as included in the CDAP SDK) modes. It uses the
+CDAP Sandbox modes. It uses the
 `Sun JCEKS <http://docs.oracle.com/javase/7/docs/technotes/guides/security/crypto/CryptoSpec.html#KeyManagement>`__
 implementation for storing secure keys. This implementation is not available in
 :term:`Distributed CDAP <distributed cdap>` as it stores the secure data in the local file system, and thus is
@@ -71,7 +71,7 @@ To use this mode, set these properties:
         Password to access the key store
       </description>
     </property>
-    
+
 - The path and the filename of the backing file can be configured in ``cdap-site.xml``
   using these (optional) settings::
 
@@ -82,7 +82,7 @@ To use this mode, set these properties:
         Location of the encrypted file which holds the secure store entries
       </description>
     </property>
-  
+
     <property>
       <name>security.store.file.name</name>
       <value>securestore</value>

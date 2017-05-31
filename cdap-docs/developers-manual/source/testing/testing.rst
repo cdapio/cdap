@@ -14,7 +14,7 @@ Strategies in Testing Applications: Test Framework
 ==================================================
 
 CDAP comes with a convenient way to unit-test your applications with CDAP’s *Test Framework.*
-This framework starts an :ref:`in-memory CDAP runtime <in-memory-data-application-platform>` 
+This framework starts an :ref:`in-memory CDAP runtime <in-memory-data-application-platform>`
 and lets you deploy an application; start, stop and monitor programs; access datasets to
 validate processing results; and retrieve metrics from the application.
 
@@ -25,11 +25,11 @@ in one of two ways:
 
 .. highlight:: xml
 
-- include all JAR files in the ``lib`` directory of the CDAP SDK installation,
+- include all JAR files in the ``lib`` directory of the CDAP Local Sandbox installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (as shown in the ``pom.xml`` file of the :ref:`CDAP SDK examples <standalone-index>`)::
-  
+  (as shown in the ``pom.xml`` file of the :ref:`CDAP Local Sandbox examples <local-sandbox-index>`)::
+
     . . .
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -79,7 +79,7 @@ then we’ll start the flow and the service::
       FlowManager flowManager = appManager.getFlowManager("WordCounter").start();
       ServiceManager serviceManager = appManager.getServiceManager("RetrieveCounts").start();
       serviceManager.waitForStatus(true);
-      
+
 This flow counts the words in the events that it receives on the "wordStream". Before
 sending data to the stream, let's validate that we are starting with a clean state::
 
@@ -91,10 +91,10 @@ sending data to the stream, let's validate that we are starting with a clean sta
 Note that the dataset manager implicitly starts a transaction for the dataset when it is
 initialized. Under this transaction, read operations can only see changes that were
 committed before the transaction was started; and any writes performed within this
-transaction only become visible to other transactions after this transaction is committed. 
+transaction only become visible to other transactions after this transaction is committed.
 
 This can be done by calling the dataset manager's ``flush()`` method, which commits the current
-transaction and starts a new one. ``flush()`` also needs to be called to make changes visible 
+transaction and starts a new one. ``flush()`` also needs to be called to make changes visible
 to the dataset, if those changes were committed after the current transaction was started. We
 will see an example for this below.
 
@@ -174,7 +174,7 @@ Strategies in Testing MapReduce Programs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce programs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP SDK.
+found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP Local Sandbox.
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::
@@ -310,7 +310,7 @@ To add an artifact containing an application class::
     Action.class.getPackage().getName(),
     PipelineConfigurable.class.getPackage().getName(),
     "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
-  
+
 The first argument is the ``id`` of the artifact; the second is the application class; and
 the remainder of the arguments are packages that should be included in the
 ``Export-Packages`` manifest attribute bundled in the JAR. The framework will trace the

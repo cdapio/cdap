@@ -45,6 +45,8 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -56,7 +58,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProtoConstraintCodec;
-import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
@@ -140,7 +141,7 @@ public abstract class AppFabricTestBase {
   protected static final Gson GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
-    .registerTypeAdapter(Trigger.class, new ProtoTriggerCodec())
+    .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(Constraint.class, new ProtoConstraintCodec())
     .create();
   private static final String API_KEY = "SampleTestApiKey";
@@ -150,7 +151,6 @@ public abstract class AppFabricTestBase {
   protected static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-  protected static final Type LIST_SCHEDULE_DETAIL_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
   protected static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
@@ -871,23 +871,61 @@ public abstract class AppFabricTestBase {
     return response.getStatusLine().getStatusCode();
   }
 
+  protected List<ScheduleDetail> listSchedules(String namespace, String appName,
+                                               @Nullable String appVersion) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/schedules", appName,
+                                        appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion);
+    return goGetSchedules(namespace, schedulesUrl);
+  }
+
   protected List<ScheduleDetail> getSchedules(String namespace, String appName,
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
-    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
-    HttpResponse response = doGet(versionedUrl);
-    String json = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(json, LIST_SCHEDULE_DETAIL_TYPE);
+    return goGetSchedules(namespace, schedulesUrl);
   }
 
   protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", appName, appVersion,
                                         workflowName);
-    String versionedUrl = getVersionedAPIPath(schedulesUrl, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
+    return goGetSchedules(namespace, schedulesUrl);
+  }
+
+  private List<ScheduleDetail> goGetSchedules(String namespace, String schedulesUrl) throws Exception {
+    String versionedUrl = getVersionedAPIPath(schedulesUrl, namespace);
     HttpResponse response = doGet(versionedUrl);
-    String json = EntityUtils.toString(response.getEntity());
-    return GSON.fromJson(json, LIST_SCHEDULE_DETAIL_TYPE);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    return readResponse(response, Schedulers.SCHEDULE_DETAILS_TYPE);
+  }
+
+  @Deprecated
+  protected List<ScheduleSpecification> listScheduleSpecs(String namespace, String appName,
+                                                          @Nullable String appVersion) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/schedules", appName,
+                                        appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion);
+    return goGetScheduleSpecs(namespace, schedulesUrl);
+  }
+
+  @Deprecated
+  protected List<ScheduleSpecification> getScheduleSpecs(String namespace, String app,
+                                                         String workflow) throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", app, workflow);
+    return goGetScheduleSpecs(namespace, schedulesUrl);
+  }
+
+  @Deprecated
+  protected List<ScheduleSpecification> getScheduleSpecs(String namespace, String app, String version,
+                                                         String workflow) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", app, version, workflow);
+    return goGetScheduleSpecs(namespace, schedulesUrl);
+  }
+
+  @Deprecated
+  private List<ScheduleSpecification> goGetScheduleSpecs(String namespace, String schedulesUrl) throws Exception {
+    String versionedUrl = getVersionedAPIPath(schedulesUrl + "?format=spec", namespace);
+    HttpResponse response = doGet(versionedUrl);
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+    return readResponse(response, Schedulers.SCHEDULE_SPECS_TYPE);
   }
 
   protected HttpResponse addSchedule(String namespace, String appName, @Nullable String appVersion, String scheduleName,
@@ -928,7 +966,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected ScheduleDetail getSchedule(String namespace, String appName, @Nullable String appVersion,
-                                              String scheduleName) throws Exception {
+                                       String scheduleName) throws Exception {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
     String path = String.format("apps/%s/versions/%s/schedules/%s", appName, appVersion, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
@@ -936,13 +974,14 @@ public abstract class AppFabricTestBase {
     return readResponse(response, ScheduleDetail.class);
   }
 
-  protected List<ScheduleDetail> listSchedules(String namespace, String appName,
-                                               @Nullable String appVersion) throws Exception {
+  @Deprecated
+  protected ScheduleSpecification getScheduleSpec(String namespace, String appName, @Nullable String appVersion,
+                                                  String scheduleName) throws Exception {
     appVersion = appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion;
-    String path = String.format("apps/%s/versions/%s/schedules", appName, appVersion);
+    String path = String.format("apps/%s/versions/%s/schedules/%s?format=spec", appName, appVersion, scheduleName);
     HttpResponse response = doGet(getVersionedAPIPath(path, namespace));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    return readResponse(response, LIST_SCHEDULE_DETAIL_TYPE);
+    return readResponse(response, ScheduleSpecification.class);
   }
 
   protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {

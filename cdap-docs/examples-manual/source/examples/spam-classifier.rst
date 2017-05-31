@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform SpamClassifier Application
-    :copyright: Copyright © 2016 Cask Data, Inc.
+    :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
 .. _examples-spam-classifier:
 
@@ -18,7 +18,7 @@ This example demonstrates a Spark Streaming application that classifies Kafka me
 based on a trained Spark MLlib NaiveBayes model.
 
 Training data from a sample file is sent to CDAP by a CDAP CLI command to the *trainingDataStream*. This training data
-is from the `SMS Spam Collection Dataset <https://archive.ics.uci.edu/ml/datasets/SMS+Spam+Collection>`__, 
+is from the `SMS Spam Collection Dataset <https://archive.ics.uci.edu/ml/datasets/SMS+Spam+Collection>`__,
 which consists of a label (``spam``, ``ham``) followed by the message.
 
 This training data is used by the *SpamClassifierProgram* to train a Spark MLlib NaiveBayes model, which is then used
@@ -76,12 +76,12 @@ Running the Example
 Injecting Training Data
 -----------------------
 Inject a file of training data to the stream *trainingDataStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface:
-  
+CDAP Local Sandbox home directory, using the Command Line Interface:
+
 .. tabbed-parsed-literal::
-  
+
   $ cdap cli load stream trainingDataStream examples/SpamClassifier/src/test/resources/trainingData.txt
-  
+
   Successfully loaded file to stream 'trainingDataStream'
 
 Running the Spark Program
@@ -96,7 +96,7 @@ There are three ways to start the Spark program:
      kafka.topics:topic1,topic2
 
    then click the *Start* button;
-   
+
 #. Use the Command Line Interface:
 
    .. tabbed-parsed-literal::
@@ -122,7 +122,7 @@ the format::
 For example::
 
     2:I will call you later
-    
+
 
 Querying the Results
 --------------------
@@ -133,7 +133,7 @@ To query the *messageClassificationStore* ObjectStore using the ``MessageClassif
   .. tabbed-parsed-literal::
 
     $ cdap cli call service SpamClassifier.MessageClassification GET status/1
-    
+
     Ham
 
 - Send a query via an HTTP request using a ``curl`` command. For example:
@@ -141,7 +141,7 @@ To query the *messageClassificationStore* ObjectStore using the ``MessageClassif
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SpamClassifier/services/MessageClassification/methods/status/1"
-    
+
     Ham
 
 .. Stopping and Removing the Application

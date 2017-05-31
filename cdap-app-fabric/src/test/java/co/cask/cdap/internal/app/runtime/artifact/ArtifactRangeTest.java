@@ -31,6 +31,11 @@ import java.util.List;
  */
 public class ArtifactRangeTest {
 
+  @Test(expected = InvalidArtifactRangeException.class)
+  public void testExtraCharactersAtEnd() throws InvalidArtifactRangeException {
+    ArtifactRanges.parseArtifactRange("system:cdap-etl-batch[3.5.0,3.6.0],system:cdap-data-pipeline[3.5.0,3.6.0]");
+  }
+
   @Test
   public void testWhitespace() throws InvalidArtifactRangeException {
     ArtifactRange range = ArtifactRanges.parseArtifactRange(NamespaceId.DEFAULT.getNamespace(),

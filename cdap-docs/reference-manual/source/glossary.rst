@@ -2,7 +2,6 @@
    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-nav: true
-:orphan:
 
 .. _glossary:
 
@@ -36,31 +35,31 @@ Glossary
       A visual editor, part of the :term:`CDAP UI`, for creating and configuring
       pipelines. You click and drag sources, transformations, and sinks, and can name and
       configure the pipelines. It provides an operational view of the resulting pipeline
-      that allows for monitoring of metrics, logs, and other run-time information.      
-      
+      that allows for monitoring of metrics, logs, and other run-time information.
+
    Stream
       The primary means of bringing data from external systems into CDAP in real time; an
       ordered, time-partitioned sequences of data, usable for real-time collection and
       consumption of data.
-      
+
    Dataset
       Datasets store and retrieve data and are a high-level abstraction of the underlying
       data storage with generic reusable implementations of common data patterns.
-      
+
    Flow
       Flows are user-implemented real-time stream processors, comprised of one or
-      more flowlets that are wired together into a directed acyclic graph. 
-      
+      more flowlets that are wired together into a directed acyclic graph.
+
    Flowlet
       A flowlet represents an individual processing node within a flow. flowlets consume
       data objects from their inputs and execute custom logic on each data object, able to
       perform data operations as well as emit data objects to the flowlet’s outputs.
-      
+
    MapReduce
       MapReduce is a processing model used to process data in batch. MapReduce programs can be
       written as in a conventional Apache Hadoop system. CDAP datasets can be accessed
       from MapReduce programs as both input and output.
-      
+
    Workflow
       A workflow is used to execute a series of MapReduce programs, with an optional schedule
       to run itself periodically.
@@ -72,7 +71,7 @@ Glossary
 
    Secure Storage
       Encrypted storage for sensitive data using :term:`Secure Keys <Secure Key>`. CDAP supports :ref:`File-backed
-      <admin-secure-storage-file>` (for :term:`Standalone CDAP`) as well as :ref:`Apache Hadoop KMS-backed 
+      <admin-secure-storage-file>` (for :term:`CDAP Local Sandbox`) as well as :ref:`Apache Hadoop KMS-backed
       <admin-secure-storage-kms>` (for :term:`Distributed CDAP`) Secure Storage.
 
    Spark
@@ -93,7 +92,7 @@ Glossary
    Worker
       Workers are typically long-running background programs that can be used to execute tasks.
       Each instance of a worker runs either in its own YARN container (Distributed CDAP mode) or
-      a single thread (Standalone CDAP or in-memory mode) and the number of instances may be updated
+      a single thread (CDAP Local Sandbox or in-memory mode) and the number of instances may be updated
       via RESTful APIs or the CLI. Datasets can be accessed from inside workers.
 
    Data Abstraction
@@ -107,20 +106,24 @@ Glossary
 
    ETL
       Abbreviation for *extract,* *transform,* and *loading* of data.
-      
+
    Application Abstraction
       Application abstraction allows the same application to run in multiple environments
       without modification.
-      
+
    CDAP
       The Cask Data Application Platform; refers to both the platform, and an installed instance of it.
 
-   Standalone CDAP
-      A version of the Cask Data Application Platform, supplied as a downloadable SDK,
+   CDAP Local Sandbox
+      A version of the Cask Data Application Platform, supplied as a downloadable archive,
       that runs on a single machine in a single Java Virtual Machine (JVM). It provides
       all of the CDAP APIs without requiring a Hadoop cluster, using alternative,
       fully-functional implementations of CDAP features. For example, application
-      containers are implemented as Java threads instead of YARN containers.
+      containers are implemented as Java threads instead of YARN containers. Formerly
+      known as the :term:`Standalone CDAP`.
+
+   Standalone CDAP
+      See :term:`CDAP Local Sandbox`.
 
    Distributed CDAP
       A version of the Cask Data Application Platform, supplied as either Yum ``.rpm`` or
@@ -141,9 +144,9 @@ Glossary
 
    DAG
       A directed acyclic graph. Flows are wired together and displayed as a DAG in the CDAP UI.
-      
+
    CDAP UI
-      The CDAP UI is a web-based application used to deploy CDAP applications, create 
+      The CDAP UI is a web-based application used to deploy CDAP applications, create
       :term:`pipelines <pipeline>` using the :term:`CDAP Studio`, and query and
       manage the Cask Data Application Platform instance.
 
@@ -213,16 +216,16 @@ Glossary
 
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
-      
+
    ETL
-      Refers to the *Extract*, *Transform* and *Load* of data. 
-    
+      Refers to the *Extract*, *Transform* and *Load* of data.
+
    ETL Application
       A type of :term:`Application` created from one of the system :term:`artifacts <artifact>` shipped with CDAP,
       ``cdap-data-pipeline`` and ``cdap-etl-realtime``. An ETL Application defines a source to read
       from, zero or more transformations to perform on the data read from the source, and one or more
       sinks to write the transformed data to.
-  
+
    ETL Plugin
       A :term:`plugin` of type *BatchSource*, *RealtimeSource*, *BatchSink*, *RealtimeSink,* or
       *Transformation*, packaged in a JAR file format, for use as a :term:`plugin`
@@ -231,12 +234,12 @@ Glossary
    Plugin
       A plugin extends an :term:`application` by implementing an interface
       expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.
-      
+
    View
       A read-only view of a stream, with a specific read format. Read
       formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
       <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
-      
+
    Pipeline
       CDAP provides an easy method of configuring
       pipelines using a visual editor, called :term:`CDAP Studio`. You click and

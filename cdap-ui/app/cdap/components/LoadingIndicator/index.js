@@ -58,6 +58,7 @@ export default class LoadingIndicator extends Component {
         <Modal
           isOpen={this.state.showLoading}
           toggle={() =>{}}
+          zIndex={2000}
           className="loading-indicator"
         >
 

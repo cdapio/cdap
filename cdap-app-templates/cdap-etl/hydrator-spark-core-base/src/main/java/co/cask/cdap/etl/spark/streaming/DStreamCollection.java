@@ -36,6 +36,7 @@ import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorGroupBy;
 import co.cask.cdap.etl.spark.streaming.function.DynamicSparkCompute;
 import co.cask.cdap.etl.spark.streaming.function.DynamicTransform;
 import co.cask.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
+import co.cask.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -129,8 +130,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception {
-    // should never be called.
-    throw new UnsupportedOperationException("Spark sink not supported in Spark Streaming.");
+    Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageInfo));
   }
 
   @Override

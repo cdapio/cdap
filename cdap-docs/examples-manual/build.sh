@@ -138,7 +138,7 @@ function download_includes() {
   test_an_include 77d244f968d508d9ea2d91e463065b68 ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberSplitter.java
   test_an_include 9f963a17090976d2c15a4d092bd9e8de ../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/NumberCounter.java
 
-  test_an_include fa746b8f3423736310316f2d48b0fe7d ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
+  test_an_include 263e7d702cf431068bfbae5ef7274fc7 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansing.java
   test_an_include cc6989fe673cd88545d73cdaffad1bb1 ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include ce5a99853f6e2d2298888fdf15d3cfb7 ../../cdap-examples/DecisionTreeRegression/src/main/java/co/cask/cdap/examples/dtree/DecisionTreeRegressionApp.java
@@ -151,8 +151,8 @@ function download_includes() {
 
   test_an_include 4626aaec1bbc5bdbfd1de28cc721ec76 ../../cdap-examples/LogAnalysis/src/main/java/co/cask/cdap/examples/loganalysis/LogAnalysisApp.java
 
-  test_an_include f90e4e4ce08851f45bdbe2563efb51dd ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
-  test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
+  test_an_include a8afaa78608768231ccf0369c7c147d0 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
+  test_an_include 272a77c680b8cfb14adb42b09e33a770 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   test_an_include bb7344dd2c55c5ef70653ff0b5fcd6df ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
 

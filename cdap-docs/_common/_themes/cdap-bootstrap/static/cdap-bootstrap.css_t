@@ -1,0 +1,690 @@
+/*
+ * cdap-bootstrap.css_t
+ * ~~~~~~~~~~~~~~~~~~~~
+ *
+ * Sphinx stylesheet for the CDAP-Bootstrap theme
+ *
+ * :copyright: Copyright 2017 by Cask Data, Inc.
+ * :license: Apache Version 2.0, see LICENSE for details.
+ *
+ */
+
+/*
+
+Color Scheme
+
+Cask Orange:
+color: #FF6600;
+
+Background Dark:   Grey_03
+color: #666666;
+
+Background Middle: Grey_04
+color: #999999;
+
+Background Light:  Grey_05
+color: #CCCCCC;
+
+Background Mid Light:
+color: rgb(240, 240, 240);
+color: #F0F0F0;
+background for literals
+
+Background Extra Light:
+color: #F7F7F7;
+background for Left Sidebar
+
+*/
+
+@import url("css/basic2013.css");
+
+@import url("css/cdap-bootstrap-fonts.css");
+
+@import url("css/tabbed-parsed-literal-0.2.css");
+
+/* -- General -- */
+
+.main-container.container {
+    margin-top: 100px;
+}
+
+body,html {
+    -moz-osx-font-smoothing: grayscale;
+    -ms-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+    color: #212121;
+    font: 400 16px/24px Roboto, sans-serif;
+    text-size-adjust: 100%;
+}
+
+a {
+    color: #FF6600;
+}
+
+p {
+    margin: 16px 0;
+    padding: 0;
+}
+
+li, li p {
+    margin: 8px 0;
+    padding: 0;
+}
+
+ul {
+  list-style-type: disc;
+}
+
+/* -- A page that starts with a list needs less padding-left -- */
+
+div.row > div.content > div.section > ul.simple {
+    padding-left: 20px;
+}
+
+/* -- Header -- */
+
+.navbar-inverse {
+    background-color: #666666;
+    background-image: none;
+    border-bottom: 0;
+    box-shadow: 0 0 4px rgba(0, 0, 0, .14), 0 4px 8px rgba(0, 0, 0, .28);
+}
+
+/* -- Header First Row -- */
+
+.navbar-header {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.navbar-text.navbar-version.pull-left {
+    color: white;
+    font: 14px/16px Roboto, sans-serif;
+    letter-spacing: 0;
+    margin-bottom: 0;
+    margin-top: 22px;
+    margin-left: 10px;
+}
+
+.navbar-brand {
+    padding-right: 0;
+    padding-top: 8px;
+    margin-top: 10px;
+}
+
+.navbar-brand img {
+    height: 26px;
+}
+
+a.navbar-brand {
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-top: 10px;
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+}
+
+.form-control {
+    border: #999999;
+    border-radius: 2px;
+    color: white;
+}
+
+.navbar-search-image {
+    color: white;
+    left: 36px;
+    position: relative;
+    transition: color .2s;
+    vertical-align: middle;
+}
+
+.navbar-search-image:before {
+    content: 'search';
+}
+
+form.navbar-form.navbar-right input.form-control {
+    padding-left: 36px;
+}
+
+@media (min-width: 768px) {
+    .navbar > .container .navbar-brand, .navbar > .container-fluid .navbar-brand {
+        margin-left: 0;
+    }
+}
+
+.form-control {
+    background: #999999;
+}
+
+/* -- Placeholder color -- */
+
+.form-control::-webkit-input-placeholder {
+    color: white;
+    transition: color .2s;
+}
+
+.form-control::-moz-placeholder {
+    color: white;
+    transition: color .2s;
+}
+
+.form-control:-moz-placeholder {
+    color: white;
+    transition: color .2s;
+}
+
+.form-control:-ms-input-placeholder {
+    color: white;
+    transition: color .2s;
+}
+
+/* -- Header Second Row -- */
+
+.docsite-nav-tab-link {
+    border-bottom: 2px solid transparent;
+    border-top: 2px solid transparent;
+    display: inline-block;
+    font: 500 14px/44px Roboto, sans-serif;
+    margin: 0;
+    padding: 0 24px;
+    padding-top: 0px;
+    text-transform: uppercase;
+    transition: color .2s;
+    border-bottom-width: 4px;
+}
+
+.docsite-nav-tab-link:hover,
+.docsite-nav-tab-link:focus {
+    color: white;
+    text-decoration: none;
+}
+
+.navbar-inverse .navbar-nav > li > a {
+    color: rgba(255,255,255,.7);
+    padding-bottom: 11px;
+    padding-top: 11px;
+}
+
+.navbar-inverse .navbar-nav > li > a.current {
+    color: white;
+    border-bottom-color: #FF6600;
+/*
+    padding-bottom: 9px;
+ */
+}
+
+li.docsite-nav-tab-container {
+    margin: 0 0;
+}
+
+/* -- Manual Nav Scroll (Left Sidebar) -- */
+
+#sidebar.bs-sidenav {
+    background-color: #F7F7F7;
+    border-radius: 2px;
+    font-size: 13px;
+    line-height: 16px;
+    margin-bottom: 0;
+    margin-top: 0;
+    max-height: calc(100% - 140px - 60px);
+    overflow: auto;
+    padding-bottom: 16px;
+    padding-left: 16px;
+    padding-right: 12px;
+    padding-top: 8px;
+}
+
+#sidebar h3 {
+    border-bottom-color: rgb(207, 216, 220);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 16px;
+    margin-bottom: 8px;
+    margin-top: 8px;
+    padding-bottom: 8px;
+}
+
+#sidebar a {
+    color: #212121;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#sidebar a:hover {
+    background-color: transparent;
+    border-right: 0;
+    color: #FF6600;
+    text-decoration: none;
+}
+
+nav.pagenav,
+.toctree-l2,
+.toctree-l3 {
+    padding-left: 10px;
+}
+
+.toctree-l1.current > a.reference.internal,
+.toctree-l2.current > a.reference.internal,
+.toctree-l3.current > a.reference.internal {
+    font-weight: bold;
+}
+
+/* -- Reference Manual Left Sidebar --*/
+
+ul.reference-page-menu nav.pagenav {
+    padding-left: 0;
+}
+
+/* -- Page Nav Scroll Spy (Right Sidebar)             -- */
+/* -- Calc max height less top space less bottom space -- */
+
+/* -- See cdap-dynamicscrollspy-4.css -- */
+
+/* -- Main Section -- */
+/* -- Add space on left side to allow for permalink icons to show up in -- */
+
+#main-content {
+    padding-right: 0;
+    padding-left: 30px;
+}
+
+/* -- Footer -- */
+
+.footer {
+    margin: 16px 0;
+}
+
+.footer-left, .footer-center, .footer-right {
+    font: 14px/20px Roboto, sans-serif;
+}
+
+.footer-center {
+    text-align: center;
+}
+
+.footer-right {
+    text-align: right;
+}
+
+/* ============ General ============ */
+
+/* -- Page Section Head Perma-Links -- */
+
+h1:hover .headerlink:before,
+h2:hover .headerlink:before,
+h3:hover .headerlink:before,
+h4:hover .headerlink:before,
+h5:hover .headerlink:before,
+h6:hover .headerlink:before {
+    visibility: visible;
+}
+
+a.headerlink {
+    text-decoration: none;
+}
+
+a.headerlink:before {
+    content: '\1F517';
+    font: 16px/20px Roboto, sans-serif;
+    margin-left: -24px;
+    padding-right: 3px;
+    visibility: hidden;
+}
+
+/* -- Page Section Heads -- */
+
+h1 {
+    color: #757575;
+    font: 300 34px/40px Roboto, sans-serif;
+    letter-spacing: -.01em;
+}
+
+h2 {
+    border-bottom: 1px solid #ebebeb;
+    font: 300 24px/32px Roboto, sans-serif;
+    letter-spacing: -.01em;
+    margin: 40px 0 20px;
+    padding-bottom: 3px;
+}
+
+h3 {
+    border-bottom: 1px dashed #ebebeb;
+    font: 400 20px/32px Roboto, sans-serif;
+    margin: 32px 0 16px;
+}
+
+h4 {
+    font: 400 18px/32px Roboto, sans-serif;
+    margin: 32px 0 16px;
+}
+
+h5 {
+    font: 700 16px/24px Roboto, sans-serif;
+    margin: 32px 0 16px;
+}
+
+h6 {
+    font: 500 16px/24px Roboto, sans-serif;
+    margin: 32px 0 16px;
+}
+
+/* -- Literals ------------------------------------------ */
+/* -- See also (and keep in sync) these styles: pre tt -- */
+/* -- was font: 500 90%/1 Roboto Mono, monospace;      -- */
+/* -- was background-color: #F0F0F0;                   -- */
+
+.docutils.literal {
+    background: #F0F0F0;
+    border-radius: 3px;
+    color: #37474f;
+    font: 100%/1 monospace;
+    padding: 1px 4px;
+}
+
+td .docutils.literal {
+    background: #F0F0F0;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
+
+pre {
+    background-color: #F1F6F8;
+    border-radius: 2px;
+    border: none;
+    color: #37474f;
+    font: 14px/20px monospace;
+    margin: 16px 0;
+    overflow-x: auto;
+    padding: 8px;
+    position: relative;
+    white-space: pre;
+    word-break: keep-all;
+    word-wrap: normal;
+}
+
+code.docutils.literal {
+    white-space: pre;
+    word-break: keep-all;
+    word-wrap: normal;
+}
+
+tt {
+    color: #37474F;
+    font-family: monospace;
+    font-size: 1.2em;
+    font: 100%/1 monospace;
+}
+
+.copyable.copyable-text.container,
+.highlight.container {
+    overflow: scroll;
+    padding: 0;
+    width: 100%;
+}
+
+td > code.docutils.literal {
+    background-color: white;
+    white-space: normal;
+    word-break: normal;
+}
+
+/* -- Images -- */
+
+.bordered-image {
+    border: 1px solid #ccc;
+    width: 100%;
+}
+
+.bordered-image.reference.internal.image-reference {
+    border: none;
+}
+
+.figure.align-center {
+    margin: 1em 0;
+    padding: 0 0;
+    width: 100%;
+}
+
+/* --  Admin Manual Installation Images -- */
+
+.admin-manual-step-images.container {
+    padding-left: 0px;
+    text-align: center;
+    width: 100%;
+}
+
+/* -- Block Quotes -- */
+
+blockquote {
+    border-left: none;
+    font-size: inherit;
+    margin: 0;
+    padding: 0;
+}
+
+li blockquote {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+li blockquote div ul.simple {
+    padding-left: 20px;
+}
+
+/* -- Lists in lists...  -- */
+/* Keep the same style of bullets (disc) -- */
+
+ul ul, ol ul {
+    list-style-type: disc;
+}
+
+/* -- Special Divs -- */
+
+div.topic {
+    background-color: #eee;
+}
+
+/* -- Tables -- */
+
+table {
+    table-layout: fixed;
+}
+
+.table.table {
+    background: #666666;
+}
+
+.table.table thead {
+    background-color: #666666;
+    color: white;
+    font: 500 16px/24px Roboto, sans-serif;
+    height: 48px;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+/* -- Table Head -- */
+
+.table thead tr th {
+    border-bottom: 0px;
+}
+
+.table thead tr.row-odd {
+    background: none;
+}
+
+.table thead tr.row-even {
+    background: rgba(255, 255, 255, .25);
+}
+
+/* -- Table Body -- */
+
+.table tbody tr.row-even,
+.table tbody tr.row-odd {
+    background: rgba(255, 255, 255, .95);
+}
+
+/* -- General Table styles -- */
+
+.table.table {
+    background-color: white;
+    margin-left: 0%;
+    margin-right: 0%;
+    width: 100%;
+}
+
+table.docutils p.first {
+    line-height: 1.3em;
+}
+
+table.docutils p.last {
+    line-height: 1.3em;
+    margin-bottom: 0;
+}
+
+table.docutils tbody td p {
+    line-height: 1.3em;
+}
+
+table.docutils td, table.docutils th {
+    padding-left: 15px;
+}
+
+ul.first.last.simple li {
+    line-height: 1.5em;
+}
+
+/* -- For lists in a table, reduce left padding -- */
+
+td > ul.first.last.simple {
+    padding-left: 20px;
+}
+
+
+/* -- Table styles used in Introduction page -- */
+
+div.table-block.container {
+    border-color: #aaa;
+    border-style: solid;
+    border-width: 1px;
+    margin-bottom: 40px;
+    margin-left: 0;
+    margin-top: 20px;
+    width:100%;
+}
+
+/* -- Background and Border colors -- */
+
+/* -- Make first table dark background -- */
+
+div.table-block.container table.docutils tr.row-odd {
+    background-color: #E4E7F0;
+}
+
+/* -- Triple-table -- */
+
+/* -- Triple-table: Make even row with white border -- */
+
+div.table-block.container table.triple-table.docutils tr.row-even td {
+    border-bottom: 1px solid white;
+}
+
+div.table-block.container table.triple-table.docutils th.stub {
+    border-bottom: 1px solid white;
+    padding-top: 8px;
+}
+
+/* -- Triple-table: Make odd row with white background -- */
+
+div.table-block.container table.triple-table.docutils tr.row-odd {
+    background-color: white;
+}
+
+div.table-block.container table.triple-table.docutils tr.row-odd th.stub {
+    border-bottom: 1px solid #aaa;
+}
+
+/* -- Triple-table: Make first row light-grey background with bottom border -- */
+
+div.table-block.container table.triple-table.docutils tr:first-of-type {
+    background-color: #F9FAFB;
+}
+
+div.table-block.container table.triple-table.docutils tr:first-of-type th.stub {
+    border-bottom: 1px solid #aaa;
+    padding-top: 8px;
+}
+
+div.table-block.container table.triple-table.docutils ul.first.last.simple {
+    padding-top: 6px;
+}
+
+/* -- Table styles used on RESTful pages -- */
+
+div.table-block-example.container {
+    border-color: #aaa;
+    border-style: solid;
+    border-width: 1px;
+    margin-bottom: 30px;
+    margin-left: 0;
+    margin-top: 20px;
+}
+
+div.table-block-example.container table.docutils tr.row-odd {
+    background-color: #E4E7F0;
+}
+
+/* -- Triple-table: Make even row with white border -- */
+
+div.table-block-example.container table.triple-table.docutils tr.row-even td {
+    border-bottom: 1px solid white;
+}
+
+div.table-block-example.container table.triple-table.docutils th.stub {
+    border-bottom: 1px solid white;
+}
+
+/* -- Triple-table: Make odd row with white background -- */
+
+div.table-block-example.container table.triple-table.docutils tr.row-odd {
+    background-color: white;
+}
+
+div.table-block-example.container table.triple-table.docutils tr.row-odd th.stub {
+    border-bottom: 1px solid #aaa;
+}
+
+/* -- Triple-table: Make first row light-grey background with bottom border -- */
+
+div.table-block-example.container table.triple-table.docutils tr:first-of-type {
+    background-color: #F9FAFB;
+}
+
+div.table-block-example.container table.triple-table.docutils tr:first-of-type th.stub {
+    border-bottom: 1px solid #aaa;
+}
+
+/* -- Triple-table: Introduction section -- */
+
+table.triple-table.table > tbody > tr > td {
+    max-width: 630px;
+}
+
+table.triple-table.table > tbody > tr > td > ul {
+    overflow: auto;
+}
+
+table.triple-table.table .docutils.literal {
+    white-space: normal;
+}
+
+div.table-block.container > table:not(.triple-table) > tbody > tr:first-of-type > td,
+div.table-block.container > table:not(.triple-table) > tbody > tr:first-of-type > th {
+    border-top: 0;
+}

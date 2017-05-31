@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2014-2016 Cask Data, Inc.
+  Copyright © 2014-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@
 
 
   <!-- Applications Configuration -->
-  
+
   <property>
     <name>app.artifact.dir</name>
     <value>artifacts;artifacts/${app.program.spark.compat}</value>
@@ -52,9 +52,9 @@
     <name>app.program.spark.compat</name>
     <value>spark1_2.10</value>
     <description>
-      Spark compatibility version. Must be 'spark1_2.10' or 'spark2_2.11'.
-      This is only used in standalone mode. In distributed mode, the Spark
-      version will be automatically detected.
+      Spark compatibility version. Must be 'spark1_2.10' or 'spark2_2.11'. This is only
+      used in CDAP Local Sandbox mode. In Distributed CDAP mode, the Spark version will be
+      automatically detected.
     </description>
   </property>
 
@@ -79,12 +79,12 @@
 
 
   <!-- Datasets Configuration -->
-  
+
   <property>
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>
-      Block size in bytes for data fabric when in Standalone CDAP
+      Block size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -92,13 +92,13 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in Standalone CDAP
+      Cache size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
 
   <!-- Logging Configuration -->
-  
+
   <property>
     <name>log.base.dir</name>
     <value>logs/avro</value>
@@ -140,7 +140,8 @@
     <name>log.pipeline.cdap.file.permissions</name>
     <value> </value>
     <description>
-      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+      We don't want to use set permissions in CDAP Local Sandbox, as posix permissions are
+      not supported on the Windows FS.
     </description>
   </property>
 
@@ -148,12 +149,13 @@
     <name>log.pipeline.cdap.dir.permissions</name>
     <value> </value>
     <description>
-      we don't want to use set permissions in standalone, as posix permissions are not supported on windows FS.
+      We don't want to use set permissions in CDAP Local Sandbox, as posix permissions are
+      not supported on the Windows FS.
     </description>
   </property>
 
   <!-- Metrics Configuration -->
-  
+
   <property>
     <name>metrics.data.table.retention.resolution.1.seconds</name>
     <value>7200</value>
@@ -184,12 +186,13 @@
   </property>
 
   <!-- Router Configuration -->
-  
+
   <property>
     <name>router.address</name>
     <value>127.0.0.1</value>
     <description>
-      CDAP Router service address to which CDAP UI connects (deprecated; use router.server.address directly)
+      CDAP Router service address to which CDAP UI connects (deprecated; use
+      router.server.address directly)
     </description>
   </property>
 
@@ -211,13 +214,13 @@
 
 
   <!-- Stream Configuration -->
-  
+
   <property>
     <name>stream.container.instances</name>
     <value>1</value>
     <description>
-      Number of YARN container instances for the stream handler; in
-      Standalone CDAP, it is always one
+      Number of YARN container instances for the stream handler; in CDAP Local Sandbox, it
+      is always one
     </description>
   </property>
 

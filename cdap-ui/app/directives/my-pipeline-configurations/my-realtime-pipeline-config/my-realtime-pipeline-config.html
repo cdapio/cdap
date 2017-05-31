@@ -1,0 +1,745 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="pipeline-configurations-content" ng-if="RealtimePipelineConfigCtrl.isDisabled">
+  <div class="pipeline-configurations-header">
+    <h3 class="modeless-title">
+      Configure
+      <span ng-if="RealtimePipelineConfigCtrl.pipelineName.length > 0">
+        "{{RealtimePipelineConfigCtrl.pipelineName}}"
+      </span>
+    </h3>
+    <div class="btn-group">
+      <a class="btn" ng-click="RealtimePipelineConfigCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-configurations-body">
+    <div class="configurations-side-panel">
+      <div class="configurations-headers">
+        <div class="configuration-header"
+              ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'}"
+              ng-click="RealtimePipelineConfigCtrl.activeTab = 'runtimeArgs'"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          Runtime Arguments
+        </div>
+        <div class="configuration-header"
+              ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'previewConfig'}"
+              ng-click="RealtimePipelineConfigCtrl.activeTab = 'previewConfig'"
+              ng-if="!RealtimePipelineConfigCtrl.isDisabled && RealtimePipelineConfigCtrl.showPreviewConfig">
+          Preview Config
+        </div>
+        <div class="configuration-header toggle-advanced-options"
+              ng-click="RealtimePipelineConfigCtrl.showAdvanced = !RealtimePipelineConfigCtrl.showAdvanced"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          <span class="fa"
+                ng-class="{'fa-caret-down': RealtimePipelineConfigCtrl.showAdvanced, 'fa-caret-right': !RealtimePipelineConfigCtrl.showAdvanced}">
+           </span>
+          Advanced options
+        </div>
+        <div class="advanced-options"
+              ng-show="RealtimePipelineConfigCtrl.showAdvanced || !RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'pipelineConfig'">
+            Pipeline Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'engineConfig'}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'engineConfig'">
+            Engine Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'resources', 'disabled': RealtimePipelineConfigCtrl.showPreviewConfig}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'resources'">
+            Resources
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="configuration-content">
+
+      <div class="configuration-step-content configuration-content-container runtime-arguments"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
+        <div class="step-content-heading">
+          Specify Runtime Arguments or Update the Ones Derived from Preferences
+        </div>
+        <div class="runtime-arguments-labels key-value-pair-labels">
+          <span class="key-label">Name</span>
+          <span class="value-label">Value</span>
+        </div>
+        <div class="runtime-arguments-values key-value-pair-values">
+          <key-value-pairs
+            key-values="RealtimePipelineConfigCtrl.runtimeArguments"
+            on-key-value-change="RealtimePipelineConfigCtrl.onRuntimeArgumentsChange"
+            get-resetted-key-value="RealtimePipelineConfigCtrl.getResettedRuntimeArgument"
+          ></key-value-pairs>
+        </div>
+      </div>
+
+      <div class="configuration-step-content configuration-content-container preview-config"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'previewConfig'">
+        <div class="step-content-heading">
+          Set how long you want to run your preview
+        </div>
+        <div class="label-with-toggle timeout-in-minutes row">
+          <span class="toggle-label col-xs-4">Time to run preview</span>
+          <my-number-widget
+            ng-model="RealtimePipelineConfigCtrl.timeoutInMinutes"
+            config="RealtimePipelineConfigCtrl.numberConfig"
+          ></my-number-widget>
+          <span class="control-label min">min</span>
+          <i class="fa fa-info-circle"
+             uib-tooltip="Number of minutes to run Realtime pipeline preview. It can be run for a maximum of 15 mins."
+             tooltip-placement="right">
+        </div>
+      </div>
+
+      <div class="configuration-step-content pipeline-config"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'">
+        <div class="step-content-heading">
+          Set configurations for this pipeline
+        </div>
+        <div class="label-with-toggle batch-interval form-group row">
+          <span class="toggle-label col-xs-4">Batch Interval</span>
+          <div class="col-xs-7">
+            <select class="form-control small-dropdown"
+                    ng-model="RealtimePipelineConfigCtrl.batchIntervalTime"
+                    ng-options="option as option for option in RealtimePipelineConfigCtrl.batchIntervalTimeOptions"
+                    ng-change="RealtimePipelineConfigCtrl.updatePipelineEditStatus()">
+            </select>
+            <select class="form-control small-dropdown batch-interval-unit"
+                    ng-model="RealtimePipelineConfigCtrl.batchIntervalUnit"
+                    ng-options="optionKey as optionVal for (optionKey,optionVal) in RealtimePipelineConfigCtrl.batchIntervalUnits"
+                    ng-change="RealtimePipelineConfigCtrl.updatePipelineEditStatus()">
+            </select>
+          </div>
+        </div>
+        <div class="label-with-toggle checkpointing row">
+          <span class="toggle-label col-xs-4">Checkpointing</span>
+          <div class="col-xs-7 toggle-container">
+            <my-toggle-switch-widget
+              is-on="!RealtimePipelineConfigCtrl.checkpointing"
+              on-toggle="RealtimePipelineConfigCtrl.onCheckPointingChange()"
+            ></my-toggle-switch-widget>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures."
+                tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+        <div class="label-with-toggle instrumentation row">
+          <span class="toggle-label col-xs-4">Instrumentation</span>
+          <div class="col-xs-7 toggle-container">
+            <my-toggle-switch-widget
+              is-on="RealtimePipelineConfigCtrl.instrumentation"
+              on-toggle="RealtimePipelineConfigCtrl.onInstrumentationChange()"
+            ></my-toggle-switch-widget>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Emits timing metrics such as total time, mean and standard deviation for pipeline stages."
+                tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+        <div class="label-with-toggle stage-logging row">
+          <span class="toggle-label col-xs-4">Stage Level Logging</span>
+          <div class="col-xs-7 toggle-container">
+            <my-toggle-switch-widget
+              is-on="RealtimePipelineConfigCtrl.stageLogging"
+              on-toggle="RealtimePipelineConfigCtrl.onStageLoggingChange()"
+            ></my-toggle-switch-widget>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Allows logs from each stage in the pipeline to be queried individually."
+                tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+        <div class="label-with-toggle graceful-stop row">
+          <span class="toggle-label col-xs-4">Graceful Stop</span>
+          <div class="col-xs-7 toggle-container">
+            <my-toggle-switch-widget
+              is-on="RealtimePipelineConfigCtrl.gracefulStop"
+              on-toggle="RealtimePipelineConfigCtrl.onGracefulStopChange()"
+            ></my-toggle-switch-widget>
+            <i class="fa fa-info-circle"
+                uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
+                tooltip-placement="right">
+            </i>
+          </div>
+        </div>
+      </div>
+      <div class="configuration-step-content resources"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'resources'">
+        <div class="step-content-heading">
+          Specify the resources for the following processes of the Spark program
+        </div>
+        <div class="col-xs-4 client">
+          <span class="resource-title">
+            Client
+          </span>
+          <i class="fa fa-info-circle"
+              uib-tooltip="Resources for the client process"
+              tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="RealtimePipelineConfigCtrl.actionCreator"
+              store="RealtimePipelineConfigCtrl.store"
+              resource-type="clientResource"
+              is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+              on-memory-change="RealtimePipelineConfigCtrl.onClientMemoryChange"
+              on-core-change="RealtimePipelineConfigCtrl.onClientCoreChange"
+              virtual-cores-value="RealtimePipelineConfigCtrl.clientResources.virtualCores"
+              memory-mb-value="RealtimePipelineConfigCtrl.clientResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+        <div class="col-xs-4 driver">
+          <span class="resource-title">
+            Driver
+          </span>
+          <i class="fa fa-info-circle"
+              uib-tooltip="Resources for the driver process which initializes the pipeline"
+              tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="RealtimePipelineConfigCtrl.actionCreator"
+              store="RealtimePipelineConfigCtrl.store"
+              resource-type="driverResource"
+              is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+              on-memory-change="RealtimePipelineConfigCtrl.onDriverMemoryChange"
+              on-core-change="RealtimePipelineConfigCtrl.onDriverCoreChange"
+              virtual-cores-value="RealtimePipelineConfigCtrl.driverResources.virtualCores"
+              memory-mb-value="RealtimePipelineConfigCtrl.driverResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+        <div class="col-xs-4 executor">
+          <span class="resource-title">
+            Executor
+          </span>
+          <i class="fa fa-info-circle"
+              uib-tooltip="Resources for executor processes which run tasks in an Apache Spark pipeline"
+              tooltip-placement="right">
+          </i>
+          <div class="resource-holder">
+            <div
+              action-creator="RealtimePipelineConfigCtrl.actionCreator"
+              store="RealtimePipelineConfigCtrl.store"
+              resource-type="executorResource"
+              is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+              on-memory-change="RealtimePipelineConfigCtrl.onExecutorMemoryChange"
+              on-core-change="RealtimePipelineConfigCtrl.onExecutorCoreChange"
+              virtual-cores-value="RealtimePipelineConfigCtrl.executorResources.virtualCores"
+              memory-mb-value="RealtimePipelineConfigCtrl.executorResources.memoryMB"
+              my-pipeline-resource-factory
+            ></div>
+          </div>
+        </div>
+      </div>
+      <fieldset class="configuration-content-container"
+                ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'"
+                ng-disabled="RealtimePipelineConfigCtrl.isDisabled">
+
+
+        <div class="configuration-step-content engine-config"
+              ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'">
+          <div class="step-content-heading">
+            Select the type of engine running your realtime pipeline
+          </div>
+          <div class="label-with-toggle backpressure row">
+            <span class="toggle-label col-xs-4">Backpressure</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="RealtimePipelineConfigCtrl.backpressure"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.backpressure = !RealtimePipelineConfigCtrl.backpressure"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle numExecutors form-group row">
+            <span class="toggle-label col-xs-4">Number of Executors</span>
+            <div class="col-xs-7">
+              <select class="form-control small-dropdown"
+                  ng-model="RealtimePipelineConfigCtrl.numExecutors"
+                  ng-options="option as option for option in RealtimePipelineConfigCtrl.numExecutorsOptions">
+              </select>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="The number of executors to allocate for this pipeline on Apache Yarn."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="add-custom-config">
+            <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length === 0"
+                  ng-hide="RealtimePipelineConfigCtrl.isDisabled">
+              <a class="add-custom-config-label"
+                  ng-click="RealtimePipelineConfigCtrl.addCustomConfig()"
+                  ng-hide="RealtimePipelineConfigCtrl.isDisabled">>
+                  Add Custom Config
+              </a>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark program."
+                 tooltip-placement="right">
+              </i>
+            </span>
+            <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 0">
+              <hr />
+              <label>Custom Config</label>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark program."
+                 tooltip-placement="right">
+              </i>
+              <div class="custom-config-labels key-value-pair-labels">
+                <span class="key-label">Name</span>
+                <span class="value-label">Value</span>
+              </div>
+              <div class="custom-config-values key-value-pair-values">
+                <key-value-pairs
+                  key-values="RealtimePipelineConfigCtrl.customEngineConfig"
+                  on-key-value-change="RealtimePipelineConfigCtrl.onCustomEngineConfigChange"
+                ></key-value-pairs>
+              </div>
+            </span>
+          </div>
+        </div>
+
+      </fieldset>
+
+      <div class="configuration-step-navigation">
+        <div ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-run"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled() || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline "
+            ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
+            <span>Save &amp; Run</span>
+            <span ng-if="RealtimePipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'"
+            ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="RealtimePipelineConfigCtrl.activeTab !== 'runtimeArgs' && RealtimePipelineConfigCtrl.activeTab !== engineConfig"
+            ng-disabled="!RealtimePipelineConfigCtrl.enablePipelineUpdate || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline "
+            ng-click="RealtimePipelineConfigCtrl.updatePipeline()">
+            <span ng-if="!RealtimePipelineConfigCtrl.updatingPipeline">Save</span>
+            <span ng-if="RealtimePipelineConfigCtrl.updatingPipeline">Saving</span>
+             <span ng-if="RealtimePipelineConfigCtrl.updatingPipeline">
+               <span class="fa fa-spinner fa-spin"></span>
+             </span>
+          </button>
+        </div>
+        <div ng-if="!RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-close"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pipeline-configurations-content" ng-if="!RealtimePipelineConfigCtrl.isDisabled">
+  <div class="pipeline-configurations-header">
+    <h3 class="modeless-title">
+      Configure
+      <span ng-if="RealtimePipelineConfigCtrl.pipelineName.length > 0">
+        "{{RealtimePipelineConfigCtrl.pipelineName}}"
+      </span>
+    </h3>
+    <div class="btn-group">
+      <a class="btn" ng-click="RealtimePipelineConfigCtrl.onClose()">
+        <span class="fa fa-remove"></span>
+      </a>
+    </div>
+  </div>
+  <div class="pipeline-configurations-body">
+    <div class="configurations-side-panel">
+      <div class="configurations-headers">
+        <div class="configuration-header"
+              ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'}"
+              ng-click="RealtimePipelineConfigCtrl.activeTab = 'runtimeArgs'"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          Runtime Arguments
+        </div>
+        <div class="configuration-header"
+              ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'previewConfig'}"
+              ng-click="RealtimePipelineConfigCtrl.activeTab = 'previewConfig'"
+              ng-if="!RealtimePipelineConfigCtrl.isDisabled && RealtimePipelineConfigCtrl.showPreviewConfig">
+          Preview Config
+        </div>
+        <div class="configuration-header toggle-advanced-options"
+              ng-click="RealtimePipelineConfigCtrl.showAdvanced = !RealtimePipelineConfigCtrl.showAdvanced"
+              ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          <span class="fa"
+                ng-class="{'fa-caret-down': RealtimePipelineConfigCtrl.showAdvanced, 'fa-caret-right': !RealtimePipelineConfigCtrl.showAdvanced}">
+           </span>
+          Advanced options
+        </div>
+        <div class="advanced-options"
+              ng-show="RealtimePipelineConfigCtrl.showAdvanced || !RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'pipelineConfig'">
+            Pipeline Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'engineConfig'}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'engineConfig'">
+            Engine Config
+          </div>
+          <div class="configuration-header"
+                ng-class="{'active': RealtimePipelineConfigCtrl.activeTab === 'resources', 'disabled': RealtimePipelineConfigCtrl.showPreviewConfig}"
+                ng-click="RealtimePipelineConfigCtrl.activeTab = 'resources'">
+            Resources
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="configuration-content">
+
+      <div class="configuration-step-content configuration-content-container runtime-arguments"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
+        <div class="step-content-heading">
+          Specify Runtime Arguments or Update the Ones Derived from Preferences
+        </div>
+        <div class="runtime-arguments-labels key-value-pair-labels">
+          <span class="key-label">Name</span>
+          <span class="value-label">Value</span>
+        </div>
+        <div class="runtime-arguments-values key-value-pair-values">
+          <key-value-pairs
+            key-values="RealtimePipelineConfigCtrl.runtimeArguments"
+            on-key-value-change="RealtimePipelineConfigCtrl.onRuntimeArgumentsChange"
+            get-resetted-key-value="RealtimePipelineConfigCtrl.getResettedRuntimeArgument"
+          ></key-value-pairs>
+        </div>
+      </div>
+
+      <div class="configuration-step-content configuration-content-container preview-config"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'previewConfig'">
+        <div class="step-content-heading">
+          Set how long you want to run your preview
+        </div>
+        <div class="label-with-toggle timeout-in-minutes row">
+          <span class="toggle-label col-xs-4">Time to run preview</span>
+          <my-number-widget
+            ng-model="RealtimePipelineConfigCtrl.timeoutInMinutes"
+            config="RealtimePipelineConfigCtrl.numberConfig"
+          ></my-number-widget>
+          <span class="control-label min">min</span>
+          <i class="fa fa-info-circle"
+             uib-tooltip="Number of minutes to run Realtime pipeline preview. It can be run for a maximum of 15 mins."
+             tooltip-placement="right">
+        </div>
+      </div>
+
+      <fieldset class="configuration-content-container"
+                ng-if="RealtimePipelineConfigCtrl.activeTab !== 'runtimeArgs' && RealtimePipelineConfigCtrl.activeTab !== 'previewConfig'"
+                ng-disabled="RealtimePipelineConfigCtrl.isDisabled">
+
+        <div class="configuration-step-content pipeline-config"
+              ng-if="RealtimePipelineConfigCtrl.activeTab === 'pipelineConfig'">
+          <div class="step-content-heading">
+            Set configurations for this pipeline
+          </div>
+          <div class="label-with-toggle batch-interval form-group row">
+            <span class="toggle-label col-xs-4">Batch Interval</span>
+            <div class="col-xs-7">
+              <select class="form-control small-dropdown"
+                      ng-model="RealtimePipelineConfigCtrl.batchIntervalTime"
+                      ng-options="option as option for option in RealtimePipelineConfigCtrl.batchIntervalTimeOptions">
+              </select>
+              <select class="form-control small-dropdown batch-interval-unit"
+                      ng-model="RealtimePipelineConfigCtrl.batchIntervalUnit"
+                      ng-options="optionKey as optionVal for (optionKey,optionVal) in RealtimePipelineConfigCtrl.batchIntervalUnits">
+              </select>
+            </div>
+          </div>
+          <div class="label-with-toggle checkpointing row">
+            <span class="toggle-label col-xs-4">Checkpointing</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="!RealtimePipelineConfigCtrl.checkpointing"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.checkpointing = !RealtimePipelineConfigCtrl.checkpointing"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Allows Apache Spark Streaming to checkpoint data (RDDs) to persistent storage so that the pipeline can recover from failures."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle instrumentation row">
+            <span class="toggle-label col-xs-4">Instrumentation</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="RealtimePipelineConfigCtrl.instrumentation"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.instrumentation = !RealtimePipelineConfigCtrl.instrumentation"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Emits timing metrics such as total time, mean, standard deviation for pipeline stages. It is recommended to always have this setting on, unless the environment is short on resources."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle stage-logging row">
+            <span class="toggle-label col-xs-4">Stage Level Logging</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="RealtimePipelineConfigCtrl.stageLogging"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.stageLogging = !RealtimePipelineConfigCtrl.stageLogging"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Allows logs from each stage in the pipeline to be queried individually. It is recommended to always have this setting on, unless the environment is short on resources."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle graceful-stop row">
+            <span class="toggle-label col-xs-4">Graceful Stop</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="RealtimePipelineConfigCtrl.gracefulStop"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.gracefulStop = !RealtimePipelineConfigCtrl.gracefulStop"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="When the pipeline is stopped, waits for the processing of all received data to be completed."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+        </div>
+
+        <div class="configuration-step-content engine-config"
+              ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'">
+          <div class="step-content-heading">
+            Select the type of engine running your realtime pipeline
+          </div>
+          <div class="label-with-toggle backpressure row">
+            <span class="toggle-label col-xs-4">Backpressure</span>
+            <div class="col-xs-7 toggle-container">
+              <my-toggle-switch-widget
+                is-on="RealtimePipelineConfigCtrl.backpressure"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-toggle="RealtimePipelineConfigCtrl.backpressure = !RealtimePipelineConfigCtrl.backpressure"
+              ></my-toggle-switch-widget>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Allows the Apache Spark Streaming engine to control the receiving rate based on the current batch scheduling delays and processing times so that the system receives only as fast as the system can process."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="label-with-toggle numExecutors form-group row">
+            <span class="toggle-label col-xs-4">Number of Executors</span>
+            <div class="col-xs-7">
+              <select class="form-control small-dropdown"
+                  ng-model="RealtimePipelineConfigCtrl.numExecutors"
+                  ng-options="option as option for option in RealtimePipelineConfigCtrl.numExecutorsOptions">
+              </select>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="The number of executors to allocate for this pipeline on Apache Yarn."
+                 tooltip-placement="right">
+              </i>
+            </div>
+          </div>
+          <div class="add-custom-config">
+            <span ng-hide="RealtimePipelineConfigCtrl.isDisabled">
+              <a class="add-custom-config-label"
+                  ng-click="RealtimePipelineConfigCtrl.showCustomConfig = !RealtimePipelineConfigCtrl.showCustomConfig">
+                  <span class="fa"
+                        ng-class="{'fa-caret-down': RealtimePipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !RealtimePipelineConfigCtrl.showCustomConfig}">
+                   </span>
+                  Add Custom Config
+              </a>
+              <i class="fa fa-info-circle"
+                 uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
+                 tooltip-placement="right">
+              </i>
+              <span class="float-xs-right num-rows"
+                    ng-if="RealtimePipelineConfigCtrl.showCustomConfig">
+                  {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
+                <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length === 1">
+                  custom config
+                </span>
+                <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 1">
+                  custom configs
+                </span>
+              </span>
+            </span>
+            <span ng-if="(RealtimePipelineConfigCtrl.isDisabled && RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!RealtimePipelineConfigCtrl.isDisabled && RealtimePipelineConfigCtrl.showCustomConfig)">
+              <hr />
+              <span ng-if="RealtimePipelineConfigCtrl.isDisabled && RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 0">
+                <label>Custom Config</label>
+                <i class="fa fa-info-circle"
+                   uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
+                   tooltip-placement="right">
+                </i>
+                <span class="float-xs-right num-rows">
+                    {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
+                  <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length === 1">
+                    custom config
+                  </span>
+                  <span ng-if="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 1">
+                    custom configs
+                  </span>
+                </span>
+              </span>
+              <div class="custom-config-labels key-value-pair-labels">
+                <span class="key-label">Name</span>
+                <span class="value-label">Value</span>
+              </div>
+              <div class="custom-config-values key-value-pair-values">
+                <key-value-pairs
+                  key-values="RealtimePipelineConfigCtrl.customEngineConfig"
+                  on-key-value-change="RealtimePipelineConfigCtrl.onCustomEngineConfigChange"
+                ></key-value-pairs>
+              </div>
+            </span>
+          </div>
+        </div>
+
+        <div class="configuration-step-content resources"
+              ng-if="RealtimePipelineConfigCtrl.activeTab === 'resources'">
+          <div class="step-content-heading">
+            Specify the resources for the following processes of the Spark program
+          </div>
+          <div class="col-xs-4 client">
+            <span class="resource-title">
+              Client
+            </span>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Resources for the client process which launches the Apache Spark Streaming pipeline"
+                tooltip-placement="right">
+            </i>
+            <div class="resource-holder">
+              <div
+                action-creator="RealtimePipelineConfigCtrl.actionCreator"
+                store="RealtimePipelineConfigCtrl.store"
+                resource-type="clientResource"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-memory-change="RealtimePipelineConfigCtrl.onClientMemoryChange"
+                on-core-change="RealtimePipelineConfigCtrl.onClientCoreChange"
+                virtual-cores-value="RealtimePipelineConfigCtrl.clientResources.virtualCores"
+                memory-mb-value="RealtimePipelineConfigCtrl.clientResources.memoryMB"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+          <div class="col-xs-4 driver">
+            <span class="resource-title">
+              Driver
+            </span>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Resources for the Apache Spark driver process which initializes the pipeline"
+                tooltip-placement="right">
+            </i>
+            <div class="resource-holder">
+              <div
+                action-creator="RealtimePipelineConfigCtrl.actionCreator"
+                store="RealtimePipelineConfigCtrl.store"
+                resource-type="driverResource"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-memory-change="RealtimePipelineConfigCtrl.onDriverMemoryChange"
+                on-core-change="RealtimePipelineConfigCtrl.onDriverCoreChange"
+                virtual-cores-value="RealtimePipelineConfigCtrl.driverResources.virtualCores"
+                memory-mb-value="RealtimePipelineConfigCtrl.driverResources.memoryMB"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+          <div class="col-xs-4 executor">
+            <span class="resource-title">
+              Executor
+            </span>
+            <i class="fa fa-info-circle"
+                uib-tooltip="Resources for executor processes which run tasks in an Apache Spark pipeline"
+                tooltip-placement="right">
+            </i>
+            <div class="resource-holder">
+              <div
+                action-creator="RealtimePipelineConfigCtrl.actionCreator"
+                store="RealtimePipelineConfigCtrl.store"
+                resource-type="executorResource"
+                is-disabled="RealtimePipelineConfigCtrl.isDisabled"
+                on-memory-change="RealtimePipelineConfigCtrl.onExecutorMemoryChange"
+                on-core-change="RealtimePipelineConfigCtrl.onExecutorCoreChange"
+                virtual-cores-value="RealtimePipelineConfigCtrl.executorResources.virtualCores"
+                memory-mb-value="RealtimePipelineConfigCtrl.executorResources.memoryMB"
+                my-pipeline-resource-factory
+              ></div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="configuration-step-navigation">
+        <div class="apply-run-container"
+            ng-if="RealtimePipelineConfigCtrl.isDisabled || RealtimePipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-run"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="RealtimePipelineConfigCtrl.applyAndRunPipeline()">
+            Apply &amp; Run
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="RealtimePipelineConfigCtrl.applyConfig()">
+            Apply
+          </button>
+          <span class="num-runtime-args"
+                ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
+              {{ RealtimePipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length === 1">
+              runtime argument
+            </span>
+            <span ng-if="RealtimePipelineConfigCtrl.runtimeArguments.pairs.length > 1">
+              runtime arguments
+            </span>
+          </span>
+        </div>
+        <div ng-if="!RealtimePipelineConfigCtrl.isDisabled && !RealtimePipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-close"
+            ng-disabled="RealtimePipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="RealtimePipelineConfigCtrl.applyAndClose()">
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -22,6 +22,8 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.table.ConflictDetection;
+import co.cask.cdap.api.dataset.table.TableProperties;
 
 import java.io.IOException;
 import java.util.Map;
@@ -37,12 +39,12 @@ public class ProgramScheduleStoreDefinition extends CompositeDatasetDefinition<P
 
   @Override
   public DatasetSpecification configure(String name, DatasetProperties properties) {
-    DatasetProperties indexProps = DatasetProperties.builder()
-      .addAll(properties.getProperties())
-      .add(IndexedTable.INDEX_COLUMNS_CONF_KEY, ProgramScheduleStoreDataset.INDEX_COLUMNS)
-      .build();
+    TableProperties.Builder indexProps = TableProperties.builder();
+    indexProps.addAll(properties.getProperties());
+    indexProps.add(IndexedTable.INDEX_COLUMNS_CONF_KEY, ProgramScheduleStoreDataset.INDEX_COLUMNS);
+    indexProps.setConflictDetection(ConflictDetection.COLUMN);
     DatasetSpecification indexSpec = getDelegate(ProgramScheduleStoreDataset.EMBEDDED_TABLE_NAME)
-      .configure(ProgramScheduleStoreDataset.EMBEDDED_TABLE_NAME, indexProps);
+      .configure(ProgramScheduleStoreDataset.EMBEDDED_TABLE_NAME, indexProps.build());
     return DatasetSpecification.builder(name, getName()).datasets(indexSpec).build();
   }
 

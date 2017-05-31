@@ -18,6 +18,7 @@ package co.cask.cdap.app;
 
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -28,18 +29,16 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleConfigurer;
+import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleConfigurer;
+import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.NamespaceId;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 /**
@@ -109,10 +108,15 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public ScheduleConfigurer configureWorkflowSchedule(String scheduleName, String workflowName) {
+  public void schedule(ScheduleCreationSpec programSchedule) {
+
+  }
+
+  @Override
+  public ScheduleBuilder buildSchedule(String scheduleName, ProgramType programType,
+                                       String workflowName) {
     // the result of this won't actually be used, but the returned object will have its methods called
-    return new DefaultScheduleConfigurer(scheduleName, NamespaceId.DEFAULT, workflowName,
-                                         new HashMap<String, ScheduleCreationSpec>());
+    return new DefaultScheduleBuilder(scheduleName, NamespaceId.DEFAULT, workflowName);
   }
 
   @Nullable

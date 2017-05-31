@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+body.theme-cdap {
+  &.state-hydrator {
+    my-realtime-pipeline-config {
+      .pipeline-configurations-content {
+        .pipeline-configurations-body {
+          .configuration-content {
+            .configuration-step-content {
+              &.preview-config {
+                .timeout-in-minutes {
+                  my-number-widget {
+                    margin-left: 10px;
+                    width: 60px;
+                  }
+
+                  .min {
+                    margin-left: 10px;
+                  }
+                }
+              }
+              &.pipeline-config {
+                .batch-interval {
+                  .batch-interval-unit {
+                    width: 85px;
+                    padding-left: 5px;
+                    padding-right: 0;
+                  }
+                }
+              }
+              &.engine-config {
+                .label-with-toggle {
+                  margin-bottom: 12px;
+                }
+
+                .add-custom-config {
+                  margin-top: 15px;
+
+                  hr {
+                    margin-top: 9px;
+                    margin-bottom: 9px;
+                  }
+                }
+
+                .custom-config-values {
+                  &.key-value-pair-values {
+                    margin-top: 5px;
+                  }
+                }
+              }
+              &.resources {
+                .driver,
+                .executor {
+                  padding-left: 20px;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

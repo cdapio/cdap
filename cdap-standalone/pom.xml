@@ -200,6 +200,12 @@
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-hdfs</artifactId>
       <version>${sdk.hadoop.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-all</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
@@ -312,7 +318,7 @@
       <id>dist</id>
       <properties>
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
-        <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
+        <stage.opt.dir>${sdk.dir}/cdap-local-sandbox-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
@@ -848,7 +854,7 @@
                   </descriptors>
                   <appendAssemblyId>false</appendAssemblyId>
                   <attach>false</attach>
-                  <finalName>cdap-sdk-${project.version}</finalName>
+                  <finalName>cdap-local-sandbox-${project.version}</finalName>
                 </configuration>
               </execution>
             </executions>
@@ -869,10 +875,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${project.groupId}</groupId>
-                  <artifactId>cdap-sdk</artifactId>
+                  <artifactId>cdap-local-sandbox</artifactId>
                   <packaging>zip</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-sdk-${project.version}.zip</file>
+                  <file>${project.build.directory}/cdap-local-sandbox-${project.version}.zip</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>

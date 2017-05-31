@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG){
     this.state = {};
     this.mySettings = mySettings;
     this.myHelpers = myHelpers;
@@ -31,6 +31,7 @@ class HydratorPlusPlusConfigStore {
     this.$state = $state;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.avsc = avsc;
+    this.isDistributed = MY_CONFIG.isEnterprise ? true : false;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -45,6 +46,8 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onSetMemoryMB', this.setMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetDriverVirtualCores', this.setDriverVirtualCores.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSetDriverMemoryMB', this.setDriverMemoryMB.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetClientVirtualCores', this.setClientVirtualCores.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetClientMemoryMB', this.setClientMemoryMB.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onInitialize', this.init.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
@@ -75,7 +78,7 @@ class HydratorPlusPlusConfigStore {
         draftId: null
       },
       description: '',
-      name: '',
+      name: ''
     };
     Object.assign(this.state, { config: this.getDefaultConfig() });
 
@@ -84,8 +87,15 @@ class HydratorPlusPlusConfigStore {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
+      this.setProperties(this.state.config.properties);
       this.setDriverResources(this.state.config.driverResources);
       this.setResources(this.state.config.resources);
+      this.setClientResources(this.state.config.clientResources);
+      this.setInstrumentation(this.state.config.processTimingEnabled);
+      this.setStageLogging(this.state.config.stageLoggingEnabled);
+      this.setCheckpointing(this.state.config.disableCheckpoints);
+      this.setGracefulStop(this.state.config.stopGracefully);
+      this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -102,7 +112,11 @@ class HydratorPlusPlusConfigStore {
       connections: [],
       batchInterval: this.HYDRATOR_DEFAULT_VALUES.batchInterval,
       comments: [],
-      postActions: []
+      postActions: [],
+      properties: {},
+      processTimingEnabled: true,
+      stageLoggingEnabled: true,
+      numOfRecordsPreview: 100
     };
   }
 
@@ -216,14 +230,12 @@ class HydratorPlusPlusConfigStore {
     });
     config.connections = connections;
 
-
     // Adding leftover nodes
     if (Object.keys(nodesMap).length !== 0) {
       angular.forEach(nodesMap, (node, id) => {
         addPluginToConfig(node, id);
       });
     }
-
 
     let appType = this.getAppType();
     if ( this.GLOBALS.etlBatchPipelines.indexOf(appType) !== -1) {
@@ -237,6 +249,10 @@ class HydratorPlusPlusConfigStore {
         memoryMB: this.getDriverMemoryMB(),
         virtualCores: this.getDriverVirtualCores()
       };
+      config.properties = this.getProperties();
+      config.stageLoggingEnabled = this.getStageLogging();
+      config.processTimingEnabled = this.getInstrumentation();
+      config.numOfRecordsPreview = this.getNumRecordsPreview();
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instances = this.getInstance();
     } else if (this.GLOBALS.etlDataStreams) {
@@ -249,6 +265,15 @@ class HydratorPlusPlusConfigStore {
         memoryMB: this.getDriverMemoryMB(),
         virtualCores: this.getDriverVirtualCores()
       };
+      config.clientResources = {
+        memoryMB: this.getClientMemoryMB(),
+        virtualCores: this.getClientVirtualCores()
+      };
+      config.properties = this.getProperties();
+      config.stageLoggingEnabled = this.getStageLogging();
+      config.processTimingEnabled = this.getInstrumentation();
+      config.disableCheckpoints = this.getCheckpointing();
+      config.stopGracefully = this.getGracefulStop();
     }
 
     if (this.state.description) {
@@ -296,6 +321,9 @@ class HydratorPlusPlusConfigStore {
     state.__ui__.nodes = nodes;
 
     return angular.copy(state);
+  }
+  getCloneConfig() {
+    return this.getConfigForExport();
   }
   getDisplayConfig() {
     let uniqueNodeNames = {};
@@ -371,6 +399,139 @@ class HydratorPlusPlusConfigStore {
   }
   getEngine() {
     return this.state.config.engine || 'mapreduce';
+  }
+  getProperties() {
+    return this.getConfig().properties;
+  }
+  setProperties(properties) {
+    if (typeof properties !== 'undefined' && Object.keys(properties).length > 0) {
+      this.state.config.properties = properties;
+    } else {
+      this.state.config.properties = {};
+      if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+        this.state.config.properties['system.spark.spark.streaming.backpressure.enabled'] = true;
+        if (this.isDistributed) {
+          this.state.config.properties['system.spark.spark.executor.instances'] = 1;
+        } else {
+          this.state.config.properties['system.spark.spark.master'] = 'local[1]';
+        }
+      }
+    }
+  }
+  getCustomConfig() {
+    let customConfig = {};
+    let backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
+    for (let key in this.state.config.properties) {
+      if (this.state.config.properties.hasOwnProperty(key) && backendProperties.indexOf(key) === -1) {
+        customConfig[key] = this.state.config.properties[key];
+      }
+    }
+
+    return customConfig;
+  }
+
+  getCustomConfigForDisplay() {
+    let currentCustomConfig = this.getCustomConfig();
+    let customConfigForDisplay = {};
+    for (let key in currentCustomConfig) {
+      if (currentCustomConfig.hasOwnProperty(key)) {
+        let newKey = key;
+        if (key.startsWith('system.mapreduce.')) {
+          newKey = newKey.slice(17);
+        } else if (key.startsWith('system.spark.')) {
+          newKey = newKey.slice(13);
+        }
+        customConfigForDisplay[newKey] = currentCustomConfig[key];
+      }
+    }
+    return customConfigForDisplay;
+  }
+
+  setCustomConfig(customConfig) {
+    // have to do this because oldCustomConfig is already part of this.state.config.properties
+    let oldCustomConfig = this.getCustomConfig();
+    for (let oldKey in oldCustomConfig) {
+      if (oldCustomConfig.hasOwnProperty(oldKey) && this.state.config.properties.hasOwnProperty(oldKey)) {
+          delete this.state.config.properties[oldKey];
+      }
+    }
+    let newCustomConfig = {};
+    for (let configKey in customConfig) {
+      if (customConfig.hasOwnProperty(configKey)) {
+        let newKey = configKey;
+        if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1 && this.getEngine() === 'mapreduce') {
+          newKey = 'system.mapreduce.' + configKey;
+        } else {
+          newKey = 'system.spark.' + configKey;
+        }
+        newCustomConfig[newKey] = customConfig[configKey];
+      }
+    }
+    angular.extend(this.state.config.properties, newCustomConfig);
+  }
+  getBackpressure() {
+    return this.getConfig().properties['system.spark.spark.streaming.backpressure.enabled'];
+  }
+  setBackpressure(val) {
+    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      this.state.config.properties['system.spark.spark.streaming.backpressure.enabled'] = val;
+    }
+  }
+  getNumExecutors() {
+    if (this.isDistributed) {
+      return this.getConfig().properties['system.spark.spark.executor.instances'].toString();
+    } else {
+      // format on standalone is 'local[{number}]'
+      let formattedNum = this.getConfig().properties['system.spark.spark.master'];
+      if (formattedNum) {
+        return formattedNum.substring(6, formattedNum.length - 1);
+      } else {
+        return '1';
+      }
+    }
+  }
+  setNumExecutors(num) {
+    if (this.isDistributed) {
+      this.state.config.properties['system.spark.spark.executor.instances'] = num;
+    } else {
+      this.state.config.properties['system.spark.spark.master'] = `local[${num}]`;
+    }
+  }
+  getInstrumentation() {
+    return this.getConfig().processTimingEnabled;
+  }
+  setInstrumentation(val=true) {
+    this.state.config.processTimingEnabled = val;
+  }
+  getStageLogging() {
+    return this.getConfig().stageLoggingEnabled;
+  }
+  setStageLogging(val=true) {
+    this.state.config.stageLoggingEnabled = val;
+  }
+  getCheckpointing() {
+    return this.getConfig().disableCheckpoints;
+  }
+  setCheckpointing(val=false) {
+    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      this.state.config.disableCheckpoints = val;
+    }
+  }
+  getGracefulStop() {
+    return this.getConfig().stopGracefully;
+  }
+  setGracefulStop(val=true) {
+    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      this.state.config.stopGracefully = val;
+    }
+  }
+  getNumRecordsPreview() {
+    return this.getConfig().numOfRecordsPreview;
+  }
+  setNumRecordsPreview(val=100) {
+    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
+      this.state.config.numOfRecordsPreview = val;
+    }
   }
   setArtifact(artifact) {
     this.state.artifact.name = artifact.name;
@@ -682,6 +843,17 @@ class HydratorPlusPlusConfigStore {
         });
       }
     });
+    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      errorFactory.hasValidClientResources(this.state.config, (err) => {
+        if (err) {
+          isStateValid = false;
+          errors.push({
+            type: 'error',
+            content: this.GLOBALS.en.hydrator.studio.error[err]
+          });
+        }
+      });
+    }
 
     if (errors.length && isShowConsoleMessage) {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
@@ -709,6 +881,11 @@ class HydratorPlusPlusConfigStore {
   }
   setResources(resources) {
     this.state.config.resources = resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
+  }
+  setClientResources(clientResources) {
+    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+      this.state.config.clientResources = clientResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
+    }
   }
   setDriverVirtualCores(virtualCores) {
     this.state.config.driverResources = this.state.config.driverResources || {};
@@ -738,6 +915,20 @@ class HydratorPlusPlusConfigStore {
     this.state.config.resources = this.state.config.resources || {};
     this.state.config.resources.memoryMB = memoryMB;
   }
+  setClientVirtualCores(virtualCores) {
+    this.state.config.clientResources = this.state.config.clientResources || {};
+    this.state.config.clientResources.virtualCores = virtualCores;
+  }
+  getClientVirtualCores() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'clientResources', 'virtualCores');
+  }
+  getClientMemoryMB() {
+    return this.myHelpers.objectQuery(this.state, 'config', 'clientResources', 'memoryMB');
+  }
+  setClientMemoryMB(memoryMB) {
+    this.state.config.clientResources = this.state.config.clientResources || {};
+    this.state.config.clientResources.memoryMB = memoryMB;
+  }
 
   setComments(comments) {
     this.state.config.comments = comments;
@@ -752,7 +943,7 @@ class HydratorPlusPlusConfigStore {
   }
   editPostAction(config) {
     let index = _.findLastIndex(this.state.config.postActions, (post) => {
-      return config.name === post.name;
+      return post.id === config.id;
     });
 
     this.state.config.postActions[index] = config;
@@ -760,7 +951,7 @@ class HydratorPlusPlusConfigStore {
   }
   deletePostAction(config) {
     _.remove(this.state.config.postActions, (post) => {
-      return post.name === config.name;
+      return post.id === config.id;
     });
     this.emitChange();
   }
@@ -831,6 +1022,6 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers', 'avsc'];
+HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers', 'avsc', 'MY_CONFIG'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

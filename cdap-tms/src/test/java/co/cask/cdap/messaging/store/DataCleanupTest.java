@@ -35,6 +35,7 @@ import javax.annotation.Nullable;
  */
 public abstract class DataCleanupTest {
   private static final int GENERATION = 1;
+  protected static final int METADATA_CACHE_EXPIRY = 1;
 
   @Test
   public void testPayloadTTLCleanup() throws Exception {
@@ -72,7 +73,7 @@ public abstract class DataCleanupTest {
       Assert.assertEquals(101L, entry.getTransactionWritePointer());
       iterator.close();
 
-      TimeUnit.SECONDS.sleep(3);
+      TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.PAYLOAD);
 
       iterator = payloadTable.fetch(topic, 101L, new MessageId(messageId), true, Integer.MAX_VALUE);
@@ -115,7 +116,7 @@ public abstract class DataCleanupTest {
       Assert.assertEquals("data", Bytes.toString(entry.getPayload()));
       iterator.close();
 
-      TimeUnit.SECONDS.sleep(3);
+      TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.MESSAGE);
 
       iterator = messageTable.fetch(topic, 0, Integer.MAX_VALUE, null);
@@ -170,7 +171,7 @@ public abstract class DataCleanupTest {
 
       metadataTable.deleteTopic(topicId);
       // Sleep so that the metadata cache in coprocessor expires
-      TimeUnit.SECONDS.sleep(3);
+      TimeUnit.SECONDS.sleep(3 * METADATA_CACHE_EXPIRY);
       forceFlushAndCompact(Table.MESSAGE);
       forceFlushAndCompact(Table.PAYLOAD);
 

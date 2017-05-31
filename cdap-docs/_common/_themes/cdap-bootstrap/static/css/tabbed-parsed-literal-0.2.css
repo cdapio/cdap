@@ -1,0 +1,121 @@
+/*
+ * tabbed-parsed-literal.css
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * Sphinx stylesheet -- cdap theme.
+ *
+ * :copyright: Copyright 2016-2017 Cask Data, Inc.
+ * :license: Apache 2.0, see LICENSE for details.
+ *
+ * Version 0.2
+ *
+ */
+
+.tabbed-parsed-literal {
+    list-style: none;
+    margin-bottom: 0;
+    padding-left: 0;
+}
+
+.tabbed-parsed-literal:before, .tabbed-parsed-literal:after {
+    content: " ";
+    display: table;
+}
+
+.tabbed-parsed-literal:after {
+    clear: both
+}
+
+.tabbed-parsed-literal > li {
+    display: block;
+    position: relative;
+}
+
+.tabbed-parsed-literal > li > a {
+    display: block;
+    padding: 10px 15px;
+    position: relative;
+}
+
+.tabbed-parsed-literal > li > a:hover,
+.tabbed-parsed-literal > li > a:focus {
+    background-color: #eee;
+    text-decoration: none;
+}
+
+.tabbed-parsed-literal > li.disabled > a {
+    color: #999;
+}
+
+.tabbed-parsed-literal > li.disabled > a:hover,
+.tabbed-parsed-literal > li.disabled > a:focus {
+    background-color: transparent;
+    color: #999;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+
+.tabbed-parsed-literal .open > a,
+.tabbed-parsed-literal .open > a:hover,
+.tabbed-parsed-literal .open > a:focus {
+    background-color: #eee;
+    border-color: #2fa4e7;
+}
+
+.tabbed-parsed-literal .tabbed-parsed-literal-divider {
+    background-color: #e5e5e5;
+    height: 1px;
+    margin: 9px 0;
+    overflow: hidden;
+}
+
+.tabbed-parsed-literal > li > a > img {
+    max-width: none;
+}
+
+.tabbed-parsed-literal .nav-tabs {
+    border-bottom: 1px solid #ddd;
+}
+
+.tabbed-parsed-literal .nav-tabs > li {
+    float: left;
+    margin-bottom: -1px;
+}
+
+.tabbed-parsed-literal .nav-tabs > li > a {
+    margin-right: 2px;
+    line-height: 1.428571429;
+    border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+}
+
+.tabbed-parsed-literal .nav-tabs > li > a:hover {
+    border-color: #eee #eee #ddd;
+}
+
+.tabbed-parsed-literal .nav-tabs > li.active > a,
+.tabbed-parsed-literal .nav-tabs > li.active > a:hover,
+.tabbed-parsed-literal .nav-tabs > li.active > a:focus {
+    color: #555;
+    cursor: default;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-bottom-color: transparent;
+}
+
+.tabbed-parsed-literal > div.tab-contents {
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-radius: 0 0 4px 4px;
+    padding: 10px 10px 1px 10px;
+}
+
+.tabbed-parsed-literal > div.tab-contents > .tab-pane {
+    display: none;
+}
+
+.tabbed-parsed-literal > div.tab-contents > .tab-pane.active {
+    display: block;
+}
+

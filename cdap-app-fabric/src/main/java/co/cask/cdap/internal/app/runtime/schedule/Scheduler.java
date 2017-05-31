@@ -23,7 +23,6 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
@@ -34,27 +33,46 @@ import java.util.Map;
 public interface Scheduler {
 
   /**
-   * Convert and add a {@link ProgramSchedule} to the store.
+   * Add a new schedule converted from the given {@link ProgramSchedule}.
    *
-   * @param schedule the schedule to add
+   * @param schedule the {@link ProgramSchedule} to convert and add
    * @throws AlreadyExistsException if the schedule already exists
+   * @throws SchedulerException on unforeseen error
    */
   void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException;
 
   /**
-   * Updates a {@link ProgramSchedule} in the store. The schedule with the same {@link ScheduleId}
-   * as the given {@code schedule} will be replaced.
+   * Deletes the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
    *
-   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
-   */
-  void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException;
-
-  /**
-   * Deletes the schedule corresponding to the given {@link ProgramSchedule} if it exists
-   *
-   * @param schedule the {@link ProgramSchedule} to delete
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to delete
+   * @throws NotFoundException if the schedule could not be found
+   * @throws SchedulerException on unforeseen error
    */
   void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+
+  /**
+   * Suspends the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
+   * Sub-sequent schedules will not trigger for the job. If the schedule is already suspended,
+   * this method will not do anything.
+   *
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @throws NotFoundException if the schedule could not be found
+   * @throws SchedulerException on unforeseen error
+   */
+  void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+
+  /**
+   * Resume the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
+   * If the schedule is already active, this method will not do anything.
+   * The time schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
+   * from the next possible runtime. For data schedules based on size, the execution will be triggered only once,
+   * even if the data requirement has been met multiple times.
+   *
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @throws NotFoundException if the schedule could not be found
+   * @throws SchedulerException on unforeseen error.
+   */
+  void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
    * Schedule a program to be run in a defined schedule.

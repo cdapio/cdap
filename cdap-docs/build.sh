@@ -224,8 +224,8 @@ function build_javadocs() {
   export USING_JAVADOCS
   local javadoc_type=${1}
   local title="Building Javadocs: '${javadoc_type}'"
-  local errors
   display_start_title "${title}"
+  local warnings
   check_build_rst
   set_environment
   if [[ ${DEBUG} == ${TRUE} ]]; then
@@ -260,13 +260,13 @@ function build_javadocs() {
     echo "Error building Javadocs"
   fi
   display_end_title ${title}
-  return ${errors}
+  return ${warnings}
 }
 
 function build_docs_cli() {
   local title="Building CLI Input File for docs"
   display_start_title "${title}"
-  local errors
+  local warnings
   if [[ -n ${NO_CLI_DOCS} ]]; then
     echo_red_bold "Building CLI input file disabled. '${NO_CLI_DOCS}'"
   else
@@ -276,13 +276,13 @@ function build_docs_cli() {
     set_environment
     cd ${PROJECT_PATH}
     mvn package -pl cdap-docs-gen -am -DskipTests
-    errors=$?
-    if [[ ${errors} -eq 0 ]]; then
+    warnings=$?
+    if [[ ${warnings} -eq 0 ]]; then
       ${JAVA} -cp cdap-docs-gen/target/cdap-docs-gen-${PROJECT_VERSION}.jar:cdap-cli/target/cdap-cli-${PROJECT_VERSION}.jar co.cask.cdap.docgen.cli.GenerateCLIDocsTable > ${target_txt}
       warnings=$?
       echo
       echo "Completed building of CLI"
-      if [[ ${errors} -eq 0 ]]; then
+      if [[ ${warnings} -eq 0 ]]; then
         echo "CLI input file written to ${target_txt}"
         USING_CLI_DOCS="true"
       else
@@ -294,46 +294,43 @@ function build_docs_cli() {
     export USING_CLI_DOCS
   fi
   display_end_title ${title}
-  return ${errors}
+  return ${warnings}
 }
 
 function cache_docs_cli() {
   local target_txt=${SCRIPT_PATH}/../cdap-docs-gen/target/cdap-docs-cli.txt
   local cache=${SCRIPT_PATH}/target
-  local errors
   cp ${target_txt} ${cache}
-  errors=$?
-  if [[ ${errors} -eq 0 ]]; then
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
     echo "Caching CLI output file from '${target_txt}'"
   else
     echo "Error caching CLI output file: ${warnings}"
     echo "From: ${target_txt}"
     echo "To: ${cache}"
   fi
-  return ${errors}
+  return ${warnings}
 }
 
 function restore_cached_docs_cli() {
   local target=${SCRIPT_PATH}/../cdap-docs-gen/target
   local cache_txt=${SCRIPT_PATH}/target/cdap-docs-cli.txt
-  local errors
   cp ${cache_txt} ${target}
-  errors=$?
-  if [[ ${errors} -eq 0 ]]; then
+  warnings=$?
+  if [[ ${warnings} -eq 0 ]]; then
     echo "Restored CLI output file from '${cache_txt}'"
   else
     echo "Error restoring CLI output file: ${warnings}"
     echo "From: ${cache_txt}"
     echo "To: ${target}"
   fi
-  return ${errors}
+  return ${warnings}
 }
 
 function build_docs_inner_level() {
   # Change to each manual, and run the local ./build.sh from there.
   # Each manual can (and does) have a customised build script, using the common-build.sh as a base.
   local build_target=${1}
-  local errors
   if [[ ${LOCAL_INCLUDES} == ${TRUE} ]]; then
     echo "Using local builds."
     build_target="${1}-local"
@@ -346,15 +343,9 @@ function build_docs_inner_level() {
     echo
     cd ${SCRIPT_PATH}/${i}
     ./build.sh ${build_target}
-    errors=$?
-    if [[ ${errors} -ne 0 ]]; then
-        echo_set_message "Could not build manual \"${i}\"."
-        break
-    fi
     echo
   done
   popd > /dev/null
-  return ${errors}
 }
 
 function build_docs_outer_level() {
@@ -385,11 +376,6 @@ function build_docs_outer_level() {
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_options} ${TARGET_PATH}/${SOURCE} ${TARGET_PATH}/${HTML}
-    errors=$?
-    if [[ ${errors} -ne 0 ]]; then
-        echo_set_message "Could not build using Sphinx."
-        return ${errors}
-    fi
   fi
   consolidate_messages
   add_html_redirect

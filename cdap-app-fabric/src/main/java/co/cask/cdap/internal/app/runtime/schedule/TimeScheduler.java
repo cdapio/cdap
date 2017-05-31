@@ -25,6 +25,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
@@ -170,17 +171,20 @@ public final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-    ProgramId program = schedule.getProgramId();
-    SchedulableProgramType programType = program.getType().getSchedulableType();
-    rescheduleJob(program, programType, schedule.getName(),
-                  ((ProtoTrigger.TimeTrigger) schedule.getTrigger()).getCronExpression(),
-                  schedule.getProperties());
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
   }
 
   @Override
-  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    suspendSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                    schedule.getName());
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    resumeSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
                    schedule.getName());
   }
 
@@ -232,7 +236,7 @@ public final class TimeScheduler implements Scheduler {
         .withIdentity(triggerKey.getName(), PAUSED_NEW_TRIGGERS_GROUP)
         .forJob(job)
         .withSchedule(CronScheduleBuilder
-                        .cronSchedule(getQuartzCronExpression(cronEntry))
+                        .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
                         .withMisfireHandlingInstructionDoNothing());
       addProperties(trigger, properties);
 
@@ -253,7 +257,7 @@ public final class TimeScheduler implements Scheduler {
 
       // create the new trigger with the new schedule schedule all other fields will remain unmodified
       triggerBuilder.withSchedule(CronScheduleBuilder
-                                    .cronSchedule(getQuartzCronExpression(cronEntry))
+                                    .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
                                     .withMisfireHandlingInstructionDoNothing());
       addProperties(triggerBuilder, properties);
       scheduler.rescheduleJob(trigger.getKey(), triggerBuilder.build());
@@ -420,7 +424,7 @@ public final class TimeScheduler implements Scheduler {
 
       // create the new trigger with the new schedule schedule all other fields will remain unmodified
       triggerBuilder.withSchedule(CronScheduleBuilder
-                                    .cronSchedule(getQuartzCronExpression(cronEntry))
+                                    .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
                                     .withMisfireHandlingInstructionDoNothing());
       addProperties(triggerBuilder, properties);
       scheduler.rescheduleJob(trigger.getKey(), triggerBuilder.build());
@@ -503,27 +507,6 @@ public final class TimeScheduler implements Scheduler {
 
   private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
     return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
-  }
-
-  //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
-  //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
-  //2. Quartz resolution is in seconds which cron entry doesn't support.
-  private String getQuartzCronExpression(String cronEntry) {
-    // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
-    // CronExpression will directly be used for tests.
-    String parts [] = cronEntry.split(" ");
-    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
-    if (parts.length == 5) {
-      //cron entry format
-      StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-      if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*') {
-        cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
-      }
-      return cronStringBuilder.toString();
-    } else {
-      //Use the given cronExpression
-      return cronEntry;
-    }
   }
 
   private JobFactory createJobFactory() {
