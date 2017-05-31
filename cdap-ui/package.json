@@ -68,6 +68,7 @@
     "lodash-webpack-plugin": "0.10.0",
     "main-bower-files": "2.11.1",
     "merge-stream": "1.0.0",
+    "node-dir": "0.1.16",
     "postcss-loader": "1.1.1",
     "react-addons-test-utils": "15.3.2",
     "style-loader": "0.13.1",
