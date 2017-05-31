@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,8 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import co.cask.http.NettyHttpService;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;
@@ -33,9 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,9 +46,10 @@ import javax.ws.rs.PathParam;
  * to get {@link Transaction} information associated with the stage. For detail design, please refer to the
  * <a href="https://wiki.cask.co/display/CE/Spark+Revamp">design documentation</a>.
  */
-final class SparkTransactionService extends AbstractIdleService {
+public final class SparkTransactionHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkTransactionHandler.class);
+  private static final TransactionCodec TX_CODEC = new TransactionCodec();
   private static final TransactionInfo IMPLICIT_TX_INFO = new TransactionInfo() {
     @Nullable
     @Override
@@ -84,37 +80,10 @@ final class SparkTransactionService extends AbstractIdleService {
   private final ConcurrentMap<Integer, Integer> stageToJob;
   private final ConcurrentMap<Integer, JobTransaction> jobTransactions;
 
-  private final NettyHttpService httpServer;
-
-  SparkTransactionService(TransactionSystemClient txClient, String hostname, String programName) {
+  SparkTransactionHandler(TransactionSystemClient txClient) {
     this.txClient = txClient;
     this.stageToJob = new ConcurrentHashMap<>();
     this.jobTransactions = new ConcurrentHashMap<>();
-    this.httpServer = NettyHttpService.builder(programName + "-spark-tx")
-      .addHttpHandlers(Collections.singleton(new SparkTransactionHandler()))
-      .setHost(hostname)
-      .build();
-  }
-
-  @Override
-  protected void startUp() throws Exception {
-    httpServer.startAndWait();
-  }
-
-  @Override
-  protected void shutDown() throws Exception {
-    httpServer.stopAndWait();
-  }
-
-  /**
-   * Returns the base {@link URI} for talking to this service remotely through HTTP.
-   */
-  URI getBaseURI() {
-    InetSocketAddress bindAddress = httpServer.getBindAddress();
-    if (bindAddress == null) {
-      throw new IllegalStateException("SparkTransactionService hasn't been started");
-    }
-    return URI.create(String.format("http://%s:%d", bindAddress.getHostName(), bindAddress.getPort()));
   }
 
   /**
@@ -181,58 +150,51 @@ final class SparkTransactionService extends AbstractIdleService {
   }
 
   /**
-   * HTTP Handler to provide the Spark stage execution transaction lookup service.
+   * Handler method to get a serialized {@link Transaction} for the given stage.
    */
-  public final class SparkTransactionHandler extends AbstractHttpHandler {
+  @GET
+  @Path("/spark/stages/{stage}/transaction")
+  public void getTransaction(HttpRequest request, HttpResponder responder, @PathParam("stage") int stageId) {
+    // Lookup the jobId from the stageId
+    Integer jobId = stageToJob.get(stageId);
+    if (jobId == null) {
+      // If the JobId is not there, it's either the job hasn't been registered yet (because it's async) or
+      // the job is already finished. For either case, return 404 and let the client to handle retry if necessary.
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "JobId not found for stage " + stageId);
+      return;
+    }
 
-    private final TransactionCodec txCodec = new TransactionCodec();
+    // Get the transaction
+    JobTransaction jobTransaction = jobTransactions.get(jobId);
+    if (jobTransaction == null) {
+      // The only reason we can find the jobId from the stageToJob map but not the job transaction is because
+      // the job is completed, hence the transaction get removed. In normal case, it shouldn't happen
+      // as a job won't complete if there are still stages running and
+      // this method only gets called from stage running in executor node.
+      responder.sendString(HttpResponseStatus.GONE,
+                           "No transaction associated with the stage " + stageId + " of job " + jobId);
+      return;
+    }
 
-    /**
-     * Handler method to get a serialized {@link Transaction} for the given stage.
-     */
-    @GET
-    @Path("/spark/stages/{stage}/transaction")
-    public void getTransaction(HttpRequest request, HttpResponder responder, @PathParam("stage") int stageId) {
-      // Lookup the jobId from the stageId
-      Integer jobId = stageToJob.get(stageId);
-      if (jobId == null) {
-        // If the JobId is not there, it's either the job hasn't been registered yet (because it's async) or
-        // the job is already finished. For either case, return 404 and let the client to handle retry if necessary.
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "JobId not found for stage " + stageId);
-        return;
-      }
+    Transaction transaction = jobTransaction.getTransaction();
+    if (transaction == null) {
+      // Job failed to start a transaction. Response with GONE as well so that the stage execution can fail itself
+      responder.sendString(HttpResponseStatus.GONE,
+                           "Failed to start transaction for stage " + stageId + " of job " + jobId);
+      return;
+    }
 
-      // Get the transaction
-      JobTransaction jobTransaction = jobTransactions.get(jobId);
-      if (jobTransaction == null) {
-        // The only reason we can find the jobId from the stageToJob map but not the job transaction is because
-        // the job is completed, hence the transaction get removed. In normal case, it shouldn't happen
-        // as a job won't complete if there are still stages running and
-        // this method only gets called from stage running in executor node.
-        responder.sendString(HttpResponseStatus.GONE,
-                             "No transaction associated with the stage " + stageId + " of job " + jobId);
-        return;
-      }
-
-      Transaction transaction = jobTransaction.getTransaction();
-      if (transaction == null) {
-        // Job failed to start a transaction. Response with GONE as well so that the stage execution can fail itself
-        responder.sendString(HttpResponseStatus.GONE,
-                             "Failed to start transaction for stage " + stageId + " of job " + jobId);
-        return;
-      }
-
-      // Serialize the transaction and send it back
-      try {
-        responder.sendByteArray(HttpResponseStatus.OK, txCodec.encode(transaction), null);
-      } catch (IOException e) {
-        // Shouldn't happen
-        LOG.error("Failed to encode Transaction {}", jobTransaction, e);
-        responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                             "Failed to encode transaction: " + e.getMessage());
-      }
+    // Serialize the transaction and send it back
+    try {
+      responder.sendByteArray(HttpResponseStatus.OK, TX_CODEC.encode(transaction), null);
+    } catch (IOException e) {
+      // Shouldn't happen
+      LOG.error("Failed to encode Transaction {}", jobTransaction, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Failed to encode transaction: " + e.getMessage());
     }
   }
+
 
   /**
    * A private class for handling the {@link Transaction} lifecycle for a job.

@@ -32,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- * Client class to interact with {@link SparkTransactionService} through HTTP. It is used by tasks executed inside
+ * Client class to interact with {@link SparkTransactionHandler} through HTTP. It is used by tasks executed inside
  * executor processes.
  */
 final class SparkTransactionClient {

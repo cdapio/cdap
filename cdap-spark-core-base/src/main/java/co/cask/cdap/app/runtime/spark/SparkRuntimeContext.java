@@ -57,6 +57,7 @@ import javax.annotation.Nullable;
  */
 public final class SparkRuntimeContext extends AbstractContext implements Metrics, Closeable {
 
+  private final CConfiguration cConf;
   private final Configuration hConf;
   private final String hostname;
   private final TransactionSystemClient txClient;
@@ -82,7 +83,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
-
+    this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;
     this.txClient = txClient;
@@ -152,6 +153,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   TransactionSystemClient getTransactionSystemClient() {
     return txClient;
+  }
+
+  /**
+   * Returns the CDAP {@link CConfiguration} used for the execution.
+   */
+  CConfiguration getCConfiguration() {
+    return cConf;
   }
 
   /**

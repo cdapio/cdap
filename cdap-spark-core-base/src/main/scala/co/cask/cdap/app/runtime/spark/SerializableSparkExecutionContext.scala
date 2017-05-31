@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
@@ -58,6 +59,8 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
   override def execute(runnable: TxRunnable) = delegate.execute(runnable)
 
   override def execute(timeout: Int, runnable: TxRunnable) = delegate.execute(timeout, runnable)
+
+  override def createInterpreter(): SparkInterpreter = delegate.createInterpreter()
 
   override def saveAsDataset[K: ClassTag, V: ClassTag](rdd: RDD[(K, V)], namespace: String,
                                                        datasetName: String, arguments: Map[String, String]) =
