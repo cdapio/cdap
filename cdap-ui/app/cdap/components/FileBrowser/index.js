@@ -28,6 +28,9 @@ import orderBy from 'lodash/orderBy';
 import IconSVG from 'components/IconSVG';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import isEmpty from 'lodash/isEmpty';
+import DataPrepStore from 'components/DataPrep/store';
+import lastIndexOf from 'lodash/lastIndexOf';
+import isNil from 'lodash/isNil';
 
 require('./FileBrowser.scss');
 
@@ -56,24 +59,46 @@ export default class FileBrowser extends Component {
 
   componentWillMount() {
     if (!this.props.enableRouting) {
-      // When routing is disabled location, match are not entirely right.
-      let path = isEmpty(this.state.path) ? BASEPATH : this.state.path;
+      let path = this.getFilePath();
+      this.dataprepSubscription = DataPrepStore.subscribe(() => {
+        let path = this.getFilePath();
+        if (!isNil(path) && path !== this.state.path) {
+          this.goToPath(path);
+        }
+      });
       this.goToPath(path);
     } else {
       this.fetchDirectory(this.props);
     }
   }
 
+  componentWillUnmount() {
+    if (this.dataprepSubscription) {
+      this.dataprepSubscription();
+    }
+  }
+
   componentWillReceiveProps(nextProps) {
     if (!this.props.enableRouting) {
       // When routing is disabled location, match are not entirely right.
-      let path = isEmpty(this.state.path) ? BASEPATH : this.state.path;
-      this.goToPath(path);
+      let path = this.getFilePath();
+      if (!isNil(path) && path !== this.state.path) {
+        this.goToPath(path);
+      }
     } else {
       this.fetchDirectory(nextProps);
     }
   }
 
+  getFilePath() {
+    let {workspaceInfo} = DataPrepStore.getState().dataprep;
+    let filePath = objectQuery(workspaceInfo, 'properties', 'path');
+    filePath = !isEmpty(filePath) ? filePath.slice(0, lastIndexOf(filePath, '/') + 1) : this.state.path;
+    if (isEmpty(filePath)) {
+      filePath = BASEPATH;
+    }
+    return filePath;
+  }
 
   preventPropagation(e) {
     if (this.props.enableRouting) {
