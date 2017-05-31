@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyPostRunActionWizardCtrl', function($scope, uuid, myAlertOnValium) {
+  .controller('MyPostRunActionWizardCtrl', function($scope, uuid) {
     'ngInject';
     var vm = this;
     vm.action = vm.action || {};
@@ -76,10 +76,6 @@ angular.module(PKG.name + '.commons')
         } else {
           vm.actionCreator.addPostAction(vm.confirmedAction);
         }
-        myAlertOnValium.show({
-          type: 'success',
-          content: vm.confirmedAction.plugin.name + ' post action saved.'
-        });
       } catch(e) {
         console.log('ERROR', e);
         //FIXME: We should be able to handle errors more efficiently
