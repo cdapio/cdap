@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.cask360.Cask360TableModule;
 import co.cask.cdap.data2.dataset2.lib.external.ExternalDatasetModule;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
@@ -140,5 +141,6 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding("metadata").toInstance(new MetadataDatasetModule());
     mapBinder.addBinding("lineage").toInstance(new LineageDatasetModule());
     mapBinder.addBinding("externalDataset").toInstance(new ExternalDatasetModule());
+    mapBinder.addBinding("cask360table").toInstance(new Cask360TableModule());
   }
 }
