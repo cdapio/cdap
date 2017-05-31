@@ -51,8 +51,8 @@ Machine on your local machine and includes a local version of the CDAP UI. The
 underlying Big Data infrastructure is emulated on top of your local file system. All data
 is persisted.
 
-See :ref:`Getting Started Developing <getting-started-index>` and the *Cask Data Application Platform
-SDK* for information on how to start and manage your CDAP Local Sandbox.
+See :ref:`Getting Started Developing <getting-started-index>` and :ref:`CDAP Local Sandbox
+<local-sandbox-index>` for information on how to start and manage your CDAP Local Sandbox.
 
 **Features:**
 

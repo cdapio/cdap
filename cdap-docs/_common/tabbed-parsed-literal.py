@@ -87,7 +87,7 @@ Examples:
     > cdap.bat cli start flow HelloWorld.WhoFlow
     Successfully started flow 'WhoFlow' of application 'HelloWorld' with stored runtime arguments '{}'
 
-    > <CDAP-SDK-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
+    > <CDAP-HOME>\libexec\bin\curl.exe -d c:\|release| -X POST 'http://repository.cask.co/centos/6/x86_64/cdap/|short-version|/cask.repo'
 
 If you pass a single set of commands, without comments, the directive will create a
 two-tabbed "Linux" and "Windows" with a generated Windows-equivalent command set. Check

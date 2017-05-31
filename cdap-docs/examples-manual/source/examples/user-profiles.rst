@@ -115,7 +115,7 @@ and build this example twice:
    - Start CDAP, deploy and start the application and its component.
      Make sure you start the flow and service as described below.
    - Once the application has been deployed and started, you can run the example by `starting the flow and service. <#starting-the-flow>`__
-   - You should observe errors as described below, in the ``<CDAP-SDK-home>/logs/cdap-debug.log``.
+   - You should observe errors as described below, in the ``<CDAP-HOME>/logs/cdap-debug.log``.
 
 #. Re-build the Application with Column-level Conflict Detection
 
@@ -196,7 +196,7 @@ For example, such a conflict would show as (reformatted to fit)::
   co.cask.tephra.TransactionContext.finish(TransactionContext.java:79) ~[co.cask.tephra.tephra-core-0.4.1.jar:na] at
   . . .
 
-(The log file is located at ``<CDAP-SDK-HOME>/logs/cdap-debug.log``. You should also see
+(The log file is located at ``<CDAP-HOME>/logs/cdap-debug.log``. You should also see
 an error in the CDAP UI, in the :cdap-ui-apps:`UserProfileService error log
 <UserProfiles/programs/services/UserProfileService/logs?filter=error>`.)
 

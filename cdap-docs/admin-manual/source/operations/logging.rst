@@ -165,7 +165,7 @@ only affect programs that are started after the change; existing running program
 be affected.
 
 - For **CDAP Local Sandbox:** As the entire CDAP Local Sandbox runs in a single JVM, the
-  ``logback.xml`` file, located in  ``<cdap-sdk-home>/conf``, configures both "container"
+  ``logback.xml`` file, located in  ``<CDAP-HOME>/conf``, configures both "container"
   and CDAP system service logging.
 - For **Distributed CDAP:** the ``logback-container.xml`` file is located in ``/etc/cdap/conf``.
 
@@ -256,7 +256,7 @@ System Service Log File Locations
 The location of CDAP system service logs depends on the mode of CDAP (Local Sandbox or
 Distributed) and the Hadoop distribution:
 
-- For **CDAP Local Sandbox:** system logs are located in ``<CDAP-SDK-HOME>/logs``.
+- For **CDAP Local Sandbox:** system logs are located in ``<CDAP-HOME>/logs``.
 
 - For **Distributed CDAP:** system logs are located in ``/var/log/cdap`` (with the
   exception of Cloudera Manager-based clusters). With Cloudera Manager installations, system
@@ -277,7 +277,7 @@ Configuring System Service Logs
 
   - For **CDAP Local Sandbox:** the ``logback.xml`` file is located in ``/etc/cdap/conf``.
   - For **Distributed CDAP:** the file ``logback.xml`` file, located in
-    ``<cdap-sdk-home>/conf``, configures both "container" and CDAP system service logging.
+    ``<CDAP-HOME>/conf``, configures both "container" and CDAP system service logging.
 
 Changing System Service Log Levels
 ----------------------------------
@@ -488,7 +488,7 @@ CDAP looks for "logback" files located in a directory as set by the property
 ``log.process.pipeline.config.dir`` in the :ref:`cdap-site.xml
 <appendix-cdap-default-logging>` file. In the default configuration, this is:
 
-- For **CDAP Local Sandbox:** ``<cdap-sdk-home>/ext/logging/config``
+- For **CDAP Local Sandbox:** ``<CDAP-HOME>/ext/logging/config``
 - For **Distributed CDAP:** ``/opt/cdap/master/ext/logging/config``
 
 .. _logging-monitoring-custom-logging-example:

@@ -45,18 +45,18 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 	http://localhost:11015/v3/namespaces/my_namespace/apps...
 
 
-Accessing CLI, curl, and the SDK bin
-------------------------------------
+Accessing CLI, curl, and the CDAP Local Sandbox bin
+---------------------------------------------------
 
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
-  Command Line Interface. Substitute the actual path of ``./<CDAP-SDK-HOME>/bin/cdap cli``,
-  or ``<CDAP-SDK-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
+  Command Line Interface. Substitute the actual path of ``./<CDAP-HOME>/bin/cdap cli``,
+  or ``<CDAP-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
 
-- A Windows-version of the application ``curl`` is included in the CDAP SDK as
+- A Windows-version of the application ``curl`` is included in the CDAP Local Sandbox as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
-- If you add the SDK bin directory to your path, you can simplify the commands. From within
-  the ``<CDAP-SDK-HOME>`` directory, enter:
+- If you add the CDAP Local Sandbox ``bin`` directory to your path, you can simplify the commands. From within
+  the ``<CDAP-HOME>`` directory, enter:
 
   .. tabbed-parsed-literal::
 
@@ -68,7 +68,7 @@ Accessing CLI, curl, and the SDK bin
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
 
-  The Windows path has been augmented with a directory where the SDK includes
+  The Windows path has been augmented with a directory where the CDAP Local Sandbox includes
   Windows-versions of commands such as ``curl``.
 
 .. include:: /_includes/windows-note.txt
@@ -95,7 +95,7 @@ To build all the examples, switch to the main examples directory and run the Mav
 
 .. tabbed-parsed-literal::
 
-  $ cd <CDAP-SDK-HOME>/examples
+  $ cd <CDAP-HOME>/examples
   $ mvn clean package -DskipTests
 
 
@@ -147,7 +147,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
 
-- Use an application such as ``curl`` (a Windows-version is included in the CDAP SDK in
+- Use an application such as ``curl`` (a Windows-version is included in the CDAP Local Sandbox in
   ``libexec\bin\curl.exe``):
 
   .. tabbed-parsed-literal::

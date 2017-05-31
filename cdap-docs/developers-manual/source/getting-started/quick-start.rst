@@ -8,7 +8,8 @@
 Quick Start
 ===========
 
-These instructions will take you from downloading the CDAP SDK through the running of an application.
+These instructions will take you from downloading the CDAP Local Sandbox through the
+running of an application.
 
 Download, Install and Start CDAP
 ================================
