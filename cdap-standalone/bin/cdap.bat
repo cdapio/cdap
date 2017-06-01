@@ -54,7 +54,10 @@ cd "%CDAP_HOME%"
 
 REM Process command line
 IF "%1" == "cli" GOTO CLI
-IF "%1" == "sdk" GOTO SDK
+IF "%1" == "sdk" ( 
+ECHO [WARN] sdk commands are deprecated, please use sandbox commands instead. 
+GOTO SDK )
+IF "%1" == "sandbox" GOTO SDK 
 IF "%1" == "tx-debugger" GOTO TX_DEBUGGER
 IF "%1" == "apply-pack" GOTO APPLY_PACK
 IF "%1" == "version" GOTO VERSION
@@ -70,9 +73,9 @@ GOTO USAGE
 :SDK_DEPRECATED
 REM Process deprecated SDK arguments
 ECHO:
-ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' for the CDAP command line.
+ECHO [WARN] %0 is deprecated and will be removed in CDAP 5.0. Please use 'cdap sandbox' for the CDAP command line.
 ECHO:
-ECHO   cdap sdk %*
+ECHO   cdap sandbox %*
 ECHO:
 ECHO:
 IF "%1" == "start" GOTO SDK_START
@@ -133,7 +136,7 @@ GOTO :EOF
 REM Check if Node.js is installed
 set nodejs_minimum=v4.5.0
 for %%x in (node.exe) do if [%%~$PATH:x]==[] (
-  echo Standalone CDAP requires Node.js but it is either not installed or not in the path.
+  echo CDAP Sandbox requires Node.js but it is either not installed or not in the path.
   echo We recommend any version of Node.js starting with %nodejs_minimum%.
   GOTO FINALLY
 )
@@ -268,7 +271,7 @@ echo   Commands:
 echo:
 echo     apply-pack  - Installs a CDAP Pack specified as an argument
 echo     cli         - Starts a CDAP CLI session
-echo     sdk         - Sends the arguments to the SDK service
+echo     sandbox     - Sends the arguments to the CDAP Sandbox
 echo     tx-debugger - Sends the arguments to the CDAP transaction debugger
 echo     version     - Displays version of the CDAP SDK
 echo:
@@ -280,11 +283,11 @@ GOTO FINALLY
 
 :SDK_USAGE
 echo:
-echo Usage: %APP% sdk [ start ^| stop ^| restart ^| status ^| reset ]
+echo Usage: %APP% sandbox [ start ^| stop ^| restart ^| status ^| reset ]
 echo:
 echo Additional options with start or restart:
 echo:
-echo   --enable-debug [ ^<port^> ] to connect to a debug port for Standalone CDAP (default port is %DEFAULT_DEBUG_PORT%)
+echo   --enable-debug [ ^<port^> ] to connect to a debug port for CDAP Sandbox (default port is %DEFAULT_DEBUG_PORT%)
 echo:
 GOTO FINALLY
 
@@ -295,18 +298,18 @@ IF %ERRORLEVEL% == 0 (
   CHOICE /C yn /N /M "This deletes all apps, data, and logs. Are you certain you want to proceed? (y/n) "
   IF ERRORLEVEL 2 GOTO FINALLY
   REM Delete logs and data directories
-  echo Resetting Standalone CDAP...
+  echo Resetting CDAP Sandbox...
   rmdir /S /Q "%CDAP_HOME%\logs" "%CDAP_HOME%\data" > NUL 2>&1
-  echo CDAP reset successfully.
+  echo CDAP Sandbox reset successfully.
 ) else (
-  echo Stop it first using the 'cdap sdk stop' command.
+  echo Stop it first using the 'cdap sandbox stop' command.
 )
 GOTO FINALLY
 
 :SDK_START
 CALL :CHECK_PID
 IF %ERRORLEVEL% NEQ 0 (
-  echo Stop it first using either the 'cdap sdk stop' or 'cdap sdk restart' commands.
+  echo Stop it first using either the 'cdap sandbox stop' or 'cdap sandbox restart' commands.
   GOTO FINALLY
 )
 REM See TX_DEBUGGER for notes on setting CLASSPATH
@@ -356,7 +359,7 @@ set class=co.cask.cdap.StandaloneMain
 REM Note use of an empty title "" in the start command; without it, Windows will
 REM mis-interpret the JAVACMD incorrectly if it has spaces in it
 start "" /B "%JAVACMD%" %DEFAULT_JVM_OPTS% %HADOOP_HOME_OPTS% %HIVE_SCRATCH_DIR_OPTS% %HIVE_LOCAL_SCRATCH_DIR_OPTS% !DEBUG_OPTIONS! %SECURITY_OPTS% -classpath "%CLASSPATH%" %class% >> "%CDAP_HOME%\logs\cdap-process.log" 2>&1 < NUL
-echo Starting Standalone CDAP...
+echo Starting CDAP Sandbox...
 
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq java.exe"') DO SET MyPID=%%b
 echo %MyPID% > %~dsp0MyProg.pid
@@ -384,7 +387,7 @@ GOTO FINALLY
 
 :ServerSuccess
 echo:
-echo Standalone CDAP started.
+echo CDAP Sandbox started.
 
 IF NOT "!DEBUG_OPTIONS!" == "" (
   echo Remote debugger agent started on port !port!.
@@ -398,7 +401,7 @@ PING 127.0.0.1 -n 6 > NUL 2>&1
 for /F "TOKENS=1,2,*" %%a in ('tasklist /FI "IMAGENAME eq node.exe"') DO SET MyNodePID=%%b
 echo %MyNodePID% > %~dsp0MyProgNode.pid
 attrib +h %~dsp0MyProgNode.pid >NUL
-echo Standalone CDAP started successfully.
+echo CDAP Sandbox started successfully.
 GOTO FINALLY
 
 :SDK_STOP
@@ -409,7 +412,7 @@ GOTO FINALLY
 REM Pass a flag as a parameter to show or hide error messages
 SET show_error_messages=%1%
 SET error_code=0
-echo Stopping Standalone CDAP...
+echo Stopping CDAP Sandbox...
 attrib -h %~dsp0MyProg.pid >NUL
 IF exist %~dsp0MyProg.pid (
   for /F %%i in (%~dsp0MyProg.pid) do (
@@ -444,10 +447,10 @@ IF exist %~dsp0MyProgNode.pid (
 )
 IF %error_code% EQU 1 (
   IF %show_error_messages% EQU 1 (
-    echo Is CDAP running? Use 'cdap sdk status'.
+    echo Is CDAP running? Use 'cdap sandbox status'.
   )
 ) else (
-  echo Finished stopping Standalone CDAP.
+  echo Finished stopping CDAP Sandbox.
 )
 GOTO :EOF
 

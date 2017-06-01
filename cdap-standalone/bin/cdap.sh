@@ -16,11 +16,11 @@
 # the License.
 #
 
-# This script is a wrapper for "cdap sdk" and will be removed in 5.0
+# This script is a wrapper for "cdap sandbox" and will be removed in 5.0
 echo
-echo "[WARN] ${0} is deprecated and will be removed in CDAP 5.0. Please use 'cdap sdk' to manage Standalone CDAP."
+echo "[WARN] ${0} is deprecated and will be removed in CDAP 5.0. Please use 'cdap sandbox' to manage CDAP Sandbox."
 echo
-echo "  cdap sdk ${@}"
+echo "  cdap sandbox ${@}"
 echo
 echo
 
@@ -38,4 +38,4 @@ __readlink() {
 }
 __target=$(__readlink ${__script})
 __app_home=$(cd $(dirname ${__target})/.. >&-; pwd -P)
-${__app_home}/bin/cdap sdk ${@}
+${__app_home}/bin/cdap sandbox ${@}
