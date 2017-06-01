@@ -90,6 +90,13 @@ public class IncrementHandler extends BaseRegionObserver {
     }
   }
 
+  @Override
+  public void stop(CoprocessorEnvironment e) throws IOException {
+    if (state != null) {
+      state.stop();
+    }
+  }
+
   @VisibleForTesting
   void setTimestampOracle(TimestampOracle timeOracle) {
     state.setTimestampOracle(timeOracle);

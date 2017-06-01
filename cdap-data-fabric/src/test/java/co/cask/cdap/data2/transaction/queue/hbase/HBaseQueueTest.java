@@ -50,6 +50,7 @@ import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.TableNameAwareCacheSupplier;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -668,8 +669,8 @@ public abstract class HBaseQueueTest extends QueueTest {
       String prefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
       CConfigurationReader cConfReader
         = new CConfigurationReader(hConf, HTableNameConverter.getSysConfigTablePrefix(prefix));
-      return ConsumerConfigCache.getInstance(configTableName,
-                                             cConfReader, new Supplier<TransactionVisibilityState>() {
+      return TableNameAwareCacheSupplier.getSupplier(configTableName,
+                                                     cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override
           public TransactionVisibilityState get() {
             try {
@@ -683,7 +684,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           public HTableInterface getInput() throws IOException {
             return new HTable(hConf, configTableName);
           }
-        });
+        }).get();
     }
   }
 
