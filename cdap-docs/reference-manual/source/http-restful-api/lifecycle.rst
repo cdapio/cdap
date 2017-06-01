@@ -793,54 +793,82 @@ request with the version specified::
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
 
-The request body is a JSON object specifying the schedule to be created. Two different schedule
-types are currently supported for workflows: :ref:`time schedules <schedules-time>` and
-:ref:`stream-size schedules <schedules-stream-size>`:
-
 .. highlight:: json-ellipsis
 
-- To specify a :ref:`time schedule <schedules-time>`, use ``"scheduleType": "TIME"``, as
-  shown in this example for scheduling the *PurchaseHistoryWorkflow* of the :ref:`Purchase
-  application <examples-purchase>` to trigger daily::
+The request body is a JSON object specifying the details of the schedule to be created::
 
     {
-      "scheduleType": "TIME",
-      "schedule":{
-        "cronExpression":"0 4 * * *",
-        "description":"Daily schedule",
-        "runConstraints":{
-          "maxConcurrentRuns":1
-        }
-      },
-      "program":{
-        "programName": "PurchaseHistoryWorkflow",
+      "name": "<name of the schedule>",
+      "description": "<schedule description>",
+      "program": {
+        "programName": "<name of the program>",
         "programType": "WORKFLOW"
       },
-      "properties":{
-      }
+      "properties": {
+        "<key>": "<value>",
+        ...
+      },
+      "constraints": [
+        {
+          "type": "<constraint type>",
+          "waitUntilMet": "<boolean>",
+          ...
+        },
+        ...
+      ],
+      "trigger": {
+        "type": "<trigger type>",
+        ...
+      },
+      "timeoutMillis": <timeout in milli seconds>
     }
 
-- To specify a :ref:`stream-sized schedule <schedules-stream-size>`, use ``"scheduleType":
-  "STREAM"``, as shown in this example for scheduling the *PurchaseHistoryWorkflow* of the
-  :ref:`Purchase application <examples-purchase>` to trigger after ingesting 1 MB of data or more::
+where a trigger is either a time trigger::
 
     {
-      "scheduleType":"STREAM",
-      "schedule":{
-        "dataTriggerMB":1,
-        "description":"Schedule execution when 1 MB or more of data is ingested in the purchaseStream",
-        "runConstraints":{
-          "maxConcurrentRuns":1
-        },
-        "streamName":"purchaseStream"
-      },
-      "program":{
-        "programName":"PurchaseHistoryWorkflow",
-        "programType":"WORKFLOW"
-      },
-      "properties":{
-      }
+      "type": "TIME",
+      "cronExpression": "<cron expression>"
     }
+
+or a partition trigger::
+
+    {
+      "type": "PARTITION",
+      "dataset": {
+        "namespace": "<namespace of the dataset>",
+        "dataset": "<name of the dataset>"
+      },
+      "numPartitions": <required number of partitions>
+    }
+
+and a constraint can be one of::
+
+    {
+      "type": "CONCURRENCY",
+      "maxConcurrency": <max number of runs>,
+      "waitUntilMet": <boolean>
+    }
+
+    {
+      "type": "DELAY",
+      "millisAfterTrigger": <milli seconds to delay>,
+      "waitUntilMet": <boolean>
+    }
+
+    {
+      "type": "TIME_RANGE",
+      "startTime": "<time in form HH:mm>",
+      "endTime": "<time in form HH:mm>",
+      "timeZone": "<name of the time zone, e.g., PST>",
+      "waitUntilMet": <boolean>
+    }
+
+    {
+      "type": "LAST_RUN",
+      "millisSinceLastRun": <milli seconds since last run>,
+      "waitUntilMet": <boolean>
+    }
+
 
 .. highlight:: console
 
@@ -887,47 +915,14 @@ request with the version specified::
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
 
-The request body is a JSON object specifying the schedule configurations to be updated, and follows
+The request body is a JSON object specifying the details of the schedule to be updated, and follows
 the same form as documented in :ref:`http-restful-api-lifecycle-schedule-add`.
-
-.. highlight:: json-ellipsis
-
-- To update a :ref:`time schedule <schedules-time>`, use::
-
-    {
-      "schedule": {
-        "description": "updatedDescription",
-        "runConstraints": {
-          "maxConcurrentRuns": 5
-        },
-        "cronExpression": "0 4 * * *"
-      },
-      "properties": {
-        "aKey": "aValue"
-      }
-    }
-
-- For a :ref:`stream-sized schedule <schedules-stream-size>`, use::
-
-    {
-      "schedule": {
-        "description": "updatedDescription",
-        "runConstraints": {
-          "maxConcurrentRuns": 5
-        },
-        "streamName": "myStream",
-        "dataTriggerMB": 256
-      },
-      "properties": {
-        "aKey": "aValue"
-      }
-    }
 
 .. highlight:: console
 
-Only changes to the schedule configurations are supported; changes to the schedule name,
-type, or the program associated with it are not allowed. If *any* properties are provided,
-it will overwrite all existing properties with what is provided. You must include all
+Only changes to the schedule configurations are supported; changes to the schedule name, or to the
+program associated with it are not allowed. If *any* properties are provided, they will
+overwrite all existing properties with what is provided. You must include all
 properties, even ones you are are not altering.
 
 .. rubric:: HTTP Responses
@@ -964,29 +959,10 @@ To retrieve a schedule in an application, submit an HTTP GET request::
    * - ``schedule-name``
      - Name of the schedule
 
-.. container:: table-block-example
+The response will contain the schedule in the same form described in :ref:`http-restful-api-lifecycle-schedule-add`.
 
-   .. list-table::
-      :widths: 99 1
-      :stub-columns: 1
-
-      * - Example: Retrieving a Schedule
-        -
-
-   .. list-table::
-      :widths: 15 85
-      :class: triple-table
-
-      * - Description
-        - Retrieves the schedule *DailySchedule* of the application *PurchaseHistory*
-
-      * - HTTP Method
-        - ``GET /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule``
-
-      * - Returns
-        - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-          | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-
+Note: The response format has changed in CDAP 4.2.0. To retrieve the schedule in the ``ScheduleSpecification``
+format that was used in previous versions of CDAP, add a URL parameter ``?format=spec`` to the request URL.
 
 List Schedules
 --------------
@@ -1002,9 +978,11 @@ To list all of the schedules of a workflow of an application, use an HTTP GET re
 
   GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/schedules
 
-To list the next time that the workflow is scheduled to run, use the parameter ``nextruntime``::
+The response will contain a list of schedules in the same form as described
+in :ref:`http-restful-api-lifecycle-schedule-add`.
 
-  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
+Note: The response format has changed in CDAP 4.2.0. To retrieve the schedules in the ``ScheduleSpecification``
+format that was used in previous versions of CDAP, add a URL parameter ``?format=spec`` to the request URL.
 
 .. list-table::
    :widths: 20 80
@@ -1019,31 +997,27 @@ To list the next time that the workflow is scheduled to run, use the parameter `
    * - ``workflow-id``
      - Name of the workflow
 
+Next Scheduled Run Time
+-----------------------
 
-.. container:: table-block-example
+To list the next time that the workflow will be be scheduled by a time trigger,
+use the parameter ``nextruntime``::
 
-  .. list-table::
-     :widths: 99 1
-     :stub-columns: 1
+  GET /v3/namespaces/<namespace-id>/apps/<app-id>/workflows/<workflow-id>/nextruntime
 
-     * - Example: Retrieving a Schedule
-       -
 
-  .. list-table::
-     :widths: 15 85
-     :class: triple-table
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-     * - Description
-       - Retrieves the schedules of the workflow *PurchaseHistoryWorkflow* of the
-         application *PurchaseHistory*
-
-     * - HTTP Method
-       - ``GET /v3/namespaces/default/apps/PurchaseHistory/workflows/PurchaseHistoryWorkflow/schedules``
-
-     * - Returns
-       - | ``[{"schedule":{"name":"DailySchedule","description":"DailySchedule with crontab 0 4 * * *","cronEntry":"0 4 * * *"},``
-         | `` "program":{"programName":"PurchaseHistoryWorkflow","programType":"WORKFLOW"},"properties":{}}]``
-
+   * - Parameter
+     - Description
+   * - ``namespace-id``
+     - Namespace ID
+   * - ``app-id``
+     - Name of the application
+   * - ``workflow-id``
+     - Name of the workflow
 
 .. container:: table-block-example
 
@@ -1110,24 +1084,24 @@ request with the version specified::
      - If the schedule given by ``schedule-id`` was not found
 
 
-.. _http-restful-api-lifecycle-schedule-suspend-resume:
+.. _http-restful-api-lifecycle-schedule-disable-enable:
 
-Schedule: Suspend and Resume
-----------------------------
-For a schedule, you can suspend and resume it using the RESTful API.
+Schedule: Disable and and Enable
+--------------------------------
+For a schedule, you can disable and enable it using the RESTful API.
 
-**Suspend:** To *suspend* a schedule means that the program associated with that schedule will not
-trigger again until the schedule is resumed.
+**Disable:** To *disable* a schedule means that the program associated with that schedule will not
+trigger again until the schedule is enabled.
 
-**Resume:** To *resume* a schedule means that the trigger is reset, and the program associated will
+**Enable:** To *enable* a schedule means that the trigger is reset, and the program associated will
 run again at the next scheduled time.
 
-As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
+As a schedule is initially deployed in a *disabled* state, a call to this API is needed to *enable* it.
 
-To suspend or resume a schedule use::
+To disable or enable a schedule use::
 
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/suspend
-  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/resume
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/disable
+  POST /v3/namespaces/<namespace-id>/apps/<app-id>/schedules/<schedule-id>/enable
 
 .. list-table::
    :widths: 20 80
@@ -1148,7 +1122,7 @@ To suspend or resume a schedule use::
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Suspending a Schedule
+     * - Example: Disabling a Schedule
        -
 
   .. list-table::
@@ -1156,13 +1130,13 @@ To suspend or resume a schedule use::
      :class: triple-table
 
      * - Description
-       - Suspends the schedule *DailySchedule* of the application *PurchaseHistory*
+       - Disables the schedule *DailySchedule* of the application *PurchaseHistory*
 
      * - HTTP Method
-       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/suspend``
+       - ``POST /v3/namespaces/default/apps/PurchaseHistory/schedules/DailySchedule/disable``
 
      * - Returns
-       - | ``OK`` if successfully set as suspended
+       - | ``OK`` if successfully set as disabled
 
 
 .. _http-restful-api-lifecycle-container-information:

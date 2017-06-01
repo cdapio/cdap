@@ -81,23 +81,6 @@ it. This is permanent and cannot be undone. If another stream is created with th
 name, it will not return any of the previous stream's events.
 
 
-.. _streams-notifications:
-
-Stream Notifications
-====================
-Streams publish notifications internally to CDAP when they ingest data. The increment of data that they have to ingest
-in order for a notification to be published is defined by the ``notification.threshold.mb`` configuration of a stream,
-and can be changed using the :ref:`http-restful-api-stream`, the :ref:`stream-client` of the :ref:`client-api`, or
-by using the :ref:`Command Line Interface <cli>`. When creating a stream, by default the threshold is set to the value of
-``stream.notification.threshold`` in the :ref:`cdap-site.xml <appendix-cdap-site.xml>`.
-
-The notifications describe the absolute size of events ever ingested by a stream, and as such, they will always describe
-increasing data size. In particular, they do not reset when the stream is truncated, and they do not decrease when
-part of the data ingested by the stream has reach the TTL.
-
-Stream-size notifications are used by :ref:`stream-size schedules <stream-size-schedules>`.
-
-
 Stream Examples
 ===============
 Streams are included in just about every CDAP :ref:`application <apps-and-packs>`,
