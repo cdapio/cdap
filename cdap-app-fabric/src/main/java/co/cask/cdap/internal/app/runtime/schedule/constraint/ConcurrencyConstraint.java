@@ -59,6 +59,6 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
       return ConstraintResult.NEVER_SATISFIED;
     }
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                context.getCheckTime() + TimeUnit.SECONDS.toMillis(10));
+                                context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
   }
 }

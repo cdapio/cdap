@@ -84,13 +84,13 @@ public class TimeRangeConstraintTest {
     ConstraintResult result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 36 minutes till 4PM
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.MINUTES.toMillis(36),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.MINUTES.toMillis(36),
                         (long) result.getNextCheckTime());
 
     constraintContext = createConstraintContext(job, result.getNextCheckTime() - 1);
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
-    Assert.assertEquals(constraintContext.getCheckTime() + 1L, (long) result.getNextCheckTime());
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + 1L, (long) result.getNextCheckTime());
 
     result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now + TimeUnit.MINUTES.toMillis(36)));
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
@@ -101,7 +101,7 @@ public class TimeRangeConstraintTest {
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 23 hours until the next time its 4PM again
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.HOURS.toMillis(23),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.HOURS.toMillis(23),
                         (long) result.getNextCheckTime());
   }
 
@@ -119,13 +119,13 @@ public class TimeRangeConstraintTest {
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 6 hours + 36 minutes till 4PM
     long sixHoursAnd36Minutes = TimeUnit.HOURS.toMillis(6) + TimeUnit.MINUTES.toMillis(36);
-    Assert.assertEquals(constraintContext.getCheckTime() + sixHoursAnd36Minutes,
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + sixHoursAnd36Minutes,
                         (long) result.getNextCheckTime());
 
     constraintContext = createConstraintContext(job, result.getNextCheckTime() - 1);
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
-    Assert.assertEquals(constraintContext.getCheckTime() + 1L, (long) result.getNextCheckTime());
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + 1L, (long) result.getNextCheckTime());
 
     result = timeRangeConstraint.check(SCHEDULE, createConstraintContext(job, now + sixHoursAnd36Minutes));
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
@@ -136,7 +136,7 @@ public class TimeRangeConstraintTest {
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 5 hours until the next time its 10PM again
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.HOURS.toMillis(5),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.HOURS.toMillis(5),
                         (long) result.getNextCheckTime());
 
     // 5:00AM PST
@@ -151,7 +151,7 @@ public class TimeRangeConstraintTest {
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 16 hours until the next time its 10PM
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.HOURS.toMillis(16),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.HOURS.toMillis(16),
                         (long) result.getNextCheckTime());
 
     // 7:00AM PST
@@ -160,7 +160,7 @@ public class TimeRangeConstraintTest {
     result = timeRangeConstraint.check(SCHEDULE, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
     // 15 hours until the next time its 10PM
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.HOURS.toMillis(15),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.HOURS.toMillis(15),
                         (long) result.getNextCheckTime());
   }
 
