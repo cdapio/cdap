@@ -247,6 +247,10 @@ export default class AddToHydratorModal extends Component {
           field: '*'
         };
 
+        if (state.workspaceInfo.properties.connection === 'file') {
+          properties.field = 'body';
+        }
+
         try {
           getParsedSchemaForDataPrep(tempSchema);
         } catch (e) {
