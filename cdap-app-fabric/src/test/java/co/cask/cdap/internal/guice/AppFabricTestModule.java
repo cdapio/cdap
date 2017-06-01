@@ -53,7 +53,6 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -155,20 +154,7 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
-      }
-
-      @Override
       public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                           Map<String, String> properties) {
-      }
-
-      @Override
-      public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules) {
-      }
-
-      @Override
-      public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules,
                            Map<String, String> properties) {
       }
 
@@ -183,25 +169,11 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType) {
-        return ImmutableList.of();
-      }
-
-      @Override
       public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
       }
 
       @Override
       public void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule) {
-      }
-
-      @Override
-      public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                                 Map<String, String> properties) {
       }
 
       @Override
@@ -212,14 +184,6 @@ public final class AppFabricTestModule extends AbstractModule {
       public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) {
       }
 
-      @Override
-      public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
-      }
-
-      @Override
-      public ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-        return ScheduleState.NOT_FOUND;
-      }
     };
   }
 }

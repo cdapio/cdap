@@ -16,11 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler.ScheduleState;
-
 /**
- * Indicates the status of a program schedule. The enum values reflect the same values as
- * {@link ScheduleState} for backward compatibility.
+ * Indicates the status of a program schedule.
  */
 public enum ProgramScheduleStatus {
   /**

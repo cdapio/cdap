@@ -875,23 +875,23 @@ public abstract class AppFabricTestBase {
                                                @Nullable String appVersion) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/schedules", appName,
                                         appVersion == null ? ApplicationId.DEFAULT_VERSION : appVersion);
-    return goGetSchedules(namespace, schedulesUrl);
+    return doGetSchedules(namespace, schedulesUrl);
   }
 
   protected List<ScheduleDetail> getSchedules(String namespace, String appName,
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
-    return goGetSchedules(namespace, schedulesUrl);
+    return doGetSchedules(namespace, schedulesUrl);
   }
 
   protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", appName, appVersion,
                                         workflowName);
-    return goGetSchedules(namespace, schedulesUrl);
+    return doGetSchedules(namespace, schedulesUrl);
   }
 
-  private List<ScheduleDetail> goGetSchedules(String namespace, String schedulesUrl) throws Exception {
+  private List<ScheduleDetail> doGetSchedules(String namespace, String schedulesUrl) throws Exception {
     String versionedUrl = getVersionedAPIPath(schedulesUrl, namespace);
     HttpResponse response = doGet(versionedUrl);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
