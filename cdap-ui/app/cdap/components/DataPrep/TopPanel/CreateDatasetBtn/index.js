@@ -202,6 +202,9 @@ export default class CreateDatasetBtn extends Component {
   }
 
   addMacrosToPipelineConfig(pipelineConfig) {
+    let {dataprep} = DataPrepStore.getState();
+    let workspaceProps = objectQuery(dataprep, 'workspaceInfo', 'properties');
+
     let macroMap = this.getAppConfigMacros();
     let dataFormatProperties = {
       schema: '${schema}',
@@ -211,7 +214,7 @@ export default class CreateDatasetBtn extends Component {
       'Wrangler': {
         directives: '${directives}',
         schema: '${schema}',
-        field: '*',
+        field: workspaceProps.connection === 'file' ? 'body' : '*',
         precondition: 'false',
         'threshold': '1',
       },
