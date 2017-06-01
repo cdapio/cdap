@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
@@ -33,6 +34,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import java.io.IOException;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -125,6 +127,11 @@ public class BasicSparkExecutionPluginContext extends AbstractTransformContext i
   @Override
   public PluginContext getPluginContext() {
     return sec.getPluginContext();
+  }
+
+  @Override
+  public SparkInterpreter createSparkInterpreter() throws IOException {
+    return sec.createInterpreter();
   }
 
   @Override
