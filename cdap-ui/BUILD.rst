@@ -65,22 +65,22 @@ This will build the pre-built library dlls that we use in CDAP
 
 Building a Running Backend
 ==========================
-UI work generally requires having a running Standalone CDAP instance. To build an instance::
+UI work generally requires having a running CDAP Sandbox instance. To build an instance::
 
     $ git clone git@github.com:caskdata/cdap.git
     $ cd cdap
     $ mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     $ cd cdap-standalone/target
-    $ unzip cdap-sdk-{version}.zip
-    $ cd <cdap-sdk-folder>
-    $ bin/cdap sdk start
+    $ unzip cdap-local-sandbox-{version}.zip
+    $ cd <cdap-local-sandbox-folder>
+    $ bin/cdap sandbox start
 
-Once you have started the Standalone CDAP, it starts the UI node server as part of its init script.
+Once you have started the CDAP Sandbox, it starts the UI node server as part of its init script.
 
 To work on UI Code
 ------------------
-If you want to develop and test the UI against the Standalone CDAP that was just built as above,
-you need to first kill the node server started by the Standalone CDAP and follow this process:
+If you want to develop and test the UI against the CDAP Sandbox that was just built as above,
+you need to first kill the node server started by the CDAP Sandbox and follow this process:
 
 Start these processes, each in their own terminal tab or browser window:
 
