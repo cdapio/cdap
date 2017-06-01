@@ -17,6 +17,9 @@
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -32,13 +35,17 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -148,15 +156,37 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private void upgradeUserTables(final ExecutorService executor) throws Exception {
     final Map<String, Future<?>> allFutures = new HashMap<>();
+    // TODO: will this list all namespaces without the right impersonation?
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor);
-          allFutures.putAll(futures);
-          return null;
-        }
-      });
+      final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
+      LOG.info("Upgrading user tables in namespace {}", namespaceId);
+      UserGroupInformation ugi = impersonator.getUGI(namespaceId);
+      // TODO change to debug
+      LOG.info("Got UGI {} for namespace {}", ugi, namespaceMeta.getName());
+      HTableDescriptor[] hTableDescriptors =
+        ImpersonationUtils.doAs(ugi,
+                                new Callable<HTableDescriptor[]>() {
+                                  @Override
+                                  public HTableDescriptor[] call() throws Exception {
+                                    String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
+                                    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
+                                      return hAdmin.listTableDescriptorsByNamespace(
+                                        HTableNameConverter.encodeHBaseEntity(hBaseNamespace));
+                                    }
+                                  }
+                                });
+      // Dataset id allows '.' in it. Hence cannot use prefix matching to figure out entity id from Hbase table name.
+      Map<String, DatasetId> tableDatasetMap =
+        ImpersonationUtils.doAs(ugi,
+                                new Callable<Map<String, DatasetId>>() {
+                                  @Override
+                                  public Map<String, DatasetId> call() throws Exception {
+                                    return createTableDatasetMap(dsFramework, namespaceId);
+                                  }
+                                });
+
+      Map<String, Future<?>> futures = upgradeUserTables(namespaceId, hTableDescriptors, tableDatasetMap, executor);
+      allFutures.putAll(futures);
     }
 
     // Wait for the user dataset upgrades to complete
@@ -170,20 +200,25 @@ public class DatasetUpgrader extends AbstractUpgrader {
     }
   }
 
-  private Map<String, Future<?>> upgradeUserTables(NamespaceMeta namespaceMeta, ExecutorService executor)
+  private Map<String, Future<?>> upgradeUserTables(final NamespaceId namespaceId,
+                                                   HTableDescriptor[] hTableDescriptors,
+                                                   final Map<String, DatasetId> tableDatasetMap,
+                                                   ExecutorService executor)
     throws Exception {
     Map<String, Future<?>> futures = new HashMap<>();
-    String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
-    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
-      for (final HTableDescriptor desc :
-        hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
+    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
+      for (final HTableDescriptor desc : hTableDescriptors) {
         Runnable runnable = new Runnable() {
           public void run() {
             try {
               if (isCDAPUserTable(desc)) {
-                upgradeUserTable(desc);
+                DatasetId datasetId = tableDatasetMap.get(desc.getTableName().getQualifierAsString());
+                if (datasetId == null) {
+                  throw new Exception("Cannot find the dataset that contains the table " + desc.getNameAsString());
+                }
+                impUpgradeUserTable(datasetId, desc);
               } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-                updateTableDesc(desc, ddlExecutor);
+                impUpdateTableDesc(namespaceId, desc, ddlExecutor);
               }
             } catch (Exception e) {
               throw new RuntimeException(e);
@@ -196,6 +231,29 @@ public class DatasetUpgrader extends AbstractUpgrader {
       }
     }
     return futures;
+  }
+
+  private void impUpgradeUserTable(DatasetId datasetId, final HTableDescriptor desc) throws Exception {
+    impersonator.doAs(datasetId,
+                      new Callable<Void>() {
+                        @Override
+                        public Void call() throws Exception {
+                          upgradeUserTable(desc);
+                          return null;
+                        }
+                      });
+  }
+
+  private void impUpdateTableDesc(NamespaceId namespaceId, final HTableDescriptor desc,
+                                  final HBaseDDLExecutor ddlExecutor) throws Exception {
+    impersonator.doAs(namespaceId,
+                      new Callable<Void>() {
+                        @Override
+                        public Void call() throws Exception {
+                          updateTableDesc(desc, ddlExecutor);
+                          return null;
+                        }
+                      });
   }
 
   private void upgradeUserTable(HTableDescriptor desc) throws IOException {
@@ -280,5 +338,44 @@ public class DatasetUpgrader extends AbstractUpgrader {
       }
     }
     return failed;
+  }
+
+  /**
+   * For all HBase tables in the given namespace, return a mapping of the HBase table qualifier name to the Dataset Id
+   * of which the HBase table is part of.
+   *
+   * @param dsFramework dataset framework
+   * @param namespaceId namespace id for which the map needs to be created
+   * @return map of the HBase table qualifier name to its containing the Dataset Id
+   * @throws DatasetManagementException on failure in Dataset operations
+   */
+  @VisibleForTesting
+  static Map<String, DatasetId> createTableDatasetMap(DatasetFramework dsFramework, NamespaceId namespaceId)
+    throws DatasetManagementException {
+    Map<String, DatasetId> tableDatasetMap = new HashMap<>();
+    for (DatasetSpecificationSummary specSummary : dsFramework.getInstances(namespaceId)) {
+      DatasetId datasetId = namespaceId.dataset(specSummary.getName());
+      DatasetSpecification datasetSpec = dsFramework.getDatasetSpec(datasetId);
+      if (datasetSpec == null) {
+        LOG.debug("Ignoring null dataset spec for dataset {}", datasetId);
+        continue;
+      }
+
+      visitDatasetSpec(tableDatasetMap, datasetId, ImmutableSortedMap.of(datasetSpec.getName(), datasetSpec));
+    }
+    return tableDatasetMap;
+  }
+
+  private static void visitDatasetSpec(Map<String, DatasetId> tableDatasetMap, DatasetId datasetId,
+                                Map<String, DatasetSpecification> specifications) {
+    for (DatasetSpecification spec : specifications.values()) {
+      if ("table".equals(spec.getType()) || Table.class.getName().equals(spec.getType())) {
+        tableDatasetMap.put(spec.getName(), datasetId);
+      }
+      SortedMap<String, DatasetSpecification> embeddedSpecs = spec.getSpecifications();
+      if (!embeddedSpecs.isEmpty()) {
+        visitDatasetSpec(tableDatasetMap, datasetId, embeddedSpecs);
+      }
+    }
   }
 }
