@@ -68,11 +68,12 @@ class ScalaDynamicSpark extends AbstractSpark with SparkMain {
 
     val intp = sec.createInterpreter()
     try {
-      intp.addDependency(depJar)
+      intp.addDependencies(depJar)
+      intp.addImports("test.dynamic.Compute")
       intp.bind("sc", sc)
       intp.bind("sparkMain", this)
       intp.bind("sec", sec)
-      intp.interpret("test.dynamic.Compute.run(sc, sparkMain)(sec)");
+      intp.interpret("Compute.run(sc, sparkMain)(sec)");
     } finally {
       intp.close()
     }

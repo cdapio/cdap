@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.etl.api.TransformContext;
 import org.apache.hadoop.io.ByteWritable;
@@ -32,6 +33,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -193,4 +195,12 @@ public interface SparkExecutionPluginContext extends DatasetContext, TransformCo
    * @return A {@link Serializable} {@link PluginContext}.
    */
   PluginContext getPluginContext();
+
+  /**
+   * Creates a new instance of {@link SparkInterpreter} for Scala code compilation and interpretation.
+   *
+   * @return a new instance of {@link SparkInterpreter}
+   * @throws IOException if failed to create a local directory for storing the compiled class files
+   */
+  SparkInterpreter createSparkInterpreter() throws IOException;
 }

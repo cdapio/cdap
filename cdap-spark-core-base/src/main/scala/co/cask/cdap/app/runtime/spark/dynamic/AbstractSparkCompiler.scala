@@ -110,8 +110,8 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
     }
   }
 
-  override def addDependency(file: File): Unit = {
-    iMain.addURLs(file.toURI.toURL)
+  override def addDependencies(file: File*): Unit = {
+    iMain.addURLs(file.map(_.toURI.toURL): _*)
   }
 
   override def getIMain(): IMain = {

@@ -29,12 +29,12 @@ import scala.tools.nsc.interpreter.IMain
 trait SparkCompiler extends AutoCloseable {
 
   /**
-    * Adds dependency to the compiler. Classes loadable from the given file are usable by the code to be compiled
+    * Adds dependencies to the compiler. Classes loadable from the given files are usable by the code to be compiled
     * by this compiler.
     *
-    * @param file a directory or a jar file.
+    * @param files a set of directories or jar files.
     */
-  def addDependency(file: File): Unit
+  def addDependencies(file: File*): Unit
 
   /**
     * Compiles the given source code. The source code must have content the same as a valid scala source file.

@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -73,7 +74,7 @@ public abstract class SparkCompilerTestBase {
     File mainClassJar = new File(TEMP_FOLDER.newFolder(), "testMain.jar");
     try (SparkCompiler compiler = createCompiler()) {
       // Add the TestClass jar as dependency
-      compiler.addDependency(testClassJar);
+      compiler.addDependencies(JavaConversions.asScalaBuffer(Collections.singletonList(testClassJar)));
 
       // Compile a main class
       StringWriter writer = new StringWriter();
@@ -92,14 +93,14 @@ public abstract class SparkCompilerTestBase {
 
     // Create an Interpreter
     SparkInterpreter interpreter = createInterpreter();
-    interpreter.addDependency(testClassJar);
-    interpreter.addDependency(mainClassJar);
+    interpreter.addDependencies(JavaConversions.asScalaBuffer(Arrays.asList(testClassJar, mainClassJar)));
 
     // Call the `TestMain.main` method
     File outputFile = TEMP_FOLDER.newFile();
+    interpreter.addImports(JavaConversions.asScalaBuffer(Collections.singletonList("co.cask.cdap.test.TestMain")));
     interpreter.bind("output", File.class.getName(), outputFile,
                      JavaConversions.asScalaBuffer(Collections.<String>emptyList()));
-    interpreter.interpret("co.cask.cdap.test.TestMain.main(Array(output.getAbsolutePath(), \"a\", \"b\", \"c\"))");
+    interpreter.interpret("TestMain.main(Array(output.getAbsolutePath(), \"a\", \"b\", \"c\"))");
 
     // The main method will write to output file with the rest of the arguments, each on a new line
     String content = Files.toString(outputFile, StandardCharsets.UTF_8).trim();
