@@ -56,6 +56,7 @@ public class LastRunConstraintTest {
     Store store = AppFabricTestHelper.getInjector().getInstance(Store.class);
 
     long now = System.currentTimeMillis();
+    long nowSec = TimeUnit.MILLISECONDS.toSeconds(now);
     ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
@@ -63,7 +64,7 @@ public class LastRunConstraintTest {
     SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // require 1 hour since last run
-    LastRunConstraint lastRunConstraint = new LastRunConstraint(TimeUnit.HOURS.toMillis(1));
+    LastRunConstraint lastRunConstraint = new LastRunConstraint(1, TimeUnit.HOURS);
     ConstraintContext constraintContext = new ConstraintContext(job, now, store);
 
     // there's been no runs, so the constraint is satisfied by default
@@ -77,7 +78,7 @@ public class LastRunConstraintTest {
 
     // a RUNNING workflow, started 3 hours ago will fail the constraint check
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    store.setStart(WORKFLOW_ID, pid1, now - TimeUnit.HOURS.toMillis(3), null, EMPTY_MAP, systemArgs);
+    store.setStart(WORKFLOW_ID, pid1, nowSec - TimeUnit.HOURS.toSeconds(3), null, EMPTY_MAP, systemArgs);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // a SUSPENDED workflow started 3 hours ago will also fail the constraint check
@@ -87,29 +88,29 @@ public class LastRunConstraintTest {
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow runs completes 2 hours ago, the constraint check will be satisfied
-    store.setStop(WORKFLOW_ID, pid1, now - TimeUnit.HOURS.toMillis(2), ProgramRunStatus.COMPLETED);
+    store.setStop(WORKFLOW_ID, pid1, nowSec - TimeUnit.HOURS.toSeconds(2), ProgramRunStatus.COMPLETED);
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // a RUNNING workflow, started 2 hours ago will fail the constraint check
-    store.setStart(WORKFLOW_ID, pid2, now - TimeUnit.HOURS.toMillis(2), null, EMPTY_MAP, EMPTY_MAP);
+    store.setStart(WORKFLOW_ID, pid2, nowSec - TimeUnit.HOURS.toSeconds(2), null, EMPTY_MAP, EMPTY_MAP);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow run fails 1 minute ago, the constraint check will be satisfied
-    store.setStop(WORKFLOW_ID, pid2, now - TimeUnit.MINUTES.toMillis(1), ProgramRunStatus.FAILED);
+    store.setStop(WORKFLOW_ID, pid2, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.FAILED);
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // similarly, a KILLED workflow, started 2 hours ago will also fail the constraint check
-    store.setStart(WORKFLOW_ID, pid3, now - TimeUnit.HOURS.toMillis(2), null, EMPTY_MAP, EMPTY_MAP);
+    store.setStart(WORKFLOW_ID, pid3, nowSec - TimeUnit.HOURS.toSeconds(2), null, EMPTY_MAP, EMPTY_MAP);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
-    store.setStop(WORKFLOW_ID, pid3, now - TimeUnit.MINUTES.toMillis(1), ProgramRunStatus.KILLED);
+    store.setStop(WORKFLOW_ID, pid3, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.KILLED);
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // a RUNNING workflow, started 2 hours ago will fail the constraint check
-    store.setStart(WORKFLOW_ID, pid4, now - TimeUnit.HOURS.toMillis(2), null, EMPTY_MAP, EMPTY_MAP);
+    store.setStart(WORKFLOW_ID, pid4, nowSec - TimeUnit.HOURS.toSeconds(2), null, EMPTY_MAP, EMPTY_MAP);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow runs completes 1 minute ago, the constraint check will not be satisfied
-    store.setStop(WORKFLOW_ID, pid4, now - TimeUnit.MINUTES.toMillis(1), ProgramRunStatus.COMPLETED);
+    store.setStop(WORKFLOW_ID, pid4, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.COMPLETED);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
   }
 

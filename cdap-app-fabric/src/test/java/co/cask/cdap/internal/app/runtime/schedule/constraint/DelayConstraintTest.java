@@ -54,7 +54,7 @@ public class DelayConstraintTest {
     SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // test with 10 minute delay
-    DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(TimeUnit.MINUTES.toMillis(10));
+    DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(10, TimeUnit.MINUTES);
     // a check against 12 minutes after 'now' will return SATISFIED
     ConstraintResult result =
       tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12), null));

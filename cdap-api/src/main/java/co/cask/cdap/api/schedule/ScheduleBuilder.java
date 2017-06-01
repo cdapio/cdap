@@ -26,9 +26,9 @@ import java.util.concurrent.TimeUnit;
  * Builder for scheduling a program. The schedule must be triggered by a certain event and wait for all constraints to
  * be satisfied to launch the program. Build the schedule by setting the schedule's trigger with
  * methods {@link #triggerByTime(String)} or {@link #triggerOnPartitions(String, int)}.
- * To set the constraints for the schedule, use methods {@link #withConcurrency(int)}, {@link #withDelay(long)},
- * {@link #withTimeWindow(String, String)}, {@link #withTimeWindow(String, String, TimeZone)},
- * and {@link #withDurationSinceLastRun(long)}.
+ * To set the constraints for the schedule, use methods {@link #withConcurrency(int)},
+ * {@link #withDelay(long, TimeUnit)}, {@link #withTimeWindow(String, String)},
+ * {@link #withTimeWindow(String, String, TimeZone)}, and {@link #withDurationSinceLastRun(long, TimeUnit)}.
  * If no constraint is specified, the schedule will immediately launch the program once the schedule is triggered.
  */
 public interface ScheduleBuilder {
@@ -73,11 +73,12 @@ public interface ScheduleBuilder {
   /**
    * Set a certain amount of delay passed after the schedule is triggered, before launching the program.
    *
-   * @param delayMillis delay in milliseconds to wait after the schedule is triggered before launching the program
+   * @param delay delay in the given <tt>unit</tt> to wait after the schedule is triggered before launching the program
+   * @param unit the time unit of the <tt>delay</tt> argument
    * @return {@link ScheduleBuilder} containing the given delay. Note that the delay constraint does not have the
    * option to abort the schedule if the constraint is not met.
    */
-  ScheduleBuilder withDelay(long delayMillis);
+  ScheduleBuilder withDelay(long delay, TimeUnit unit);
 
   /**
    * Set a time range in a day starting from {@code startTime} and ending at {@code endTime}, between which
@@ -104,11 +105,12 @@ public interface ScheduleBuilder {
   /**
    * Set a certain duration passed since the last launching of the program before launching the program again.
    *
-   * @param delayMillis duration in milliseconds to wait after the last launch of the program
-   *                    before launching the program
+   * @param duration duration in the given <tt>unit</tt> to wait after the last launch of the program
+   *                 before launching the program
+   * @param unit the time unit of the <tt>duration</tt> argument
    * @return {@link ConstraintProgramScheduleBuilder} containing the given duration
    */
-  ConstraintProgramScheduleBuilder withDurationSinceLastRun(long delayMillis);
+  ConstraintProgramScheduleBuilder withDurationSinceLastRun(long duration, TimeUnit unit);
 
   /**
    * Create a schedule which is triggered based upon the given cron expression.

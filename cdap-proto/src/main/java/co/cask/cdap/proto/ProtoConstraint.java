@@ -25,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -107,9 +108,9 @@ public abstract class ProtoConstraint implements Constraint {
 
     protected final long millisAfterTrigger;
 
-    public DelayConstraint(long millisAfterTrigger) {
+    public DelayConstraint(long delayAfterTrigger, TimeUnit unit) {
       super(Type.DELAY, true);
-      this.millisAfterTrigger = millisAfterTrigger;
+      this.millisAfterTrigger = unit.toMillis(delayAfterTrigger);
       validate();
     }
 
@@ -156,9 +157,9 @@ public abstract class ProtoConstraint implements Constraint {
 
     protected final long millisSinceLastRun;
 
-    public LastRunConstraint(long millisSinceLastRun) {
+    public LastRunConstraint(long durationSinceLastRun, TimeUnit unit) {
       super(Type.LAST_RUN, false);
-      this.millisSinceLastRun = millisSinceLastRun;
+      this.millisSinceLastRun = unit.toMillis(durationSinceLastRun);
       validate();
     }
 

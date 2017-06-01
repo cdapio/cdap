@@ -68,7 +68,7 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
     initialize();
-    calendar.setTimeInMillis(context.getCheckTime());
+    calendar.setTimeInMillis(context.getCheckTimeMillis());
     int hourOfDay = calendar.get(Calendar.HOUR_OF_DAY);
     int minute = calendar.get(Calendar.MINUTE);
 
@@ -104,6 +104,6 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                calendar.getTimeInMillis() - context.getCheckTime());
+                                calendar.getTimeInMillis() - context.getCheckTimeMillis());
   }
 }
