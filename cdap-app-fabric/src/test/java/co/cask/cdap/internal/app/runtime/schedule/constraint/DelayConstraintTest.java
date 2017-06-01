@@ -64,7 +64,7 @@ public class DelayConstraintTest {
     constraintContext = new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9), null);
     result = tenMinuteDelayConstraint.check(schedule, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
-    Assert.assertEquals(constraintContext.getCheckTime() + TimeUnit.MINUTES.toMillis(1),
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.MINUTES.toMillis(1),
                         (long) result.getNextCheckTime());
   }
 
