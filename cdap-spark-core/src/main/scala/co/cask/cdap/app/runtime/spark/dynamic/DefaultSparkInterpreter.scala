@@ -22,7 +22,7 @@ import scala.tools.nsc.io.AbstractFile
 /**
   * Default implementation of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]] for Scala 2.10.
   */
-class DefaultSparkInterpreter(settings: Settings, outputDir: AbstractFile, onClose: () => Unit)
-  extends DefaultSparkCompiler(settings, outputDir, onClose) with AbstractSparkInterpreter {
+class DefaultSparkInterpreter(settings: Settings, outputDir: AbstractFile, urlAdder: URLAdder, onClose: () => Unit)
+  extends DefaultSparkCompiler(settings, outputDir, urlAdder, onClose) with AbstractSparkInterpreter {
 
 }
