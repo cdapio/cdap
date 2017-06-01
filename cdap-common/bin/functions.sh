@@ -507,12 +507,16 @@ cdap_set_spark() {
       local __spark_client_version=None
       for __dist in hdp iop; do
         if [[ $(which ${__dist}-select 2>/dev/null) ]]; then
-          __spark_client_version=$(${__dist}-select status spark-client | awk '{print $3}')
+          __spark_name="spark"
+          if [[ ${SPARK_MAJOR_VERSION} -ne 1 ]]; then
+            __spark_name="spark${SPARK_MAJOR_VERSION}"
+          fi
+          __spark_client_version=$(${__dist}-select status ${__spark_name}-client | awk '{print $3}')
           if [[ ${__spark_client_version} == 'None' ]]; then # defaults None, we're hoping for a version
             logecho "$(date) Spark client not installed via ${__dist}-select detection"
             return 1
-          elif [[ -x /usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell ]]; then
-            __spark_shell=/usr/${__dist}/${__spark_client_version}/spark/bin/spark-shell
+          elif [[ -x /usr/${__dist}/${__spark_client_version}/${__spark_name}/bin/spark-shell ]]; then
+            __spark_shell=/usr/${__dist}/${__spark_client_version}/${__spark_name}/bin/spark-shell
           else
             logecho "$(date) Spark client not installed via on-disk detection"
             return 1
