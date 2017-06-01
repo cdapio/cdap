@@ -136,6 +136,7 @@ export default class ConnectionPopover extends Component {
         isOpen={true}
         toggle={this.toggleDeleteConfirmation}
         className="connection-delete-confirmation-modal"
+        zIndex="1061"
       >
         <ModalHeader toggle={this.toggleDeleteConfirmation}>
           {
