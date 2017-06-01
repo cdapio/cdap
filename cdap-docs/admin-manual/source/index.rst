@@ -32,6 +32,12 @@ installation and its security configuration.
 - |hadoop-compatibility|_ The **Hadoop/HBase environment** that CDAP requires.
 
 
+.. |cdap-hadoop-compatibility| replace:: **CDAP and Hadoop Compatibility:**
+.. _cdap-hadoop-compatibility: cdap-hadoop-compatibility.html
+
+- |cdap-hadoop-compatibility|_ The different versions of CDAP and the Hadoop distributions they work with.
+
+
 .. |system-requirements| replace:: **System Requirements:**
 .. _system-requirements: system-requirements.html
 
