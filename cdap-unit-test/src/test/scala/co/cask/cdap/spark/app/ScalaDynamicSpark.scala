@@ -16,7 +16,8 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.common.Bytes
+import java.io.File
+
 import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
 
@@ -32,10 +33,14 @@ class ScalaDynamicSpark extends AbstractSpark with SparkMain {
   override def run(implicit sec: SparkExecutionContext): Unit = {
     val sc = new SparkContext
 
+    val depJar = new File(sec.getRuntimeArguments.get("tmpdir"), "compute.jar")
+
     val interpreter = sec.createInterpreter()
     try {
       val classSource =
         """
+           package test.dynamic
+
            import co.cask.cdap.api.common._
            import co.cask.cdap.api.spark._
            import org.apache.spark._
@@ -56,13 +61,20 @@ class ScalaDynamicSpark extends AbstractSpark with SparkMain {
            }
         """
       interpreter.compile(classSource)
-
-      interpreter.bind("sc", sc)
-      interpreter.bind("sparkMain", this)
-      interpreter.bind("sec", sec)
-      interpreter.interpret("Compute.run(sc, sparkMain)(sec)");
+      interpreter.saveAsJar(depJar)
     } finally {
       interpreter.close()
+    }
+
+    val intp = sec.createInterpreter()
+    try {
+      intp.addDependency(depJar)
+      intp.bind("sc", sc)
+      intp.bind("sparkMain", this)
+      intp.bind("sec", sec)
+      intp.interpret("test.dynamic.Compute.run(sc, sparkMain)(sec)");
+    } finally {
+      intp.close()
     }
   }
 }

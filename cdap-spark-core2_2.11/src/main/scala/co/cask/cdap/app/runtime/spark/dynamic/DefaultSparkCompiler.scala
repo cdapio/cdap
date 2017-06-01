@@ -27,7 +27,9 @@ import scala.tools.nsc.io.AbstractFile
   * [[scala.tools.nsc.interpreter.IMain]] for the compilation.
   */
 
-class DefaultSparkCompiler(settings: Settings, onClose: () => Unit) extends AbstractSparkCompiler(settings, onClose) {
+class DefaultSparkCompiler(settings: Settings,
+                           urlAdder: URLAdder,
+                           onClose: () => Unit) extends AbstractSparkCompiler(settings, onClose) {
 
   override protected def createIMain(settings: Settings, errorReporter: ErrorReporter): IMain with URLAdder = {
     // Overrides the error reporting so that we can collect the errors instead of just getting printed to console
@@ -54,6 +56,7 @@ class DefaultSparkCompiler(settings: Settings, onClose: () => Unit) extends Abst
         ensureClassLoader()
         addUrlsToClassPath(urls: _*)
         resetClassLoader()
+        urlAdder.addURLs(urls: _*)
       }
     }
   }

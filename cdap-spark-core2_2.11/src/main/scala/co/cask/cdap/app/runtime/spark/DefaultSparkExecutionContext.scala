@@ -19,7 +19,7 @@ import java.io.File
 import java.util
 
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
+import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
@@ -38,9 +38,9 @@ class DefaultSparkExecutionContext(sparkClassLoader: SparkClassLoader, localizeR
     rdd.saveAsNewAPIHadoopDataset(conf)
   }
 
-  override protected def createInterpreter(settings: Settings,
-                                           classDir: File, onClose: () => Unit): SparkInterpreter = {
+  override protected def createInterpreter(settings: Settings, classDir: File,
+                                           urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter = {
     settings.Yreploutdir.value = classDir.getAbsolutePath
-    new DefaultSparkInterpreter(settings, onClose)
+    new DefaultSparkInterpreter(settings, urlAdder, onClose)
   }
 }

@@ -32,6 +32,7 @@ import scala.tools.nsc.{Global, Settings, io}
   */
 class DefaultSparkCompiler(settings: Settings,
                            outputDir: AbstractFile,
+                           urlAdder: URLAdder,
                            onClose: () => Unit) extends AbstractSparkCompiler(settings, onClose) {
 
   override protected def createIMain(settings: Settings, errorReporter: ErrorReporter): IMain with URLAdder = {
@@ -85,6 +86,7 @@ class DefaultSparkCompiler(settings: Settings,
       override def addURLs(urls: URL*): Unit = {
         updateCompilerClassPath(urls: _*)
         urls.foreach(runtimeParentClassLoader.addURL)
+        urlAdder.addURLs(urls: _*)
       }
 
       /**
