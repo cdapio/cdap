@@ -54,7 +54,8 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
     if (!waitUntilMet) {
       return ConstraintResult.NEVER_SATISFIED;
     }
-    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED, TimeUnit.SECONDS.toMillis(10));
+    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
+                                context.getCheckTime() + TimeUnit.SECONDS.toMillis(10));
   }
 
   // Filters run records that are: FAILED, KILLED; keeps only: RUNNING, SUSPENDED, COMPLETED.
