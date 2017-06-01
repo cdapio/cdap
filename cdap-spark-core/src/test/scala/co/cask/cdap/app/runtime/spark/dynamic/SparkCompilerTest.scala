@@ -15,6 +15,8 @@
  */
 
 package co.cask.cdap.app.runtime.spark.dynamic
+import java.net.URL
+
 import co.cask.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
 
 import scala.reflect.io.{PlainFile, VirtualDirectory}
@@ -27,12 +29,20 @@ class SparkCompilerTest extends SparkCompilerTestBase {
 
   override protected def createCompiler(): SparkCompiler = {
     val settings = AbstractSparkCompiler.setClassPath(new Settings(), getClass.getClassLoader)
-    new DefaultSparkCompiler(settings, new VirtualDirectory("in-memory", None), () => { });
+    new DefaultSparkCompiler(settings, new VirtualDirectory("in-memory", None), new URLAdder {
+      override def addURLs(urls: URL*) = {
+        // no-op
+      }
+    }, () => { });
   }
 
   override protected def createInterpreter(): SparkInterpreter = {
     val settings = AbstractSparkCompiler.setClassPath(new Settings(), getClass.getClassLoader)
-    return new DefaultSparkInterpreter(settings,
-                                       new PlainFile(SparkCompilerTestBase.TEMP_FOLDER.newFolder()), () => { });
+    return new DefaultSparkInterpreter(settings, new PlainFile(SparkCompilerTestBase.TEMP_FOLDER.newFolder()),
+      new URLAdder {
+        override def addURLs(urls: URL*) = {
+          // no-op
+        }
+      }, () => { });
   }
 }

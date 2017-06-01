@@ -17,7 +17,7 @@
 package co.cask.cdap.app.runtime.spark
 
 import java.io._
-import java.net.URI
+import java.net.{URI, URL}
 import java.util
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,7 +38,7 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
-import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler}
+import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, URLAdder}
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
@@ -61,6 +61,7 @@ import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.tools.nsc.Settings
 
@@ -213,9 +214,17 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     // Setup classloader
     settings.embeddedDefaults(sparkClassLoader)
 
-    sparkClassFileHandler.addClassDir(classDir)
-    createInterpreter(settings, classDir, () => {
-      sparkClassFileHandler.removeClassDir(classDir)
+    val urlAdded = new mutable.HashSet[URL]
+    val urlAdder = new URLAdder {
+      override def addURLs(urls: URL*) = {
+        sparkClassFileHandler.addURLs(urls: _*)
+        urlAdded ++= urls
+      }
+    }
+    urlAdder.addURLs(classDir.toURI.toURL)
+
+    createInterpreter(settings, classDir, urlAdder, () => {
+      sparkClassFileHandler.removeURLs(urlAdded)
       try {
         DirUtils.deleteDirectoryContents(classDir, true)
       } catch {
@@ -432,9 +441,13 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     *
     * @param settings settings for the interpreter created. It has the classpath property being populated already.
     * @param classDir the directory to write the compiled class files
+    * @param urlAdder a [[co.cask.cdap.app.runtime.spark.dynamic.URLAdder]] for adding URL to have classes
+    *                 visible for the Spark executor.
+    * @param onClose function to call on closing the [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
     * @return a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
     */
-  protected def createInterpreter(settings: Settings, classDir: File, onClose: () => Unit): SparkInterpreter
+  protected def createInterpreter(settings: Settings, classDir: File,
+                                  urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter
 }
 
 /**

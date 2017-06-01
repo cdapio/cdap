@@ -181,7 +181,9 @@ public class SparkTestRun extends TestFrameworkTestBase {
     }
 
     SparkManager sparkManager = appManager.getSparkManager(ScalaDynamicSpark.class.getSimpleName());
-    sparkManager.start(ImmutableMap.of("input", "SparkStream", "output", "ResultTable"));
+    sparkManager.start(ImmutableMap.of("input", "SparkStream",
+                                       "output", "ResultTable",
+                                       "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()));
 
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
