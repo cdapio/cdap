@@ -1644,6 +1644,7 @@
                   <exclude>*.rst</exclude>
                   <exclude>*.md</exclude>
                   <exclude>**/*.md</exclude>
+                  <exclude>**/*.iml</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>cdap-docs/**</exclude>
                   <exclude>**/grok/patterns/**</exclude>
