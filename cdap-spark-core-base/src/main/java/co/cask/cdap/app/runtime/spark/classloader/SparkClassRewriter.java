@@ -41,6 +41,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -161,8 +163,31 @@ public class SparkClassRewriter implements ClassRewriter {
    */
   private byte[] rewriteContext(final Type contextType, InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(contextType, byteCodeStream, new ConstructorRewriter() {
+
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      void onMethodEnter(String name, String desc, GeneratorAdapter generatorAdapter) {
+        Type[] argTypes = Type.getArgumentTypes(desc);
+        // If the constructor has SparkConf as arguments,
+        // update the SparkConf by calling SparkRuntimeEnv.setupSparkConf(sparkConf)
+        // This is mainly to make any runtime properties setup by CDAP are being pickup even restoring
+        // from Checkpointing.
+        List<Integer> confIndices = new ArrayList<>();
+        for (int i = 0; i < argTypes.length; i++) {
+          if (SPARK_CONF_TYPE.equals(argTypes[i])) {
+            confIndices.add(i);
+          }
+        }
+
+        // Update all SparkConf arguments.
+        for (int confIndex : confIndices) {
+          generatorAdapter.loadArg(confIndex);
+          generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                        new Method("setupSparkConf", Type.VOID_TYPE, new Type[] { SPARK_CONF_TYPE }));
+        }
+      }
+
+      @Override
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("setContext", Type.VOID_TYPE, new Type[] { contextType }));
@@ -176,7 +201,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteSparkConf(final Type sparkConfType, InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(sparkConfType, byteCodeStream, new ConstructorRewriter() {
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("setupSparkConf", Type.VOID_TYPE, new Type[] { sparkConfType }));
@@ -224,7 +249,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteBatchedWriteAheadLog(InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("addBatchedWriteAheadLog", Type.VOID_TYPE,
@@ -297,7 +322,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteKryo(InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(KRYO_TYPE, byteCodeStream, new ConstructorRewriter() {
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         // Register serializer for Schema
         // addDefaultSerializer(Schema.class, SchemaSerializer.class);
         generatorAdapter.loadThis();
@@ -335,7 +360,8 @@ public class SparkClassRewriter implements ClassRewriter {
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
       @Override
-      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      public MethodVisitor visitMethod(int access, final String name,
+                                       final String desc, String signature, String[] exceptions) {
         // Call super so that the method signature is registered with the ClassWriter (parent)
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
@@ -359,14 +385,23 @@ public class SparkClassRewriter implements ClassRewriter {
           }
 
           @Override
+          protected void onMethodEnter() {
+            if (calledThis) {
+              // For constructors that call this(), we don't need rewrite
+              return;
+            }
+            rewriter.onMethodEnter(name, desc, this);
+          }
+
+          @Override
           protected void onMethodExit(int opcode) {
             if (calledThis) {
-              // For constructors that call this(), we don't need to generate a call to SparkContextCache
+              // For constructors that call this(), we don't need rewrite
               return;
             }
             // Add a call to SparkContextCache.setContext() for the normal method return path
             if (opcode == RETURN) {
-              rewriter.onMethodExit(this);
+              rewriter.onMethodExit(name, desc, this);
             }
           }
         };
@@ -630,7 +665,14 @@ public class SparkClassRewriter implements ClassRewriter {
   /**
    * Private interface for rewriting constructor.
    */
-  private interface ConstructorRewriter {
-    void onMethodExit(GeneratorAdapter generatorAdapter);
+  private abstract class ConstructorRewriter {
+
+    void onMethodEnter(String name, String desc, GeneratorAdapter generatorAdapter) {
+      // no-op
+    }
+
+    void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
+      // no-op
+    }
   }
 }

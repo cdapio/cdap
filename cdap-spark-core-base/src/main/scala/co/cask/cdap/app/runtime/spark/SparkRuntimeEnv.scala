@@ -23,7 +23,7 @@ import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
 import org.apache.spark.scheduler._
-import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
@@ -189,10 +189,21 @@ object SparkRuntimeEnv {
         // If running Spark streaming, interrupt the thread first to give
         // the Spark program time to terminate gracefully.
         thread.foreach(t => {
-          t.interrupt()
-          t.join()
+          // The getState method only available since 1.4.
+          // For older version compatability, try to get the field directly
+          context.callMethod("getState").orElse(context.getField("state")).foreach(_ match {
+            case state: StreamingContextState => state match {
+              // Interrupt and wait for the running thread before stopping the context if it is ACTIVE
+              case StreamingContextState.ACTIVE => {
+                t.interrupt()
+                t.join()
+                context.stop(false, false)
+              }
+              // Otherwise, just stop it
+              case _ => context.stop(false, false)
+            }
+          })
         })
-        context.stop(false, false)
       })
     } finally {
       sc.foreach(context => {
