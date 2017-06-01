@@ -41,7 +41,10 @@ const market = (state=initialState, action) => {
         activeEntity: action.payload.entityId
       });
     case 'SET_FILTER':
-      return Object.assign({}, state, { filter: action.payload });
+      return Object.assign({}, state, {
+        filter: action.payload,
+        activeEntity: undefined
+      });
     case 'SET_ERROR':
       return Object.assign({}, state, { isError: true, loading: false });
     case 'RESET':

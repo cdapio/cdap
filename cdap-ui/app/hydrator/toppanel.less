@@ -71,6 +71,7 @@ body.theme-cdap {
         border-bottom: 1px solid transparent;
         transition: all 0.2s ease;
         width: 60px;
+        margin-left: 0;
 
         .btn-container {
           border-left: 1px solid @btn-border-color;
@@ -88,20 +89,16 @@ body.theme-cdap {
           }
         }
 
-        + .btn {
-          margin-left: 0;
+        &.margin-left {
+          margin-left: 2px;
+        }
 
-          &.margin-left {
-            margin-left: 2px;
-          }
+        &[disabled] {
+          opacity: 1;
 
-          &[disabled] {
-            opacity: 1;
-
-            span.fa,
-            .button-label {
-              opacity: 0.65;
-            }
+          span.fa,
+          .button-label {
+            opacity: 0.65;
           }
         }
 
@@ -127,7 +124,6 @@ body.theme-cdap {
         &.btn-select {
           background-color: #ebebeb;
           border-top: 1px solid #ebebeb;
-          border-right: 1px solid #ebebeb;
           border-bottom: 1px solid #ebebeb;
         }
         &:active {

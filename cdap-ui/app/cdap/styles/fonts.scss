@@ -42,6 +42,36 @@
   }
 }
 
+.icon-gce:before {
+  content: "\ea20";
+}
+.icon-aws:before {
+  content: "\ea21";
+}
+.icon-parquet:before {
+  content: "\ea18";
+}
+.icon-tokenizeranalytics:before {
+  content: "\ea19";
+}
+.icon-logisticregressionanalytics:before {
+  content: "\ea1a";
+}
+.icon-hashingtffeaturegenerator:before {
+  content: "\ea1b";
+}
+.icon-decisiontreeanalytics:before {
+  content: "\ea1c";
+}
+.icon-skipgram:before {
+  content: "\ea1d";
+}
+.icon-pipeline:before {
+  content: "\ea1e";
+}
+.icon-cdapstream:before {
+  content: "\ea1f";
+}
 .icon-recordsplitter:before {
   content: "\ea11";
 }

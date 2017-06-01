@@ -81,6 +81,20 @@ const TabConfig = {
       icon: 'icon-database',
       name: T.translate('features.Market.tabs.edwOffload'),
       content: <AllTabContents />
+    },
+    {
+      id: 11,
+      filter: 'Microsoft Azure',
+      icon: 'icon-azureblobstore',
+      name: T.translate('features.Market.tabs.azure'),
+      content: <AllTabContents />
+    },
+    {
+      id: 12,
+      filter: 'AWS',
+      icon: 'icon-aws',
+      name: T.translate('features.Market.tabs.aws'),
+      content: <AllTabContents />
     }
   ]
 };
