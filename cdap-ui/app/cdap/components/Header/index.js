@@ -120,6 +120,10 @@ export default class Header extends Component {
       return true;
     };
 
+    const isDataPrepActive = (match, location) => {
+      return !isCDAPActive(match, location);
+    };
+
     return (
       <div className="global-navbar">
         <div
@@ -171,7 +175,7 @@ export default class Header extends Component {
                   <NavLink
                     activeClassName="active"
                     to={`/ns/${this.state.currentNamespace}/dataprep`}
-                    isActive={!isCDAPActive}
+                    isActive={isDataPrepActive}
                   >
                     {T.translate('features.Navbar.dataprepLabel')}
                   </NavLink>

@@ -46,7 +46,7 @@ export default class DatabaseDetail extends Component {
     let customId = shortid.generate();
 
     this.state = {
-      connType: CONN_TYPE.basic,
+      connType: this.props.db.name === 'oraclethin' ? CONN_TYPE.advanced : CONN_TYPE.basic,
       name: '',
       hostname: '',
       port: this.props.mode === 'ADD' ? defaultPort : '',
@@ -548,6 +548,33 @@ export default class DatabaseDetail extends Component {
     );
   }
 
+  renderConnectionType () {
+    if (this.props.db.name === 'oraclethin') { return null; }
+
+    return (
+      <div className="form-group row">
+        <label className={LABEL_COL_CLASS}>
+          {T.translate(`${PREFIX}.connType`)}
+        </label>
+        <div className={`${INPUT_COL_CLASS} connection-type`}>
+          <span
+            onClick={this.handleConnTypeChange.bind(this, CONN_TYPE.basic)}
+            className={classnames({'active': this.state.connType === CONN_TYPE.basic})}
+          >
+            {T.translate(`${PREFIX}.basic`)}
+          </span>
+          <span className="divider">|</span>
+          <span
+            onClick={this.handleConnTypeChange.bind(this, CONN_TYPE.advanced)}
+            className={classnames({'active': this.state.connType === CONN_TYPE.advanced})}
+          >
+            {T.translate(`${PREFIX}.advanced`)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   renderError() {
     if (!this.state.error) { return null; }
 
@@ -605,30 +632,12 @@ export default class DatabaseDetail extends Component {
                   className="form-control"
                   value={this.state.name}
                   onChange={this.handleChange.bind(this, 'name')}
+                  disabled={this.props.mode === 'EDIT'}
                 />
               </div>
             </div>
 
-            <div className="form-group row">
-              <label className={LABEL_COL_CLASS}>
-                {T.translate(`${PREFIX}.connType`)}
-              </label>
-              <div className={`${INPUT_COL_CLASS} connection-type`}>
-                <span
-                  onClick={this.handleConnTypeChange.bind(this, CONN_TYPE.basic)}
-                  className={classnames({'active': this.state.connType === CONN_TYPE.basic})}
-                >
-                  {T.translate(`${PREFIX}.basic`)}
-                </span>
-                <span className="divider">|</span>
-                <span
-                  onClick={this.handleConnTypeChange.bind(this, CONN_TYPE.advanced)}
-                  className={classnames({'active': this.state.connType === CONN_TYPE.advanced})}
-                >
-                  {T.translate(`${PREFIX}.advanced`)}
-                </span>
-              </div>
-            </div>
+            {this.renderConnectionType()}
 
             {this.renderConnectionInfo()}
 
