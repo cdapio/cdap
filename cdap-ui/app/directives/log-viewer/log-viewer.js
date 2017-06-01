@@ -29,7 +29,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
   let showCondensedLogsQuery = ' AND .origin=plugin OR .origin=program';
   if (vm.isPipeline) {
-    showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle';
+    showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle OR MDC:eventType=userLog';
   }
 
   var pollTimeout;
@@ -745,7 +745,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     let mdc = log.mdc;
     let source = `${log.loggerName}#${log.lineNumber}`;
     // system log
-    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle')) {
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle' || mdc['MDC:eventType'] === 'userLog')) {
       source += `-${log.threadName}`;
     }
     return source;

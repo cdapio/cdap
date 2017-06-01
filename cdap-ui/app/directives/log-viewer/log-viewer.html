@@ -179,21 +179,11 @@
             </td>
 
             <td class="source"
-                ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source"
-                uib-tooltip="{{LogViewer.getEntrySource(entry)}}"
-                tooltip-append-to-body="true"
-                tooltip-placement="top"
-                tooltip-popup-delay="500"
-                tooltip-class="source-tooltip">
+                ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
                 <span ng-bind="LogViewer.getEntrySource(entry)"></span>
             </td>
             <td class="log-message"
-                ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
-                uib-tooltip="{{entry.log.message}}"
-                tooltip-append-to-body="true"
-                tooltip-placement="top"
-                tooltip-popup-delay="500"
-                tooltip-class="message-tooltip">
+                ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message">
               <span ng-bind-html="LogViewer.highlight(entry.log.message)"></span>
             </td>
             <td class="stack-trace" ng-if="entry.stackTrace" colspan="4">
