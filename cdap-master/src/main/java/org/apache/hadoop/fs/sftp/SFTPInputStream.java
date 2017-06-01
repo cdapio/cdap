@@ -21,12 +21,18 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.apache.hadoop.fs.FSInputStream;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
 import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-/** SFTP FileSystem input stream. */
+/**
+ * {@link SFTPInputStream}, copied from Hadoop and modified, that doesn't throw an exception when seeks are attempted
+ * to the current position. Position equality check logic in {@link SFTPInputStream#seek} is the only change from the
+ * original class in Hadoop. This change is required since {@link LineRecordReader} calls {@link SFTPInputStream#seek}
+ * with value of 0. TODO: This file can be removed once https://issues.cask.co/browse/CDAP-5387 is addressed.
+ */
 class SFTPInputStream extends FSInputStream {
 
   public static final String E_SEEK_NOTSUPPORTED = "Seek not supported";
