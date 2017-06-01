@@ -27,6 +27,12 @@ import scala.tools.nsc.interpreter.Results.{Error, Incomplete, Success}
   */
 trait AbstractSparkInterpreter extends SparkInterpreter {
 
+  override def addImports(imports: String*): Unit = {
+    if (!imports.isEmpty) {
+      interpret("import " + imports.mkString(", "))
+    }
+  }
+
   override def bind[T: runtime.universe.TypeTag : ClassTag](name: String, value: T): Unit = {
     val valueType = implicitly[runtime.universe.TypeTag[T]].tpe
     val iMain = getIMain()
@@ -57,7 +63,7 @@ trait AbstractSparkInterpreter extends SparkInterpreter {
     }
   }
 
-  override def getValue(name: String): Option[Any] = {
-    getIMain().valueOfTerm(name)
+  override def getValue[T](name: String): Option[T] = {
+    getIMain().valueOfTerm(name).map(_.asInstanceOf[T])
   }
 }

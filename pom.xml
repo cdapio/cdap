@@ -1372,9 +1372,14 @@
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-recipes</artifactId>
           </exclusion>
+          <!-- excludes scala-compiler and scala-reflect to avoid conflicting with the one from spark-repl -->
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
@@ -1419,9 +1424,14 @@
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-recipes</artifactId>
           </exclusion>
+          <!-- excludes scala-compiler and scala-reflect to avoid conflicting with the one from spark-repl -->
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>

@@ -27,6 +27,15 @@ import scala.reflect.{ClassTag, runtime}
 trait SparkInterpreter extends SparkCompiler {
 
   /**
+    * Adds a set of imports to the context.
+    *
+    * @param imports set of imports
+    * @throws co.cask.cdap.api.spark.dynamic.InterpretFailureException if failed to add the imports
+    */
+  @throws(classOf[InterpretFailureException])
+  def addImports(imports: String*): Unit
+
+  /**
     * Binds a variable to a specific value.
     *
     * @param name name of the variable
@@ -62,7 +71,8 @@ trait SparkInterpreter extends SparkCompiler {
     * Gets the value of the given variable if it exists in the context.
     *
     * @param name name of the variable
+    * @tparam T type of the result
     * @return an [[scala.Option]] that will content [[scala.Some]] value if it exists, or [[scala.None]] otherwise.
     */
-  def getValue(name: String): Option[Any]
+  def getValue[T](name: String): Option[T]
 }
