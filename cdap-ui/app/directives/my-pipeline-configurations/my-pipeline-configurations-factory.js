@@ -20,7 +20,6 @@ angular.module(PKG.name + '.commons')
       'runtime-arguments': 'runtimeArguments',
       'resolved-macros': 'resolvedMacros',
       'apply-runtime-arguments': 'applyRuntimeArguments()',
-      'convert-runtime-args-to-macros': 'convertRuntimeArgsToMacros()',
       'pipeline-name': '{{::pipelineName}}',
       'pipeline-action': '{{::pipelineAction}}',
       'run-pipeline': 'runPipeline()',

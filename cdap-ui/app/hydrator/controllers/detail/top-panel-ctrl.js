@@ -385,10 +385,11 @@ class HydratorDetailTopPanelController {
     this.lastFinished = null;
     this.viewConfig = false;
     this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
+    let macrosWithNonEmptyValues = this.HydratorPlusPlusHydratorService.getMacrosWithNonEmptyValues(this.macrosMap);
     this.HydratorPlusPlusDetailActions.startPipeline(
       this.HydratorPlusPlusDetailRunsStore.getApi(),
       this.HydratorPlusPlusDetailRunsStore.getParams(),
-      Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap)
+      Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArgumentsMap)
     )
     .then(
       () => {},
@@ -426,8 +427,10 @@ class HydratorDetailTopPanelController {
       scope: this.$scope
     };
 
+    let macrosWithNonEmptyValues = this.HydratorPlusPlusHydratorService.getMacrosWithNonEmptyValues(this.macrosMap);
+
     this.myPreferenceApi
-      .setAppPreference(preferenceParams, Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap))
+      .setAppPreference(preferenceParams, Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArgumentsMap))
       .$promise
       .then(
         () => {

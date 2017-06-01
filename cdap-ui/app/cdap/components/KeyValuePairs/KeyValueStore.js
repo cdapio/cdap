@@ -44,12 +44,12 @@ const keyValues = (state = initialState, action = defaultAction) => {
       }
       stateCopy.pairs[action.payload.index].value = action.payload.value;
       return stateCopy;
-    case KeyValueStoreActions.setEnabled:
+    case KeyValueStoreActions.setProvided:
       stateCopy = Object.assign({}, state);
-      if (action.payload.enabled === null || typeof action.payload.enabled === 'undefined') {
+      if (action.payload.provided === null || typeof action.payload.provided === 'undefined') {
         return stateCopy;
       }
-      stateCopy.pairs[action.payload.index].enabled = action.payload.enabled;
+      stateCopy.pairs[action.payload.index].provided = action.payload.provided;
       return stateCopy;
     case KeyValueStoreActions.addPair:
       stateCopy = Object.assign({}, state);
@@ -57,7 +57,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
         key : '',
         value: '',
         uniqueId: shortid.generate(),
-        enabled: true
+        provided: false
       });
       return stateCopy;
     case KeyValueStoreActions.deletePair:
@@ -68,7 +68,7 @@ const keyValues = (state = initialState, action = defaultAction) => {
           key : '',
           value : '',
           uniqueId: shortid.generate(),
-          enabled: true
+          provided: false
         });
       }
       return stateCopy;

@@ -376,7 +376,7 @@ class HydratorPlusPlusHydratorService {
   keyValuePairsHaveMissingValues(keyValues) {
     if (keyValues.pairs) {
       return keyValues.pairs.some((keyValuePair) => {
-        if (keyValuePair.notDeletable && !keyValuePair.enabled) { return false; }
+        if (keyValuePair.notDeletable && keyValuePair.provided) { return false; }
         let emptyKeyField = (keyValuePair.key.length === 0);
         let emptyValueField = (keyValuePair.value.length === 0);
         // buttons are disabled when either the key or the value of a pair is empty, but not both
@@ -388,29 +388,29 @@ class HydratorPlusPlusHydratorService {
 
   convertMacrosToRuntimeArguments(currentRuntimeArgs, macrosMap, userRuntimeArgumentsMap) {
     let runtimeArguments = {};
-    let disabledMacros = {};
+    let providedMacros = {};
 
-    // holds disable macros in an object here even though we don't need the value,
+    // holds provided macros in an object here even though we don't need the value,
     // because object hash is faster than Array.indexOf
     if (currentRuntimeArgs.pairs) {
       currentRuntimeArgs.pairs.forEach((currentPair) => {
         let key = currentPair.key;
-        if (currentPair.notDeletable && !currentPair.enabled) {
-          disabledMacros[key] = currentPair.value;
+        if (currentPair.notDeletable && currentPair.provided) {
+          providedMacros[key] = currentPair.value;
         }
       });
     }
     let macros = Object.keys(macrosMap).map(macroKey => {
-      let enabled = true;
-      if (disabledMacros.hasOwnProperty(macroKey)) {
-        enabled = false;
+      let provided = false;
+      if (providedMacros.hasOwnProperty(macroKey)) {
+        provided = true;
       }
       return {
         key: macroKey,
         value: macrosMap[macroKey],
         uniqueId: 'id-' + this.uuid.v4(),
         notDeletable: true,
-        enabled
+        provided
       };
     });
     let userRuntimeArguments = this.convertMapToKeyValuePairs(userRuntimeArgumentsMap);
@@ -433,6 +433,21 @@ class HydratorPlusPlusHydratorService {
       macrosMap,
       userRuntimeArgumentsMap
     };
+  }
+
+  getMacrosWithNonEmptyValues(macrosMap) {
+    let macrosMapCopy = Object.assign({}, macrosMap);
+    let {keysWithMissingValue} = this.myHelpers.objHasMissingValues(macrosMapCopy);
+    keysWithMissingValue.forEach(key => {
+      delete macrosMapCopy[key];
+    });
+    return macrosMapCopy;
+  }
+
+  runtimeArgsContainsMacros(runtimeArgs) {
+    return runtimeArgs.pairs.some((currentPair) => {
+      return currentPair.notDeletable;
+    });
   }
 }
 

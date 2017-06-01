@@ -17,7 +17,7 @@
 const KeyValueStoreActions = {
   setKey: 'SET-KEY',
   setVal: 'SET-VALUE',
-  setEnabled: 'SET-ENABLED',
+  setProvided: 'SET-PROVIDED',
   addPair: 'ADD-PAIR',
   deletePair: 'DELETE-PAIR',
   onReset: 'ON-RESET',

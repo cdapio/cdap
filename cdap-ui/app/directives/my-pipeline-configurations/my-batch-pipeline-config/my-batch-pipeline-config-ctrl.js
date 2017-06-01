@@ -74,6 +74,7 @@ class MyBatchPipelineConfigCtrl {
     this.onExecutorMemoryChange = this.onExecutorMemoryChange.bind(this);
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.containsMacros = HydratorPlusPlusHydratorService.runtimeArgsContainsMacros(this.runtimeArguments);
   }
 
   onRuntimeArgumentsChange(newRuntimeArguments) {
@@ -92,7 +93,7 @@ class MyBatchPipelineConfigCtrl {
     let runtimeArgumentsPairs = runtimeArguments.pairs;
     for (let i = 0; i < runtimeArgumentsPairs.length; i++) {
       if (runtimeArgumentsPairs[i].notDeletable) {
-        if (!runtimeArgumentsPairs[i].enabled) {
+        if (runtimeArgumentsPairs[i].provided) {
           runtimeArgumentsPairs[i].showReset = false;
         } else {
           let runtimeArgKey = runtimeArgumentsPairs[i].key;

@@ -78,12 +78,16 @@
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
           <div class="step-content-subtitle">
-            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+            By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
           </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
           <span class="value-label">Value</span>
+          <span class="provided-label"
+                ng-if="RealtimePipelineConfigCtrl.containsMacros">
+            Provided
+          </span>
         </div>
         <div class="runtime-arguments-values key-value-pair-values">
           <key-value-pairs
@@ -432,12 +436,16 @@
         <div class="step-content-heading">
           Specify Runtime Arguments or Update the Ones Derived from Preferences
           <div class="step-content-subtitle">
-            Values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline is designed to provide a value for a runtime argument, you can disable that argument by clicking on the checkbox next to it.
+            By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
           </div>
         </div>
         <div class="runtime-arguments-labels key-value-pair-labels">
           <span class="key-label">Name</span>
           <span class="value-label">Value</span>
+          <span class="provided-label"
+                ng-if="RealtimePipelineConfigCtrl.containsMacros">
+            Provided
+          </span>
         </div>
         <div class="runtime-arguments-values key-value-pair-values">
           <key-value-pairs
