@@ -14,37 +14,37 @@ Guides
 
 .. default-role:: link-black
 
-.. |developers-manual| replace:: **Developers’ Manual:**
-.. _developers-manual: developers-manual/index.html
+.. |developer-manual| replace:: **Developer Manual**
+.. _developer-manual: developer-manual/index.html
 
 .. |dev-man-gsd-black| replace:: `Getting Started Developing:`
-.. _dev-man-gsd-black: developers-manual/getting-started/index.html
+.. _dev-man-gsd-black: developer-manual/getting-started/index.html
 
 .. |dev-man-o-black| replace:: `Overview:`
-.. _dev-man-o-black: developers-manual/overview/index.html
+.. _dev-man-o-black: developer-manual/overview/index.html
 
 .. |dev-man-bb-black| replace:: `Building Blocks:`
-.. _dev-man-bb-black: developers-manual/building-blocks/index.html
+.. _dev-man-bb-black: developer-manual/building-blocks/index.html
 
 .. |dev-man-m-black| replace:: `Metadata:`
-.. _dev-man-m-black: developers-manual/metadata/index.html
+.. _dev-man-m-black: developer-manual/metadata/index.html
 
 .. |dev-man-p-black| replace:: `Pipelines:`
-.. _dev-man-p-black: developers-manual/pipelines/index.html
+.. _dev-man-p-black: developer-manual/pipelines/index.html
 
 .. |dev-man-s-black| replace:: `Security:`
-.. _dev-man-s-black: developers-manual/security/index.html
+.. _dev-man-s-black: developer-manual/security/index.html
 
 .. |dev-man-tad-black| replace:: `Testing and Debugging:`
-.. _dev-man-tad-black: developers-manual/testing/index.html
+.. _dev-man-tad-black: developer-manual/testing/index.html
 
 .. |dev-man-id-black| replace:: `Ingesting Data:`
-.. _dev-man-id-black: developers-manual/ingesting-tools/index.html
+.. _dev-man-id-black: developer-manual/ingesting-tools/index.html
 
 .. |dev-man-at-black| replace:: `Advanced Topics:`
-.. _dev-man-at-black: developers-manual/advanced/index.html
+.. _dev-man-at-black: developer-manual/advanced/index.html
 
-- |developers-manual|_
+- |developer-manual|_
 
   - |dev-man-gsd-black|_ A quick, hands-on introduction to developing with CDAP
   - |dev-man-o-black|_ The overall architecture, abstractions, modes, and components behind CDAP
@@ -58,7 +58,7 @@ Guides
     class loading in CDAP, configuring program resources and retry policies
 
 
-.. |admin-manual| replace:: **Administration Manual:**
+.. |admin-manual| replace:: **Administration Manual**
 .. _admin-manual: admin-manual/index.html
 
 .. |admin-man-i-black| replace:: `Installation:`
@@ -83,7 +83,7 @@ Guides
   - |admin-man-a-black|_ Covers the CDAP installation and security configuration files
 
 
-.. |integrations| replace:: **Integrations:**
+.. |integrations| replace:: **Integrations**
 .. _integrations: integrations/index.html
 
 .. |integ-man-cm-black| replace:: `Cask Market:`
@@ -124,7 +124,7 @@ Guides
   - |integ-man-sq-black|_ *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
 
 
-.. |examples-manual| replace:: **Examples, Guides, and Tutorials:**
+.. |examples-manual| replace:: **Examples, Guides, and Tutorials**
 .. _examples-manual: examples-manual/index.html
 
 .. |ex-man-e-black| replace:: `Examples:`

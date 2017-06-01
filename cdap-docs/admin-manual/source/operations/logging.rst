@@ -170,7 +170,7 @@ be affected.
 - For **Distributed CDAP:** the ``logback-container.xml`` file is located in ``/etc/cdap/conf``.
 
 You can also use a custom "logback" file with your application, as described in the
-Developers' Manual section :ref:`application-logback`.
+Developer Manual section :ref:`application-logback`.
 
 Changing Program Log Levels
 ---------------------------

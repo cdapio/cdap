@@ -14,7 +14,7 @@ Enabling Perimeter Security
 ===========================
 Follow the instructions below for enabling perimeter security, either for CDAP Local Sandbox or Distributed CDAP,
 depending on your installation. Client authentication, once security has been enabled, is described in the
-Developers' Manual section :ref:`client-authentication`.
+Developer Manual section :ref:`client-authentication`.
 
 Enabling Perimeter Security (CDAP Local Sandbox)
 ------------------------------------------------
@@ -402,7 +402,7 @@ To make your custom handler class available to the authentication service, copy 
 packaged jar file (and any additional dependency jars) to the ``security/lib/`` directory
 within your CDAP installation (typically under ``/opt/cdap``).
 
-The Developers’ Manual :ref:`Custom Authentication <developers-custom-authentication>` section shows
+The Developer Manual :ref:`Custom Authentication <developer-custom-authentication>` section shows
 how to create a Custom Authentication Mechanism.
 
 .. _configuring-auth-exemptions:

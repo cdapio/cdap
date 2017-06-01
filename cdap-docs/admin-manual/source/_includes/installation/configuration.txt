@@ -31,7 +31,7 @@ for CDAP to run successfully.
    (such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
    to your custom directory ``/etc/cdap/conf.mycdap``::
-   
+
      $ sudo cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
      $ sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
 
@@ -43,10 +43,10 @@ for CDAP to run successfully.
    ``cdap-site.xml.example`` as a model. (See the :ref:`appendix
    <appendix-minimal-cdap-site.xml>` for a listing of ``cdap-site.xml.example``,
    the minimal ``cdap-site.xml`` file required.)
-   
+
    Customize your configuration by creating (or editing if existing) an `.xml` file
    ``conf/cdap-site.xml`` and set appropriate properties::
-   
+
      $ sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
      $ sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
 
@@ -54,7 +54,7 @@ for CDAP to run successfully.
 
    Environment variables that will be included in the environment used when launching CDAP and
    can be set in the ``cdap-env.sh`` file, usually at ``/etc/cdap/conf/cdap-env.sh``.
-   
+
    This is only necessary if you need to customize the environment launching CDAP, such
    as described below under :ref:`|distribution|-configuration-local-storage`.
 
@@ -67,37 +67,37 @@ for CDAP to run successfully.
    .. highlight:: xml
 
    i. Check that the ``zookeeper.quorum`` property in ``conf/cdap-site.xml`` is set to the
-      **ZooKeeper quorum string**, a comma-delimited list of fully-qualified domain names for 
+      **ZooKeeper quorum string**, a comma-delimited list of fully-qualified domain names for
       the ZooKeeper quorum:
 
       .. ifconfig:: "|distribution|" != "mapr"
-  
+
         ::
-        
+
            <property>
              <name>zookeeper.quorum</name>
              <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
              <description>
-               ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+               ZooKeeper quorum string; specifies the ZooKeeper host:port;
                substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
              </description>
            </property>
 
       .. ifconfig:: "|distribution|" == "mapr"
-  
+
         ::
-        
+
            <property>
              <name>zookeeper.quorum</name>
              <value>FQDN1:5181,FQDN2:5181/${root.namespace}</value>
              <description>
-               ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+               ZooKeeper quorum string; specifies the ZooKeeper host:port;
                substitute the quorum for the components shown here (FQDN1:5181,FQDN2:5181)
              </description>
            </property>
-  
+
         *Note:* The MapR default ZooKeeper port of 5181 is different than the ZooKeeper default of 2181.
-  
+
    #. Check that the ``router.server.address`` property in ``conf/cdap-site.xml`` is set to the
       **hostname of the CDAP Router**. The CDAP UI uses this property to connect to the Router::
 
@@ -109,11 +109,11 @@ for CDAP to run successfully.
 
    #. Check that there exists in HDFS a user directory for the ``hdfs.user`` property of ``conf/cdap-site.xml``.
       By default, the HDFS user is |hdfs-user|. If necessary, create the directory:
-     
+
       .. container:: highlight
-      
+
         .. parsed-literal::
-        
+
           |$| |su_hdfs|
           |$| hadoop fs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user|:|hdfs-user| /user/|hdfs-user|
 
@@ -121,45 +121,45 @@ for CDAP to run successfully.
 
       1. Create the HDFS directory you want to use, such as ``/myhadoop/myspace``.
       #. Create an ``hdfs.namespace`` property for the HDFS directory in ``conf/cdap-site.xml``::
-  
+
            <property>
              <name>hdfs.namespace</name>
              <value>/myhadoop/myspace</value>
              <description>Default HDFS namespace</description>
            </property>
-  
+
       #. Check that the default HDFS user |hdfs-user| owns that HDFS directory.
-  
+
    #. If you want to use **an HDFS user** other than |hdfs-user|, such as |my_username|:
 
       1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
          in the cluster on which YARN is running (typically, all of the machines).
       #. Create an ``hdfs.user`` property for that user in ``conf/cdap-site.xml``::
-  
+
            <property>
              <name>hdfs.user</name>
              <value>my_username</value>
              <description>User for accessing HDFS</description>
            </property>
-  
+
       #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
       #. Check that there exists in HDFS a ``/user/`` directory for that HDFS user, as described above, such as:
-      
+
          .. container:: highlight
-       
+
            .. parsed-literal::
-         
+
              |$| |su_hdfs|
              |$| hadoop fs -mkdir -p /user/|my_username| && hadoop fs -chown |my_username|:|my_username| /user/|my_username|
-      
+
       #. If you use an HDFS user other than |hdfs-user|, you must use either a secure
          cluster or use the `LinuxContainerExecutor
-         <https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html>`__ 
+         <https://hadoop.apache.org/docs/stable/hadoop-yarn/hadoop-yarn-site/SecureContainer.html>`__
          instead of the ``DefaultContainerExecutor``. (Because of how ``DefaultContainerExecutor``
          works, other containers will launch as |hdfs-user| rather than the specified
          ``hdfs.user``.) On Kerberos-enabled clusters, you must use ``LinuxContainerExecutor``
          as the ``DefaultContainerExecutor`` will not work correctly.
-   
+
    #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
       compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
       <admin-manual-hadoop-compatibility-matrix>`. To use this feature on secure Hadoop
@@ -167,31 +167,31 @@ for CDAP to run successfully.
       <|distribution|-configuration-enabling-kerberos>`.
 
       .. _|distribution|-configuration-explore-service:
-  
+
       **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
       up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
-      If the CDAP Explore Service fails to start and you see a 
+      If the CDAP Explore Service fails to start and you see a
       ``javax.jdo.JDODataStoreException: Communications link failure`` in the log, try
       adding this property to the Hive ``hive-site.xml`` file::
-  
+
         <property>
           <name>datanucleus.connectionPoolingType</name>
           <value>DBCP</value>
         </property>
-        
-   #. If Hive is **not** going to be installed, disable the CDAP Explore Service in 
+
+   #. If Hive is **not** going to be installed, disable the CDAP Explore Service in
       ``conf/cdap-site.xml`` (by default, it is enabled)::
-  
+
         <property>
           <name>explore.enabled</name>
           <value>false</value>
           <description>Enable Explore functionality</description>
         </property>
-    
-   #. If you'd like to publish metadata updates to an external Apache Kafka instance, 
+
+   #. If you'd like to publish metadata updates to an external Apache Kafka instance,
       CDAP has the capability of publishing notifications upon metadata updates. Details on
       the configuration settings and an example output are shown in the :ref:`Audit logging
-      section <audit-logging>` of the Developers' Manual.
+      section <audit-logging>` of the Developer Manual.
 
 .. _|distribution|-configuration-ulimit:
 
@@ -216,7 +216,7 @@ by CDAP for deploying applications and operating CDAP.
 
 The CDAP user (the ``cdap`` system user) **must** be able to write to **all** of these
 directories, as they are used for deploying applications and for operating CDAP.
-  
+
 - **List of local storage directories**
 
   - Properties specified in the ``cdap-site.xml`` file, as described in the :ref:`appendix-cdap-site.xml`:
@@ -249,7 +249,7 @@ directories, as they are used for deploying applications and for operating CDAP.
     for CDAP Master
 
   These variables can be set in the file ``/etc/cdap/conf/cdap-env.sh`` and will be included in
-  the environment when launching CDAP. See :ref:`|distribution|-configuration-central` 
+  the environment when launching CDAP. See :ref:`|distribution|-configuration-central`
   for details of the central configuration used by CDAP and how to implement this.
 
 - As in all installations, the ``kafka.server.log.dirs`` may need to be created locally.
@@ -267,12 +267,12 @@ Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__,
 MapReduce libraries are in HDFS. This requires an addition be made to the file
 ``cdap-env.sh`` to indicate the version of HDP::
 
-  export OPTS="${OPTS} -Dhdp.version=<version>" 
-  
+  export OPTS="${OPTS} -Dhdp.version=<version>"
+
 where ``<version>`` matches the HDP version of the cluster. The build iteration must be
 included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
 
-  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
+  export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800"
 
 The file ``cdap-env.sh`` is located in the central configuration directory, as described
 above under :ref:`CDAP Configuration <|distribution|-configuration-central>`.
@@ -286,7 +286,7 @@ In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-sit
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version> -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=<version></value>
     <description>Java options for all program containers</description>
   </property>
-  
+
 Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``, as::
 
   <property>
@@ -315,11 +315,11 @@ A. In order to configure **CDAP for Kerberos authentication:**
       the form ``username/hostname@REALM``, creating a separate principal for each host
       where a CDAP service will run.  This prevents simultaneous login attempts from
       multiple hosts from being mistaken for a replay attack by the Kerberos KDC.
-      
+
    #. Generate a keytab file for each CDAP Master Kerberos principal, and place the file as
       ``/etc/security/keytabs/cdap.keytab`` on the corresponding CDAP Master host.  The
       file should be readable only by the user running the CDAP Master service.
-      
+
    #. Edit ``/etc/cdap/conf/cdap-site.xml`` on each host running a CDAP service, substituting the Kerberos
       primary (user) for ``<cdap-principal>``, and your Kerberos authentication realm for ``EXAMPLE.COM``,
       when adding these two properties:
@@ -332,7 +332,7 @@ A. In order to configure **CDAP for Kerberos authentication:**
           <name>cdap.master.kerberos.keytab</name>
           <value>/etc/security/keytabs/cdap.service.keytab</value>
         </property>
-  
+
         <property>
           <name>cdap.master.kerberos.principal</name>
           <value><cdap-principal>/_HOST@EXAMPLE.COM</value>
@@ -344,11 +344,11 @@ A. In order to configure **CDAP for Kerberos authentication:**
       .. highlight:: console
 
    #. The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-      that by running the following command as the ``hdfs`` user (change the ownership in the 
+      that by running the following command as the ``hdfs`` user (change the ownership in the
       command from ``cdap`` to whatever is the ``<cdap-principal>``)::
-   
+
         $ |su_hdfs| && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
-     
+
    #. When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
         $ echo "grant 'cdap', 'RWCA'" | hbase shell
@@ -357,7 +357,7 @@ A. In order to configure **CDAP for Kerberos authentication:**
 
 .. configuration-yarn-for-secure-hadoop:
 
-B. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be 
+B. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` user must be
    able to launch YARN containers, either by adding it to the YARN ``allowed.system.users``
    whitelist (preferred) or by adjusting the YARN ``min.user.id`` to include the ``<cdap-principal>`` user.
 
@@ -365,10 +365,10 @@ B. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` us
 
    .. highlight:: xml
 
-   #. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts. 
-      For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system 
+   #. To allow CDAP to act as a Hive client, it must be given ``proxyuser`` permissions and allowed from all hosts.
+      For example: set the following properties in the configuration file ``core-site.xml``, where ``cdap`` is a system
       group to which the ``cdap`` user is a member::
-  
+
         <property>
           <name>hadoop.proxyuser.hive.groups</name>
           <value>cdap,hadoop,hive</value>
@@ -377,11 +377,11 @@ B. In order to configure **YARN for secure Hadoop:** the ``<cdap-principal>`` us
           <name>hadoop.proxyuser.hive.hosts</name>
           <value>*</value>
         </property>
-  
-   #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer`` 
+
+   #. To execute Hive queries on a secure cluster, the cluster must be running the MapReduce ``JobHistoryServer``
       service. Consult your distribution documentation on the proper configuration of this service.
-   #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service 
-      must be configured for Kerberos authentication. Consult your distribution documentation on the proper 
+   #. To execute Hive queries on a secure cluster using the CDAP Explore Service, the Hive MetaStore service
+      must be configured for Kerberos authentication. Consult your distribution documentation on the proper
       configuration of the Hive MetaStore service.
 
    With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.

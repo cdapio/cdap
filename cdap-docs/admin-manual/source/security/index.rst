@@ -30,7 +30,7 @@ This section covers how to setup these security mechanisms on a secure CDAP inst
 
 Additional security information, including client APIs, the authentication process,
 developing authorization extensions, and authorization policies is covered in the
-Developers’ Manual :ref:`developers:security-index` section.
+:ref:`Developer Manual's <developer:developer-index>` :ref:`developer:security-index` section.
 
 .. NOTE: INCLUDED IN OTHER FILES
 .. _admin-security-summary-start:

@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: Missing Page
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :description: Missing Page or Missing Reference
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 :hide-relations: true
 :hide-global-toc: true
@@ -26,8 +26,8 @@ Here's what we can offer in the way of help:
 
 .. rubric:: Perhaps you were trying to reach...
 
-.. |developers-manual| replace:: **Developers’ Manual**
-.. _developers-manual: developers-manual/index.html
+.. |developer-manual| replace:: **Developer Manual**
+.. _developer-manual: developer-manual/index.html
 
 .. |admin-manual| replace:: **Administration Manual**
 .. _admin-manual: admin-manual/index.html
@@ -47,34 +47,29 @@ Here's what we can offer in the way of help:
 .. |faq| replace:: **FAQ**
 .. _faq: reference-manual/faq.html
 
-- |developers-manual|_
-- |admin-manual|_ 
+- |developer-manual|_
+- |admin-manual|_
 - |examples-manual|_
 - |reference-manual|_
-- |release-notes|_ 
-- |glossary|_ 
-- |faq|_ 
+- |release-notes|_
+- |glossary|_
+- |faq|_
 
 
 .. rubric:: Try the Homepage
 
-The **main page for the documentation:** :ref:`CDAP Documentation <documentation-index>`
+The **main page for the documentation:** is :ref:`CDAP Documentation <documentation-index>`.
 
 
 .. rubric:: Search
 
-The site has a **Quick Search**, located in the left sidebar and on the 
+The site has a **Search**, located in the top bar and on the
 `Search page <search.html>`__.
-
-*Quick Search* is a local keyword search; not as comprehensive as an external search
-engine, but fast and often sufficiently accurate. Note that the Search function will
-automatically search for all of the words. Pages containing fewer words won't appear in
-the result list.
 
 
 .. rubric:: Contact Us
 
-Post a message at either the two CDAP groups:
+Post a message at one of the two CDAP groups:
 
 - `CDAP Users: cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
 

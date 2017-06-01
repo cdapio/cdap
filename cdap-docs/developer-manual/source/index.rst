@@ -5,9 +5,9 @@
 
 .. _developer-index:
 
-=======================
-CDAP Developer’s Manual
-=======================
+=====================
+CDAP Developer Manual
+=====================
 
 .. |getting-started| replace:: **Getting Started Developing:**
 .. _getting-started: getting-started/index.html

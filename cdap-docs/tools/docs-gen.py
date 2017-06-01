@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Copyright © 2014-2016 Cask Data, Inc.
+# Copyright © 2014-2017 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@
 # which is given relative to the script location.
 #
 # PDF generation examples:
-# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-enterprise-dependencies.pdf ../developers-manual/source/licenses/cdap-enterprise-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-level-1-dependencies.pdf    ../developers-manual/source/licenses/cdap-level-1-dependencies.rst
-# python doc-gen.py -g pdf -o ../../../developers-manual/licenses-pdf/cdap-local-sandbox-dependencies.pdf ../developers-manual/source/licenses/cdap-local-sandbox-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-manual/licenses-pdf/cdap-enterprise-dependencies.pdf ../developer-manual/source/licenses/cdap-enterprise-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-manual/licenses-pdf/cdap-level-1-dependencies.pdf    ../developer-manual/source/licenses/cdap-level-1-dependencies.rst
+# python doc-gen.py -g pdf -o ../../../developer-manual/licenses-pdf/cdap-local-sandbox-dependencies.pdf ../developer-manual/source/licenses/cdap-local-sandbox-dependencies.rst
 #
 
 VERSION = "0.0.4"
@@ -207,10 +207,10 @@ def process_pdf(input_file, options):
 
     # Generate PDF
 #     rst2pdf
-#     --config="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-config"
-#     --stylesheets="/Users/*/*/cdap/docs/developers-manual/source/_templates/pdf-stylesheet"
-#     -o "/Users/*/*/cdap/docs/developers-manual/build-pdf/rest2.pdf"
-#     "/Users/*/*/cdap/docs/developers-manual/source/rest.rst_temp”
+#     --config="/Users/*/*/cdap/docs/developer-manual/source/_templates/pdf-config"
+#     --stylesheets="/Users/*/*/cdap/docs/developer-manual/source/_templates/pdf-stylesheet"
+#     -o "/Users/*/*/cdap/docs/developer-manual/build-pdf/rest2.pdf"
+#     "/Users/*/*/cdap/docs/developer-manual/source/rest.rst_temp”
 
     command = 'rst2pdf --config="%s" --stylesheets="%s" -o "%s" %s' % (config, stylesheets, output, temp_file)
     print "command: %s" % command

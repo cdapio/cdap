@@ -14,7 +14,7 @@ Lifecycle HTTP RESTful API
 Use the CDAP Lifecycle HTTP RESTful API to deploy or delete applications and manage the lifecycle of
 flows, MapReduce and Spark programs, custom services, workers, and workflows.
 
-Details of these CDAP components can be found in the :ref:`Developers' Manual: Building Blocks <building-blocks>`.
+Details of these CDAP components can be found in the :ref:`Developer Manual: Building Blocks <building-blocks>`.
 
 .. Base URL explanation
 .. --------------------
@@ -1194,7 +1194,7 @@ Example::
   GET /v3/namespaces/default/apps/WordCount/flows/WordCounter/live-info
 
 The response is formatted in JSON; an example of this is shown in
-:ref:`CDAP Testing and Debugging. <developers:debugging-distributed>`
+:ref:`CDAP Testing and Debugging <developer:debugging-distributed>`.
 
 
 .. _http-restful-api-lifecycle-scale:

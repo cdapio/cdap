@@ -14,7 +14,7 @@ Namespace HTTP RESTful API
 
 Use the CDAP Namespace HTTP RESTful API to create, list, and delete namespaces in the CDAP instance.
 
-Namespaces, their use and examples, are described in the :ref:`Developers' Manual: Namespaces
+Namespaces, their use and examples, are described in the :ref:`Developer Manual: Namespaces
 <namespaces>`.
 
 The definition of namespace names supported by this API is described under

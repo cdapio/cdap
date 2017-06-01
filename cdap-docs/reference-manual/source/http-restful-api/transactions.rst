@@ -15,7 +15,7 @@ Transaction Service HTTP RESTful API
 Use the CDAP Transaction Service HTTP RESTful API to access selected
 internals of the CDAP Transaction Service that are exposed via endpoints.
 
-Additional details are found in the :ref:`Developers' Manual: Transaction System <developers:transaction-system>`.
+Additional details are found in the :ref:`Developer Manual: Transaction System <developer:transaction-system>`.
 
 .. Base URL explanation
 .. --------------------

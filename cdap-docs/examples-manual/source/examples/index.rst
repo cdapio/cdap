@@ -15,6 +15,7 @@ Examples
    :maxdepth: 1
    :titlesonly:
 
+   Introduction to CDAP <introduction-to-cdap>
    Hello World <hello-world>
    Clicks and Views <clicks-and-views>
    Count Random <count-random>
@@ -33,8 +34,15 @@ Examples
    Wikipedia Pipeline <wikipedia-data-pipeline>
    Word Count <word-count>
 
-In addition to the :ref:`Getting Started's <getting-started-index>`
-:ref:`Quick Start/Web Log Analytics example, <quick-start>` the CDAP Local Sandbox includes these examples:
+
+For a comprehensive inital introduction to CDAP and its capabilities, follow the
+:ref:`Introduction to CDAP <introduction-to-cdap>` tutorial, covering everything from installation
+of a CDAP Local Sandbox through the creation of a real-world application.
+
+For developers intent on building Java-based CDAP applications, see the :ref:`Getting Started's
+<getting-started-index>` :ref:`Quick Start/Web Log Analytics <quick-start>` example.
+
+The :ref:`CDAP Local Sandbox <local-sandbox>` includes these examples in the download:
 
 .. list-table::
   :widths: 15 60
@@ -102,12 +110,12 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
 
 .. rubric:: What's Next
 
-You can learn more about developing data application using CDAP by:
+For more about developing data application using CDAP:
 
-- Look at our :ref:`How-To Guides<guides-index>` and
-  :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
-  longer tutorials covering a complete range of Big Data application topics.
-- Exploring the web analytics application :doc:`source code.<web-analytics>` It includes
+- Look at our :ref:`How-To Guides <guides-index>` and :ref:`Tutorials <tutorials>`, with a
+  collection of quick how-to-guides and longer tutorials covering a complete range of Big
+  Data application topics.
+- Explore a web analytics application :doc:`source code <web-analytics>`. It includes
   test cases that show unit-testing an application.
 - For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and
   :ref:`Building Blocks <building-blocks>` sections.

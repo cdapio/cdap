@@ -16,19 +16,19 @@ Integrating CDAP with Impala
 When using CDAP with Impala:
 
 .. |cdap-pipelines| replace:: **Data Pipelines:**
-.. _cdap-pipelines: ../../../developers-manual/pipelines/index.html
+.. _cdap-pipelines: ../../../developer-manual/pipelines/index.html
 
 - |cdap-pipelines|_ Using **CDAP pipelines** and **plugins** to create either real-time or batch data pipelines
 
 
 .. |stream| replace:: **Stream Exploration:**
-.. _stream: ../../../developers-manual/data-exploration/streams.html
+.. _stream: ../../../developer-manual/data-exploration/streams.html
 
 - |stream|_ It is often useful to be able to **examine data in a stream** in an ad-hoc manner through SQL-like queries
 
 
 .. |fileset| replace:: **Fileset Exploration:**
-.. _fileset: ../../../developers-manual/data-exploration/filesets.html
+.. _fileset: ../../../developer-manual/data-exploration/filesets.html
 
 - |fileset|_ The **CDAP FileSet Datasets** can be explored through ad-hoc SQL-like queries.
 
@@ -92,7 +92,7 @@ You can also attach a schema to your stream to enable more powerful queries::
 On one of our test clusters, the above query took just about two minutes to complete.
 Data in CDAP is integrated with Apache Hive, and the above query above translates to a Hive query.
 As such, it will launch two MapReduce jobs in order to calculate the query results, which
-is why it takes minutes instead of seconds. 
+is why it takes minutes instead of seconds.
 
 To reduce query time, you can use Impala to query the data instead of Hive. Since streams
 are written in a custom format, they cannot be directly queried through Impala. Instead,
@@ -103,7 +103,7 @@ To do this, write the following JSON to a config file:
 
 .. parsed-literal::
   :class: copyable copyable-text
-           
+
   {
     "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
     "artifact": {
@@ -183,7 +183,7 @@ To do this, write the following JSON to a config file:
   }
 
 **Note:** The above JSON has been re-formatted to fit and requires editing (remove the line endings added to
-the ``schema`` values) to be a conforming JSON file. 
+the ``schema`` values) to be a conforming JSON file.
 
 Then use your config file with the ``cdap-data-pipeline`` artifact to create an application through the CLI.
 For example, if you wrote the above JSON to a file named ``conversion.json``:
@@ -199,7 +199,7 @@ will not run until you resume it::
 
   cdap > resume schedule trades_conversion.dataPipelineSchedule
 
-This will start a schedule that will run the workflow every ten minutes. 
+This will start a schedule that will run the workflow every ten minutes.
 The next time the workflow runs, it will spawn a MapReduce job that reads all events added
 in the past ten minutes, writes each event to Avro encoded files, and registers a new
 partition in the Hive Metastore. We can then query the contents using Impala. On a
