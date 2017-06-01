@@ -17,8 +17,10 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
@@ -37,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -81,9 +84,10 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
                        final ConstraintCheckerService constraintCheckerService,
                        final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
     this.datasetFramework = datasetFramework;
-    DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
-                                                                   txClient, Schedulers.STORE_DATASET_ID.getParent(),
-                                                                   Collections.<String, String>emptyMap(), null, null);
+    final DynamicDatasetCache datasetCache =
+      new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                  txClient, Schedulers.STORE_DATASET_ID.getParent(),
+                                  Collections.<String, String>emptyMap(), null, null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
 
@@ -101,6 +105,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             }
             schedulerService.startAndWait();
             migrateSchedules(namespaceQueryAdmin, store);
+            cleanupJobs();
             constraintCheckerService.startAndWait();
             notificationSubscriberService.startAndWait();
           }
@@ -114,6 +119,34 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         };
       }
     }, co.cask.cdap.common.service.RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS));
+  }
+
+  // Attempts to remove all jobs that are in PENDING_LAUNCH state.
+  // These are jobs that were about to be launched, but the scheduler shut down or crashed after the job was marked
+  // PENDING_LAUNCH, but before they were actually launched.
+  // This should only be called at startup.
+  private void cleanupJobs() {
+    try {
+      transactional.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          JobQueueDataset jobQueue = Schedulers.getJobQueue(context, datasetFramework);
+          try (CloseableIterator<Job> jobIter = jobQueue.fullScan()) {
+            LOG.info("Cleaning up jobs in state {}.", Job.State.PENDING_LAUNCH);
+            while (jobIter.hasNext()) {
+              Job job = jobIter.next();
+              if (job.getState() == Job.State.PENDING_LAUNCH) {
+                LOG.warn("Removing job because it was left in state {} from a previous run of the scheduler: {} .",
+                         Job.State.PENDING_LAUNCH, job);
+                jobQueue.deleteJob(job);
+              }
+            }
+          }
+        }
+      });
+    } catch (TransactionFailureException exception) {
+      LOG.warn("Failed to cleanup jobs upon startup.", exception);
+    }
   }
 
   private void migrateSchedules(final NamespaceQueryAdmin namespaceQueryAdmin, final Store appMetaStore)

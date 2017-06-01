@@ -217,7 +217,14 @@
       </div>
     </div>
     <div class="btn margin-left"
-         ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})">
+         ui-sref="hydrator.create({data: TopPanelCtrl.cloneConfig, type: TopPanelCtrl.app.type, isClone: true})"
+         ng-disabled="TopPanelCtrl.isCloneDisabled"
+         uib-tooltip="etl-batch and etl-realtime pipelines are no longer supported"
+         tooltip-enable="TopPanelCtrl.isCloneDisabled"
+         tooltip-placement="bottom-right"
+         tooltip-append-to-body="true"
+         tooltip-class="toppanel-tooltip"
+         ng-class="{'disabled': TopPanelCtrl.isCloneDisabled}">
       <div class="btn-container">
         <span class="icon-clone"></span>
         <div class="button-label">Clone</div>

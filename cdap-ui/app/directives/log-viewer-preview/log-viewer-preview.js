@@ -33,7 +33,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
   vm.viewLimit = 100;
   vm.errorRetrievingLogs = false;
 
-  const showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle';
+  const showCondensedLogsQuery = ' AND .origin=plugin OR MDC:eventType=lifecycle OR MDC:eventType=userLog';
 
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
@@ -708,7 +708,7 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
     let mdc = log.mdc;
     let source = `${log.loggerName}#${log.lineNumber}`;
     // system log
-    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle')) {
+    if (!(mdc['.origin'] === 'plugin' || mdc['.origin'] === 'program' && mdc['MDC:eventType'] === 'lifecycle' || mdc['MDC:eventType'] === 'userLog')) {
       source += `-${log.threadName}`;
     }
     return source;

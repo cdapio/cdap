@@ -40,7 +40,7 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
     if (numRunning >= maxConcurrency) {
         LOG.debug("Skipping run of program {} from schedule {} because there are at least {} running runs.",
                   schedule.getProgramId(), schedule.getName(), maxConcurrency);
-      return notSatisfied();
+      return notSatisfied(context);
     }
 
     int numSuspended =
@@ -49,15 +49,16 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
         LOG.debug("Skipping run of program {} from schedule {} because there are at least" +
                     "{} running runs and at least {} suspended runs.",
                   schedule.getProgramId(), schedule.getName(), numRunning, numSuspended);
-      return notSatisfied();
+      return notSatisfied(context);
     }
     return ConstraintResult.SATISFIED;
   }
 
-  private ConstraintResult notSatisfied() {
+  private ConstraintResult notSatisfied(ConstraintContext context) {
     if (!waitUntilMet) {
       return ConstraintResult.NEVER_SATISFIED;
     }
-    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED, TimeUnit.SECONDS.toMillis(10));
+    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
+                                context.getCheckTimeMillis() + TimeUnit.SECONDS.toMillis(10));
   }
 }

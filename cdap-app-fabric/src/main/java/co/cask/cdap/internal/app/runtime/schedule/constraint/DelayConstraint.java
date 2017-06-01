@@ -36,6 +36,7 @@ public class DelayConstraint extends ProtoConstraint.DelayConstraint implements 
     if (elapsedTime >= millisAfterTrigger) {
       return ConstraintResult.SATISFIED;
     }
-    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED, millisAfterTrigger - elapsedTime);
+    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
+                                context.getJob().getCreationTime() + millisAfterTrigger);
   }
 }

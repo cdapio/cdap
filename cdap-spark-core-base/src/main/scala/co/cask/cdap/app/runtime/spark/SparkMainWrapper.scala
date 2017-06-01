@@ -106,14 +106,7 @@ object SparkMainWrapper {
 
             // main() method
             case cls =>
-              getMainMethod(cls).fold(
-                throw new IllegalArgumentException(userSparkClass.getName
-                  + " is not a supported Spark program. It should implement either "
-                  + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
-                  + " or has a main method defined")
-              )(
-                _.invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
-              )
+              getMainMethod(cls).invoke(null, RuntimeArguments.toPosixArray(runtimeContext.getRuntimeArguments))
           }
           stopped = true
         } finally {
@@ -135,12 +128,18 @@ object SparkMainWrapper {
     }
   }
 
-  private def getMainMethod(obj: Class[_]): Option[Method] = {
+  private def getMainMethod(obj: Class[_]): Method = {
     try {
       val mainMethod = obj.getDeclaredMethod("main", classOf[Array[String]])
-      if (Modifier.isStatic(mainMethod.getModifiers)) Some(mainMethod) else None
+      if (!Modifier.isStatic(mainMethod.getModifiers)) {
+        throw new IllegalArgumentException("Static modifiers not used for main method of " + obj.getName)
+      }
+      mainMethod
     } catch {
-      case _: Throwable => None
+      case e: NoSuchMethodException => throw new IllegalArgumentException(obj.getName
+        + " is not a supported Spark program. It should either implement "
+        + classOf[SparkMain].getName + " or " + classOf[JavaSparkMain].getName
+        + " or define a main method")
     }
   }
 

@@ -104,6 +104,6 @@ public class TimeRangeConstraint extends ProtoConstraint.TimeRangeConstraint imp
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
     return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
-                                calendar.getTimeInMillis() - context.getCheckTimeMillis());
+                                calendar.getTimeInMillis());
   }
 }

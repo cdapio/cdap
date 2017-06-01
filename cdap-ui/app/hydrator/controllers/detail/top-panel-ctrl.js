@@ -100,6 +100,8 @@ class HydratorDetailTopPanelController {
     this.validToStartOrSchedule = true;
     this.pipelineAction = 'Run';
 
+    this.isCloneDisabled = [GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(HydratorPlusPlusDetailNonRunsStore.getArtifact().name) !== -1;
+
     if (Object.keys(this.macrosMap).length === 0) {
       this.fetchMacros();
     }
