@@ -13,6 +13,7 @@ CDAP Administration Manual Table of Contents
     CDAP Components <cdap-components>
     Deployment Architectures <deployment-architectures>
     Hadoop Compatibility <hadoop-compatibility>
+    CDAP and Hadoop Compatibility <cdap-hadoop-compatibility>
     System Requirements <system-requirements>
     Installation <installation/index>
     Verification <verification>
