@@ -83,7 +83,8 @@ case ${1} in
   upgrade) shift; cdap_upgrade_tool ${@}; __ret=${?} ;;
   version) shift; cdap_version_command ${@}; __ret=${?} ;;
   run) shift; cdap_run_class ${@}; __ret=${?} ;;
-  sdk) shift; cdap_sdk ${@}; __ret=${?} ;;
+  sdk) shift; echo "[WARN] sdk commands are deprecated, please use sandbox commands instead."; cdap_sdk ${@}; __ret=${?} ;;
+  sandbox) shift; cdap_sdk ${@}; __ret=${?} ;;
   setup) shift; cdap_setup ${@}; __ret=${?} ;;
   debug) shift; cdap_debug ${@}; __ret=${?} ;;
   *)
@@ -107,8 +108,7 @@ case ${1} in
     echo "    setup        - Setup the specified component (coprocessors) required by CDAP at runtime"
     echo
     else
-    echo "    sdk          - Sends the arguments (start/stop/etc.) to the Standalone CDAP service on this host"
-    echo
+    echo "    sandbox      - Sends the arguments (start/stop/etc.) to the CDAP Sandbox on this host"
     fi
     echo "    apply-pack   - Installs a CDAP Pack specified as an argument"
     echo "    cli          - Starts an interactive CDAP CLI session"

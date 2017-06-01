@@ -905,7 +905,7 @@ cdap_version_command() {
   local readonly __context=$(cdap_context)
   local __component __name
   if [[ ${__context} == sdk ]]; then
-    echo "CDAP SDK version $(cdap_version)"
+    echo "CDAP Sandbox version $(cdap_version)"
     echo
   else # Distributed, possibly CLI-only
     if [[ -r ${CDAP_HOME}/VERSION ]]; then
@@ -933,11 +933,11 @@ cdap_version_command() {
 #
 cdap_sdk_usage() {
   echo
-  echo "Usage: ${0} sdk {start|stop|restart|status|usage}"
+  echo "Usage: ${0} sandbox {start|stop|restart|status|usage}"
   echo
   echo "Additional options with start, restart:"
-  echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
-  echo "--foreground to run the SDK in the foreground, showing logs on STDOUT"
+  echo "--enable-debug [ <port> ] to connect to a debug port for CDAP Sandbox (default port is 5005)"
+  echo "--foreground to run the Sandbox in the foreground, showing logs on STDOUT"
   echo
   return 0
 }
@@ -958,13 +958,13 @@ cdap_sdk_restart() { cdap_sdk_stop ; cdap_sdk_start ${@}; };
 #
 # cdap_sdk_stop
 #
-cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
+cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Sandbox"; };
 
 #
 # cdap_sdk_check_before_start
 #
 cdap_sdk_check_before_start() {
-  cdap_check_pidfile ${__pidfile} Standalone || return ${?}
+  cdap_check_pidfile ${__pidfile} Sandbox || return ${?}
   cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
@@ -1023,7 +1023,7 @@ cdap_sdk_start() {
   cd "${CDAP_HOME}"
 
   # Start SDK processes
-  echo -n "$(date) Starting CDAP Standalone (SDK) ..."
+  echo -n "$(date) Starting CDAP Sandbox ..."
   if ${__foreground}; then
     echo
     nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
@@ -1391,7 +1391,7 @@ cdap_sdk() {
       ${__command} ${__foreground} ${__debug} ${__port} ${__arg}
       __ret=${?}
       ;;
-    status) cdap_status_pidfile ${__pidfile} "CDAP Standalone (SDK)"; __ret=${?} ;;
+    status) cdap_status_pidfile ${__pidfile} "CDAP Sandbox"; __ret=${?} ;;
     stop) cdap_sdk_stop; __ret=${?} ;;
     usage) cdap_sdk_usage; __ret=${?} ;;
     cleanup) cdap_sdk_cleanup; __ret=${?} ;;

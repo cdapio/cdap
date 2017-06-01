@@ -279,7 +279,7 @@ public class StandaloneMain {
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       cConf.getInt(Constants.Dashboard.BIND_PORT);
-    System.out.println("Standalone CDAP started successfully.");
+    System.out.println("CDAP Sandbox started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
 
