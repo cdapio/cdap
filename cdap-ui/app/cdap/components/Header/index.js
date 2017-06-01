@@ -174,14 +174,12 @@ export default class Header extends Component {
                     isActive={!isCDAPActive}
                   >
                     {T.translate('features.Navbar.dataprepLabel')}
-                    <span className="beta-badge">BETA</span>
                   </NavLink>
                 )
               :
                 (
                   <a href={dataprepUrl}>
                     {T.translate('features.Navbar.dataprepLabel')}
-                    <span className="beta-badge">BETA</span>
                   </a>
                 )
             }
