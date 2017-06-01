@@ -504,6 +504,7 @@ cdap_set_spark() {
       # Otherwise the spark-shell won't run correctly
       unset SPARK_HOME
       local __spark_shell=$(which spark-shell 2>/dev/null)
+      local __spark_client_version=None
       ERR_FILE=$(mktemp)
       SPARK_VAR_OUT=$(echo '(sys.env ++ Map(("sparkVersion", org.apache.spark.SPARK_VERSION),("scalaVersion", scala.util.Properties.releaseVersion.get))).foreach { case (k, v) => println(s"$k=$v") }; sys.exit' | spark-shell --master local 2>${ERR_FILE})
       __ret=$?
