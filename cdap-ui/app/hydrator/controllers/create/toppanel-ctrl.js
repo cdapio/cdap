@@ -744,13 +744,13 @@ class HydratorPlusPlusTopPanelCtrl {
       let validArtifact = isValidArtifact(jsonData.artifact);
       if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
         if (!validArtifact.name) {
-          invalidFields.push('Artifact name');
+          invalidFields.push('Artifact name: ' + jsonData.artifact.name);
         } else {
           if (!validArtifact.version) {
-            invalidFields.push('Artifact version');
+            invalidFields.push('Artifact version: ' + jsonData.artifact.version);
           }
           if (!validArtifact.scope) {
-            invalidFields.push('Artifact scope');
+            invalidFields.push('Artifact scope: ' + jsonData.artifact.scope);
           }
         }
         invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');

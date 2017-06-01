@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorStudioPlusPlus'
           },
           resolve: {
-            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService) {
+            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService, GLOBALS) {
               var defer = $q.defer();
               if ($stateParams.draftId) {
                 mySettings.get('hydratorDrafts', true)
@@ -74,6 +74,11 @@ angular.module(PKG.name + '.feature.hydrator')
                           supportedVersion: $rootScope.cdapVersion,
                           versionRange: draft.artifact.version
                         });
+                      let isOldArtifact = draft.artifact.name;
+                      if ([GLOBALS.etlRealtime, GLOBALS.etlBatch].indexOf(isOldArtifact) !== -1) {
+                        defer.reject(false);
+                        return defer.promise;
+                      }
                       if (isVersionInRange) {
                         draft.artifact.version = $rootScope.cdapVersion;
                       } else {
@@ -100,6 +105,11 @@ angular.module(PKG.name + '.feature.hydrator')
                     supportedVersion: $rootScope.cdapVersion,
                     versionRange: $stateParams.data.artifact.version
                   });
+                let isOldArtifact = $stateParams.data.artifact.name;
+                if ([GLOBALS.etlRealtime, GLOBALS.etlBatch].indexOf(isOldArtifact) !== -1) {
+                  defer.reject(false);
+                  return defer.promise;
+                }
                 if (isVersionInRange) {
                   $stateParams.data.artifact.version = $rootScope.cdapVersion;
                 } else {
@@ -124,7 +134,7 @@ angular.module(PKG.name + '.feature.hydrator')
             },
             rSelectedArtifact: function($stateParams, $q, myPipelineApi, myAlertOnValium, $state, GLOBALS, $rootScope) {
               var defer = $q.defer();
-              let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
+              let uiSupportedArtifacts = [GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
               let isArtifactValid = (backendArtifacts, artifact) => {
                 return backendArtifacts.filter( a =>
                   (a.name === artifact && a.version === $rootScope.cdapVersion)
@@ -199,7 +209,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 if (!res.length) {
                   return;
                 } else {
-                  let uiSupportedArtifacts = [GLOBALS.etlBatch, GLOBALS.etlRealtime, GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
+                  let uiSupportedArtifacts = [GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams];
                   let filteredRes = res
                     .filter( artifact => artifact.version === $rootScope.cdapVersion)
                     .filter( r => uiSupportedArtifacts.indexOf(r.name) !== -1 );
