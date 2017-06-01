@@ -515,10 +515,11 @@ class HydratorPlusPlusTopPanelCtrl {
      *  This is a cheat way for generating preview for the entire pipeline
      **/
 
+    let macrosWithNonEmptyValues = this.HydratorPlusPlusHydratorService.getMacrosWithNonEmptyValues(this.macrosMap);
     let previewConfig = {
       startStages: [],
       endStages: [],
-      runtimeArgs: Object.assign({}, this.macrosMap, this.userRuntimeArguments)
+      runtimeArgs: Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArguments)
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {

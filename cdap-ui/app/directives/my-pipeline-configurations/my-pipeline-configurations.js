@@ -22,7 +22,6 @@ angular.module(PKG.name + '.commons')
         runtimeArguments: '=',
         resolvedMacros: '=',
         applyRuntimeArguments: '&',
-        convertRuntimeArgsToMacros: '&',
         pipelineName: '@',
         pipelineAction: '@',
         runPipeline: '&',

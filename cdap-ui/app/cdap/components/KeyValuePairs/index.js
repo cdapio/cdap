@@ -25,7 +25,7 @@ const mapStateToFieldNameProps = (state, ownProps) => {
   return {
     name: state.keyValues.pairs[ownProps.index].key,
     value: state.keyValues.pairs[ownProps.index].value,
-    enabled: state.keyValues.pairs[ownProps.index].enabled,
+    provided: state.keyValues.pairs[ownProps.index].provided,
     notDeletable: state.keyValues.pairs[ownProps.index].notDeletable,
     showReset: state.keyValues.pairs[ownProps.index].showReset
   };
@@ -59,12 +59,12 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
         }
       });
     },
-    onEnabled: (e) => {
+    onProvided: (e) => {
       dispatch({
-        type: KeyValueStoreActions.setEnabled,
+        type: KeyValueStoreActions.setProvided,
         payload: {
           index: ownProps.index,
-          enabled: e.target.checked
+          provided: e.target.checked
         }
       });
     }
@@ -144,7 +144,7 @@ KeyValuePairs.propTypes = {
       key : PropTypes.string,
       value : PropTypes.string,
       uniqueId : PropTypes.string,
-      enabled: PropTypes.bool,
+      provided: PropTypes.bool,
       notDeletable : PropTypes.bool,
       showReset : PropTypes.bool
     }))

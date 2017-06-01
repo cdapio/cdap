@@ -101,6 +101,8 @@ class MyRealtimePipelineConfigCtrl {
       memoryMB: this.store.getClientMemoryMB(),
       virtualCores: this.store.getClientVirtualCores()
     };
+
+    this.containsMacros = HydratorPlusPlusHydratorService.runtimeArgsContainsMacros(this.runtimeArguments);
   }
 
   onRuntimeArgumentsChange(newRuntimeArguments) {
@@ -115,7 +117,7 @@ class MyRealtimePipelineConfigCtrl {
     let runtimeArgumentsPairs = runtimeArguments.pairs;
     for (let i = 0; i < runtimeArgumentsPairs.length; i++) {
       if (runtimeArgumentsPairs[i].notDeletable) {
-        if (!runtimeArgumentsPairs[i].enabled) {
+        if (runtimeArgumentsPairs[i].provided) {
           runtimeArgumentsPairs[i].showReset = false;
         } else {
           let runtimeArgKey = runtimeArgumentsPairs[i].key;
@@ -313,7 +315,7 @@ class MyRealtimePipelineConfigCtrl {
   }
 }
 
-MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state', 
+MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state',
 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
   .directive('keyValuePairs', function(reactDirective) {
