@@ -34,6 +34,7 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
   private final String extensionDir;
 
   public HBaseDDLExecutorFactory(CConfiguration cConf, Configuration hConf) {
+    super(cConf);
     this.extensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
     this.hBaseDDLExecutorLoader = new HBaseDDLExecutorLoader(extensionDir == null ? "" : extensionDir);
     this.context = new BasicHBaseDDLExecutorContext(cConf, hConf);

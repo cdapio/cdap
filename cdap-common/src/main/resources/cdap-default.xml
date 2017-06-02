@@ -980,6 +980,19 @@
     </description>
   </property>
 
+  <property>
+    <name>hive.version.resolution.strategy</name>
+    <value>auto.strict</value>
+    <description>
+      Determines how to behave when the Hive version on a cluster is an unsupported value.
+      The default value of "auto.strict" will require that the Hive version matches a
+      supported value; if Explore is enabled, CDAP Master will then not start if the Hive
+      version is unsupported. Set to "auto.latest" to use the latest Hive version of CDAP
+      modules available on the cluster with an unsupported Hive version. This property is
+      ignored for supported versions of Hive or if Explore has been disabled by setting
+      ${explore.enabled} to false.
+    </description>
+  </property>
 
   <!-- Gateway Configuration -->
 
@@ -1397,6 +1410,18 @@
     <value>15000</value>
     <description>
       RPC timeout from HBase operations performed from master services
+    </description>
+  </property>
+
+  <property>
+    <name>hbase.version.resolution.strategy</name>
+    <value>auto.strict</value>
+    <description>
+      Determines how to behave when the HBase version on a cluster is an unsupported
+      value. The default value of "auto.strict" will require that the HBase version match
+      a supported value, and CDAP Master will not start if the HBase version is
+      unsupported. Set to "auto.latest" to use the latest HBase version available on the
+      cluster with an unsupported HBase version.
     </description>
   </property>
 

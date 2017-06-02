@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.common.base.Function;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -46,7 +47,7 @@ public class ExploreServiceUtilsTest {
   @Test
   public void testHiveVersion() throws Exception {
     // This would throw an exception if it didn't pass
-    ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
+    ExploreServiceUtils.checkHiveSupport(CConfiguration.create(), getClass().getClassLoader());
   }
 
   @Test

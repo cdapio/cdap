@@ -181,7 +181,7 @@ public class StandaloneMain {
 
     boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
-      ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
+      ExploreServiceUtils.checkHiveSupport(cConf, getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 

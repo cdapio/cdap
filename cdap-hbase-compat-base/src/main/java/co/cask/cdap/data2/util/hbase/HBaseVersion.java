@@ -62,7 +62,8 @@ public class HBaseVersion {
     HBASE_10_CDH56("1.0-cdh5.6"),
     HBASE_11("1.1"),
     HBASE_12_CDH57("1.2-cdh5.7"),
-    UNKNOWN("unknown");
+    UNKNOWN("unknown"),
+    UNKNOWN_CDH("unknown-cdh");
 
     final String majorVersion;
 
@@ -266,6 +267,10 @@ public class HBaseVersion {
         return Version.HBASE_11;
       }
     } else {
+      VersionNumber ver = VersionNumber.create(versionString);
+      if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+        return Version.UNKNOWN_CDH;
+      }
       return Version.UNKNOWN;
     }
   }

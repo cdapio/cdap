@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.explore.service.hive.Hive12CDH5ExploreService;
 import co.cask.cdap.explore.service.hive.Hive12ExploreService;
@@ -62,6 +63,8 @@ public class ExploreServiceUtils {
     "org/apache/hadoop/hive/ql/session/SessionState.class", Collections.singleton("loadAuxJars")
   );
 
+  private static final String CDH = "cdh";
+
   /**
    * Hive support enum.
    */
@@ -75,16 +78,25 @@ public class ExploreServiceUtils {
     HIVE_CDH5_3(Pattern.compile("^.*cdh5.3\\..*$"), Hive13ExploreService.class),
     // CDH > 5.3 uses Hive >= 1.1 (which Hive14ExploreService supports)
     HIVE_CDH5(Pattern.compile("^.*cdh5\\..*$"), Hive14ExploreService.class),
+    // Current latest CDH version uses Hive >= 1.1. Need to update HIVE_CDH_LATEST when newer CDH version is added.
+    HIVE_CDH_LATEST(null, Hive14ExploreService.class),
 
     HIVE_12(null, Hive12ExploreService.class),
     HIVE_13(null, Hive13ExploreService.class),
     HIVE_14(null, Hive14ExploreService.class),
     HIVE_1_0(null, Hive14ExploreService.class),
     HIVE_1_1(null, Hive14ExploreService.class),
-    HIVE_1_2(null, Hive14ExploreService.class);
+    HIVE_1_2(null, Hive14ExploreService.class),
+    // Current latest non-CDH version is HIVE_1_2. Need to update HIVE_LATEST when newer non-CDH version is added.
+    HIVE_LATEST(HIVE_1_2);
 
     private final Pattern hadoopVersionPattern;
     private final Class<? extends ExploreService> hiveExploreServiceClass;
+
+    HiveSupport(HiveSupport hiveSupport) {
+      this.hadoopVersionPattern = hiveSupport.getHadoopVersionPattern();
+      this.hiveExploreServiceClass = hiveSupport.getHiveExploreServiceClass();
+    }
 
     HiveSupport(Pattern hadoopVersionPattern, Class<? extends ExploreService> hiveExploreServiceClass) {
       this.hadoopVersionPattern = hadoopVersionPattern;
@@ -100,14 +112,14 @@ public class ExploreServiceUtils {
     }
   }
 
-  public static Class<? extends ExploreService> getHiveService() {
-    HiveSupport hiveVersion = checkHiveSupport(null);
+  public static Class<? extends ExploreService> getHiveService(CConfiguration cConf) {
+    HiveSupport hiveVersion = checkHiveSupport(cConf, null);
     return hiveVersion.getHiveExploreServiceClass();
   }
 
-  static boolean shouldEscapeColumns(Configuration hConf) {
+  static boolean shouldEscapeColumns(CConfiguration cConf, Configuration hConf) {
     // backtick support was added in Hive13.
-    ExploreServiceUtils.HiveSupport hiveSupport = checkHiveSupport(hConf.getClassLoader());
+    ExploreServiceUtils.HiveSupport hiveSupport = checkHiveSupport(cConf, hConf.getClassLoader());
     if (hiveSupport == HiveSupport.HIVE_12
       || hiveSupport == HiveSupport.HIVE_CDH5_0
       || hiveSupport == HiveSupport.HIVE_CDH5_1) {
@@ -123,8 +135,8 @@ public class ExploreServiceUtils {
     return "column".equalsIgnoreCase(hConf.get("hive.support.quoted.identifiers", "column"));
   }
 
-  public static HiveSupport checkHiveSupport() {
-    return checkHiveSupport(ExploreUtils.getExploreClassloader());
+  public static HiveSupport checkHiveSupport(CConfiguration cConf) {
+    return checkHiveSupport(cConf, ExploreUtils.getExploreClassloader());
   }
 
   public static String getHiveVersion() {
@@ -144,7 +156,7 @@ public class ExploreServiceUtils {
   /**
    * Check that Hive is in the class path - with a right version.
    */
-  public static HiveSupport checkHiveSupport(@Nullable ClassLoader hiveClassLoader) {
+  public static HiveSupport checkHiveSupport(CConfiguration cConf, @Nullable ClassLoader hiveClassLoader) {
     // First try to figure which hive support is relevant based on Hadoop distribution name
     String hadoopVersion = VersionInfo.getVersion();
     for (HiveSupport hiveSupport : HiveSupport.values()) {
@@ -152,6 +164,25 @@ public class ExploreServiceUtils {
         hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
         return hiveSupport;
       }
+    }
+
+    boolean useLatestVersionForUnsupported = Constants.Explore.HIVE_AUTO_LATEST_VERSION.equals(
+      cConf.get(Constants.Explore.HIVE_VERSION_RESOLUTION_STRATEGY));
+    if (hadoopVersion.contains(CDH)) {
+      if (useLatestVersionForUnsupported) {
+        LOG.info("Hive distribution in CDH Hadoop version '{}' is not supported. " +
+                   "Continuing with latest version of Hive module available.",
+                 hadoopVersion);
+        return HiveSupport.HIVE_CDH_LATEST;
+      }
+      throw new RuntimeException(String.format("Hive distribution in Hadoop version '%s' is not supported." +
+                                                 " Set the configuration '%s' to false to start up without Explore. " +
+                                                 "Or set the configuration '%s' to '%s' to use the latest " +
+                                                 "version of Hive module available",
+                                               hadoopVersion,
+                                               Constants.Explore.EXPLORE_ENABLED,
+                                               Constants.Explore.HIVE_VERSION_RESOLUTION_STRATEGY,
+                                               Constants.Explore.HIVE_AUTO_LATEST_VERSION));
     }
 
     String hiveVersion = getHiveVersion(hiveClassLoader);
@@ -170,9 +201,20 @@ public class ExploreServiceUtils {
       return HiveSupport.HIVE_1_2;
     }
 
-    throw new RuntimeException("Hive distribution not supported. Set the configuration '" +
-                                 Constants.Explore.EXPLORE_ENABLED +
-                                 "' to false to start up without Explore.");
+    if (useLatestVersionForUnsupported) {
+      LOG.info("Hive distribution '{}' is not supported. Continuing with latest version of Hive module available.",
+               hiveVersion);
+      return HiveSupport.HIVE_LATEST;
+    }
+
+    throw new RuntimeException(String.format("Hive distribution '%s' is not supported." +
+                                               " Set the configuration '%s' to false to start up without Explore. " +
+                                               "Or set the configuration '%s' to '%s' to use the latest " +
+                                               "Hive module available",
+                                             hiveVersion,
+                                             Constants.Explore.EXPLORE_ENABLED,
+                                             Constants.Explore.HIVE_VERSION_RESOLUTION_STRATEGY,
+                                             Constants.Explore.HIVE_AUTO_LATEST_VERSION));
   }
 
   /**
