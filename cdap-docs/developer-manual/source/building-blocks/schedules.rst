@@ -78,7 +78,7 @@ execute immediately; instead, each job goes through a life cycle:
   has constraints, then it remains *pending constraints* until all constraints are fulfilled.
   The scheduling system now continuously checks whether its constraints are fulfilled.
   During this check, if any constraint is not fulfilled and it was added with
-  ``abortIfNotMet()``, then the job is canceled and removed from the job queue.
+  ``abortIfNotMet()``, then the job is aborted and removed from the job queue.
 - When all of a job’s constraints are fulfilled, the job’s state changes to *pending launch*.
   At this time, the scheduling system will prepare the execution of the workflow, and once
   it is started successfully, the job is complete and removed from the job queue. Note that
@@ -87,15 +87,15 @@ execute immediately; instead, each job goes through a life cycle:
   the scheduler’s point of view. If starting the workflow fails, however, the job remains
   *pending launch* and the system will retry execution.
 - If a job does not reach *pending launch* state before its configured timeout, it is
-  canceled and removed form the job queue.
+  aborted and removed form the job queue.
 - If a schedule is deleted, modified or disabled, then all jobs for that schedule are
-  canceled and removed from the job queue, regardless of their state. However, due to to
+  aborted and removed from the job queue, regardless of their state. However, due to
   timing and concurrency, a job that is *pending launch* may still execute around the same
   time that the schedule was modified.
 - At any given time, there is only one job in state *pending trigger* or *pending constraints*
   for a given schedule. That means that if the schedule’s trigger fires again, it does not
   create a new job in the job queue. Only after the job transitions into *pending launch*
-  state, the schedule’s trigger can create a new job.
+  state can the schedule's trigger create a new job.
 
 .. _schedules-events:
 
@@ -115,8 +115,9 @@ Run Constraints
 ===============
 
 A run constraint can either delay or prevent the execution of a schedule’s workflow, based
-on a condition represented by the constraint. Whether the execution is delayed or canceled
-can be made explicit by specifying either ``.waitUntilMet()`` or ``abortIfNotMet()``
+on a condition represented by the constraint. The default behavior of whether the execution
+is delayed or aborted is different for each type of run constraint |---| it can be configured
+explicitly by specifying either ``.waitUntilMet()`` or ``.abortIfNotMet()``
 when adding the constraint to the schedule builder. Every individual type of run constraint
 also has its own default for this behavior. These constraints are available:
 
@@ -135,7 +136,7 @@ also has its own default for this behavior. These constraints are available:
   of certain workflows to times when the load on the cluster is low.
 - ``withDurationSinceLastRun(long n, TimeUnit unit)``: Fulfilled only after n time
   units since the start of the last successful run of the same workflow. This is useful
-  to limit the frequency of execution of the workflow. By default, this cancels the
+  to limit the frequency of execution of the workflow. By default, this aborts the
   execution if not met.
 
 .. _schedules-triggers:
@@ -196,7 +197,7 @@ To ensure that the workflow runs at least once per hour::
 
 We added another schedule that runs once hourly, but only if no other run of the workflow
 in the last hour succeeded and no concurrent run is happening. We also add the concurrency
-constraint to the first schedule to make it does not kick off when the second schedule is
+constraint to the first schedule to make sure it does not kick off when the second schedule is
 just executing a job.
 
 Note that through the properties we can indicate to the workflow which schedule triggered
@@ -215,10 +216,10 @@ These actions can be performed on a schedule:
 - *Create*: This happens either as part of application deployment or through the Lifecycle HTTP
   RESTful API. After creating a schedule, it is initially disabled and will not execute any jobs.
 - *Disable*: Disabling a schedule will delete all pending jobs for the schedule from the job
-  queue, and prevent new jobs from being created. This action will not suspend or cancel any
+  queue, and prevent new jobs from being created. This action will not suspend or abort any
   current execution of the workflow.
 - *Enable*: This action will put the schedule back into an active state, after a *Disable*
-  action. Note that if the schedule was previously disabled, that canceled all pending jobs
+  action. Note that if the schedule was previously disabled, that aborted all pending jobs
   for the schedule. Therefore new triggers have to create new jobs for this schedule before
   its workflow is executed again.
 - *Delete*: This first disables the schedule and then permanently deletes it.
@@ -235,13 +236,13 @@ modifiying schedules through REST, redeploying the application, which may happen
 reasons unrelated to the schedules, would undo all those changes and reinstate the schedules
 defined by the ``configure()`` method. Because that is undesired, CDAP provides an option
 to configure whether schedules are controlled by the ``configure()`` method or not. This
-option is called ``app.deploy.update.schedules`` and is given as field of the
+option is called ``app.deploy.update.schedules`` and is given as a field of the
 :ref:`application deployment request <http-restful-api-lifecycle-create-app>`.
 
 - If this option is true, then application deployment will replace all schedules for
   the application with the schedules given by the ``configure()`` method;
 - if it is false, application deployment will not change any schedules, except that if
-  the application is updated, all schedules for programs that do not exists any longer
+  the application is updated, all schedules for programs that do not exist any longer
   after the update are deleted.
 
 .. rubric:: Special Runtime Arguments
