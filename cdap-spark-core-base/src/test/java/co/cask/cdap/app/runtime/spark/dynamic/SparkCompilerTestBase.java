@@ -109,6 +109,17 @@ public abstract class SparkCompilerTestBase {
     interpreter.interpret("val num = 10 + 10");
     Assert.assertEquals(20, interpreter.getValue("num").get());
     Assert.assertTrue(interpreter.getValue("num1").isEmpty());
+
+    // Use the ClassLoader to load the TestMain class and call it using reflection
+    File newOutputFile = TEMP_FOLDER.newFile();
+    Class<?> testMainClass = interpreter.getClassLoader().loadClass("co.cask.cdap.test.TestMain");
+    testMainClass.getDeclaredMethod("main", String[].class).invoke(null, new Object[] { new String[] {
+      newOutputFile.getAbsolutePath(), "x", "y", "z"
+    }});
+
+    // Verify the new output file content.
+    content = Files.toString(newOutputFile, StandardCharsets.UTF_8).trim();
+    Assert.assertEquals(content, Joiner.on(System.getProperty("line.separator")).join("x", "y", "z"));
   }
 
   @Test(expected = CompilationFailureException.class)

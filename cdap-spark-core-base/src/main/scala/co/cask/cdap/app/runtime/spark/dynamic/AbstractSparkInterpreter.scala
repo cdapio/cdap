@@ -66,4 +66,11 @@ trait AbstractSparkInterpreter extends SparkInterpreter {
   override def getValue[T](name: String): Option[T] = {
     getIMain().valueOfTerm(name).map(_.asInstanceOf[T])
   }
+
+  /**
+    * Returns the [[java.lang.ClassLoader]] used by the interpreter.
+    */
+  override def getClassLoader(): ClassLoader = {
+    getIMain().classLoader
+  }
 }
