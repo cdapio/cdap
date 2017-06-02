@@ -241,7 +241,8 @@ final class HttpHandlerGenerator {
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
     Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
-    String signature = Signatures.getMethodSignature(constructor, getContextType(delegateType),
+    String signature = Signatures.getMethodSignature(constructor, TypeToken.of(void.class),
+                                                     getContextType(delegateType),
                                                      TypeToken.of(MetricsContext.class));
 
     // Constructor(DelegatorContext, MetricsContext)

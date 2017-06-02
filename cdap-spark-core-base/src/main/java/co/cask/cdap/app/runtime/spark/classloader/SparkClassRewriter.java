@@ -22,12 +22,15 @@ import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.asm.Classes;
+import co.cask.cdap.internal.asm.Signatures;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -40,9 +43,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -259,22 +266,43 @@ public class SparkClassRewriter implements ClassRewriter {
   }
 
   /**
-   * Rewrites the ExecutorClassLoader so that it won't use system classloader as parent.
+   * Rewrites the ExecutorClassLoader so that it won't use system classloader as parent since CDAP classes
+   * are not in system classloader.
+   * Also optionally overrides the getResource, getResources and getResourceAsStream methods if they are not
+   * defined (for fixing SPARK-11818 for older Spark < 1.6).
    */
   private byte[] rewriteExecutorClassLoader(InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
-    ClassWriter cw = new ClassWriter(0);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+    final Type classloaderType = Type.getType(ClassLoader.class);
+    final Type parentClassLoaderType = Type.getObjectType("org/apache/spark/util/ParentClassLoader");
+    final Method parentLoaderMethod = new Method("parentLoader", parentClassLoaderType, new Type[0]);
+
+    // Map from getResource* methods to the method signature
+    // (can be null, since only method that has generic has signature)
+    final Map<Method, String> resourceMethods = new HashMap<>();
+    Method method = new Method("getResource", Type.getType(URL.class), new Type[]{Type.getType(String.class)});
+    resourceMethods.put(method, null);
+
+    method = new Method("getResources", Type.getType(Enumeration.class), new Type[] { Type.getType(String.class) });
+    resourceMethods.put(method, Signatures.getMethodSignature(method, new TypeToken<Enumeration<URL>>() { },
+                                                              TypeToken.of(String.class)));
+
+    method = new Method("getResourceAsStream", Type.getType(InputStream.class),
+                        new Type[] { Type.getType(String.class) });
+    resourceMethods.put(method, null);
 
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
-      private final Type classloaderType = Type.getType(ClassLoader.class);
-      private boolean needRewrite;
+      private boolean hasParentLoader;
+      private boolean rewriteInit;
 
       @Override
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        // Only generate
+        // Only rewrite `<init>` if the ExecutorClassloader extends from ClassLoader
         if (classloaderType.getInternalName().equals(superName)) {
-          needRewrite = true;
+          rewriteInit = true;
         }
         super.visit(version, access, name, signature, superName, interfaces);
       }
@@ -282,11 +310,12 @@ public class SparkClassRewriter implements ClassRewriter {
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        if (!needRewrite) {
-          return mv;
-        }
+        // If the resource method is declared, no need to generate at the end.
+        Method method = new Method(name, desc);
+        resourceMethods.remove(method);
+        hasParentLoader = hasParentLoader || parentLoaderMethod.equals(method);
 
-        if (!"<init>".equals(name)) {
+        if (!rewriteInit || !"<init>".equals(name)) {
           return mv;
         }
         return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
@@ -307,6 +336,37 @@ public class SparkClassRewriter implements ClassRewriter {
             }
           }
         };
+      }
+
+      @Override
+      public void visitEnd() {
+        // See if needs to implement the getResource, getResources and getResourceAsStream methods
+        // All implementations are delegating to the parentLoader
+        if (!hasParentLoader) {
+          super.visitEnd();
+          return;
+        }
+
+        for (Map.Entry<Method, String> entry : resourceMethods.entrySet()) {
+          // Generate the method.
+          // return parentLoader().getResource*(arg)
+          Method method = entry.getKey();
+          MethodVisitor mv = super.visitMethod(Modifier.PUBLIC, method.getName(),
+                                               method.getDescriptor(), entry.getValue(), null);
+          GeneratorAdapter generator = new GeneratorAdapter(Modifier.PUBLIC, method, mv);
+
+          // call `parentLoader()`
+          generator.loadThis();
+          generator.invokeVirtual(SPARK_EXECUTOR_CLASSLOADER_TYPE, parentLoaderMethod);
+
+          // Load the argument
+          generator.loadArg(0);
+
+          // Call the method on the parent loader.
+          generator.invokeVirtual(parentClassLoaderType, method);
+          generator.returnValue();
+          generator.endMethod();
+        }
       }
     }, ClassReader.EXPAND_FRAMES);
 
