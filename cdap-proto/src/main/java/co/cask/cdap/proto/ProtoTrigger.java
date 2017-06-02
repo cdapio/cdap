@@ -146,18 +146,18 @@ public abstract class ProtoTrigger implements Trigger {
    */
   public static class StreamSizeTrigger extends ProtoTrigger {
 
-    protected final StreamId stream;
+    protected final StreamId streamId;
     protected final int triggerMB;
 
-    public StreamSizeTrigger(StreamId stream, int triggerMB) {
+    public StreamSizeTrigger(StreamId streamId, int triggerMB) {
       super(Type.STREAM_SIZE);
-      this.stream = stream;
+      this.streamId = streamId;
       this.triggerMB = triggerMB;
       validate();
     }
 
-    public StreamId getStream() {
-      return stream;
+    public StreamId getStreamId() {
+      return streamId;
     }
 
     public int getTriggerMB() {
@@ -166,9 +166,9 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public void validate() {
-      ProtoTrigger.validateNotNull(getStream(), "stream");
-      ProtoTrigger.validateNotNull(getStream().getNamespace(), "stream namespace");
-      ProtoTrigger.validateNotNull(getStream().getStream(), "stream name");
+      ProtoTrigger.validateNotNull(getStreamId(), "stream");
+      ProtoTrigger.validateNotNull(getStreamId().getNamespace(), "stream namespace");
+      ProtoTrigger.validateNotNull(getStreamId().getStream(), "stream name");
       ProtoTrigger.validateInRange(getTriggerMB(), "trigger in MB", 1, null);
     }
 
@@ -177,18 +177,18 @@ public abstract class ProtoTrigger implements Trigger {
       return this == o ||
         o != null &&
           getClass().equals(o.getClass()) &&
-          Objects.equals(getStream(), ((StreamSizeTrigger) o).getStream()) &&
+          Objects.equals(getStreamId(), ((StreamSizeTrigger) o).getStreamId()) &&
           Objects.equals(getTriggerMB(), ((StreamSizeTrigger) o).getTriggerMB());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(getStream(), getTriggerMB());
+      return Objects.hash(getStreamId(), getTriggerMB());
     }
 
     @Override
     public String toString() {
-      return String.format("StreamSizeTrigger(%s, %d MB)", getStream(), getTriggerMB());
+      return String.format("StreamSizeTrigger(%s, %d MB)", getStreamId(), getTriggerMB());
     }
   }
 

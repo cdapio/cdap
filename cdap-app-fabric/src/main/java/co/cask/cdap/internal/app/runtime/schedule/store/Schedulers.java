@@ -150,7 +150,7 @@ public class Schedulers {
   public static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
     StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
     return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
-                                  trigger.getStream().getStream(), trigger.getTriggerMB());
+                                  trigger.getStreamId().getStream(), trigger.getTriggerMB());
   }
 
   public static void validateCronExpression(String cronExpression) {

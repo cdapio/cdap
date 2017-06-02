@@ -25,7 +25,7 @@ import co.cask.cdap.proto.id.StreamId;
  */
 public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements Trigger {
 
-  public StreamSizeTrigger(StreamId stream, int triggerMB) {
-    super(stream, triggerMB);
+  public StreamSizeTrigger(StreamId streamId, int triggerMB) {
+    super(streamId, triggerMB);
   }
 }

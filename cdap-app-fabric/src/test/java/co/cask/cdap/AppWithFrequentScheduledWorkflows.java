@@ -48,9 +48,10 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
                .triggerOnPartitions(DATASET_NAME2, 2));
     // Schedule the workflow to run in every min
-    scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_1).createTimeSchedule("* * * * *"), SCHEDULED_WORKFLOW_1);
+    schedule(buildSchedule(ONE_MIN_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1).triggerByTime("* * * * *"));
     // Schedule the workflow to run in every min with a different cron expression
-    scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_2).createTimeSchedule("*/1 * * * *"), SCHEDULED_WORKFLOW_2);
+    schedule(buildSchedule(ONE_MIN_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
+               .triggerByTime("*/1 * * * *"));
   }
 
   /**

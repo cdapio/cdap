@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -34,11 +35,11 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new SomeWorkflow());
     addWorkflow(new AnotherWorkflow());
-    scheduleWorkflow(Schedules.builder("SomeSchedule1").createTimeSchedule("0 4 * * *"), "SomeWorkflow");
-    scheduleWorkflow(Schedules.builder("SomeSchedule2").createTimeSchedule("0 5 * * *"), "SomeWorkflow");
-    scheduleWorkflow(Schedules.builder("AnotherSchedule1").createTimeSchedule("0 6 * * *"), "AnotherWorkflow");
-    scheduleWorkflow(Schedules.builder("AnotherSchedule2").createTimeSchedule("0 7 * * *"), "AnotherWorkflow");
-    scheduleWorkflow(Schedules.builder("AnotherSchedule3").createTimeSchedule("0 8 * * *"), "AnotherWorkflow");
+    schedule(buildSchedule("SomeSchedule1", ProgramType.WORKFLOW, "SomeWorkflow").triggerByTime("0 4 * * *"));
+    schedule(buildSchedule("SomeSchedule2", ProgramType.WORKFLOW, "SomeWorkflow").triggerByTime("0 5 * * *"));
+    schedule(buildSchedule("AnotherSchedule1", ProgramType.WORKFLOW, "AnotherWorkflow").triggerByTime("0 6 * * *"));
+    schedule(buildSchedule("AnotherSchedule2", ProgramType.WORKFLOW, "AnotherWorkflow").triggerByTime("0 7 * * *"));
+    schedule(buildSchedule("AnotherSchedule3", ProgramType.WORKFLOW, "AnotherWorkflow").triggerByTime("0 8 * * *"));
   }
 
   /**
