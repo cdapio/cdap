@@ -282,7 +282,7 @@ class HydratorPlusPlusTopPanelCtrl {
 
   fetchMacros() {
     let newMacrosMap = {};
-    let nodes = this.HydratorPlusPlusConfigStore.getNodes();
+    let nodes = this.HydratorPlusPlusConfigStore.getStages();
 
     for (let i = 0; i < nodes.length; i++) {
       let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
