@@ -306,6 +306,12 @@ public class EntityIdTest {
   }
 
   @Test
+  public void testArtifactId() {
+    Assert.assertTrue(ArtifactId.isValidArtifactId("cdap-artifact-id_2.10-1.0.0"));
+    Assert.assertTrue(ArtifactId.isValidArtifactId("cdap-artifact-id-1.0.0-2.10"));
+  }
+
+  @Test
   @Ignore
   public void printToString() {
     for (EntityId id : ids) {
