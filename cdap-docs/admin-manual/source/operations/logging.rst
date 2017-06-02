@@ -650,11 +650,6 @@ To enable the access logging, complete the following steps:
 
   **Note:** By default, these properties are already at the bottom of the ``logback.xml`` file but commented out.
 
-- After modification of ``logback.xml``, restart ``cdap-router`` and ``cdap-auth-server`` using the following commands::
-
-  $ /etc/init.d/cdap-router restart
-  $ /etc/init.d/cdap-auth-server restart
-
 - The log files ``access.log`` and ``external_auth_access.log`` will be available by default under ``/home/cdap``
   directory, to configure the log paths, simply provide the path of the log in the ``logback.xml`` file.
   For example, having::
@@ -662,6 +657,11 @@ To enable the access logging, complete the following steps:
     <file>/var/log/cdap/access.log</file>
 
   will change the ``access.log`` file to the path ``/var/log/cdap`` directory.
+
+- After modification of ``logback.xml``, restart ``cdap-router`` and ``cdap-auth-server`` using the following commands::
+
+  $ /etc/init.d/cdap-router restart
+  $ /etc/init.d/cdap-auth-server restart
 
 
 Monitoring Utilities
