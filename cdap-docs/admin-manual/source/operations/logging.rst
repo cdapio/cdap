@@ -494,7 +494,7 @@ CDAP looks for "logback" files located in a directory as set by the property
 .. _logging-monitoring-custom-logging-example:
 
 Example "logback" File for a Custom log pipeline
-----------------------------------------------------
+------------------------------------------------
 .. highlight:: xml
 
 Here is an example "logback" file, using two appenders (``STDOUT`` and
@@ -606,6 +606,62 @@ extension of Logback's ``LoggerContext``::
 Adding a dependency on the ``cdap-watchdog`` API will allow you to access the
 :cdap-java-source-github:`cdap-watchdog-api/src/main/java/co/cask/cdap/api/logging/AppenderContext.java`
 in your appender.
+
+
+.. _enabling-access-log:
+
+Enabling Access Log
+===================
+Access logging can be enabled on distributed CDAP with security turned on. Once enabled, each HTTP access via the
+Authentication Server and Router will be logged. Log output will be in the `standard Apache HTTPd access log format
+<http://httpd.apache.org/docs/2.2/logs.html#accesslog>`__.
+
+To enable the access logging, complete the following steps:
+
+- In the ``logback-container.xml`` file located in ``/etc/cdap/conf``, have the following properties::
+
+    <appender name="AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="http-access" level="TRACE" additivity="false">
+      <appender-ref ref="AUDIT" />
+    </logger>
+
+    <appender name="EXTERNAL_AUTH_AUDIT" class="ch.qos.logback.core.rolling.RollingFileAppender">
+      <file>external_auth_access.log</file>
+      <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>external_auth_access.log.%d{yyyy-MM-dd}</fileNamePattern>
+        <maxHistory>30</maxHistory>
+      </rollingPolicy>
+      <encoder>
+        <pattern>%msg%n</pattern>
+      </encoder>
+    </appender>
+    <logger name="external-auth-access" level="TRACE" additivity="false">
+      <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
+    </logger>
+
+  **Note:** By default, these properties are already at the bottom of the ``logback.xml`` file but commented out.
+
+- After modification of ``logback.xml``, restart ``cdap-router`` and ``cdap-auth-server`` using the following commands::
+
+  $ /etc/init.d/cdap-router restart
+  $ /etc/init.d/cdap-auth-server restart
+
+- The log files ``access.log`` and ``external_auth_access.log`` will be available by default under ``/home/cdap``
+  directory, to configure the log paths, simply provide the path of the log in the ``logback.xml`` file.
+  For example, having::
+
+    <file>/var/log/cdap/access.log</file>
+
+  will change the ``access.log`` file to the path ``/var/log/cdap`` directory.
 
 
 Monitoring Utilities
