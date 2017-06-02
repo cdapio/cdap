@@ -28,6 +28,7 @@ export default function WizardModal({children, title, isOpen, toggle, className}
       className={classnames("wizard-modal", className)}
       size="lg"
       backdrop='static'
+      zIndex="1061"
     >
       <ModalHeader>
         <span className="float-xs-left">
