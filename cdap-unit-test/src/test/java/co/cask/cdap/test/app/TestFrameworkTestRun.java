@@ -39,17 +39,17 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -809,9 +809,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
     final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
-    List<ScheduleSpecification> schedules = wfmanager.getSchedules();
+    List<ScheduleDetail> schedules = wfmanager.getProgramSchedules();
     Assert.assertEquals(1, schedules.size());
-    String scheduleName = schedules.get(0).getSchedule().getName();
+    String scheduleName = schedules.get(0).getName();
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
@@ -831,7 +831,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     wfmanager.getSchedule(scheduleName).suspend();
-    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
+    waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
     TimeUnit.SECONDS.sleep(3); // Sleep for three seconds to make sure scheduled workflows are pending to run
     // All runs should be completed
@@ -860,7 +860,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).resume();
 
     //Check that after resume it goes to "SCHEDULED" state
-    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SCHEDULED);
+    waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SCHEDULED);
 
     // Make sure new runs happens after resume
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -880,7 +880,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).suspend();
 
     // Check that after suspend it goes to "SUSPENDED" state
-    waitForScheduleState(scheduleName, wfmanager, Scheduler.ScheduleState.SUSPENDED);
+    waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
     // Test workflow token while suspended
     String pid = history.get(0).getPid();
@@ -944,11 +944,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   private void waitForScheduleState(final String scheduleId, final WorkflowManager wfmanager,
-                                    Scheduler.ScheduleState expected) throws Exception {
-    Tasks.waitFor(expected, new Callable<Scheduler.ScheduleState>() {
+                                    ProgramScheduleStatus expected) throws Exception {
+    Tasks.waitFor(expected, new Callable<ProgramScheduleStatus>() {
       @Override
-      public Scheduler.ScheduleState call() throws Exception {
-        return Scheduler.ScheduleState.valueOf(wfmanager.getSchedule(scheduleId).status(200));
+      public ProgramScheduleStatus call() throws Exception {
+        return ProgramScheduleStatus.valueOf(wfmanager.getSchedule(scheduleId).status(200));
       }
     }, 5, TimeUnit.SECONDS, 30, TimeUnit.MILLISECONDS);
   }

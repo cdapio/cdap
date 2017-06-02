@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -1039,7 +1039,7 @@ public class AuthorizationTest extends TestBase {
     }
 
     // but BOB should be able to get schedule status now
-    Assert.assertEquals(Scheduler.ScheduleState.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1050,7 +1050,7 @@ public class AuthorizationTest extends TestBase {
     SecurityRequestContext.setUserId(BOB.getName());
     // try to resume the schedule. This should pass and workflow should run
     scheduleManager.resume();
-    Assert.assertEquals(Scheduler.ScheduleState.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
     // wait for workflow to start
     workflowManager.waitForStatus(true);

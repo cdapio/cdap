@@ -41,23 +41,16 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.workflow.NodeStatus;
-import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -69,7 +62,6 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.store.DefaultNamespaceStore;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -88,7 +80,6 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -102,20 +93,16 @@ public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
-  private static Scheduler scheduler;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
     nsStore = injector.getInstance(DefaultNamespaceStore.class);
-    scheduler = injector.getInstance(Scheduler.class);
   }
 
   @Before
   public void before() throws Exception {
-    // Delete any schedules that may have been registered with Quartz during app deployment
-    scheduler.deleteAllSchedules(NamespaceId.DEFAULT);
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);
@@ -899,80 +886,6 @@ public class DefaultStoreTest {
   }
 
   private static final Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
-  private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
-                                                           AppWithWorkflow.SampleWorkflow.NAME);
-  private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.builder("Schedule1")
-    .setDescription("Every minute")
-    .createTimeSchedule("* * * * ?");
-  private static final Schedule schedule2 = Schedules.builder("Schedule2")
-    .setDescription("Every Hour")
-    .createTimeSchedule("0 * * * ?");
-  private static final Schedule scheduleWithSameName = Schedules.builder("Schedule2")
-    .setDescription("Every minute")
-    .createTimeSchedule("* * * * ?");
-  private static final Map<String, String> properties1 = ImmutableMap.of();
-  private static final Map<String, String> properties2 = ImmutableMap.of();
-  private static final ScheduleSpecification scheduleSpec1 =
-    new ScheduleSpecification(schedule1, new ScheduleProgramInfo(programType, AppWithWorkflow.SampleWorkflow.NAME),
-                              properties1);
-  private static final ScheduleSpecification scheduleSpec2 =
-    new ScheduleSpecification(schedule2, new ScheduleProgramInfo(programType, AppWithWorkflow.SampleWorkflow.NAME),
-                              properties2);
-  private static final ScheduleSpecification scheduleWithSameNameSpec =
-    new ScheduleSpecification(scheduleWithSameName, new ScheduleProgramInfo(programType,
-                                                                            AppWithWorkflow.SampleWorkflow.NAME),
-                              properties2);
-
-  @Test
-  public void testDynamicScheduling() throws Exception {
-    ApplicationSpecification spec = Specifications.from(new AppWithWorkflow());
-    ApplicationId appId = NamespaceId.DEFAULT.app(spec.getName());
-    store.addApplication(appId, spec);
-
-    Map<String, ScheduleSpecification> schedules = getSchedules(appId);
-    Assert.assertEquals(0, schedules.size());
-
-    store.addSchedule(program.toEntityId(), scheduleSpec1, false);
-    schedules = getSchedules(appId);
-    Assert.assertEquals(1, schedules.size());
-    Assert.assertEquals(scheduleSpec1, schedules.get("Schedule1"));
-
-    store.addSchedule(program.toEntityId(), scheduleSpec2, false);
-    schedules = getSchedules(appId);
-    Assert.assertEquals(2, schedules.size());
-    Assert.assertEquals(scheduleSpec2, schedules.get("Schedule2"));
-
-    try {
-      store.addSchedule(program.toEntityId(), scheduleWithSameNameSpec, false);
-      Assert.fail("Should have thrown Exception because multiple schedules with the same name are being added.");
-    } catch (AlreadyExistsException ex) {
-      ScheduleId expected = new ScheduleId(program.getNamespace().getId(), program.getApplication().getId(),
-                                           scheduleWithSameNameSpec.getSchedule().getName());
-      Assert.assertEquals(expected, ex.getObjectId());
-    }
-
-    store.deleteSchedule(program.toEntityId(), "Schedule2");
-    schedules = getSchedules(appId);
-    Assert.assertEquals(1, schedules.size());
-    Assert.assertEquals(null, schedules.get("Schedule2"));
-
-    try {
-      store.deleteSchedule(program.toEntityId(), "Schedule2");
-      Assert.fail();
-    } catch (NoSuchElementException e) {
-      // Expected
-    }
-    schedules = getSchedules(appId);
-    Assert.assertEquals(1, schedules.size());
-    Assert.assertEquals(null, schedules.get("Schedule2"));
-  }
-
-  private Map<String, ScheduleSpecification> getSchedules(ApplicationId appId) {
-    ApplicationSpecification application = store.getApplication(appId);
-    Assert.assertNotNull(application);
-    return application.getSchedules();
-  }
 
   @Test
   public void testRunningInRangeSimple() throws Exception {
