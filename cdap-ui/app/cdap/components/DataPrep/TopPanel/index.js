@@ -196,7 +196,6 @@ export default class DataPrepTopPanel extends Component {
         <strong>
           {T.translate('features.DataPrep.TopPanel.title')}
         </strong>
-        <span className="tag tag-success">BETA</span>
       </div>
     );
   }
