@@ -24,14 +24,18 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
+import org.apache.spark.rdd.RDD;
+import scala.collection.JavaConversions;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +48,8 @@ import java.util.Map;
 public class StringValueFilterCompute extends SparkCompute<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf conf;
+  private SparkInterpreter interpreter;
+  private Method computeMethod;
 
   public StringValueFilterCompute(Conf conf) {
     this.conf = conf;
@@ -62,21 +68,35 @@ public class StringValueFilterCompute extends SparkCompute<StructuredRecord, Str
     if (inputSchema != null && !inputSchema.equals(context.getOutputSchema())) {
       throw new IllegalStateException("runtime schema does not match what was set at configure time.");
     }
+
+    interpreter = context.createSparkInterpreter();
+    interpreter.compile(
+      "package test\n" +
+      "import co.cask.cdap.api.data.format._\n" +
+      "import org.apache.spark._\n" +
+      "import org.apache.spark.api.java._\n" +
+      "import org.apache.spark.rdd._\n" +
+      "object Compute {\n" +
+      "  def compute(rdd: RDD[StructuredRecord]): JavaRDD[StructuredRecord] = {\n" +
+      "    val value = \"" + conf.value + "\"\n" +
+      "    val field = \"" + conf.field + "\"\n" +
+      "    JavaRDD.fromRDD(rdd.filter(r => !value.equals(r.get(field))))\n" +
+      "  }\n" +
+      "}"
+    );
+
+    computeMethod = interpreter.getClassLoader().loadClass("test.Compute").getDeclaredMethod("compute", RDD.class);
   }
 
   @Override
   public JavaRDD<StructuredRecord> transform(SparkExecutionPluginContext context,
                                              JavaRDD<StructuredRecord> input) throws Exception {
-    return input.filter(new Function<StructuredRecord, Boolean>() {
-      @Override
-      public Boolean call(StructuredRecord v1) throws Exception {
-        return !conf.value.equals(v1.get(conf.field));
-      }
-    });
+    //noinspection unchecked
+    return (JavaRDD<StructuredRecord>) computeMethod.invoke(null, input.rdd());
   }
 
   /**
-   * Config for the plugin.
+   * Config for the plugin
    */
   public static class Conf extends PluginConfig {
     @Macro
