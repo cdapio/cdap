@@ -75,4 +75,9 @@ trait SparkInterpreter extends SparkCompiler {
     * @return an [[scala.Option]] that will content [[scala.Some]] value if it exists, or [[scala.None]] otherwise.
     */
   def getValue[T](name: String): Option[T]
+
+  /**
+    * Returns the [[java.lang.ClassLoader]] used by the interpreter.
+    */
+  def getClassLoader(): ClassLoader
 }
