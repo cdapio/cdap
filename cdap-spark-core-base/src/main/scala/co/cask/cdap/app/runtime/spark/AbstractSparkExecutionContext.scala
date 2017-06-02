@@ -20,7 +20,7 @@ import java.io._
 import java.net.{URI, URL}
 import java.util
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
@@ -38,7 +38,7 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
-import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, URLAdder}
+import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, SparkCompilerCleanupManager, URLAdder}
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
@@ -94,6 +94,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
+  private val compilerCleanupManager = new SparkCompilerCleanupManager
   private val interpreterCount = new AtomicInteger(0)
 
   // Start the Spark driver http service
@@ -142,7 +143,11 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       // This make sure all jobs' transactions are committed/invalidated
       SparkRuntimeEnv.stop().foreach(sc => applicationEndLatch.await())
     } finally {
-      sparkDriveHttpService.stopAndWait()
+      try {
+        sparkDriveHttpService.stopAndWait()
+      } finally {
+        compilerCleanupManager.close()
+      }
     }
   }
 
@@ -223,14 +228,25 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     }
     urlAdder.addURLs(classDir.toURI.toURL)
 
-    createInterpreter(settings, classDir, urlAdder, () => {
-      sparkClassFileHandler.removeURLs(urlAdded)
-      try {
-        DirUtils.deleteDirectoryContents(classDir, true)
-      } catch {
-        case e: IOException => LOG.warn("Failed to delete class directory {}", classDir, e: Any)
-      }
+    // Creates the interpreter. The cleanup is just to remove it from the cleanup manager
+    var interpreterRef: Option[SparkInterpreter] = None
+    val interpreter = createInterpreter(settings, classDir, urlAdder, () => {
+      interpreterRef.foreach(compilerCleanupManager.removeCompiler)
     })
+    interpreterRef = Some(interpreter)
+
+    // The closeable for removing the class file directory from the file handler as well as deleting it
+    val closeable = new Closeable {
+      val closed = new AtomicBoolean()
+      override def close(): Unit = {
+        if (closed.compareAndSet(false, true)) {
+          sparkClassFileHandler.removeURLs(urlAdded)
+          DirUtils.deleteDirectoryContents(classDir, true)
+        }
+      }
+    }
+    compilerCleanupManager.addCompiler(interpreter, closeable)
+    interpreter
   }
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
