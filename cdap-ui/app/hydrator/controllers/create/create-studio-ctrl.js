@@ -64,6 +64,7 @@ class HydratorPlusPlusStudioCtrl {
     } else {
       let config = {};
       config.artifact = artifact;
+      config.stages = [];
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
     }
 
