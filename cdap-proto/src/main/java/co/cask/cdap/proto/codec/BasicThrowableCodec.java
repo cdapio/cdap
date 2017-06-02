@@ -46,7 +46,7 @@ public final class BasicThrowableCodec extends AbstractSpecificationCodec<BasicT
     throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
     String className = jsonObj.get("className").getAsString();
-    String message = jsonObj.get("message").getAsString();
+    String message = jsonObj.get("message") == null ? null : jsonObj.get("message").getAsString();
     JsonArray stackTraces = jsonObj.get("stackTraces").getAsJsonArray();
     StackTraceElement[] stackTraceElements = context.deserialize(stackTraces, StackTraceElement[].class);
     JsonElement cause = jsonObj.get("cause");
