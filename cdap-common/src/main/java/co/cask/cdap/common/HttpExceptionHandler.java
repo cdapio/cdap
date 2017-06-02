@@ -40,6 +40,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
     for (Throwable cause : Throwables.getCausalChain(t)) {
       // Check if the exception is caused by Service being unavailable: this will happen during master startup
       if (cause instanceof ServiceUnavailableException) {
+        logWithTrace(request, cause);
         responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, cause.getMessage());
         return;
       }
@@ -52,15 +53,15 @@ public class HttpExceptionHandler extends ExceptionHandler {
       }
 
       // For some known exception naming convention, response with 4xx
-      if (t.getClass().getName().endsWith("NotFoundException")) {
-        logWithTrace(request, t);
-        responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
+      if (cause.getClass().getName().endsWith("NotFoundException")) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, cause.getMessage());
         return;
       }
 
-      if (t.getClass().getName().endsWith("AlreadyExistsException")) {
-        logWithTrace(request, t);
-        responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
+      if (cause.getClass().getName().endsWith("AlreadyExistsException")) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.CONFLICT, cause.getMessage());
         return;
       }
     }
