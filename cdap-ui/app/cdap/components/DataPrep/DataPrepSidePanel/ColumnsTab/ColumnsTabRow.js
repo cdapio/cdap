@@ -61,9 +61,9 @@ export default class ColumnsTabRow extends Component {
   render() {
     let rowInfo = this.props.rowInfo || {};
     let general = rowInfo.general || {};
-    let {empty: empty=0, null: nullValues=0, 'non-null': nonEmpty=100} = general;
+    let {empty: empty=0, 'non-null': nonEmpty=100} = general;
 
-    let nonNull = Math.ceil(nonEmpty - (empty + nullValues));
+    let nonNull = Math.ceil(nonEmpty - empty);
     return (
       <tr
         className={classnames({
