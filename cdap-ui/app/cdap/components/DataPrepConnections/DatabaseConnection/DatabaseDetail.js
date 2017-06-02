@@ -324,7 +324,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="form-group row">
-        <div className="col-xs-8 offset-xs-4">
+        <div className="col-xs-8 offset-xs-4 col-xs-offset-4">
           <button
             className="btn btn-secondary"
             onClick={this.testConnection}
@@ -535,7 +535,7 @@ export default class DatabaseDetail extends Component {
 
     return (
       <div className="row">
-        <div className="col-xs-8 offset-xs-4">
+        <div className="col-xs-8 offset-xs-4 col-xs-offset-4">
           <button
             className="btn btn-primary"
             onClick={onClickFn}

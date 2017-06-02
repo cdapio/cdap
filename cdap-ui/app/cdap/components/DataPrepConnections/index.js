@@ -100,7 +100,10 @@ export default class DataPrepConnections extends Component {
     if (!this.props.enableRouting) {
       this.dataprepSubscription = DataPrepStore.subscribe(() => {
         let {workspaceInfo} = DataPrepStore.getState().dataprep;
-        if (workspaceInfo.properties.connectionid !== this.state.activeConnectionid || workspaceInfo.properties.id !== this.state.activeConnectionid) {
+        if (
+          objectQuery(workspaceInfo, 'properties', 'connectionid') !== this.state.activeConnectionid ||
+          objectQuery(workspaceInfo, 'properties', 'id') !== this.state.activeConnectionid
+        ) {
           this.setState({
             activeConnectionid: workspaceInfo.properties.connectionid || workspaceInfo.properties.id,
             activeConnectionType: workspaceInfo.properties.connection

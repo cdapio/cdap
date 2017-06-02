@@ -148,6 +148,7 @@ export default class DatabaseConnection extends Component {
           size="lg"
           className="database-connection-modal"
           backdrop="static"
+          zIndex="1061"
         >
           <ModalHeader toggle={this.props.close}>
             {T.translate(`${PREFIX}.ModalHeader.${this.props.mode}`, {connection: this.props.connectionId})}

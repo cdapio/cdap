@@ -25,6 +25,9 @@
 
 .popover.connection-action-popover {
   border-radius: 0;
+  z-index: 1061;
+  display: block;
+  min-width: 100px;
 
   &.bs-tether-element-attached-right { margin-left: 0; }
   &.bs-tether-element-attached-top { margin-top: -20px; }
