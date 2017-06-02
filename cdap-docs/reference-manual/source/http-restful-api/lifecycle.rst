@@ -793,8 +793,6 @@ request with the version specified::
      - Version of the application, typically following `semantic versioning
        <http://semver.org>`__
 
-.. highlight:: json-ellipsis
-
 The request body is a JSON object specifying the details of the schedule to be created::
 
     {
@@ -811,7 +809,7 @@ The request body is a JSON object specifying the details of the schedule to be c
       "constraints": [
         {
           "type": "<constraint type>",
-          "waitUntilMet": "<boolean>",
+          "waitUntilMet": <boolean>,
           ...
         },
         ...
