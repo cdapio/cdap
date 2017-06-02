@@ -48,7 +48,7 @@ export default class DatabaseDetail extends Component {
     this.state = {
       connType: this.props.db.name === 'oraclethin' ? CONN_TYPE.advanced : CONN_TYPE.basic,
       name: '',
-      hostname: '',
+      hostname: 'localhost',
       port: this.props.mode === 'ADD' ? defaultPort : '',
       username: '',
       password: '',
