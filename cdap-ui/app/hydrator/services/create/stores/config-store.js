@@ -704,7 +704,7 @@ class HydratorPlusPlusConfigStore {
     return this.getState().__ui__.nodes;
   }
   getStages() {
-    return this.getState().config.stages;
+    return this.getState().config.stages || [];
   }
   getSourceNodes(nodeId) {
     let nodesMap = {};

@@ -107,21 +107,36 @@ export default class Header extends Component {
 
     const isCDAPActive = (match, location) => {
       if (!match) { return false; }
+      if (match.isExact) { return true; }
 
-      const basepath = `/ns/${this.state.currentNamespace}`;
-
-      let connections = `${basepath}/connections`;
-      let workspaces = `${basepath}/dataprep`;
-
-      if (location.pathname.startsWith(connections) || location.pathname.startsWith(workspaces)) {
-        return false;
+      let basePath = `/ns/${this.state.currentNamespace}`;
+      let dataprepBasePath = `/ns/${this.state.currentNamespace}/dataprep`;
+      let connectionsBasePath = `/ns/${this.state.currentNamespace}/connections`;
+      if (
+        location.pathname.startsWith(basePath) &&
+        !location.pathname.startsWith(dataprepBasePath) &&
+        !location.pathname.startsWith(connectionsBasePath)
+      ) {
+        return true;
       }
-
-      return true;
+      return false;
     };
 
     const isDataPrepActive = (match, location) => {
-      return !isCDAPActive(match, location);
+      let dataprepBasePath = `/ns/${this.state.currentNamespace}/dataprep`;
+      let connectionsBasePath = `/ns/${this.state.currentNamespace}/connections`;
+      if (!match) {
+        if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+          return true;
+        }
+        return false;
+      }
+      if (match.isExact) { return true; }
+
+      if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+        return true;
+      }
+      return false;
     };
 
     return (
@@ -156,7 +171,6 @@ export default class Header extends Component {
             {
               !this.props.nativeLink ?
                 <NavLink
-                  activeClassName="active"
                   to={`/ns/${this.state.currentNamespace}`}
                   isActive={isCDAPActive}
                 >
@@ -173,7 +187,6 @@ export default class Header extends Component {
               !this.props.nativeLink ?
                 (
                   <NavLink
-                    activeClassName="active"
                     to={`/ns/${this.state.currentNamespace}/dataprep`}
                     isActive={isDataPrepActive}
                   >

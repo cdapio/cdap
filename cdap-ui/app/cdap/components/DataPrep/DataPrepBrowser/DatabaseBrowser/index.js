@@ -60,6 +60,9 @@ export default class DatabaseBrowser extends Component {
       if (activeBrowser.name !== 'database') {
         return;
       }
+      if (database.connectionId === this.state.connectionId) {
+        return;
+      }
       if (database.loading) {
         this.setState({
           loading: true
