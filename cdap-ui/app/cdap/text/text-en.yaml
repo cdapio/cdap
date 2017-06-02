@@ -856,7 +856,7 @@ features:
       all: All
       artifacts: Drivers
       aws: AWS
-      azure: Microsoft Azure
+      azure: Azure
       dashboards: Dashboards
       datapacks: Datapacks
       datasets: Datasets

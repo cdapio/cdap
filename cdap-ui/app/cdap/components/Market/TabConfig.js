@@ -84,7 +84,7 @@ const TabConfig = {
     },
     {
       id: 11,
-      filter: 'Microsoft Azure',
+      filter: 'Azure',
       icon: 'icon-azureblobstore',
       name: T.translate('features.Market.tabs.azure'),
       content: <AllTabContents />
