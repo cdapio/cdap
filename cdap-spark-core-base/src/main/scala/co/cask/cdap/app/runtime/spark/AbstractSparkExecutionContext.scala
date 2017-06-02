@@ -38,7 +38,7 @@ import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
-import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, SparkInterpreterCleanupManager, URLAdder}
+import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, SparkCompilerCleanupManager, URLAdder}
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
 import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
@@ -94,7 +94,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
-  private val interpreterCleanupManager = new SparkInterpreterCleanupManager
+  private val compilerCleanupManager = new SparkCompilerCleanupManager
   private val interpreterCount = new AtomicInteger(0)
 
   // Start the Spark driver http service
@@ -146,7 +146,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       try {
         sparkDriveHttpService.stopAndWait()
       } finally {
-        interpreterCleanupManager.close()
+        compilerCleanupManager.close()
       }
     }
   }
@@ -231,7 +231,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     // Creates the interpreter. The cleanup is just to remove it from the cleanup manager
     var interpreterRef: Option[SparkInterpreter] = None
     val interpreter = createInterpreter(settings, classDir, urlAdder, () => {
-      interpreterRef.foreach(interpreterCleanupManager.removeInterpreter)
+      interpreterRef.foreach(compilerCleanupManager.removeCompiler)
     })
     interpreterRef = Some(interpreter)
 
@@ -245,7 +245,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
         }
       }
     }
-    interpreterCleanupManager.addInterpreter(interpreter, closeable)
+    compilerCleanupManager.addCompiler(interpreter, closeable)
     interpreter
   }
 
