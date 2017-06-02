@@ -70,7 +70,7 @@ export default class DataPrepServiceControl extends Component {
     return (
       <div className="dataprep-container error">
         <h4 className="text-xs-center">
-          Data Preparation (Beta) is not enabled. Please enable it.
+          Data Preparation is not enabled. Please enable it.
         </h4>
         <br/>
         <div className="text-xs-center">
