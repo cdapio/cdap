@@ -24,6 +24,8 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
+import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
@@ -84,10 +86,13 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     DataStreamsPipelineSpec spec = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
                                                  DataStreamsPipelineSpec.class);
 
+    PipelinePluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics(), true, true);
     int numSources = 0;
+
     for (StageSpec stageSpec : spec.getStages()) {
       if (StreamingSource.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
-        numSources++;
+        StreamingSource<Object> streamingSource = pluginContext.newPluginInstance(stageSpec.getName());
+        numSources = numSources + streamingSource.getRequiredExecutors();
       }
     }
 
@@ -107,6 +112,10 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     }
     // without this, stopping will hang on machines with few cores.
     sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
+
+    sparkConf.set("spark.executor.instances", String.valueOf(numSources + 2));
+    sparkConf.setMaster(String.format("local[%d]", numSources + 2));
+
     if (spec.isUnitTest()) {
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
     }
