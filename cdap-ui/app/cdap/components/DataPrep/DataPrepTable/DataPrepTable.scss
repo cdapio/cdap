@@ -19,6 +19,7 @@ $selected-header-bg-color: #3498db;
 
 $border-and-selected-color: #dbdbdb;
 $header-bg-color: #eeeeee;
+$col_type_font_color: gray;
 
 .dataprep-container {
   .dataprep-table {
@@ -44,7 +45,12 @@ $header-bg-color: #eeeeee;
       font-family: Helvetica, Arial, sans-serif;
 
       &.table-bordered { border: 0; }
-
+      .col-type {
+        margin-left: 26px;
+        color: $col_type_font_color;
+        font-weight: 400;
+        font-size: 12px;
+      }
       td {
         border: 1px solid $border-and-selected-color;
       }

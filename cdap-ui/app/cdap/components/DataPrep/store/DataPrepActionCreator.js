@@ -61,7 +61,8 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
           payload: {
             data: res.values,
             headers: res.header,
-            directives: updatedDirectives
+            directives: updatedDirectives,
+            types: res.types
           }
         });
 
@@ -101,6 +102,7 @@ export function setWorkspace(workspaceId) {
               payload: {
                 data: response.values,
                 headers: response.header,
+                types: response.types,
                 directives,
                 workspaceId,
                 workspaceUri,

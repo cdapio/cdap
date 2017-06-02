@@ -89,7 +89,7 @@ export default class ColumnsTabRow extends Component {
           {this.props.columnName}
         </td>
         <td>
-          <span className="text-success">
+          <span>
             {`${nonNull}%`}
           </span>
         </td>
