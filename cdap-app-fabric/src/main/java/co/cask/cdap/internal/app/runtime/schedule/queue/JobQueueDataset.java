@@ -237,7 +237,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
 
   // full scan of JobQueueDataset
   public CloseableIterator<Job> fullScan() {
-    return createCloseableIterator(table.scan(null, null));
+    return createCloseableIterator(table.scan(JOB_ROW_PREFIX, Bytes.stopKeyForPrefix(JOB_ROW_PREFIX)));
   }
 
   private CloseableIterator<Job> createCloseableIterator(final Scanner scanner) {
