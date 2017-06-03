@@ -36,32 +36,34 @@ public class HttpExceptionHandler extends ExceptionHandler {
 
   @Override
   public void handle(Throwable t, HttpRequest request, HttpResponder responder) {
-    // Check if the exception is caused by Service being unavailable: this will happen during master startup
+    // this is done as sometimes exceptions are not propagated properly and they are wrapped with other exceptions.
     for (Throwable cause : Throwables.getCausalChain(t)) {
+      // Check if the exception is caused by Service being unavailable: this will happen during master startup
       if (cause instanceof ServiceUnavailableException) {
+        logWithTrace(request, cause);
         responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE, cause.getMessage());
         return;
       }
-    }
 
-    // If the exception provides http status, response with it
-    if (t instanceof HttpErrorStatusProvider) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) t).getStatusCode()),
-                           t.getMessage());
-      return;
-    }
+      if (cause instanceof HttpErrorStatusProvider) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.valueOf(((HttpErrorStatusProvider) cause).getStatusCode()),
+                             cause.getMessage());
+        return;
+      }
 
-    // For some known exception naming convention, response with 4xx
-    if (t.getClass().getName().endsWith("NotFoundException")) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, t.getMessage());
-      return;
-    }
-    if (t.getClass().getName().endsWith("AlreadyExistsException")) {
-      logWithTrace(request, t);
-      responder.sendString(HttpResponseStatus.CONFLICT, t.getMessage());
-      return;
+      // For some known exception naming convention, response with 4xx
+      if (cause.getClass().getName().endsWith("NotFoundException")) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.NOT_FOUND, cause.getMessage());
+        return;
+      }
+
+      if (cause.getClass().getName().endsWith("AlreadyExistsException")) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.CONFLICT, cause.getMessage());
+        return;
+      }
     }
 
     // If it is not some known exception type, response with 500.

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,16 +22,19 @@ import co.cask.cdap.proto.security.Role;
 import java.net.HttpURLConnection;
 
 /**
- * Exception thrown when a {@link Role} is not found, This is deprecated, please use {@link NotFoundException}
+ * Exception thrown when a {@link Role} or an entity already exists
  */
-@Deprecated
-public class RoleNotFoundException extends Exception implements HttpErrorStatusProvider {
-  public RoleNotFoundException(Role role) {
-    super(String.format("%s not found.", role));
+public class AlreadyExistsException extends Exception implements HttpErrorStatusProvider {
+  public AlreadyExistsException(Role role) {
+    super(String.format("%s already exists.", role));
+  }
+
+  public AlreadyExistsException(String message) {
+    super(message);
   }
 
   @Override
   public int getStatusCode() {
-    return HttpURLConnection.HTTP_NOT_FOUND;
+    return HttpURLConnection.HTTP_CONFLICT;
   }
 }
