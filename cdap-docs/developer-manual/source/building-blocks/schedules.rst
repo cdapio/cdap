@@ -249,6 +249,4 @@ option is called ``app.deploy.update.schedules`` and is given as a field of the
 
 When a schedule with a time trigger executes a workflow it passes in the ``logicalStartTime``
 runtime argument: this is the timestamp, in milliseconds, at which the schedule's cron expression
-was fulfilled and triggered the job. For a schedule with a partition trigger, this runtime argument
-represents the time when the first partition event was received and the job was created.
-
+was fulfilled and triggered the job. 

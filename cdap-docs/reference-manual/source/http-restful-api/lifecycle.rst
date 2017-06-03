@@ -818,7 +818,7 @@ The request body is a JSON object specifying the details of the schedule to be c
         "type": "<trigger type>",
         ...
       },
-      "timeoutMillis": <timeout in milli seconds>
+      "timeoutMillis": <timeout in milliseconds>
     }
 
 where a trigger is either a time trigger::
@@ -849,7 +849,7 @@ and a constraint can be one of::
 
     {
       "type": "DELAY",
-      "millisAfterTrigger": <milli seconds to delay>,
+      "millisAfterTrigger": <milliseconds to delay>,
       "waitUntilMet": <boolean>
     }
 
@@ -863,7 +863,7 @@ and a constraint can be one of::
 
     {
       "type": "LAST_RUN",
-      "millisSinceLastRun": <milli seconds since last run>,
+      "millisSinceLastRun": <milliseconds since last run>,
       "waitUntilMet": <boolean>
     }
 
