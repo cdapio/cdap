@@ -268,7 +268,7 @@ Concurrent Workflows
 --------------------
 By default, a workflow runs concurrently, allowing multiple instances of a workflow to be
 run simultaneously. However, for scheduled workflows, the number of concurrent runs can be
-controlled by :ref:`setting a maximum number <run-constraints>` of runs.
+controlled by :ref:`setting a maximum number <schedules-run-constraints>` of runs.
 
 
 .. _workflow_token:
