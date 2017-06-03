@@ -519,6 +519,9 @@ cdap_set_spark() {
       local __spark_shell=$(which spark-shell 2>/dev/null)
       local __spark_client_version=None
       for __dist in hdp iop; do
+        if [[ ! -d /usr/${__dist} ]]; then
+          continue
+        fi
         if [[ $(which ${__dist}-select 2>/dev/null) ]]; then
           __spark_name="spark"
           if [[ ${SPARK_MAJOR_VERSION} -ne 1 ]]; then
