@@ -87,7 +87,7 @@ execute immediately; instead, each job goes through a life cycle:
   the scheduler’s point of view. If starting the workflow fails, however, the job remains
   *pending launch* and the system will retry execution.
 - If a job does not reach *pending launch* state before its configured timeout, it is
-  aborted and removed form the job queue.
+  aborted and removed from the job queue.
 - If a schedule is deleted, modified or disabled, then all jobs for that schedule are
   aborted and removed from the job queue, regardless of their state. However, due to
   timing and concurrency, a job that is *pending launch* may still execute around the same
