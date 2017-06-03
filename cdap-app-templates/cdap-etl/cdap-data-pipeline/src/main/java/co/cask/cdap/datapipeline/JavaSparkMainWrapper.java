@@ -51,7 +51,7 @@ public class JavaSparkMainWrapper implements JavaSparkMain {
     Class<?> mainClass = pluginContext.loadPluginClass(stageName);
 
     // if it's a CDAP JavaSparkMain, instantiate it and call the run method
-    if (mainClass.isAssignableFrom(JavaSparkMain.class)) {
+    if (JavaSparkMain.class.isAssignableFrom(mainClass)) {
       MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(),
                                                                 sec.getLogicalStartTime(), sec.getSecureStore(),
                                                                 sec.getNamespace());
