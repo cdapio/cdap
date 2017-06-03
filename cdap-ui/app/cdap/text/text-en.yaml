@@ -94,6 +94,11 @@ features:
         and: " and "
         privacyPolicy: Privacy Policy
     mode: "Mode: "
+    providers:
+      aws: Amazon Web Services (AWS)
+      azure: Microsoft Azure
+      forLabel: for
+      gcp: Google Cloud Platform (GCP)
     security: "Security: "
     version: Version {version}
   AccessTokenModal:
@@ -323,12 +328,6 @@ features:
       errorMessage: Page {pageNum} not found
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
-    SplashScreen:
-      addentity: Start by Adding Entities to CDAP
-      disclaimerMessage: To access the classic view of the CDAP UI, please use the "Switch to Classic View" option from the CDAP dropdown on the top right.
-      gotoLabel: Go to Overview page
-      welcomeMessage1: Welcome To The New CDAP
-      welcomeMessage2: User Experience
     Title: CDAP | Overview
   DataPrep:
     DataPrepSidePanel:
@@ -607,12 +606,12 @@ features:
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
       title: Data Preparation
       upgradeBtnLabel: Upgrade
-      upload: File Upload
+      upload: Local File Upload
       viewSchemaBtnLabel: View Schema
       copyToCDAPDatasetBtn:
-        uploadDisabledMessage: Copying to a dataset is not supported for uploaded files.
-        btnLabel: Make a Copy
-        createBtnLabel: Copy Data
+        uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
+        btnLabel: Ingest Data
+        createBtnLabel: Ingest Data
         copyingSteps:
           Step1: 'Preparing to copy...'
           Step1Error: 'Unable to copy data.'
@@ -634,8 +633,8 @@ features:
           avro: Avro
           orc: ORC
           parquet: Parquet
-        modalTitle: Make a Copy
-        monitorBtnLabel: Monitor Data Copy
+        modalTitle: Ingest Data
+        monitorBtnLabel: Explore Data
       WorkspaceModal:
         create: Create
         createModalTitle: Create Workspace
@@ -729,6 +728,7 @@ features:
     directory: Directory
     EmptyMessage:
       clearLabel: Clear
+      noFilesOrDirectories: No files or directories found in this directory
       suggestion1: your search
       suggestionTitle: "You can try to:"
       title: 'No match found for "{searchText}"'
@@ -741,7 +741,7 @@ features:
       size: Size
       type: Type
     TopPanel:
-      directoryMetrics: "{count} Files and Folders"
+      directoryMetrics: "{count} Files and Directories"
       searchPlaceholder: Search this directory
       selectData: "Select File/Directory to Preview"
 
@@ -819,7 +819,7 @@ features:
 
   LoadingIndicator:
     # backendDown: 'CDAP Services are not available',
-    backendDown: 'Unable to connect to CDAP Router'
+    backendDown: 'Unable to connect to CDAP'
     backendDownSubtitle: 'Attempting to connect...'
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
@@ -898,6 +898,10 @@ features:
       dataPrep: Data Preparation
       documentationLabel: Documentation
       logout: Logout
+      modes:
+        cloudSandbox: Cloud Sandbox
+        distributed: Distributed
+        localSandbox: Local Sandbox
       olduilink: Switch to Classic View
       prodWebsiteLabel: Product Website
       supportLabel: Support
