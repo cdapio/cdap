@@ -91,6 +91,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     // Also need to define Kryo class as it is for rewriting the Kryo class to add extra default serializers
     // Also need to define janino class for code compilation to avoid leaking classloader
     if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
+        && !name.startsWith("co.cask.cdap.app.deploy.spark.")
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
         && !name.startsWith("com.fasterxml.jackson.module.scala.")

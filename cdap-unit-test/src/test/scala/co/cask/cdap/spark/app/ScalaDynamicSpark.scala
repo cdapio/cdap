@@ -16,55 +16,67 @@
 
 package co.cask.cdap.spark.app
 
-import java.io.File
+import java.io.{ByteArrayOutputStream, File}
+import java.nio.file.Files
 
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.{AbstractExtendedSpark, SparkExecutionContext, SparkMain}
+import com.google.common.io.BaseEncoding
 import org.apache.spark.SparkContext
+
+import scala.collection.JavaConversions._
 
 /**
   *
   */
-class ScalaDynamicSpark extends AbstractSpark with SparkMain {
+class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
+
+  val classSource =
+    """
+      package test.dynamic
+
+      import co.cask.cdap.api.common._
+      import co.cask.cdap.api.spark._
+      import org.apache.spark._
+
+      object Compute {
+       def run(sc: SparkContext, sparkMain: SparkMain)(implicit sec: SparkExecutionContext) {
+         import sparkMain._
+
+         val args = sec.getRuntimeArguments()
+         sc.fromStream[String](args.get("input"))
+           .flatMap(_.split("\\s+"))
+           .map((_, 1))
+           .reduceByKey(_ + _)
+           .map(t => (Bytes.toBytes(t._1), Bytes.toBytes(t._2)))
+           .saveAsDataset(args.get("output")
+         )
+       }
+      }
+    """
 
   override protected def configure(): Unit = {
     setMainClass(classOf[ScalaDynamicSpark])
+    val compiler = getConfigurer.createSparkCompiler()
+    try {
+      // Compile the code and remember it in the property.
+      compiler.compile(classSource)
+      val bos = new ByteArrayOutputStream()
+      try {
+        compiler.saveAsJar(bos)
+      } finally {
+        bos.close()
+      }
+      setProperties(Map(("compiled.jar", BaseEncoding.base64().encode(bos.toByteArray))))
+    } finally {
+      compiler.close()
+    }
   }
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
     val sc = new SparkContext
 
-    val depJar = new File(sec.getRuntimeArguments.get("tmpdir"), "compute.jar")
-
-    val interpreter = sec.createInterpreter()
-    try {
-      val classSource =
-        """
-           package test.dynamic
-
-           import co.cask.cdap.api.common._
-           import co.cask.cdap.api.spark._
-           import org.apache.spark._
-
-           object Compute {
-             def run(sc: SparkContext, sparkMain: SparkMain)(implicit sec: SparkExecutionContext) {
-               import sparkMain._
-
-               val args = sec.getRuntimeArguments()
-               sc.fromStream[String](args.get("input"))
-                 .flatMap(_.split("\\s+"))
-                 .map((_, 1))
-                 .reduceByKey(_ + _)
-                 .map(t => (Bytes.toBytes(t._1), Bytes.toBytes(t._2)))
-                 .saveAsDataset(args.get("output")
-               )
-             }
-           }
-        """
-      interpreter.compile(classSource)
-      interpreter.saveAsJar(depJar)
-    } finally {
-      interpreter.close()
-    }
+    val depJar = new File(sec.getRuntimeArguments.get("tmpdir"), "compiled.jar")
+    Files.write(depJar.toPath, BaseEncoding.base64().decode(sec.getSpecification.getProperty("compiled.jar")))
 
     val intp = sec.createInterpreter()
     try {

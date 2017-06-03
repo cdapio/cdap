@@ -39,6 +39,7 @@ import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.DefaultApplicationSpecification;
 import co.cask.cdap.internal.app.DefaultPluginConfigurer;
@@ -58,6 +59,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,6 +70,9 @@ import javax.annotation.Nullable;
  * Default implementation of {@link ApplicationConfigurer}.
  */
 public class DefaultAppConfigurer extends DefaultPluginConfigurer implements ApplicationConfigurer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultAppConfigurer.class);
+
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
   private final Id.Artifact artifactId;
@@ -135,9 +141,32 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
-                                                                   artifactRepository,
-                                                                   pluginInstantiator);
+    DefaultSparkConfigurer configurer = null;
+
+    // It is a bit hacky here to look for the DefaultExtendedSparkConfigurer implementation through the
+    // SparkRunnerClassloader directly (CDAP-11797)
+    ClassLoader sparkRunnerClassLoader = ClassLoaders.findByName(
+      spark.getClass().getClassLoader(), "co.cask.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader");
+
+    if (sparkRunnerClassLoader != null) {
+      try {
+        configurer = (DefaultSparkConfigurer) sparkRunnerClassLoader
+          .loadClass("co.cask.cdap.app.deploy.spark.DefaultExtendedSparkConfigurer")
+          .getConstructor(Spark.class, Id.Namespace.class, Id.Artifact.class,
+                          ArtifactRepository.class, PluginInstantiator.class)
+          .newInstance(spark, deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+
+      } catch (Exception e) {
+        // Ignore it and the configurer will be defaulted to DefaultSparkConfigurer
+        LOG.trace("No DefaultExtendedSparkConfigurer found. Fallback to DefaultSparkConfigurer.", e);
+      }
+    }
+
+    if (configurer == null) {
+      configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
+                                              artifactRepository, pluginInstantiator);
+    }
+
     spark.configure(configurer);
     addDatasetsAndPlugins(configurer);
     SparkSpecification spec = configurer.createSpecification();

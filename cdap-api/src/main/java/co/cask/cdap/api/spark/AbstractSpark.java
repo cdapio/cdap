@@ -56,7 +56,7 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
    * Returns the {@link SparkConfigurer}, only available at configuration time.
    */
   @Override
-  protected final SparkConfigurer getConfigurer() {
+  protected SparkConfigurer getConfigurer() {
     return configurer;
   }
 

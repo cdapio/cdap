@@ -99,6 +99,32 @@ public final class ClassLoaders {
   }
 
   /**
+   * Finds a ClassLoader along the ClassLoader hierarchy that the ClassLoader class matches the given name.
+   * This method recognize usage of {@link Delegator} on ClassLoader and will try to match with
+   * the object returned by {@link Delegator#getDelegate()} for the ClassLoader of the given type.
+   *
+   * @return the ClassLoader found or {@code null} if no such ClassLoader exists.
+   */
+  @Nullable
+  public static ClassLoader findByName(@Nullable ClassLoader classLoader, String classLoaderName) {
+    ClassLoader result = classLoader;
+    while (result != null) {
+      if (result instanceof Delegator) {
+        Object delegate = ((Delegator) result).getDelegate();
+        if (delegate != null && delegate instanceof ClassLoader) {
+          result = (ClassLoader) delegate;
+        }
+      }
+
+      if (result.getClass().getName().equals(classLoaderName)) {
+        break;
+      }
+      result = result.getParent();
+    }
+    return result;
+  }
+
+  /**
    * Populates the list of {@link URL} that this ClassLoader uses, including all URLs used by the parent of the
    * given ClassLoader. This is the same as calling {@link #getClassLoaderURLs(ClassLoader, boolean, Collection)} with
    * {@code childFirst} set to {@code false}.
