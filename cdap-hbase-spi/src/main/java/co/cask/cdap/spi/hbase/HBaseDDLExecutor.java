@@ -25,18 +25,21 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Interface providing the HBase DDL operations.
+ * Interface providing the HBase DDL operations. All methods except {@link #initialize} must
+ * be idempotent in order to allow retry of failed operations.
  */
 @Beta
 public interface HBaseDDLExecutor extends Closeable {
   /**
    * Initialize the {@link HBaseDDLExecutor}.
+   * This method is called once when the executor is created, before any other methods are called.
    * @param context the context for the executor
    */
   void initialize(HBaseDDLExecutorContext context);
 
   /**
    * Create the specified namespace if it does not exist.
+   * This method gets called when CDAP attempts to create a new namespace.
    *
    * @param name the namespace to create
    * @return whether the namespace was created
@@ -46,6 +49,7 @@ public interface HBaseDDLExecutor extends Closeable {
 
   /**
    * Delete the specified namespace if it exists.
+   * This method is called during namespace deletion process.
    *
    * @param name the namespace to delete
    * @throws IOException if a remote or network exception occurs
@@ -55,6 +59,7 @@ public interface HBaseDDLExecutor extends Closeable {
 
   /**
    * Create the specified table if it does not exist.
+   * This method is called during the creation of an HBase backed dataset (either system or user).
    *
    * @param descriptor the descriptor for the table to create
    * @param splitKeys the initial split keys for the table
@@ -64,7 +69,10 @@ public interface HBaseDDLExecutor extends Closeable {
     throws IOException;
 
   /**
-   * Enable the specified table if it is disabled.
+   * Enable the specified table if it is disabled. This is called when an HBase
+   * backed dataset has its properties modified. In order to modify the HBase table,
+   * CDAP first calls {@code disableTableIfEnabled}, then calls {@code modifyTable},
+   * then enables the table with this method.
    *
    * @param namespace the namespace of the table to enable
    * @param name the name of the table to enable
@@ -73,7 +81,10 @@ public interface HBaseDDLExecutor extends Closeable {
   void enableTableIfDisabled(String namespace, String name) throws IOException;
 
   /**
-   * Disable the specified table if it is enabled.
+   * Disable the specified table if it is enabled. This is called when an HBase backed
+   * dataset has its properties modified. In order to modify the HBase table, CDAP first
+   * disables it with this method, then calls {@code modifyTable}, then calls
+   * {@code enableTableIfDisabled}.
    *
    * @param namespace the namespace of the table to disable
    * @param name the name of the table to disable
@@ -82,7 +93,9 @@ public interface HBaseDDLExecutor extends Closeable {
   void disableTableIfEnabled(String namespace, String name) throws IOException;
 
   /**
-   * Modify the specified table. The table must be disabled.
+   * Modify the specified table. This is called when an HBase backed dataset has
+   * its properties modified. In order to modify the HBase table, CDAP first calls
+   * {@code disableTableIfEnabled}, then calls this method, then calls {@code enableTableIfDisabled}.
    *
    * @param namespace the namespace of the table to modify
    * @param name the name of the table to modify
@@ -93,7 +106,8 @@ public interface HBaseDDLExecutor extends Closeable {
   void modifyTable(String namespace, String name, TableDescriptor descriptor) throws IOException;
 
   /**
-   * Truncate the specified table. The table must be disabled.
+   * Truncate the specified table. The table must be disabled first to truncate it,
+   * after which it must be enabled again.
    *
    * @param namespace the namespace of the table to truncate
    * @param name the name of the table to truncate
