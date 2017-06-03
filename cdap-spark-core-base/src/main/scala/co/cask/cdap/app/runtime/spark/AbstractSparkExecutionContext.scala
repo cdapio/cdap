@@ -201,8 +201,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
     }
 
-    // Setup classpath
-    val settings = AbstractSparkCompiler.setClassPath(new Settings(), runtimeContext.getProgram.getClassLoader)
+    // Setup classpath and classloader
+    val settings = AbstractSparkCompiler.setClassPath(new Settings())
 
     val urlAdded = new mutable.HashSet[URL]
     val urlAdder = new URLAdder {

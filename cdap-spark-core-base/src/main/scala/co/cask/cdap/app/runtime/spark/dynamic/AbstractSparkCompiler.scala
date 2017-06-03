@@ -21,8 +21,9 @@ import java.net.URL
 import java.util.jar.{JarEntry, JarOutputStream}
 
 import co.cask.cdap.api.spark.dynamic.{CompilationFailureException, SparkCompiler}
-import co.cask.cdap.common.lang.ClassLoaders
 import co.cask.cdap.common.lang.jar.BundleJarUtil
+import co.cask.cdap.common.lang.{ClassLoaders, CombineClassLoader}
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader
 import co.cask.cdap.internal.lang.CallerClassSecurityManager
 
 import scala.collection.JavaConversions._
@@ -161,32 +162,29 @@ abstract class AbstractSparkCompiler(settings: Settings, onClose: () => Unit) ex
 object AbstractSparkCompiler {
 
   /**
-    * Setup the [[scala.tools.nsc.settings]] user classpath based on the give [[java.lang.ClassLoader]].
+    * Setup the [[scala.tools.nsc.settings]] user classpath based on the context classloader
+    * as well as the caller class.
     *
     * @param settings the settings to modify
-    * @param classLoader the classloader to use to determine the set of URLs to generate the user classpath
     * @return the same settings instance from the argument
     */
-  def setClassPath(settings: Settings, classLoader: ClassLoader): Settings = {
-    val userClassLoader = findUserCallerClassLoader(classLoader);
-    settings.classpath.value =
-      ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL])
-                  .mkString(File.pathSeparator)
-    settings.embeddedDefaults(userClassLoader)
-    settings
-  }
-
-  private def findUserCallerClassLoader(defaultClassLoader: ClassLoader): ClassLoader = {
-    // Try to see if the call is from plugin
-    // It can be done by finding the classloader from the call chain that the class loader is not the
-    // given classloader (ProgramClassLoader) or any of its parent.
-    val callerClassLoader = CallerClassSecurityManager.getCallerClasses
+  def setClassPath(settings: Settings): Settings = {
+    // Find the plugin classloader if it is called from plugin
+    val classLoaderOption = CallerClassSecurityManager.getCallerClasses
       .map(_.getClassLoader)
-      .dropWhile(cl => ClassLoaders.find(defaultClassLoader, cl.getClass) != null)
-      .headOption
+      .find(cl => cl != null && cl.isInstanceOf[PluginClassLoader])
 
-    // Either it is found, or default to the program classloader.
-    callerClassLoader.getOrElse(defaultClassLoader)
+    val contextClassLoader = Thread.currentThread().getContextClassLoader
+
+    // Use a combine classloder of plugin + context if the call is from plugin,
+    // otherwise just use the context classloader
+    val classLoader = classLoaderOption
+      .map(cl => new CombineClassLoader(null, List(cl, contextClassLoader)))
+      .getOrElse(contextClassLoader)
+    settings.embeddedDefaults(classLoader)
+    settings.classpath.value = ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL])
+                                           .mkString(File.pathSeparator)
+    settings
   }
 
   /**
