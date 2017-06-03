@@ -182,7 +182,7 @@ export default class DataPrepConnections extends Component {
     this.checkBackendUp();
   }
 
-  fetchConnectionsList() {
+  fetchConnectionsList(action, targetId) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     MyDataPrepApi.listConnections({
@@ -190,8 +190,14 @@ export default class DataPrepConnections extends Component {
       type: 'database' // currently only going to fetch database connection
     }).subscribe((res) => {
       // need to group by connection type
-
-      this.setState({connectionsList: res.values});
+      let state = {};
+      if (action === 'delete' && this.state.activeConnectionid === targetId) {
+        state.activeConnectionid = null;
+        state.activeConnectionType = 'file';
+        setActiveBrowser({name: 'file'});
+      }
+      state.connectionsList = res.values;
+      this.setState(state);
     });
   }
 

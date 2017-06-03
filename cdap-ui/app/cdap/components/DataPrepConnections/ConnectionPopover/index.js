@@ -61,10 +61,11 @@ export default class ConnectionPopover extends Component {
     this.setState({loading: true});
 
     let namespace = NamespaceStore.getState().selectedNamespace;
+    let connectionId = this.props.connectionInfo.id;
 
     let params = {
       namespace,
-      connectionId: this.props.connectionInfo.id
+      connectionId
     };
 
     MyDataPrepApi.deleteConnection(params)
@@ -74,7 +75,8 @@ export default class ConnectionPopover extends Component {
           deleteConfirmation: false
         });
 
-        this.props.onAction();
+        this.props.onAction('delete', connectionId);
+
       }, (err) => {
         let errMessage = objectQuery(err, 'message') || objectQuery(err, 'response', 'message');
 
