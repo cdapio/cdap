@@ -43,6 +43,24 @@ Note that for building an application, you only need to include the CDAP API in 
 dependencies. For testing, however, you need the CDAP run-time. To build your test case,
 extend the ``TestBase`` class.
 
+Running Tests with Spark2
+-------------------------
+The ``TestBase`` class included in the ``cdap-unit-test`` dependency will run programs using
+Spark1 and Scala 2.10. If you need to unit test a program that uses Spark2 and Scala 2.11,
+you must remove the ``cdap-unit-test`` artifact from your Maven test dependencies and replace it
+with ``cdap-unit-test2_2.11``::
+
+    . . .
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-unit-test2_2.11</artifactId>
+      <version>${cdap.version}</version>
+      <scope>test</scope>
+    </dependency>
+    . . .
+
+In addition, instead of extending the ``TestBase`` class, you must extend the ``TestBaseWithSpark2`` class.
+
 .. highlight:: console
 
 Running Tests from an IDE

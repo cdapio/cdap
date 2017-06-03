@@ -517,22 +517,12 @@ Cluster Home Page: Status Tab
 
 Cluster Home Page: Configuring for Spark
 ----------------------------------------
-**Including Spark:** If you are including Spark, the *Environment Advanced Configuration*
-needs to contain the location of the Spark libraries, typically as
-``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
+**Including Spark:** If your cluster contains both Spark1 and Spark2, and you would like to use Spark2,
+the *Environment Advanced Configuration* needs to contain the Spark version to use as
+``SPARK_MAJOR_VERSION=2``. If you only have one version of Spark installed, CDAP will use that version.
 
 **Additional environment variables** are set using the Cloudera Manager's
 "CDAP Service Environment Advanced Configuration Snippet (Safety Valve)".
-
-.. figure:: ../_images/cloudera/cloudera-csd-10.png
-   :figwidth: 100%
-   :width: 800px
-   :align: center
-   :class: bordered-image
-
-   **Cluster Home Page, Configuration Tab:** Adding *SPARK_HOME* environmental value using the *Service Environment
-   Advanced Configuration Snippet (Safety Valve)*.
-
 
 Cluster Home Page: Configuring for Spark
 ----------------------------------------
@@ -625,6 +615,7 @@ Advanced Topics
 - :ref:`Enabling Kerberos <cloudera-configuration-enabling-kerberos>`
 - :ref:`Enabling CDAP High Availability <cloudera-configuration-highly-available>`
 - :ref:`Enabling Hive Execution Engines <cloudera-configuration-enabling-hive-execution-engines>`
+- :ref:`Enabling Spark2 <cloudera-configuration-enabling-spark2>`
 
 .. _cloudera-configuration-security:
 
@@ -759,3 +750,12 @@ CDAP Authentication Server
 .. _cloudera-configuration-enabling-hive-execution-engines:
 
 .. include:: /_includes/installation/hive-execution-engines.txt
+
+.. _cloudera-configuration-enabling-spark2:
+
+Enabling Spark2
+---------------
+In order to use Spark2, you must first install Spark2 on your cluster. If both Spark1
+and Spark2 are installed, you must set SPARK_MAJOR_VERSION to 2 in cdap-env.
+When Spark2 is in use, Spark1 programs cannot be run. Similarly, when Spark1 is in use,
+Spark2 programs cannot be run.

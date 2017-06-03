@@ -393,6 +393,32 @@ Here is an example of using an explicit transaction in Spark:
     }
   }
 
+.. _spark-spark-versions:
+
+.. highlight:: xml
+
+Spark Versions
+==============
+CDAP allows you to write Spark programs using either Spark1 or Spark2. 
+To use Spark1, you must add the ``cdap-api-spark`` Maven dependency::
+
+    . . .
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark</artifactId>
+      <version>${cdap.version}</version>
+    </dependency>
+    . . .
+
+To use Spark2, you must add the ``cdap-api-spark2_2.11`` Maven dependency::
+
+    . . .
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-api-spark2_2.11</artifactId>
+      <version>${cdap.version}</version>
+    </dependency>
+    . . .
 
 Spark Program Examples
 ======================
@@ -400,6 +426,9 @@ Spark Program Examples
   :ref:`Spam Classifier <examples-spam-classifier>`, :ref:`Spark K-Means <examples-spark-k-means>`,
   :ref:`Spark Page Rank <examples-spark-page-rank>`, and :ref:`Wikipedia Pipeline
   <examples-wikipedia-data-pipeline>` examples.
+
+- For an example of a **Spark2 program,** see the :ref:`Decision Tree Regression <examples-decision-tree-regression>`
+  example.
 
 - For a longer example, the how-to guide :ref:`cdap-spark-guide` gives another demonstration.
 
