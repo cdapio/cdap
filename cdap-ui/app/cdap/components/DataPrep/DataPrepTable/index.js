@@ -29,6 +29,7 @@ import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
+import captialize from 'lodash/capitalize';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
@@ -163,6 +164,7 @@ export default class DataPrepTable extends Component {
     });
     return true;
   }
+
   handleSaveEditedColumnName(index, changedValue, noChange) {
     let headers = this.state.headers;
     let matchedHeader = headers[index];
@@ -181,6 +183,7 @@ export default class DataPrepTable extends Component {
       ]
     });
   }
+
   applyDirective(directive) {
     execute([directive])
       .subscribe(
@@ -195,10 +198,11 @@ export default class DataPrepTable extends Component {
         }
       );
   }
+
   renderDataprepTable() {
     let headers = this.state.headers;
     let data = this.state.data;
-
+    let types = DataPrepStore.getState().dataprep.types;
     return (
       <table className="table table-bordered">
         <thead className="thead-inverse">
@@ -214,6 +218,7 @@ export default class DataPrepTable extends Component {
                   key={head.name}
                 >
                   <DataQuality columnInfo={this.state.columns[head.name]} />
+                  <div className="col-type">{captialize(types[head.name] || 'unknown')}</div>
                   <div
                     className="clearfix column-wrapper"
                   >
@@ -295,6 +300,7 @@ export default class DataPrepTable extends Component {
       </table>
     );
   }
+
   render() {
     if (this.state.loading) {
       return (

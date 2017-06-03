@@ -28,6 +28,7 @@ const defaultInitialState = {
   workspaceUri: '',
   data: [],
   headers: [],
+  types: {},
   selectedHeaders: [],
   highlightColumns: {
     directive: null,
@@ -70,6 +71,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         headers: action.payload.headers,
         directives: action.payload.directives,
         loading: false,
+        types: action.payload.types || {},
         // after any directive, remove selected header(s) if they're no longer in
         // the list of headers
         selectedHeaders: state.selectedHeaders.filter((head) => {
@@ -84,6 +86,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         headers: action.payload.headers || [],
         directives: action.payload.directives || [],
         data: action.payload.data || [],
+        types: action.payload.types || {},
         initialized: true,
         loading: false,
         selectedHeaders: [],
