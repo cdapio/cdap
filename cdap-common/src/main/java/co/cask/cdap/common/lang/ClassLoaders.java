@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -149,26 +151,61 @@ public final class ClassLoaders {
    */
   public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader,
                                                                          boolean childFirst, T urls) {
-    Deque<ClassLoader> classLoaders = new LinkedList<>();
-    ClassLoader cl = classLoader;
-    while (cl != null) {
-      classLoaders.addFirst(cl);
-      cl = cl.getParent();
-    }
+    Deque<URLClassLoader> classLoaders = collectURLClassLoaders(classLoader, new LinkedList<URLClassLoader>());
 
-    Iterator<ClassLoader> iterator = childFirst ? classLoaders.descendingIterator() : classLoaders.iterator();
+    Iterator<URLClassLoader> iterator = childFirst ? classLoaders.iterator() : classLoaders.descendingIterator();
     while (iterator.hasNext()) {
-      cl = iterator.next();
-      if (cl instanceof URLClassLoader) {
-        for (URL url : ((URLClassLoader) cl).getURLs()) {
-          if (urls.add(url) && (url.getProtocol().equals("file"))) {
-            addClassPathFromJar(url, urls);
-          }
+      ClassLoader cl = iterator.next();
+      for (URL url : ((URLClassLoader) cl).getURLs()) {
+        if (urls.add(url) && (url.getProtocol().equals("file"))) {
+          addClassPathFromJar(url, urls);
         }
       }
     }
 
     return urls;
+  }
+
+  /**
+   * Collects {@link URLClassLoader} along the {@link ClassLoader} chain. This method recognizes both
+   * {@link Delegator} and {@link CombineClassLoader} and will unfold the delegating classloaders inside it.
+   * The order of insertion
+   *
+   * @param classLoader the classloader to start the search from
+   * @param result a collection for storing the result
+   * @param <T> type of the collection
+   * @return the result collection
+   */
+  private static <T extends Collection<? super URLClassLoader>> T collectURLClassLoaders(ClassLoader classLoader,
+                                                                                         T result) {
+    // Do BFS from the bottom of the ClassLoader chain
+    Deque<ClassLoader> queue = new LinkedList<>();
+    queue.add(classLoader);
+    while (!queue.isEmpty()) {
+      ClassLoader cl = queue.remove();
+      if (cl instanceof URLClassLoader) {
+        result.add((URLClassLoader) cl);
+      } else if (cl instanceof Delegator) {
+        Object delegate = ((Delegator) cl).getDelegate();
+        if (delegate != null && delegate instanceof ClassLoader) {
+          // Use add first for delegate, which effectively is replacing the current classloader
+          queue.addFirst((ClassLoader) delegate);
+        }
+      } else if (cl instanceof CombineClassLoader) {
+        List<ClassLoader> delegates = ((CombineClassLoader) cl).getDelegates();
+        ListIterator<ClassLoader> iterator = delegates.listIterator(delegates.size());
+        // Use add first for delegates, which effectively is replacing the current classloader
+        while (iterator.hasPrevious()) {
+          queue.addFirst(iterator.previous());
+        }
+      }
+
+      if (cl.getParent() != null) {
+        queue.add(cl.getParent());
+      }
+    }
+
+    return result;
   }
 
   /**

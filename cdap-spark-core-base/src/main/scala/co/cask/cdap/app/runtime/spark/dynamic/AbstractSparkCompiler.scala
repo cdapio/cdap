@@ -23,6 +23,7 @@ import java.util.jar.{JarEntry, JarOutputStream}
 import co.cask.cdap.api.spark.dynamic.{CompilationFailureException, SparkCompiler}
 import co.cask.cdap.common.lang.ClassLoaders
 import co.cask.cdap.common.lang.jar.BundleJarUtil
+import co.cask.cdap.internal.lang.CallerClassSecurityManager
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -167,10 +168,25 @@ object AbstractSparkCompiler {
     * @return the same settings instance from the argument
     */
   def setClassPath(settings: Settings, classLoader: ClassLoader): Settings = {
+    val userClassLoader = findUserCallerClassLoader(classLoader);
     settings.classpath.value =
       ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL])
                   .mkString(File.pathSeparator)
+    settings.embeddedDefaults(userClassLoader)
     settings
+  }
+
+  private def findUserCallerClassLoader(defaultClassLoader: ClassLoader): ClassLoader = {
+    // Try to see if the call is from plugin
+    // It can be done by finding the classloader from the call chain that the class loader is not the
+    // given classloader (ProgramClassLoader) or any of its parent.
+    val callerClassLoader = CallerClassSecurityManager.getCallerClasses
+      .map(_.getClassLoader)
+      .dropWhile(cl => ClassLoaders.find(defaultClassLoader, cl.getClass) != null)
+      .headOption
+
+    // Either it is found, or default to the program classloader.
+    callerClassLoader.getOrElse(defaultClassLoader)
   }
 
   /**

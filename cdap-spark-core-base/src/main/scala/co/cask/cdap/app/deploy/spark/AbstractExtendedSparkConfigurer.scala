@@ -22,7 +22,6 @@ import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer
-import co.cask.cdap.internal.lang.CallerClassSecurityManager
 import co.cask.cdap.proto.Id
 
 import scala.tools.nsc.Settings
@@ -39,16 +38,7 @@ abstract class AbstractExtendedSparkConfigurer(spark: Spark,
   with ExtendedSparkConfigurer {
 
   override def createSparkCompiler(): SparkCompiler = {
-    val callerClasses = CallerClassSecurityManager.getCallerClasses
-
-    var callerClassLoader: ClassLoader = null
-    // We expect 0 as this class, 1 as the CallerClassSecurityManager and 2 is the caller class
-    if (callerClasses.length < 3) {
-      // This shouldn't happen. If it does, use the program classloader as the caller classloader
-      callerClassLoader = spark.getClass.getClassLoader
-    }
-    else callerClassLoader = callerClasses(2).getClassLoader
-    return createSparkCompiler(AbstractSparkCompiler.setClassPath(new Settings, callerClassLoader))
+    return createSparkCompiler(AbstractSparkCompiler.setClassPath(new Settings, spark.getClass.getClassLoader))
   }
 
   def createSparkCompiler(settings: Settings): SparkCompiler
