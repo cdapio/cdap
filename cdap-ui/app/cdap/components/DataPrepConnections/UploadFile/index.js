@@ -47,6 +47,7 @@ export default class ConnectionsUpload extends Component {
   fileHandler(e) {
     this.setState({
       file: e[0],
+      recordDelimiter: (e[0].type === "application/json") ? '' : '\\n',
       error: e[0].size > FILE_SIZE_LIMIT
     });
   }
