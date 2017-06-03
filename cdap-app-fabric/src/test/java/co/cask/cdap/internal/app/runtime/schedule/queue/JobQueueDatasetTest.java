@@ -229,6 +229,7 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
         jobQueue.put(SCHED1_JOB);
 
         Assert.assertEquals(ImmutableSet.of(SCHED1_JOB), getAllJobs(jobQueue));
+        Assert.assertEquals(ImmutableSet.of(SCHED1_JOB), toSet(jobQueue.fullScan()));
       }
     });
   }
