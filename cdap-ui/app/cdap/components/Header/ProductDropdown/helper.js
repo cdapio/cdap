@@ -14,16 +14,17 @@
  * the License.
  */
 
+import T from 'i18n-react';
 
 export function getMode() {
   if (window.CDAP_CONFIG.isEnterprise) {
-    return 'Distributed';
+    return T.translate('features.Navbar.ProductDropdown.modes.distributed');
   }
   let sandboxMode = window.CDAP_CONFIG.sandboxMode;
   if (sandboxMode === 'azure' || sandboxMode === 'aws' || sandboxMode === 'gcp') {
-    return 'Cloud Sandbox';
+    return T.translate('features.Navbar.ProductDropdown.modes.cloudSandbox');
   }
-  return 'Local Sandbox';
+  return T.translate('features.Navbar.ProductDropdown.modes.localSandbox');
 }
 
 export function getModeWithCloudProvider() {
@@ -32,17 +33,17 @@ export function getModeWithCloudProvider() {
   if (cloudProvider === '') {
     return mode;
   }
-  return mode + ' for ' + cloudProvider;
+  return mode + ' ' + T.translate('features.AboutPage.providers.forLabel') + ' ' + cloudProvider;
 }
 
 function getCloudProvider() {
   let provider = '';
   if (window.CDAP_CONFIG.sandboxMode === 'azure') {
-    provider = 'Microsoft Azure';
+    provider = T.translate('features.AboutPage.providers.azure');
   } else if (window.CDAP_CONFIG.sandboxMode === 'aws') {
-    provider = 'Amazon Web Services (AWS)';
+    provider = T.translate('features.AboutPage.providers.aws');
   } else if (window.CDAP_CONFIG.sandboxMode === 'gcp') {
-    provider = 'Google Cloud Platform (GCP)';
+    provider = T.translate('features.AboutPage.providers.gcp');
   }
   return provider;
 }

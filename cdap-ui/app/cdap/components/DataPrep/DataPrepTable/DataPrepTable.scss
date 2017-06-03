@@ -46,10 +46,10 @@ $col_type_font_color: gray;
 
       &.table-bordered { border: 0; }
       .col-type {
-        margin-left: 26px;
+        margin-left: 28px;
         color: $col_type_font_color;
         font-weight: 400;
-        font-size: 12px;
+        font-size: 11px;
       }
       td {
         border: 1px solid $border-and-selected-color;
