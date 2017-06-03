@@ -28,7 +28,7 @@ import scala.tools.nsc.Settings
 class SparkCompilerTest extends SparkCompilerTestBase {
 
   override protected def createCompiler(): SparkCompiler = {
-    val settings = AbstractSparkCompiler.setClassPath(new Settings(), getClass.getClassLoader)
+    val settings = AbstractSparkCompiler.setClassPath(new Settings())
     new DefaultSparkCompiler(settings, new URLAdder {
       override def addURLs(urls: URL*) = {
         // no-op
@@ -37,7 +37,7 @@ class SparkCompilerTest extends SparkCompilerTestBase {
   }
 
   override protected def createInterpreter(): SparkInterpreter = {
-    val settings = AbstractSparkCompiler.setClassPath(new Settings(), getClass.getClassLoader)
+    val settings = AbstractSparkCompiler.setClassPath(new Settings())
     settings.Yreploutdir.value = SparkCompilerTestBase.TEMP_FOLDER.newFolder.getAbsolutePath
     new DefaultSparkInterpreter(settings, new URLAdder {
       override def addURLs(urls: URL*) = {

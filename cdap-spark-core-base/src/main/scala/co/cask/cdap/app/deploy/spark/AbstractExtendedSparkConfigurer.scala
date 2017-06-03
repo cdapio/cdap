@@ -38,7 +38,7 @@ abstract class AbstractExtendedSparkConfigurer(spark: Spark,
   with ExtendedSparkConfigurer {
 
   override def createSparkCompiler(): SparkCompiler = {
-    return createSparkCompiler(AbstractSparkCompiler.setClassPath(new Settings, spark.getClass.getClassLoader))
+    return createSparkCompiler(AbstractSparkCompiler.setClassPath(new Settings))
   }
 
   def createSparkCompiler(settings: Settings): SparkCompiler

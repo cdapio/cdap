@@ -27,6 +27,8 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
+import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -35,6 +37,7 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -152,7 +156,13 @@ public final class InMemoryConfigurator implements Configurator {
       }
 
       try {
-        app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+          new CombineClassLoader(null, Arrays.asList(app.getClass().getClassLoader(), getClass().getClassLoader())));
+        try {
+          app.configure(configurer, new DefaultApplicationContext<>(appConfig));
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof ClassNotFoundException) {
