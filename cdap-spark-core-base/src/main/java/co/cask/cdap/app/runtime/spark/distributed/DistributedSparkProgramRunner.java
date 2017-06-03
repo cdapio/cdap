@@ -37,6 +37,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
+import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.proto.ProgramType;
@@ -62,6 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -151,12 +153,16 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     Map<String, String> extraEnv = new HashMap<>(SparkPackageUtils.getSparkClientEnv());
     SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
 
+    // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
+    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
 
     launchConfig
       .addExtraResources(localizeResources)
       .addExtraDependencies(SparkProgramRuntimeProvider.class)
       .addExtraEnv(extraEnv)
+      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
       .setClassAcceptor(createBundlerClassAcceptor());
   }
 
