@@ -47,7 +47,6 @@ import co.cask.cdap.data.LineageDatasetContext
 import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext
-import co.cask.cdap.internal.lang.CallerClassSecurityManager
 import co.cask.cdap.proto.id.StreamId
 import co.cask.cdap.proto.security.Action
 import org.apache.hadoop.conf.Configuration
@@ -193,17 +192,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   override def createInterpreter(): SparkInterpreter = {
-    val callerClasses = CallerClassSecurityManager.getCallerClasses
-    var callerClassLoader: ClassLoader = null
-
-    // We expect 0 as this class, 1 as the CallerClassSecurityManager and 2 is the caller class
-    if (callerClasses.length < 3) {
-      // This shouldn't happen. If it does, use the program classloader as the caller classloader
-      callerClassLoader = runtimeContext.getProgram.getClassLoader
-    } else {
-      callerClassLoader = callerClasses(2).getClassLoader
-    }
-
     // Create the class directory
     val cConf = runtimeContext.getCConfiguration
     val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
@@ -214,10 +202,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     }
 
     // Setup classpath
-    val settings = AbstractSparkCompiler.setClassPath(new Settings(), callerClassLoader)
-
-    // Setup classloader
-    settings.embeddedDefaults(sparkClassLoader)
+    val settings = AbstractSparkCompiler.setClassPath(new Settings(), runtimeContext.getProgram.getClassLoader)
 
     val urlAdded = new mutable.HashSet[URL]
     val urlAdder = new URLAdder {
