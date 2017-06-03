@@ -505,4 +505,9 @@ public abstract class JavaSparkExecutionContextBase implements RuntimeContext, T
    * @throws IOException if failed to create a local directory for storing the compiled class files
    */
   public abstract SparkInterpreter createInterpreter() throws IOException;
+
+  /**
+   * Returns the underlying {@link SparkExecutionContext} used by this object.
+   */
+  public abstract SparkExecutionContext getSparkExecutionContext();
 }
