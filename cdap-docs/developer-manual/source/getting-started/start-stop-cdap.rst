@@ -25,12 +25,8 @@ CDAP Local Sandbox is installed):
     $ ./bin/cdap sandbox stop
 
 
-.. _start-stop-cdap-configure:
-
 You can configure CDAP by editing the ``cdap-site.xml`` file under your ``conf`` directory.
 CDAP must be restarted in order for changes in configuration to be picked up. 
-
-.. _start-stop-cdap-spark2:
 
 To run Spark2 programs with the CDAP Local Sandbox, edit the ``app.program.spark.compat`` setting
 in your ``cdap-site.xml`` file to be ``spark2_2.11``. When the CDAP Local Sandbox is using
