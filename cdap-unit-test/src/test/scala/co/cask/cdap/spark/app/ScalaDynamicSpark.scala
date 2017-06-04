@@ -39,7 +39,9 @@ class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
       import org.apache.spark._
 
       object Compute {
-       def run(sc: SparkContext, sparkMain: SparkMain)(implicit sec: SparkExecutionContext) {
+       def run(sc: SparkContext)(implicit sec: SparkExecutionContext) {
+         // Creates a dummy SparkMain instance for importing implicits
+         val sparkMain = new SparkMain() { override def run(implicit sec: SparkExecutionContext): Unit = { } }
          import sparkMain._
 
          val args = sec.getRuntimeArguments()
@@ -83,9 +85,8 @@ class ScalaDynamicSpark extends AbstractExtendedSpark with SparkMain {
       intp.addDependencies(depJar)
       intp.addImports("test.dynamic.Compute")
       intp.bind("sc", sc)
-      intp.bind("sparkMain", this)
-      intp.bind("sec", sec)
-      intp.interpret("Compute.run(sc, sparkMain)(sec)");
+      intp.bind("sec", sec.getClass.getName, sec, "implicit")
+      intp.interpret("Compute.run(sc)");
     } finally {
       intp.close()
     }
