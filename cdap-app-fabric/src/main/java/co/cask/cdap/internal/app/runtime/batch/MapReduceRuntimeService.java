@@ -289,7 +289,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add(launcherJar.getName());
 
         // Localize logback.xml
-        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation);
+        Location logbackLocation = ProgramRunners.createLogbackJar(tempLocation.append("logback.xml.jar"));
         if (logbackLocation != null) {
           job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());
@@ -389,7 +389,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Shutdown will still get executed, but the service will notify failure after that.
     // However, if it's the job is requested to stop (via triggerShutdown, meaning it's a user action), don't throw
     if (!stopRequested) {
-      Preconditions.checkState(job.isSuccessful(), "MapReduce JobId {} failed", job.getStatus().getJobID());
+      Preconditions.checkState(job.isSuccessful(), "MapReduce JobId %s failed", job.getStatus().getJobID());
     }
   }
 
@@ -1047,7 +1047,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Class<? extends HBaseDDLExecutor> ddlExecutorClass = new HBaseDDLExecutorFactory(cConf, hConf)
       .get().getClass();
     try {
-      Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass();
+      Class<?> hbaseTableUtilClass = HBaseTableUtilFactory.getHBaseTableUtilClass(cConf);
       classes.add(hbaseTableUtilClass);
       classes.add(ddlExecutorClass);
     } catch (ProvisionException e) {

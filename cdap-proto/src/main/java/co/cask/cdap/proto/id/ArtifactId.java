@@ -40,7 +40,7 @@ public class ArtifactId extends NamespacedEntityId implements ParentedId<Namespa
     if (version == null) {
       throw new NullPointerException("Version cannot be null.");
     }
-    ensureValidId("artifact", artifact);
+    ensureValidArtifactId("artifact", artifact);
     this.artifact = artifact;
     this.version = version;
   }

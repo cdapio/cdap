@@ -16,14 +16,14 @@ DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
-CDAP_MANUALS="introduction developers-manual admin-manual integrations examples-manual reference-manual faqs"
+CDAP_MANUALS="developer-manual admin-manual integrations examples-manual reference-manual faqs"
 EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 
 # Used to monitor any changes in scripts or commands for the building of Javadocs
 BUILD_RST="BUILD.rst"
 BUILD_RST_HASH_LOCATION="cdap-docs/vars"
-BUILD_RST_HASH="5db96f8c4866f62b2f28b4ca3c99448c"
+BUILD_RST_HASH="7fa2dfa8ae24e7d6f8d871eb53affb29"
 
 #
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced
@@ -41,38 +41,38 @@ GIT_NODE_JS_MIN_VERSION="v4.5.0"
 # GIT_NODE_JS_MAX_VERSION="" # not currently known
 
 # This needs to be explicitly set as Git has trouble identifying it
-GIT_BRANCH_PARENT="develop"
+GIT_BRANCH_PARENT="release/4.2"
 
 # Used by admin-manual
-GIT_BRANCH_CDAP_SECURITY_EXTN="develop"
+GIT_BRANCH_CDAP_SECURITY_EXTN="release/0.5"
 
-# Used for metadata management documentation in developers-manual
+# Used for metadata management documentation in developer-manual
 # cask-tracker repo
-GIT_BRANCH_CDAP_METADATA_MANAGEMENT="develop"
+GIT_BRANCH_CDAP_METADATA_MANAGEMENT="release/0.5"
 
-# Used by developers-manual
-GIT_BRANCH_CDAP_CLIENTS="develop"
+# Used by developer-manual
+GIT_BRANCH_CDAP_CLIENTS="release/1.3.0"
 
-GIT_BRANCH_CDAP_INGEST="develop"
+GIT_BRANCH_CDAP_INGEST="release/1.4.0"
 
-GIT_BRANCH_CDAP_APPS="develop"
+GIT_BRANCH_CDAP_APPS="release/cdap-4.2-compatible"
 
 GIT_VERSION_CDAP_APPS="0.8.0"
 
-# Used for pipelines documentation in developers-manual
+# Used for pipelines documentation in developer-manual
 # From https://github.com/caskdata/hydrator-plugins
-GIT_BRANCH_CDAP_PIPELINES="develop"
-GIT_BRANCH_HYDRATOR_PLUGINS="develop"
+GIT_BRANCH_CDAP_PIPELINES="release/1.7"
+GIT_BRANCH_HYDRATOR_PLUGINS="release/1.2"
 
 GIT_PLUGINS_SPEC_VERSION="1.4"
 
 # Used by examples manual
-GIT_BRANCH_CDAP_GUIDES="develop"
+GIT_BRANCH_CDAP_GUIDES="release/cdap-4.2-compatible"
 
 # Used by integrations-manual
-GIT_BRANCH_CDAP_PACKS="develop"
+GIT_BRANCH_CDAP_PACKS="release/cdap-4.2-compatible"
 
-GIT_VERSION_NAVIGATOR="0.1.0"
+GIT_VERSION_NAVIGATOR="0.5.0"
 GIT_CASK_MARKET_VERSION="v2"
 
 # Google Analytics Code

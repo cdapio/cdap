@@ -31,9 +31,12 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
 
   private final HBaseDDLExecutorLoader hBaseDDLExecutorLoader;
   private final HBaseDDLExecutorContext context;
+  private final String extensionDir;
 
   public HBaseDDLExecutorFactory(CConfiguration cConf, Configuration hConf) {
-    this.hBaseDDLExecutorLoader = new HBaseDDLExecutorLoader(cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, ""));
+    super(cConf);
+    this.extensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    this.hBaseDDLExecutorLoader = new HBaseDDLExecutorLoader(extensionDir == null ? "" : extensionDir);
     this.context = new BasicHBaseDDLExecutorContext(cConf, hConf);
   }
 
@@ -46,7 +49,13 @@ public class HBaseDDLExecutorFactory extends HBaseVersionSpecificFactory<HBaseDD
       // HBase DDL executor extension is provided.
       executor = extensions.values().iterator().next();
     } else {
-      // HBase DDL executor extension is not provided. Return the version specific executor instance.
+      if (extensionDir != null) {
+        // Extension directory is provided but the extension is not loaded
+        throw new RuntimeException(String.format("HBaseDDLExecutor extension cannot be loaded from directory '%s'." +
+                                                   " Please make sure jar is available at that location with " +
+                                                   "appropriate permissions.", extensionDir));
+      }
+      // Return the version specific executor instance.
       executor = super.get();
     }
 

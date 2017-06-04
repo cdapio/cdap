@@ -62,7 +62,8 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
 
     List<ScheduleDetail> list = scheduleClient.listSchedules(workflowId);
     Table table = Table.builder()
-      .setHeader("application", "program", "program type", "name", "description", "trigger", "properties")
+      .setHeader("application", "program", "program type", "name", "description", "trigger", "timeoutMillis",
+                 "properties")
       .setRows(list, new RowMaker<ScheduleDetail>() {
         @Override
         public List<?> makeRow(ScheduleDetail object) {
@@ -72,6 +73,7 @@ public final class ListWorkflowSchedulesCommand extends AbstractCommand {
                                     object.getName(),
                                     object.getDescription(),
                                     object.getTrigger(),
+                                    object.getTimeoutMillis(),
                                     GSON.toJson(object.getProperties()));
         }
       }).build();

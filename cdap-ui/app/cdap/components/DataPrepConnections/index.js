@@ -14,17 +14,25 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { Component, PropTypes } from 'react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
-import {Route, NavLink, Redirect} from 'react-router-dom';
-import FileBrowser from 'components/FileBrowser';
+import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
+import {setActiveBrowser, setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
+import {preventPropagation} from 'services/helpers';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
 import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
+import AddConnection from 'components/DataPrepConnections/AddConnection';
+import isNil from 'lodash/isNil';
+import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
+import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
+import DataPrepStore from 'components/DataPrep/store';
+import {objectQuery} from 'services/helpers';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -36,25 +44,80 @@ const RouteToHDFS = () => {
     <Redirect to={`/ns/${namespace}/connections/browser`} />
   );
 };
+const NavLinkWrapper = ({children, to, singleWorkspaceMode, ...attributes}) => {
+  if (singleWorkspaceMode) {
+    return (
+      <a
+        href={to}
+        {...attributes}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <NavLink
+      to={to}
+      {...attributes}
+    >
+      {children}
+    </NavLink>
+  );
+};
+
+NavLinkWrapper.propTypes = {
+  children: PropTypes.node,
+  to: PropTypes.string,
+  singleWorkspaceMode: PropTypes.bool
+};
 
 export default class DataPrepConnections extends Component {
   constructor(props) {
     super(props);
 
+    let {workspaceInfo} = DataPrepStore.getState().dataprep;
     this.state = {
-      sidePanelExpanded: true,
+      sidePanelExpanded: this.props.enableRouting ? true : false,
       backendChecking: true,
-      backendDown: false
+      backendDown: false,
+      connectionsList: [],
+      activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
+      activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
+      showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
     };
 
     this.toggleSidePanel = this.toggleSidePanel.bind(this);
     this.onServiceStart = this.onServiceStart.bind(this);
+    this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
+    this.onUploadSuccess = this.onUploadSuccess.bind(this);
   }
 
   componentWillMount() {
     this.checkBackendUp();
+    if (isNil(this.props.match) || this.props.match.path.indexOf('connections') === -1) {
+      setActiveBrowser({name: 'file'});
+    }
+    if (!this.props.enableRouting) {
+      this.dataprepSubscription = DataPrepStore.subscribe(() => {
+        let {workspaceInfo} = DataPrepStore.getState().dataprep;
+        if (
+          objectQuery(workspaceInfo, 'properties', 'connectionid') !== this.state.activeConnectionid ||
+          objectQuery(workspaceInfo, 'properties', 'id') !== this.state.activeConnectionid
+        ) {
+          this.setState({
+            activeConnectionid: workspaceInfo.properties.connectionid || workspaceInfo.properties.id,
+            activeConnectionType: workspaceInfo.properties.connection
+          });
+        }
+      });
+    }
   }
 
+  componentWillUnmount() {
+    if (this.dataprepSubscription) {
+      this.dataprepSubscription();
+    }
+  }
   checkBackendUp() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -64,6 +127,8 @@ export default class DataPrepConnections extends Component {
           backendChecking: false,
           backendDown: false
         });
+
+        this.fetchConnectionsList();
       }, (err) => {
         if (err.statusCode === 503) {
           console.log('backend not started');
@@ -78,15 +143,111 @@ export default class DataPrepConnections extends Component {
       });
   }
 
-  onServiceStart() {
+  handlePropagation(browserName, e) {
+    if (this.props.enableRouting && !this.props.singleWorkspaceMode) {
+      setActiveBrowser({name: browserName});
+      return;
+    }
+    preventPropagation(e);
+
+    if (isNil(browserName)) {
+      return;
+    }
+
+    // FIXME: This feels adhoc. We should be able to simplify this.
+    if (browserName === 'upload') {
+      this.setState({
+        showUpload: true
+      });
+      return;
+    }
+    let activeConnectionType, activeConnectionid;
+    if (browserName === 'file') {
+      setActiveBrowser({name: 'file'});
+      activeConnectionType = 'file';
+    } else if (typeof browserName === 'object' && browserName.type === 'DATABASE') {
+      setDatabaseAsActiveBrowser({name: 'database', id: browserName.id});
+      activeConnectionType = 'database';
+      activeConnectionid = browserName.id;
+    }
+
     this.setState({
-      backendDown: false,
-      backendChecking: false
+      showUpload: false,
+      activeConnectionType,
+      activeConnectionid
+    });
+  }
+
+  onServiceStart() {
+    this.checkBackendUp();
+  }
+
+  fetchConnectionsList(action, targetId) {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+
+    MyDataPrepApi.listConnections({
+      namespace,
+      type: 'database' // currently only going to fetch database connection
+    }).subscribe((res) => {
+      // need to group by connection type
+      let state = {};
+      if (action === 'delete' && this.state.activeConnectionid === targetId) {
+        state.activeConnectionid = null;
+        state.activeConnectionType = 'file';
+        setActiveBrowser({name: 'file'});
+      }
+      state.connectionsList = res.values;
+      this.setState(state);
     });
   }
 
   toggleSidePanel() {
     this.setState({sidePanelExpanded: !this.state.sidePanelExpanded});
+  }
+
+  onUploadSuccess(workspaceId) {
+    if (this.props.enableRouting) {
+      let {selectedNamespace: namespace} = NamespaceStore.getState();
+      let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
+      window.location.href = navigatePath;
+      return;
+    }
+    if (this.props.onWorkspaceCreate) {
+      this.props.onWorkspaceCreate(workspaceId);
+    }
+  }
+  renderDatabaseDetail() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.connectionsList.map((database) => {
+          return (
+            <div
+              key={database.id}
+              title={database.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/database/${database.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, database)}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {database.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={database}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   renderPanel() {
@@ -114,9 +275,11 @@ export default class DataPrepConnections extends Component {
 
         <div className="connections-menu">
           <div className="menu-item">
-            <NavLink
+            <NavLinkWrapper
               to={`${baseLinkPath}/upload`}
               activeClassName="active"
+              onClick={this.handlePropagation.bind(this, 'upload')}
+              singleWorkspaceMode={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
                 <IconSVG name="icon-upload" />
@@ -125,13 +288,15 @@ export default class DataPrepConnections extends Component {
               <span>
                 {T.translate(`${PREFIX}.upload`)}
               </span>
-            </NavLink>
+            </NavLinkWrapper>
           </div>
 
           <div className="menu-item">
-            <NavLink
+            <NavLinkWrapper
               to={`${baseLinkPath}/browser`}
               activeClassName="active"
+              onClick={this.handlePropagation.bind(this, 'file')}
+              singleWorkspaceMode={this.props.singleWorkspaceMode}
             >
               <span className="fa fa-fw">
                 <IconSVG name="icon-hdfs" />
@@ -140,13 +305,104 @@ export default class DataPrepConnections extends Component {
               <span>
                 {T.translate(`${PREFIX}.hdfs`)}
               </span>
-            </NavLink>
+            </NavLinkWrapper>
           </div>
+
+          <ExpandableMenu>
+            <div>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-database" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.database`, {count: this.state.connectionsList.length})}
+              </span>
+            </div>
+            {this.renderDatabaseDetail()}
+          </ExpandableMenu>
         </div>
+
+        <AddConnection
+          onAdd={this.fetchConnectionsList}
+        />
       </div>
     );
   }
 
+  renderRoutes() {
+    const BASEPATH = '/ns/:namespace/connections';
+    return (
+      <Switch>
+        <Route
+          path={`${BASEPATH}/browser`}
+          render={({match, location}) => {
+            setActiveBrowser({name: 'file'});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
+        <Route
+          path={`${BASEPATH}/upload`}
+          render={() => {
+            return (
+              <ConnectionsUpload
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
+        <Route
+          path={`${BASEPATH}/database/:databaseId`}
+          render={(match) => {
+            let id  = match.match.params.databaseId;
+            setDatabaseAsActiveBrowser({name: 'database', id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
+        <Route component={RouteToHDFS} />
+      </Switch>
+    );
+  }
+  showNonRoutableContents() {
+    if (this.state.showUpload) {
+      return (
+        <ConnectionsUpload
+          toggle={this.toggleSidePanel}
+          onWorkspaceCreate={this.onUploadSuccess}
+        />
+      );
+    }
+    let {enableRouting, ...attributes} = this.props;
+    enableRouting = this.props.singleWorkspaceMode ? false : this.props.enableRouting;
+    if (this.state.activeConnectionType === 'database') {
+      setDatabaseAsActiveBrowser({name: 'database', id: this.state.activeConnectionid});
+    } else if (this.state.activeConnectionType === 'file') {
+      setActiveBrowser({name: 'file'});
+    }
+    return (
+      <DataPrepBrowser
+        match={this.props.match}
+        location={this.props.location}
+        toggle={this.toggleSidePanel}
+        onWorkspaceCreate={!this.props.singleWorkspaceMode ? null : this.props.onWorkspaceCreate}
+        enableRouting={enableRouting}
+        {...attributes}
+      />
+    );
+  }
   render() {
     if (this.state.backendChecking) {
       return (
@@ -164,9 +420,6 @@ export default class DataPrepConnections extends Component {
       );
     }
 
-
-    const BASEPATH = '/ns/:namespace/connections';
-
     return (
       <div className="dataprep-connections-container">
         {this.renderPanel()}
@@ -174,28 +427,27 @@ export default class DataPrepConnections extends Component {
         <div className={classnames('connections-content', {
           'expanded': !this.state.sidePanelExpanded
         })}>
-          <Route path={`${BASEPATH}/browser`}
-            render={({match, location}) => {
-              return (
-                <FileBrowser
-                  match={match}
-                  location={location}
-                  toggle={this.toggleSidePanel}
-                />
-              );
-            }}
-          />
-          <Route path={`${BASEPATH}/upload`}
-            render={() => {
-              return (
-                <ConnectionsUpload toggle={this.toggleSidePanel} />
-              );
-            }}
-          />
+          {
+            this.props.enableRouting && !this.props.singleWorkspaceMode ?
+              this.renderRoutes()
+            :
+              this.showNonRoutableContents()
+          }
         </div>
 
-        <Route exact path={`${BASEPATH}`} component={RouteToHDFS} />
       </div>
     );
   }
 }
+
+DataPrepConnections.defaultProps = {
+  enableRouting: true
+};
+
+DataPrepConnections.propTypes = {
+  match: PropTypes.object,
+  location: PropTypes.object,
+  enableRouting: PropTypes.bool,
+  onWorkspaceCreate: PropTypes.func,
+  singleWorkspaceMode: PropTypes.bool
+};

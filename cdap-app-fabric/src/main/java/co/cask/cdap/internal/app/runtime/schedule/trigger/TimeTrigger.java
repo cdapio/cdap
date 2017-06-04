@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
 
@@ -26,6 +27,11 @@ public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Trigger {
 
   public TimeTrigger(String cronExpression) {
     super(cronExpression);
+    validate();
   }
 
+  @Override
+  public void validate() {
+    Schedulers.validateCronExpression(cronExpression);
+  }
 }

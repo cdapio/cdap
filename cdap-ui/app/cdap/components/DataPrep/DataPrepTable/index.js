@@ -29,6 +29,7 @@ import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
 import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
+import captialize from 'lodash/capitalize';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
@@ -163,6 +164,7 @@ export default class DataPrepTable extends Component {
     });
     return true;
   }
+
   handleSaveEditedColumnName(index, changedValue, noChange) {
     let headers = this.state.headers;
     let matchedHeader = headers[index];
@@ -181,6 +183,7 @@ export default class DataPrepTable extends Component {
       ]
     });
   }
+
   applyDirective(directive) {
     execute([directive])
       .subscribe(
@@ -195,10 +198,11 @@ export default class DataPrepTable extends Component {
         }
       );
   }
+
   renderDataprepTable() {
     let headers = this.state.headers;
     let data = this.state.data;
-
+    let types = DataPrepStore.getState().dataprep.types;
     return (
       <table className="table table-bordered">
         <thead className="thead-inverse">
@@ -214,9 +218,16 @@ export default class DataPrepTable extends Component {
                   key={head.name}
                 >
                   <DataQuality columnInfo={this.state.columns[head.name]} />
+                  <div className="col-type">{captialize(types[head.name] || 'unknown')}</div>
                   <div
                     className="clearfix column-wrapper"
                   >
+                    <span className="directives-dropdown-button">
+                      <ColumnActionsDropdown
+                        column={head.name}
+                        dropdownOpened={this.columnDropdownOpened}
+                      />
+                    </span>
                     {
                       !head.edit ?
                         <span
@@ -233,6 +244,7 @@ export default class DataPrepTable extends Component {
                             onChange={this.handleSaveEditedColumnName.bind(this, index)}
                             value={head.name}
                             onWarning={this.showWarningMessage.bind(this, index)}
+                            allowSpace={false}
                           />
                           {
                             head.showWarning ?
@@ -259,12 +271,6 @@ export default class DataPrepTable extends Component {
                           }
                         </div>
                     }
-                    <span className="float-xs-right directives-dropdown-button">
-                      <ColumnActionsDropdown
-                        column={head.name}
-                        dropdownOpened={this.columnDropdownOpened}
-                      />
-                    </span>
                     <span
                       onClick={this.toggleColumnSelect.bind(this, head.name)}
                       className={classnames('float-xs-right fa column-header-checkbox', {
@@ -294,6 +300,7 @@ export default class DataPrepTable extends Component {
       </table>
     );
   }
+
   render() {
     if (this.state.loading) {
       return (
@@ -312,37 +319,32 @@ export default class DataPrepTable extends Component {
       return (
         <div className="dataprep-table empty">
           <div>
-            <h5 className="text-xs-center">Please create a workspace to wrangle data</h5>
-            <div className="button-container text-xs-center">
-              <button
-                className="btn btn-primary"
-                onClick={this.openCreateWorkspaceModal}
-              >
-                Create
-              </button>
-            </div>
+            <h5 className="text-xs-center">Please select or upload a file to wrangle data</h5>
           </div>
         </div>
       );
     }
 
+    // FIXME: Not sure if this is possible now.
     if (data.length === 0 || headers.length === 0) {
       return (
         <div className="dataprep-table empty">
           {
-            this.state.directivesLength === 0 ? (
-              <div>
-                <h5 className="text-xs-center">Start by uploading data to this workspace</h5>
-                <div className="button-container text-xs-center">
-                  <button
-                    className="btn btn-primary"
-                    onClick={this.openUploadData}
-                  >
-                    Upload
-                  </button>
+            this.state.directivesLength === 0 ?
+              (
+                <div>
+                  <h5 className="text-xs-center">
+                    {T.translate('features.DataPrep.DataPrepTable.emptyWorkspace')}
+                  </h5>
                 </div>
-              </div>
-            ) : null
+              ) :
+              (
+                <div>
+                  <h5 className="text-xs-center">
+                    {T.translate('features.DataPrep.DataPrepTable.noData')}
+                  </h5>
+                </div>
+              )
           }
         </div>
       );

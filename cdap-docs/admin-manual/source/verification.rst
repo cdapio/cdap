@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _admin-manual-verification:
 
@@ -9,11 +9,10 @@ Verification
 ============
 
 To verify that the CDAP software is successfully installed and you are able to use your
-Hadoop cluster, run an example application. We provide in our SDK pre-built JAR files for
-convenience.
+Hadoop cluster, run an example application. We provide, in our CDAP Local Sandbox,
+pre-built JAR files for convenience.
 
-#. Download and install the latest `CDAP Software Development Kit (SDK)
-   <http://cask.co/downloads/#cdap>`__.
+#. Download and install the latest `CDAP Local Sandbox <http://cask.co/downloads/#cdap>`__.
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
@@ -22,7 +21,7 @@ convenience.
    It is located on port ``11011`` of the box where you installed the CDAP UI service.
 #. On the UI, click the button *Add App*.
 #. Find the pre-built |literal-Wordcount-release-jar| using the dialog box to navigate to
-   ``CDAP_HOME/examples/WordCount/target/``. 
+   ``CDAP_HOME/examples/WordCount/target/``.
 #. Once the application is deployed, instructions on running the example can be found at the
    :ref:`WordCount example <examples-word-count>`.
 #. You should be able to start the application, inject sentences, and retrieve results.
@@ -34,5 +33,5 @@ convenience.
 
 .. rubric:: Getting a Health Check
 
-.. include:: operations/index.rst 
+.. include:: operations/index.rst
    :start-after: .. _operations-health-check:

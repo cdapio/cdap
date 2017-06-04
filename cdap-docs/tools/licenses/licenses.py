@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright © 2014-2016 Cask Data, Inc.
+#  Copyright © 2014-2017 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 #  limitations under the License.
 
 # Checks that the license dependencies files used match the dependencies in the product.
-# Run this script after building the SDK.
-# Usage: python licenses.py 
+# Builds .rst files for output and PDF generation.
+
+# Usage: python licenses.py
 
 import csv
 import json
@@ -30,7 +31,7 @@ from datetime import date
 from optparse import OptionParser
 from pprint import pprint
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 COPYRIGHT_YEAR = date.today().year
 
@@ -49,10 +50,10 @@ MASTER_CSV_COMMENTS = {'bower': """# Bower Dependencies
 }
 MASTER_CSV_TYPES = ('bower', 'npm', 'jar')
 
-ENTERPRISE = 'cdap-enterprise-dependencies'
-LEVEL_1    = 'cdap-level-1-dependencies'
-STANDALONE = 'cdap-standalone-dependencies'
-CDAP_UI    = 'cdap-ui-dependencies'
+ENTERPRISE    = 'cdap-enterprise-dependencies'
+LEVEL_1       = 'cdap-level-1-dependencies'
+LOCAL_SANDBOX = 'cdap-local-sandbox-dependencies'
+CDAP_UI       = 'cdap-ui-dependencies'
 
 CASK_REVERSE_DOMAIN = 'co.cask'
 
@@ -75,7 +76,7 @@ SCRIPT_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 DEBUG = False
 QUIET = False
 
-def get_sdk_version():
+def get_cdap_version():
     # Sets the Build Version
     grep_version_cmd = "grep '<version>' ../../../pom.xml | awk 'NR==1;START{print $1}'"
     version = None
@@ -115,13 +116,13 @@ def parse_options():
         help='Print debug messages',
         default=False)
 
-    sdk_version = get_sdk_version()
+    cdap_version = get_cdap_version()
     parser.add_option(
         '-w', '--build_version',
         dest='build_version',
-        help='The built version of the CDAP SDK '
-             "(default: %s)" % sdk_version,
-        default=sdk_version)
+        help='The built version of CDAP '
+             "(default: %s)" % cdap_version,
+        default=cdap_version)
 
     parser.add_option(
         '-u', '--ui',
@@ -145,10 +146,10 @@ def parse_options():
         default=False)
 
     parser.add_option(
-        '-s', '--standalone',
+        '-s', '--local_sandbox',
         action='store_true',
-        dest='standalone',
-        help='Process standalone dependencies',
+        dest='local_sandbox',
+        help='Process local sandbox dependencies',
         default=False)
 
     parser.add_option(
@@ -166,10 +167,10 @@ def parse_options():
         default=False)
 
     parser.add_option(
-        '-c', '--rst_standalone',
+        '-c', '--rst_local_sandbox',
         action='store_true',
-        dest='rst_standalone',
-        help='Print standalone dependencies to an rst file',
+        dest='rst_local_sandbox',
+        help='Print local sandbox dependencies to an rst file',
         default=False)
 
     parser.add_option(
@@ -209,10 +210,10 @@ def parse_options():
         default=False)
 
     (options, args) = parser.parse_args()
-    
+
     global DEBUG
     DEBUG = options.debug
-    
+
     if options.version:
         print "Version: %s" % VERSION
         sys.exit(1)
@@ -220,7 +221,7 @@ def parse_options():
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
-    
+
     return options, args
 
 
@@ -275,16 +276,16 @@ def process_master():
                     lib.print_duplicate(master_libs_dict)
             else:
                 print "%sError with %s\n%srow: %s" % (SPACE, dependency, SPACE, row)
-                
+
     # Print out the results
     keys = master_libs_dict.keys()
 #     keys.sort()
 #     for k in keys:
-#         master_libs_dict[k].pretty_print()    
+#         master_libs_dict[k].pretty_print()
     print_quiet("Master CSV: Rows read: %s (comments: %s); Unique Keys created: %s" % (row_count, comment_count, len(keys)))
     return master_libs_dict
 
-    
+
 def master_print_terminal():
     master_libs_dict = process_master()
     # Print out the results
@@ -297,17 +298,17 @@ def master_print_terminal():
         for k in keys:
             if master_libs_dict[k].type == type:
                 i += 1
-                master_libs_dict[k].pretty_print(i, max_characters)    
+                master_libs_dict[k].pretty_print(i, max_characters)
 #     for k in keys:
 #         print "key: %s %s" % (k, master_libs_dict[k])
-#         master_libs_dict[k].pretty_print()    
+#         master_libs_dict[k].pretty_print()
 
 
 def test_for_application(app):
     results = subprocess.call(['which', app])
     if results == 0:
         print "Found executable for '%s'" % app
-    else: 
+    else:
         message = "No executable for '%s'" % app
         if app == 'bower':
             print "%s; install bower using: npm install -g bower" % message
@@ -334,7 +335,7 @@ def process_cdap_ui(options):
     missing_libs_dict = {}
     new_versions_dict = {}
     old_versions_dict = {}
-    
+
     print_quiet()
 
     def clean_version(version):
@@ -351,7 +352,7 @@ def process_cdap_ui(options):
         elif version[0] in ('~', '^'):
             version = version[1:]
         return version
-        
+
     def higher_version(v1, v2):
         """Compare v1 and v2 and is true if v2 > v1 (v2 is a higher version than v1)"""
         v1 = clean_version(v1)
@@ -366,15 +367,15 @@ def process_cdap_ui(options):
                     v2_list = v2_list + ['0'] * (len(v1_list) - len(v2_list))
                 else:
                     v1_list = v1_list + ['0'] * (len(v2_list) - len(v1_list))
-            return cmp(v2_list, v1_list) == 1            
+            return cmp(v2_list, v1_list) == 1
 
     for type in CDAP_UI_SOURCES.keys():
         source = CDAP_UI_SOURCES[type][0]
         json_path = os.path.join(SCRIPT_DIR_PATH, source)
         print_quiet("Reading '%s' dependencies file:\n%s" % (type, json_path))
-        with open(json_path) as data_file:    
+        with open(json_path) as data_file:
             data = json.load(data_file)
-            
+
         if CDAP_UI_DEPENDENCIES_KEY in data.keys():
             for dependency in data[CDAP_UI_DEPENDENCIES_KEY]:
                 if not dependency.startswith(CDAP_UI_CASK_DEPENDENCIES):
@@ -386,7 +387,7 @@ def process_cdap_ui(options):
                         # Compare versions
                         if higher_version(master_libs_dict[dependency].version, version):
                             if new_versions_dict.has_key(dependency):
-                                print_quiet("Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency, 
+                                print_quiet("Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency,
                                     master_libs_dict[dependency].version, new_versions_dict[dependency], version))
                             else:
                                 print_quiet("New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version))
@@ -394,7 +395,7 @@ def process_cdap_ui(options):
                                 old_versions_dict[dependency]=master_libs_dict[dependency].version
                                 master_libs_dict[dependency].version = version
                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
-                        
+
                     else:
                         missing_libs_dict[dependency] = (type, version)
 
@@ -405,7 +406,7 @@ def process_cdap_ui(options):
         keys.sort()
         for key in keys:
             print_quiet("%s : current: %s new: %s" % (key, old_versions_dict[key], new_versions_dict[key]))
-        
+
     keys = missing_libs_dict.keys()
     count_missing = len(keys)
     print_quiet("\nCDAP UI: Missing Artifacts: %s" % count_missing)
@@ -415,8 +416,8 @@ def process_cdap_ui(options):
         for type in type_keys:
             if not test_for_application(type):
                 all_apps_available = False
-                
-        if all_apps_available: 
+
+        if all_apps_available:
             keys.sort()
             missing_list = []
             for dependency in keys:
@@ -435,11 +436,11 @@ def process_cdap_ui(options):
                     missing_list.append(row)
                 else:
                     print_quiet("Unknown type: '%s' for dependency '%s', version '%s'" % (type, dependency, version))
-        
+
             print_quiet('\nCDAP UI: Missing Artifacts List:')
             for row in missing_list:
                 print_quiet(row)
-        
+
             if options.debug:
                 for dependency in keys:
                     version = missing_libs_dict[dependency]
@@ -455,8 +456,8 @@ def process_cdap_ui(options):
                         p1 = subprocess.Popen(['bower', 'info', dependency_version], stdout=subprocess.PIPE)
                         results = p1.communicate()[0]
                         print_quiet("Debug:\n%s" % results)
-                        p1 = subprocess.Popen(['bower', 'home', dependency_version], stdout=subprocess.PIPE)        
-        
+                        p1 = subprocess.Popen(['bower', 'home', dependency_version], stdout=subprocess.PIPE)
+
     print_quiet("\nCDAP UI: Row count: %s" % len(cdap_ui_dict.keys()))
 
     # Return 'Dependency','Version', 'Type','License','License URL', 'License Source URL'
@@ -468,7 +469,7 @@ def process_cdap_ui(options):
         row = list(lib.get_row())
         cdap_ui_data.append(UILicense(*row))
         print_quiet("%s : %s" % (dependency, row))
-        
+
     # Print new master entries
     print_quiet("\nNew Master Versions\n")
     keys = master_libs_dict.keys()
@@ -482,10 +483,10 @@ def process_cdap_ui(options):
                 print_quiet("%s : %s" % (dependency, row))
         print_quiet()
 
-    # Write out a new master csv file, only if not already exists 
+    # Write out a new master csv file, only if not already exists
     if count_new or count_missing:
         write_new_master_csv_file(master_libs_dict)
-    
+
     return cdap_ui_data
 
 def process_level_1(input_file, options):
@@ -517,7 +518,7 @@ def process_level_1(input_file, options):
     print_quiet("Level 1: Row count: %s" % row_count)
     print_quiet("Level 1: Unique Row count: %s" % unique_row_count)
     print_quiet("Level 1: Missing Artifacts: %s" % len(missing_libs_dict.keys()))
-    
+
     if len(missing_libs_dict.keys()) > 0:
         for key in missing_libs_dict.keys():
             print_quiet("Missing artifact_id: %s (for %s)" % (key, missing_libs_dict[key]))
@@ -537,9 +538,9 @@ def process_level_1(input_file, options):
 def process_enterprise(input_file, options):
     return _process_dependencies(ENTERPRISE)
 
-def process_standalone(input_file, options):
-    return _process_dependencies(STANDALONE)
-    
+def process_local_sandbox(input_file, options):
+    return _process_dependencies(LOCAL_SANDBOX)
+
 def _process_dependencies(dependency):
     # Read in the current master csv file and create a structure with it
     # Read in the new dependencies csv file
@@ -547,9 +548,9 @@ def _process_dependencies(dependency):
     # Make a list of the references for which links are missing and need to be added to the master
     # Make a new master list, if one does not already exist
     # Return 'Package','Version','Classifier','License','License URL'
-    
+
     master_libs_dict = process_master()
-    
+
     # Read dependencies
     new_libs_dict = {}
     missing_libs_dict = {}
@@ -601,7 +602,7 @@ def _process_dependencies(dependency):
         print_quiet('Missing Licenses')
         for miss in missing_licenses:
             print "  %s" % miss
-    
+
     if missing_entries:
         print_quiet('Missing Entries')
         i = 0
@@ -609,7 +610,7 @@ def _process_dependencies(dependency):
             i += 1
             print "  %2d: %s" % (i, missing_libs_dict[key])
 
-    # Write out a new master csv file, only if not already exists 
+    # Write out a new master csv file, only if not already exists
     if missing_entries or missing_licenses:
         write_new_master_csv_file(master_libs_dict)
 
@@ -644,7 +645,7 @@ def write_new_master_csv_file(lib_dict):
         except:
             print "Backup Master CSV: Exiting, as unable to create backup Master: %s" % backup_csv_path
             return
-    
+
     if os.path.isfile(csv_path):
         print "New Master CSV: Exiting, as new Master file already exists: %s" % csv_path
     else:
@@ -668,13 +669,13 @@ def write_new_master_csv_file(lib_dict):
                 csv_file.close()
             else:
                 print "Unable to close New Master CSV: %s" % csv_path
-            
+
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
 def master_print_file():
     master_libs_dict = process_master()
     write_new_master_csv_file(master_libs_dict)
-    
+
 def print_rst_level_1(input_file, options):
     title = 'Level 1'
     file_base = LEVEL_1
@@ -691,12 +692,12 @@ def print_rst_enterprise(input_file, options):
     data_list = process_enterprise(input_file, options)
     _print_dependencies(title, file_base, header, widths, data_list)
 
-def print_rst_standalone(input_file, options):
-    title = 'Standalone'
-    file_base = STANDALONE
+def print_rst_local_sandbox(input_file, options):
+    title = 'Local Sandbox'
+    file_base = LOCAL_SANDBOX
     header = '"Package","Version","Classifier","License","License URL"'
     widths = '20, 10, 10, 20, 30'
-    data_list = process_standalone(input_file, options)
+    data_list = process_local_sandbox(input_file, options)
     _print_dependencies(title, file_base, header, widths, data_list)
 
 def print_rst_cdap_ui(options):
@@ -734,9 +735,9 @@ Cask Data Application Platform %(title)s Dependencies
    :widths: %(widths)s
 
 """
-    sdk_version = get_sdk_version()
-    if sdk_version:
-        RST_HEADER = RST_HEADER % {'version': sdk_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
+    cdap_version = get_cdap_version()
+    if cdap_version:
+        RST_HEADER = RST_HEADER % {'version': cdap_version, 'title': title, 'header': header, 'widths': widths, 'year': COPYRIGHT_YEAR}
         rst_path = os.path.join(SCRIPT_DIR_PATH, file_base + '.rst')
 
         try:
@@ -748,8 +749,8 @@ Cask Data Application Platform %(title)s Dependencies
             raise
         print "Wrote rst file:\n%s" % rst_path
     else:
-        print "Unable to get SDK Version from Grep"
-        
+        print "Unable to get CDAP version using grep"
+
 def print_debug(message=''):
     if DEBUG:
         print message
@@ -764,7 +765,7 @@ def list_special(input_file, options):
     LICENSE_LIST = ['Apache License, Version 2.0', 'MIT License', 'MIT+GPLv2', 'Public Domain',]
 
     data_dict = dict()
-    data_list = process_enterprise(input_file, options) + process_standalone(input_file, options) + process_cdap_ui(options)
+    data_list = process_enterprise(input_file, options) + process_local_sandbox(input_file, options) + process_cdap_ui(options)
     for data in data_list:
         library = data.get_library()
         if library.startswith('com.sun.'):
@@ -795,7 +796,7 @@ def list_special(input_file, options):
 class License:
 
     SPACE_3 = ' '*3
-    
+
     def __init__(self, package, version, classifier, license, license_url, license_source_url=None):
         self.id = package
         self.package = package # aka 'jar' aka 'package' aka 'dependency'
@@ -818,7 +819,7 @@ class License:
         elif self.classifier:
             library = self.package[:-len("-%s.%s.jar" % (self.version, self.classifier))]
         return library
-    
+
     def get_short_library(self):
         library = self.get_library()
         if library.count('.') < 2:
@@ -879,7 +880,7 @@ class Library:
     MAX_SIZES={}
     PRINT_ORDER = ['id','jar','base','version','classifier','license','license_url', 'license_source_url']
     SPACE = ' '*3
-    
+
     def __init__(self, jar, license, license_url, license_source_url=None):
         self.jar = jar # aka 'package' aka 'dependency'
         self.dependency = jar
@@ -892,7 +893,7 @@ class Library:
         self.license_url = license_url
         self.license_source_url = license_source_url
         self._initialize()
-        
+
     def __str__(self):
         return "%s : %s" % (self.id, self.jar)
 
@@ -938,7 +939,7 @@ class Library:
     def _initialize(self):
         self._convert_jar()
         self._set_max_sizes()
-    
+
     def pretty_print(self, i=0, digits=3):
         SPACER = 1
         line = ''
@@ -952,11 +953,11 @@ class Library:
         print line
 
     def get_row(self):
-#         license_source_url = self.license_source_url if self.license_source_url else self.license_url        
+#         license_source_url = self.license_source_url if self.license_source_url else self.license_url
         return (self.jar, self.version, self.classifier, self.license, self.license_url, self.license_source_url)
 
     def get_full_row(self):
-        license_source_url = self.license_source_url if self.license_source_url else ''        
+        license_source_url = self.license_source_url if self.license_source_url else ''
         return (self.jar, self.version, self.classifier, self.license, self.license_url, license_source_url)
 
     def print_duplicate(self, lib_dict):
@@ -967,7 +968,7 @@ class Library:
 
 class UI_Library(Library):
     PRINT_ORDER = ['dependency','version','type','license','license_url','homepage','license_page']
-    
+
     def __init__(self, id, version, type, license, license_url, homepage, license_page):
         self.id = id
         self.dependency = id
@@ -1008,31 +1009,31 @@ def main():
         if options.use_next_year:
             COPYRIGHT_YEAR +=1
             print "\nWARNING: COPYRIGHT_YEAR of %s does not match current year of %s\n" % (COPYRIGHT_YEAR, COPYRIGHT_YEAR -1)
-            
+
         if options.cdap_ui:
             process_cdap_ui(options)
 
         if options.enterprise:
             process_enterprise(input_file, options)
-            
+
         if options.level_1:
             process_level_1(input_file, options)
-            
-        if options.standalone:
-            process_standalone(input_file, options)
-            
+
+        if options.local_sandbox:
+            process_local_sandbox(input_file, options)
+
         if options.rst_enterprise:
             print_rst_enterprise(input_file, options)
-            
+
         if options.rst_level_1:
             print_rst_level_1(input_file, options)
-            
-        if options.rst_standalone:
-            print_rst_standalone(input_file, options)
-            
+
+        if options.rst_local_sandbox:
+            print_rst_local_sandbox(input_file, options)
+
         if options.rst_cdap_ui:
             print_rst_cdap_ui(options)
-            
+
         if options.master_print_terminal:
             master_print_terminal()
 

@@ -1,0 +1,158 @@
+/*
+ * cdap-dynamicscrollspy.css
+ * ~~~~~~~~~~~~~~~~~~~~~~~~~
+ *
+ * Stylesheet for cdap dynamicscrollspy.css
+ *
+ * :copyright: Copyright 2017 by Cask Data, Inc.
+ * :license: Apache Version 2.0, see LICENSE for details.
+ *
+ */
+
+/*
+Color Scheme
+============
+
+Links
+-----
+Cask Orange:
+color: #ff6600;
+
+Background Dark:   Grey_03
+color: #666666;
+
+Background Middle: Grey_04
+color: #999999;
+
+Background Light:  Grey_05
+color: #CCCCCC;
+
+Text Color
+----------
+color: #212121;
+*/
+
+
+/*
+Calc max height as 100% less top space less bottom space
+Color of border-left is set in JS to prevent a flash
+*/
+.nav.dynamic-scrollspy,
+#right-sidebar.bs-sidenav {
+    background: #fff;
+    border-left: 4px solid white;
+    color: #212121;
+    font-size: 13px;
+    line-height: 16px;
+    max-height: calc(100% - 140px - 60px);
+    overflow-y: auto;
+    padding-left: 0px;
+    padding: 3px;
+    z-index: 10000;
+}
+
+.nav li.dynamic-scrollspy-heading > a,
+.nav li.dynamic-scrollspy-title > a {
+    border-left: 0px rgba(0, 0, 0, 0);
+    color: #212121;
+    padding: 3px;
+    padding-left: 12px;
+}
+
+ul.nav.dynamic-scrollspy {
+    border-left-width: 0px;
+    padding-left: 0px;
+}
+
+.nav li.dynamic-scrollspy-title > a,
+h3.nav.dynamic-scrollspy-title > a {
+    margin: 8px 0 0;
+    padding-right: 6px;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* All anchors hover: must precede active! */
+h3.nav.dynamic-scrollspy-heading > a:hover,
+.nav li.dynamic-scrollspy-title > a:hover {
+    background-color: white;
+    border-right: none;
+    color: #ff6600;
+    font-weight: bold;
+}
+
+.bs-sidenav .nav .nav > li > a {
+    padding-right: 12px;
+}
+
+.bs-sidenav .nav > .active > a,
+.bs-sidenav .nav > .active:hover > a,
+.bs-sidenav .nav > .active:focus > a {
+    background-color: white;
+    border-right: none;
+    color: #212121;
+    font-weight: normal;
+}
+
+/* First level */
+.nav li.dynamic-scrollspy-heading > a,
+.nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 12px;
+    padding-top: 0;
+}
+
+/* Second level */
+.nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 24px;
+    padding-top: 0;
+}
+
+/* Third level */
+.nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 36px;
+    padding-top: 0;
+}
+
+/* Fourth level */
+.nav .nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 48px;
+    padding-top: 0;
+}
+
+/* Fifth level */
+.nav .nav .nav .nav .nav .nav li.dynamic-scrollspy-title > a {
+    margin-top: 0;
+    padding-bottom: 0;
+    padding-left: 60px;
+    padding-top: 0;
+}
+
+/* Active link */
+.bs-sidenav .nav .nav.dynamic-scrollspy-title.active.scrollspy-active > a {
+    border-right: none;
+    color: #ff6600;
+    font-weight: bold;
+}
+
+/* Always show initial "Contents" heading */
+h3.nav.dynamic-scrollspy-heading {
+    margin-top: 0;
+    padding-left: 0;
+    border-bottom: none;
+}
+
+h3.nav.dynamic-scrollspy-heading > a {
+    color: #666666;
+    display: block;
+    padding-left: 12px;
+    font: 700 13px/16px Roboto, sans-serif;
+    text-decoration: none
+}

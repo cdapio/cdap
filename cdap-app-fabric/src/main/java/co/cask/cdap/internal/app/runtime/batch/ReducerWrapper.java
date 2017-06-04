@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
@@ -60,6 +61,8 @@ public class ReducerWrapper extends Reducer {
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    ClassLoader weakReferenceClassLoader = new WeakReferenceDelegatorClassLoader(classLoader);
+
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
@@ -83,7 +86,7 @@ public class ReducerWrapper extends Reducer {
 
     ClassLoader oldClassLoader;
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
@@ -94,7 +97,7 @@ public class ReducerWrapper extends Reducer {
       }
     }
 
-    oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
     try {
       delegate.run(flushingContext);
     } finally {
@@ -114,7 +117,7 @@ public class ReducerWrapper extends Reducer {
     basicMapReduceContext.closeMultiOutputs();
 
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
         ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
       } catch (Exception e) {

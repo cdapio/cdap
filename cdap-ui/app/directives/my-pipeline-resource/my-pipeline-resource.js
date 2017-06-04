@@ -22,7 +22,11 @@ angular.module(PKG.name + '.commons')
       store: '=',
       actionCreator: '=',
       isDisabled: '=',
-      resourceType: '@'
+      resourceType: '@',
+      onMemoryChange: '&',
+      onCoreChange: '&',
+      memoryMbValue: '=',
+      virtualCoresValue: '='
     },
     link: function(scope, element) {
       var angularElement,
@@ -52,7 +56,11 @@ angular.module(PKG.name + '.commons')
     scope: {
       actionCreator: '=',
       store: '=',
-      isDisabled: '='
+      isDisabled: '=',
+      onMemoryChange: '&',
+      onCoreChange: '&',
+      memoryMbValue: '=',
+      virtualCoresValue: '='
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineDriverResourceCtrl'
@@ -64,7 +72,11 @@ angular.module(PKG.name + '.commons')
     scope: {
       actionCreator: '=',
       store: '=',
-      isDisabled: '='
+      isDisabled: '=',
+      onMemoryChange: '&',
+      onCoreChange: '&',
+      memoryMbValue: '=',
+      virtualCoresValue: '='
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineExecutorResourceCtrl'
@@ -76,7 +88,11 @@ angular.module(PKG.name + '.commons')
     scope: {
       actionCreator: '=',
       store: '=',
-      isDisabled: '='
+      isDisabled: '=',
+      onMemoryChange: '&',
+      onCoreChange: '&',
+      memoryMbValue: '=',
+      virtualCoresValue: '='
     },
     templateUrl: 'my-pipeline-resource/my-pipeline-resource.html',
     controller: 'MyPipelineClientResourceCtrl'

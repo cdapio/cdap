@@ -106,7 +106,7 @@ public class SparkClassLoader extends CombineClassLoader {
     SparkConf sparkConf = new SparkConf();
     File resourcesDir = new File(sparkConf.get("spark.local.dir", System.getProperty("user.dir")));
     sparkExecutionContext = new DefaultSparkExecutionContext(
-      runtimeContext, SparkRuntimeUtils.getLocalizedResources(resourcesDir, sparkConf));
+      this, SparkRuntimeUtils.getLocalizedResources(resourcesDir, sparkConf));
     return sparkExecutionContext;
   }
 

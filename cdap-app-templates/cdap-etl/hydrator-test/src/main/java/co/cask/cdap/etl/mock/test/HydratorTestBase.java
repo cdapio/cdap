@@ -88,6 +88,7 @@ public class HydratorTestBase extends TestBase {
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
     co.cask.cdap.etl.mock.batch.MockSink.PLUGIN_CLASS,
+    co.cask.cdap.etl.mock.spark.streaming.MockSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     FilterTransform.PLUGIN_CLASS,
@@ -150,6 +151,7 @@ public class HydratorTestBase extends TestBase {
                       STREAMING_MOCK_PLUGINS,
                       co.cask.cdap.etl.mock.spark.streaming.MockSource.class,
                       co.cask.cdap.etl.mock.batch.MockSink.class,
+                      co.cask.cdap.etl.mock.spark.streaming.MockSink.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       StringValueFilterCompute.class, Window.class);

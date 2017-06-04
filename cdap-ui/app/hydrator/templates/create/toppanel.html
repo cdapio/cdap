@@ -174,12 +174,14 @@
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning"
-          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.validToStartPreview && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
-          uib-tooltip="Please provide values for runtime arguments {{ HydratorPlusPlusTopPanelCtrl.notValidRuntimeArgsString }}, before running the pipeline"
+          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading &&
+          HydratorPlusPlusTopPanelCtrl.hasNodes &&
+          HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+          uib-tooltip="Start building a pipeline before starting preview"
           tooltip-placement="bottom"
           tooltip-class="toppanel-tooltip"
-          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.validToStartPreview"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.validToStartPreview">
+          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes">
       <div class="btn-container">
         <span class="fa fa-play text-success"></span>
         <div class="button-label">Run</div>
@@ -235,7 +237,6 @@
   <div
     runtime-arguments="HydratorPlusPlusTopPanelCtrl.runtimeArguments"
     apply-runtime-arguments="HydratorPlusPlusTopPanelCtrl.applyRuntimeArguments()"
-    convert-runtime-args-to-macros="HydratorPlusPlusTopPanelCtrl.convertRuntimeArgsToMacros()"
     resolved-macros="HydratorPlusPlusTopPanelCtrl.resolvedMacros"
     run-pipeline="HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
     pipeline-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}"

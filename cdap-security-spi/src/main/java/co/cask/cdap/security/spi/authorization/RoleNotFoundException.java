@@ -22,8 +22,9 @@ import co.cask.cdap.proto.security.Role;
 import java.net.HttpURLConnection;
 
 /**
- * Exception thrown when a {@link Role} is not found
+ * Exception thrown when a {@link Role} is not found, This is deprecated, please use {@link NotFoundException}
  */
+@Deprecated
 public class RoleNotFoundException extends Exception implements HttpErrorStatusProvider {
   public RoleNotFoundException(Role role) {
     super(String.format("%s not found.", role));

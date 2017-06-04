@@ -19,15 +19,20 @@ package co.cask.cdap.app.runtime.spark
 import java.io.File
 import java.util
 
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.reflect.io.PlainFile
+import scala.tools.nsc.Settings
+
 /**
   * Spark1 SparkExecutionContext
   */
-class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext, localizeResources: util.Map[String, File])
-  extends AbstractSparkExecutionContext(runtimeContext, localizeResources) {
+class DefaultSparkExecutionContext(sparkClassLoader: SparkClassLoader, localizeResources: util.Map[String, File])
+  extends AbstractSparkExecutionContext(sparkClassLoader, localizeResources) {
 
   override protected def saveAsNewAPIHadoopDataset[K: ClassManifest, V: ClassManifest](sc: SparkContext,
                                                                                        conf: Configuration,
@@ -39,5 +44,10 @@ class DefaultSparkExecutionContext(runtimeContext: SparkRuntimeContext, localize
     } else {
       rdd.saveAsNewAPIHadoopDataset(conf)
     }
+  }
+
+  override protected def createInterpreter(settings: Settings, classDir: File,
+                                           urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter = {
+    new DefaultSparkInterpreter(settings, new PlainFile(classDir), urlAdder, onClose)
   }
 }

@@ -147,7 +147,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <spark1.version>1.6.1</spark1.version>
     <spark2.version>2.1.0</spark2.version>
-    <tephra.version>0.12.0-incubating-SNAPSHOT</tephra.version>
+    <tephra.version>0.12.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
     <twill.version>0.11.0</twill.version>
@@ -1372,9 +1372,14 @@
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-recipes</artifactId>
           </exclusion>
+          <!-- excludes scala-compiler and scala-reflect to avoid conflicting with the one from spark-repl -->
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
@@ -1382,7 +1387,7 @@
           </exclusion>
           <!--
             Need to exclude this since Spark brings in an older version that makes
-            S3 not work in standalone. This doesn't affect distributed mode.
+            S3 not work in local sandbox. This doesn't affect distributed mode.
           -->
           <exclusion>
             <groupId>net.java.dev.jets3t</groupId>
@@ -1419,9 +1424,14 @@
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-recipes</artifactId>
           </exclusion>
+          <!-- excludes scala-compiler and scala-reflect to avoid conflicting with the one from spark-repl -->
           <exclusion>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-compiler</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-reflect</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.eclipse.jetty.orbit</groupId>
@@ -1429,7 +1439,7 @@
           </exclusion>
           <!--
             Need to exclude this since Spark brings in an older version that makes
-            S3 not work in standalone. This doesn't affect distributed mode.
+            S3 not work in local sandbox. This doesn't affect distributed mode.
           -->
           <exclusion>
             <groupId>net.java.dev.jets3t</groupId>
@@ -1481,6 +1491,16 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-mllib_2.11</artifactId>
+        <version>${spark2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-repl_2.10</artifactId>
+        <version>${spark1.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.spark</groupId>
+        <artifactId>spark-repl_2.11</artifactId>
         <version>${spark2.version}</version>
       </dependency>
       <dependency>
@@ -2615,6 +2635,7 @@
         <module>cdap-explore-jdbc</module>
         <module>cdap-explore</module>
         <module>cdap-unit-test</module>
+        <module>cdap-unit-test-spark2_2.11</module>
         <module>cdap-kms</module>
         <module>cdap-master</module>
         <module>cdap-proto</module>

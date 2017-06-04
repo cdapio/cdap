@@ -261,7 +261,7 @@ final class DatumWriterGenerator {
     // Generate the top level public encode method
     String methodSignature = null;
     if (callOutputType.getType() instanceof ParameterizedType) {
-      methodSignature = Signatures.getMethodSignature(encodeMethod, callOutputType, null);
+      methodSignature = Signatures.getMethodSignature(encodeMethod, TypeToken.of(void.class), callOutputType, null);
     }
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PUBLIC, encodeMethod, methodSignature,
                               new Type[] {Type.getType(IOException.class)}, classWriter);
@@ -304,7 +304,7 @@ final class DatumWriterGenerator {
     // Put the method into map first before generating the body in order to support recursive data type.
     encodeMethods.put(key, method);
 
-    String methodSignature = Signatures.getMethodSignature(method,
+    String methodSignature = Signatures.getMethodSignature(method, TypeToken.of(void.class),
                                                            callOutputType, null, null,
                                                            new TypeToken<Set<Object>>() { });
     GeneratorAdapter mg = new GeneratorAdapter(Opcodes.ACC_PRIVATE, method, methodSignature,

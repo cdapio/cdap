@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.queue;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ScheduleId;
 
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * Responsible for keeping track of {@link Job}s, which correspond to schedules that have been triggered,
  * but not yet executed.
  */
-interface JobQueue {
+public interface JobQueue {
 
   /**
    * Returns a {@link CloseableIterator} over all the jobs associated with the given schedule Id.
@@ -66,14 +66,15 @@ interface JobQueue {
    * @param schedule the schedule for which jobs will be update
    * @param notification the new notification to update the schedule jobs with
    */
-  void addNotification(ProgramSchedule schedule, Notification notification);
+  void addNotification(ProgramScheduleRecord schedule, Notification notification);
 
   /**
-   * Deletes all jobs associated with the given schedule Id.
+   * Marks all jobs associated with the given schedule Id for deletion, recording the time of deletion.
    *
    * @param scheduleId the scheduledId for which to delete
+   * @param deletedTime the timestamp to use for the delete marker
    */
-  void deleteJobs(ScheduleId scheduleId);
+  void markJobsForDeletion(ScheduleId scheduleId, long deletedTime);
 
   /**
    * Deletes the job associated with the given schedule Id and timestamp.

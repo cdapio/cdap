@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Examples
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -15,10 +15,12 @@ Examples
    :maxdepth: 1
    :titlesonly:
 
+   Introduction to CDAP <introduction-to-cdap>
    Hello World <hello-world>
    Clicks and Views <clicks-and-views>
    Count Random <count-random>
    Data Cleansing <data-cleansing>
+   Decision Tree Regression <decision-tree-regression>
    FileSet Example <fileset-example>
    Log Analysis <log-analysis>
    Purchase <purchase>
@@ -32,8 +34,15 @@ Examples
    Wikipedia Pipeline <wikipedia-data-pipeline>
    Word Count <word-count>
 
-In addition to the :ref:`Getting Started's <getting-started-index>` 
-:ref:`Quick Start/Web Log Analytics example, <quick-start>` the SDK includes these examples:
+
+For a comprehensive inital introduction to CDAP and its capabilities, follow the
+:ref:`Introduction to CDAP <introduction-to-cdap>` tutorial, covering everything from installation
+of a CDAP Local Sandbox through the creation of a real-world application.
+
+For developers intent on building Java-based CDAP applications, see the :ref:`Getting Started's
+<getting-started-index>` :ref:`Quick Start/Web Log Analytics <quick-start>` example.
+
+The :ref:`CDAP Local Sandbox <local-sandbox>` includes these examples in the download:
 
 .. list-table::
   :widths: 15 60
@@ -52,6 +61,9 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Data Cleansing <data-cleansing>`
     - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
       partitioned fileset using MapReduce.
+  * - :doc:`Decision Tree Regression <decision-tree-regression>`
+    - An application demonstrating machine-learning model training using a Spark2 program. It trains decision tree
+      regression models from labeled data uploaded through a Service.
   * - :doc:`FileSet Example <fileset-example>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
@@ -98,12 +110,12 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
 
 .. rubric:: What's Next
 
-You can learn more about developing data application using CDAP by:
+For more about developing data application using CDAP:
 
-- Look at our :ref:`How-To Guides<guides-index>` and
-  :ref:`Tutorials<tutorials>`, with a collection of quick how-to-guides and
-  longer tutorials covering a complete range of Big Data application topics.
-- Exploring the web analytics application :doc:`source code.<web-analytics>` It includes 
+- Look at our :ref:`How-To Guides <guides-index>` and :ref:`Tutorials <tutorials>`, with a
+  collection of quick how-to-guides and longer tutorials covering a complete range of Big
+  Data application topics.
+- Explore a web analytics application :doc:`source code <web-analytics>`. It includes
   test cases that show unit-testing an application.
-- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and 
+- For a detailed understanding of what CDAP is capable of, read our :ref:`Overview <cdap-overview>` and
   :ref:`Building Blocks <building-blocks>` sections.

@@ -131,6 +131,15 @@ public final class Constants {
     public static final String MANAGE_COPROCESSORS = "master.manage.hbase.coprocessors";
     public static final String CLIENT_RETRIES = "hbase.client.retries.number";
     public static final String RPC_TIMEOUT = "hbase.rpc.timeout";
+    /** Determines how to behave when the HBase version is unsupported. cdap_set_hbase() method
+     * in cdap-common/bin/functions.sh must also be updated if this String is changed */
+    public static final String HBASE_VERSION_RESOLUTION_STRATEGY = "hbase.version.resolution.strategy";
+    /** Keep HBase version as it is when HBase version is unsupported. cdap_set_hbase() method
+     * in cdap-common/bin/functions.sh must also be updated if this String is changed */
+    public static final String HBASE_AUTO_STRICT_VERSION = "auto.strict";
+    /** Use latest HBase version available on the cluster when HBase version is unsupported. cdap_set_hbase() method
+     * in cdap-common/bin/functions.sh must also be updated if this String is changed */
+    public static final String HBASE_AUTO_LATEST_VERSION = "auto.latest";
   }
 
   /**
@@ -575,6 +584,8 @@ public final class Constants {
 
     public static final String MESSAGING_TOPIC_NUM = "metrics.messaging.topic.num";
 
+    public static final String TWILL_INSTANCE_ID = "metrics.twill.instance.id";
+
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
@@ -803,6 +814,9 @@ public final class Constants {
     public static final String TAG_WORKFLOW_SPARK_ID = ".workflowSparkId";
     public static final String TAG_WORKFLOW_PROGRAM_RUN_ID = ".workflowProgramRunId";
 
+    public static final String EVENT_TYPE_TAG = "MDC:eventType";
+    public static final String USER_LOG_TAG_VALUE = "userLog";
+
     // cut-off time discount from actual transaction timeout
     public static final int TX_TIMEOUT_DISCOUNT_SECS = 5;
   }
@@ -1019,6 +1033,11 @@ public final class Constants {
     public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
     public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
       "hive.security.authorization.sqlstd.confwhitelist.append";
+
+    /** Determines how to behave when the Hive version is unsupported */
+    public static final String HIVE_VERSION_RESOLUTION_STRATEGY = "hive.version.resolution.strategy";
+    public static final String HIVE_AUTO_STRICT_VERSION = "auto.strict";
+    public static final String HIVE_AUTO_LATEST_VERSION = "auto.latest";
 
     // a marker so that we know which tables are created by CDAP
     public static final String CDAP_NAME = "cdap.name";

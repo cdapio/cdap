@@ -1,0 +1,107 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../../styles/variables.scss';
+
+$header-border: #cccccc;
+$header-bg: #eeeeee;
+$content-font-color: #333333;
+
+.database-browser {
+  height: calc(100vh - 50px - 54px);
+
+  .database-browser-header,
+  .database-browser-content {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  .database-browser-content { height: calc(100% - 56px - 46px); }
+
+  .database-content-table {
+    padding: 0;
+    height: 100%;
+
+    .row {
+      margin: 0;
+    }
+    .database-content-header {
+      border-bottom: 1px solid $header-border;
+      border-top: 1px solid $header-border;
+      background-color: $header-bg;
+      line-height: 36px;
+      font-weight: 600;
+    }
+    .database-content-body {
+      height: calc(100% - 38px);
+      overflow-y: auto;
+      .content-row {
+        border-bottom: 1px solid $header-border;
+        line-height: 36px;
+        color: $content-font-color;
+        cursor: pointer;
+        &:hover {
+          background: $header-border;
+        }
+      }
+    }
+  }
+  .tables-count {
+    color: gray;
+    font-size: 12px;
+  }
+  .database-browser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 46px;
+
+    .database-metadata { padding-left: 5px; }
+  }
+  .empty-search-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+    width: 100%;
+
+    .empty-search {
+      font-size: 18px;
+      font-weight: 500;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 25vh;
+      max-width: 80%;
+      word-wrap: break-word;
+
+      hr {
+        color: #999999;
+        background-color: #999999;
+      }
+      span {
+        font-size: 14px;
+      }
+      ul {
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+        .link-text {
+          cursor: pointer;
+          color: $cdap-orange;
+        }
+      }
+    }
+  }
+}

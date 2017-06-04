@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,11 @@
 package co.cask.cdap.examples.streamconversion;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.schedule.Schedules;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 
@@ -41,10 +41,9 @@ public class StreamConversionApp extends AbstractApplication {
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
     addWorkflow(new StreamConversionWorkflow());
-    scheduleWorkflow(Schedules.builder("every5min")
-                       .setDescription("runs every 5 minutes")
-                       .createTimeSchedule("*/5 * * * *"),
-                     "StreamConversionWorkflow");
+    schedule(buildSchedule("every5min", ProgramType.WORKFLOW, "StreamConversionWorkflow")
+               .setDescription("runs every 5 minutes")
+               .triggerByTime("*/5 * * * *"));
 
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore
     createDataset("converted", TimePartitionedFileSet.class, FileSetProperties.builder()

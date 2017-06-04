@@ -15,15 +15,15 @@ Starting the Services
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button,
   and then do the same for the |example-service2-italic| and |example-service3-italic| services; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli start service |example|.\ |example-service1|
     $ cdap cli start service |example|.\ |example-service2|
     $ cdap cli start service |example|.\ |example-service3|
-    
+
     Successfully started service '|example-service1|' of application '|example|' with stored runtime arguments '{}'
     Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'
     Successfully started service '|example-service3|' of application '|example|' with stored runtime arguments '{}'

@@ -24,11 +24,18 @@ import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -52,9 +59,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionFailureException;
+import org.apache.tephra.TransactionSystemClient;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -64,6 +75,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -223,23 +237,29 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
-    // Deploy an app with default version
-    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithfrequentschedules", VERSION1);
-    addAppArtifact(artifactId, AppWithFrequentScheduledWorkflows.class);
-    AppRequest<? extends Config> appRequest = new AppRequest<>(
-      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    deploy(APP_ID, appRequest);
+
+    deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Resume the schedule because schedules are initialized as paused
-    resumeSchedule(APP_ID.getNamespace(), APP_ID.getApplication(),
-                   AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_1);
-    resumeSchedule(APP_ID.getNamespace(), APP_ID.getApplication(),
-                   AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_2);
+    enableSchedule(AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_1);
+    enableSchedule(AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_2);
+    enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
+    enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
 
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < 5; i++) {
       testNewPartition(i + 1);
     }
+
+    // disable the two partition schedules, send them notifications (but they should not trigger)
+    int runs1 = getRuns(WORKFLOW_1);
+    int runs2 = getRuns(WORKFLOW_2);
+    disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
+    disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+
     long elapsedTime = System.currentTimeMillis() - startTime;
     // Sleep to wait for one run of WORKFLOW_3 to complete as scheduled
     long sleepTime = TimeUnit.SECONDS.toMillis(75) - elapsedTime;
@@ -248,24 +268,81 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
     // Both workflows must run at least once.
     // If the testNewPartition() loop took longer than expected, it may be more (quartz fired multiple times)
-    Assert.assertTrue(0 < store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE).size());
-    Assert.assertTrue(0 < store.getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED, 0,
-                                        Long.MAX_VALUE, Integer.MAX_VALUE).size());
+    Assert.assertTrue(0 < getRuns(SCHEDULED_WORKFLOW_1));
+    Assert.assertTrue(0 < getRuns(SCHEDULED_WORKFLOW_2));
+
+    // verify that the two partition schedules did not trigger
+    Assert.assertEquals(runs1, getRuns(WORKFLOW_1));
+    Assert.assertEquals(runs2, getRuns(WORKFLOW_2));
+
+    // enable partition schedule 2
+    enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    testScheduleUpdate("disable");
+    testScheduleUpdate("update");
+    testScheduleUpdate("delete");
+  }
+
+  private void testScheduleUpdate(String howToUpdate) throws Exception {
+    int runs = getRuns(WORKFLOW_2);
+    ScheduleId scheduleId2 = APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    // send one notification to it, that will not start the workflow
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    TimeUnit.SECONDS.sleep(5); // give it enough time to create the job
+    Assert.assertEquals(runs, getRuns(WORKFLOW_2));
+    if ("disable".equals(howToUpdate)) {
+      // disabling and enabling the schedule should remove the job
+      disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+      enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+    } else {
+      ProgramSchedule schedule = scheduler.getSchedule(scheduleId2);
+      Map<String, String> updatedProperties = ImmutableMap.<String, String>builder()
+        .putAll(schedule.getProperties()).put(howToUpdate, howToUpdate).build();
+      ProgramSchedule updatedSchedule = new ProgramSchedule(schedule.getName(), schedule.getDescription(),
+                                                            schedule.getProgramId(), updatedProperties,
+                                                            schedule.getTrigger(), schedule.getConstraints());
+      if ("update".equals(howToUpdate)) {
+        scheduler.updateSchedule(updatedSchedule);
+        Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(scheduleId2));
+      } else if ("delete".equals(howToUpdate)) {
+        scheduler.deleteSchedule(scheduleId2);
+        scheduler.addSchedule(updatedSchedule);
+        enableSchedule(scheduleId2.getSchedule());
+      } else {
+        Assert.fail("invalid howToUpdate: " + howToUpdate);
+      }
+    }
+    // single notification should not trigger workflow 2 yet (if it does, then the job was not removed)
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    TimeUnit.SECONDS.sleep(10); // give it enough time to create the job, but should not start
+    Assert.assertEquals(runs, getRuns(WORKFLOW_2));
+    // now this should kick off the workflow
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    waitForCompleteRuns(runs + 1, WORKFLOW_2);
+  }
+
+  private void enableSchedule(String name) throws NotFoundException, ConflictException {
+    ScheduleId scheduleId = APP_ID.schedule(name);
+    scheduler.enableSchedule(scheduleId);
+    Assert.assertEquals(ProgramScheduleStatus.SCHEDULED, scheduler.getScheduleStatus(scheduleId));
+  }
+
+  private void disableSchedule(String name) throws NotFoundException, ConflictException {
+    ScheduleId scheduleId = APP_ID.schedule(name);
+    scheduler.disableSchedule(scheduleId);
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED, scheduler.getScheduleStatus(scheduleId));
   }
 
   private void testNewPartition(int expectedNumRuns) throws Exception {
     publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
     try {
       waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
       waitForCompleteRuns(expectedNumRuns, WORKFLOW_2);
     } finally {
-      LOG.info("WORKFLOW_1 runRecords: {}",
-               store.getRuns(WORKFLOW_1, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
-      LOG.info("WORKFLOW_2 runRecords: {}",
-               store.getRuns(WORKFLOW_2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE));
+      LOG.info("WORKFLOW_1 runRecords: {}", getRuns(WORKFLOW_1));
+      LOG.info("WORKFLOW_2 runRecords: {}", getRuns(WORKFLOW_2));
     }
   }
 
@@ -275,9 +352,13 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Tasks.waitFor(numRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return store.getRuns(program, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
+        return getRuns(program);
       }
-    }, 5, TimeUnit.SECONDS);
+    }, 10, TimeUnit.SECONDS);
+  }
+
+  private int getRuns(ProgramId workflowId) {
+    return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
   }
 
   private void publishNotification(TopicId topicId, ProgramId programId, String dataset)

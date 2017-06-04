@@ -59,4 +59,9 @@ public class IdTest {
     Assert.assertEquals(flow, sameFlow);
   }
 
+  @Test
+  public void testArtifactIdTest() {
+    Assert.assertTrue(Id.Artifact.isValidName("cdap-artifact-id_2.10-1.0.0"));
+  }
+
 }

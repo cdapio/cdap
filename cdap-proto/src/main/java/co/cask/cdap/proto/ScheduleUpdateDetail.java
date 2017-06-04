@@ -24,7 +24,10 @@ import javax.annotation.Nullable;
 
 /**
  * A class which wraps fields which can be updated for an existing {@link ScheduleSpecification}
+ *
+ * @deprecated as of 4.2.0. Use {@link ScheduleDetail} instead.
  */
+@Deprecated
 public class ScheduleUpdateDetail {
 
   private final Schedule schedule;

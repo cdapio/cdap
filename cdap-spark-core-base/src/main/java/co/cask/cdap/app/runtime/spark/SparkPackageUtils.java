@@ -340,6 +340,10 @@ public final class SparkPackageUtils {
     } catch (IOException e) {
       LOG.warn("Failed to load Spark default configurations from {}.", confFile, e);
     }
+
+    // Remove "spark.master" and "spark.submit.deployMode"
+    properties.remove("spark.master");
+    properties.remove("spark.submit.deployMode");
     return properties;
   }
 

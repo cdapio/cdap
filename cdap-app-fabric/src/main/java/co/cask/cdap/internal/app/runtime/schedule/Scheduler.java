@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,7 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
@@ -34,38 +32,46 @@ import java.util.Map;
 public interface Scheduler {
 
   /**
-   * Convert and add a {@link ProgramSchedule} to the store.
+   * Add a new schedule converted from the given {@link ProgramSchedule}.
    *
-   * @param schedule the schedule to add
+   * @param schedule the {@link ProgramSchedule} to convert and add
    * @throws AlreadyExistsException if the schedule already exists
+   * @throws SchedulerException on unforeseen error
    */
   void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException;
 
   /**
-   * Updates a {@link ProgramSchedule} in the store. The schedule with the same {@link ScheduleId}
-   * as the given {@code schedule} will be replaced.
+   * Deletes the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
    *
-   * @param schedule the new schedule. The existing schedule with the same {@link ScheduleId} will be replaced
-   */
-  void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException;
-
-  /**
-   * Deletes the schedule corresponding to the given {@link ProgramSchedule} if it exists
-   *
-   * @param schedule the {@link ProgramSchedule} to delete
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to delete
+   * @throws NotFoundException if the schedule could not be found
+   * @throws SchedulerException on unforeseen error
    */
   void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
-   * Schedule a program to be run in a defined schedule.
+   * Suspends the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
+   * Sub-sequent schedules will not trigger for the job. If the schedule is already suspended,
+   * this method will not do anything.
    *
-   * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedule Schedule with which the program runs.
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @throws NotFoundException if the schedule could not be found
+   * @throws SchedulerException on unforeseen error
+   */
+  void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
+
+  /**
+   * Resume the schedule with the same schedule name and {@link ProgramId} as the given {@link ProgramSchedule}.
+   * If the schedule is already active, this method will not do anything.
+   * The time schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
+   * from the next possible runtime. For data schedules based on size, the execution will be triggered only once,
+   * even if the data requirement has been met multiple times.
+   *
+   * @param schedule the {@link ProgramSchedule} with schedule name and {@link ProgramId} of the schedule to suspend
+   * @throws NotFoundException if the schedule could not be found
    * @throws SchedulerException on unforeseen error.
    */
-  void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws SchedulerException;
+  void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
    * Schedule a program to be run in a defined schedule.
@@ -78,30 +84,6 @@ public interface Scheduler {
    */
   void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                 Map<String, String> properties) throws SchedulerException;
-
-  /**
-   * Schedule a program to be run in a defined schedule.
-   *
-   * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedules Schedules with which the program runs.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException;
-
-  /**
-   * Schedule a program to be run in a defined schedule.
-   *
-   * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedules Schedules with which the program runs.
-   * @param properties system properties to be passed to the schedule.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                Map<String, String> properties)
-    throws SchedulerException;
 
   /**
    * Get the previous run time for the program. A program may contain one or more schedules
@@ -131,17 +113,6 @@ public interface Scheduler {
    * @throws SchedulerException on unforeseen error.
    */
   List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException;
-
-  /**
-   * Get Schedule ids for a given program and program type.
-   *
-   * @param program program for which schedules needs to be determined.
-   * @param programType type of program.
-   * @return List of scheduleIds, empty List if there are no matching schedules.
-   * @throws SchedulerException on unforeseen error.
-   */
-  List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException;
 
   /**
@@ -175,33 +146,6 @@ public interface Scheduler {
     throws NotFoundException, SchedulerException;
 
   /**
-   * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
-   *
-   * @param program the program for which schedule needs to be updated
-   * @param programType the type of the program
-   * @param schedule the new schedule. The schedule with the same name will be replaced
-   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
-   *                           belongs to does not exist.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws NotFoundException, SchedulerException;
-
-  /**
-   * Update the given schedule. The schedule with the same name than the given {@code schedule} will be replaced.
-   *
-   * @param program the program for which schedule needs to be updated
-   * @param programType the type of the program
-   * @param schedule the new schedule. The schedule with the same name will be replaced
-   * @param properties properties that can be passed to the quartz scheduler
-   * @throws NotFoundException if the {@code schedule} does not exist, or if the application the {@code program}
-   *                           belongs to does not exist.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                             Map<String, String> properties) throws NotFoundException, SchedulerException;
-
-  /**
    * Deletes the schedule.
    * Deletes the associated Job if no other schedules exist for that job.
    *
@@ -223,30 +167,5 @@ public interface Scheduler {
    */
   void deleteSchedules(ProgramId programId, SchedulableProgramType programType)
     throws SchedulerException;
-
-  /**
-   * Deletes all schedules associated with the given namespace.
-   *
-   * @param namespaceId Id of the namespace
-   * @throws SchedulerException on unforeseen error
-   */
-  void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException;
-
-  /**
-   * Get state of a particular schedule.
-   *
-   * @param program the program for which the state of the schedule is queried
-   * @param programType the type of the program
-   * @param scheduleName the name of the schedule
-   * @return State of the schedule.
-   * @throws SchedulerException on unforeseen error.
-   */
-  ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws SchedulerException;
-
-  /**
-   * Schedule state.
-   */
-  enum ScheduleState { NOT_FOUND, SCHEDULED, SUSPENDED }
 
 }

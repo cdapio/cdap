@@ -45,25 +45,27 @@ public class DelayConstraintTest {
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   @Test
-  public void test() {
+  public void testDelayConstraint() {
     long now = System.currentTimeMillis();
     ProgramSchedule schedule = new ProgramSchedule("SCHED1", "one partition schedule", WORKFLOW_ID,
                                                    ImmutableMap.of("prop3", "abc"),
                                                    new PartitionTrigger(DATASET_ID, 1),
                                                    ImmutableList.<Constraint>of());
-    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER);
+    SimpleJob job = new SimpleJob(schedule, now, Collections.<Notification>emptyList(), Job.State.PENDING_TRIGGER, 0L);
 
     // test with 10 minute delay
-    DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(TimeUnit.MINUTES.toMillis(10));
+    DelayConstraint tenMinuteDelayConstraint = new DelayConstraint(10, TimeUnit.MINUTES);
     // a check against 12 minutes after 'now' will return SATISFIED
-    ConstraintResult result =
-      tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12)));
+    ConstraintContext constraintContext = new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(12), null);
+    ConstraintResult result = tenMinuteDelayConstraint.check(schedule, constraintContext);
     Assert.assertEquals(ConstraintResult.SATISFIED, result);
 
     // a check against 9 minutes after 'now' will return NOT_SATISFIED, with 1 minute to wait until next retry
-    result = tenMinuteDelayConstraint.check(schedule, new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9)));
+    constraintContext = new ConstraintContext(job, now + TimeUnit.MINUTES.toMillis(9), null);
+    result = tenMinuteDelayConstraint.check(schedule, constraintContext);
     Assert.assertEquals(ConstraintResult.SatisfiedState.NOT_SATISFIED, result.getSatisfiedState());
-    Assert.assertEquals(TimeUnit.MINUTES.toMillis(1), (long) result.getMillisBeforeNextRetry());
+    Assert.assertEquals(constraintContext.getCheckTimeMillis() + TimeUnit.MINUTES.toMillis(1),
+                        (long) result.getNextCheckTime());
   }
 
 }

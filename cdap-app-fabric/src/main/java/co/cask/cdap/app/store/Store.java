@@ -298,29 +298,10 @@ public interface Store extends RuntimeStore {
   Map<String, String> getRuntimeArguments(ProgramRunId runId);
 
   /**
-   * Adds a schedule for a particular program. If the schedule with the name already exists, the method will
-   * throw AlreadyExistsException unless overwrite is true. If overwrite is true then the existing schedule is updated.
-   *
-   * @param program defines program to which a schedule is being added
-   * @param scheduleSpecification defines the schedule to be added for the program
-   * @param allowOverwrite whether to overwrite an existing schedule
-   * @throws AlreadyExistsException when schedule already exists and overwrite is false
-   */
-  void addSchedule(ProgramId program, ScheduleSpecification scheduleSpecification, boolean allowOverwrite)
-    throws AlreadyExistsException;
-
-  /**
    * Deletes data for an application from the WorkflowDataset table
    * @param id id of application to be deleted
    */
   void deleteWorkflowStats(ApplicationId id);
-
-  /**
-   * Deletes a schedules from a particular program
-   * @param program defines program from which a schedule is being deleted
-   * @param scheduleName the name of the schedule to be removed from the program
-   */
-  void deleteSchedule(ProgramId program, String scheduleName);
 
   /**
    * Check if an application exists.

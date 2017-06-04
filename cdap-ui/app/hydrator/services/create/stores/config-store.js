@@ -54,6 +54,7 @@ class HydratorPlusPlusConfigStore {
     this.hydratorPlusPlusConfigDispatcher.register('onAddPostAction', this.addPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onEditPostAction', this.editPostAction.bind(this));
     this.hydratorPlusPlusConfigDispatcher.register('onDeletePostAction', this.deletePostAction.bind(this));
+    this.hydratorPlusPlusConfigDispatcher.register('onSetMaxConcurrentRuns', this.setMaxConcurrentRuns.bind(this));
   }
   registerOnChangeListener(callback) {
     // index of the listener to be removed while un-subscribing
@@ -96,6 +97,7 @@ class HydratorPlusPlusConfigStore {
       this.setCheckpointing(this.state.config.disableCheckpoints);
       this.setGracefulStop(this.state.config.stopGracefully);
       this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
+      this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -116,7 +118,8 @@ class HydratorPlusPlusConfigStore {
       properties: {},
       processTimingEnabled: true,
       stageLoggingEnabled: true,
-      numOfRecordsPreview: 100
+      numOfRecordsPreview: 100,
+      maxConcurrentRuns: 1
     };
   }
 
@@ -303,6 +306,7 @@ class HydratorPlusPlusConfigStore {
     });
 
     config.postActions = postActions;
+    config.maxConcurrentRuns = this.getMaxConcurrentRuns();
 
     return config;
   }
@@ -321,6 +325,9 @@ class HydratorPlusPlusConfigStore {
     state.__ui__.nodes = nodes;
 
     return angular.copy(state);
+  }
+  getCloneConfig() {
+    return this.getConfigForExport();
   }
   getDisplayConfig() {
     let uniqueNodeNames = {};
@@ -467,7 +474,7 @@ class HydratorPlusPlusConfigStore {
     angular.extend(this.state.config.properties, newCustomConfig);
   }
   getBackpressure() {
-    return this.getConfig().properties['system.spark.spark.streaming.backpressure.enabled'];
+    return this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
   }
   setBackpressure(val) {
     if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
@@ -476,15 +483,16 @@ class HydratorPlusPlusConfigStore {
   }
   getNumExecutors() {
     if (this.isDistributed) {
-      return this.getConfig().properties['system.spark.spark.executor.instances'].toString();
+      if (this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.executor.instances')) {
+        return this.state.config.properties['system.spark.spark.executor.instances'].toString();
+      }
     } else {
       // format on standalone is 'local[{number}]'
-      let formattedNum = this.getConfig().properties['system.spark.spark.master'];
-      if (formattedNum) {
+      if (this.myHelpers.objectQuery(this.state, 'config', 'properties', 'system.spark.spark.master')) {
+        let formattedNum = this.state.config.properties['system.spark.spark.master'];
         return formattedNum.substring(6, formattedNum.length - 1);
-      } else {
-        return '1';
       }
+      return '1';
     }
   }
   setNumExecutors(num) {
@@ -694,6 +702,9 @@ class HydratorPlusPlusConfigStore {
   }
   getNodes() {
     return this.getState().__ui__.nodes;
+  }
+  getStages() {
+    return this.getState().config.stages || [];
   }
   getSourceNodes(nodeId) {
     let nodesMap = {};
@@ -935,6 +946,9 @@ class HydratorPlusPlusConfigStore {
   }
 
   addPostAction(config) {
+    if (!this.state.config.postActions) {
+      this.state.config.postActions = [];
+    }
     this.state.config.postActions.push(config);
     this.emitChange();
   }
@@ -954,6 +968,12 @@ class HydratorPlusPlusConfigStore {
   }
   getPostActions() {
     return this.getState().config.postActions;
+  }
+  getMaxConcurrentRuns() {
+    return this.getState().config.maxConcurrentRuns;
+  }
+  setMaxConcurrentRuns(num=1) {
+    this.state.config.maxConcurrentRuns = num;
   }
 
   saveAsDraft() {

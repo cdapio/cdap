@@ -1,0 +1,46 @@
+    .mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar{ /* the dragger element */
+/*
+        width: 4px;
+*/
+        width: 10px;
+    }
+
+
+    .mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar{
+/*
+        height: 4px;
+*/
+        height: 10px;
+    }
+
+
+    /* theme: "minimal", "minimal-dark" */
+
+    /* Use a 3px space top and bottom on vertical scrollbars, and 0 spacing on horizontal scrollbars */
+
+    .mCSB_outside + .mCS-minimal.mCSB_scrollTools_vertical,
+    .mCSB_outside + .mCS-minimal-dark.mCSB_scrollTools_vertical{
+/*
+        margin: 12px 0;
+*/
+        margin: 3px 0;
+    }
+
+    .mCustomScrollBox.mCS-minimal + .mCSB_scrollTools.mCSB_scrollTools_horizontal,
+    .mCustomScrollBox.mCS-minimal + .mCSB_scrollTools + .mCSB_scrollTools.mCSB_scrollTools_horizontal,
+    .mCustomScrollBox.mCS-minimal-dark + .mCSB_scrollTools.mCSB_scrollTools_horizontal,
+    .mCustomScrollBox.mCS-minimal-dark + .mCSB_scrollTools + .mCSB_scrollTools.mCSB_scrollTools_horizontal{
+/*
+        margin: 0 12px;
+*/
+        margin: 0 0;
+    }
+
+
+	.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_draggerContainer { /* contains the draggable element and dragger rail markup */
+		padding-top: 6px;
+	}
+
+	.mCSB_scrollTools.mCSB_scrollTools_vertical .mCSB_draggerContainer { /* contains the draggable element and dragger rail markup */
+		padding-left: 8px;
+	}

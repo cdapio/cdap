@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ScheduleDetail;
@@ -38,16 +39,24 @@ public class ProgramSchedule {
   private final Map<String, String> properties;
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
+  private final long timeoutMillis;
 
   public ProgramSchedule(String name, String description,
                          ProgramId programId, Map<String, String> properties,
                          Trigger trigger, List<? extends Constraint> constraints) {
+    this(name, description, programId, properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+  }
+
+  public ProgramSchedule(String name, String description,
+                         ProgramId programId, Map<String, String> properties,
+                         Trigger trigger, List<? extends Constraint> constraints, long timeoutMillis) {
     this.description = description;
     this.programId = programId;
     this.scheduleId = programId.getParent().schedule(name);
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
+    this.timeoutMillis = timeoutMillis;
   }
 
   public String getName() {
@@ -78,6 +87,10 @@ public class ProgramSchedule {
     return scheduleId;
   }
 
+  public long getTimeoutMillis() {
+    return timeoutMillis;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -93,12 +106,13 @@ public class ProgramSchedule {
       Objects.equal(this.description, that.description) &&
       Objects.equal(this.properties, that.properties) &&
       Objects.equal(this.trigger, that.trigger) &&
-      Objects.equal(this.constraints, that.constraints);
+      Objects.equal(this.constraints, that.constraints) &&
+      Objects.equal(this.timeoutMillis, that.timeoutMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(scheduleId, programId, description, properties, trigger, constraints);
+    return Objects.hashCode(scheduleId, programId, description, properties, trigger, constraints, timeoutMillis);
   }
 
   @Override
@@ -110,13 +124,15 @@ public class ProgramSchedule {
       ", properties=" + properties +
       ", trigger=" + trigger +
       ", constraints=" + constraints +
+      ", timeoutMillis=" + timeoutMillis +
       '}';
   }
 
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
       new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
-    return new ScheduleDetail(scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints);
+    return new ScheduleDetail(scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints,
+                              timeoutMillis);
   }
 }
 

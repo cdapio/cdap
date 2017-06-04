@@ -116,7 +116,6 @@ function clean() {
 }
 
 function build_docs() {
-  local errors=0
   local google_tag
   if [[ -n ${1} ]] ; then
     google_tag="-A html_google_tag_manager_code=${1}"
@@ -127,8 +126,6 @@ function build_docs() {
   errors=$?
   if [[ ${errors} -ne 0 ]]; then
     echo_set_message "Error in check_includes: ${errors}"
-    consolidate_messages
-    return ${errors}
   fi
   if [[ ${USE_SPHINX_BUILD} == ${FALSE} ]]; then
     echo "Not building using Sphinx."
@@ -136,16 +133,10 @@ function build_docs() {
   else
     echo "Building using Sphinx."
     ${SPHINX_BUILD} -w ${TARGET}/${SPHINX_MESSAGES} ${google_tag} ${SOURCE} ${TARGET}/${HTML}
-    errors=$?
-    if [[ ${errors} -ne 0 ]]; then
-        echo_set_message "Could not build using Sphinx."
-        consolidate_messages
-        return ${errors}
-    fi
   fi
   build_extras
-  add_html_redirect
   consolidate_messages
+  add_html_redirect
 }
 
 function build_docs_local() {
@@ -187,7 +178,7 @@ function add_html_redirect() {
 </html>
 EOF
 )
-  echo "Adding redirect"
+  echo_set_message "Adding redirect"
   echo ${redirect_text} >> ${TARGET}/redirect.html
 }
 
@@ -208,7 +199,6 @@ function check_build_rst() {
 }
 
 function check_includes() {
-  local errors
   if [[ ${DOCS_LOCAL} == ${TRUE} ]]; then
     LOCAL_INCLUDES="${TRUE}"
   fi
@@ -326,7 +316,7 @@ function build_license_pdfs() {
   mkdir ${SCRIPT_PATH}/licenses-pdf
   LIC_PDF="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/licenses-pdf"
   LIC_RST="${PROJECT_PATH}/${CDAP_DOCS}/${REFERENCE}/${SOURCE}/licenses"
-  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-standalone-dependencies cdap-ui-dependencies"
+  PDFS="cdap-enterprise-dependencies cdap-level-1-dependencies cdap-local-sandbox-dependencies cdap-ui-dependencies"
   for PDF in ${PDFS}; do
     echo
     echo "Building ${PDF}"
@@ -437,7 +427,7 @@ function display_version() {
 }
 
 function print_version() {
-  cd ${SCRIPT_PATH}/developers-manual
+  cd ${SCRIPT_PATH}/developer-manual
   ./build.sh display-version
 }
 
@@ -501,7 +491,7 @@ function consolidate_messages() {
   if [[ -z ${TMP_MESSAGES_FILE} ]]; then
     return
   fi
-  local m="Messages for \"${MANUAL}\":"
+  local m="Warning Messages for \"${MANUAL}\":"
   local l="--------------------------------------------------------"
   if [[ -n ${MESSAGES} ]]; then
     echo_red_bold "Consolidating messages"
@@ -531,7 +521,7 @@ function display_messages() {
   if [[ -n ${TMP_MESSAGES_FILE} && -s ${TMP_MESSAGES_FILE} ]]; then
     echo
     echo "--------------------------------------------------------"
-    echo_red_bold "Messages: $(basename ${TMP_MESSAGES_FILE})"
+    echo_red_bold "Warning Messages: $(basename ${TMP_MESSAGES_FILE})"
     echo "--------------------------------------------------------"
     echo
     cat ${TMP_MESSAGES_FILE} | while read line
@@ -540,7 +530,7 @@ function display_messages() {
     done
     echo
     echo "--------------------------------------------------------"
-    echo_red_bold "End Messages"
+    echo_red_bold "End Warning Messages"
     echo "--------------------------------------------------------"
     echo
     warnings=1 # Indicates warning messages present
@@ -553,7 +543,6 @@ function rewrite() {
   # or if $4=='', substitutes text in-place in file $1, replacing text $2 with text $3
   # or if $3 & $4=='', substitutes text in-place in file $1, using sed command $2
   local rewrite_source=${1}
-  local errors
   pushd ${SCRIPT_PATH} > /dev/null
   echo "Re-writing"
   echo "    $rewrite_source"

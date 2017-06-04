@@ -97,6 +97,48 @@ export default class Header extends Component {
       }
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
+
+    let dataprepUrl = window.getDataPrepUrl({
+      stateName: 'workspaces',
+      stateParams: {
+        namespace: this.state.currentNamespace
+      }
+    });
+
+    const isCDAPActive = (match, location) => {
+      if (!match) { return false; }
+      if (match.isExact) { return true; }
+
+      let basePath = `/ns/${this.state.currentNamespace}`;
+      let dataprepBasePath = `/ns/${this.state.currentNamespace}/dataprep`;
+      let connectionsBasePath = `/ns/${this.state.currentNamespace}/connections`;
+      if (
+        location.pathname.startsWith(basePath) &&
+        !location.pathname.startsWith(dataprepBasePath) &&
+        !location.pathname.startsWith(connectionsBasePath)
+      ) {
+        return true;
+      }
+      return false;
+    };
+
+    const isDataPrepActive = (match, location) => {
+      let dataprepBasePath = `/ns/${this.state.currentNamespace}/dataprep`;
+      let connectionsBasePath = `/ns/${this.state.currentNamespace}/connections`;
+      if (!match) {
+        if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+          return true;
+        }
+        return false;
+      }
+      if (match.isExact) { return true; }
+
+      if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+        return true;
+      }
+      return false;
+    };
+
     return (
       <div className="global-navbar">
         <div
@@ -129,8 +171,8 @@ export default class Header extends Component {
             {
               !this.props.nativeLink ?
                 <NavLink
-                  activeClassName="active"
                   to={`/ns/${this.state.currentNamespace}`}
+                  isActive={isCDAPActive}
                 >
                   {T.translate('features.Navbar.overviewLabel')}
                 </NavLink>
@@ -138,6 +180,25 @@ export default class Header extends Component {
                 <a href={overviewUrl}>
                   {T.translate('features.Navbar.overviewLabel')}
                 </a>
+            }
+          </li>
+          <li>
+            {
+              !this.props.nativeLink ?
+                (
+                  <NavLink
+                    to={`/ns/${this.state.currentNamespace}/dataprep`}
+                    isActive={isDataPrepActive}
+                  >
+                    {T.translate('features.Navbar.dataprepLabel')}
+                  </NavLink>
+                )
+              :
+                (
+                  <a href={dataprepUrl}>
+                    {T.translate('features.Navbar.dataprepLabel')}
+                  </a>
+                )
             }
           </li>
           <li>

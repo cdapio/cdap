@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.constraint;
 
+import com.google.common.base.Preconditions;
+
 import javax.annotation.Nullable;
 
 /**
@@ -23,22 +25,29 @@ import javax.annotation.Nullable;
  * the constraint will likely not be satisfied for.
  */
 public class ConstraintResult {
-  public static final ConstraintResult SATISFIED = new ConstraintResult(SatisfiedState.SATISFIED, null);
-  public static final ConstraintResult NEVER_SATISFIED = new ConstraintResult(SatisfiedState.NEVER_SATISFIED, null);
+  public static final ConstraintResult SATISFIED = new ConstraintResult(SatisfiedState.SATISFIED);
+  public static final ConstraintResult NEVER_SATISFIED = new ConstraintResult(SatisfiedState.NEVER_SATISFIED);
 
-  enum SatisfiedState {
+  /**
+   * Indicates whether a Constraint was satisfied or not.
+   */
+  public enum SatisfiedState {
     SATISFIED, NOT_SATISFIED, NEVER_SATISFIED
   }
   private final SatisfiedState satisfiedState;
-  private final Long millisBeforeNextRetry;
+  private final Long nextCheckTime;
 
   ConstraintResult(SatisfiedState satisfiedState) {
     this(satisfiedState, null);
   }
 
-  ConstraintResult(SatisfiedState satisfiedState, @Nullable Long millisBeforeNextRetry) {
+  ConstraintResult(SatisfiedState satisfiedState, Long nextCheckTime) {
+    if (satisfiedState == SatisfiedState.NOT_SATISFIED) {
+      // if a constraint is NOT_SATISFIED, there must be a duration specified for the next retry
+      Preconditions.checkNotNull(nextCheckTime);
+    }
     this.satisfiedState = satisfiedState;
-    this.millisBeforeNextRetry = millisBeforeNextRetry;
+    this.nextCheckTime = nextCheckTime;
   }
 
   public SatisfiedState getSatisfiedState() {
@@ -46,7 +55,7 @@ public class ConstraintResult {
   }
 
   @Nullable
-  public Long getMillisBeforeNextRetry() {
-    return millisBeforeNextRetry;
+  public Long getNextCheckTime() {
+    return nextCheckTime;
   }
 }

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
 .. _cdap-jdbc:
 
@@ -13,15 +13,15 @@ Overview
 CDAP provides a JDBC driver to make integrations with external programs and third-party BI
 (business intelligence) tools easier.
 
-The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``libexec``
-directory of your SDK installation at::
+The JDBC driver is a JAR that is bundled with the CDAP Local Sandbox. You can find it in the ``libexec``
+directory of your Local Sandbox installation at::
 
   libexec/co.cask.cdap.cdap-explore-jdbc-<version>.jar
 
-If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, 
-you can download the CDAP JDBC driver from `this link 
+If you don't have a CDAP Local Sandbox and only want to connect to an existing instance of CDAP,
+you can download the CDAP JDBC driver from `this link
 <https://repo1.maven.org/maven2/co/cask/cdap/cdap-explore-jdbc/>`__.
-Go to the directory matching the version of your running CDAP instance, and download the file 
+Go to the directory matching the version of your running CDAP instance, and download the file
 with the matching version number::
 
   cdap-explore-jdbc-<version>.jar
@@ -61,7 +61,7 @@ and executes a query over a CDAP dataset ``mydataset``::
   ...
 
 Here are the parameters that can be used in the connection URL:
-  
+
 - ``namespace``: CDAP namespace to run in
 - ``auth.token``: authentication token for the connection
 - ``ssl.enabled``: boolean; whether SSL is enabled or not

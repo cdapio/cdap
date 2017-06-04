@@ -339,7 +339,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
           }
         }, stateStore);
       } catch (TransactionFailureException e) {
-        // Ignore transaction not in progress exception as it's caued by short TX timeout on commit
+        // Ignore transaction not in progress exception as it's caused by short TX timeout on commit
         if (!(Throwables.getRootCause(e) instanceof TransactionNotInProgressException)) {
           throw Throwables.propagate(e);
         }
@@ -492,7 +492,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(HBaseQueueDebugger.class.getName()).getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),

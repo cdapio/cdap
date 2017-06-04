@@ -29,18 +29,19 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{Partition, SparkContext, TaskContext}
 
+import scala.annotation.meta.param
 import scala.reflect.ClassTag
 
 /**
   * A [[org.apache.spark.rdd.RDD]] for reading data from [[co.cask.cdap.api.dataset.Dataset]].
   */
-class DatasetRDD[K: ClassTag, V: ClassTag](@transient sc: SparkContext,
-                                           @transient datasetCompute: DatasetCompute,
-                                           @transient hConf: Configuration,
+class DatasetRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkContext,
+                                           @(transient @param) datasetCompute: DatasetCompute,
+                                           @(transient @param) hConf: Configuration,
                                            namespace: String,
                                            datasetName: String,
                                            arguments: Map[String, String],
-                                           @transient splits: Option[Iterable[_ <: Split]],
+                                           @(transient @param) splits: Option[Iterable[_ <: Split]],
                                            txServiceBaseURI: Broadcast[URI]) extends RDD[(K, V)](sc, Nil) {
 
   var delegateRDD: Option[RDD[(K, V)]] = None

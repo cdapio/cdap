@@ -1,3 +1,0 @@
-**Note:** There is an issue with running Microsoft Windows and using the Standalone CDAP
-scripts when ``CDAP_HOME`` is defined as a path with spaces in it. Until this is addressed,
-do not use a path with space characters in it for ``CDAP_HOME.``

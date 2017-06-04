@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: HTTP RESTful Interface to the Cask Data Application Platform
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _http-restful-api-introduction:
 
@@ -54,7 +54,7 @@ This means you would use::
 
   PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-If you are using the CDAP SDK, running on your local machine, you might make a ``curl`` call such as:
+If you are using the CDAP Local Sandbox, running on your local machine, you might make a ``curl`` call such as:
 
 .. tabbed-parsed-literal::
 
@@ -78,7 +78,7 @@ the stream *mystream*::
 Reserved and Unsafe Characters
 ------------------------------
 In path parameters, reserved and unsafe characters must be replaced with their equivalent
-percent-encoded format, using the "``%hh``" syntax, as described in 
+percent-encoded format, using the "``%hh``" syntax, as described in
 `RFC3986: Uniform Resource Identifier (URI): Generic Syntax <http://tools.ietf.org/html/rfc3986#section-2.1>`__.
 
 In general, any character that is not a letter, a digit, or one of ``$-_.+!*'()`` should be encoded.
@@ -163,8 +163,8 @@ in CDAP. Example::
 can be replaced with::
 
   PUT http://<host>:<port>/v3/namespaces/default/streams/<new-stream-id>
-  
-However, you will need to test your code, as many APIs have changed as a result of the 
+
+However, you will need to test your code, as many APIs have changed as a result of the
 addition of namespaces.
 
 .. _http-restful-api-working-with-cdap-security:
@@ -174,7 +174,7 @@ Working with CDAP Security
 - When working with a CDAP cluster with **security enabled** (``security.enabled=true`` in
   ``cdap-site.xml``), all calls to the HTTP RESTful APIs must be authenticated. Clients must
   first obtain an access token from the authentication server (see the :ref:`Client
-  Authentication <client-authentication>` section of the :ref:`developers:developer-index`).
+  Authentication <client-authentication>` section of the :ref:`developer:developer-index`).
   In order to authenticate, all client requests must supply this access token in the
   ``Authorization`` header of the request::
 

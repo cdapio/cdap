@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,29 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -79,14 +73,12 @@ public final class TimeScheduler implements Scheduler {
   private final MessagingService messagingService;
   private ListeningExecutorService taskExecutorService;
   private boolean schedulerStarted;
-  private final Store store;
   private final TopicId topicId;
 
   @Inject
-  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, Store store, MessagingService messagingService,
+  TimeScheduler(Supplier<org.quartz.Scheduler> schedulerSupplier, MessagingService messagingService,
                 CConfiguration cConf) {
     this.schedulerSupplier = schedulerSupplier;
-    this.store = store;
     this.messagingService = messagingService;
     this.scheduler = null;
     this.schedulerStarted = false;
@@ -170,17 +162,20 @@ public final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-    ProgramId program = schedule.getProgramId();
-    SchedulableProgramType programType = program.getType().getSchedulableType();
-    rescheduleJob(program, programType, schedule.getName(),
-                  ((ProtoTrigger.TimeTrigger) schedule.getTrigger()).getCronExpression(),
-                  schedule.getProperties());
+  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                   schedule.getName());
   }
 
   @Override
-  public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    deleteSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    suspendSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
+                    schedule.getName());
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    resumeSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
                    schedule.getName());
   }
 
@@ -232,7 +227,7 @@ public final class TimeScheduler implements Scheduler {
         .withIdentity(triggerKey.getName(), PAUSED_NEW_TRIGGERS_GROUP)
         .forJob(job)
         .withSchedule(CronScheduleBuilder
-                        .cronSchedule(getQuartzCronExpression(cronEntry))
+                        .cronSchedule(Schedulers.getQuartzCronExpression(cronEntry))
                         .withMisfireHandlingInstructionDoNothing());
       addProperties(trigger, properties);
 
@@ -242,45 +237,12 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  private void rescheduleJob(ProgramId program, SchedulableProgramType programType,
-                             String scheduleName, String cronEntry, Map<String, String> properties)
-    throws ScheduleNotFoundException, SchedulerException {
-
-    checkInitialized();
-    try {
-      Trigger trigger = getTrigger(program, programType, scheduleName);
-      TriggerBuilder triggerBuilder = trigger.getTriggerBuilder();
-
-      // create the new trigger with the new schedule schedule all other fields will remain unmodified
-      triggerBuilder.withSchedule(CronScheduleBuilder
-                                    .cronSchedule(getQuartzCronExpression(cronEntry))
-                                    .withMisfireHandlingInstructionDoNothing());
-      addProperties(triggerBuilder, properties);
-      scheduler.rescheduleJob(trigger.getKey(), triggerBuilder.build());
-    } catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-  }
-
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws SchedulerException {
-    schedule(program, programType, schedule, ImmutableMap.<String, String>of());
-  }
-
   @Override
   public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
                        Map<String, String> properties) throws SchedulerException {
     schedule(program, programType, ImmutableList.of(schedule), properties);
   }
 
-  @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException {
-    schedule(programId, programType, schedules, ImmutableMap.<String, String>of());
-  }
-
-  @Override
   public synchronized void schedule(ProgramId program, SchedulableProgramType programType,
                                     Iterable<Schedule> schedules,
                                     Map<String, String> properties) throws SchedulerException {
@@ -352,22 +314,6 @@ public final class TimeScheduler implements Scheduler {
     return scheduledRuntimes;
   }
 
-  @Override
-  public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException {
-    checkInitialized();
-
-    List<String> scheduleIds = Lists.newArrayList();
-    try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
-        scheduleIds.add(trigger.getKey().getName());
-      }
-    }   catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-    return scheduleIds;
-  }
-
 
   @Override
   public synchronized void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
@@ -404,32 +350,6 @@ public final class TimeScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws NotFoundException, SchedulerException {
-    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public synchronized void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                                          Map<String, String> properties) throws NotFoundException, SchedulerException {
-    checkInitialized();
-    try {
-      Trigger trigger = getTrigger(program, programType, schedule.getName());
-      TriggerBuilder triggerBuilder = trigger.getTriggerBuilder();
-      String cronEntry =  ((TimeSchedule) schedule).getCronEntry();
-
-      // create the new trigger with the new schedule schedule all other fields will remain unmodified
-      triggerBuilder.withSchedule(CronScheduleBuilder
-                                    .cronSchedule(getQuartzCronExpression(cronEntry))
-                                    .withMisfireHandlingInstructionDoNothing());
-      addProperties(triggerBuilder, properties);
-      scheduler.rescheduleJob(trigger.getKey(), triggerBuilder.build());
-    } catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-  }
-
-  @Override
   public synchronized void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     checkInitialized();
@@ -457,73 +377,12 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
-  public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
-      deleteAllSchedules(namespaceId, appSpec);
-    }
-  }
-
-  private void deleteAllSchedules(NamespaceId namespaceId, ApplicationSpecification appSpec)
-    throws SchedulerException {
-    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
-      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
-    }
-  }
-
-  @Override
-  public synchronized ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType,
-                                                  String scheduleName)
-    throws SchedulerException {
-    checkInitialized();
-    try {
-      Trigger.TriggerState state = scheduler.getTriggerState(getGroupedTriggerKey(program, programType, scheduleName));
-      // Map trigger state to schedule state.
-      // This method is only interested in returning if the scheduler is
-      // Paused, Scheduled or NotFound.
-      switch (state) {
-        case NONE:
-          return ScheduleState.NOT_FOUND;
-        case PAUSED:
-          return ScheduleState.SUSPENDED;
-        default:
-          return ScheduleState.SCHEDULED;
-      }
-    } catch (org.quartz.SchedulerException e) {
-      throw new SchedulerException(e);
-    }
-  }
-
   private void checkInitialized() {
     Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
   }
 
   private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {
     return new JobKey(AbstractSchedulerService.programIdFor(program, programType));
-  }
-
-  //Helper function to adapt cron entry to a cronExpression that is usable by quartz.
-  //1. Quartz doesn't support wild-carding of both day-of-the-week and day-of-the-month
-  //2. Quartz resolution is in seconds which cron entry doesn't support.
-  private String getQuartzCronExpression(String cronEntry) {
-    // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
-    // CronExpression will directly be used for tests.
-    String parts [] = cronEntry.split(" ");
-    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
-    if (parts.length == 5) {
-      //cron entry format
-      StringBuilder cronStringBuilder = new StringBuilder("0 " + cronEntry);
-      if (cronStringBuilder.charAt(cronStringBuilder.length() - 1) == '*') {
-        cronStringBuilder.setCharAt(cronStringBuilder.length() - 1, '?');
-      }
-      return cronStringBuilder.toString();
-    } else {
-      //Use the given cronExpression
-      return cronEntry;
-    }
   }
 
   private JobFactory createJobFactory() {

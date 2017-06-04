@@ -31,17 +31,31 @@ public final class SimpleJob implements Job {
   private final JobKey jobKey;
   private final List<Notification> notifications;
   private final State state;
+  private final long scheduleLastUpdatedTime;
+  private Long deleteTimeMillis = null;
 
-  public SimpleJob(ProgramSchedule schedule, long creationTime, List<Notification> notifications, State state) {
+  /**
+   * @param scheduleLastUpdatedTime the last modification time of the schedule, at the time this job is created.
+   *                                This serves as a way to detect whether the schedule was changed later-on, and
+   *                                hence, the job would be obsolete in that case.
+   */
+  public SimpleJob(ProgramSchedule schedule, long creationTime, List<Notification> notifications, State state,
+                   long scheduleLastUpdatedTime) {
     this.schedule = schedule;
     this.jobKey = new JobKey(schedule.getScheduleId(), creationTime);
     this.notifications = ImmutableList.copyOf(notifications);
     this.state = state;
+    this.scheduleLastUpdatedTime = scheduleLastUpdatedTime;
   }
 
   @Override
   public ProgramSchedule getSchedule() {
     return schedule;
+  }
+
+  @Override
+  public long getScheduleLastUpdatedTime() {
+    return scheduleLastUpdatedTime;
   }
 
   @Override
@@ -78,12 +92,14 @@ public final class SimpleJob implements Job {
     return Objects.equal(this.schedule, that.schedule) &&
       Objects.equal(this.jobKey, that.jobKey) &&
       Objects.equal(this.notifications, that.notifications) &&
-      Objects.equal(this.state, that.state);
+      Objects.equal(this.state, that.state) &&
+      Objects.equal(this.scheduleLastUpdatedTime, that.scheduleLastUpdatedTime) &&
+      Objects.equal(this.deleteTimeMillis, that.deleteTimeMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(schedule, jobKey, notifications, state);
+    return Objects.hashCode(schedule, jobKey, notifications, state, scheduleLastUpdatedTime, deleteTimeMillis);
   }
 
   @Override
@@ -93,6 +109,21 @@ public final class SimpleJob implements Job {
       .add("jobKey", jobKey)
       .add("notifications", notifications)
       .add("state", state)
+      .add("scheduleLastUpdatedTime", scheduleLastUpdatedTime)
+      .add("deleteTimeMillis", deleteTimeMillis)
       .toString();
+  }
+
+  @Override
+  public boolean isToBeDeleted() {
+    return deleteTimeMillis != null;
+  }
+
+  public Long getDeleteTimeMillis() {
+    return deleteTimeMillis;
+  }
+
+  public void setToBeDeleted(long timestamp) {
+    this.deleteTimeMillis = timestamp;
   }
 }

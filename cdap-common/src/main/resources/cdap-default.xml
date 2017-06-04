@@ -72,7 +72,7 @@
     <name>local.data.dir</name>
     <value>data</value>
     <description>
-      Data directory for Standalone CDAP and the CDAP Master process in
+      Data directory for CDAP Local Sandbox and the CDAP Master process in
       Distributed CDAP
     </description>
   </property>
@@ -126,7 +126,7 @@
       ${master.startup.checks.packages} and ${master.startup.checks.classes}
       settings. If any checks fail, the CDAP Master will fail to start
       instead of waiting for the problem to be fixed. This setting only
-      affects Distributed CDAP. It does not apply to Standalone CDAP.
+      affects Distributed CDAP. It does not apply to CDAP Local Sandbox.
     </description>
   </property>
 
@@ -348,9 +348,9 @@
     <name>app.program.spark.compat</name>
     <value>spark1_2.10</value>
     <description>
-      The Spark compatibility version, if Spark is available. Must be 'spark1_2.10' or 'spark2_2.11'.
-      In distributed mode, this will be overridden by the detected Spark version.
-      In standalone mode, this can be set to the desired version of Spark.
+      The Spark compatibility version, if Spark is available. Must be either 'spark1_2.10'
+      or 'spark2_2.11'. In distributed mode, this will be overridden by the detected Spark
+      version. In CDAP Local Sandbox, this can be set to the desired version of Spark.
     </description>
   </property>
 
@@ -538,8 +538,7 @@
     <name>data.local.storage</name>
     <value>${local.data.dir}/ldb</value>
     <description>
-      Database directory for LevelDB, used for data fabric in Standalone
-      CDAP
+      Database directory for LevelDB, used for data fabric in CDAP Local Sandbox
     </description>
   </property>
 
@@ -547,7 +546,7 @@
     <name>data.local.storage.blocksize</name>
     <value>1024</value>
     <description>
-      Block size in bytes for data fabric when in Standalone CDAP
+      Block size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -555,7 +554,7 @@
     <name>data.local.storage.cachesize</name>
     <value>104857600</value>
     <description>
-      Cache size in bytes for data fabric when in Standalone CDAP
+      Cache size in bytes for data fabric when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -697,7 +696,7 @@
     <name>data.tx.grace.period</name>
     <value>86400</value>
     <description>
-      The time in seconds used to pad transaction max lifetime while pruning.
+      Time in seconds used to pad transaction maximum lifetime while pruning
     </description>
     <final>true</final>
   </property>
@@ -759,7 +758,7 @@
     <value>${local.data.dir}/tx.snapshot</value>
     <description>
       Storage directory on the local filesystem of snapshot and logs of
-      transaction state when in Standalone CDAP
+      transaction state when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -949,7 +948,7 @@
     <name>explore.local.data.dir</name>
     <value>${local.data.dir}/explore</value>
     <description>
-      Data directory for the CDAP Explore service when in Standalone CDAP
+      Data directory for the CDAP Explore service when in CDAP Local Sandbox
     </description>
   </property>
 
@@ -981,6 +980,19 @@
     </description>
   </property>
 
+  <property>
+    <name>hive.version.resolution.strategy</name>
+    <value>auto.strict</value>
+    <description>
+      Determines how to behave when the Hive version on a cluster is an unsupported value.
+      The default value of "auto.strict" will require that the Hive version matches a
+      supported value; if Explore is enabled, CDAP Master will then not start if the Hive
+      version is unsupported. Set to "auto.latest" to use the latest Hive version of CDAP
+      modules available on the cluster with an unsupported Hive version. This property is
+      ignored for supported versions of Hive or if Explore has been disabled by setting
+      ${explore.enabled} to false.
+    </description>
+  </property>
 
   <!-- Gateway Configuration -->
 
@@ -1140,7 +1152,7 @@
     <name>log.collection.root</name>
     <value>${local.data.dir}/logs</value>
     <description>
-      In Standalone CDAP, the local directory under which the system log pipeline saves
+      In CDAP Local Sandbox, the local directory under which the system log pipeline saves
       log files
     </description>
   </property>
@@ -1402,6 +1414,18 @@
   </property>
 
   <property>
+    <name>hbase.version.resolution.strategy</name>
+    <value>auto.strict</value>
+    <description>
+      Determines how to behave when the HBase version on a cluster is an unsupported
+      value. The default value of "auto.strict" will require that the HBase version match
+      a supported value, and CDAP Master will not start if the HBase version is
+      unsupported. Set to "auto.latest" to use the latest HBase version available on the
+      cluster with an unsupported HBase version.
+    </description>
+  </property>
+
+  <property>
     <name>http.service.boss.threads</name>
     <value>1</value>
     <description>
@@ -1507,7 +1531,7 @@
     <value>30</value>
     <description>
       Memory in megabytes for the cache size used by the messaging service
-      for caching recently published messages. Currently, only topics listed
+      for caching recently-published messages. Currently, only topics listed
       in the ${messaging.system.topics} configuration have caching enabled.
       Set it to 0 to disable caching.
     </description>
@@ -1614,7 +1638,7 @@
     <value>3600</value>
     <description>
       Scheduling frequency of time-to-live cleanup thread in seconds (only
-      used in Standalone CDAP)
+      used in CDAP Local Sandbox)
     </description>
   </property>
 
@@ -1623,7 +1647,7 @@
     <value>${local.data.dir}/messaging</value>
     <description>
       Local storage directory for the messaging system (used only in
-      Standalone CDAP)
+      CDAP Local Sandbox)
     </description>
   </property>
 
@@ -1994,8 +2018,8 @@
     <name>metrics.processor.queue.size</name>
     <value>20000</value>
     <description>
-      The maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory
-      before persisting them
+      Maximum size of a queue where the metrics processor temporarily stores
+      newly-fetched metrics in-memory before persisting them
     </description>
   </property>
 
@@ -2003,7 +2027,8 @@
     <name>metrics.processor.max.delay.ms</name>
     <value>3000</value>
     <description>
-      The maximum delay allowed between the latest metrics timestamp and the time when it is processed
+      Maximum delay in milliseconds allowed between the latest metrics timestamp and the
+      time when it is processed
     </description>
   </property>
 
@@ -2718,7 +2743,8 @@
     <name>security.authorization.cache.max.entries</name>
     <value>100000</value>
     <description>
-      Number of entries to hold in the container authorization cache. If this is set to 0 then no caching will be done.
+      Number of entries to hold in the container authorization cache. If set to 0, no
+      caching will be performed.
     </description>
   </property>
 
@@ -2758,12 +2784,11 @@
     <name>security.authorization.propagate.privileges</name>
     <value>true</value>
     <description>
-      Allows propagation of privileges to descendants. If this is set to true
-      then having a privilege on an entity will allow the user to perform that
-      action on all the descendants of that entity. For example, if this is true
-      having READ on namespace will allow an user to READ all datasets in that
-      namespace. If this is set to false then the users will need privileges on
-      the entity the action is being performed on.
+      Allows the propagation of privileges to descendants. If set to 'true', then having a
+      privilege on an entity will allow the user to perform actions on all the descendants
+      of that entity. For example, if set to 'true', then having READ on a namespace will
+      allow a user to READ all datasets in that namespace. If set to 'false', then users
+      will need privileges on each entity an action is performed on.
     </description>
   </property>
 
@@ -2771,7 +2796,7 @@
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
-      Path to the secret key file (only used in Standalone CDAP)
+      Path to the secret key file (only used in CDAP Local Sandbox)
     </description>
   </property>
 
@@ -2978,7 +3003,7 @@
     <value>1</value>
     <description>
       Number of YARN container instances for the stream handler; in
-      Standalone CDAP, it is always one
+      CDAP Local Sandbox, it is always one
     </description>
   </property>
 

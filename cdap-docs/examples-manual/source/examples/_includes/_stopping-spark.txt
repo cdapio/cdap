@@ -8,11 +8,11 @@
 
 - Using the CDAP UI, go to the |application-overview|,
   click |example-spark-italic| to get to the Spark program detail page, then click the *Stop* button; or
-  
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli stop spark |example|.\ |example-spark|
-    
+
     Successfully stopped Spark '|example-spark|' of application '|example|'

@@ -42,9 +42,9 @@ output in another ``KeyValueTable`` dataset called *normalized*.
 
 The *WikipediaPipelineWorkflow* then contains a fork, with two branches:
 
-- One branch runs the Apache Spark program *SparkWikipediaClustering*. This program can be configured to either run 
-  `Latent Dirichlet Allocation (LDA) 
-  <http://spark.apache.org/docs/latest/mllib-clustering.html#latent-dirichlet-allocation-lda>`__, or 
+- One branch runs the Apache Spark program *SparkWikipediaClustering*. This program can be configured to either run
+  `Latent Dirichlet Allocation (LDA)
+  <http://spark.apache.org/docs/latest/mllib-clustering.html#latent-dirichlet-allocation-lda>`__, or
   `K-Means <http://spark.apache.org/docs/latest/mllib-clustering.html#k-means>`__. The algorithm can be chosen by
   setting the field *clusteringAlgorithm* in an application config. By default, the workflow is configured to use
   *LDA*, if the *clusteringAlgorithm* field is not specified. This program consumes normalized
@@ -71,7 +71,7 @@ This application demonstrates:
   (*WikipediaPipelineWorkflow*) under two different names. Also, depending on the chosen *clusteringAlgorithm*, the
   name of the *SparkWikipediaClustering* will either be *SparkWikipediaClustering-LDA* or
   *SparkWikipediaClustering-KMEANS*.
-  
+
 - **The use of Workflow Tokens** in:
 
   - Condition Predicates
@@ -91,7 +91,7 @@ This application demonstrates:
   programs of this example application can take a namespace as a runtime argument or
   preference, programs can access datasets in a different namespace than the one where the
   application was deployed.
-  
+
   If your data is in a different namespace than your application, you can pass that
   namespace as a runtime argument when you call programs in the application, as shown
   below. The technique can be adapted to allow cross-namespace access for both reading,
@@ -108,11 +108,11 @@ This application demonstrates:
 .. .. include:: _includes/_building-starting-running.txt
 
 .. include:: _includes/_building-running-base.txt
-  
+
 - Once the application (|example-italic|) has been deployed, you can start its components, as described in general in
   :ref:`Starting an Application <cdap-building-running-starting-application>`, and
   detailed for this example in `deploying the example <#deploying-the-example>`__.
-  
+
 - Once all components are deployed, `run the example <#running-the-example>`__.
 
 - When finished, you can `stop and remove the application <#stopping-and-removing-the-application>`__.
@@ -140,13 +140,13 @@ applications from it, the preferred method of deploying it is to use the CDAP CL
 .. tabbed-parsed-literal::
 
     $ cdap cli create app wiki-lda WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-lda.json
-    
+
     Successfully created application
 
 - Create an application using K-Means as the clustering algorithm:
 
 .. tabbed-parsed-literal::
-    
+
   $ cdap cli create app wiki-kmeans WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-kmeans.json
 
   Successfully created application
@@ -161,24 +161,24 @@ Injecting data
 --------------
 The *pageTitleStream* consumes events in the format returned by the Facebook "Likes" Graph API.
 
-- Inject a file of Facebook "Likes" data to the stream *pageTitleStream* by running this command from the Standalone
-  CDAP SDK directory, using the CDAP Command Line Interface:
-  
+- Inject a file of Facebook "Likes" data to the stream *pageTitleStream* by running this command from the
+  CDAP Local Sandbox home directory, using the CDAP Command Line Interface:
+
   .. tabbed-parsed-literal::
 
       $ cdap cli load stream pageTitleStream examples/WikipediaPipeline/resources/fb-likes-data.txt
-    
+
       Successfully loaded file to stream 'pageTitleStream'
 
   The *wikiStream* consumes events in the format returned by the MediaWiki Wikipedia API.
 
-- Inject a file of "Wikipedia" data to the stream *wikiStream* by running this command from the Standalone
-  CDAP SDK directory, using the Command Line Interface:
+- Inject a file of "Wikipedia" data to the stream *wikiStream* by running this command from the
+  CDAP Local Sandbox home directory, using the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
       $ cdap cli load stream wikiStream examples/WikipediaPipeline/resources/wikipedia-data.txt
-    
+
       Successfully loaded file to stream 'wikiStream'
 
 .. Start the Workflow
@@ -220,12 +220,12 @@ the ``mode`` to ``online``, by setting either the runtime arguments (which chang
 
 You can also do this from a terminal:
 
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli start workflow |example|.\ |example-workflow| "\"min.pages.threshold=0 mode=online\""
-    
+
     Successfully started workflow '|example-workflow|' of application '|example|'
     with provided runtime arguments 'min.pages.threshold=0 mode=online'
 
@@ -242,7 +242,7 @@ namespace as a runtime argument when you call programs in the application:
   .. tabbed-parsed-literal::
 
     $ cdap cli start workflow |example|.\ |example-workflow| "\"namespace=dataNamespace min.pages.threshold=0 mode=online\""
-    
+
     Successfully started workflow '|example-workflow|' of application '|example|'
     with provided runtime arguments 'namespace=dataNamespace min.pages.threshold=0 mode=online'
 
@@ -269,37 +269,37 @@ The service exposes these REST APIs, which can be accessed either with the CDAP 
 - Retrieve the list of topics generated by the *SparkWikipediaAnalyzer* program:
 
   .. tabbed-parsed-literal::
-  
+
     $ cdap cli call service |example|.\ |example-service| GET /v1/functions/lda/topics
-  
+
     $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics"
-  
+
     [0,1,2,3,4,5,6,7,8,9]
 
 - Retrieve the details (terms and term weights) for a given (integer) topic:
 
   .. tabbed-parsed-literal::
-  
+
     $ cdap cli call service |example|.\ |example-service| GET /v1/functions/lda/topics/0
-    
+
     $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics/0"
-    
+
     [{"name":"and","weight":0.038682279584092004},{"name":"company","weight":0.011716155714206075},
     {"name":"facebook","weight":0.03279816812913312},{"name":"for","weight":0.0236260327332555},
     {"name":"google","weight":0.03240608486488011},{"name":"its","weight":0.01541806996121385},
     {"name":"that","weight":0.032277216101403945},{"name":"the","weight":0.08955250785732792},
-    {"name":"users","weight":0.013512787321319556},{"name":"was","weight":0.014201825107197289}]      
+    {"name":"users","weight":0.013512787321319556},{"name":"was","weight":0.014201825107197289}]
 
 - Retrieve the output of the *TopNMapReduce* program:
 
   .. tabbed-parsed-literal::
-  
+
       $ cdap cli call service |example|.\ |example-service| GET /v1/functions/topn/words
-      
+
       $ curl -w"\n" -X GET "localhost:11015/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/topn/words"
 
       [{"The":627},{"a":1466},{"and":1844},{"in":1415},{"of":2076},{"on":604},{"that":644},{"the":3857},{"to":1620},{"was":740}]
-      
+
 
 .. Stopping and Removing the Application
 .. =====================================

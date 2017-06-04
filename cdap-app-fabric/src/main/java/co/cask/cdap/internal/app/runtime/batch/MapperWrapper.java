@@ -18,8 +18,11 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.InputContexts;
@@ -46,6 +49,8 @@ import java.io.IOException;
 public class MapperWrapper extends Mapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapperWrapper.class);
+  private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
+                                                           Constants.Logging.USER_LOG_TAG_VALUE);
   private static final String ATTR_MAPPER_CLASS = "c.mapper.class";
 
   /**
@@ -76,7 +81,10 @@ public class MapperWrapper extends Mapper {
   @Override
   public void run(Context context) throws IOException, InterruptedException {
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    ClassLoader weakReferenceClassLoader = new WeakReferenceDelegatorClassLoader(classLoader);
+
     BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+    String program = basicMapReduceContext.getProgramName();
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
     WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
@@ -88,7 +96,8 @@ public class MapperWrapper extends Mapper {
     }
 
     ClassLoader programClassLoader = classLoader.getProgramClassLoader();
-    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context);
+    Mapper delegate = createMapperInstance(programClassLoader, getWrappedMapper(context.getConfiguration()), context,
+                                           program);
 
     // injecting runtime components, like datasets, etc.
     try {
@@ -97,24 +106,28 @@ public class MapperWrapper extends Mapper {
                         new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
                         new DataSetFieldSetter(basicMapReduceContext));
     } catch (Throwable t) {
-      LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
-      throw Throwables.propagate(t);
+      Throwable rootCause = Throwables.getRootCause(t);
+      USERLOG.error("Failed to initialize program '{}' with error: {}. Please check the system logs for more details.",
+                    program, rootCause.getMessage(), rootCause);
+      throw new IOException(String.format("Failed to inject fields to %s", delegate.getClass()), t);
     }
 
     ClassLoader oldClassLoader;
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
         ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
       } catch (Exception e) {
-        LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
-        throw Throwables.propagate(e);
+        Throwable rootCause = Throwables.getRootCause(e);
+        USERLOG.error("Failed to initialize program '{}' with error: {}. Please check the system logs for more " +
+                        "details.", program, rootCause.getMessage(), rootCause);
+        throw new IOException(String.format("Failed to initialize mapper with %s", basicMapReduceContext), e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     }
 
-    oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
     try {
       delegate.run(flushingContext);
     } finally {
@@ -126,15 +139,14 @@ public class MapperWrapper extends Mapper {
     try {
       basicMapReduceContext.flushOperations();
     } catch (Exception e) {
-      LOG.error("Failed to flush operations at the end of mapper of {}", basicMapReduceContext, e);
-      throw Throwables.propagate(e);
+      throw new IOException("Failed to flush operations at the end of mapper of " + basicMapReduceContext, e);
     }
 
     // Close all writers created by MultipleOutputs
     basicMapReduceContext.closeMultiOutputs();
 
     if (delegate instanceof ProgramLifecycle) {
-      oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+      oldClassLoader = ClassLoaders.setContextClassLoader(weakReferenceClassLoader);
       try {
         ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
       } catch (Exception e) {
@@ -195,7 +207,7 @@ public class MapperWrapper extends Mapper {
     return flushingContext;
   }
 
-  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context) {
+  private Mapper createMapperInstance(ClassLoader classLoader, String userMapper, Context context, String program) {
     if (context.getInputSplit() instanceof MultiInputTaggedSplit) {
       // Find the delegate Mapper from the MultiInputTaggedSplit.
       userMapper = ((MultiInputTaggedSplit) context.getInputSplit()).getMapperClassName();
@@ -203,7 +215,10 @@ public class MapperWrapper extends Mapper {
     try {
       return (Mapper) classLoader.loadClass(userMapper).newInstance();
     } catch (Exception e) {
+      Throwable rootCause = Throwables.getRootCause(e);
       LOG.error("Failed to create instance of the user-defined Mapper class: " + userMapper);
+      USERLOG.error("Failed to create mapper instance for program '{}' with error: {}. Please check the system logs " +
+                      "for more details.", program, rootCause.getMessage(), rootCause);
       throw Throwables.propagate(e);
     }
   }

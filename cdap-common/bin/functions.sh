@@ -413,7 +413,20 @@ cdap_set_hbase() {
     1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
     1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
-    *) die "Unknown/Unsupported HBase version found: ${HBASE_VERSION}" ;;
+    *)
+      if [[ $(cdap_get_conf "hbase.version.resolution.strategy" "${CDAP_CONF}"/cdap-site.xml auto.strict) == 'auto.latest' ]]; then
+        local readonly __latest_hbase_compat
+        if [[ ${HBASE_VERSION} =~ -cdh ]]; then
+          __latest_hbase_compat=hbase-compat-1.2-cdh5.7.0 # must be updated if a new CDH HBase version is added
+        else
+          __latest_hbase_compat=hbase-compat-1.1 # must be updated if a new HBase version is added
+        fi
+        __compat="${CDAP_HOME}"/${__latest_hbase_compat}/lib/*
+        echo "Using ${__latest_hbase_compat} for HBase version ${HBASE_VERSION} due to 'auto.latest' resolution strategy."
+      else
+        die "Unknown or unsupported HBase version found: ${HBASE_VERSION}"
+      fi
+      ;;
   esac
   export CLASSPATH="${__compat}":${CLASSPATH}
   return 0
@@ -503,15 +516,38 @@ cdap_set_spark() {
       # If there is no valid SPARK_HOME, we should unset the existing one if it is set
       # Otherwise the spark-shell won't run correctly
       unset SPARK_HOME
+      local __spark_shell=$(which spark-shell 2>/dev/null)
+      local __spark_client_version=None
+      for __dist in hdp iop; do
+        if [[ ! -d /usr/${__dist} ]]; then
+          continue
+        fi
+        if [[ $(which ${__dist}-select 2>/dev/null) ]]; then
+          __spark_name="spark"
+          if [[ ${SPARK_MAJOR_VERSION} -ne 1 ]]; then
+            __spark_name="spark${SPARK_MAJOR_VERSION}"
+          fi
+          __spark_client_version=$(${__dist}-select status ${__spark_name}-client | awk '{print $3}')
+          if [[ ${__spark_client_version} == 'None' ]]; then # defaults None, we're hoping for a version
+            logecho "$(date) Spark client not installed via ${__dist}-select detection"
+            return 1
+          elif [[ -x /usr/${__dist}/${__spark_client_version}/${__spark_name}/bin/spark-shell ]]; then
+            __spark_shell=/usr/${__dist}/${__spark_client_version}/${__spark_name}/bin/spark-shell
+          else
+            logecho "$(date) Spark client not installed via on-disk detection"
+            return 1
+          fi
+        fi
+      done
       ERR_FILE=$(mktemp)
-      SPARK_VAR_OUT=$(echo '(sys.env ++ Map(("sparkVersion", org.apache.spark.SPARK_VERSION),("scalaVersion", scala.util.Properties.releaseVersion.get))).foreach { case (k, v) => println(s"$k=$v") }; sys.exit' | spark-shell --master local 2>${ERR_FILE})
+      SPARK_VAR_OUT=$(echo '(sys.env ++ Map(("sparkVersion", org.apache.spark.SPARK_VERSION),("scalaVersion", scala.util.Properties.releaseVersion.get))).foreach { case (k, v) => println(s"$k=$v") }; sys.exit' | ${__spark_shell} --master local 2>${ERR_FILE})
       __ret=$?
       # spark-shell invocation above does not properly restore the stty.
-      stty ${__saved_stty}
+      stty ${__saved_stty} 2>/dev/null
       SPARK_ERR_MSG=$(< ${ERR_FILE})
       rm ${ERR_FILE}
       if [[ ${__ret} -ne 0 ]]; then
-        echo "[ERROR] While determining Spark home, failed to get Spark settings using: spark-shell --master local"
+        echo "[ERROR] While determining Spark home, failed to get Spark settings using: ${__spark_shell} --master local"
         echo "  stderr:"
         echo "${SPARK_ERR_MSG}"
         return 1
@@ -726,7 +762,7 @@ cdap_start_java() {
   echo
   if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
-    cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
+    cdap_set_spark || logecho "$(date) Could not determine SPARK_HOME! Spark support unavailable!"
     if [[ -n ${SPARK_COMPAT} ]]; then
       __defines+=" -Dapp.program.spark.compat=${SPARK_COMPAT}"
     fi
@@ -751,13 +787,13 @@ cdap_start_java() {
           local __conf_version=$(echo ${OPTS} | grep -oP "\-D${__dist}.version=\d+\.\d+\.\d+\.\d+-\d+" | cut -d= -f2)
           if [[ ${__conf_version} != ${__auto_version} ]]; then
             local __caps=$(echo ${__dist} | awk 'BEGIN { getline; print toupper($0) }')
-            logecho "[WARN] ${__caps} version mismatch! Detected: ${__auto_version}, Configured: ${__conf_version}"
-            logecho "[WARN] Using configured ${__caps} version: ${__conf_version}"
+            logecho "$(date) [WARN] ${__caps} version mismatch! Detected: ${__auto_version}, Configured: ${__conf_version}"
+            logecho "$(date) [WARN] Using configured ${__caps} version: ${__conf_version}"
           fi
         else
           # No version specified in OPTS or incorrect format, appending ours
           __defines+=" -D${__dist}.version=${__auto_version}"
-          logecho "Detected ${__dist} version ${__auto_version} and adding to CDAP Master command line"
+          logecho "$(date) Detected ${__dist} version ${__auto_version} and adding to CDAP Master command line"
         fi
       fi
     done
@@ -804,7 +840,7 @@ cdap_run_class() {
   cdap_set_classpath "${CDAP_HOME}"/master "${CDAP_CONF}"
   # Setup Java
   cdap_set_java || return 1
-  cdap_set_spark || logecho "[WARN] Could not determine SPARK_HOME! Spark support unavailable!"
+  cdap_set_spark || logecho "$(date) [WARN] Could not determine SPARK_HOME! Spark support unavailable!"
   cdap_set_hive_classpath || return 1
   # Add proper HBase compatibility to CLASSPATH
   cdap_set_hbase || exit 1
@@ -889,7 +925,7 @@ cdap_version_command() {
   local readonly __context=$(cdap_context)
   local __component __name
   if [[ ${__context} == sdk ]]; then
-    echo "CDAP SDK version $(cdap_version)"
+    echo "CDAP Sandbox version $(cdap_version)"
     echo
   else # Distributed, possibly CLI-only
     if [[ -r ${CDAP_HOME}/VERSION ]]; then
@@ -917,11 +953,11 @@ cdap_version_command() {
 #
 cdap_sdk_usage() {
   echo
-  echo "Usage: ${0} sdk {start|stop|restart|status|usage}"
+  echo "Usage: ${0} sandbox {start|stop|restart|status|usage}"
   echo
   echo "Additional options with start, restart:"
-  echo "--enable-debug [ <port> ] to connect to a debug port for Standalone CDAP (default port is 5005)"
-  echo "--foreground to run the SDK in the foreground, showing logs on STDOUT"
+  echo "--enable-debug [ <port> ] to connect to a debug port for CDAP Sandbox (default port is 5005)"
+  echo "--foreground to run the Sandbox in the foreground, showing logs on STDOUT"
   echo
   return 0
 }
@@ -942,13 +978,13 @@ cdap_sdk_restart() { cdap_sdk_stop ; cdap_sdk_start ${@}; };
 #
 # cdap_sdk_stop
 #
-cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Standalone (SDK)"; };
+cdap_sdk_stop() { cdap_stop_pidfile ${__pidfile} "CDAP Sandbox"; };
 
 #
 # cdap_sdk_check_before_start
 #
 cdap_sdk_check_before_start() {
-  cdap_check_pidfile ${__pidfile} Standalone || return ${?}
+  cdap_check_pidfile ${__pidfile} Sandbox || return ${?}
   cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
   local __node_pid=$(ps | grep ${CDAP_UI_PATH:-ui/server.js} | grep -v grep | awk '{ print $1 }')
   if [[ -z ${__node_pid} ]]; then
@@ -1007,7 +1043,7 @@ cdap_sdk_start() {
   cd "${CDAP_HOME}"
 
   # Start SDK processes
-  echo -n "$(date) Starting CDAP Standalone (SDK) ..."
+  echo -n "$(date) Starting CDAP Sandbox ..."
   if ${__foreground}; then
     echo
     nice -1 "${JAVA}" ${JVM_OPTS[@]} ${ROUTER_OPTS} -classpath "${CLASSPATH}" co.cask.cdap.StandaloneMain \
@@ -1375,7 +1411,7 @@ cdap_sdk() {
       ${__command} ${__foreground} ${__debug} ${__port} ${__arg}
       __ret=${?}
       ;;
-    status) cdap_status_pidfile ${__pidfile} "CDAP Standalone (SDK)"; __ret=${?} ;;
+    status) cdap_status_pidfile ${__pidfile} "CDAP Sandbox"; __ret=${?} ;;
     stop) cdap_sdk_stop; __ret=${?} ;;
     usage) cdap_sdk_usage; __ret=${?} ;;
     cleanup) cdap_sdk_cleanup; __ret=${?} ;;

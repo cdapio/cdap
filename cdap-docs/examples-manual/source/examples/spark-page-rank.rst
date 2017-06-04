@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Cask Data Application Platform SparkPageRank Application
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _examples-spark-page-rank:
 
@@ -89,12 +89,12 @@ Injecting URL Pairs
 -------------------
 
 Inject a file of URL pairs to the stream *backlinkURLStream* by running this command from the
-Standalone CDAP SDK directory, using the Command Line Interface:
-  
+CDAP Local Sandbox home directory, using the Command Line Interface:
+
 .. tabbed-parsed-literal::
 
   $ cdap cli load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
-  
+
   Successfully loaded file to stream 'backlinkURLStream'
 
 Starting the Workflow
@@ -110,33 +110,33 @@ use ``3`` as the value.
   click |example-workflow-italic| to get to the workflow detail page, set the runtime
   arguments using ``spark.SparkPageRankProgram.args`` as the key and ``3`` as the value, then click
   the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface:
+- From the CDAP Local Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
     $ cdap cli start workflow |example|.\ |example-workflow| "spark.SparkPageRankProgram.args='3'"
-    
-    Successfully started workflow '|example-workflow|' of application '|example|' 
+
+    Successfully started workflow '|example-workflow|' of application '|example|'
     with provided runtime arguments 'spark.SparkPageRankProgram.args=3'
-      
+
 - Or, send a query via an HTTP request using the ``curl`` command:
 
   .. tabbed-parsed-literal::
 
     $ curl -w"\n" -X POST -d '{spark.SparkPageRankProgram.args="3"}' \
     "http://localhost:11015/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start"
-    
+
 
 Querying the Results
 --------------------
 
-To query the *ranks* ObjectStore through the ``SparkPageRankService``, 
+To query the *ranks* ObjectStore through the ``SparkPageRankService``,
 you can use the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
   $ cdap cli call service SparkPageRank.SparkPageRankService POST "rank" body "{'url':'http://example.com/page1'}"
-  
+
   10
 
 You can also send a query via an HTTP request using the ``curl`` command. For example:
@@ -145,8 +145,8 @@ You can also send a query via an HTTP request using the ``curl`` command. For ex
 
   $ curl -w"\n" -X POST -d '{"url":"http://example.com/page1"}' \
   "http://localhost:11015/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank"
-  
-  10  
+
+  10
 
 Similarly, to query the *rankscount* ObjectStore using the ``SparkPageRankService`` and get the total number of
 pages with a page rank of 10, you can do the following:
@@ -156,7 +156,7 @@ Using the Command Line Interface:
 .. tabbed-parsed-literal::
 
   $ cdap cli call service SparkPageRank.SparkPageRankService GET 'total/10'
-  
+
   48
 
 Using ``curl``:
@@ -164,7 +164,7 @@ Using ``curl``:
 .. tabbed-parsed-literal::
 
   $ curl -w"\n" -X GET "http://localhost:11015/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10"
-  
+
   48
 
 

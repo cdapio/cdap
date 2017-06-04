@@ -31,6 +31,7 @@ import co.cask.cdap.api.messaging.MessagingContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
@@ -41,6 +42,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.tephra.TransactionFailureException;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -496,4 +498,11 @@ public abstract class JavaSparkExecutionContextBase implements RuntimeContext, T
    */
   public abstract void execute(int timeoutInSeconds, TxRunnable runnable) throws TransactionFailureException;
 
+  /**
+   * Creates a new instance of {@link SparkInterpreter} for Scala code compilation and interpretation.
+   *
+   * @return a new instance of {@link SparkInterpreter}
+   * @throws IOException if failed to create a local directory for storing the compiled class files
+   */
+  public abstract SparkInterpreter createInterpreter() throws IOException;
 }

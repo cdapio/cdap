@@ -46,19 +46,22 @@ public class ScheduleDetail {
   private final Map<String, String> properties;
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
+  private final Long timeoutMillis;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
                         @Nullable Map<String, String> properties,
                         @Nullable Trigger trigger,
-                        @Nullable List<? extends Constraint> constraints) {
+                        @Nullable List<? extends Constraint> constraints,
+                        @Nullable Long timeoutMillis) {
     this.name = name;
     this.description = description;
     this.program = program;
     this.properties = properties;
     this.trigger = trigger;
     this.constraints = constraints;
+    this.timeoutMillis = timeoutMillis;
   }
 
   @Nullable
@@ -91,6 +94,11 @@ public class ScheduleDetail {
     return constraints;
   }
 
+  @Nullable
+  public Long getTimeoutMillis() {
+    return timeoutMillis;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -105,12 +113,56 @@ public class ScheduleDetail {
       Objects.equals(program, that.program) &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(trigger, that.trigger) &&
-      Objects.equals(constraints, that.constraints);
+      Objects.equals(constraints, that.constraints) &&
+      Objects.equals(timeoutMillis, that.timeoutMillis);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, program, properties, trigger, constraints);
+    return Objects.hash(name, description, program, properties, trigger, constraints, timeoutMillis);
+  }
+
+  @Override
+  public String toString() {
+    return "ScheduleDetail{" +
+      "name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", program=" + program +
+      ", properties=" + properties +
+      ", trigger=" + trigger +
+      ", constraints=" + constraints +
+      ", timeoutMillis=" + timeoutMillis +
+      '}';
+  }
+
+  /**
+   * Return an equivalent schedule specification, or null if there is no equivalent one.
+   */
+  @Deprecated
+  @Nullable
+  public ScheduleSpecification toScheduleSpec() {
+    RunConstraints constraints = RunConstraints.NONE;
+    if (getConstraints() != null) {
+      for (Constraint runConstraint : getConstraints()) {
+        if (runConstraint instanceof ProtoConstraint.ConcurrencyConstraint) {
+          constraints = new RunConstraints(
+            ((ProtoConstraint.ConcurrencyConstraint) runConstraint).getMaxConcurrency());
+          break;
+        }
+      }
+    }
+    Schedule schedule;
+    if (getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+      ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) getTrigger());
+      schedule = new TimeSchedule(getName(), getDescription(), trigger.getCronExpression(), constraints);
+    } else if (getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+      ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) getTrigger();
+      schedule = new StreamSizeSchedule(getName(), getDescription(),
+                                        trigger.getStreamId().getStream(), trigger.getTriggerMB(), constraints);
+    } else {
+      return null;
+    }
+    return new ScheduleSpecification(schedule, getProgram(), getProperties());
   }
 
   /**
@@ -125,34 +177,10 @@ public class ScheduleDetail {
   public static List<ScheduleSpecification> toScheduleSpecs(List<ScheduleDetail> details) {
     List<ScheduleSpecification> specs = new ArrayList<>();
     for (ScheduleDetail detail : details) {
-      RunConstraints constraints = RunConstraints.NONE;
-      if (detail.getConstraints() != null) {
-        for (Constraint runConstraint : detail.getConstraints()) {
-          if (runConstraint instanceof ProtoConstraint.ConcurrencyConstraint) {
-            constraints = new RunConstraints(
-              ((ProtoConstraint.ConcurrencyConstraint) runConstraint).getMaxConcurrency());
-            break;
-          }
-        }
+      ScheduleSpecification spec = detail.toScheduleSpec();
+      if (spec != null) {
+        specs.add(spec);
       }
-      Schedule schedule;
-      if (detail.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-        ProtoTrigger.TimeTrigger trigger = ((ProtoTrigger.TimeTrigger) detail.getTrigger());
-        schedule = new TimeSchedule(detail.getName(),
-                                    detail.getDescription(),
-                                    trigger.getCronExpression(),
-                                    constraints);
-      } else if (detail.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
-        ProtoTrigger.StreamSizeTrigger trigger = (ProtoTrigger.StreamSizeTrigger) detail.getTrigger();
-        schedule = new StreamSizeSchedule(detail.getName(),
-                                          detail.getDescription(),
-                                          trigger.getStream().getStream(),
-                                          trigger.getTriggerMB(),
-                                          constraints);
-      } else {
-        continue;
-      }
-      specs.add(new ScheduleSpecification(schedule, detail.getProgram(), detail.getProperties()));
     }
     return specs;
   }

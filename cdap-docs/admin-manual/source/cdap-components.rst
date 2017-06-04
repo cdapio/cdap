@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _admin-manual-cdap-components:
 
@@ -32,7 +32,7 @@ to configure CDAP to your specific requirements prior to starting CDAP services.
 
 CDAP generates log files, following the settings in the configuration file ``logback.xml``, using
 `Logback <http://logback.qos.ch/>`__. Logs (for Distributed CDAP) are located in ``/var/log/cdap``.
-For Standalone CDAP, they are located in ``<CDAP-SDK-HOME>/logs``.
+For CDAP Local Sandbox, they are located in ``<CDAP-HOME>/logs``.
 
 If you have :ref:`CDAP Security <admin-security>` enabled, then you will have an
 additional file, ``cdap-security.xml`` (documented in :ref:`an appendix
@@ -46,7 +46,7 @@ In summary, these are the steps that you follow to install CDAP:
 
 #. Determine your system architecture
 #. Review and meet the system requirements: hardware, network, and software
-#. Prepare your Hadoop cluster 
+#. Prepare your Hadoop cluster
 #. Install the CDAP components
 #. Configure the CDAP installation
 #. Start CDAP services

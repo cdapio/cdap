@@ -128,6 +128,7 @@ public class StandaloneMain {
   private final DatasetService datasetService;
   private final ExploreClient exploreClient;
   private final TrackerAppCreationService trackerAppCreationService;
+  private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
   private final AuthorizationBootstrapper authorizationBootstrapper;
@@ -151,6 +152,7 @@ public class StandaloneMain {
       trackerAppCreationService = null;
     }
 
+    wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
     authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
@@ -179,7 +181,7 @@ public class StandaloneMain {
 
     boolean exploreEnabled = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED);
     if (exploreEnabled) {
-      ExploreServiceUtils.checkHiveSupport(getClass().getClassLoader());
+      ExploreServiceUtils.checkHiveSupport(cConf, getClass().getClassLoader());
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
     }
 
@@ -268,6 +270,7 @@ public class StandaloneMain {
       trackerAppCreationService.startAndWait();
     }
 
+    wranglerAppCreationService.startAndWait();
     remoteSystemOperationsService.startAndWait();
 
     operationalStatsService.startAndWait();
@@ -276,7 +279,7 @@ public class StandaloneMain {
     int dashboardPort = sslEnabled ?
       cConf.getInt(Constants.Dashboard.SSL_BIND_PORT) :
       cConf.getInt(Constants.Dashboard.BIND_PORT);
-    System.out.println("Standalone CDAP started successfully.");
+    System.out.println("CDAP Sandbox started successfully.");
     System.out.printf("Connect to the CDAP UI at %s://%s:%d\n", protocol, "localhost", dashboardPort);
   }
 
@@ -292,6 +295,7 @@ public class StandaloneMain {
         userInterfaceService.stopAndWait();
       }
 
+      wranglerAppCreationService.stopAndWait();
       if (trackerAppCreationService != null) {
         trackerAppCreationService.stopAndWait();
       }
@@ -471,7 +475,7 @@ public class StandaloneMain {
       new DiscoveryRuntimeModule().getStandaloneModules(),
       new LocationRuntimeModule().getStandaloneModules(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),
-      new DataFabricModules().getStandaloneModules(),
+      new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new MetricsClientRuntimeModule().getStandaloneModules(),

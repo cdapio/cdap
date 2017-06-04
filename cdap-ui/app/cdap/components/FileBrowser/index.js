@@ -22,15 +22,19 @@ import classnames from 'classnames';
 import moment from 'moment';
 import {Link} from 'react-router-dom';
 import FilePath from 'components/FileBrowser/FilePath';
-import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL} from 'services/helpers';
+import {convertBytesToHumanReadable, HUMANREADABLESTORAGE_NODECIMAL, preventPropagation as preventPropagationService, objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import orderBy from 'lodash/orderBy';
 import IconSVG from 'components/IconSVG';
-import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import isEmpty from 'lodash/isEmpty';
+import DataPrepStore from 'components/DataPrep/store';
+import lastIndexOf from 'lodash/lastIndexOf';
+import isNil from 'lodash/isNil';
 
 require('./FileBrowser.scss');
 
-const BASEPATH = '/Users';
+const BASEPATH = '/';
 const PREFIX = 'features.FileBrowser';
 
 export default class FileBrowser extends Component {
@@ -40,23 +44,69 @@ export default class FileBrowser extends Component {
     this.state = {
       contents: [],
       path: '',
-      statePath: this.props.match.url,
+      statePath: objectQuery(this.props, 'match', 'url') || '',
       error: null,
       loading: true,
       search: '',
       sort: 'name',
-      sortOrder: 'asc'
+      sortOrder: 'asc',
+      searchFocus: true
     };
 
     this.handleSearch = this.handleSearch.bind(this);
+    this.preventPropagation = this.preventPropagation.bind(this);
+    this.goToPath = this.goToPath.bind(this);
   }
 
   componentWillMount() {
-    this.fetchDirectory(this.props);
+    if (!this.props.enableRouting) {
+      let path = this.getFilePath();
+      this.dataprepSubscription = DataPrepStore.subscribe(() => {
+        let path = this.getFilePath();
+        if (!isNil(path) && path !== this.state.path) {
+          this.goToPath(path);
+        }
+      });
+      this.goToPath(path);
+    } else {
+      this.fetchDirectory(this.props);
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.dataprepSubscription) {
+      this.dataprepSubscription();
+    }
   }
 
   componentWillReceiveProps(nextProps) {
-    this.fetchDirectory(nextProps);
+    if (!this.props.enableRouting) {
+      // When routing is disabled location, match are not entirely right.
+      let path = this.getFilePath();
+      if (!isNil(path) && path !== this.state.path) {
+        this.goToPath(path);
+      }
+    } else {
+      this.fetchDirectory(nextProps);
+    }
+  }
+
+  getFilePath() {
+    let {workspaceInfo} = DataPrepStore.getState().dataprep;
+    let filePath = objectQuery(workspaceInfo, 'properties', 'path');
+    filePath = !isEmpty(filePath) ? filePath.slice(0, lastIndexOf(filePath, '/') + 1) : this.state.path;
+    if (isEmpty(filePath)) {
+      filePath = BASEPATH;
+    }
+    return filePath;
+  }
+
+  preventPropagation(e) {
+    if (this.props.enableRouting) {
+      return;
+    }
+    preventPropagationService(e);
+
   }
 
   fetchDirectory(props) {
@@ -85,7 +135,8 @@ export default class FileBrowser extends Component {
 
     MyDataPrepApi.explorer({
       namespace,
-      path
+      path,
+      hidden: true
     }).subscribe((res) => {
       this.setState({
         loading: false,
@@ -94,9 +145,11 @@ export default class FileBrowser extends Component {
         search: ''
       });
     }, (err) => {
+      console.log('err', err);
+
       this.setState({
         loading: false,
-        error: err.response,
+        error: err.response.message || err.response,
         search: ''
       });
     });
@@ -151,13 +204,47 @@ export default class FileBrowser extends Component {
       .subscribe((res) => {
         let workspaceId = res.values[0].id;
 
+        if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
+          this.props.onWorkspaceCreate(workspaceId);
+          return;
+        }
         let navigatePath = `${window.location.origin}/cdap/ns/${namespace}/dataprep/${workspaceId}`;
         window.location.href = navigatePath;
       });
 
   }
 
+  renderCollapsedContent(row) {
+    return (
+      <div
+        key={row.uniqueId}
+        className={classnames('row content-row', {
+          'disabled': !row.directory && !row.wrangle
+        })}
+      >
+        <div className="col-xs-8 name">
+          <span
+            className={classnames('type-icon fa fa-fw', {
+              'folder-icon fa-folder-o': row.directory,
+              'file-icon fa-file-o': !row.directory
+            })}
+          />
+          <span title={row.name}>{row.name}</span>
+        </div>
+        <div className="col-xs-4">
+          <span title={row.type}>
+            {row.type}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   renderRowContent(row) {
+    if (this.props.noState || !this.props.enableRouting) {
+      return this.renderCollapsedContent(row);
+    }
+
     return (
       <div
         key={row.uniqueId}
@@ -209,7 +296,7 @@ export default class FileBrowser extends Component {
   }
 
   renderDirectory(content) {
-    if (this.props.noState) {
+    if (this.props.noState || !this.props.enableRouting) {
       return (
         <div
           className="row-container"
@@ -221,9 +308,10 @@ export default class FileBrowser extends Component {
     }
 
     let linkPath = `${this.state.statePath}${content.path}`;
-
     return (
-      <Link to={linkPath}>
+      <Link
+        to={linkPath}
+      >
         {this.renderRowContent(content)}
       </Link>
     );
@@ -250,15 +338,41 @@ export default class FileBrowser extends Component {
     }
   }
 
+  renderEmptySearch() {
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search">
+          <strong>
+            {T.translate(`${PREFIX}.EmptyMessage.title`, {searchText: this.state.search})}
+          </strong>
+          <hr />
+          <span> {T.translate(`${PREFIX}.EmptyMessage.suggestionTitle`)} </span>
+          <ul>
+            <li>
+              <span
+                className="link-text"
+                onClick={() => {
+                  this.setState({
+                    search: ''
+                  });
+                }}
+              >
+                {T.translate(`${PREFIX}.EmptyMessage.clearLabel`)}
+              </span>
+              <span> {T.translate(`${PREFIX}.EmptyMessage.suggestion1`)} </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   renderContent() {
     if (this.state.loading) {
       // NEED TO REPLACE WITH ACTUAL LOADING ICON
 
       return (
-        <div className="loading-container text-xs-center">
-          <br />
-          <LoadingSVG />
-        </div>
+        <LoadingSVGCentered />
       );
     }
 
@@ -275,7 +389,7 @@ export default class FileBrowser extends Component {
 
     if (this.state.contents.length === 0) {
       return (
-        <h5 className="text-xs-center">Empty</h5>
+        <h5 className="text-xs-center">{T.translate(`${PREFIX}.EmptyMessage.noFilesOrDirectories`)}</h5>
       );
     }
 
@@ -290,14 +404,7 @@ export default class FileBrowser extends Component {
       });
 
       if (displayContent.length === 0) {
-        return (
-          <div className="empty-container">
-            <br />
-            <h4 className="text-xs-center">
-              {T.translate(`${PREFIX}.emptySearch`, { searchTerm: this.state.search })}
-            </h4>
-          </div>
-        );
+        return this.renderEmptySearch();
       }
     }
 
@@ -320,7 +427,16 @@ export default class FileBrowser extends Component {
       permission: 'col-xs-2'
     };
 
-    const COLUMN_HEADERS = Object.keys(TABLE_COLUMNS_PROPERTIES);
+    let columnProperties = TABLE_COLUMNS_PROPERTIES;
+
+    if (this.props.noState || !this.props.enableRouting) {
+      columnProperties = {
+        name: 'col-xs-8',
+        type: 'col-xs-4'
+      };
+    }
+
+    const COLUMN_HEADERS = Object.keys(columnProperties);
 
     return (
       <div className="directory-content-table">
@@ -330,7 +446,7 @@ export default class FileBrowser extends Component {
               return (
                 <div
                   key={head}
-                  className={TABLE_COLUMNS_PROPERTIES[head]}
+                  className={columnProperties[head]}
                 >
                   <span
                     onClick={this.orderBy.bind(this, head)}
@@ -391,6 +507,8 @@ export default class FileBrowser extends Component {
             <FilePath
               baseStatePath={this.state.statePath}
               fullpath={this.state.path}
+              enableRouting={this.props.enableRouting}
+              onPathChange={this.goToPath}
             />
           </div>
 
@@ -408,6 +526,7 @@ export default class FileBrowser extends Component {
                 placeholder={T.translate(`${PREFIX}.TopPanel.searchPlaceholder`)}
                 value={this.state.search}
                 onChange={this.handleSearch}
+                autoFocus={this.state.searchFocus}
               />
             </div>
           </div>
@@ -419,10 +538,16 @@ export default class FileBrowser extends Component {
   }
 }
 
+FileBrowser.defaultProps = {
+  enableRouting: true
+};
+
 FileBrowser.propTypes = {
   location: PropTypes.object,
   match: PropTypes.object,
   initialDirectoryPath: PropTypes.string,
   noState: PropTypes.bool,
-  toggle: PropTypes.func.isRequired
+  toggle: PropTypes.func.isRequired,
+  enableRouting: PropTypes.bool,
+  onWorkspaceCreate: PropTypes.func
 };

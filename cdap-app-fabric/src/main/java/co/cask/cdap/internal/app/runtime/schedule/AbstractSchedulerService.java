@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,17 +24,13 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
-import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,36 +105,38 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
-    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
       timeScheduler.addProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
       streamSizeScheduler.addProgramSchedule(schedule);
     }
   }
 
   @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
-      timeScheduler.updateProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
-      streamSizeScheduler.updateProgramSchedule(schedule);
-    }
-  }
-
-  @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    if (schedule.getTrigger() instanceof ProtoTrigger.TimeTrigger) {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
       timeScheduler.deleteProgramSchedule(schedule);
-    } else if (schedule.getTrigger() instanceof ProtoTrigger.StreamSizeTrigger) {
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
       streamSizeScheduler.deleteProgramSchedule(schedule);
     }
   }
 
+  @Override
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
+      timeScheduler.suspendProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+      streamSizeScheduler.suspendProgramSchedule(schedule);
+    }
+  }
 
   @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Schedule schedule)
-    throws SchedulerException {
-    schedule(programId, programType, schedule, ImmutableMap.<String, String>of());
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+    if (schedule.getTrigger() instanceof TimeTrigger) {
+      timeScheduler.resumeProgramSchedule(schedule);
+    } else if (schedule.getTrigger() instanceof StreamSizeTrigger) {
+      streamSizeScheduler.resumeProgramSchedule(schedule);
+    }
   }
 
   @Override
@@ -151,20 +149,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException {
-    schedule(programId, programType, schedules, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                       Map<String, String> properties) throws SchedulerException {
-    for (Schedule schedule : schedules) {
-      schedule(programId, programType, schedule, properties);
-    }
-  }
-
-  @Override
   public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return timeScheduler.previousScheduledRuntime(program, programType);
@@ -174,15 +158,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return timeScheduler.nextScheduledRuntime(program, programType);
-  }
-
-  @Override
-  public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException {
-    return ImmutableList.<String>builder()
-      .addAll(timeScheduler.getScheduleIds(program, programType))
-      .addAll(streamSizeScheduler.getScheduleIds(program, programType))
-      .build();
   }
 
   @Override
@@ -200,24 +175,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws NotFoundException, SchedulerException {
-    updateSchedule(program, programType, schedule, ImmutableMap.<String, String>of());
-  }
-
-  @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                             Map<String, String> properties) throws NotFoundException, SchedulerException {
-    Scheduler scheduler = getSchedulerForSchedule(program, schedule.getName());
-    ScheduleState scheduleState = scheduleState(program, programType, schedule.getName());
-    scheduler.updateSchedule(program, programType, schedule, properties);
-    // the update of schedule will delete and a create new one so we have to suspend it if it was suspended
-    if (scheduleState == ScheduleState.SUSPENDED) {
-      suspendSchedule(program, programType, schedule.getName());
-    }
-  }
-
-  @Override
   public void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
     Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
@@ -229,34 +186,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     throws SchedulerException {
     timeScheduler.deleteSchedules(program, programType);
     streamSizeScheduler.deleteSchedules(program, programType);
-  }
-
-  @Override
-  public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
-    for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
-      deleteAllSchedules(namespaceId, appSpec);
-    }
-  }
-
-  private void deleteAllSchedules(NamespaceId namespaceId, ApplicationSpecification appSpec)
-    throws SchedulerException {
-    for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-      ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
-      ProgramType programType = ProgramType.valueOfSchedulableType(scheduleSpec.getProgram().getProgramType());
-      ProgramId programId = appId.program(programType, scheduleSpec.getProgram().getProgramName());
-      deleteSchedules(programId, scheduleSpec.getProgram().getProgramType());
-    }
-  }
-
-  @Override
-  public ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws SchedulerException {
-    try {
-      Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
-      return scheduler.scheduleState(program, programType, scheduleName);
-    } catch (NotFoundException e) {
-      return ScheduleState.NOT_FOUND;
-    }
   }
 
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {

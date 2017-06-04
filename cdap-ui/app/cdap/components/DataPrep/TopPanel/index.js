@@ -25,6 +25,9 @@ import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
+import isNil from 'lodash/isNil';
+import CreateDatasetBtn from 'components/DataPrep/TopPanel/CreateDatasetBtn';
+import classnames from 'classnames';
 
 require('./TopPanel.scss');
 
@@ -152,12 +155,36 @@ export default class DataPrepTopPanel extends Component {
     if (info) {
       if (info.properties.connection === 'file') {
         return (
-          <div className="data-prep-name">
+          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
               {T.translate('features.DataPrep.TopPanel.file')}
             </div>
             <div className="title">
               {info.properties.file}
+            </div>
+          </div>
+        );
+      } else if (info.properties.connection === 'database') {
+        return (
+          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.database')}
+              <span className="connection-name">{info.properties.connectionid}</span>
+            </div>
+            <div className="title">
+              {T.translate('features.DataPrep.TopPanel.databaseTitle', {name: info.properties.name})}
+            </div>
+          </div>
+        );
+      } else if (info.properties.connection === 'upload') {
+        return (
+          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.upload')}
+              <span className="connection-name">{info.properties.connectionid}</span>
+            </div>
+            <div className="title">
+              {info.properties.name}
             </div>
           </div>
         );
@@ -169,15 +196,15 @@ export default class DataPrepTopPanel extends Component {
         <strong>
           {T.translate('features.DataPrep.TopPanel.title')}
         </strong>
-        <span className="tag tag-success">BETA</span>
       </div>
     );
   }
 
   render() {
+    let makeACopyDisabledState = isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload';
     return (
-      <div className="top-panel clearfix">
-        <div className="left-title float-xs-left">
+      <div className="row top-panel clearfix">
+        <div className="left-title">
           <div className="upper-section">
             {this.renderTopPanelDisplay()}
 
@@ -198,7 +225,7 @@ export default class DataPrepTopPanel extends Component {
           </div>
         </div>
 
-        <div className="action-buttons float-xs-right">
+        <div className="action-buttons">
           {
             this.state.onSubmitError ?
               <span className="text-danger">{this.state.onSubmitError}</span>
@@ -217,7 +244,7 @@ export default class DataPrepTopPanel extends Component {
             <button
               className="btn btn-primary"
               onClick={this.onSubmit.bind(this)}
-              disabled={this.state.onSubmitLoading ? 'disabled' : null}
+              disabled={this.state.onSubmitLoading || isNil(this.state.workspaceInfo) ? 'disabled' : false}
             >
               {
                 this.state.onSubmitLoading ?
@@ -230,12 +257,24 @@ export default class DataPrepTopPanel extends Component {
           }
           {this.renderAddToPipelineModal()}
 
-          <button
-            className="btn btn-link"
-            onClick={this.toggleSchemaModal}
-          >
-            {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
-          </button>
+          <div className="secondary-actions">
+            {
+              this.props.singleWorkspaceMode ?
+                null
+              :
+                <CreateDatasetBtn
+                  disabledState={makeACopyDisabledState}
+                  title={!objectQuery(this.state, 'workspaceInfo', 'properties', 'path') ? T.translate('features.DataPrep.TopPanel.copyToCDAPDatasetBtn.uploadDisabledMessage') : null}
+                />
+            }
+            <button
+              className="btn btn-link"
+              onClick={this.toggleSchemaModal}
+              disabled={isNil(this.state.workspaceInfo) ? 'disabled' : false}
+            >
+              {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
+            </button>
+          </div>
           {this.renderSchemaModal()}
         </div>
       </div>

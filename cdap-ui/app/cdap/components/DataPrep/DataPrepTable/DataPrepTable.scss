@@ -19,6 +19,7 @@ $selected-header-bg-color: #3498db;
 
 $border-and-selected-color: #dbdbdb;
 $header-bg-color: #eeeeee;
+$col_type_font_color: gray;
 
 .dataprep-container {
   .dataprep-table {
@@ -44,7 +45,12 @@ $header-bg-color: #eeeeee;
       font-family: Helvetica, Arial, sans-serif;
 
       &.table-bordered { border: 0; }
-
+      .col-type {
+        margin-left: 28px;
+        color: $col_type_font_color;
+        font-weight: 400;
+        font-size: 11px;
+      }
       td {
         border: 1px solid $border-and-selected-color;
       }
@@ -63,6 +69,7 @@ $header-bg-color: #eeeeee;
         border-right: 1px solid #cccccc;
         border-top: 0;
         position: relative;
+        padding: 0.5rem 0.75rem;
 
         .quality-bar {
           position: absolute;
@@ -75,10 +82,12 @@ $header-bg-color: #eeeeee;
           display: inline-flex;
           align-items: center;
           width: 100%;
+          margin-top: 5px;
 
           .header-text {
             width: 100%;
             cursor: initial;
+            margin-right: 5px;
 
             span {
               margin-left: 3px;
@@ -95,7 +104,6 @@ $header-bg-color: #eeeeee;
           }
 
           .column-header-checkbox {
-            margin-right: 5px;
             width: 12px;
           }
 

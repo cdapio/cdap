@@ -261,9 +261,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
     @Provides
     @Singleton
     @Exposed
-    public ExploreService providesExploreService(Injector injector) {
+    public ExploreService providesExploreService(Injector injector, CConfiguration cConf) {
       // Figure out which HiveExploreService class to load
-      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService();
+      Class<? extends ExploreService> hiveExploreServiceCl = ExploreServiceUtils.getHiveService(cConf);
       LOG.info("Using Explore service class {}", hiveExploreServiceCl.getName());
       return injector.getInstance(hiveExploreServiceCl);
     }

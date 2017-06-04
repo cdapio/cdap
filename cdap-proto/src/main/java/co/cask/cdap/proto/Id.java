@@ -59,6 +59,8 @@ public abstract class Id implements EntityIdCompatible {
   private static final Pattern namespacePattern = Pattern.compile("[a-zA-Z0-9_]+");
   // Allow hyphens for other ids.
   private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
+  // Allow '.' and hyphens for artifact ids.
+  private static final Pattern artifactIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
 
@@ -71,6 +73,10 @@ public abstract class Id implements EntityIdCompatible {
 
   private static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
+  }
+
+  private static boolean isValidArtifactId(String name) {
+    return artifactIdPattern.matcher(name).matches();
   }
 
   private static boolean isValidDatasetId(String datasetId) {
@@ -1067,7 +1073,7 @@ public abstract class Id implements EntityIdCompatible {
       if (name == null) {
         throw new NullPointerException("Name cannot be null.");
       }
-      if (!isValidId(name)) {
+      if (!isValidArtifactId(name)) {
         throw new IllegalArgumentException("Invalid artifact name.");
       }
       if (version == null) {
@@ -1148,7 +1154,7 @@ public abstract class Id implements EntityIdCompatible {
     }
 
     public static boolean isValidName(String name) {
-      return isValidId(name);
+      return isValidArtifactId(name);
     }
 
     @Override

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2016 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _cli:
 .. _cdap-cli:
@@ -13,7 +13,7 @@ Introduction
 ============
 
 The Command Line Interface (CLI, or CDAP CLI) provides methods to interact with the CDAP server from within a shell,
-similar to the HBase or ``bash`` shells. It is located within the SDK, at ``bin/cdap-cli`` as either a bash
+similar to the HBase or ``bash`` shells. It is located within the CDAP Local Sandbox, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
 It can be :ref:`installed on Distributed CDAP <packages-cli-package-installation>`, in
@@ -42,13 +42,13 @@ To run the CLI in interactive mode, run the ``cdap cli`` executable with no argu
   .. Windows
 
   > .\bin\cdap.bat cli
-  
+
   .. Distributed CDAP
 
   $ /opt/cdap/cli/bin/cdap cli
-  
+
   .. Cloudera Manager Clusters
-  
+
   $ /opt/cloudera/parcels/cdap/cli/bin/cdap cli
 
 
@@ -57,7 +57,7 @@ The executable should bring you into a shell, with a prompt similar to:
 .. container:: highlight
 
   .. parsed-literal::
-  
+
     cdap (http://localhost:11015/namespace:default)>
 
 This indicates that the CLI is currently set to interact with the CDAP server at ``localhost``.
@@ -74,15 +74,15 @@ a CDAP instance at ``example.com``, port ``11015``::
 To list all of the available commands, enter the CLI command ``help``::
 
   cdap (http://localhost:11015/namespace:default)> help
-  
+
 In this documentation, to save space, this prompt is abbreviated to:
 
 .. container:: highlight
 
   .. parsed-literal::
-  
+
     |cdap >|
-  
+
 
 Non-Interactive Mode
 --------------------
@@ -170,7 +170,7 @@ Certain commands (``cli render as``, ``connect``, and ``use namespace``) affect 
 
       app id,description
       PurchaseApp,Some description
-      
+
 - The command ``connect`` (from the `General`_ commands) allows you to connect to a CDAP
   instance.
 

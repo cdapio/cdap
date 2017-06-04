@@ -19,7 +19,7 @@ Each example comes with a Maven pom.xml file. To build, install Maven, and from 
 /examples directory prompt, enter::
 
   $ mvn clean package
-  
+
 To build while skipping tests, use::
 
   $ mvn clean package -DskipTests
@@ -42,7 +42,12 @@ CountRandom
 DataCleansing
 -------------
 - Demonstrates incrementally consuming partitions of a partitioned fileset using MapReduce.
-      
+
+Decision Tree Regression
+------------------------
+- Demonstrates machine-learning model training using a Spark2 program.
+- It trains decision tree regression models from labeled data uploaded through a Service.
+
 FileSetExample
 --------------
 - Illustrates how to use the FileSet dataset in applications.
@@ -76,7 +81,7 @@ Purchase
   - When scheduled by the *PurchaseHistoryWorkFlow*, the *PurchaseHistoryBuilder* MapReduce
     program reads the *purchases* dataset, creates a purchase history, and stores the purchase
     history in the *history* dataset every morning at 4:00 A.M. You can manually (in the
-    application's pages in the CDAP-UI) or programmatically execute the 
+    application's pages in the CDAP-UI) or programmatically execute the
     *PurchaseHistoryBuilder* MapReduce to store customers' purchase history in the
     *history* dataset.
   - Request the ``PurchaseHistoryService`` retrieve from the *history* dataset the
@@ -132,11 +137,11 @@ WikipediaPipeline
 -----------------
 - An application that performs analysis on Wikipedia data using MapReduce and Spark programs
   running within a CDAP workflow: *WikipediaPipelineWorkflow*.
-      
+
 WordCount
 ---------
 - A simple application that counts words and tracks word associations and unique words
-  seen on the stream. 
+  seen on the stream.
 - It demonstrates the power of using datasets and how they can be used to simplify storing
   complex data.
 - It uses a configuration class to configure the application at deployment time.
@@ -147,7 +152,7 @@ License and Trademarks
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
 
-Copyright © 2014-2016 Cask Data, Inc.
+Copyright © 2014-2017 Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -155,6 +160,6 @@ except in compliance with the License. You may obtain a copy of the License at
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the
-License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
 either express or implied. See the License for the specific language governing permissions
 and limitations under the License.

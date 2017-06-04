@@ -21,7 +21,6 @@ import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 
 import java.util.Collections;
@@ -38,18 +37,17 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void updateProgramSchedule(ProgramSchedule schedule) throws SchedulerException, NotFoundException {
-
-  }
-
-  @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
 
   }
 
   @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType,
-                       Schedule schedule) throws SchedulerException {
+  public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
+
+  }
+
+  @Override
+  public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
 
   }
 
@@ -72,11 +70,6 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public List<String> getScheduleIds(ProgramId program, SchedulableProgramType programType) throws SchedulerException {
-    return Collections.emptyList();
-  }
-
-  @Override
   public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
 
@@ -89,18 +82,6 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule)
-    throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
-  public void updateSchedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                             Map<String, String> properties) throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
   public void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
 
@@ -108,29 +89,6 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) throws SchedulerException {
-
-  }
-
-  @Override
-  public void deleteAllSchedules(NamespaceId namespaceId) throws SchedulerException {
-
-  }
-
-  @Override
-  public ScheduleState scheduleState(ProgramId program, SchedulableProgramType programType,
-                                     String scheduleName) throws SchedulerException {
-    return null;
-  }
-
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules)
-    throws SchedulerException {
-
-  }
-
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Iterable<Schedule> schedules,
-                       Map<String, String> properties) throws SchedulerException {
 
   }
 

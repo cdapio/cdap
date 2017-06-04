@@ -68,6 +68,8 @@ public abstract class EntityId implements IdCompatible {
 
   // Allow hyphens for other ids.
   private static final Pattern idPattern = Pattern.compile("[a-zA-Z0-9_-]+");
+  // Allow '.' and hyphens for artifact ids.
+  private static final Pattern artifactIdPattern = Pattern.compile("[\\.a-zA-Z0-9_-]+");
   // Allow '.' and '$' for dataset ids since they can be fully qualified class names
   private static final Pattern datasetIdPattern = Pattern.compile("[$\\.a-zA-Z0-9_-]+");
   // Only allow alphanumeric and _ character for namespace
@@ -82,9 +84,21 @@ public abstract class EntityId implements IdCompatible {
     }
   }
 
+  public static void ensureValidArtifactId(String propertyName, String name) {
+    if (!isValidArtifactId(name)) {
+      throw new IllegalArgumentException(String.format("Invalid %s ID: %s. Should only contain alphanumeric " +
+                                                         "characters and _ or - or .", propertyName, name));
+    }
+  }
+
   public static boolean isValidId(String name) {
     return idPattern.matcher(name).matches();
   }
+
+  public static boolean isValidArtifactId(String name) {
+    return artifactIdPattern.matcher(name).matches();
+  }
+
 
   public static void ensureValidDatasetId(String propertyName, String datasetId) {
     if (!isValidDatasetId(datasetId)) {

@@ -247,6 +247,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  createEventHandler(cConf));
 
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+
+          for (Map.Entry<String, RunnableResource> entry : launchConfig.getRunnables().entrySet()) {
+            String runnable = entry.getKey();
+            RunnableResource runnableResource = entry.getValue();
+            if (runnableResource.getMaxRetries() != null) {
+              twillPreparer.withMaxRetries(runnable, runnableResource.getMaxRetries());
+            }
+          }
+
           if (options.isDebug()) {
             twillPreparer.enableDebugging();
           }
@@ -296,7 +305,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
           // Add dependencies
           Set<Class<?>> extraDependencies = new HashSet<>(launchConfig.getExtraDependencies());
-          extraDependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
+          extraDependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
           extraDependencies.add(new HBaseDDLExecutorFactory(cConf, hConf).get().getClass());
           if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
             extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
@@ -592,7 +601,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     }
 
     public LaunchConfig addRunnable(String name, TwillRunnable runnable, Resources resources, int instances) {
-      runnables.put(name, new RunnableResource(runnable, createResourceSpec(resources, instances)));
+      return addRunnable(name, runnable, resources, instances, null);
+    }
+
+    public LaunchConfig addRunnable(String name, TwillRunnable runnable, Resources resources, int instances,
+                                    @Nullable Integer maxRetries) {
+      runnables.put(name, new RunnableResource(runnable, createResourceSpec(resources, instances), maxRetries));
       return this;
     }
 

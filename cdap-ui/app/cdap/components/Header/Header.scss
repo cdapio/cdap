@@ -36,6 +36,7 @@
     &:hover,
     &:active {
       color: $cdap-light-orange;
+
     }
     .active {
       color: $cdap-orange;
@@ -70,6 +71,7 @@
   .brand-section {
     display: inline-block;
     vertical-align: top;
+    min-width: 108px;
     img {
       height: 50px;
     }
@@ -181,4 +183,5 @@
       }
     }
   }
+
 }

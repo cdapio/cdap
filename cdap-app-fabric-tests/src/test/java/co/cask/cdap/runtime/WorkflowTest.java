@@ -148,7 +148,7 @@ public class WorkflowTest {
       AppFabricTestHelper.deployApplicationWithManager(WorkflowSchedulesWithSameNameApp.class, TEMP_FOLDER_SUPPLIER);
       Assert.fail("Should have thrown Exception because Workflow is configured with schedules having same name.");
     } catch (Exception ex) {
-      Assert.assertEquals("Schedule with the name 'DailySchedule' already exists.",
+      Assert.assertEquals("Duplicate schedule name for schedule: 'DailySchedule'",
                           ex.getCause().getCause().getMessage());
     }
 

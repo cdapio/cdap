@@ -18,6 +18,8 @@ $tabs-bg-color: #efefef;
 $border-color: #cccccc;
 $tab-bg-color: #dddddd;
 $tab-active-bg-color: white;
+$dropdown-font-color: #333333;
+$workspace-link-active-color: #ff6600;
 
 .workspace-tabs {
   height: 30px;
@@ -37,48 +39,58 @@ $tab-active-bg-color: white;
     width: 30px;
     cursor: pointer;
   }
+}
 
-  .workspace-tab {
-    position: relative;
-    display: inline-block;
-    padding: 5px 15px 5px;
-    margin: 0 -2px;
-    cursor: pointer;
+.workspace-list-popover.popover {
+  width: 250px;
+  border-radius: 0;
 
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
+  &.bs-tether-element-attached-right { margin-left: 0; }
+  &.bs-tether-element-attached-top { margin-top: 2px; }
 
-    .delete-workspace {
-      margin-left: 10px;
-      vertical-align: top;
-      margin-top: 2px;
-    }
+  .workspace-list-dropdown-item {
+    display: block;
+    font-size: 13px;
+    padding: 10px;
+    width: 100%;
 
-    &:before {
-      border: 1px solid $border-color;
-      content: '';
-      position: absolute;
-      top: 0;
-      right: 0;
-      bottom: 5px;
-      left: 0;
-      background-color: $tab-bg-color;
-      transform: perspective(5px) rotateX(2deg);
-      transform-origin: bottom;
-      z-index: -1;
-    }
+    .workspace-link {
+      color: $dropdown-font-color;
+      display: inline-block;
+      width: calc(100% - 25px);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
 
-    &.active {
-      z-index: 2;
-
-      &:before {
-        margin-bottom: -1px;
-        border-top-width: 1px;
-        background-color: $tab-active-bg-color;
-        border-bottom-color: $tab-active-bg-color;
+      &:hover {
+        color: $workspace-link-active-color;
+        text-decoration: none;
       }
+
+      &.active { color: $workspace-link-active-color; }
+    }
+
+    span.fa {
+      margin-top: 1px;
+      cursor: pointer;
+    }
+  }
+}
+
+.workspace-delete-confirmation {
+  .modal-header {
+    border-bottom: 0;
+
+    .close { opacity: 1; }
+  }
+
+  .modal-body {
+    h4 { margin-bottom: 15px; }
+
+    .action-buttons {
+      margin-top: 25px;
+
+      .btn { margin-right: 10px; }
     }
   }
 }

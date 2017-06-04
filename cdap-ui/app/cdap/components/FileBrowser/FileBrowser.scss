@@ -14,6 +14,8 @@
  * the License.
  */
 
+@import '../../styles/variables.scss';
+
 $border-color: #cccccc;
 $table-header-color: #eeeeee;
 $table-row-hover-color: #eeeeee;
@@ -24,6 +26,8 @@ $info-font-color: #999999;
 $row-disabled-color: #aaaaaa;
 $subpanel-height: 46px;
 $gutter-width: 15px;
+$divider-color: #999999;
+$empty-message-link-color: $cdap-orange;
 
 .file-browser-container {
   // Whichever component is using this component will need to
@@ -32,7 +36,6 @@ $gutter-width: 15px;
 
   .sub-panel {
     padding: 0 $gutter-width;
-    height: $subpanel-height;
 
     .path-container {
       line-height: $subpanel-height;
@@ -40,7 +43,6 @@ $gutter-width: 15px;
 
     .search-container,
     .info {
-      display: inline-block;
       float: left;
       width: 200px;
       padding-left: $gutter-width;
@@ -68,6 +70,8 @@ $gutter-width: 15px;
       border-top: 1px solid $border-color;
       background-color: $table-header-color;
       line-height: 36px;
+      height: 36px;
+      overflow: hidden;
       font-weight: 600;
 
       span { cursor: pointer; }
@@ -77,7 +81,7 @@ $gutter-width: 15px;
     }
 
     .content-body {
-      height: calc(100% - 38px);
+      max-height: calc(100% - 38px);
       overflow-y: auto;
 
       .row-container { cursor: pointer; }
@@ -101,6 +105,40 @@ $gutter-width: 15px;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+      }
+    }
+  }
+
+  .empty-search-container {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1;
+    width: 100%;
+
+    .empty-search {
+      font-size: 18px;
+      font-weight: 500;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 25vh;
+      max-width: 80%;
+      word-wrap: break-word;
+
+      hr {
+        color: $divider-color;
+        background-color: $divider-color;
+      }
+      span {
+        font-size: 14px;
+      }
+      ul {
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+        .link-text {
+          cursor: pointer;
+          color: $empty-message-link-color;
         }
       }
     }

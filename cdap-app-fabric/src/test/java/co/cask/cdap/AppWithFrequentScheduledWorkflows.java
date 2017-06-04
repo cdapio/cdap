@@ -22,6 +22,7 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
+  public static final String NAME = "AppWithFrequentScheduledWorkflows";
   public static final String SOME_WORKFLOW = "SomeWorkflow";
   public static final String ANOTHER_WORKFLOW = "AnotherWorkflow";
   public static final String DATASET_PARTITION_SCHEDULE_1 = "DataSetPartionSchedule1";
@@ -36,7 +37,7 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("AppWithMultipleWorkflows");
+    setName(NAME);
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new DummyWorkflow(SOME_WORKFLOW));
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));
@@ -45,11 +46,12 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_1, ProgramType.WORKFLOW, SOME_WORKFLOW)
                .triggerOnPartitions(DATASET_NAME1, 1));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
-               .triggerOnPartitions(DATASET_NAME2, 1));
+               .triggerOnPartitions(DATASET_NAME2, 2));
     // Schedule the workflow to run in every min
-    scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_1).createTimeSchedule("* * * * *"), SCHEDULED_WORKFLOW_1);
+    schedule(buildSchedule(ONE_MIN_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1).triggerByTime("* * * * *"));
     // Schedule the workflow to run in every min with a different cron expression
-    scheduleWorkflow(Schedules.builder(ONE_MIN_SCHEDULE_2).createTimeSchedule("*/1 * * * *"), SCHEDULED_WORKFLOW_2);
+    schedule(buildSchedule(ONE_MIN_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
+               .triggerByTime("*/1 * * * *"));
   }
 
   /**

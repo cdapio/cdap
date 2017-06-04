@@ -34,13 +34,13 @@ import org.junit.Test;
 public class TwillRunnableTest {
   @Test
   public void testExploreServiceTwillRunnableInjector() {
-    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() throws Exception {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
-                                                                            HBaseConfiguration.create());
+                                                                            HBaseConfiguration.create(), "");
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
@@ -49,7 +49,7 @@ public class TwillRunnableTest {
 
   @Test
   public void testStreamHandlerTwillRunnableInjector() {
-    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration());
+    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test
@@ -64,12 +64,13 @@ public class TwillRunnableTest {
 
   @Test
   public void testMetricsTwillRunnableInjector() throws Exception {
-    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create());
+    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
   }
 
   @Test
   public void testMetricsProcessorTwillRunnableInjector() {
-    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration());
+    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "",
+                                                      new MockTwillContext());
   }
 
   @Test

@@ -1,10 +1,10 @@
 Cask Data Application Platform Software Development Kit - @@project.version@@
 ================================================================================
 
-The Cask Data Application Platform (CDAP) Development Kit includes a Standalone
-CDAP: a fully-functioning, standalone edition of the CDAP runtime. You can use this
-edition to write, debug and test your Big Data applications before deploying them to a
-remote staging or production CDAP.
+The Cask Data Application Platform (CDAP) includes a CDAP Local Sandbox: a
+fully-functioning, standalone edition of the CDAP runtime. You can use this edition to
+write, debug and test your Big Data applications before deploying them to a remote staging
+or production CDAP.
 
 
 Installation
@@ -17,30 +17,30 @@ prerequisites:
   2. Node.js (required to run the CDAP UI; we recommend any version greater than v0.10.0)
   3. Apache Maven 3.0+ (required to build the example applications)
 
-Once you have installed the prerequisites, unzip the SDK to a suitable directory:
+Once you have installed the prerequisites, unzip the CDAP Local Sandbox to a suitable directory:
 
-  %> cd <path to SDK>
-  %> unzip /tmp/cdap-sdk-@@project.version@@.zip
+  %> cd <CDAP-HOME>
+  %> unzip /tmp/cdap-local-sandbox-@@project.version@@.zip
 
 or on Windows:
-  
-  > cd <path to SDK>
-  > jar xf cdap-sdk-@@project.version@@.zip
+
+  > cd <CDAP-HOME>
+  > jar xf cdap-local-sandbox-@@project.version@@.zip
 
 Starting CDAP
 =============
 
-You are now ready to start CDAP. Do so by running the 'cdap' 
+You are now ready to start CDAP. Do so by running the 'cdap'
 script in the $CDAP/bin folder:
 
-  %> cd <path to SDK>/cdap-sdk-@@project.version@@
-  %> ./bin/cdap sdk start
-  
+  %> cd <CDAP-HOME>/cdap-local-sandbox-@@project.version@@
+  %> ./bin/cdap sandbox start
+
 or on Windows:
-  
+
   > cd <path to SDK>\cdap-sdk-@@project.version@@
-  > bin\cdap.bat sdk start
-  
+  > bin\cdap.bat sandbox start
+
 
 Using CDAP
 ==========
@@ -48,7 +48,7 @@ Using CDAP
 Open a browser window to http://localhost:11011 to view the CDAP-UI.
 
 To get started with CDAP, see our online introduction:
- 
+
   http://docs.cask.co/cdap/@@project.version@@/en/introduction/index.html
 
 Documentation for CDAP can be found at our documentation website:
@@ -58,11 +58,11 @@ Documentation for CDAP can be found at our documentation website:
 Contacts for support, sales, and general information can be found on our website at:
 
   http://cask.co/company/#company-contact
-  
-  
+
+
 Licensing
 =========
-  
+
 Copyright © 2014-@@package.build.year@@ Cask Data, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");

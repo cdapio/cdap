@@ -17,6 +17,7 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
@@ -33,10 +34,15 @@ import java.util.concurrent.TimeUnit;
  *
  */
 public class WorkflowAppWithFork extends AbstractApplication {
+  public static final String SCHED_NAME = "testSchedule";
+
   @Override
   public void configure() {
     setDescription("Workflow App containing fork.");
     addWorkflow(new WorkflowWithFork());
+    schedule(buildSchedule(SCHED_NAME, ProgramType.WORKFLOW, "WorkflowWithFork")
+               .setDescription("testDescription")
+               .triggerByTime("* * * * *"));
   }
 
   /**

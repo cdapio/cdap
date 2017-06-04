@@ -19,21 +19,24 @@ package co.cask.cdap.internal.app.runtime.schedule.constraint;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.ProtoConstraint;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * A constraint which requires a certain amount of delay pass after the trigger is fired, before executing the program.
  */
 public class DelayConstraint extends ProtoConstraint.DelayConstraint implements CheckableConstraint {
 
-  public DelayConstraint(long millisAfterTrigger) {
-    super(millisAfterTrigger);
+  public DelayConstraint(long delayAfterTrigger, TimeUnit unit) {
+    super(delayAfterTrigger, unit);
   }
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    long elapsedTime = context.getCheckTime() - context.getJob().getCreationTime();
+    long elapsedTime = context.getCheckTimeMillis() - context.getJob().getCreationTime();
     if (elapsedTime >= millisAfterTrigger) {
       return ConstraintResult.SATISFIED;
     }
-    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED, millisAfterTrigger - elapsedTime);
+    return new ConstraintResult(ConstraintResult.SatisfiedState.NOT_SATISFIED,
+                                context.getJob().getCreationTime() + millisAfterTrigger);
   }
 }

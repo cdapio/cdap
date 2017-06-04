@@ -19,6 +19,7 @@ package co.cask.cdap.proto;
 import co.cask.cdap.proto.codec.BasicThrowableCodec;
 
 import java.util.Arrays;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -38,7 +39,9 @@ public final class BasicThrowable {
    * @param stackTraces stack traces associated with the Throwable
    * @param cause cause associated with the Throwable
    */
-  public BasicThrowable(String className, String message, StackTraceElement[] stackTraces,
+  public BasicThrowable(String className,
+                        @Nullable String message,
+                        StackTraceElement[] stackTraces,
                         @Nullable BasicThrowable cause) {
     this.className = className;
     this.message = message;
@@ -72,6 +75,7 @@ public final class BasicThrowable {
   /**
    * Return the detail message associated with the Throwable.
    */
+  @Nullable
   public String getMessage() {
     return message;
   }
@@ -102,25 +106,14 @@ public final class BasicThrowable {
 
     BasicThrowable that = (BasicThrowable) o;
 
-    if (!className.equals(that.className)) {
-      return false;
-    }
-    if (!message.equals(that.message)) {
-      return false;
-    }
-
-    if (!Arrays.equals(stackTraces, that.stackTraces)) {
-      return false;
-    }
-    return cause != null ? cause.equals(that.cause) : that.cause == null;
+    return className.equals(that.className)
+      && Objects.equals(message, that.message)
+      && Arrays.equals(stackTraces, that.stackTraces)
+      && Objects.equals(cause, that.cause);
   }
 
   @Override
   public int hashCode() {
-    int result = className.hashCode();
-    result = 31 * result + message.hashCode();
-    result = 31 * result + Arrays.hashCode(stackTraces);
-    result = 31 * result + (cause != null ? cause.hashCode() : 0);
-    return result;
+    return Objects.hash(className, message, Arrays.hashCode(stackTraces), cause);
   }
 }

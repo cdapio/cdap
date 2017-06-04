@@ -32,8 +32,14 @@ export default class TextboxOnValium extends Component {
     }
   }
   updateTextValue(e) {
+    let textValue = e.target.value;
+
+    if (!this.props.allowSpace) {
+      textValue = textValue.trim();
+    }
+
     this.setState({
-      textValue: e.target.value
+      textValue
     }, () => {
       if (this.state.originalValue !== this.state.textValue && this.props.onWarning) {
         let isWarning = this.props.onWarning(this.state.textValue);
@@ -74,9 +80,15 @@ export default class TextboxOnValium extends Component {
     );
   }
 }
+
+TextboxOnValium.defaultProps = {
+  allowSpace: true
+};
+
 TextboxOnValium.propTypes = {
   onChange: PropTypes.func,
   value: PropTypes.string,
   onWarning: PropTypes.func,
-  className: PropTypes.string
+  className: PropTypes.string,
+  allowSpace: PropTypes.bool
 };

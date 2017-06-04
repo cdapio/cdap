@@ -18,11 +18,11 @@ and should not be altered.
 
 Any of the default values (with the exception of those marked :ref:`[Final]
 <cdap-site-xml-note-final>`) can be over-ridden by defining a modifying value in the
-``cdap-site.xml`` file, located (by default) either in ``<CDAP-SDK-HOME>/conf/cdap-site.xml`` 
-(Standalone mode) or ``/etc/cdap/conf/cdap-site.xml`` (Distributed mode).
+``cdap-site.xml`` file, located (by default) either in ``<CDAP-HOME>/conf/cdap-site.xml``
+(CDAP Local Sandbox) or ``/etc/cdap/conf/cdap-site.xml`` (Distributed CDAP).
 
 The section below are the parameters that can be defined in the ``cdap-site.xml`` file, their default
-values (obtained from ``cdap-default.xml``) and their descriptions. 
+values (obtained from ``cdap-default.xml``) and their descriptions.
 
 .. rubric:: Notes
 

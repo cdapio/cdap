@@ -29,7 +29,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -38,7 +37,6 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -64,7 +62,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -763,78 +760,6 @@ public class DefaultStore implements Store {
         return getAppMetadataStore(context).getAllAppVersionsAppIds(id.getNamespace(), id.getApplication());
       }
     });
-  }
-
-  @Override
-  public void addSchedule(final ProgramId program, final ScheduleSpecification scheduleSpecification,
-                          final boolean allowOverwrite) throws AlreadyExistsException {
-    try {
-      Transactions.executeUnchecked(transactional, new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          AppMetadataStore metaStore = getAppMetadataStore(context);
-          ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, program);
-          Map<String, ScheduleSpecification> existingSchedules = appSpec.getSchedules();
-          String scheduleName = scheduleSpecification.getSchedule().getName();
-          if (!allowOverwrite && existingSchedules.containsKey(scheduleName)) {
-            throw new AlreadyExistsException(
-              new ScheduleId(program.getNamespace(), program.getApplication(), scheduleName));
-          }
-
-          Map<String, ScheduleSpecification> schedules = Maps.newHashMap(existingSchedules);
-          schedules.put(scheduleSpecification.getSchedule().getName(), scheduleSpecification);
-          ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-          metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
-          LOG.debug("{} schedule for program {} - {}",
-                    existingSchedules.containsKey(scheduleName) ? "Added" : "Updated", program, scheduleSpecification);
-        }
-      });
-    } catch (Exception e) {
-      // Transactions.executeUnchecked wraps all exceptions in RuntimeException
-      if (e.getCause() instanceof AlreadyExistsException) {
-        throw (AlreadyExistsException) e.getCause();
-      } else {
-        throw e;
-      }
-    }
-  }
-
-  @Override
-  public void deleteSchedule(final ProgramId program, final String scheduleName) {
-    Transactions.executeUnchecked(transactional, new TxRunnable() {
-      @Override
-      public void run(DatasetContext context) throws Exception {
-        AppMetadataStore metaStore = getAppMetadataStore(context);
-        ApplicationSpecification appSpec = getAppSpecOrFail(metaStore, program);
-        Map<String, ScheduleSpecification> schedules = Maps.newHashMap(appSpec.getSchedules());
-        ScheduleSpecification removed = schedules.remove(scheduleName);
-        if (removed == null) {
-          throw new NoSuchElementException("No such schedule @ namespace id: " + program.getNamespaceId() +
-                                             ", app id: " + program.getApplication() +
-                                             ", program id: " + program.getProgram() +
-                                             ", schedule name: " + scheduleName);
-        }
-
-        ApplicationSpecification newAppSpec = new AppSpecificationWithChangedSchedules(appSpec, schedules);
-        metaStore.updateAppSpec(program.getNamespace(), program.getApplication(), program.getVersion(), newAppSpec);
-        LOG.debug("Deleted schedule for program {} - {}", program, removed);
-      }
-    });
-  }
-
-  private static class AppSpecificationWithChangedSchedules extends ForwardingApplicationSpecification {
-    private final Map<String, ScheduleSpecification> newSchedules;
-
-    private AppSpecificationWithChangedSchedules(ApplicationSpecification delegate,
-                                                 Map<String, ScheduleSpecification> newSchedules) {
-      super(delegate);
-      this.newSchedules = newSchedules;
-    }
-
-    @Override
-    public Map<String, ScheduleSpecification> getSchedules() {
-      return newSchedules;
-    }
   }
 
   @Override

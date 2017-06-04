@@ -17,9 +17,10 @@
 package co.cask.cdap.app.runtime.spark
 
 import java.io._
-import java.net.URI
+import java.net.{URI, URL}
 import java.util
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import co.cask.cdap.api._
 import co.cask.cdap.api.app.ApplicationSpecification
@@ -32,13 +33,16 @@ import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
 import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.spark.{SparkExecutionContext, SparkSpecification}
 import co.cask.cdap.api.stream.GenericStreamEventData
 import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
 import co.cask.cdap.app.runtime.spark.SparkTransactional.TransactionType
+import co.cask.cdap.app.runtime.spark.dynamic.{AbstractSparkCompiler, SparkClassFileHandler, SparkCompilerCleanupManager, URLAdder}
 import co.cask.cdap.app.runtime.spark.preview.SparkDataTracer
 import co.cask.cdap.app.runtime.spark.stream.SparkStreamInputFormat
-import co.cask.cdap.common.conf.ConfigurationUtil
+import co.cask.cdap.common.conf.{ConfigurationUtil, Constants}
+import co.cask.cdap.common.utils.DirUtils
 import co.cask.cdap.data.LineageDatasetContext
 import co.cask.cdap.data.stream.{AbstractStreamInputFormat, StreamUtils}
 import co.cask.cdap.data2.metadata.lineage.AccessType
@@ -56,7 +60,9 @@ import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.reflect.ClassTag
+import scala.tools.nsc.Settings
 
 /**
   * Default implementation of [[co.cask.cdap.api.spark.SparkExecutionContext]].
@@ -65,26 +71,41 @@ import scala.reflect.ClassTag
   * @param localizeResources a Map from name to local file that the user requested to localize during the
   *                          beforeSubmit call.
   */
-abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext,
+abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
                                              localizeResources: util.Map[String, File])
   extends SparkExecutionContext with AutoCloseable {
 
   // Import the companion object for static fields
   import AbstractSparkExecutionContext._
 
+  protected val runtimeContext = sparkClassLoader.getRuntimeContext
+
   private val taskLocalizationContext = new DefaultTaskLocalizationContext(localizeResources)
   private val transactional = new SparkTransactional(runtimeContext.getTransactionSystemClient,
                                                      runtimeContext.getDatasetCache,
                                                      runtimeContext.getRetryStrategy)
   private val workflowInfo = Option(runtimeContext.getWorkflowInfo)
-  private val sparkTxService = new SparkTransactionService(runtimeContext.getTransactionSystemClient,
-                                                           runtimeContext.getHostname, runtimeContext.getProgramName)
+  private val sparkTxHandler = new SparkTransactionHandler(runtimeContext.getTransactionSystemClient)
+  private val sparkClassFileHandler = new SparkClassFileHandler
+  private val sparkDriveHttpService = new SparkDriverHttpService(runtimeContext.getProgramName,
+                                                                 runtimeContext.getHostname,
+                                                                 sparkTxHandler, sparkClassFileHandler)
   private val applicationEndLatch = new CountDownLatch(1)
   private val authorizationEnforcer = runtimeContext.getAuthorizationEnforcer
   private val authenticationContext = runtimeContext.getAuthenticationContext
+  private val compilerCleanupManager = new SparkCompilerCleanupManager
+  private val interpreterCount = new AtomicInteger(0)
 
-  // Start the Spark TX service
-  sparkTxService.startAndWait()
+  // Start the Spark driver http service
+  sparkDriveHttpService.startAndWait()
+
+  // Set the spark.repl.class.uri that points to the http service if spark-repl is present
+  try {
+    sparkClassLoader.loadClass(SparkRuntimeContextProvider.EXECUTOR_CLASSLOADER_NAME)
+    SparkRuntimeEnv.setProperty("spark.repl.class.uri", sparkDriveHttpService.getBaseURI.toString)
+  } catch {
+    case _: ClassNotFoundException => // no-op
+  }
 
   // Attach a listener to the SparkContextCache, which will in turn listening to events from SparkContext.
   SparkRuntimeEnv.addSparkListener(new SparkListener {
@@ -100,18 +121,18 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
       sparkTransaction.fold({
         LOG.debug("Spark program={}, runId={}, jobId={} starts without transaction",
                   runtimeContext.getProgram.getId, getRunId, jobId)
-        sparkTxService.jobStarted(jobId, stageIds)
+        sparkTxHandler.jobStarted(jobId, stageIds)
       })(info => {
         LOG.debug("Spark program={}, runId={}, jobId={} starts with auto-commit={} on transaction {}",
                   runtimeContext.getProgram.getId, getRunId, jobId,
                   info.commitOnJobEnded().toString, info.getTransaction)
-        sparkTxService.jobStarted(jobId, stageIds, info)
+        sparkTxHandler.jobStarted(jobId, stageIds, info)
         info.onJobStarted()
       })
     }
 
     override def onJobEnd(jobEnd: SparkListenerJobEnd): Unit = {
-      sparkTxService.jobEnded(jobEnd.jobId, jobEnd.jobResult == JobSucceeded)
+      sparkTxHandler.jobEnded(jobEnd.jobId, jobEnd.jobResult == JobSucceeded)
     }
   })
 
@@ -121,7 +142,11 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
       // This make sure all jobs' transactions are committed/invalidated
       SparkRuntimeEnv.stop().foreach(sc => applicationEndLatch.await())
     } finally {
-      sparkTxService.stopAndWait()
+      try {
+        sparkDriveHttpService.stopAndWait()
+      } finally {
+        compilerCleanupManager.close()
+      }
     }
   }
 
@@ -166,12 +191,55 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
     transactional.execute(timeout, runnable)
   }
 
+  override def createInterpreter(): SparkInterpreter = {
+    // Create the class directory
+    val cConf = runtimeContext.getCConfiguration
+    val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile
+    val classDir = new File(tempDir, runtimeContext.getProgramRunId + "-classes-" + interpreterCount.incrementAndGet())
+    if (!DirUtils.mkdirs(classDir)) {
+      throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
+    }
+
+    // Setup classpath and classloader
+    val settings = AbstractSparkCompiler.setClassPath(new Settings())
+
+    val urlAdded = new mutable.HashSet[URL]
+    val urlAdder = new URLAdder {
+      override def addURLs(urls: URL*) = {
+        sparkClassFileHandler.addURLs(urls: _*)
+        urlAdded ++= urls
+      }
+    }
+    urlAdder.addURLs(classDir.toURI.toURL)
+
+    // Creates the interpreter. The cleanup is just to remove it from the cleanup manager
+    var interpreterRef: Option[SparkInterpreter] = None
+    val interpreter = createInterpreter(settings, classDir, urlAdder, () => {
+      interpreterRef.foreach(compilerCleanupManager.removeCompiler)
+    })
+    interpreterRef = Some(interpreter)
+
+    // The closeable for removing the class file directory from the file handler as well as deleting it
+    val closeable = new Closeable {
+      val closed = new AtomicBoolean()
+      override def close(): Unit = {
+        if (closed.compareAndSet(false, true)) {
+          sparkClassFileHandler.removeURLs(urlAdded)
+          DirUtils.deleteDirectoryContents(classDir, true)
+        }
+      }
+    }
+    compilerCleanupManager.addCompiler(interpreter, closeable)
+    interpreter
+  }
+
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
                                                      datasetName: String,
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
     new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, getNamespace, datasetName,
-      arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+      arguments, splits, getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI))
   }
 
   override def fromDataset[K: ClassTag, V: ClassTag](sc: SparkContext,
@@ -180,7 +248,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
                                                      arguments: Map[String, String],
                                                      splits: Option[Iterable[_ <: Split]]): RDD[(K, V)] = {
     new DatasetRDD[K, V](sc, createDatasetCompute, runtimeContext.getConfiguration, namespace,
-      datasetName, arguments, splits, getTxServiceBaseURI(sc, sparkTxService.getBaseURI))
+      datasetName, arguments, splits, getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI))
   }
 
   override def fromStream[T: ClassTag](sc: SparkContext, streamName: String, startTime: Long, endTime: Long)
@@ -272,7 +340,7 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
               saveAsNewAPIHadoopDataset(sc, conf, rdd)
 
             case batchWritable: BatchWritable[K, V] =>
-              val txServiceBaseURI = getTxServiceBaseURI(sc, sparkTxService.getBaseURI)
+              val txServiceBaseURI = getDriveHttpServiceBaseURI(sc, sparkDriveHttpService.getBaseURI)
               sc.runJob(rdd, BatchWritableFunc.create(namespace, datasetName, arguments, txServiceBaseURI))
 
             case _ =>
@@ -363,8 +431,24 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
     }
   }
 
+  /**
+    * Saves a [[org.apache.spark.rdd.RDD]] to a dataset.
+    */
   protected def saveAsNewAPIHadoopDataset[K: ClassTag, V: ClassTag](sc: SparkContext, conf: Configuration,
                                                                     rdd: RDD[(K, V)]): Unit
+
+  /**
+    * Creates a new [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]].
+    *
+    * @param settings settings for the interpreter created. It has the classpath property being populated already.
+    * @param classDir the directory to write the compiled class files
+    * @param urlAdder a [[co.cask.cdap.app.runtime.spark.dynamic.URLAdder]] for adding URL to have classes
+    *                 visible for the Spark executor.
+    * @param onClose function to call on closing the [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
+    * @return a new instance of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]]
+    */
+  protected def createInterpreter(settings: Settings, classDir: File,
+                                  urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter
 }
 
 /**
@@ -373,19 +457,19 @@ abstract class AbstractSparkExecutionContext(runtimeContext: SparkRuntimeContext
 object AbstractSparkExecutionContext {
 
   private val LOG = LoggerFactory.getLogger(classOf[AbstractSparkExecutionContext])
-  private var txServiceBaseURI: Option[Broadcast[URI]] = None
+  private var driverHttpServiceBaseURI: Option[Broadcast[URI]] = None
 
   /**
     * Creates a [[org.apache.spark.broadcast.Broadcast]] for the base URI
-    * of the [[co.cask.cdap.app.runtime.spark.SparkTransactionService]]
+    * of the [[co.cask.cdap.app.runtime.spark.SparkDriverHttpService]]
     */
-  private def getTxServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
+  private def getDriveHttpServiceBaseURI(sc: SparkContext, baseURI: URI): Broadcast[URI] = {
     this.synchronized {
-      this.txServiceBaseURI match {
+      this.driverHttpServiceBaseURI match {
         case Some(uri) => uri
         case None =>
           val broadcast = sc.broadcast(baseURI)
-          txServiceBaseURI = Some(broadcast)
+          driverHttpServiceBaseURI = Some(broadcast)
           broadcast
       }
     }

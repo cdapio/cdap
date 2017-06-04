@@ -22,8 +22,9 @@ import co.cask.cdap.proto.security.Role;
 import java.net.HttpURLConnection;
 
 /**
- * Exception thrown when an {@link Role} already exists
+ * Exception thrown when an {@link Role} already exists, this is deprecated please use {@link AlreadyExistsException}
  */
+@Deprecated
 public class RoleAlreadyExistsException extends Exception implements HttpErrorStatusProvider {
   public RoleAlreadyExistsException(Role role) {
     super(String.format("%s already exists.", role));

@@ -327,6 +327,7 @@ Advanced Topics
 - :ref:`Enabling Kerberos <ambari-configuration-enabling-kerberos>`
 - :ref:`Enabling CDAP High Availability <ambari-configuration-highly-available>`
 - :ref:`Enabling Hive Execution Engines <ambari-configuration-enabling-hive-execution-engines>`
+- :ref:`Enabling Spark2 <ambari-configuration-enabling-spark2>`
 
 .. _ambari-configuration-security:
 
@@ -492,3 +493,12 @@ CDAP Authentication Server
 .. _ambari-configuration-enabling-hive-execution-engines:
 
 .. include:: /_includes/installation/hive-execution-engines.txt
+
+.. _ambari-configuration-enabling-spark2:
+
+Enabling Spark2
+---------------
+In order to use Spark2, you must first install Spark2 on your cluster. If both Spark1
+and Spark2 are installed, you must set SPARK_MAJOR_VERSION to 2 in cdap-env.
+When Spark2 is in use, Spark1 programs cannot be run. Similarly, when Spark1 is in use,
+Spark2 programs cannot be run.

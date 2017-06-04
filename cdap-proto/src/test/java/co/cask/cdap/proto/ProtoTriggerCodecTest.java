@@ -69,12 +69,12 @@ public class ProtoTriggerCodecTest {
                                                  new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
                                                  ImmutableMap.of("prop3", "abc"),
                                                  new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of());
+                                                 ImmutableList.<Constraint>of(), null);
     ScheduleDetail sched2 = new ScheduleDetail("schedone", "one time schedule",
                                                  new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
                                                  ImmutableMap.of("prop", "all"),
                                                  new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of());
+                                                 ImmutableList.<Constraint>of(), null);
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(sched1), ScheduleDetail.class));
     Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(sched2), ScheduleDetail.class));
   }

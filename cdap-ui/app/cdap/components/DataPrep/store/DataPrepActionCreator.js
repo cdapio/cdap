@@ -22,7 +22,7 @@ import Rx from 'rx';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
-import {sortBy, find} from 'lodash';
+import {orderBy, find} from 'lodash';
 
 
 export function execute(addDirective, shouldReset, hideLoading = false) {
@@ -61,7 +61,8 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
           payload: {
             data: res.values,
             headers: res.header,
-            directives: updatedDirectives
+            directives: updatedDirectives,
+            types: res.types
           }
         });
 
@@ -101,6 +102,7 @@ export function setWorkspace(workspaceId) {
               payload: {
                 data: response.values,
                 headers: response.header,
+                types: response.types,
                 directives,
                 workspaceId,
                 workspaceUri,
@@ -173,7 +175,7 @@ export function getWorkspaceList(workspaceId) {
         return;
       }
 
-      let workspaceList = sortBy(res.values, ['name']);
+      let workspaceList = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
 
       DataPrepStore.dispatch({
         type: DataPrepActions.setWorkspaceList,

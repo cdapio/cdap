@@ -44,6 +44,7 @@ import co.cask.cdap.spark.app.Person;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaClassicSparkProgram;
 import co.cask.cdap.spark.app.ScalaCrossNSProgram;
+import co.cask.cdap.spark.app.ScalaDynamicSpark;
 import co.cask.cdap.spark.app.ScalaSparkLogParser;
 import co.cask.cdap.spark.app.ScalaStreamFormatSpecSpark;
 import co.cask.cdap.spark.app.SparkAppUsingGetDataset;
@@ -167,6 +168,33 @@ public class SparkTestRun extends TestFrameworkTestBase {
     KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
     Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ClassicSparkProgram.class.getName())));
     Assert.assertEquals(1L, Bytes.toLong(resultTable.read(ScalaClassicSparkProgram.class.getName())));
+  }
+
+  @Test
+  public void testDynamicSpark() throws Exception {
+    ApplicationManager appManager = deploy(TestSparkApp.class);
+
+    // Populate data into the stream
+    StreamManager streamManager = getStreamManager("SparkStream");
+    for (int i = 0; i < 10; i++) {
+      streamManager.send("Line " + (i + 1));
+    }
+
+    SparkManager sparkManager = appManager.getSparkManager(ScalaDynamicSpark.class.getSimpleName());
+    sparkManager.start(ImmutableMap.of("input", "SparkStream",
+                                       "output", "ResultTable",
+                                       "tmpdir", TMP_FOLDER.newFolder().getAbsolutePath()));
+
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // Validate the result written to dataset
+    KeyValueTable resultTable = this.<KeyValueTable>getDataset("ResultTable").get();
+    // There should be ten "Line"
+    Assert.assertEquals(10, Bytes.toInt(resultTable.read("Line")));
+    // Each number should appear once
+    for (int i = 0; i < 10; i++) {
+      Assert.assertEquals(1, Bytes.toInt(resultTable.read(Integer.toString(i + 1))));
+    }
   }
 
   @Test

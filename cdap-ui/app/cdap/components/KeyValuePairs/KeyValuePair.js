@@ -24,14 +24,58 @@ class KeyValuePair extends Component {
 
     this.keyDown = this.keyDown.bind(this);
   }
+
   keyDown(e) {
     if (e.keyCode === 13) {
       this.props.addRow();
     }
   }
-  render() {
-    let notDeletableCondition = this.props.notDeletable && this.props.notDeletable === true;
 
+  renderValueField() {
+    if (this.props.provided) {
+      return (
+        <input
+          type="text"
+          value=""
+          className="form-control value-input"
+          disabled
+        />
+      );
+    }
+    return (
+      <input
+        type="text"
+        value={this.props.value}
+        onKeyDown={this.keyDown}
+        onChange={this.props.onChange.bind(null, 'value')}
+        placeholder={T.translate('commons.keyValPairs.valuePlaceholder')}
+        className="form-control value-input"
+      />
+    );
+  }
+
+  renderNotDeletableElements() {
+    if (!this.props.notDeletable) { return null; }
+
+    return (
+      <span>
+        <input
+          type="checkbox"
+          checked={this.props.provided}
+          onChange={this.props.onProvided}
+          className="form-control provided-input"
+        />
+        <span
+          className={classnames("reset-action", {"hidden": !this.props.showReset})}
+          onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
+        >
+          {T.translate('commons.keyValPairs.reset')}
+        </span>
+      </span>
+    );
+  }
+
+  render() {
     return (
       <div className="key-value-pair-preference">
         <input
@@ -42,16 +86,9 @@ class KeyValuePair extends Component {
           onChange={this.props.onChange.bind(null, 'key')}
           placeholder={T.translate('commons.keyValPairs.keyPlaceholder')}
           className="form-control key-input"
-          disabled={notDeletableCondition}
+          disabled={this.props.notDeletable}
         />
-        <input
-          type="text"
-          value={this.props.value}
-          onKeyDown={this.keyDown}
-          onChange={this.props.onChange.bind(null, 'value')}
-          placeholder={T.translate('commons.keyValPairs.valuePlaceholder')}
-          className="form-control value-input"
-        />
+        {this.renderValueField()}
         <button
           type="submit"
           className="btn add-row-btn btn-link"
@@ -61,23 +98,12 @@ class KeyValuePair extends Component {
         </button>
         <button
           type="submit"
-          className={classnames("btn remove-row-btn btn-link", {"hidden": notDeletableCondition})}
+          className={classnames("btn remove-row-btn btn-link", {"invisible": this.props.notDeletable})}
           onClick={this.props.removeRow}
         >
           <i className="fa fa-trash" />
         </button>
-        {
-          notDeletableCondition ?
-            (
-              <span
-                className={classnames("reset-action", {"hidden": !this.props.showReset})}
-                onClick={this.props.getResettedKeyValue.bind(this, this.props.index)}
-              >
-                {T.translate('commons.keyValPairs.reset')}
-              </span>
-            )
-          : null
-        }
+        {this.renderNotDeletableElements()}
       </div>
     );
   }
@@ -89,10 +115,12 @@ KeyValuePair.propTypes = {
   value: PropTypes.string,
   index: PropTypes.number,
   notDeletable: PropTypes.bool,
+  provided: PropTypes.bool,
   showReset: PropTypes.bool,
   onChange: PropTypes.func,
   addRow: PropTypes.func,
   removeRow: PropTypes.func,
+  onProvided: PropTypes.func,
   getResettedKeyValue: PropTypes.func
 };
 

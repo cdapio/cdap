@@ -29,7 +29,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -50,6 +50,7 @@ import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
+import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.TableNameAwareCacheSupplier;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
@@ -155,7 +156,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     cConf.setLong(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 100000000L);
 
     injector = Guice.createInjector(
-      new DataFabricDistributedModule(),
+      new DataFabricModules().getDistributedModules(),
       new ConfigModule(cConf, hConf),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
@@ -668,8 +669,8 @@ public abstract class HBaseQueueTest extends QueueTest {
       String prefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
       CConfigurationReader cConfReader
         = new CConfigurationReader(hConf, HTableNameConverter.getSysConfigTablePrefix(prefix));
-      return ConsumerConfigCache.getInstance(configTableName,
-                                             cConfReader, new Supplier<TransactionVisibilityState>() {
+      return TableNameAwareCacheSupplier.getSupplier(configTableName,
+                                                     cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override
           public TransactionVisibilityState get() {
             try {
@@ -683,7 +684,7 @@ public abstract class HBaseQueueTest extends QueueTest {
           public HTableInterface getInput() throws IOException {
             return new HTable(hConf, configTableName);
           }
-        });
+        }).get();
     }
   }
 

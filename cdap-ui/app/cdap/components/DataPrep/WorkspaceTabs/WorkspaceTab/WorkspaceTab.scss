@@ -1,0 +1,137 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$tabs-bg-color: #efefef;
+$border-color: #cccccc;
+$tab-bg-color: #dddddd;
+$tab-active-bg-color: white;
+$tab-active-color: #ff6600;
+
+.workspace-tab {
+  position: relative;
+  display: inline-block;
+  padding: 5px 15px 0 15px;
+  margin: 0 -2px;
+  cursor: pointer;
+  width: 200px;
+
+  .display-name-container {
+    display: inline-block;
+    width: calc(100% - 30px);
+    overflow: hidden;
+    height: 20px;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+    width: 100%;
+
+    &:hover {
+      text-decoration: none;
+      color: $tab-active-color;
+    }
+  }
+
+  // handling ellipsis
+  .display-name {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    top: 0;
+    bottom: 0;
+    display: inline-block;
+    height: 16px;
+    line-height: 16px;
+
+    .full-name,
+    .overflow-layer {
+      position: absolute;
+      top: 0;
+      display: inline-block;
+    }
+
+    .full-name {
+      right: 0;
+      color: linear-gradient(90deg, transparent, transparent 60%, rgba(0, 0, 0, 1));
+    }
+
+    .overflow-layer {
+      left: 0;
+      right: 50%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      background-color: $tab-bg-color;
+    }
+  }
+
+  .delete-workspace {
+    margin-left: 10px;
+    vertical-align: top;
+    margin-top: 2px;
+  }
+
+  &:before {
+    border: 1px solid $border-color;
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 5px;
+    left: 0;
+    background-color: $tab-bg-color;
+    transform: perspective(7px) rotateX(1deg);
+    transform-origin: bottom;
+    z-index: -1;
+    height: 100%;
+  }
+
+  &.active {
+    z-index: 2;
+
+    &:before {
+      margin-bottom: -1px;
+      border-top-width: 1px;
+      background-color: $tab-active-bg-color;
+      border-bottom-color: $tab-active-bg-color;
+    }
+
+    .display-name,
+    .original-name {
+      color: $tab-active-color;
+    }
+
+    .display-name {
+      .overflow-layer {
+        background-color: $tab-active-bg-color;
+      }
+    }
+  }
+
+  &.workspace-dropdown {
+    width: 50px;
+    padding-top: 7px;
+    padding-left: 0;
+    padding-right: 0;
+    top: -5px;
+
+    > span { width: 100%; }
+
+    &:before { transform: perspective(2px) rotateX(1deg); }
+  }
+}

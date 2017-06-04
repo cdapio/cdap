@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,10 +35,10 @@ angular.module(PKG.name + '.commons')
         $scope.keyPlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'key-placeholder') || 'key';
         $scope.valuePlaceholder = myHelpers.objectQuery($scope.config, 'widget-attributes', 'value-placeholder') || 'value';
 
-        $scope.showDelimiter = true;
+        $scope.showDelimiter = false;
         var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
-        if (($scope.config.properties && $scope.config.properties.showDelimiter === 'false') || showDelimiterProperty === 'false' ) {
-          $scope.showDelimiter = false;
+        if (($scope.config.properties && $scope.config.properties.showDelimiter === 'true') || showDelimiterProperty === 'true' ) {
+          $scope.showDelimiter = true;
         }
 
         // Changing value field to dropdown based on config

@@ -209,7 +209,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.metadataExpanded = false;
     } else if (event.keyCode === 27) {
       // Reset if the user hits ESC key.
-      this.resetMetadata();
+      this.resetMetadata(event);
     }
   }
 
@@ -282,7 +282,7 @@ class HydratorPlusPlusTopPanelCtrl {
 
   fetchMacros() {
     let newMacrosMap = {};
-    let nodes = this.HydratorPlusPlusConfigStore.getNodes();
+    let nodes = this.HydratorPlusPlusConfigStore.getStages();
 
     for (let i = 0; i < nodes.length; i++) {
       let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
@@ -420,7 +420,7 @@ class HydratorPlusPlusTopPanelCtrl {
                 this.previewActions.setMacros(this.macrosMap)
               );
             }
-            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
             this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
@@ -435,7 +435,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setMacros(this.macrosMap)
       );
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
       this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
@@ -449,14 +449,18 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   startOrStopPreview() {
-    this.getRuntimeArguments()
-    .then(() => {
-      if (this.previewRunning) {
-        this.stopPreview();
-      } else {
-        this.onPreviewStart();
-      }
-    });
+    if (this.validToStartPreview) {
+      this.getRuntimeArguments()
+      .then(() => {
+        if (this.previewRunning) {
+          this.stopPreview();
+        } else {
+          this.onPreviewStart();
+        }
+      });
+    } else {
+      this.toggleConfig();
+    }
   }
 
   toggleScheduler() {
@@ -475,16 +479,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   isValidToStartPreview() {
-    let fullMacrosMap = Object.assign({}, this.macrosMap, this.userRuntimeArgumentsMap);
-    let hasMissingValues = this.myHelpers.objHasMissingValues(fullMacrosMap);
-    if (hasMissingValues.res) {
-      let notValidRuntimeArgs = hasMissingValues.keysWithMissingValue;
-      this.notValidRuntimeArgsString = '"' + notValidRuntimeArgs.join('", "') + '"';
-    } else {
-      this.notValidRuntimeArgsString = '';
-    }
-
-    return !hasMissingValues.res;
+    return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
   onPreviewStart() {
@@ -520,10 +515,11 @@ class HydratorPlusPlusTopPanelCtrl {
      *  This is a cheat way for generating preview for the entire pipeline
      **/
 
+    let macrosWithNonEmptyValues = this.HydratorPlusPlusHydratorService.getMacrosWithNonEmptyValues(this.macrosMap);
     let previewConfig = {
       startStages: [],
       endStages: [],
-      runtimeArgs: Object.assign({}, this.macrosMap, this.userRuntimeArguments)
+      runtimeArgs: Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArguments)
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {
@@ -749,13 +745,13 @@ class HydratorPlusPlusTopPanelCtrl {
       let validArtifact = isValidArtifact(jsonData.artifact);
       if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
         if (!validArtifact.name) {
-          invalidFields.push('Artifact name');
+          invalidFields.push('Artifact name: ' + jsonData.artifact.name);
         } else {
           if (!validArtifact.version) {
-            invalidFields.push('Artifact version');
+            invalidFields.push('Artifact version: ' + jsonData.artifact.version);
           }
           if (!validArtifact.scope) {
-            invalidFields.push('Artifact scope');
+            invalidFields.push('Artifact scope: ' + jsonData.artifact.scope);
           }
         }
         invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');

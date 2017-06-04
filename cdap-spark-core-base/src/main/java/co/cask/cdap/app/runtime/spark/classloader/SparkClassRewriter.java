@@ -22,12 +22,15 @@ import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
 import co.cask.cdap.internal.asm.Classes;
+import co.cask.cdap.internal.asm.Signatures;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -40,7 +43,13 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Modifier;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -66,6 +75,10 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
+  private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
+  private static final Type SPARK_EXECUTOR_CLASSLOADER_TYPE =
+    Type.getObjectType("org/apache/spark/repl/ExecutorClassLoader");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
   private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
@@ -124,6 +137,16 @@ public class SparkClassRewriter implements ClassRewriter {
       // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
       return rewriteDStreamGraph(input);
     }
+    if (className.equals(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE.getClassName())) {
+      // Rewrite BatchedWriteAheadLog to register it in SparkRuntimeEnv so that we can free up the batch writer thread
+      // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935)
+      return rewriteBatchedWriteAheadLog(input);
+    }
+    if (className.equals(SPARK_EXECUTOR_CLASSLOADER_TYPE.getClassName())) {
+      // Rewrite the Spark repl ExecutorClassLoader to call `super(null)` so that it won't use the system classloader
+      // as parent
+      return rewriteExecutorClassLoader(input);
+    }
     if (className.equals(AKKA_REMOTING_TYPE.getClassName())) {
       // Define the akka.remote.Remoting class to avoid thread leakage
       return rewriteAkkaRemoting(input);
@@ -147,8 +170,31 @@ public class SparkClassRewriter implements ClassRewriter {
    */
   private byte[] rewriteContext(final Type contextType, InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(contextType, byteCodeStream, new ConstructorRewriter() {
+
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      void onMethodEnter(String name, String desc, GeneratorAdapter generatorAdapter) {
+        Type[] argTypes = Type.getArgumentTypes(desc);
+        // If the constructor has SparkConf as arguments,
+        // update the SparkConf by calling SparkRuntimeEnv.setupSparkConf(sparkConf)
+        // This is mainly to make any runtime properties setup by CDAP are being pickup even restoring
+        // from Checkpointing.
+        List<Integer> confIndices = new ArrayList<>();
+        for (int i = 0; i < argTypes.length; i++) {
+          if (SPARK_CONF_TYPE.equals(argTypes[i])) {
+            confIndices.add(i);
+          }
+        }
+
+        // Update all SparkConf arguments.
+        for (int confIndex : confIndices) {
+          generatorAdapter.loadArg(confIndex);
+          generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                        new Method("setupSparkConf", Type.VOID_TYPE, new Type[] { SPARK_CONF_TYPE }));
+        }
+      }
+
+      @Override
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("setContext", Type.VOID_TYPE, new Type[] { contextType }));
@@ -162,7 +208,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteSparkConf(final Type sparkConfType, InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(sparkConfType, byteCodeStream, new ConstructorRewriter() {
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("setupSparkConf", Type.VOID_TYPE, new Type[] { sparkConfType }));
@@ -204,6 +250,130 @@ public class SparkClassRewriter implements ClassRewriter {
   }
 
   /**
+   * Rewrites the BatchedWriteAheadLog class to register itself to SparkRuntimeEnv so that the write ahead log thread
+   * can be shutdown when the Spark program finished.
+   */
+  private byte[] rewriteBatchedWriteAheadLog(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addBatchedWriteAheadLog", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Object.class) }));
+      }
+    });
+  }
+
+  /**
+   * Rewrites the ExecutorClassLoader so that it won't use system classloader as parent since CDAP classes
+   * are not in system classloader.
+   * Also optionally overrides the getResource, getResources and getResourceAsStream methods if they are not
+   * defined (for fixing SPARK-11818 for older Spark < 1.6).
+   */
+  private byte[] rewriteExecutorClassLoader(InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+    final Type classloaderType = Type.getType(ClassLoader.class);
+    final Type parentClassLoaderType = Type.getObjectType("org/apache/spark/util/ParentClassLoader");
+    final Method parentLoaderMethod = new Method("parentLoader", parentClassLoaderType, new Type[0]);
+
+    // Map from getResource* methods to the method signature
+    // (can be null, since only method that has generic has signature)
+    final Map<Method, String> resourceMethods = new HashMap<>();
+    Method method = new Method("getResource", Type.getType(URL.class), new Type[]{Type.getType(String.class)});
+    resourceMethods.put(method, null);
+
+    method = new Method("getResources", Type.getType(Enumeration.class), new Type[] { Type.getType(String.class) });
+    resourceMethods.put(method, Signatures.getMethodSignature(method, new TypeToken<Enumeration<URL>>() { },
+                                                              TypeToken.of(String.class)));
+
+    method = new Method("getResourceAsStream", Type.getType(InputStream.class),
+                        new Type[] { Type.getType(String.class) });
+    resourceMethods.put(method, null);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      private boolean hasParentLoader;
+      private boolean rewriteInit;
+
+      @Override
+      public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        // Only rewrite `<init>` if the ExecutorClassloader extends from ClassLoader
+        if (classloaderType.getInternalName().equals(superName)) {
+          rewriteInit = true;
+        }
+        super.visit(version, access, name, signature, superName, interfaces);
+      }
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        // If the resource method is declared, no need to generate at the end.
+        Method method = new Method(name, desc);
+        resourceMethods.remove(method);
+        hasParentLoader = hasParentLoader || parentLoaderMethod.equals(method);
+
+        if (!rewriteInit || !"<init>".equals(name)) {
+          return mv;
+        }
+        return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
+
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            // If there is a call to `super()`, skip that instruction and have the onMethodEnter generate the call
+            if (opcode == Opcodes.INVOKESPECIAL
+                && Type.getObjectType(owner).equals(classloaderType)
+                && name.equals("<init>")
+                && Type.getArgumentTypes(desc).length == 0
+                && Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
+              // Generate `super(null)`. The `this` is already in the stack, so no need to `loadThis()`
+              push((Type) null);
+              invokeConstructor(classloaderType, new Method("<init>", Type.VOID_TYPE, new Type[] { classloaderType }));
+            } else {
+              super.visitMethodInsn(opcode, owner, name, desc, itf);
+            }
+          }
+        };
+      }
+
+      @Override
+      public void visitEnd() {
+        // See if needs to implement the getResource, getResources and getResourceAsStream methods
+        // All implementations are delegating to the parentLoader
+        if (!hasParentLoader) {
+          super.visitEnd();
+          return;
+        }
+
+        for (Map.Entry<Method, String> entry : resourceMethods.entrySet()) {
+          // Generate the method.
+          // return parentLoader().getResource*(arg)
+          Method method = entry.getKey();
+          MethodVisitor mv = super.visitMethod(Modifier.PUBLIC, method.getName(),
+                                               method.getDescriptor(), entry.getValue(), null);
+          GeneratorAdapter generator = new GeneratorAdapter(Modifier.PUBLIC, method, mv);
+
+          // call `parentLoader()`
+          generator.loadThis();
+          generator.invokeVirtual(SPARK_EXECUTOR_CLASSLOADER_TYPE, parentLoaderMethod);
+
+          // Load the argument
+          generator.loadArg(0);
+
+          // Call the method on the parent loader.
+          generator.invokeVirtual(parentClassLoaderType, method);
+          generator.returnValue();
+          generator.endMethod();
+        }
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
+
+  /**
    * Rewrites the constructor of the Kryo class to add serializer for CDAP classes.
    *
    * @param byteCodeStream {@link InputStream} for reading the original bytecode of the class
@@ -212,7 +382,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private byte[] rewriteKryo(InputStream byteCodeStream) throws IOException {
     return rewriteConstructor(KRYO_TYPE, byteCodeStream, new ConstructorRewriter() {
       @Override
-      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+      public void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
         // Register serializer for Schema
         // addDefaultSerializer(Schema.class, SchemaSerializer.class);
         generatorAdapter.loadThis();
@@ -250,7 +420,8 @@ public class SparkClassRewriter implements ClassRewriter {
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
       @Override
-      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      public MethodVisitor visitMethod(int access, final String name,
+                                       final String desc, String signature, String[] exceptions) {
         // Call super so that the method signature is registered with the ClassWriter (parent)
         MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
@@ -274,14 +445,23 @@ public class SparkClassRewriter implements ClassRewriter {
           }
 
           @Override
+          protected void onMethodEnter() {
+            if (calledThis) {
+              // For constructors that call this(), we don't need rewrite
+              return;
+            }
+            rewriter.onMethodEnter(name, desc, this);
+          }
+
+          @Override
           protected void onMethodExit(int opcode) {
             if (calledThis) {
-              // For constructors that call this(), we don't need to generate a call to SparkContextCache
+              // For constructors that call this(), we don't need rewrite
               return;
             }
             // Add a call to SparkContextCache.setContext() for the normal method return path
             if (opcode == RETURN) {
-              rewriter.onMethodExit(this);
+              rewriter.onMethodExit(name, desc, this);
             }
           }
         };
@@ -545,7 +725,14 @@ public class SparkClassRewriter implements ClassRewriter {
   /**
    * Private interface for rewriting constructor.
    */
-  private interface ConstructorRewriter {
-    void onMethodExit(GeneratorAdapter generatorAdapter);
+  private abstract class ConstructorRewriter {
+
+    void onMethodEnter(String name, String desc, GeneratorAdapter generatorAdapter) {
+      // no-op
+    }
+
+    void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
+      // no-op
+    }
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter;
 import co.cask.cdap.app.guice.DistributedProgramRunnableModule;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
@@ -61,9 +62,13 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.Services;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
@@ -77,6 +82,8 @@ import javax.annotation.Nullable;
  */
 public final class SparkRuntimeContextProvider {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeContextProvider.class);
+
   // Constants defined for file names used for files localization done by the SparkRuntimeService.
   // They are needed for recreating the SparkRuntimeContext in this class.
   static final String CCONF_FILE_NAME = "cConf.xml";
@@ -84,6 +91,7 @@ public final class SparkRuntimeContextProvider {
   // The suffix has to be .jar, otherwise YARN don't expand it
   static final String PROGRAM_JAR_EXPANDED_NAME = "program.expanded.jar";
   static final String PROGRAM_JAR_NAME = "program.jar";
+  static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
 
   private static volatile SparkRuntimeContext sparkRuntimeContext;
 
@@ -96,8 +104,26 @@ public final class SparkRuntimeContextProvider {
     }
 
     // Try to find it from the context classloader
-    SparkClassLoader sparkClassLoader = ClassLoaders.find(Thread.currentThread().getContextClassLoader(),
-                                                          SparkClassLoader.class);
+    ClassLoader runtimeClassLoader = Thread.currentThread().getContextClassLoader();
+
+    // For interactive Spark, it uses ExecutorClassLoader, which doesn't follow normal classloader hierarchy.
+    // Since the presence of ExecutorClassLoader is optional in Spark, use reflection to gain access to the parentLoader
+    if (EXECUTOR_CLASSLOADER_NAME.equals(runtimeClassLoader.getClass().getName())) {
+      try {
+        Method getParentLoader = runtimeClassLoader.getClass().getDeclaredMethod("parentLoader");
+        if (!getParentLoader.isAccessible()) {
+          getParentLoader.setAccessible(true);
+        }
+        runtimeClassLoader = ((ClassLoader) getParentLoader.invoke(runtimeClassLoader)).getParent();
+      } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
+        LOG.warn("Unable to get the CDAP runtime classloader from {}. " +
+                   "Spark program may not be running correctly if {} is being used.",
+                 EXECUTOR_CLASSLOADER_NAME, SparkInterpreter.class.getName(), e);
+      }
+    }
+
+    SparkClassLoader sparkClassLoader = ClassLoaders.find(runtimeClassLoader, SparkClassLoader.class);
+
     if (sparkClassLoader != null) {
       // Shouldn't set the sparkContext field. It is because in Standalone, the SparkContext instance will be different
       // for different runs, hence it shouldn't be cached in the static field.
@@ -263,7 +289,10 @@ public final class SparkRuntimeContextProvider {
   private static Injector createInjector(CConfiguration cConf, Configuration hConf,
                                          ProgramId programId, ProgramOptions programOptions) {
     String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId, principal));
+    String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
+    String instanceId = programOptions.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+    return Guice.createInjector(new DistributedProgramRunnableModule(cConf, hConf).createModule(programId, runId,
+                                                                                                instanceId, principal));
   }
 
   /**

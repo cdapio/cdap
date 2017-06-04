@@ -47,4 +47,14 @@ public abstract class StreamingSource<T> implements PipelineConfigurable, Serial
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     // no-op
   }
+
+  /**
+   * Get number of required executors for the streaming source. This needs to be overriden in case
+   * {@link JavaDStream} returned in {@link StreamingSource#getStream(StreamingContext)} is a union of multiple streams
+   *
+   * @return number of executors required for the streaming source, defaults to 1
+   */
+  public int getRequiredExecutors() {
+    return 1;
+  }
 }

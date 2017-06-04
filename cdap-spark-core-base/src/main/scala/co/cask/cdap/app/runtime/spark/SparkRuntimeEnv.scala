@@ -16,17 +16,19 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import java.util
 import java.util.Properties
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
 import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
 import org.apache.spark.scheduler._
-import org.apache.spark.streaming.StreamingContext
+import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
+import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -44,6 +46,7 @@ object SparkRuntimeEnv {
   private val properties = new Properties
   private var sparkContext: Option[SparkContext] = None
   private var streamingContext: Option[StreamingContext] = None
+  private val batchedWALs = new mutable.ListBuffer[AnyRef]
   private val sparkListeners = new ConcurrentLinkedQueue[SparkListener]()
 
   /**
@@ -106,6 +109,19 @@ object SparkRuntimeEnv {
 
       // Spark doesn't allow multiple StreamingContext instances concurrently, hence we don't need to check in here
       streamingContext = Some(context)
+    }
+  }
+
+  /**
+    * Adds the refernce to BatchedWriteAheadLog instance.
+    */
+  def addBatchedWriteAheadLog(batchedWAL: AnyRef): Unit = {
+    this.synchronized {
+      if (stopped) {
+        stopBatchedWAL(batchedWAL)
+        throw new IllegalStateException("Spark program is already stopped")
+      }
+      batchedWALs += batchedWAL
     }
   }
 
@@ -173,14 +189,25 @@ object SparkRuntimeEnv {
         // If running Spark streaming, interrupt the thread first to give
         // the Spark program time to terminate gracefully.
         thread.foreach(t => {
-          t.interrupt()
-          t.join()
+          // The getState method only available since 1.4.
+          // For older version compatability, try to get the field directly
+          context.callMethod("getState").orElse(context.getField("state")).foreach(_ match {
+            case state: StreamingContextState => state match {
+              // Interrupt and wait for the running thread before stopping the context if it is ACTIVE
+              case StreamingContextState.ACTIVE => {
+                t.interrupt()
+                t.join()
+                context.stop(false, false)
+              }
+              // Otherwise, just stop it
+              case _ => context.stop(false, false)
+            }
+          })
         })
-        context.stop(false, false)
       })
     } finally {
       sc.foreach(context => {
-        val cleanup = createCleanup(context);
+        val cleanup = createCleanup(context, batchedWALs.toList);
         try {
           context.stop
         } finally {
@@ -201,7 +228,7 @@ object SparkRuntimeEnv {
     * Creates a function that will stop and cleanup up all http servers and thread pools
     * associated with the given SparkContext.
     */
-  private def createCleanup(sc: SparkContext): () => Unit = {
+  private def createCleanup(sc: SparkContext, batchedWALs: List[AnyRef]): () => Unit = {
     val closers = ArrayBuffer.empty[Option[() => Unit]]
 
     // Create a closer function for the file server in Spark
@@ -233,6 +260,9 @@ object SparkRuntimeEnv {
       case _ => None
     })
 
+    // Create a closer function for stopping the thead in BatchedWriteAheadLog
+    closers += Some(() => batchedWALs.foreach(stopBatchedWAL))
+
     // Creates a function that calls all closers
     () => closers.foreach(_.foreach(_()))
   }
@@ -249,6 +279,26 @@ object SparkRuntimeEnv {
           threadPool.callMethod("stop")
         }
       )
+    })
+  }
+
+  /**
+    * Stops the thread in the given BatchedWriteAheadLog instance
+    */
+  private def stopBatchedWAL(batchedWAL: AnyRef) = {
+    // Get the internal record queue
+    batchedWAL.getField("walWriteQueue").flatMap(queue => queue match {
+      case c: util.Collection[Any] => Some(c)
+      case _ => None
+    }).foreach(queue => {
+      // Wait until the queue is empty and the WAL is still active
+      while (!queue.isEmpty &&
+        batchedWAL.getField("active").filter(_.isInstanceOf[Boolean]).map(_.asInstanceOf[Boolean]).exists(b => b)) {
+        TimeUnit.MILLISECONDS.sleep(100)
+      }
+
+      // Now call BatchedWriteAheadLog.close()
+      batchedWAL.callMethod("close")
     })
   }
 

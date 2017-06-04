@@ -117,6 +117,7 @@ export default class Format extends Component {
     this.setState({
       activeModal: (
         <SimpleDateModal
+          source="format"
           toggle={this.toggleModal}
           onApply={this.applyDateFormat}
         />

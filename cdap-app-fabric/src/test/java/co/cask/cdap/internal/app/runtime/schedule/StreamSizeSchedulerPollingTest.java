@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableMap;
 import org.junit.BeforeClass;
@@ -40,12 +40,12 @@ public class StreamSizeSchedulerPollingTest extends SchedulerTestBase {
   }
 
   @Override
-  protected StreamMetricsPublisher createMetricsPublisher(final Id.Stream streamId) {
+  protected StreamMetricsPublisher createMetricsPublisher(final StreamId streamId) {
     return new StreamMetricsPublisher() {
       @Override
       public void increment(long size) throws Exception {
-        metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespaceId(),
-                                                         Constants.Metrics.Tag.STREAM, streamId.getId()),
+        metricStore.add(new MetricValues(ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, streamId.getNamespace(),
+                                                         Constants.Metrics.Tag.STREAM, streamId.getStream()),
                                          "collect.bytes", TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                          size, MetricType.COUNTER));
       }

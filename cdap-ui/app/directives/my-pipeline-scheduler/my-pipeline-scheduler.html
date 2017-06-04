@@ -29,7 +29,7 @@
   </div>
   <div class="pipeline-scheduler-body">
     <div class="schedule-content">
-      <fieldset ng-disabled="SchedulerCtrl._isDisabled">
+      <fieldset ng-disabled="SchedulerCtrl.scheduleStatus === 'SCHEDULED'">
         <div class="schedule-types row">
           <span class="col-xs-3 schedule-type schedule-type-basic"
                 ng-class="{'active': SchedulerCtrl.scheduleType === 'basic'}"
@@ -70,7 +70,8 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Hourly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.repeatEvery.numHours"
-                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>hour(s)</span>
                 </span>
@@ -78,7 +79,8 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Daily'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.repeatEvery.numDays"
-                          ng-options="option as option for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>day(s)</span>
                 </span>
@@ -98,7 +100,8 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Monthly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth"
-                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>day of the month</span>
                 </span>
@@ -106,11 +109,13 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Yearly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.repeatEvery.month"
-                          ng-options="option as (option | cronMonthName) for option in SchedulerCtrl.MONTH_OPTIONS">
+                          ng-options="option as (option | cronMonthName) for option in SchedulerCtrl.MONTH_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.repeatEvery.dayOfMonth"
-                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS">
+                          ng-options="option as (option | cronDayOfMonth) for option in SchedulerCtrl.DAY_OF_MONTH_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                 </span>
               </div>
@@ -125,7 +130,8 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Hourly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.min"
-                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>past the hour</span>
                 </span>
@@ -133,68 +139,93 @@
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Daily'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
-                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span class="separator"> : </span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.min"
-                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>&nbsp;</span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
-                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                 </span>
                 <span class="schedule-values"
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Weekly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
-                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span class="separator"> : </span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.min"
-                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>&nbsp;</span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
-                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                 </span>
                 <span class="schedule-values"
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Monthly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
-                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span class="separator"> : </span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.min"
-                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>&nbsp;</span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
-                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                 </span>
                 <span class="schedule-values"
                       ng-if="SchedulerCtrl.intervalOptionKey === 'Yearly'">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.hour"
-                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK">
+                          ng-options="option as option for option in SchedulerCtrl.HOUR_OPTIONS_CLOCK"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span class="separator"> : </span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.min"
-                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS">
+                          ng-options="option as (option | displayTwoDigitNumber) for option in SchedulerCtrl.MINUTE_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
                   </select>
                   <span>&nbsp;</span>
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.timeSelections.startingAt.am_pm"
-                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.AM_PM_OPTIONS"
+                          ng-change="SchedulerCtrl.updateCron()">
+                  </select>
+                </span>
+              </div>
+            </div>
+            <div class="form-group row max-concurrent-runs">
+              <label class="col-xs-3 control-label">
+                Max concurrent runs
+              </label>
+              <div class="col-xs-4 schedule-values-container">
+                <span class="schedule-values">
+                  <select class="form-control small-dropdown"
+                          ng-model="SchedulerCtrl.maxConcurrentRuns"
+                          ng-options="option as option for option in SchedulerCtrl.CONCURRENT_RUNS_OPTIONS">
                   </select>
                 </span>
               </div>
@@ -272,6 +303,14 @@
                     </span>
                   </span>
                 </div>
+                <div>
+                  <span ng-if="SchedulerCtrl.maxConcurrentRuns === 1">
+                    The pipeline cannot have concurrent runs
+                  </span>
+                  <span ng-if="SchedulerCtrl.maxConcurrentRuns > 1">
+                    The pipeline can have {{ SchedulerCtrl.maxConcurrentRuns }} concurrent runs
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -284,6 +323,7 @@
                 <label>Min</label>
                 <input type="text"
                       ng-model="SchedulerCtrl.advancedScheduleValues.min"
+                      ng-change="SchedulerCtrl.updateCron()"
                       class="form-control"
                 />
               </div>
@@ -291,6 +331,7 @@
                 <label>Hour</label>
                 <input type="text"
                       ng-model="SchedulerCtrl.advancedScheduleValues.hour"
+                      ng-change="SchedulerCtrl.updateCron()"
                       class="form-control"
                 />
               </div>
@@ -298,6 +339,7 @@
                 <label>Day</label>
                 <input type="text"
                       ng-model="SchedulerCtrl.advancedScheduleValues.day"
+                      ng-change="SchedulerCtrl.updateCron()"
                       class="form-control"
                 />
               </div>
@@ -305,6 +347,7 @@
                 <label>Month</label>
                 <input type="text"
                       ng-model="SchedulerCtrl.advancedScheduleValues.month"
+                      ng-change="SchedulerCtrl.updateCron()"
                       class="form-control"
                 />
               </div>
@@ -312,6 +355,7 @@
                 <label>Day of the Week</label>
                 <input type="text"
                       ng-model="SchedulerCtrl.advancedScheduleValues.daysOfWeek"
+                      ng-change="SchedulerCtrl.updateCron()"
                       class="form-control"
                 />
               </div>
@@ -320,19 +364,45 @@
         </div>
       </fieldset>
       <div class="schedule-navigation">
+        <div ng-if="SchedulerCtrl.scheduleStatus === 'SUSPENDED'">
+          <button
+            ng-if="SchedulerCtrl._isDisabled"
+            class="btn btn-primary start-schedule-btn"
+            ng-click="SchedulerCtrl.startScheduleAndClose()"
+            ng-disabled="SchedulerCtrl.savingSchedule">
+            <span ng-if="!SchedulerCtrl.isScheduleChange">Start Schedule</span>
+            <span ng-if="SchedulerCtrl.isScheduleChange">Save and Start Schedule</span>
+          </button>
+          <button
+            ng-if="SchedulerCtrl._isDisabled && SchedulerCtrl.isScheduleChange"
+            class="btn btn-link start-schedule-btn"
+            ng-click="SchedulerCtrl.saveSchedule()"
+            ng-disabled="SchedulerCtrl.savingSchedule">
+            <span>Save Schedule</span>
+            <span ng-if="SchedulerCtrl.savingSchedule">
+              <span class="fa fa-spinner fa-spin"></span>
+            </span>
+          </button>
+        </div>
         <button
-          ng-if="SchedulerCtrl._isDisabled"
-          class="btn btn-primary start-schedule-btn"
-          ng-click="SchedulerCtrl.startSchedule()">
-          Start Schedule
-        </button>
-        <button
-          ng-if="!SchedulerCtrl._isDisabled"
           class="btn btn-primary save-schedule-btn"
+          ng-if="!SchedulerCtrl._isDisabled"
           ng-click="SchedulerCtrl.saveSchedule()">
-          Save Schedule
+          <span>
+            Save Schedule
+          </span>
         </button>
       </div>
+
+      <div class="schedule-navigation" ng-if="SchedulerCtrl.scheduleStatus === 'SCHEDULED'">
+        <button
+          class="btn btn-primary schedule-btn"
+          ng-click="SchedulerCtrl.suspendScheduleAndClose()"
+        >
+          Suspend Schedule
+        </button>
+      </div>
+
     </div>
   </div>
 </div>

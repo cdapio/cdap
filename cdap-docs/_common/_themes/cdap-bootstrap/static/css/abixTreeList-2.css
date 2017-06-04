@@ -1,0 +1,25 @@
+.abix-tree-list li {
+    list-style: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.abix-tree-list .collapsed span.icon,
+.abix-tree-list .expanded span.icon {
+    cursor: pointer;
+    margin-left: -16px;
+    margin-right: 0;
+    user-select: none;
+}
+
+ul.current.nav.nav-list.abix-tree-list {
+    padding-left: 6px;
+}
+
+ul.current.nav.nav-list.abix-tree-list a.reference.internal {
+    display: inline;
+}

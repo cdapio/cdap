@@ -13,7 +13,7 @@ The CDAP UI displays each plugin property as a simple textbox. To customize how 
 are displayed in the UI, you can place a configuration file in the ``widgets`` directory.
 The file must be named following a convention of ``[plugin-name]-[plugin-type].json``.
 
-See [Plugin Widget Configuration](http://docs.cdap.io/cdap/current/en/hydrator-manual/developing-plugins/packaging-plugins.html#plugin-widget-json)
+See [Plugin Widget Configuration](http://docs.cask.co/cdap/current/en/hydrator-manual/developing-plugins/packaging-plugins.html#plugin-widget-json)
 for details on the configuration file.
 
 The UI will also display a reference doc for your plugin if you place a file in the ``docs`` directory

@@ -37,7 +37,7 @@ import java.util.Set;
 /**
  * Default implementation of {@link SparkConfigurer}.
  */
-public final class DefaultSparkConfigurer extends DefaultPluginConfigurer implements SparkConfigurer {
+public class DefaultSparkConfigurer extends DefaultPluginConfigurer implements SparkConfigurer {
 
   private final Spark spark;
   private String name;

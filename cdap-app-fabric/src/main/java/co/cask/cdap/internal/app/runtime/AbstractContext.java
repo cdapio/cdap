@@ -393,6 +393,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
+   * Returns the {@link ProgramRunId} of the running program.
+   */
+  public ProgramRunId getProgramRunId() {
+    return programRunId;
+  }
+
+  /**
    * Release all resources held by this context, for example, datasets. Subclasses should override this
    * method to release additional resources.
    */

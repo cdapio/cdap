@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
@@ -37,8 +39,18 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
     this.sparkContext = sparkContext;
   }
 
+  public BasicSparkPluginContext(JavaSparkExecutionContext sec, DatasetContext datasetContext, StageInfo stageInfo) {
+    super(sec.getPluginContext(), sec.getServiceDiscoverer(), datasetContext, sec.getMetrics(),
+          new DatasetContextLookupProvider(datasetContext), sec.getLogicalStartTime(), sec.getAdmin(), stageInfo,
+          new BasicArguments(sec));
+    this.sparkContext = null;
+  }
+
   @Override
   public void setSparkConf(SparkConf sparkConf) {
+    if (sparkContext == null) {
+      throw new UnsupportedOperationException("Spark configurations cannot be updated in realtime pipelines.");
+    }
     sparkContext.setSparkConf(sparkConf);
   }
 

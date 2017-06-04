@@ -1,0 +1,105 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$popover-border-color: #999999;
+$popover-bg-color: white;
+$connection-options-hover-bg-color: #efefef;
+
+.add-connection-container {
+  .btn {
+    &:active,
+    &:focus,
+    &:active:focus {
+      outline: none;
+    }
+
+    .fa {
+      margin-right: 10px;
+      vertical-align: top;
+    }
+  }
+}
+
+.popover.add-connection-popover {
+  position: relative;
+  &:before,
+  &:after {
+    position: absolute;
+    display: block;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+    content: "";
+    border-width: 11px;
+  }
+  &.bs-tether-element-attached-bottom {
+    &:before {
+      border-top-color: #999999;
+    }
+    &:before,
+    &:after {
+      margin-top: -10px;
+      bottom: -11px;
+      margin-left: -11px;
+      left: 50%;
+      border-bottom-width: 0;
+      border-top-color: white;
+    }
+  }
+}
+
+.popover.add-connection-popover.bs-tether-element-attached-bottom {
+  border-radius: 0;
+  border-color: $popover-border-color;
+  padding: 22px 22px 17px;
+  z-index: 1061;
+  display: block;
+  max-width: 276px;
+  min-width: 200px;
+  margin-top: -10px;
+
+  .popover-title {
+    background-color: $popover-bg-color;
+    border-bottom: 0;
+    font-weight: 600;
+    padding: 0;
+    font-size: 12px;
+    margin-bottom: 15px;
+  }
+
+  .connection-type-option {
+    font-size: 14px;
+    padding: 5px 22px;
+    margin-left: -22px;
+    margin-right: -22px;
+    cursor: pointer;
+
+    .fa {
+      vertical-align: top;
+      margin-top: 3px;
+      margin-right: 10px;
+      font-size: 18px;
+    }
+
+    &:hover { background-color: $connection-options-hover-bg-color; }
+  }
+
+  .popover-content { padding: 0; }
+
+  // for the triangle attachment
+  &:before { border-top-color: $popover-border-color; }
+}
