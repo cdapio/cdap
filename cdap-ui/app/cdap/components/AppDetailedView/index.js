@@ -28,6 +28,7 @@ import AppDetailedViewTab from 'components/AppDetailedView/Tabs';
 import shortid from 'shortid';
 import {Redirect} from 'react-router-dom';
 import FastActionToMessage from 'services/fast-action-message-helper';
+import EntityIconMap from 'services/entity-icon-map';
 import capitalize from 'lodash/capitalize';
 import Page404 from 'components/404';
 import ResourceCenterButton from 'components/ResourceCenterButton';
@@ -188,6 +189,8 @@ export default class AppDetailedView extends Component {
       pathname: this.state.previousPathName,
       label: T.translate('commons.back')
     }];
+    let artifactName = objectQuery(this.state, 'entityDetail', 'artifact', 'name');
+    let icon = EntityIconMap[artifactName] || EntityIconMap['application'];
     return (
       <div className="app-detailed-view">
         <Helmet
@@ -196,7 +199,7 @@ export default class AppDetailedView extends Component {
         <ResourceCenterButton />
         <BreadCrumb
           previousPaths={previousPaths}
-          currentStateIcon="icon-fist"
+          currentStateIcon={icon}
           currentStateLabel={T.translate('commons.application')}
         />
         <OverviewHeader successMessage={this.state.successMessage} />
