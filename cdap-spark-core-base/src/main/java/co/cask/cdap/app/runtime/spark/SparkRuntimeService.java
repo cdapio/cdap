@@ -169,6 +169,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       String metricsConfPath;
       String classpath = "";
 
+      // Setup the SparkConf with properties from spark-defaults.conf
+      Properties sparkDefaultConf = SparkPackageUtils.getSparkDefaultConf();
+      for (String key : sparkDefaultConf.stringPropertyNames()) {
+        SparkRuntimeEnv.setProperty(key, sparkDefaultConf.getProperty(key));
+      }
+
       if (contextConfig.isLocal()) {
         // In local mode, always copy (or link if local) user requested resources
         copyUserResources(context.getLocalizeResources(), tempDir);

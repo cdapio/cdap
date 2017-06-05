@@ -87,14 +87,6 @@ public class ExternalSparkProgram extends AbstractSpark {
     sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
     sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
 
-    for (Map.Entry<String, String> pluginProperty : pluginProperties.entrySet()) {
-      String key = pluginProperty.getKey();
-      String val = pluginProperty.getValue();
-      if (!key.equals(PROGRAM_ARGS)) {
-        sparkConf.set(key, val);
-      }
-    }
-
     context.setSparkConf(sparkConf);
   }
 }
