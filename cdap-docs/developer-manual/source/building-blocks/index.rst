@@ -98,5 +98,5 @@ platform :doc:`overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and
 the code in the :ref:`examples <examples-index>` directory, both of which are available at the
-`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP Local Sandbox
+`Cask.co resources page, <http://cask.co/resources>`_ as well as in your CDAP Sandbox
 installation directory.

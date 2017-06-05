@@ -16,7 +16,7 @@ Installation
 
 UNIX/Linux Flavors
 ------------------
-**CDAP Local Sandbox**
+**CDAP Sandbox**
 ::
 
   $ cd <CDAP_HOME>
@@ -112,7 +112,7 @@ These steps will be automated in a later CDAP release.
 
 UNIX/Linux Flavors
 ------------------
-**CDAP Local Sandbox**
+**CDAP Sandbox**
 ::
 
   $ cd <CDAP_HOME>
@@ -141,7 +141,7 @@ UNIX/Linux Flavors
 
 Windows
 -------
-1. Using the command prompt, stop the CDAP Local Sandbox::
+1. Using the command prompt, stop the CDAP Sandbox::
 
     > cd <CDAP_HOME>
     > bin\cdap sandbox stop
@@ -153,7 +153,7 @@ Windows
 5. Extract the UI pack (cdap-ui-pack-4.1.0_p1.zip) in the ``<CDAP_HOME>`` directory, by right-clicking on the file,
    choosing *Extract All*, and specifying the path to the ``<CDAP_HOME>`` directory
 6. A new ``ui`` directory should be created
-7. Using the command prompt, start the CDAP Local Sandbox::
+7. Using the command prompt, start the CDAP Sandbox::
 
     > cd <CDAP_HOME>
     > bin\cdap sandbox start

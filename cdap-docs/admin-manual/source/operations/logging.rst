@@ -142,11 +142,11 @@ Program Log File Locations
 --------------------------
 Program logs are stored in locations specified by properties in the
 :ref:`cdap-site.xml <appendix-cdap-default-logging>` file depending on the mode
-of CDAP (Local Sandbox or Distributed):
+of CDAP (Sandbox or Distributed):
 
-- For **CDAP Local Sandbox:** the property ``log.collection.root`` (default
+- For **CDAP Sandbox:** the property ``log.collection.root`` (default
   ``${local.data.dir}/logs``) is the root location for collecting program logs when in
-  CDAP Local Sandbox.
+  CDAP Sandbox.
 
 - For **Distributed CDAP:** the property ``hdfs.namespace`` (default ``/cdap``) is the
   base directory in HDFS; program logs are stored in ``${hdfs.namespace}/logs`` (by default,
@@ -164,7 +164,7 @@ for the modified logback file to take effect. Changing the ``logback-container.x
 only affect programs that are started after the change; existing running programs will not
 be affected.
 
-- For **CDAP Local Sandbox:** As the entire CDAP Local Sandbox runs in a single JVM, the
+- For **CDAP Sandbox:** As the entire CDAP Sandbox runs in a single JVM, the
   ``logback.xml`` file, located in  ``<CDAP-HOME>/conf``, configures both "container"
   and CDAP system service logging.
 - For **Distributed CDAP:** the ``logback-container.xml`` file is located in ``/etc/cdap/conf``.
@@ -206,7 +206,7 @@ their preferences before the program starts.
 **Note:** The :ref:`Logging HTTP RESTful API
 <http-restful-api-logging-changing-program-log-levels>` for changing program log levels
 can only be used with programs that are running under Distributed CDAP. For changing the log
-levels of programs run under CDAP Local Sandbox, you either modify the ``logback.xml`` file,
+levels of programs run under CDAP Sandbox, you either modify the ``logback.xml`` file,
 or you :ref:`provide a "logback.xml" <application-logback>` with your application
 before it is deployed.
 
@@ -253,10 +253,10 @@ The log messages emitted by CDAP system services can be retrieved by:
 
 System Service Log File Locations
 ---------------------------------
-The location of CDAP system service logs depends on the mode of CDAP (Local Sandbox or
+The location of CDAP system service logs depends on the mode of CDAP (Sandbox or
 Distributed) and the Hadoop distribution:
 
-- For **CDAP Local Sandbox:** system logs are located in ``<CDAP-HOME>/logs``.
+- For **CDAP Sandbox:** system logs are located in ``<CDAP-HOME>/logs``.
 
 - For **Distributed CDAP:** system logs are located in ``/var/log/cdap`` (with the
   exception of Cloudera Manager-based clusters). With Cloudera Manager installations, system
@@ -275,7 +275,7 @@ Configuring System Service Logs
   the service(s) affected will need to be restarted for the modified "logback" file to
   take effect.
 
-  - For **CDAP Local Sandbox:** the ``logback.xml`` file is located in ``/etc/cdap/conf``.
+  - For **CDAP Sandbox:** the ``logback.xml`` file is located in ``/etc/cdap/conf``.
   - For **Distributed CDAP:** the file ``logback.xml`` file, located in
     ``<CDAP-HOME>/conf``, configures both "container" and CDAP system service logging.
 
@@ -298,7 +298,7 @@ RESTful API <http-restful-api-logging-changing-system-service-log-levels>`. Howe
 **Note:** The :ref:`Logging HTTP RESTful API
 <http-restful-api-logging-changing-system-service-log-levels>` for changing system service
 log levels can only be used with system services that are running under Distributed CDAP.
-For changing the log levels of system services under CDAP Local Sandbox, you need to modify
+For changing the log levels of system services under CDAP Sandbox, you need to modify
 the ``logback.xml`` file and restart CDAP.
 
 
@@ -488,7 +488,7 @@ CDAP looks for "logback" files located in a directory as set by the property
 ``log.process.pipeline.config.dir`` in the :ref:`cdap-site.xml
 <appendix-cdap-default-logging>` file. In the default configuration, this is:
 
-- For **CDAP Local Sandbox:** ``<CDAP-HOME>/ext/logging/config``
+- For **CDAP Sandbox:** ``<CDAP-HOME>/ext/logging/config``
 - For **Distributed CDAP:** ``/opt/cdap/master/ext/logging/config``
 
 .. _logging-monitoring-custom-logging-example:

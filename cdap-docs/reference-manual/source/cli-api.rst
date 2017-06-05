@@ -13,7 +13,7 @@ Introduction
 ============
 
 The Command Line Interface (CLI, or CDAP CLI) provides methods to interact with the CDAP server from within a shell,
-similar to the HBase or ``bash`` shells. It is located within the CDAP Local Sandbox, at ``bin/cdap-cli`` as either a bash
+similar to the HBase or ``bash`` shells. It is located within the CDAP Sandbox, at ``bin/cdap-cli`` as either a bash
 script or a Windows ``.bat`` file.
 
 It can be :ref:`installed on Distributed CDAP <packages-cli-package-installation>`, in

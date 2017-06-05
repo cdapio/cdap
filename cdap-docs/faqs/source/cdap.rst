@@ -84,14 +84,14 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 :ref:`verification step <admin-manual-verification>` or did not startup, check:
 
 - Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for Distributed CDAP or
-  ``$CDAP_HOME/logs`` for CDAP Local Sandbox)
+  ``$CDAP_HOME/logs`` for CDAP Sandbox)
 - If you see an error such as::
 
-    ERROR [main:c.c.c.StandaloneMain@268] - Failed to start CDAP Local Sandbox
+    ERROR [main:c.c.c.StandaloneMain@268] - Failed to start CDAP Sandbox
     java.lang.NoSuchMethodError:
     co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
 
-  then you have downloaded the CDAP Local Sandbox version of CDAP, which is not intended
+  then you have downloaded the CDAP Sandbox version of CDAP, which is not intended
   to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
   Debian version) from http://cask.co/downloads.
 

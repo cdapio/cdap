@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: CDAP Local Sandbox
+    :description: CDAP Sandbox
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 :hide-toc: true
@@ -9,7 +9,7 @@
 .. _local-sandbox:
 
 ==================
-CDAP Local Sandbox
+CDAP Sandbox
 ==================
 
 .. toctree::
@@ -24,7 +24,7 @@ CDAP Local Sandbox
 
 .. rubric:: System Requirements and Dependencies
 
-The CDAP Local Sandbox runs on Linux, MacOS, and Windows, and has these
+The CDAP Sandbox runs on Linux, MacOS, and Windows, and has these
 requirements:
 
 - `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__
@@ -70,9 +70,9 @@ described in the section on :ref:`development environment setup. <dev-env>`
 
 .. _local-sandbox-setup:
 
-.. rubric:: CDAP Local Sandbox Download, Installation, and Setup
+.. rubric:: CDAP Sandbox Download, Installation, and Setup
 
-There are three ways to `download <http://cask.co/downloads/#cdap>`__ and install the CDAP Local Sandbox:
+There are three ways to `download <http://cask.co/downloads/#cdap>`__ and install the CDAP Sandbox:
 
 - as a :doc:`binary zip file <zip>`;
 - as a :doc:`Virtual Machine image <virtual-machine>`; or

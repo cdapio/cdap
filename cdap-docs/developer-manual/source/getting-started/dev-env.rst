@@ -131,14 +131,14 @@ To do so, follow these steps:
 #. Before starting CDAP, disable audit logs by changing the ``audit.enabled`` setting in
    ``cdap-default.xml`` to ``false``. Otherwise, due to :cask-issue:`CDAP-5864`, Kafka
    errors will appear in the logs.
-#. In the case of IntelliJ, you can create a run configuration to run CDAP Local Sandbox:
+#. In the case of IntelliJ, you can create a run configuration to run CDAP Sandbox:
 
    1. Select ``Run > Edit`` Configurations...
    #. Add a new "Application" run configuration.
    #. Set "Main class" to be ``co.cask.cdap.StandaloneMain``.
    #. Set "VM options" to ``-Xmx1024m -XX:MaxPermSize=128m`` (for in-memory MapReduce jobs).
    #. Click "OK".
-   #. You can now use this run configuration to start an instance of CDAP Local Sandbox.
+   #. You can now use this run configuration to start an instance of CDAP Sandbox.
 
 This will allow you to start CDAP and access it from either the command line (:ref:`CLI <cli>`)
 or through the :ref:`HTTP RESTful API <http-restful-api>`. To start the CLI, you can either start

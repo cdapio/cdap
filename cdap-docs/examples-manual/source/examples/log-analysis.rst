@@ -104,7 +104,7 @@ Running the Example
 Injecting Access Logs
 ---------------------
 Inject a file of Apache access log to the stream *logStream* by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 

@@ -77,7 +77,7 @@ Running the Example
 Injecting Points Data
 ---------------------
 Inject a file of points data to the stream *pointsStream* by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 

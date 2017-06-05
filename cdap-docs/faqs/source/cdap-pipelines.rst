@@ -22,9 +22,9 @@ It depends; if you are building data pipelines using the available plugins, then
 if you want to implement a custom plugin, then you need to have knowledge of Java and the
 relevant CDAP APIs.
 
-Are CDAP pipelines available in CDAP Local Sandbox mode?
+Are CDAP pipelines available in CDAP Sandbox mode?
 --------------------------------------------------------
-It's part of the CDAP Local Sandbox.
+It's part of the CDAP Sandbox.
 
 On which public clouds does CDAP work?
 --------------------------------------

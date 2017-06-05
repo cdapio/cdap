@@ -24,7 +24,7 @@ in the CDAP UI, such as entering events into a stream and exploring a dataset:
 Install CDAP
 ============
 
-- If you haven't already, :ref:`download and install the CDAP Local Sandbox <local-sandbox-index>`.
+- If you haven't already, :ref:`download and install the CDAP Sandbox <local-sandbox-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
 .. _cdap-pipelines-getting-started-start:
@@ -277,7 +277,7 @@ parses them into separate fields, and writes them as individual records to a tab
    We can send events to the stream by clicking the *Actions* menu, selecting *Send
    Events*, and then clicking *Upload* in the dialog that follows. Navigate on your drive
    to your CDAP home directory, and locate the file ``examples/resources/accesslog.txt``
-   included in your CDAP Local Sandbox. This file contains 10,000 records in CLF format.
+   included in your CDAP Sandbox. This file contains 10,000 records in CLF format.
 
    Once the file has been uploaded successfully by CDAP, you should see the *Total Events*
    for the stream change by 10,000.

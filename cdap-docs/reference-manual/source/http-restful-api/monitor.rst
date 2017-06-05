@@ -332,7 +332,7 @@ with the arguments as a JSON string in the body::
    * - ``quantity``
      - Number of instances to be used
 
-**Note:** In the CDAP Local Sandbox, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
+**Note:** In the CDAP Sandbox, trying to set the instances of system services will return a Status Code ``400 Bad Request``.
 
 .. rubric:: Examples
 .. list-table::

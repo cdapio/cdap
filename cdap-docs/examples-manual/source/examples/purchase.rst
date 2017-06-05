@@ -172,7 +172,7 @@ Running the Example
 Add A Profile
 -------------
 Add a *User Profile* for the user *Alice*, by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
@@ -185,7 +185,7 @@ CDAP Local Sandbox home directory, using the Command Line Interface:
 Injecting Sentences
 -------------------
 Inject a file of sentences by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
@@ -206,7 +206,7 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 - Using the CDAP UI, go to the |application-overview|,
   click |example-service1-italic| to get to the service detail page, then click the *Start* button; or
 
-- From the CDAP Local Sandbox home directory, use the Command Line Interface:
+- From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
@@ -232,7 +232,7 @@ This is done by a series of ``curl`` calls, as described in the :ref:`RESTful AP
 <http-restful-api-query>` section of the :ref:`CDAP Reference Manual <reference-index>`.
 For your convenience, the CDAP Local Sancbox's Command Line Interface can execute the series of calls.
 
-From within the CDAP Local Sandbox home directory:
+From within the CDAP Sandbox home directory:
 
 .. tabbed-parsed-literal::
 

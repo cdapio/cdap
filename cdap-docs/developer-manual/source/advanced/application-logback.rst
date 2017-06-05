@@ -16,7 +16,7 @@ the use case, the default configuration may be sufficient. As long as the contai
 running, these policies will apply. (As the lifetime of many containers is often less than
 14 days, these limits may never be reached.)
 
-**Note:** In the case of the CDAP Local Sandbox, the logback file used is ``logback.xml``, located
+**Note:** In the case of the CDAP Sandbox, the logback file used is ``logback.xml``, located
 in the ``<CDAP-HOME>/conf`` directory.
 
 You can specify a custom ``logback.xml`` for a CDAP application by packaging

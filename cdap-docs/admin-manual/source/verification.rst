@@ -9,10 +9,10 @@ Verification
 ============
 
 To verify that the CDAP software is successfully installed and you are able to use your
-Hadoop cluster, run an example application. We provide, in our CDAP Local Sandbox,
+Hadoop cluster, run an example application. We provide, in our CDAP Sandbox,
 pre-built JAR files for convenience.
 
-#. Download and install the latest `CDAP Local Sandbox <http://cask.co/downloads/#cdap>`__.
+#. Download and install the latest `CDAP Sandbox <http://cask.co/downloads/#cdap>`__.
 #. Extract to a folder (``CDAP_HOME``).
 #. Open a command prompt and navigate to ``CDAP_HOME/examples``.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.

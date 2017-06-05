@@ -25,10 +25,10 @@ in one of two ways:
 
 .. highlight:: xml
 
-- include all JAR files in the ``lib`` directory of the CDAP Local Sandbox installation,
+- include all JAR files in the ``lib`` directory of the CDAP Sandbox installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (as shown in the ``pom.xml`` file of the :ref:`CDAP Local Sandbox examples <local-sandbox-index>`)::
+  (as shown in the ``pom.xml`` file of the :ref:`CDAP Sandbox examples <local-sandbox-index>`)::
 
     . . .
     <dependency>
@@ -192,7 +192,7 @@ Strategies in Testing MapReduce Programs
 In a fashion similar to `Strategies in Testing Flows`_, we can write
 unit testing for MapReduce programs. Let's write a test case for an
 application that uses MapReduce. Complete source code and test can be
-found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP Local Sandbox.
+found in the :ref:`Purchase Example <examples-purchase>` included in the CDAP Sandbox.
 
 The ``PurchaseTest`` class should extend from
 ``TestBase`` similar to `Strategies in Testing Flows`::

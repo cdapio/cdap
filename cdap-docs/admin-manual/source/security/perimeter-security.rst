@@ -12,13 +12,13 @@ Perimeter Security
 
 Enabling Perimeter Security
 ===========================
-Follow the instructions below for enabling perimeter security, either for CDAP Local Sandbox or Distributed CDAP,
+Follow the instructions below for enabling perimeter security, either for CDAP Sandbox or Distributed CDAP,
 depending on your installation. Client authentication, once security has been enabled, is described in the
 Developer Manual section :ref:`client-authentication`.
 
-Enabling Perimeter Security (CDAP Local Sandbox)
+Enabling Perimeter Security (CDAP Sandbox)
 ------------------------------------------------
-To enable security in :term:`CDAP Local Sandbox <cdap local sandbox>`, add these properties to ``cdap-site.xml``:
+To enable security in :term:`CDAP Sandbox <cdap local sandbox>`, add these properties to ``cdap-site.xml``:
 
 ================================================= ===================== =====================================================
 Property                                          Value                 Description
@@ -39,7 +39,7 @@ Property                                          Value                 Descript
 
 Client Authentication then needs to be configured, as described below under
 :ref:`Configuring Authentication Mechanisms <installation-configuring-authentication-mechanisms>`.
-With CDAP Local Sandbox, the simplest is :ref:`Basic Authentication <installation-basic-authentication>`.
+With CDAP Sandbox, the simplest is :ref:`Basic Authentication <installation-basic-authentication>`.
 
 
 Enabling Perimeter Security (Distributed CDAP)
@@ -286,7 +286,7 @@ The realm file is of the following format::
 
   username: password[,rolename ...]
 
-In CDAP Local Sandbox, the realm file can be specified as ``conf/realmfile`` and placed with
+In CDAP Sandbox, the realm file can be specified as ``conf/realmfile`` and placed with
 the ``cdap-site.xml`` file. Note that it is not advisable to use this method of
 authentication. In production, we recommend using any of the other methods described below.
 

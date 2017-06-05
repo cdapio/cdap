@@ -54,7 +54,7 @@ This means you would use::
 
   PUT http://<host>:<port>/v3/namespaces/<namespace-id>/streams/<new-stream-id>
 
-If you are using the CDAP Local Sandbox, running on your local machine, you might make a ``curl`` call such as:
+If you are using the CDAP Sandbox, running on your local machine, you might make a ``curl`` call such as:
 
 .. tabbed-parsed-literal::
 
