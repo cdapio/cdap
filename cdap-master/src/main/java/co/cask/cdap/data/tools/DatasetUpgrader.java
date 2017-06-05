@@ -149,14 +149,8 @@ public class DatasetUpgrader extends AbstractUpgrader {
   private void upgradeUserTables(final ExecutorService executor) throws Exception {
     final Map<String, Future<?>> allFutures = new HashMap<>();
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor);
-          allFutures.putAll(futures);
-          return null;
-        }
-      });
+      Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor);
+      allFutures.putAll(futures);
     }
 
     // Wait for the user dataset upgrades to complete
@@ -170,7 +164,7 @@ public class DatasetUpgrader extends AbstractUpgrader {
     }
   }
 
-  private Map<String, Future<?>> upgradeUserTables(NamespaceMeta namespaceMeta, ExecutorService executor)
+  private Map<String, Future<?>> upgradeUserTables(final NamespaceMeta namespaceMeta, ExecutorService executor)
     throws Exception {
     Map<String, Future<?>> futures = new HashMap<>();
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
@@ -180,11 +174,17 @@ public class DatasetUpgrader extends AbstractUpgrader {
         Runnable runnable = new Runnable() {
           public void run() {
             try {
-              if (isCDAPUserTable(desc)) {
-                upgradeUserTable(desc);
-              } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-                updateTableDesc(desc, ddlExecutor);
-              }
+              impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
+                @Override
+                public Void call() throws Exception {
+                  if (isCDAPUserTable(desc)) {
+                    upgradeUserTable(desc);
+                  } else if (isStreamOrQueueTable(desc.getNameAsString())) {
+                    updateTableDesc(desc, ddlExecutor);
+                  }
+                  return null;
+                }
+              });
             } catch (Exception e) {
               throw new RuntimeException(e);
             }
