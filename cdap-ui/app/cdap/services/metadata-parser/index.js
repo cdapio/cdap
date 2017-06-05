@@ -76,12 +76,19 @@ function createApplicationObj(entity) {
     version = '1.0.0-SNAPSHOT';
   }
 
+  let icon = EntityIconMap[entity.entityId.type];
+  if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-pipeline') !== -1) {
+    icon = EntityIconMap['cdap-data-pipeline'];
+  } else if (entity.metadata.SYSTEM.tags.indexOf('cdap-data-streams') !== -1) {
+    icon = EntityIconMap['cdap-data-streams'];
+  }
+
   return {
     id: entity.entityId.id.applicationId,
     type: entity.entityId.type,
     metadata: entity,
     version,
-    icon: EntityIconMap[entity.entityId.type],
+    icon,
     isHydrator: intersection(entity.metadata.SYSTEM.tags, hydratorAritfacts).length > 0
   };
 }
