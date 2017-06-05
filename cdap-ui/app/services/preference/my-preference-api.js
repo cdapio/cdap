@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,10 @@ angular.module(PKG.name + '.services')
       setSystemPreference: myHelpers.getConfig('PUT', 'REQUEST', '/preferences'),
       getNamespacePreference: myHelpers.getConfig('GET', 'REQUEST', basepath + '/preferences'),
       setNamespacePreference: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/preferences'),
+      getNamespacePreferenceResolved: myHelpers.getConfig('GET', 'REQUEST', basepath + '/preferences?resolved=true'),
       getAppPreference: myHelpers.getConfig('GET', 'REQUEST', basepath + '/apps/:appId/preferences'),
       setAppPreference: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/apps/:appId/preferences'),
+      getAppPreferenceResolved: myHelpers.getConfig('GET', 'REQUEST', basepath + '/apps/:appId/preferences?resolved=true'),
       getProgramPreference: myHelpers.getConfig('GET', 'REQUEST', basepath + '/apps/:appId/:programType/:programId/preferences'),
       setProgramPreference: myHelpers.getConfig('PUT', 'REQUEST', basepath + '/apps/:appId/:programType/:programId/preferences')
     });
