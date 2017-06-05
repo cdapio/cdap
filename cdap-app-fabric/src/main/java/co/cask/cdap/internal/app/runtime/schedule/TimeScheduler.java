@@ -377,6 +377,29 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
+  @Override
+  public synchronized ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
+                                                          String scheduleName)
+    throws SchedulerException, ScheduleNotFoundException {
+    checkInitialized();
+    try {
+      Trigger.TriggerState state = scheduler.getTriggerState(getGroupedTriggerKey(program, programType, scheduleName));
+      // Map trigger state to schedule state.
+      // This method is only interested in returning if the scheduler is
+      // Paused, Scheduled or NotFound.
+      switch (state) {
+        case NONE:
+          throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
+        case PAUSED:
+          return ProgramScheduleStatus.SUSPENDED;
+        default:
+          return ProgramScheduleStatus.SCHEDULED;
+      }
+    } catch (org.quartz.SchedulerException e) {
+      throw new SchedulerException(e);
+    }
+  }
+
   private void checkInitialized() {
     Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
   }

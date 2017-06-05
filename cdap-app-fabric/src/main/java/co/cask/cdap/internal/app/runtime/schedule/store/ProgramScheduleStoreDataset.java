@@ -36,6 +36,8 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -127,11 +129,14 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    *
    * @param namespaceId  the namespace with schedules to be migrated
    * @param appMetaStore app metadata store with schedules to be migrated
+   * @param scheduler the old scheduler to get schedule status from
    * @return the lexicographically largest namespace id String with schedule migration completed
    */
-  public String migrateFromAppMetadataStore(NamespaceId namespaceId, Store appMetaStore) {
+  public String migrateFromAppMetadataStore(NamespaceId namespaceId, Store appMetaStore, Scheduler scheduler) {
+    LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
     String completedNamespace = getMigrationCompleteNamespace();
     if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
+      LOG.info("Schedule migration has already been completed for namespace '{}'", namespaceId);
       return completedNamespace;
     }
     for (ApplicationSpecification appSpec : appMetaStore.getAllApplications(namespaceId)) {
@@ -139,15 +144,25 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
         ProgramSchedule schedule = Schedulers.toProgramSchedule(appId, scheduleSpec);
         try {
-          addSchedule(schedule);
+          ProgramId programId = schedule.getProgramId();
+          ProgramScheduleStatus status = scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
+                                                                 schedule.getName());
+          addScheduleWithStatus(schedule, status, System.currentTimeMillis());
         } catch (AlreadyExistsException e) {
           // This should never happen since no schedule with the same schedule key should exist before migration
-          LOG.warn("Schedule {} already exists before schedule migration", schedule.getScheduleId(), e);
+          LOG.warn("Schedule '{}' already exists before schedule migration. Skipped.", schedule.getScheduleId(), e);
+        } catch (NotFoundException e) {
+          LOG.warn("Schedule status of '{}' is not found during schedule migration. Skipped.",
+                   schedule.getScheduleId(), e);
+        } catch (SchedulerException e) {
+          LOG.warn("Scheduler exception happens when getting status of '{}' during schedule migration. Skipped.",
+                   schedule.getScheduleId(), e);
         }
       }
     }
     store.put(MIGRATION_COMPLETE_NAMESPACE_ROW_BYTES, MIGRATION_COMPLETE_NAMESPACE_COLUMN_BYTES,
               Bytes.toBytes(namespaceId.toString()));
+    LOG.info("Schedule migration is completed for namespace '{}'", namespaceId);
     return namespaceId.toString();
   }
 
@@ -183,6 +198,33 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Add a schedule to the store.
+   *
+   * @param schedule the schedule to add
+   * @param status the status of the schedule to add
+   * @param currentTime the current time in milliseconds when adding the schedule
+   * @return the new schedule's last modified timestamp
+   * @throws AlreadyExistsException if the schedule already exists
+   */
+  private void addScheduleWithStatus(ProgramSchedule schedule, ProgramScheduleStatus status, long currentTime)
+    throws AlreadyExistsException {
+    byte[] scheduleKey = rowKeyBytesForSchedule(schedule.getProgramId().getParent().schedule(schedule.getName()));
+    if (!store.get(new Get(scheduleKey)).isEmpty()) {
+      throw new AlreadyExistsException(schedule.getProgramId().getParent().schedule(schedule.getName()));
+    }
+    Put schedulePut = new Put(scheduleKey);
+    schedulePut.add(SCHEDULE_COLUMN_BYTES, GSON.toJson(schedule));
+    schedulePut.add(UPDATED_COLUMN_BYTES, currentTime);
+    schedulePut.add(STATUS_COLUMN_BYTES, status.toString());
+    store.put(schedulePut);
+    int count = 0;
+    for (String triggerKey : extractTriggerKeys(schedule)) {
+      byte[] triggerRowKey = rowKeyBytesForTrigger(scheduleKey, count++);
+      store.put(new Put(triggerRowKey, TRIGGER_KEY_COLUMN_BYTES, triggerKey));
+    }
+  }
+
+  /**
    * Add one or more schedules to the store.
    *
    * @param schedules the schedules to add
@@ -192,20 +234,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   public long addSchedules(Iterable<? extends ProgramSchedule> schedules) throws AlreadyExistsException {
     long currentTime = System.currentTimeMillis();
     for (ProgramSchedule schedule : schedules) {
-      byte[] scheduleKey = rowKeyBytesForSchedule(schedule.getProgramId().getParent().schedule(schedule.getName()));
-      if (!store.get(new Get(scheduleKey)).isEmpty()) {
-        throw new AlreadyExistsException(schedule.getProgramId().getParent().schedule(schedule.getName()));
-      }
-      Put schedulePut = new Put(scheduleKey);
-      schedulePut.add(SCHEDULE_COLUMN_BYTES, GSON.toJson(schedule));
-      schedulePut.add(UPDATED_COLUMN_BYTES, currentTime);
-      schedulePut.add(STATUS_COLUMN_BYTES, ProgramScheduleStatus.SUSPENDED.toString()); // initially suspended
-      store.put(schedulePut);
-      int count = 0;
-      for (String triggerKey : extractTriggerKeys(schedule)) {
-        byte[] triggerRowKey = rowKeyBytesForTrigger(scheduleKey, count++);
-        store.put(new Put(triggerRowKey, TRIGGER_KEY_COLUMN_BYTES, triggerKey));
-      }
+      addScheduleWithStatus(schedule, ProgramScheduleStatus.SUSPENDED, currentTime); // initially suspended
     }
     return currentTime;
   }
