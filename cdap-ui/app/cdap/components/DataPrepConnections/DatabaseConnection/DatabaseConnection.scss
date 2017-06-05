@@ -226,7 +226,8 @@ $db-sprite-url: url('/cdap_assets/img/db-sprite.png');
   @include db-image(5);
 }
 
-.db-postgresql {
+.db-postgresql,
+.db-postgresql65 {
   @include db-image(6);
 }
 
