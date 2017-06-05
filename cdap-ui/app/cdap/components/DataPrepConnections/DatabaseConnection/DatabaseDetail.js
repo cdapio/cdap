@@ -71,6 +71,36 @@ export default class DatabaseDetail extends Component {
     this.handleDatabaseSelect = this.handleDatabaseSelect.bind(this);
   }
 
+  fetchDatabases() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let requestBody = {
+      name: this.state.name,
+      type: 'DATABASE',
+      properties: this.constructProperties()
+    };
+
+    MyDataPrepApi.getDatabaseList({namespace}, requestBody)
+      .subscribe((databaseList) => {
+        let list = databaseList.values.sort();
+        let customId = this.state.customId;
+
+        if (list.indexOf(customId) !== -1) {
+          customId = shortid.generate();
+        }
+
+        list.push(customId);
+        list.unshift('');
+
+        this.setState({
+          databaseList: list,
+          selectedDatabase: this.props.mode === 'EDIT' ? this.state.database : '',
+          customId
+        });
+      }, (err) => {
+        console.log('err fetching database list', err);
+      });
+  }
+
   componentWillMount() {
     if (this.props.mode !== 'ADD') {
       let name = this.props.mode === 'EDIT' ? this.props.connInfo.name : '';
@@ -95,6 +125,10 @@ export default class DatabaseDetail extends Component {
         selectedDatabase: this.state.customId,
         connType: connectionString ? CONN_TYPE.advanced : CONN_TYPE.basic
       });
+
+      if (this.props.mode === 'EDIT') {
+        this.fetchDatabases();
+      }
     }
   }
 
@@ -248,26 +282,7 @@ export default class DatabaseDetail extends Component {
           testConnectionLoading: false
         });
 
-        MyDataPrepApi.getDatabaseList({namespace}, requestBody)
-          .subscribe((databaseList) => {
-            let list = databaseList.values.sort();
-            let customId = this.state.customId;
-
-            if (list.indexOf(customId) !== -1) {
-              customId = shortid.generate();
-            }
-
-            list.push(customId);
-            list.unshift('');
-
-            this.setState({
-              databaseList: list,
-              selectedDatabase: '',
-              customId
-            });
-          }, (err) => {
-            console.log('err fetching database list', err);
-          });
+        this.fetchDatabases();
       }, (err) => {
         console.log('Error testing database connection', err);
 
