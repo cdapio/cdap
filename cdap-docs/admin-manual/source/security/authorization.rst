@@ -107,8 +107,10 @@ CDAP supports hierarchical authorization enforcement, which means that an operat
 requires a certain privilege on an entity is allowed if the user has the same privilege on
 the entity's parent. For example, reading from a CDAP dataset will succeed even if the
 user does not have specific *READ* privileges on the dataset, but instead has *READ*
-privileges on the namespace in which the dataset exists. Note: :ref:`CDAP Instance <security-cdap-instance>`is not a
-part of authorization hierarchy. For example, READ on CDAP Instance does not give READ on any of the Namespaces.
+privileges on the namespace in which the dataset exists.
+
+Note: :ref:`CDAP Instance <security-cdap-instance>`is not a part of the authorization hierarchy.
+For example, READ on a CDAP Instance does not give READ on any of the Namespaces or any other entities in the Namespace.
 
 Authorization policies for various CDAP operations are listed in these tables:
 
