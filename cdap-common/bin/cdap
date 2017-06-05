@@ -46,7 +46,7 @@ __app_home=$(cd "${__app_home}"/.. >&-; pwd -P)
 __comp_home=${COMPONENT_HOME:-$(cd "${__target%/*/*}" >&- 2>/dev/null; pwd -P)}
 
 # Determine if we're in Distributed from packages or SDK/Parcel
-if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
+if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]] && [[ ${__comp_home} != /opt/cdap/sandbox* ]]; then
   # We're distributed from packages
   __app_home=${__comp_home}
   __cdap_home=${CDAP_HOME:-/opt/cdap}
