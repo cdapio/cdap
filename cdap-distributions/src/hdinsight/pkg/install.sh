@@ -24,7 +24,7 @@ CDAP_BRANCH='release/4.1'
 # Optional tag to checkout - All released versions of this script should set this
 CDAP_TAG='hdi4.1'
 # The CDAP package version passed to Chef
-CDAP_VERSION='4.1.1-2'
+CDAP_VERSION='4.1.2-2'
 # The version of Chef to install
 CHEF_VERSION='12.10.24'
 # cdap-site.xml configuration parameters
