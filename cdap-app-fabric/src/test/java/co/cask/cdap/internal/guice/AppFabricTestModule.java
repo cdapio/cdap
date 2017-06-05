@@ -42,6 +42,8 @@ import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsServiceModule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
@@ -184,6 +186,11 @@ public final class AppFabricTestModule extends AbstractModule {
       public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) {
       }
 
+      @Override
+      public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
+                                                 String scheduleName) throws ScheduleNotFoundException {
+        throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
+      }
     };
   }
 }

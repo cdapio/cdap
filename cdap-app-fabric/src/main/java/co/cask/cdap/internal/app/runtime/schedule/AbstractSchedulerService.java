@@ -188,6 +188,14 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
     streamSizeScheduler.deleteSchedules(program, programType);
   }
 
+  @Override
+  public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
+                                             String scheduleName)
+    throws SchedulerException, NotFoundException {
+    Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
+    return scheduler.scheduleState(program, programType, scheduleName);
+  }
+
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {
     return String.format("%s:%s", programIdFor(program, programType), scheduleName);
   }
