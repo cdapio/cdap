@@ -378,7 +378,7 @@
       <id>dist</id>
       <properties>
         <sdk.dir>${project.build.directory}/sdk</sdk.dir>
-        <stage.opt.dir>${sdk.dir}/cdap-local-sandbox-${project.version}</stage.opt.dir>
+        <stage.opt.dir>${sdk.dir}/cdap-sandbox-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
@@ -920,7 +920,7 @@
                   </descriptors>
                   <appendAssemblyId>false</appendAssemblyId>
                   <attach>false</attach>
-                  <finalName>cdap-local-sandbox-${project.version}</finalName>
+                  <finalName>cdap-sandbox-${project.version}</finalName>
                 </configuration>
               </execution>
             </executions>
@@ -941,10 +941,10 @@
                 <configuration>
                   <version>${project.version}</version>
                   <groupId>${project.groupId}</groupId>
-                  <artifactId>cdap-local-sandbox</artifactId>
+                  <artifactId>cdap-sandbox</artifactId>
                   <packaging>zip</packaging>
                   <generatePom>false</generatePom>
-                  <file>${project.build.directory}/cdap-local-sandbox-${project.version}.zip</file>
+                  <file>${project.build.directory}/cdap-sandbox-${project.version}.zip</file>
                   <repositoryId>continuuity</repositoryId>
                   <url>${deploy.url}</url>
                 </configuration>
