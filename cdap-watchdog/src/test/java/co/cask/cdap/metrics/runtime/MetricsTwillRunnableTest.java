@@ -28,11 +28,11 @@ public class MetricsTwillRunnableTest {
 
   @Test
   public void testMetricsTwillRunnableInjector() throws Exception {
-    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create());
+    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "metrics");
   }
 
   @Test
   public void testMetricsProcessorTwillRunnableInjector() {
-    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration());
+    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "metricsprocessor");
   }
 }
