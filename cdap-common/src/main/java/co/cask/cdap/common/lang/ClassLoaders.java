@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Queue;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -74,30 +75,41 @@ public final class ClassLoaders {
 
   /**
    * Finds a ClassLoader along the ClassLoader hierarchy that is assignable from the given type.
-   * This method recognize usage of {@link Delegator} on ClassLoader and will try to match with
-   * the object returned by {@link Delegator#getDelegate()} for the ClassLoader of the given type.
+   * This method recognize usage of {@link Delegator} and {@link CombineClassLoader} and will try to match with
+   * the object returned by {@link Delegator#getDelegate()} or {@link CombineClassLoader#getDelegates()}
+   * for the ClassLoader of the given type.
    *
    * @return the ClassLoader found or {@code null} if no such ClassLoader exists.
    */
   @SuppressWarnings("unchecked")
   @Nullable
   public static <T extends ClassLoader> T find(@Nullable ClassLoader classLoader, Class<T> type) {
-    ClassLoader result = classLoader;
-    while (result != null) {
-      if (result instanceof Delegator) {
-        Object delegate = ((Delegator) result).getDelegate();
+    if (classLoader == null) {
+      return null;
+    }
+
+    Queue<ClassLoader> queue = new LinkedList<>();
+    queue.add(classLoader);
+
+    while (!queue.isEmpty()) {
+      ClassLoader cl = queue.remove();
+      if (type.isAssignableFrom(cl.getClass())) {
+        return (T) cl;
+      }
+      if (cl instanceof Delegator) {
+        Object delegate = ((Delegator) cl).getDelegate();
         if (delegate != null && delegate instanceof ClassLoader) {
-          result = (ClassLoader) delegate;
+          queue.add((ClassLoader) delegate);
         }
       }
-
-      if (type.isAssignableFrom(result.getClass())) {
-        break;
+      if (cl instanceof CombineClassLoader) {
+        queue.addAll(((CombineClassLoader) cl).getDelegates());
       }
-      result = result.getParent();
+      if (cl.getParent() != null) {
+        queue.add(cl.getParent());
+      }
     }
-    // The casting should succeed since it's either null or is assignable to the given type
-    return (T) result;
+    return null;
   }
 
   /**
