@@ -314,6 +314,9 @@ public class PluginInstantiator implements Closeable {
         try {
           // Call the plugin constructor to construct the instance
           return (T) constructor.newInstance(config);
+        } catch (InvocationTargetException e) {
+          // If there is exception thrown from the constructor, propagate it.
+          throw Throwables.propagate(e.getCause());
         } catch (Exception e) {
           // Failed to instantiate. Resort to field injection
           LOG.warn("Failed to invoke plugin constructor {}. Resort to config field injection.", constructor);
