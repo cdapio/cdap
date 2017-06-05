@@ -23,7 +23,7 @@ Plugin Reference
 
 
 These plugins (from CDAP Pipelines Version |cdap-pipelines-version|) are shipped with CDAP, both in the
-CDAP Local Sandbox and Distributed CDAP:
+CDAP Sandbox and Distributed CDAP:
 
 - :doc:`Action Plugins <actions/index>`
 - :doc:`Source Plugins <sources/index>`

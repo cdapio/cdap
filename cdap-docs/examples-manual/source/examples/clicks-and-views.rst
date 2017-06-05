@@ -104,7 +104,7 @@ The MapReduce will write to a partition based upon its logical start time when i
 - Using the CDAP UI, go to the |application-overview|,
   click |example-mapreduce-italic| to get to the MapReduce detail page, then click
   the *Start* button; or
-- From the CDAP Local Sandbox home directory, use the Command Line Interface:
+- From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 

@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :description: CDAP Local Sandbox, Binary Zip File
+    :description: CDAP Sandbox, Binary Zip File
     :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. highlight:: console
@@ -12,10 +12,10 @@ Binary Zip File
 .. _local-sandbox-zip-file:
 
 The **zip file** is available on the Downloads section of the Cask Website at
-`<http://cask.co/downloads/#cdap>`__. Click the tab marked "Local Sandbox" for the *CDAP
-Local Sandbox*. There will be a button to download the latest version.
+`<http://cask.co/downloads/#cdap>`__. Click the tab marked "Sandbox" for the *CDAP
+Sandbox*. There will be a button to download the latest version.
 
-The CDAP Local Sandbox includes the software required for development and a version of
+The CDAP Sandbox includes the software required for development and a version of
 CDAP suitable for running on a laptop.
 
 Once downloaded, unzip it to a directory on your machine:
@@ -24,11 +24,11 @@ Once downloaded, unzip it to a directory on your machine:
 
   .. Linux
 
-  $ unzip cdap-local-sandbox-|release|.zip
+  $ unzip cdap-sandbox-|release|.zip
 
   .. Windows
 
-  > jar xf cdap-local-sandbox-|release|.zip
+  > jar xf cdap-sandbox-|release|.zip
 
 
 .. include:: index.rst

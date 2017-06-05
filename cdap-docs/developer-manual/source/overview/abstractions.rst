@@ -46,7 +46,7 @@ services that are typically needed by Big Data applications, such as service dis
 collection, and configuration. The environment-specific implementations of these services are injected
 by CDAP into the program containers in which the application is run—the application itself does not
 need to change based on the environment. This allows you to develop applications in one environment—on
-your laptop using a CDAP Local Sandbox for testing—and then seamlessly deploy them in the different
+your laptop using a CDAP Sandbox for testing—and then seamlessly deploy them in the different
 environment of a distributed staging cluster.
 
 Deployment of an application as well as its lifecycle management, monitoring and scaling are done
@@ -59,7 +59,7 @@ Developer Focus
 CDAP supports developers through the entire application development lifecycle:
 development, debugging, testing, continuous integration and production. Using familiar
 development tools such as *IntelliJ* and *Eclipse*, you can build, test and debug your
-application right on your laptop with a *CDAP Local Sandbox*. Utilize the application unit
+application right on your laptop with a *CDAP Sandbox*. Utilize the application unit
 test framework (which embeds an *In-Memory CDAP*) for continuous integration. Deploy
 to a development cloud or production cloud (*Distributed CDAP*) with a push of a button.
 No matter which environment you are in, the experience of managing the application remains

@@ -142,7 +142,7 @@ and build this example twice:
 
 Populate the *profiles* Table
 -----------------------------
-Populate the ``profiles`` table with users using a script. From the CDAP Local Sandbox home directory, use:
+Populate the ``profiles`` table with users using a script. From the CDAP Sandbox home directory, use:
 
 .. tabbed-parsed-literal::
 

@@ -3,10 +3,10 @@ CDAP Integration Test Framework
 ===============================
 
 Users can use ``IntegrationTestBase`` to write tests that run against a framework-provided
-CDAP Local Sandbox or a remote CDAP instance.
+CDAP Sandbox or a remote CDAP instance.
 
 
-Running tests using the framework-provided CDAP Local Sandbox instance
+Running tests using the framework-provided CDAP Sandbox instance
 ======================================================================
 
 ::

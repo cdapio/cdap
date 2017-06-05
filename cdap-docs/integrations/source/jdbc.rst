@@ -13,12 +13,12 @@ Overview
 CDAP provides a JDBC driver to make integrations with external programs and third-party BI
 (business intelligence) tools easier.
 
-The JDBC driver is a JAR that is bundled with the CDAP Local Sandbox. You can find it in the ``libexec``
-directory of your Local Sandbox installation at::
+The JDBC driver is a JAR that is bundled with the CDAP Sandbox. You can find it in the ``libexec``
+directory of your Sandbox installation at::
 
   libexec/co.cask.cdap.cdap-explore-jdbc-<version>.jar
 
-If you don't have a CDAP Local Sandbox and only want to connect to an existing instance of CDAP,
+If you don't have a CDAP Sandbox and only want to connect to an existing instance of CDAP,
 you can download the CDAP JDBC driver from `this link
 <https://repo1.maven.org/maven2/co/cask/cdap/cdap-explore-jdbc/>`__.
 Go to the directory matching the version of your running CDAP instance, and download the file

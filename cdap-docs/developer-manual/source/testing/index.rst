@@ -37,7 +37,7 @@ help with testing and debugging CDAP applications:
 .. |debugging| replace:: **Debugging:**
 .. _debugging: debugging.html
 
-- |debugging|_ How you can **debug CDAP applications** in CDAP Local Sandbox mode and application
+- |debugging|_ How you can **debug CDAP applications** in CDAP Sandbox mode and application
   containers in Distributed CDAP mode.
 
 

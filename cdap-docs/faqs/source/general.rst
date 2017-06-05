@@ -11,9 +11,9 @@
 FAQs: General Questions
 =======================
 
-What is available in the CDAP Local Sandbox?
+What is available in the CDAP Sandbox?
 --------------------------------------------
-The CDAP Local Sandbox includes:
+The CDAP Sandbox includes:
 
 - Local instance of the CDAP Server;
 - CDAP APIs for building applications;
@@ -21,9 +21,9 @@ The CDAP Local Sandbox includes:
 - Examples for getting started with CDAP.
 
 
-What platforms are supported by the CDAP Local Sandbox?
+What platforms are supported by the CDAP Sandbox?
 -------------------------------------------------------
-The CDAP Local Sandbox has been extensively tested on Mac OS X and Linux. CDAP on Windows
+The CDAP Sandbox has been extensively tested on Mac OS X and Linux. CDAP on Windows
 has not been as extensively tested. If you have any issues with CDAP on Windows, help us by
 `filing a ticket <https://issues.cask.co/browse/CDAP>`__.
 
@@ -52,7 +52,7 @@ What Hadoop distributions can CDAP run on?
 CDAP |version| has been tested on and supports CDH |cdh-versions|, HDP |hdp-versions|,
 MapR |mapr-versions|, Amazon Hadoop (EMR) |emr-versions|, and Apache Bigtop 1.0.
 
-I'm seeing log messages about the failure to send audit log message while running the Local Sandbox. What's wrong?
+I'm seeing log messages about the failure to send audit log message while running the Sandbox. What's wrong?
 ------------------------------------------------------------------------------------------------------------------
 If your computer goes into sleep mode, then you may see these messages after the machine
 is restored from sleep mode, as the audit logs are not getting delivered while the machine

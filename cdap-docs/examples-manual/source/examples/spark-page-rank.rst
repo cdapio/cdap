@@ -89,7 +89,7 @@ Injecting URL Pairs
 -------------------
 
 Inject a file of URL pairs to the stream *backlinkURLStream* by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 
@@ -110,7 +110,7 @@ use ``3`` as the value.
   click |example-workflow-italic| to get to the workflow detail page, set the runtime
   arguments using ``spark.SparkPageRankProgram.args`` as the key and ``3`` as the value, then click
   the *Start* button; or
-- From the CDAP Local Sandbox home directory, use the Command Line Interface:
+- From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 

@@ -162,7 +162,7 @@ Injecting data
 The *pageTitleStream* consumes events in the format returned by the Facebook "Likes" Graph API.
 
 - Inject a file of Facebook "Likes" data to the stream *pageTitleStream* by running this command from the
-  CDAP Local Sandbox home directory, using the CDAP Command Line Interface:
+  CDAP Sandbox home directory, using the CDAP Command Line Interface:
 
   .. tabbed-parsed-literal::
 
@@ -173,7 +173,7 @@ The *pageTitleStream* consumes events in the format returned by the Facebook "Li
   The *wikiStream* consumes events in the format returned by the MediaWiki Wikipedia API.
 
 - Inject a file of "Wikipedia" data to the stream *wikiStream* by running this command from the
-  CDAP Local Sandbox home directory, using the Command Line Interface:
+  CDAP Sandbox home directory, using the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
@@ -220,7 +220,7 @@ the ``mode`` to ``online``, by setting either the runtime arguments (which chang
 
 You can also do this from a terminal:
 
-- From the CDAP Local Sandbox home directory, use the Command Line Interface:
+- From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 

@@ -141,7 +141,7 @@ Guides
 
 - |examples-manual|_
 
-  - |ex-man-e-black|_ Included with the :ref:`CDAP Local Sandbox <getting-started-index>`, they range from a simple introductory to more elaborate examples
+  - |ex-man-e-black|_ Included with the :ref:`CDAP Sandbox <getting-started-index>`, they range from a simple introductory to more elaborate examples
   - |ex-man-htg-black|_ Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
   - |ex-man-t-black|_ Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations
   - |ex-man-capr-black|_ data applications built using CDAP and useful building blocks for your data applications

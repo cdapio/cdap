@@ -33,7 +33,7 @@ Building and Running CDAP Applications
 
 .. highlight:: console
 
-In the examples, we refer to the CDAP Local Sandbox as *CDAP*, and the example code that is
+In the examples, we refer to the CDAP Sandbox as *CDAP*, and the example code that is
 running on it as an *application*. We'll assume that you are running your application in
 the *default* :ref:`namespace <namespaces>`; if not, you will need to adjust commands
 accordingly. For example, in a URL such as::
@@ -45,17 +45,17 @@ to use the namespace *my_namespace*, you would replace ``default`` with ``my_nam
 	http://localhost:11015/v3/namespaces/my_namespace/apps...
 
 
-Accessing CLI, curl, and the CDAP Local Sandbox bin
+Accessing CLI, curl, and the CDAP Sandbox bin
 ---------------------------------------------------
 
 - For brevity in the commands given below, we will simply use ``cdap cli`` for the CDAP
   Command Line Interface. Substitute the actual path of ``./<CDAP-HOME>/bin/cdap cli``,
   or ``<CDAP-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
 
-- A Windows-version of the application ``curl`` is included in the CDAP Local Sandbox as
+- A Windows-version of the application ``curl`` is included in the CDAP Sandbox as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
-- If you add the CDAP Local Sandbox ``bin`` directory to your path, you can simplify the commands. From within
+- If you add the CDAP Sandbox ``bin`` directory to your path, you can simplify the commands. From within
   the ``<CDAP-HOME>`` directory, enter:
 
   .. tabbed-parsed-literal::
@@ -68,7 +68,7 @@ Accessing CLI, curl, and the CDAP Local Sandbox bin
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
 
-  The Windows path has been augmented with a directory where the CDAP Local Sandbox includes
+  The Windows path has been augmented with a directory where the CDAP Sandbox includes
   Windows-versions of commands such as ``curl``.
 
 .. include:: /_includes/windows-note.txt
@@ -105,7 +105,7 @@ Starting CDAP
 -------------
 
 Before running an example application, check that an instance of CDAP is running and available; if not,
-follow the instructions for :ref:`Starting and Stopping CDAP Local Sandbox <start-stop-cdap>`.
+follow the instructions for :ref:`Starting and Stopping CDAP Sandbox <start-stop-cdap>`.
 
 If you can reach the CDAP UI through a browser at :cdap-ui:`http://localhost:11011/ <>`,
 CDAP is running.
@@ -135,7 +135,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
     examples/|example-dir|/target/|example|-|release|.jar
 
-- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface (CLI) <cli>`:
+- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
   .. tabbed-parsed-literal::
 
@@ -147,7 +147,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
 
   The CLI can be accessed under Windows using the ``bin\cdap.bat cli`` script.
 
-- Use an application such as ``curl`` (a Windows-version is included in the CDAP Local Sandbox in
+- Use an application such as ``curl`` (a Windows-version is included in the CDAP Sandbox in
   ``libexec\bin\curl.exe``):
 
   .. tabbed-parsed-literal::
@@ -174,7 +174,7 @@ Once an application is deployed, there are multiple methods for starting an appl
   see the status of any of the programs associated with the application and, by clicking
   on them, go to their detail page where you can start or stop them.
 
-- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
+- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface<cli>` to start a specific program of an application.
   (In each CDAP example, the CLI commands for that particular example are provided):
 
   .. tabbed-parsed-literal::
@@ -233,7 +233,7 @@ Once an application is deployed, use one of these methods for stoping an applica
 - On an application's detail page in the CDAP UI, you can click on a program to go
   to its detail page and then click the *Stop* button there
 
-- From the CDAP Local Sandbox home directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
+- From the CDAP Sandbox home directory, use the :ref:`Command Line Interface <cli>` to stop a specific program of an application:
 
   .. tabbed-parsed-literal::
 
@@ -292,7 +292,7 @@ the application, then click the *Actions* menu on the right side and select *Del
 
 After confirmation, the application will be deleted.
 
-From the CDAP Local Sandbox home directory, you can also use the Command Line Interface:
+From the CDAP Sandbox home directory, you can also use the Command Line Interface:
 
 .. tabbed-parsed-literal::
 

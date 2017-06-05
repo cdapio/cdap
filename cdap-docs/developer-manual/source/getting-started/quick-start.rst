@@ -8,7 +8,7 @@
 Quick Start
 ===========
 
-These instructions will take you from downloading the CDAP Local Sandbox through the
+These instructions will take you from downloading the CDAP Sandbox through the
 running of an application.
 
 Download, Install and Start CDAP
@@ -39,11 +39,11 @@ Conventions
 
 In the examples and commands that follow, for brevity we will use these conventions:
 
-- ``<CDAP-HOME>`` is the directory that you have installed the CDAP Local Sandbox, either
+- ``<CDAP-HOME>`` is the directory that you have installed the CDAP Sandbox, either
   on a UNIX-type system or Windows.
 
 - The `CDAP Command Line Interface (CLI) <http://docs.cask.co/cdap/current/en/reference-manual/cli-api.html>`__
-  is included in the CDAP Local Sandbox in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
+  is included in the CDAP Sandbox in the ``bin`` directory, either at ``bin/cdap cli`` or |---|
   on Windows |---| ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP
   facilities from a command line environment.
 
@@ -51,10 +51,10 @@ In the examples and commands that follow, for brevity we will use these conventi
   Command Line Interface. Substitute the actual path of ``./<CDAP-HOME>/bin/cdap cli``,
   or ``<CDAP-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
 
-- A Windows-version of the application ``curl`` is included in the CDAP Local Sandbox as
+- A Windows-version of the application ``curl`` is included in the CDAP Sandbox as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
-- If you add the CDAP Local Sandbox ``bin`` directory to your path, you can simplify the commands. From within
+- If you add the CDAP Sandbox ``bin`` directory to your path, you can simplify the commands. From within
   the ``CDAP-HOME`` directory, enter:
 
   .. tabbed-parsed-literal::
@@ -67,7 +67,7 @@ In the examples and commands that follow, for brevity we will use these conventi
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
 
-  The Windows path has been augmented with a directory where the CDAP Local Sandbox includes
+  The Windows path has been augmented with a directory where the CDAP Sandbox includes
   Windows-versions of commands such as ``curl``.
 
 .. include:: ../_includes/windows-note.txt

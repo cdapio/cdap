@@ -26,7 +26,7 @@ Applications are abstracted away from the platform that runs the application. Wh
 deploy and run the application into a specific installation of CDAP, the appropriate
 implementations of all services and program runtimes are injected by CDAP; the application
 does not need to change based on the environment. This allows you to develop applications in
-one environment |---| such as on your laptop using a CDAP Local Sandbox for testing |---| and
+one environment |---| such as on your laptop using a CDAP Sandbox for testing |---| and
 then seamlessly deploy them in a different environment, such as your distributed staging cluster.
 
 .. rubric:: Data and Applications Combined

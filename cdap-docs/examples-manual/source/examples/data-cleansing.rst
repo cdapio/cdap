@@ -113,7 +113,7 @@ example, we'll simply use ``1`` as the value.
   click |example-mapreduce-italic| to get to the MapReduce detail page, set the runtime
   arguments using ``output.partition.key`` as the key and ``1`` as the value, then click
   the *Start* button; or
-- From the CDAP Local Sandbox home directory, use the Command Line Interface:
+- From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 

@@ -44,10 +44,10 @@ Conventions
 
 In the examples and commands that follow, for brevity we will use these conventions:
 
-- ``<CDAP-HOME>`` is the directory that you have installed the CDAP Local Sandbox, either
+- ``<CDAP-HOME>`` is the directory that you have installed the CDAP Sandbox, either
   on a UNIX-type system or Windows.
 
-- The :ref:`CDAP Command Line Interface (CLI) <cli>` is included in the CDAP Local Sandbox
+- The :ref:`CDAP Command Line Interface (CLI) <cli>` is included in the CDAP Sandbox
   in the ``bin`` directory, either at ``bin/cdap cli`` or |---| on Windows |---|
   ``bin\cdap.bat cli``. The CLI allows you to quickly access CDAP facilities from a command
   line environment.
@@ -56,10 +56,10 @@ In the examples and commands that follow, for brevity we will use these conventi
   Command Line Interface. Substitute the actual path of ``./<CDAP-HOME>/bin/cdap cli``,
   or ``<CDAP-HOME>\bin\cdap.bat cli`` on Windows, as appropriate.
 
-- A Windows-version of the application ``curl`` is included in the CDAP Local Sandbox as
+- A Windows-version of the application ``curl`` is included in the CDAP Sandbox as
   ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
-- If you add the CDAP Local Sandbox ``bin`` directory to your path, you can simplify the commands. From within
+- If you add the CDAP Sandbox ``bin`` directory to your path, you can simplify the commands. From within
   the ``<CDAP-HOME>`` directory, enter:
 
   .. tabbed-parsed-literal::
@@ -72,7 +72,7 @@ In the examples and commands that follow, for brevity we will use these conventi
 
     > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
 
-  The Windows path has been augmented with a directory where the CDAP Local Sandbox includes
+  The Windows path has been augmented with a directory where the CDAP Sandbox includes
   Windows-versions of commands such as ``curl``.
 
 .. include:: ../../../developer-manual/source/_includes/windows-note.txt
@@ -83,10 +83,10 @@ Running WISE
 ============
 Building and running WISE v\ |cdap-apps-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
-:ref:`CDAP Local Sandbox <local-sandbox-index>`.
+:ref:`CDAP Sandbox <local-sandbox-index>`.
 
 Change to ``examples`` directory of the directory where you have installed the
-CDAP Local Sandbox, and download the WISE source code:
+CDAP Sandbox, and download the WISE source code:
 
 .. tabbed-parsed-literal::
 
@@ -299,7 +299,7 @@ this format (broken on two lines to fit)::
     "Mozilla/2.0 (compatible; Ask Jeeves)"
 
 We have already prepared a sample of Web server access logs for you to inject into the
-*logEventStream*. Run this command from the CDAP Local Sandbox home directory:
+*logEventStream*. Run this command from the CDAP Sandbox home directory:
 
 .. tabbed-parsed-literal::
 
@@ -309,7 +309,7 @@ We have already prepared a sample of Web server access logs for you to inject in
    Successfully loaded file to stream 'logEventStream'
 
 
-This requires that a CDAP Local Sandbox instance be running with the WISE application already
+This requires that a CDAP Sandbox instance be running with the WISE application already
 deployed.
 
 
@@ -601,7 +601,7 @@ Exploring Datasets through SQL
 With WISE, you can explore the datasets using SQL queries. The SQL interface on CDAP,
 called *Explore*, can be accessed through the CDAP UI:
 
-1. After deploying WISE in your CDAP Local Sandbox instance, go to the *WISE*
+1. After deploying WISE in your CDAP Sandbox instance, go to the *WISE*
    :cdap-ui-apps:`overview page <Wise/overview/status>`:
 
    .. figure:: ../_images/wise_overview.png

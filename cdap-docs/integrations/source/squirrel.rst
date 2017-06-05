@@ -28,16 +28,16 @@ Here's how to add the :ref:`CDAP JDBC driver <cdap-jdbc>` inside *SquirrelSQL*.
    *SquirrelSQL*.
 #. We can now create an alias to connect to a running instance of CDAP. Open the ``Aliases`` pane, and click on
    the ``+`` icon to create a new alias.
-#. In this example, we are going to connect to a CDAP Local Sandbox.
-   The name of our alias will be ``CDAP Local Sandbox``. Select the ``CDAP Driver`` in
-   the list of available drivers. Our URL will be ``jdbc:cdap://localhost:11015``. Our CDAP Local Sandbox instance
+#. In this example, we are going to connect to a CDAP Sandbox.
+   The name of our alias will be ``CDAP Sandbox``. Select the ``CDAP Driver`` in
+   the list of available drivers. Our URL will be ``jdbc:cdap://localhost:11015``. Our CDAP Sandbox instance
    does not require an authentication token, but if yours requires one, HTML-encode your token
    and pass it as a parameter of the ``URL``. ``User Name`` and ``Password`` are left blank.
 
    .. image:: _images/jdbc/squirrel_add_alias.png
       :width: 6in
 
-#. Click on ``OK``. ``CDAP Local Sandbox`` is now added to the list of aliases.
+#. Click on ``OK``. ``CDAP Sandbox`` is now added to the list of aliases.
 #. A popup asks you to connect to your newly-added alias. Click on ``Connect``, and *SquirrelSQL* will retrieve
    information about your running CDAP datasets.
 #. To execute a SQL query on your CDAP datasets, go to the ``SQL`` tab, enter a query in the center field, and click
