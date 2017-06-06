@@ -41,8 +41,7 @@ Additionally, it is recommended that Kerberos be enabled on the cluster by setti
 These additional properties can also be optionally modified to configure authorization:
 
 - ``security.authorization.admin.users``
-- ``security.authorization.cache.enabled``
-- ``security.authorization.cache.refresh.interval.secs``
+- ``security.authorization.cache.max.entries``
 - ``security.authorization.cache.ttl.secs``
 
 Please refer to :ref:`cdap-defaults.xml <appendix-cdap-default-security>` for
