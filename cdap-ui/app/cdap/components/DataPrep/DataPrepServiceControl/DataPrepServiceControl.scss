@@ -16,9 +16,11 @@
 
 $border-shadow-color: #cccccc;
 
-.dataprep-container.dataprep-service-control,
-.dataprep-container.dataprep-service-control.error {
-  padding-top: 50px;
+.dataprep-container {
+  &.dataprep-service-control,
+  &.dataprep-service-control.error {
+    padding-top: 50px;
+  }
 }
 
 .dataprep-service-control {
