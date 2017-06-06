@@ -370,7 +370,6 @@ public class MasterTwillApplication implements TwillApplication {
 
     // Create a zip file that contains all explore jar files.
     // Upload and localizing one big file is fast than many small one.
-    String exploreArchiveName = "explore.archive.zip";
     Path exploreArchive = Files.createTempFile(tempDir, "explore.archive", ".zip");
     Set<String> addedJar = new HashSet<>();
 
@@ -397,14 +396,16 @@ public class MasterTwillApplication implements TwillApplication {
           if (addedJar.add(resultFile.getName())) {
             zos.putNextEntry(new ZipEntry(resultFile.getName()));
             Files.copy(resultFile.toPath(), zos);
-            extraClassPath.add(exploreArchiveName + File.separator + resultFile.getName());
+            extraClassPath.add(
+              ExploreServiceTwillRunnable.EXPLORE_ARCHIVE_NAME + File.separator + resultFile.getName());
           }
         }
       }
     }
 
     if (!addedJar.isEmpty()) {
-      localizeResources.put(exploreArchiveName, new LocalizeResource(exploreArchive.toFile(), true));
+      localizeResources.put(ExploreServiceTwillRunnable.EXPLORE_ARCHIVE_NAME,
+                            new LocalizeResource(exploreArchive.toFile(), true));
     }
 
     // Explore also depends on MR, hence adding MR jars to the classpath.
