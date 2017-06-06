@@ -70,7 +70,9 @@ Enhanced Data prep
 
 Event Driven Schedules
 -----------------------
-- :cask-issue:`CDAP-7593` - Introduces a new, event-driven scheduling system.
+- :cask-issue:`CDAP-7593` - Introduces a new, event-driven scheduling system that can start programs based on data availability in HDFS partitions.
+- :cask-issue:`CDAP-11338` - Allow users to configure constraints for schedules, such as duration since last run and allowed time range for program execution.
+
 
 
 Other New Features
