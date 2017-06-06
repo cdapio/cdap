@@ -273,7 +273,7 @@ defining::
     return Scannables.valueRecordScanner(table.createSplitReader(split));
   }
 
-An example demonstrating an implementation of ``RecordScannable`` is included in the CDAP Local Sandbox in the
+An example demonstrating an implementation of ``RecordScannable`` is included in the CDAP Sandbox in the
 directory ``examples/Purchase``, namely the ``PurchaseHistoryStore``.
 
 Writing to Datasets with SQL

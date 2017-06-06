@@ -12,7 +12,7 @@ Trademarks, Licenses, and Dependencies
 
     <cdap-enterprise-dependencies>
     <cdap-level-1-dependencies>
-    <cdap-local-sandbox-dependencies>
+    <cdap-sandbox-dependencies>
     <cdap-ui-dependencies>
     <cdap-included-libraries>
 
@@ -110,8 +110,8 @@ The Cask Data Application Platform (CDAP) product is copyright and licensed as f
 CDAP Dependent Packages, Licenses, and License URLs
 ---------------------------------------------------
 
-- `CDAP Local Sandbox Dependencies <cdap-local-sandbox-dependencies.html>`_
-  (`PDF <cdap-local-sandbox-dependencies.pdf>`__)
+- `CDAP Sandbox Dependencies <cdap-sandbox-dependencies.html>`_
+  (`PDF <cdap-sandbox-dependencies.pdf>`__)
 - `CDAP Level 1 Dependencies <cdap-level-1-dependencies.html>`_
   (`PDF <cdap-level-1-dependencies.pdf>`__)
 - `CDAP Distributed Dependencies <cdap-enterprise-dependencies.html>`_

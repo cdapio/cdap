@@ -218,7 +218,7 @@ Deploying as a System Artifact
 To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
 must be placed in the appropriate directory.
 
-- **CDAP Local Sandbox:** ``$CDAP_INSTALL_DIR/artifacts``
+- **CDAP Sandbox:** ``$CDAP_INSTALL_DIR/artifacts``
 
 - **Distributed CDAP:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
@@ -280,7 +280,7 @@ a HTTP RESTful API call to :ref:`load system artifacts <http-restful-api-artifac
 can be made to load the artifacts. As described in the documentation on :ref:`artifacts`, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.
 
-Alternatively, the CDAP Local Sandbox should be restarted for this change to take effect in local sandbox
+Alternatively, the CDAP Sandbox should be restarted for this change to take effect in local sandbox
 mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 .. _plugins-deployment-user:

@@ -48,7 +48,7 @@ transform, and load) pipelines all the way up to complex, enterprise-scale data-
 applications.
 
 Developers can build and test their applications end-to-end in a full-stack, single-node
-installation. CDAP can be run either as a Local Sandbox, deployed within the Enterprise 
+installation. CDAP can be run either as a Sandbox, deployed within the Enterprise 
 on-premises or hosted in the Cloud.
 
 For more information, see our collection of `Developers' Manual and other documentation
@@ -92,9 +92,9 @@ will guide you through installing CDAP and running an example application.
 Where to Go Next
 ================
 
-Now that you've had a look at the CDAP Local Sandbox, take a look at:
+Now that you've had a look at the CDAP Sandbox, take a look at:
 
-- Examples, located in the ``cdap-examples`` directory of the CDAP Local Sandbox;
+- Examples, located in the ``cdap-examples`` directory of the CDAP Sandbox;
 - `Selected Examples <http://docs.cask.co/cdap/current/en/examples-manual/examples/index.html>`__
   (demonstrating basic features of the CDAP) are located on-line; and
 - Developers' Manual, located in the source distribution in ``cdap-docs/developers-manual/source``

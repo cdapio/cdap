@@ -37,12 +37,12 @@ Examples
 
 For a comprehensive inital introduction to CDAP and its capabilities, follow the
 :ref:`Introduction to CDAP <introduction-to-cdap>` tutorial, covering everything from installation
-of a CDAP Local Sandbox through the creation of a real-world application.
+of a CDAP Sandbox through the creation of a real-world application.
 
 For developers intent on building Java-based CDAP applications, see the :ref:`Getting Started's
 <getting-started-index>` :ref:`Quick Start/Web Log Analytics <quick-start>` example.
 
-The :ref:`CDAP Local Sandbox <local-sandbox>` includes these examples in the download:
+The :ref:`CDAP Sandbox <sandbox>` includes these examples in the download:
 
 .. list-table::
   :widths: 15 60

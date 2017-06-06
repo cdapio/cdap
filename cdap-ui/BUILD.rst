@@ -71,8 +71,8 @@ UI work generally requires having a running CDAP Sandbox instance. To build an i
     $ cd cdap
     $ mvn package -pl cdap-standalone -am -DskipTests -P dist,release
     $ cd cdap-standalone/target
-    $ unzip cdap-local-sandbox-{version}.zip
-    $ cd <cdap-local-sandbox-folder>
+    $ unzip cdap-sandbox-{version}.zip
+    $ cd <cdap-sandbox-folder>
     $ bin/cdap sandbox start
 
 Once you have started the CDAP Sandbox, it starts the UI node server as part of its init script.

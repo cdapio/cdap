@@ -23,7 +23,7 @@ MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 # Used to monitor any changes in scripts or commands for the building of Javadocs
 BUILD_RST="BUILD.rst"
 BUILD_RST_HASH_LOCATION="cdap-docs/vars"
-BUILD_RST_HASH="7fa2dfa8ae24e7d6f8d871eb53affb29"
+BUILD_RST_HASH="8a18faaf68fad532558ba7ec78c36f89"
 
 #
 # All "GIT_" variables are loaded by the Sphinx build and need to be static as they are not sourced

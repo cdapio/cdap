@@ -13,7 +13,7 @@ CDAP Developer Manual
 .. _getting-started: getting-started/index.html
 
 - |getting-started|_ **A quick, hands-on introduction to developing with CDAP,**  which guides you through
-  installing the CDAP Local Sandbox, setting up your development environment, starting and stopping CDAP,
+  installing the CDAP Sandbox, setting up your development environment, starting and stopping CDAP,
   and building and running example applications.
 
 

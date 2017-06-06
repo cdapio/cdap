@@ -3,8 +3,8 @@
     :description: CDAP Metadata Management
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. |tracker-local-sandbox-url| replace:: http://localhost:11011/tracker/ns/default
-.. |literal-tracker-local-sandbox-url| replace:: ``http://localhost:11011/tracker/ns/default``
+.. |tracker-sandbox-url| replace:: http://localhost:11011/tracker/ns/default
+.. |literal-tracker-sandbox-url| replace:: ``http://localhost:11011/tracker/ns/default``
 
 .. |tracker-distributed-cdap-url| replace:: http://<host>:<dashboard-bind-port>/tracker/ns/default
 .. |literal-tracker-distributed-cdap-url| replace:: ``http://<host>:<dashboard-bind-port>/tracker/ns/default``
@@ -308,10 +308,10 @@ CDAP metadata management consists of an application in CDAP with two programs an
 - ``_dataDictionary``: A Table dataset containing the columns and definitions of the Data Dictionary
 - ``_configurationTable``: A Key-value table containing metadata management configuration options
 
-The metadata management UI is shipped with CDAP, started automatically in CDAP Local Sandbox as part of the
+The metadata management UI is shipped with CDAP, started automatically in CDAP Sandbox as part of the
 CDAP UI. It is available at:
 
-  |literal-tracker-local-sandbox-url|
+  |literal-tracker-sandbox-url|
 
 or (Distributed CDAP):
 
@@ -331,7 +331,7 @@ to CDAP; they merely need to enable the application after starting CDAP.
 
 Enabling Metadata Management
 ----------------------------
-Metadata management is enabled automatically in CDAP Local Sandbox and the UI is available at |tracker-local-sandbox-url|.
+Metadata management is enabled automatically in CDAP Sandbox and the UI is available at |tracker-sandbox-url|.
 In the Distributed version of CDAP, you must manually enable metadata management in each namespace by visiting
 |literal-tracker-distributed-cdap-url| and pressing the ``"Enable"`` button.
 

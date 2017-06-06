@@ -76,9 +76,9 @@ Running the Example
 Setting the Spark Version
 -------------------------
 
-This example uses **Spark2**, and the CDAP Local Sandbox must be configured to use the
+This example uses **Spark2**, and the CDAP Sandbox must be configured to use the
 Spark2 runtime instead of the default of *Spark1*. To do this, modify the
-``conf/cdap-site.xml`` file of the CDAP Local Sandbox. The property
+``conf/cdap-site.xml`` file of the CDAP Sandbox. The property
 ``app.program.spark.compat`` must be changed to ``spark2_2.11`` and CDAP restarted, if it
 is currently running.
 

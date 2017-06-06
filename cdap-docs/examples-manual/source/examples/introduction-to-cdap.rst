@@ -29,8 +29,8 @@ technologies required, and then show an equivalent CDAP command with the resulti
 from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
 as required.)
 
-To try this yourself, :ref:`download <local-sandbox-index>` a copy of the CDAP Local
-Sandbox, :ref:`install it <local-sandbox-index>`, and then use the resources in its
+To try this yourself, :ref:`download <sandbox-index>` a copy of the CDAP Local
+Sandbox, :ref:`install it <sandbox-index>`, and then use the resources in its
 ``examples`` directory as you follow along.
 
 We'll look at these areas:
@@ -79,22 +79,22 @@ Installation
 
             .. Linux
 
-            $ unzip cdap-local-sandbox-|release|.zip
-            $ cd cdap-local-sandbox-|release|
+            $ unzip cdap-sandbox-|release|.zip
+            $ cd cdap-sandbox-|release|
             $ ./bin/cdap sandbox start
 
-            Starting CDAP Local Sandbox ................
-            CDAP Local Sandbox started successfully.
+            Starting CDAP Sandbox ................
+            CDAP Sandbox started successfully.
             Connect to the CDAP UI at http://localhost:11011
 
             .. Windows
 
-            > jar xf cdap-local-sandbox-|release|.zip
-            > cd cdap-local-sandbox-|release|
+            > jar xf cdap-sandbox-|release|.zip
+            > cd cdap-sandbox-|release|
             > .\bin\cdap sandbox start
 
-            Starting CDAP Local Sandbox ................
-            CDAP Local Sandbox started successfully.
+            Starting CDAP Sandbox ................
+            CDAP Sandbox started successfully.
             Connect to the CDAP UI at http://localhost:11011
 
        -
@@ -1251,11 +1251,11 @@ Building Real World Applications
          - Write an application to serve the data
 
      * - Using CDAP
-       - Download the Wise app and unzip into the ``examples`` directory of your CDAP Local Sandbox:
+       - Download the Wise app and unzip into the ``examples`` directory of your CDAP Sandbox:
 
          .. tabbed-parsed-literal::
 
-            $ cd cdap-local-sandbox-|release|/examples
+            $ cd cdap-sandbox-|release|/examples
             $ curl -O https://repository.cask.co/downloads/co/cask/cdap/apps/|cdap-apps-version|/cdap-wise-|cdap-apps-version|.zip
             $ unzip cdap-wise-|cdap-apps-version|.zip
 

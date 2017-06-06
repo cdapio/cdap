@@ -22,6 +22,7 @@ import AppOverviewTab from 'components/Overview/AppOverview/AppOverviewTab';
 import {MyAppApi} from 'api/app';
 import NamespaceStore from 'services/NamespaceStore';
 import {objectQuery} from 'services/helpers';
+import EntityIconMap from 'services/entity-icon-map';
 import {MyMetadataApi} from 'api/metadata';
 import shortid from 'shortid';
 import T from 'i18n-react';
@@ -142,6 +143,7 @@ export default class AppOverview extends Component {
       );
     }
     let artifactName = objectQuery(this.state, 'entityDetail', 'artifact', 'name');
+    let icon = EntityIconMap[artifactName] || EntityIconMap['application'];
     let entityType = [
       'cdap-data-pipeline',
       'cdap-data-streams',
@@ -156,7 +158,7 @@ export default class AppOverview extends Component {
     return (
       <div className="app-overview">
         <OverviewHeader
-          icon="icon-fist"
+          icon={icon}
           title={title}
           linkTo={{
             pathname: `/ns/${namespace}/apps/${this.props.entity.id}`,

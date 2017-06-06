@@ -76,7 +76,7 @@ Running the Example
 Injecting Training Data
 -----------------------
 Inject a file of training data to the stream *trainingDataStream* by running this command from the
-CDAP Local Sandbox home directory, using the Command Line Interface:
+CDAP Sandbox home directory, using the Command Line Interface:
 
 .. tabbed-parsed-literal::
 

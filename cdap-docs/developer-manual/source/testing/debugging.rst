@@ -8,15 +8,15 @@
 Debugging a CDAP Application
 ============================
 
-.. _debugging-local-sandbox:
+.. _debugging-sandbox:
 
-Debugging an Application in CDAP Local Sandbox
-==============================================
-Any CDAP application can be debugged in the CDAP Local Sandbox
+Debugging an Application in CDAP Sandbox
+========================================
+Any CDAP application can be debugged in the CDAP Sandbox
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:
 
-#. Start the CDAP Local Sandbox with ``--enable-debug``, optionally specifying a port (default is ``5005``).
+#. Start the CDAP Sandbox with ``--enable-debug``, optionally specifying a port (default is ``5005``).
 
    The CDAP should confirm that the debugger port is open with a message such as
    ``Remote debugger agent started on port 5005``.

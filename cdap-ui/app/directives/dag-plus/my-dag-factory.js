@@ -192,14 +192,14 @@ angular.module(PKG.name + '.commons')
         'normalize': 'icon-normalize',
         'xmlmultiparser': 'icon-XMLmultiparser',
         'xmltojson': 'icon-XMLtoJSON',
-        'decisiontreepredictor': 'icon-desiciontreepredictor',
-        'decisiontreetrainer': 'icon-desiciontreetrainer',
+        'decisiontreepredictor': 'icon-decisiontreeanalytics',
+        'decisiontreetrainer': 'icon-DesicionTree',
         'hashingtffeaturegenerator': 'icon-HashingTF',
         'ngramtransform': 'icon-NGram',
-        'tokenizer': 'icon-Tokenizer',
-        'skipgramfeaturegenerator': 'icon-skipgramfeaturegenerator',
+        'tokenizer': 'icon-tokenizeranalytics',
+        'skipgramfeaturegenerator': 'icon-skipgram',
         'skipgramtrainer': 'icon-skipgramtrainer',
-        'logisticregressionclassifier': 'icon-LogisticRegressiontrainer',
+        'logisticregressionclassifier': 'icon-logisticregressionanalytics',
         'logisticregressiontrainer': 'icon-LogisticRegressionclassifier',
         'hdfsdelete': 'icon-hdfsdelete',
         'hdfsmove': 'icon-hdfsmove',
@@ -229,7 +229,13 @@ angular.module(PKG.name + '.commons')
         'loadtosnowflake': 'icon-snowflake',
         'kudu': 'icon-apachekudu',
         'orientdb': 'icon-OrientDB',
-        'recordsplitter': 'icon-recordsplitter'
+        'recordsplitter': 'icon-recordsplitter',
+        'scalasparkprogram': 'icon-spark',
+        'scalasparkcompute': 'icon-spark',
+        'cdcdatabase': 'icon-database',
+        'cdchbase': 'icon-hbase',
+        'cdckudu': 'icon-apachekudu',
+        'cdcsqlserver': 'icon-SQL'
       };
 
       var pluginName = plugin.toLowerCase();

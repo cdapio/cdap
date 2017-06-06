@@ -13,7 +13,7 @@ Runtime Modes
 The Cask Data Application Platform (CDAP) can be run in different modes:
 
 - **Distributed CDAP** for staging and production;
-- **CDAP Local Sandbox** for testing and development on a developer's laptop; or
+- **CDAP Sandbox** for testing and development on a developer's laptop; or
 - **In-Memory CDAP** for unit testing and continuous integration pipelines.
 
 Regardless of the runtime mode, CDAP is fully-functional and the code you develop never
@@ -42,17 +42,17 @@ See the instructions for either a :ref:`distribution-specific <installation-inde
 - Uses Apache YARN Containers as the processing abstraction (via `Apache™ Twill® <http://twill.apache.org>`__)
 
 
-.. _local-sandbox-data-application-platform:
+.. _sandbox-data-application-platform:
 
-.. rubric:: CDAP Local Sandbox
+.. rubric:: CDAP Sandbox
 
-The **CDAP Local Sandbox** allows you to run the entire CDAP stack in a single Java Virtual
+The **CDAP Sandbox** allows you to run the entire CDAP stack in a single Java Virtual
 Machine on your local machine and includes a local version of the CDAP UI. The
 underlying Big Data infrastructure is emulated on top of your local file system. All data
 is persisted.
 
-See :ref:`Getting Started Developing <getting-started-index>` and :ref:`CDAP Local Sandbox
-<local-sandbox-index>` for information on how to start and manage your CDAP Local Sandbox.
+See :ref:`Getting Started Developing <getting-started-index>` and :ref:`CDAP Sandbox
+<sandbox-index>` for information on how to start and manage your CDAP Sandbox.
 
 **Features:**
 
@@ -107,5 +107,5 @@ CDAP consists chiefly of these components:
 As :ref:`described above <distributed-data-application-platform>`, in a Hadoop
 Environment, application containers are implemented as YARN containers and datasets use
 HBase and HDFS for actual storage. In other environments, the implementation can be
-different. For example, in CDAP Local Sandbox, all services run in a single JVM, application
+different. For example, in CDAP Sandbox, all services run in a single JVM, application
 containers are implemented as threads, and data is stored in the local file system.

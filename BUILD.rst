@@ -9,8 +9,8 @@ Prerequisites
 - Maven 3.1+
 - Git
 
-CDAP Local Sandbox and Distributed CDAP
-=======================================
+CDAP Sandbox and Distributed CDAP
+=================================
 
 **Building CDAP with Maven**
 
@@ -52,13 +52,13 @@ CDAP Local Sandbox and Distributed CDAP
 
     MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
 
-- Build CDAP Local Sandbox distribution ZIP::
+- Build CDAP Sandbox distribution ZIP::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
     -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
-- Build CDAP Local Sandbox distribution ZIP with additional system artifacts::
+- Build CDAP Sandbox distribution ZIP with additional system artifacts::
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package \
     -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples \
@@ -121,7 +121,7 @@ CDAP Local Sandbox and Distributed CDAP
 
   (Whenever there is a change in the UI packages.)
 
-  Then, run CDAP Local Sandbox from IDE.
+  Then, run CDAP Sandbox from IDE.
 
 
 License and Trademarks

@@ -139,7 +139,7 @@ cdap_home() {
   local readonly __dirname=$(dirname "${__script}")
   local readonly __script_bin=$(cd "${__dirname}"; pwd -P)
   local readonly __comp_home=$(cd "${__script%/*/*}" >&-; pwd -P)
-  if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]]; then
+  if [[ ${__comp_home%/*} == /opt/cdap ]] && [[ ${__comp_home} != /opt/cdap/sdk* ]] && [[ ${__comp_home} != /opt/cdap/sandbox* ]]; then
     __app_home=${__comp_home}
     __cdap_home=/opt/cdap
   elif [[ ${__comp_home##*/} == cli ]]; then

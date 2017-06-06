@@ -62,15 +62,15 @@ public class ExternalSparkProgram extends AbstractSpark {
     // check which main class is needed
     // TODO: clean this up so that we only get the class once and store it in the PluginSpec instead of getting
     // it in the pipeline spec generator and here
-    Class<?> sparkClass = usePluginClass(pluginSpec.getType(), pluginSpec.getName(),
-                                         UUID.randomUUID().toString(), pluginProperties);
-    if (sparkClass == null) {
+    Object sparkPlugin = usePlugin(pluginSpec.getType(), pluginSpec.getName(),
+                                   UUID.randomUUID().toString(), pluginProperties);
+    if (sparkPlugin == null) {
       // should never happen, should have been checked before by the pipeline spec generator
       throw new IllegalStateException(String.format("No plugin found of type %s and name %s for stage %s",
                                                     pluginSpec.getType(), pluginSpec.getName(), STAGE_NAME));
     }
 
-    if (SparkMain.class.isAssignableFrom(sparkClass)) {
+    if (SparkMain.class.isAssignableFrom(sparkPlugin.getClass())) {
       setMainClass(ScalaSparkMainWrapper.class);
     } else {
       setMainClass(JavaSparkMainWrapper.class);
@@ -84,17 +84,10 @@ public class ExternalSparkProgram extends AbstractSpark {
     Map<String, String> pluginProperties = context.getPluginProperties(stageName).getProperties();
 
     SparkConf sparkConf = new SparkConf();
-    sparkConf.set("spark.driver.extraJavaOptions", "-XX:MaxPermSize=256m");
-    sparkConf.set("spark.executor.extraJavaOptions", "-XX:MaxPermSize=256m");
-
-    for (Map.Entry<String, String> pluginProperty : pluginProperties.entrySet()) {
-      String key = pluginProperty.getKey();
-      String val = pluginProperty.getValue();
-      if (!key.equals(PROGRAM_ARGS)) {
-        sparkConf.set(key, val);
-      }
-    }
-
+    sparkConf.set("spark.driver.extraJavaOptions",
+                  "-XX:MaxPermSize=256m " + sparkConf.get("spark.driver.extraJavaOptions", ""));
+    sparkConf.set("spark.executor.extraJavaOptions",
+                  "-XX:MaxPermSize=256m " + sparkConf.get("spark.executor.extraJavaOptions", ""));
     context.setSparkConf(sparkConf);
   }
 }
