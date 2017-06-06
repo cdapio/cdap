@@ -10,7 +10,7 @@ Prerequisites
 - Git
 
 CDAP Sandbox and Distributed CDAP
-=======================================
+=================================
 
 **Building CDAP with Maven**
 

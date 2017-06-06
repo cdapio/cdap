@@ -106,7 +106,7 @@ started correctly.
      $ docker run -it --name cdap-sandbox-debugging -p 11011:11011 -p 11015:11015 caskdata/cdap-sandbox:|release| cdap sandbox start --enable-debug
 
    This will start the container (in the foreground, the default), :ref:`enable debugging
-   <debugging-local-sandbox>`, name it ``cdap-sandbox-debugging``, and set the proxying of ports.
+   <debugging-sandbox>`, name it ``cdap-sandbox-debugging``, and set the proxying of ports.
 
 #. CDAP will start automatically once the container starts. CDAP’s software
    directory is under ``/opt/cdap/sdk``.

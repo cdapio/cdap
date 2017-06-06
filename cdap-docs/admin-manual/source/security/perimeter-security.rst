@@ -18,7 +18,7 @@ Developer Manual section :ref:`client-authentication`.
 
 Enabling Perimeter Security (CDAP Sandbox)
 ------------------------------------------------
-To enable security in :term:`CDAP Sandbox <cdap local sandbox>`, add these properties to ``cdap-site.xml``:
+To enable security in :term:`CDAP Sandbox <cdap sandbox>`, add these properties to ``cdap-site.xml``:
 
 ================================================= ===================== =====================================================
 Property                                          Value                 Description

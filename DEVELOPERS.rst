@@ -30,7 +30,7 @@ You can now use this run configuration to start an instance of CDAP Sandbox.
 
 
 Build and Run CDAP Sandbox in a Docker Container
-======================================================
+================================================
 
 These instructions assume the user has a working installation of Docker and a working
 understanding of Docker behavior and commands.

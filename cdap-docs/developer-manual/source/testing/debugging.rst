@@ -8,10 +8,10 @@
 Debugging a CDAP Application
 ============================
 
-.. _debugging-local-sandbox:
+.. _debugging-sandbox:
 
 Debugging an Application in CDAP Sandbox
-==============================================
+========================================
 Any CDAP application can be debugged in the CDAP Sandbox
 by attaching a remote debugger to the CDAP JVM. To enable remote
 debugging:

@@ -5,8 +5,8 @@
 
 :hide-toc: true
 
-.. _local-sandbox-index:
-.. _local-sandbox:
+.. _sandbox-index:
+.. _sandbox:
 
 ==================
 CDAP Sandbox
@@ -68,7 +68,7 @@ You can check if ``node.js`` is installed, in your path, and an appropriate vers
 <https://www.jetbrains.com/idea/>`__ or `Eclipse, <https://www.eclipse.org/>`__ as
 described in the section on :ref:`development environment setup. <dev-env>`
 
-.. _local-sandbox-setup:
+.. _sandbox-setup:
 
 .. rubric:: CDAP Sandbox Download, Installation, and Setup
 

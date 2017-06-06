@@ -54,7 +54,7 @@ CDAP Security is configured in the files ``cdap-site.xml`` and ``cdap-security.x
 These files are shown in :ref:`appendix-cdap-site.xml` and :ref:`appendix-cdap-security.xml`.
 
 File paths shown in this section are either absolute paths or, in the case of :ref:`CDAP Sandbox
-<local-sandbox-index>`, can be relative to the CDAP Sandbox installation directory.
+<sandbox-index>`, can be relative to the CDAP Sandbox installation directory.
 
 
 - :ref:`admin-perimeter-security`
