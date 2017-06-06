@@ -29,8 +29,8 @@ technologies required, and then show an equivalent CDAP command with the resulti
 from the CDAP Command Line Interface. (Output has been reformatted to fit the webpage
 as required.)
 
-To try this yourself, :ref:`download <local-sandbox-index>` a copy of the CDAP Local
-Sandbox, :ref:`install it <local-sandbox-index>`, and then use the resources in its
+To try this yourself, :ref:`download <sandbox-index>` a copy of the CDAP Local
+Sandbox, :ref:`install it <sandbox-index>`, and then use the resources in its
 ``examples`` directory as you follow along.
 
 We'll look at these areas:

@@ -9,7 +9,7 @@
 Binary Zip File
 ===============
 
-.. _local-sandbox-zip-file:
+.. _sandbox-zip-file:
 
 The **zip file** is available on the Downloads section of the Cask Website at
 `<http://cask.co/downloads/#cdap>`__. Click the tab marked "Sandbox" for the *CDAP

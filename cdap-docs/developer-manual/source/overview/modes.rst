@@ -42,7 +42,7 @@ See the instructions for either a :ref:`distribution-specific <installation-inde
 - Uses Apache YARN Containers as the processing abstraction (via `Apache™ Twill® <http://twill.apache.org>`__)
 
 
-.. _local-sandbox-data-application-platform:
+.. _sandbox-data-application-platform:
 
 .. rubric:: CDAP Sandbox
 
@@ -52,7 +52,7 @@ underlying Big Data infrastructure is emulated on top of your local file system.
 is persisted.
 
 See :ref:`Getting Started Developing <getting-started-index>` and :ref:`CDAP Sandbox
-<local-sandbox-index>` for information on how to start and manage your CDAP Sandbox.
+<sandbox-index>` for information on how to start and manage your CDAP Sandbox.
 
 **Features:**
 
