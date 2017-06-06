@@ -109,8 +109,7 @@ the entity's parent. For example, reading from a CDAP dataset will succeed even 
 user does not have specific *READ* privileges on the dataset, but instead has *READ*
 privileges on the namespace in which the dataset exists.
 
-Note: :ref:`CDAP Instance <security-cdap-instance>`is not a part of the authorization hierarchy.
-For example, READ on a CDAP Instance does not give READ on any of the Namespaces or any other entities in the Namespace.
+Note: :ref:`CDAP Instance <security-cdap-instance>`is not a part of the authorization hierarchy. For example, READ on a CDAP Instance does not give READ on any of the Namespaces or any other entities in the Namespace.
 
 Authorization policies for various CDAP operations are listed in these tables:
 
