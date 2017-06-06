@@ -340,7 +340,8 @@ MyPipelineSchedulerCtrl.$inject = ['moment', 'myHelpers', 'CronConverter', '$sco
         onClose: '&',
         startSchedule: '&',
         isDisabled: '@',
-        suspendSchedule: '&'
+        suspendSchedule: '&',
+        showConfig: '='
       },
       bindToController: true,
       controller: 'MyPipelineSchedulerCtrl',

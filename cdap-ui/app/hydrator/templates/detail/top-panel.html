@@ -67,7 +67,7 @@
       <!-- IF ETL BATCH -->
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Deployed', 'Scheduling'].indexOf(TopPanelCtrl.scheduleStatus) !== -1 || TopPanelCtrl.scheduleStatus.error">
-          <div ng-click="TopPanelCtrl.doStartScheduleOrConfig('Schedule')"
+          <div ng-click="TopPanelCtrl.do('Schedule')"
               class="btn scheduler"
               ng-class="{'btn-select': TopPanelCtrl.viewScheduler}"
               ng-disabled="TopPanelCtrl.scheduleStatus === 'Scheduling' || TopPanelCtrl.scheduleStatus.error">
@@ -100,7 +100,7 @@
       </div>
       <div ng-if="TopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Starting', 'Succeeded', 'Failed', 'Stopped', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
-          <div ng-click="TopPanelCtrl.doStartScheduleOrConfig('Run')"
+          <div ng-click="TopPanelCtrl.doRunOrConfig()"
                class="btn"
                ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <div class="btn-container">
@@ -137,7 +137,7 @@
       <div ng-if="[TopPanelCtrl.GLOBALS.etlRealtime, TopPanelCtrl.GLOBALS.etlDataStreams].indexOf(TopPanelCtrl.app.type) !== -1">
         <div ng-if="['Stopped', 'Succeeded', 'Failed', 'Starting', 'Deployed'].indexOf(TopPanelCtrl.appStatus) !== -1">
           <div class="btn"
-            ng-click="TopPanelCtrl.doStartScheduleOrConfig('Run')"
+            ng-click="TopPanelCtrl.doRunOrConfig()"
             ng-disabled="TopPanelCtrl.appStatus === 'Starting'">
             <div class="btn-container">
               <span ng-if="TopPanelCtrl.appStatus !== 'Starting'">
@@ -262,7 +262,8 @@
       on-close="TopPanelCtrl.viewScheduler = false"
       is-disabled="true"
       suspend-schedule="TopPanelCtrl.suspendPipeline()"
-      start-schedule="TopPanelCtrl.schedulePipeline()">
+      start-schedule="TopPanelCtrl.doScheduleOrConfig()"
+      show-config="!TopPanelCtrl.validToStartOrSchedule">
     </my-pipeline-scheduler>
   </div>
   <div class="pipeline-configurations" ng-if="TopPanelCtrl.viewConfig">
