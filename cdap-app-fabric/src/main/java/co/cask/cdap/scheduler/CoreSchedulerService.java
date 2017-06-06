@@ -170,10 +170,11 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
         continue;
       }
+      LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
       completedNamespace = execute(new StoreTxRunnable<String, RuntimeException>() {
         @Override
         public String run(ProgramScheduleStoreDataset store) {
-          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore);
+          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
         }
       }, RuntimeException.class);
     }
