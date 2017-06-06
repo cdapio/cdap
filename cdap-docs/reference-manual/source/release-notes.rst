@@ -70,6 +70,7 @@ Enhanced Data prep
 
 Event Driven Schedules
 -----------------------
+- :cask-issue:`CDAP-7593` - Introduces a new, event-driven scheduling system.
 
 
 Other New Features
@@ -77,14 +78,50 @@ Other New Features
 - :cask-issue:`CDAP-11498` - Added Capability for CDAP Service to Dynamically List Available Artifacts and Dynamically Load Artifacts.
 - :cask-issue:`CDAP-7873` - CDAP 4.2 supports EMR 5.0 - 5.3 added
 - :cask-issue:`CDAP-11486` - Added the ability for Wrangler to handle byte arrays of data for processing binary data.
-- :cask-issue:`CDAP-11417` - Fixed a bug in Parquet and Avro File sinks that would cause them to fail if they received ByteBuffers instead of byte arrays.
 - :cask-issue:`CDAP-11422` - Added api to Spark Streaming source to provide number of streams being used by streaming source
+- :cask-issue:`CDAP-11681` - Users can now upload, view, and use plugins of type 'sparksink' in Studio.
+- :cask-issue:`CDAP-8396` - Added a "call-to-action" when the user had successfully created a new namespace.
+- :cask-issue:`CDAP-8668` - Modified the log viewer to only show ERROR, WARN, and INFO levels of logs by default, instead of all logs as previously.
+
 
 Bug fixes
 ----------
+- :cask-issue:`CDAP-8289` - Fix a bug that the log level was always set to INFO at the root logger
+- :cask-issue:`CDAP-7727` - Fix a bug where extra characters after an artifact version range were being ignored instead of being recognized as invalid.
+- :cask-issue:`CDAP-7884` - Fixed a bug that preview cannot read from datasets in real space.
+- :cask-issue:`CDAP-9422` - Fixed a bug that prevented from adding extra classpath to spark drivers and executors.
+- :cask-issue:`CDAP-9456` - Fixed a bug that impersonated workflow does not create local datasets with correct impersonated user.
+- :cask-issue:`CDAP-11417` - Fixed a bug in Parquet and Avro File sinks that would cause them to fail if they received ByteBuffers instead of byte arrays.
 - :cask-issue:`CDAP-11558` - Fixed a bug that write can only happen in one mongo sink even though multiple mongo sinks are present in the pipeline.
+- :cask-issue:`CDAP-11577` - Fixed a thread leakage bug in Spark (SPARK-20935) after Spark Streaming program completed
+- :cask-issue:`CDAP-11588` - Fixed a bug in TMS that fetching from the payload table raised exception if the fetch has empty result
+- :cask-issue:`CDAP-11643` - Fixed a bug in the Purchase example that could cause purchases to overwrite each other.
+- :cask-issue:`CDAP-11651` - Fixed a bug that prevented from using logback.xml in spark streaming programs.
+- :cask-issue:`CDAP-9284` -  Fixed an issue where pipeline metrics not showing up when there are a lot of nodes
+- :cask-issue:`CDAP-11795` - Fixes an issue with retrieving workflow state if it contains an exception without a message. 
+- :cask-issue:`CDAP-11445` - Fixed an issue with the CDAP Ambari service definition where the "cdap" headless user was not unique to the cluster.
+- :cask-issue:`CDAP-4887` - Fix UpgradeTool to not fail when encountering a non-CDAP table that simply follows CDAP naming convention.
+- :cask-issue:`CDAP-5067` - Fixed an issue where Workflow driver was getting restarted when it runs out of memory, causing the Workflow to be executed from start node again.
+- :cask-issue:`CDAP-7429` - Fixed an issue with Spark detection on HDP 2.5 and above, causing excess noise on the console.
+- :cask-issue:`CDAP-7616` - Fixing the stream container to terminate cleanly, also fixed the issue where master twill jar's were not cleaned up after master shutdown.
+- :cask-issue:`CDAP-8888` - Fixed an issue with the YARN container allocation logic so that the correct container size is used.
+- :cask-issue:`CDAP-8911` - Stream containers did not terminate cleanly and had to be killed by CDAP Master AM due to a non-daemon thread in stream container, this issue has been fixed now and stream containers terminate cleanly. 
+- :cask-issue:`CDAP-8918` - Fixed an issue where redeployment of an application with a deleted schedule would fail.
+- :cask-issue:`CDAP-8961` - Fixed warnings about /opt/cdap/master/artifacts not being a directory in unit tests.
+- :cask-issue:`CDAP-9026` - Fixed an issue due to which cdap entity roles were not cleanup on entity deletion.
+- :cask-issue:`CDAP-9195` - Fixes a flaky test case by disabling speculative execution.
+- :cask-issue:`CDAP-9284` - UI fixed issue where pipeline metrics not showing up when there are a lot of nodes
+- :cask-issue:`CDAP-9378` - Fixed an issue where cdap-security.xml was not written under Ambari unless security.enabled in cdap-site.xml was true.
+- :cask-issue:`CDAP-10475` - Fixed Azure Blob store to work with Avro and Parquet formats
+- :cask-issue:`CDAP-11374` - MASK-NUMBER directive issue with correctly representing mask data with pattern fixed.  
+- :cask-issue:`CDAP-11384` - Fixed AzureBlobStore to work with FileSets.
+- :cask-issue:`CDAP-11557` - Fixed the "value is" filter in the Data Preparation UI
+- :cask-issue:`CDAP-11580` - Fixes a backward-compatibility issue with the scheduler APIs introduced in this release. 
+- :cask-issue:`CDAP-11815` - Fix impersonation when upgrading datasets in UpgradeTool
 
-
+Deprecations
+-------------
+- :cask-issue:`CDAP-8327` - Add property "metrics.processor.queue.size" with default value 20000 to limit the maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory before persisting them. Add property "metrics.processor.max.delay.ms" with default value 3000 milliseconds to specify the maximum delay allowed between the latest metrics timestamp and the time when it is processed. The larger this property is, Metrics Processor gets to sleep more often between fetching each batch of metrics but the delay between metrics emission and processing also increases. Deprecated property "metrics.messaging.fetcher.limit"
 
 
 `Release 4.1.1 <http://docs.cask.co/cdap/4.1.1/index.html>`__
