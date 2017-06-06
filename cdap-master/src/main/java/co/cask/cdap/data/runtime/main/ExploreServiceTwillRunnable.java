@@ -84,6 +84,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
@@ -104,6 +105,9 @@ import javax.annotation.Nullable;
  * It launches a discoverable HTTP servers, that execute SQL statements.
  */
 public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
+
+  public static final String EXPLORE_ARCHIVE_NAME = "explore.archive.zip";
+
   private static final Logger LOG = LoggerFactory.getLogger(ExploreServiceTwillRunnable.class);
   private static final Function<URL, String> URL_TO_PATH = new Function<URL, String>() {
     @Override
@@ -212,9 +216,9 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     }
 
     // Filter out hive jars, only include non-hive jars (e.g. CDAP jars, hbase jars) from the container directory.
-    // Basically those are the jars not directly under the container directory, since we localize hive jars to the
-    // container directory. For non-hive jars, those get expanded by Twill under the $PWD/tmp directory, hence
-    // they won't be directly under $PWD.
+    // Basically those are the jars not under the explore.archive.zip directory, since we localize hive jars to the
+    // explore.archive.zip directory. For non-hive jars, those get expanded by Twill under the application.jar
+    // and twill.jar directories.
     // We also filter out jar with the same name and only taking the one that comes first in the current classloader
     // classpath, other the file localization for MR/Spark app launched by Hive will fail
     // For jars not in container directory, they are from the yarn application classpath (e.g. Hadoop jars), which
@@ -224,19 +228,26 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
 
     // Need to be a LinkedHashMap since we need to maintain the jar order
     Map<String, URL> hiveExtraJars = new LinkedHashMap<>();
-    String userDir = System.getProperty("user.dir");
-    for (URL url : urls) {
-      String path = url.getPath();
-      if (!path.endsWith(".jar") || !path.startsWith(userDir) || new File(path).getParent().equals(userDir)) {
-        // This is hive jar, hence exclude it
-        continue;
+    try {
+      String exploreArchiveDir = new File(EXPLORE_ARCHIVE_NAME).toURI().toURL().getPath();
+      for (URL url : urls) {
+        String path = url.getPath();
+        if (!path.endsWith(".jar")
+            || path.startsWith(exploreArchiveDir)
+            || new File(path).getParentFile().getAbsolutePath().equals(exploreArchiveDir)) {
+          // This is hive jar, hence exclude it
+          continue;
+        }
+        String fileName = getFileName(url);
+        if (!hiveExtraJars.containsKey(fileName)) {
+          hiveExtraJars.put(fileName, url);
+        } else {
+          LOG.debug("Ignore jar with name {} that was added previously with {}", fileName, url);
+        }
       }
-      String fileName = getFileName(url);
-      if (!hiveExtraJars.containsKey(fileName)) {
-        hiveExtraJars.put(fileName, url);
-      } else {
-        LOG.debug("Ignore jar with name {} that was added previously with {}", fileName, url);
-      }
+    } catch (MalformedURLException e) {
+      // This shouldn't happen.
+      throw Throwables.propagate(e);
     }
 
     // Set the Hive aux jars property. This is for localizing jars needed for CDAP
@@ -254,6 +265,8 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
               System.getProperty(BaseHiveExploreService.SPARK_YARN_DIST_FILES));
 
     // Rewrite the yarn-site.xml, mapred-site.xml, hive-site.xml and tez-site.xml for classpath manipulation
+    // The jar files are localized to the container local directory of the task (MR or Spark or Tez),
+    // Hence the extra classpath is based on $PWD/
     Iterable<String> extraClassPath = Iterables.concat(
       Iterables.transform(hiveExtraJars.keySet(), new Function<String, String>() {
         @Override
