@@ -234,8 +234,8 @@ angular.module(PKG.name + '.commons')
         'scalasparkcompute': 'icon-spark',
         'cdcdatabase': 'icon-database',
         'cdchbase': 'icon-hbase',
-        'cdckudu': '.icon-apachekudu',
-        'cdcsqlserver': '.icon-SQL'
+        'cdckudu': 'icon-apachekudu',
+        'cdcsqlserver': 'icon-SQL'
       };
 
       var pluginName = plugin.toLowerCase();
