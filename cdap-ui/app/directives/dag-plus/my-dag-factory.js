@@ -194,7 +194,7 @@ angular.module(PKG.name + '.commons')
         'xmltojson': 'icon-XMLtoJSON',
         'decisiontreepredictor': 'icon-decisiontreeanalytics',
         'decisiontreetrainer': 'icon-DesicionTree',
-        'hashingtffeaturegenerator': 'icon-hashingtffeaturegenerator',
+        'hashingtffeaturegenerator': 'icon-HashingTF',
         'ngramtransform': 'icon-NGram',
         'tokenizer': 'icon-tokenizeranalytics',
         'skipgramfeaturegenerator': 'icon-skipgram',
