@@ -36,24 +36,37 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
-1. **Spark Enhancements:** 
+1. **Spark Enhancements:** Added suppport for Spark 2.x, users will have an option to configure to Spark 1.x or Spark 2.x on the cluster. Enhanced capabilitiy to run interactive Spark code within CDAP framework.
 
-2. **Enhanced Data Prep:**
+2. **Enhanced Data Prep:** Added capabilities in data prep to browse file system (local and HDFS) and databases and use the data read from the steps above for data prep. 
 
-3. **Event Driven Schedules:**
+3. **Event Driven Schedules:** Added capabilities to start CDAP programs based on data availability of partitions of incoming data in HDFS and pose run contraints to intelligentally orchestrate CDAP workflows.
 
 New Features
 ------------
 
 Spark Enhancements
 ------------------
-- :cask-issue:`CDAP-7875` - Added support for Spark2. Currently, CDAP can only support a single version of Spark. In environments where multiple Spark versions exist, CDAP must be configured to use one or the other.
+- :cask-issue:`CDAP-7875` - Added support for Spark 2.x. In environments where multiple Spark versions exist, CDAP must be configured to use one or the other.
 - :cask-issue:`CDAP-11409`- Enable capabilities to run interactive Spark code within CDAP framework.
 - :cask-issue:`CDAP-11410` - Added capabilities to run arbitrary Spark code in data pipelines.
 - :cask-issues:`CDAP-11411` - Enhancements to speed up launching Spark programs.
 
 Enhanced Data prep
 ------------------
+
+- :cask-issue:`CDAP-9290` - Adds File System Browser Component to browser local and HDFS file system from Data prep.
+- :cask-issue:`CDAP-9517` - Adds Data Quality information to Data Preparation table.
+- :cask-issue:`CDAP-9524` - Added point-and-click interactions for applying directives such as parsing, splitting, find and replace, filling null or empty rows, copying and deleting columns in Data Preparation. They can be invoked by using the dropdown menu for each column.
+- :cask-issue:`CDAP-11333` - Added cleanse columns - A column level directive to clean up column names via point and click directive in dataprep UI.
+- :cask-issue:`CDAP-11334` - Added Bulk set: A column level directive as point and click feature to set column names in dataprep UI.
+- :cask-issue:`CDAP-11424` - Added the ability to copy data from dataprep to CDAP dataset via UI.
+- :cask-issue:`CDAP-9556` -  Added macro support for Wrangler directives.
+- :cask-issue:`CDAP-9517` - Adds Data Quality information to Data Preparation table
+- :cask-issue:`CDAP-11341` - STEMMING directive needs String Array or List to be created.
+- :cask-issue:`CDAP-11345` - LOWER, UPPER and TITLECASE will handle cases when the record field does not exist.
+- :cask-issue:`CDAP-11367` - SET COLUMNS directive makes sure the column names are not empty.
+- :cask-issue:`CDAP-11374` - MASK-NUMBER directive issue with correctly representing mask data with pattern fixed.
 
 Event Driven Schedules
 -----------------------
@@ -63,6 +76,14 @@ Other New Features
 ------------------
 - :cask-issue:`CDAP-11498` - Added Capability for CDAP Service to Dynamically List Available Artifacts and Dynamically Load Artifacts.
 - :cask-issue:`CDAP-7873` - CDAP 4.2 supports EMR 5.0 - 5.3 added
+- :cask-issue:`CDAP-11486` - Added the ability for Wrangler to handle byte arrays of data for processing binary data.
+- :cask-issue:`CDAP-11417` - Fixed a bug in Parquet and Avro File sinks that would cause them to fail if they received ByteBuffers instead of byte arrays.
+- :cask-issue:`CDAP-11422` - Added api to Spark Streaming source to provide number of streams being used by streaming source
+
+Bug fixes
+----------
+- :cask-issue:`CDAP-11558` - Fixed a bug that write can only happen in one mongo sink even though multiple mongo sinks are present in the pipeline.
+
 
 
 
