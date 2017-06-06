@@ -229,7 +229,13 @@ angular.module(PKG.name + '.commons')
         'loadtosnowflake': 'icon-snowflake',
         'kudu': 'icon-apachekudu',
         'orientdb': 'icon-OrientDB',
-        'recordsplitter': 'icon-recordsplitter'
+        'recordsplitter': 'icon-recordsplitter',
+        'scalasparkprogram': 'icon-spark',
+        'scalasparkcompute': 'icon-spark',
+        'cdcdatabase': 'icon-database',
+        'cdchbase': 'icon-hbase',
+        'cdckudu': '.icon-apachekudu',
+        'cdcsqlserver': '.icon-SQL'
       };
 
       var pluginName = plugin.toLowerCase();

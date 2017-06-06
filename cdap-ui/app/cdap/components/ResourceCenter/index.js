@@ -44,7 +44,7 @@ export default class ResourceCenter extends Component {
           title: T.translate('features.Resource-Center.HydratorPipeline.label'),
           description: T.translate('features.Resource-Center.HydratorPipeline.description'),
           actionLabel: T.translate('features.Resource-Center.HydratorPipeline.actionbtn0'),
-          iconClassName: 'icon-hydrator',
+          iconClassName: 'icon-pipelines',
           disabled: false,
           actionLink: window.getHydratorUrl({
             stateName: 'hydrator.create',
