@@ -29,6 +29,39 @@ Cask Data Application Platform Release Notes
    :class: faq
    :backlinks: none
    :depth: 2
+   
+`Release 4.2.0 <http://docs.cask.co/cdap/4.2.0/index.html>`__
+=============================================================
+
+Summary
+-------
+
+1. **Spark Enhancements:** 
+
+2. **Enhanced Data Prep:**
+
+3. **Event Driven Schedules:**
+
+New Features
+------------
+
+Spark Enhancements
+------------------
+- :cask-issue:`CDAP-7875` - Added support for Spark2. Currently, CDAP can only support a single version of Spark. In environments where multiple Spark versions exist, CDAP must be configured to use one or the other.
+
+Enhanced Data prep
+------------------
+
+Event Driven Schedules
+-----------------------
+
+
+Other New Features
+------------------
+- :cask-issue:`CDAP-11498` - Added Capability for CDAP Service to Dynamically List Available Artifacts and Dynamically Load Artifacts.
+- :cask-issue:`CDAP-7873` - CDAP 4.2 supports EMR 5.0 - 5.3 added
+
+
 
 `Release 4.1.1 <http://docs.cask.co/cdap/4.1.1/index.html>`__
 =============================================================
