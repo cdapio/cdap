@@ -229,10 +229,13 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
     // Need to be a LinkedHashMap since we need to maintain the jar order
     Map<String, URL> hiveExtraJars = new LinkedHashMap<>();
     try {
+      String userDir = System.getProperty("user.dir");
       String exploreArchiveDir = new File(EXPLORE_ARCHIVE_NAME).toURI().toURL().getPath();
       for (URL url : urls) {
         String path = url.getPath();
+        // Excludes everything not in current container (e.g. from hadoop classpath) or in explore.archive.zip directory
         if (!path.endsWith(".jar")
+            || !path.startsWith(userDir)
             || path.startsWith(exploreArchiveDir)
             || new File(path).getParentFile().getAbsolutePath().equals(exploreArchiveDir)) {
           // This is hive jar, hence exclude it
