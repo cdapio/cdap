@@ -1348,7 +1348,7 @@ with the arguments as a JSON string in the body::
 
   .. highlight:: console
 
-- Using ``curl`` and the :ref:`CDAP Sandbox <local-sandbox-index>`:
+- Using ``curl`` and the :ref:`CDAP Sandbox <sandbox-index>`:
 
   .. tabbed-parsed-literal::
 

@@ -28,7 +28,7 @@ in one of two ways:
 - include all JAR files in the ``lib`` directory of the CDAP Sandbox installation,
   or
 - include the ``cdap-unit-test`` artifact in your Maven test dependencies
-  (as shown in the ``pom.xml`` file of the :ref:`CDAP Sandbox examples <local-sandbox-index>`)::
+  (as shown in the ``pom.xml`` file of the :ref:`CDAP Sandbox examples <sandbox-index>`)::
 
     . . .
     <dependency>

@@ -8,7 +8,7 @@
 Debugging a CDAP Application
 ============================
 
-.. _debugging-local-sandbox:
+.. _debugging-sandbox:
 
 Debugging an Application in CDAP Sandbox
 ========================================

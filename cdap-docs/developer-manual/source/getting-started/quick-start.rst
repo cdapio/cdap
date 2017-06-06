@@ -14,7 +14,7 @@ running of an application.
 Download, Install and Start CDAP
 ================================
 If you haven't already, download, install and start CDAP
-:doc:`following these instructions <local-sandbox/index>`.
+:doc:`following these instructions <sandbox/index>`.
 
 Your First CDAP Application
 ===========================

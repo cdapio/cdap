@@ -83,7 +83,7 @@ Running WISE
 ============
 Building and running WISE v\ |cdap-apps-version| is straightforward. We’ll assume that you have
 already downloaded, installed, and have started an instance of CDAP, as described in the
-:ref:`CDAP Sandbox <local-sandbox-index>`.
+:ref:`CDAP Sandbox <sandbox-index>`.
 
 Change to ``examples`` directory of the directory where you have installed the
 CDAP Sandbox, and download the WISE source code:

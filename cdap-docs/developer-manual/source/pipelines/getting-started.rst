@@ -24,7 +24,7 @@ in the CDAP UI, such as entering events into a stream and exploring a dataset:
 Install CDAP
 ============
 
-- If you haven't already, :ref:`download and install the CDAP Sandbox <local-sandbox-index>`.
+- If you haven't already, :ref:`download and install the CDAP Sandbox <sandbox-index>`.
 - :ref:`Start CDAP <start-stop-cdap>`, open up a web browser, and go to the :cdap-ui:`CDAP UI <>`.
 
 .. _cdap-pipelines-getting-started-start:
