@@ -20,7 +20,7 @@
 
 # CDAP config
 # The git branch to clone
-CDAP_BRANCH='release/4.1'
+CDAP_BRANCH='release/4.2'
 # Optional tag to checkout - All released versions of this script should set this
 # like this: CDAP_TAG=${CDAP_TAG:+tag} as this allows setting tag to empty/null
 # otherwise, it should be CDAP_TAG=''
