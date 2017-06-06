@@ -32,8 +32,8 @@ angular.module(PKG.name+'.filters').filter('myRemoveCamelcase', function() {
       return 'CDC HBase';
     }
 
-    if (input === 'CTSQLServer') {
-      return 'CT SQL Server';
+    if (input === 'ChangeTrackingSQLServer') {
+      return 'Change Tracking SQLServer';
     }
 
     return input.replace(/([a-z])([A-Z])/g, '$1 $2')

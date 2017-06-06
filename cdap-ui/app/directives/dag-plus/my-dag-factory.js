@@ -235,7 +235,7 @@ angular.module(PKG.name + '.commons')
         'cdcdatabase': 'icon-database',
         'cdchbase': 'icon-hbase',
         'cdckudu': 'icon-apachekudu',
-        'ctsqlserver': 'icon-SQL'
+        'changetrackingsqlserver': 'icon-database'
       };
 
       var pluginName = plugin.toLowerCase();
