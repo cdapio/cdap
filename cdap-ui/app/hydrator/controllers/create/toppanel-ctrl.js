@@ -283,77 +283,90 @@ class HydratorPlusPlusTopPanelCtrl {
   fetchMacros() {
     let newMacrosMap = {};
     let nodes = this.HydratorPlusPlusConfigStore.getStages();
-
+    let listOfPromises = [];
     for (let i = 0; i < nodes.length; i++) {
-      let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
-      let backendProperties = this.myHelpers.objectQuery(nodes[i], '_backendProperties');
-      for (let prop in properties) {
-        if (properties.hasOwnProperty(prop) &&
-              backendProperties &&
-              backendProperties.hasOwnProperty(prop) &&
-              backendProperties[prop].macroSupported) {
-          let macroString = properties[prop];
-          /* Can handle:
-            - Simple nested macro (e.g. '${function(${macro1})}')
-            - Multiple macros (e.g. '${macro1}${macro2}')
-            - And combined (e,g, '${function(${macro1})}${macro2}')
-            More complicated cases will be handled by the backend
-          */
-          if (macroString.indexOf('${') !== -1 &&
-            macroString.indexOf('}') !== -1
-          ) {
-            let macroKeys = [];
-            let currentMacroDepth = 0;
-            let maxMacroDepth = 0;
-            let lastClosingBraceIndex = 0;
-            for (let i = macroString.length - 1; i >=1; i--) {
-              let macroChar = macroString[i];
-              if (macroChar === '}') {
-                lastClosingBraceIndex = i;
-                currentMacroDepth += 1;
-              }
-              if (macroChar === '{' && macroString[i-1] === '$') {
-                currentMacroDepth -= 1;
-                if (currentMacroDepth >= maxMacroDepth) {
-                  maxMacroDepth = currentMacroDepth;
-                  let macroKey = macroString.substring(i + 1, lastClosingBraceIndex);
-                  macroKeys.push(macroKey);
+      let node = nodes[i];
+      let backendProperties = this.myHelpers.objectQuery(node, '_backendProperties');
+      if (angular.isObject(backendProperties) && Object.keys(backendProperties).length) {
+        listOfPromises.push(this.$q.when(node));
+      } else {
+        listOfPromises.push(this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, this.state.artifact.name));
+      }
+    }
+
+    this.$q.all(listOfPromises)
+    .then(() => {
+      for (let i = 0; i < nodes.length; i++) {
+        let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');
+        let backendProperties = this.myHelpers.objectQuery(nodes[i], '_backendProperties');
+        for (let prop in properties) {
+          if (properties.hasOwnProperty(prop) &&
+                backendProperties &&
+                backendProperties.hasOwnProperty(prop) &&
+                backendProperties[prop].macroSupported) {
+            let macroString = properties[prop];
+            /* Can handle:
+              - Simple nested macro (e.g. '${function(${macro1})}')
+              - Multiple macros (e.g. '${macro1}${macro2}')
+              - And combined (e,g, '${function(${macro1})}${macro2}')
+              More complicated cases will be handled by the backend
+            */
+            if (macroString.indexOf('${') !== -1 &&
+              macroString.indexOf('}') !== -1
+            ) {
+              let macroKeys = [];
+              let currentMacroDepth = 0;
+              let maxMacroDepth = 0;
+              let lastClosingBraceIndex = 0;
+              for (let i = macroString.length - 1; i >=1; i--) {
+                let macroChar = macroString[i];
+                if (macroChar === '}') {
+                  lastClosingBraceIndex = i;
+                  currentMacroDepth += 1;
+                }
+                if (macroChar === '{' && macroString[i-1] === '$') {
+                  currentMacroDepth -= 1;
+                  if (currentMacroDepth >= maxMacroDepth) {
+                    maxMacroDepth = currentMacroDepth;
+                    let macroKey = macroString.substring(i + 1, lastClosingBraceIndex);
+                    macroKeys.push(macroKey);
+                  }
                 }
               }
+              macroKeys.forEach((key) => {
+                newMacrosMap[key] = '';
+              });
             }
-            macroKeys.forEach((key) => {
-              newMacrosMap[key] = '';
-            });
           }
         }
       }
-    }
 
-    if (Object.keys(newMacrosMap).length > 0) {
-      /*
-        Will resolve macros from preferences, if the new macro object is different than
-        the one we already have (this.macrosMap). We have a new macro object when the
-        user adds or removes macro(s) from the config of a stage.
-      */
+      if (Object.keys(newMacrosMap).length > 0) {
+        /*
+          Will resolve macros from preferences, if the new macro object is different than
+          the one we already have (this.macrosMap). We have a new macro object when the
+          user adds or removes macro(s) from the config of a stage.
+        */
 
-      let differentMacroKeys = false;
-      if (Object.keys(newMacrosMap).length !== Object.keys(this.macrosMap).length) {
-        differentMacroKeys = true;
+        let differentMacroKeys = false;
+        if (Object.keys(newMacrosMap).length !== Object.keys(this.macrosMap).length) {
+          differentMacroKeys = true;
+        } else {
+          for (let macroKey in newMacrosMap) {
+            if (newMacrosMap.hasOwnProperty(macroKey) && !this.macrosMap.hasOwnProperty(macroKey)) {
+              differentMacroKeys = true;
+              break;
+            }
+          }
+        }
+
+        if (differentMacroKeys) {
+          this.getRuntimeArguments(newMacrosMap);
+        }
       } else {
-        for (let macroKey in newMacrosMap) {
-          if (newMacrosMap.hasOwnProperty(macroKey) && !this.macrosMap.hasOwnProperty(macroKey)) {
-            differentMacroKeys = true;
-            break;
-          }
-        }
-      }
-
-      if (differentMacroKeys) {
         this.getRuntimeArguments(newMacrosMap);
       }
-    } else {
-      this.getRuntimeArguments(newMacrosMap);
-    }
+    });
   }
 
   getRuntimeArguments(newMacrosMap = this.macrosMap) {
