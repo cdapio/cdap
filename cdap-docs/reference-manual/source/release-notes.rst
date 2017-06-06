@@ -48,6 +48,9 @@ New Features
 Spark Enhancements
 ------------------
 - :cask-issue:`CDAP-7875` - Added support for Spark2. Currently, CDAP can only support a single version of Spark. In environments where multiple Spark versions exist, CDAP must be configured to use one or the other.
+- :cask-issue:`CDAP-11409`- Enable capabilities to run interactive Spark code within CDAP framework.
+- :cask-issue:`CDAP-11410` - Added capabilities to run arbitrary Spark code in data pipelines.
+- :cask-issues:`CDAP-11411` - Enhancements to speed up launching Spark programs.
 
 Enhanced Data prep
 ------------------
