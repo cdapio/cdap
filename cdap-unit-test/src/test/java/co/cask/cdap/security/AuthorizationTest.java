@@ -483,6 +483,7 @@ public class AuthorizationTest extends TestBase {
     // delete should fail
     try {
       appManager.delete();
+      Assert.fail("Delete should have failed");
     } catch (Exception expected) {
       // expected
     }

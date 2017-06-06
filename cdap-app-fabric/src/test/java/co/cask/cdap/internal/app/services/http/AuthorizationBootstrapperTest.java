@@ -86,7 +86,7 @@ public class AuthorizationBootstrapperTest {
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
   private static final ArtifactId SYSTEM_ARTIFACT = NamespaceId.SYSTEM.artifact("system-artifact", "1.0.0");
-  private static final Principal ADMIN_USER = new Principal("alice", Principal.PrincipalType.USER);
+  private static final Principal ADMIN_GROUP = new Principal("alice", Principal.PrincipalType.GROUP);
 
   private static AuthorizationBootstrapper authorizationBootstrapper;
   private static TransactionManager txManager;
@@ -112,7 +112,7 @@ public class AuthorizationBootstrapperTest {
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
     // make Alice an admin user, so she can create namespaces
-    cConf.set(Constants.Security.Authorization.ADMIN_USERS, ADMIN_USER.getName());
+    cConf.set(Constants.Security.Authorization.ADMIN_GROUPS, ADMIN_GROUP.getName());
     instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
     // setup a system artifact
     File systemArtifactsDir = TMP_FOLDER.newFolder();
@@ -139,7 +139,7 @@ public class AuthorizationBootstrapperTest {
     );
     // initial state: no privileges for system or admin users
     Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
-    Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
+    Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_GROUP);
     Assert.assertFalse(systemUserFilter.apply(instanceId));
     Assert.assertFalse(systemUserFilter.apply(NamespaceId.SYSTEM));
     Assert.assertFalse(adminUserFilter.apply(NamespaceId.DEFAULT));
@@ -150,7 +150,7 @@ public class AuthorizationBootstrapperTest {
       @Override
       public Boolean call() throws Exception {
         Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
-        Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
+        Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_GROUP);
         return systemUserFilter.apply(instanceId) && systemUserFilter.apply(NamespaceId.SYSTEM) &&
           adminUserFilter.apply(NamespaceId.DEFAULT);
       }
@@ -197,7 +197,8 @@ public class AuthorizationBootstrapperTest {
     Assert.assertNotNull(systemDataset);
     // as part of bootstrapping, admin users were also granted admin privileges on the CDAP instance, so they can
     // create namespaces
-    SecurityRequestContext.setUserId(ADMIN_USER.getName());
+    SecurityRequestContext.setUserId(ADMIN_GROUP.getName());
+    SecurityRequestContext.setPrincipalType(Principal.PrincipalType.GROUP);
     namespaceAdmin.create(new NamespaceMeta.Builder().setName("success").build());
     SecurityRequestContext.setUserId("bob");
     try {

@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
+  private static final ThreadLocal<Principal.PrincipalType> principalType = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
   }
@@ -64,9 +65,26 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * @return the principal type set on the current thread or PrincipalType.USER if not set
+   */
+  public static Principal.PrincipalType getPrincipalType() {
+    Principal.PrincipalType type = principalType.get();
+    return type == null ? Principal.PrincipalType.USER : type;
+  }
+
+  /**
+   * Set the principalType on the current thread.
+   *
+   * @param type principalType to be set
+   */
+  public static void setPrincipalType(Principal.PrincipalType type) {
+    principalType.set(type);
+  }
+
+  /**
    * Returns a {@link Principal} for the user set on the current thread
    */
   public static Principal toPrincipal() {
-    return new Principal(userId.get(), Principal.PrincipalType.USER);
+    return new Principal(getUserId(), getPrincipalType());
   }
 }

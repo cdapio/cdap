@@ -46,7 +46,7 @@ public class AuthorizationBootstrapper {
   private final boolean enabled;
   private final PrivilegesManager privilegesManager;
   private final Principal systemUser;
-  private final Set<Principal> adminUsers;
+  private final Set<Principal> adminGroups;
   private final InstanceId instanceId;
 
   @Inject
@@ -60,9 +60,9 @@ public class AuthorizationBootstrapper {
       throw Throwables.propagate(e);
     }
     this.systemUser = new Principal(currentUser, Principal.PrincipalType.USER);
-    this.adminUsers = getAdminUsers(cConf);
-    if (enabled && adminUsers.isEmpty()) {
-      LOG.info("Admin users specified by {} is empty.", Constants.Security.Authorization.ADMIN_USERS);
+    this.adminGroups = getAdminGroups(cConf);
+    if (enabled && adminGroups.isEmpty()) {
+      LOG.info("Admin users specified by {} is empty.", Constants.Security.Authorization.ADMIN_GROUPS);
     }
     this.instanceId = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
     this.privilegesManager = privilegesManager;
@@ -72,33 +72,33 @@ public class AuthorizationBootstrapper {
     if (!enabled) {
       return;
     }
-    LOG.debug("Bootstrapping authorization for CDAP instance: {}, system users: {} and admin users: {}",
-              instanceId, systemUser, adminUsers);
+    LOG.debug("Bootstrapping authorization for CDAP instance: {}, system users: {} and admin groups: {}",
+              instanceId, systemUser, adminGroups);
     try {
       // grant admin on instance, so the system user can create default (and other) namespaces
       privilegesManager.grant(instanceId, systemUser, Collections.singleton(Action.ADMIN));
       // grant ALL on the system namespace, so the system user can create and access tables in the system namespace
       // also required by SystemArtifactsLoader to add system artifacts
       privilegesManager.grant(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      for (Principal adminUser : adminUsers) {
-        // grant admin privileges on the CDAP instance to the admin users, so they can create namespaces
-        privilegesManager.grant(instanceId, adminUser, Collections.singleton(Action.ADMIN));
+      for (Principal adminGroup : adminGroups) {
+        // grant admin privileges on the CDAP instance to the admin groups, so they can create namespaces
+        privilegesManager.grant(instanceId, adminGroup, Collections.singleton(Action.ADMIN));
         // also grant admin on the default namespace, so admins can also manage privileges on them
-        privilegesManager.grant(NamespaceId.DEFAULT, adminUser, Collections.singleton(Action.ADMIN));
+        privilegesManager.grant(NamespaceId.DEFAULT, adminGroup, Collections.singleton(Action.ADMIN));
       }
-      LOG.info("Successfully bootstrapped authorization for CDAP instance {}, system user {} and admin users: {}",
-               instanceId, systemUser, adminUsers);
+      LOG.info("Successfully bootstrapped authorization for CDAP instance {}, system user {} and admin groups: {}",
+               instanceId, systemUser, adminGroups);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
   }
 
-  private Set<Principal> getAdminUsers(CConfiguration cConf) {
+  private Set<Principal> getAdminGroups(CConfiguration cConf) {
     Set<Principal> admins = new HashSet<>();
-    String adminUsers = cConf.get(Constants.Security.Authorization.ADMIN_USERS);
-    if (adminUsers != null) {
-      for (String adminUser : Splitter.on(",").omitEmptyStrings().trimResults().split(adminUsers)) {
-        admins.add(new Principal(adminUser, Principal.PrincipalType.USER));
+    String adminGroups = cConf.get(Constants.Security.Authorization.ADMIN_GROUPS);
+    if (adminGroups != null) {
+      for (String adminGroup : Splitter.on(",").omitEmptyStrings().trimResults().split(adminGroups)) {
+        admins.add(new Principal(adminGroup, Principal.PrincipalType.GROUP));
       }
     }
     return admins;
