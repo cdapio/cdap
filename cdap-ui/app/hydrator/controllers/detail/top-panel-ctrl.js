@@ -363,21 +363,30 @@ class HydratorDetailTopPanelController {
           );
     }
   }
-  doStartScheduleOrConfig(action) {
+  doRunOrConfig() {
     if (this.validToStartOrSchedule) {
-      this.do(action);
+      this.do('Run');
     } else {
-      this.pipelineAction = action;
+      this.pipelineAction = 'Run';
+      this.do('Config');
+    }
+  }
+  doScheduleOrConfig() {
+    if (this.validToStartOrSchedule) {
+      this.schedulePipeline();
+    } else {
+      this.viewScheduler = false;
+      this.pipelineAction = 'Start Schedule';
       this.do('Config');
     }
   }
   startOrSchedulePipeline() {
     if (this.pipelineAction === 'Run') {
       this.startPipeline();
-    } else if (this.pipelineAction === 'Schedule') {
+    } else if (this.pipelineAction === 'Start Schedule') {
       this.viewConfig = false;
       this.pipelineAction = 'Run';
-      this.viewScheduler = true;
+      this.schedulePipeline();
     }
   }
   startPipeline() {

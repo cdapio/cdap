@@ -14,13 +14,16 @@
  * the License.
  */
 
+@import "../../styles/variables.less";
+
 @text-color: #333333;
 @border-color: #cccccc;
 @modeless-bg-color: lightgray;
 @modeless-header-bg-color: #f5f5f5;
 @modeless-width: 730px;
-@modeless-height: 445px;
+@modeless-height: 455px;
 @regular-font: 14px;
+@secondary-btn-color: @brand-primary;
 
 body.theme-cdap {
   &.state-hydrator {
@@ -75,7 +78,7 @@ body.theme-cdap {
 
         .schedule-content {
           width: 100%;
-          margin: 16px 45px 40px 45px;
+          margin: 16px 45px 30px 45px;
           font-size: @regular-font;
           position: relative;
 
@@ -95,10 +98,10 @@ body.theme-cdap {
           }
 
           fieldset {
-            /* 50px: height from bottom of buttons to horizontal line */
-            height: ~"calc(100% - 50px)";
-            height: ~"-moz-calc(100% - 50px)";
-            height: ~"-webkit-calc(100% - 50px)";
+            /* 70px: height from bottom of buttons to horizontal line */
+            height: ~"calc(100% - 70px)";
+            height: ~"-moz-calc(100% - 70px)";
+            height: ~"-webkit-calc(100% - 70px)";
 
             .schedule-types {
               display: flex;
@@ -193,8 +196,21 @@ body.theme-cdap {
             position: absolute;
             bottom: 0;
 
+            .schedule-notes {
+              padding-bottom: 7px;
+
+              .note-label {
+                font-weight: bold;
+              }
+            }
+
             .btn {
               font-size: @regular-font;
+
+              &.btn-secondary {
+                color: @secondary-btn-color;
+                margin-left: 16px;
+              }
             }
           }
         }

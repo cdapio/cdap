@@ -365,6 +365,11 @@
       </fieldset>
       <div class="schedule-navigation">
         <div ng-if="SchedulerCtrl.scheduleStatus === 'SUSPENDED'">
+          <div class="schedule-notes"
+                ng-if="SchedulerCtrl._isDisabled && SchedulerCtrl.showConfig">
+            <span class="note-label">Please note:</span>
+            <span>you cannot start the pipeline schedule until you set the Runtime Arguments</span>
+          </div>
           <button
             ng-if="SchedulerCtrl._isDisabled"
             class="btn btn-primary start-schedule-btn"
@@ -374,8 +379,8 @@
             <span ng-if="SchedulerCtrl.isScheduleChange">Save and Start Schedule</span>
           </button>
           <button
-            ng-if="SchedulerCtrl._isDisabled && SchedulerCtrl.isScheduleChange"
-            class="btn btn-link start-schedule-btn"
+            ng-if="SchedulerCtrl._isDisabled"
+            class="btn btn-secondary start-schedule-btn"
             ng-click="SchedulerCtrl.saveSchedule()"
             ng-disabled="SchedulerCtrl.savingSchedule">
             <span>Save Schedule</span>

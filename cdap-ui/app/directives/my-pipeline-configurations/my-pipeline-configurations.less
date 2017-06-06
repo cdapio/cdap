@@ -28,6 +28,7 @@
 @modeless-height: 496px;
 @side-panel-width: 170px;
 @regular-font: 14px;
+@secondary-btn-color: @brand-primary;
 
 body.theme-cdap {
   &.state-hydrator {
@@ -356,6 +357,10 @@ body.theme-cdap {
 
             .btn {
               font-size: @regular-font;
+
+              &.btn-secondary {
+                color: @secondary-btn-color;
+              }
 
               &.apply-run {
                 margin-right: 16px;
