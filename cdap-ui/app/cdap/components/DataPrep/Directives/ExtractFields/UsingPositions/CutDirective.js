@@ -39,6 +39,7 @@ export default class CutDirective extends Component {
       columnDimension: {},
       textSelectionRange: {start: null, end: null, index: null},
       showPopover: false,
+      showInitialTooltip: true
     };
 
     this.newColName = null;
@@ -48,6 +49,7 @@ export default class CutDirective extends Component {
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleColNameChange = this.handleColNameChange.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
+    this.toggleInitialTooltip = this.toggleInitialTooltip.bind(this);
   }
   componentWillMount() {
     if (this.props.columns.length) {
@@ -120,6 +122,11 @@ export default class CutDirective extends Component {
       this.newColName = null;
     }
   }
+  toggleInitialTooltip() {
+    this.setState({
+      showInitialTooltip: !this.state.showInitialTooltip
+    });
+  }
   mouseDownHandler() {
     this.textSelection = true;
     this.togglePopover();
@@ -135,6 +142,7 @@ export default class CutDirective extends Component {
       this.textSelection = false;
       this.setState({
         showPopover: true,
+        toggleInitialTooltip: false,
         textSelectionRange: {
           start: startRange,
           end: endRange,
@@ -192,6 +200,58 @@ export default class CutDirective extends Component {
               value={this.newColName}
             />
           </div>
+          <div
+            className={`btn btn-primary ${CELLHIGHLIGHTCLASSNAME}`}
+            onClick={this.applyDirective}
+          >
+            {T.translate('features.DataPrep.Directives.apply')}
+          </div>
+          <div
+            className={`btn ${CELLHIGHLIGHTCLASSNAME}`}
+            onClick={this.props.onClose}
+          >
+            {T.translate(`${PREFIX}.cancelBtnLabel`)}
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  renderInitialTooltip() {
+    if (!this.state.showInitialTooltip) {
+      return null;
+    }
+    let tetherConfig = {
+      classPrefix: POPOVERTHETHERCLASSNAME,
+      attachment: 'top right',
+      targetAttachment: 'bottom left',
+      constraints: [
+        {
+          to: 'scrollParent',
+          attachment: 'together'
+        }
+      ]
+    };
+    return (
+      <Popover
+        placement="bottom left"
+        className={`cut-directive-popover ${POPOVERTHETHERCLASSNAME}-element`}
+        isOpen={this.state.showInitialTooltip}
+        target={`highlighted-header`}
+        toggle={this.toggleInitialTooltip}
+        tether={tetherConfig}
+        tetherRef={(ref) => this.tetherRef = ref}
+      >
+        <PopoverTitle className={CELLHIGHLIGHTCLASSNAME}>{T.translate(`${PREFIX}.popoverTitle`)}</PopoverTitle>
+        <PopoverContent
+          className={CELLHIGHLIGHTCLASSNAME}
+          onClick={this.preventPropagation}
+        >
+          <h3 className={CELLHIGHLIGHTCLASSNAME}> Extract Using Position </h3>
+          <p>
+            <strong>TIP: </strong>
+            Click and drag to select the characters you want
+            to extract in any row to a new column
+          </p>
           <div
             className={`btn btn-primary ${CELLHIGHLIGHTCLASSNAME}`}
             onClick={this.applyDirective}
@@ -325,6 +385,7 @@ export default class CutDirective extends Component {
           </tbody>
         </table>
         {this.renderPopover()}
+        {this.renderInitialTooltip()}
       </div>
     );
   }
