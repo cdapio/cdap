@@ -122,14 +122,11 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     stageSpecs = new HashMap<>();
     useSpark = engine == Engine.SPARK;
-    if (!useSpark) {
-      for (StageSpec stageSpec : spec.getStages()) {
-        stageSpecs.put(stageSpec.getName(), stageSpec);
-        String pluginType = stageSpec.getPlugin().getType();
-        if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
-          useSpark = true;
-          break;
-        }
+    for (StageSpec stageSpec : spec.getStages()) {
+      stageSpecs.put(stageSpec.getName(), stageSpec);
+      String pluginType = stageSpec.getPlugin().getType();
+      if (SparkCompute.PLUGIN_TYPE.equals(pluginType) || SparkSink.PLUGIN_TYPE.equals(pluginType)) {
+        useSpark = true;
       }
     }
 
