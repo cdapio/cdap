@@ -39,6 +39,33 @@ public class InstanceURIParser {
     this.cConf = cConf;
   }
 
+  public ConnectionConfig nonCLIParse(String uriString) {
+    if (!uriString.contains("://")) {
+      uriString = DEFAULT_PROTOCOL + "://" + uriString;
+    }
+
+    URI uri = URI.create(uriString);
+    NamespaceId namespace =
+      (uri.getPath() == null || uri.getPath().isEmpty() || "/".equals(uri.getPath())) ?
+        NamespaceId.DEFAULT : new NamespaceId(uri.getPath().substring(1));
+    String hostname = uri.getHost();
+    boolean sslEnabled = "https".equals(uri.getScheme());
+    int port = uri.getPort();
+
+    if (port == -1) {
+      port = sslEnabled ?
+        cConf.getInt(Constants.Router.ROUTER_SSL_PORT) :
+        cConf.getInt(Constants.Router.ROUTER_PORT);
+    }
+
+    ConnectionConfig config = ConnectionConfig.builder()
+      .setHostname(hostname)
+      .setPort(port)
+      .setSSLEnabled(sslEnabled)
+      .build();
+    return config;
+  }
+
   public CLIConnectionConfig parse(String uriString) {
     if (!uriString.contains("://")) {
       uriString = DEFAULT_PROTOCOL + "://" + uriString;
