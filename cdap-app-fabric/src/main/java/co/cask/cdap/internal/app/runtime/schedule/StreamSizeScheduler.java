@@ -358,6 +358,18 @@ public class StreamSizeScheduler implements Scheduler {
     }
   }
 
+  @Override
+  public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
+                                             String scheduleName)
+    throws SchedulerException, ScheduleNotFoundException {
+    StreamSubscriber subscriber = scheduleSubscribers.get(AbstractSchedulerService.scheduleIdFor(program, programType,
+                                                                                                 scheduleName));
+    if (subscriber != null) {
+      return subscriber.scheduleTaskState(program, programType, scheduleName);
+    }
+    throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
+  }
+
   /**
    * Create or retrieve the {@link StreamSubscriber} object corresponding to the Stream contained in the
    * {@code streamSizeSchedule}.
@@ -700,6 +712,20 @@ public class StreamSizeScheduler implements Scheduler {
       }
     }
 
+    /**
+     * Get the status a scheduling task that is based on the data received by the stream referenced by {@code this}
+     * object.
+     */
+    public ProgramScheduleStatus scheduleTaskState(ProgramId programId, SchedulableProgramType programType,
+                                                   String scheduleName) throws ScheduleNotFoundException {
+      String scheduleIdString = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
+      StreamSizeScheduleTask task = scheduleTasks.get(scheduleIdString);
+      if (task == null) {
+        throw new ScheduleNotFoundException(programId.getParent().schedule(scheduleName));
+      }
+      return task.isActive() ? ProgramScheduleStatus.SCHEDULED : ProgramScheduleStatus.SUSPENDED;
+    }
+
     public Id.Stream getStreamId() {
       return streamId;
     }
@@ -911,7 +937,6 @@ public class StreamSizeScheduler implements Scheduler {
       currentSchedule = streamSizeSchedule;
       basePollSize = pollingInfo.getSize();
       basePollTs = pollingInfo.getTimestamp();
-
 
       final ScheduleTaskPublisher taskPublisher = new ScheduleTaskPublisher(messagingService, topicId);
       try {
