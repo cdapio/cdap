@@ -222,10 +222,10 @@
           store="BatchPipelineConfigCtrl.store">
         </my-post-run-actions>
       </div>
+
       <fieldset class="configuration-content-container"
                 ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'"
                 ng-disabled="BatchPipelineConfigCtrl.isDisabled">
-
         <div class="configuration-step-content engine-config"
               ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
           <div class="step-content-heading">
@@ -300,48 +300,60 @@
             </span>
           </div>
         </div>
-
       </fieldset>
 
       <div class="configuration-step-navigation">
-        <div ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
-          <div class="apply-run-container">
-            <button
-              class="btn btn-primary apply-run"
-              ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline || BatchPipelineConfigCtrl.updatingPipeline"
-              ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
-              <span>Save &amp; {{ BatchPipelineConfigCtrl.pipelineAction }}</span>
-              <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
-            </button>
-            <button
-              class="btn btn-secondary"
-              ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
-              ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
-              ng-click="BatchPipelineConfigCtrl.applyAndClose()">
-              Save
-            </button>
-            <button
-              class="btn btn-secondary"
-              ng-if="BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
-              ng-click="BatchPipelineConfigCtrl.updatePipeline()"
-              ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline || BatchPipelineConfigCtrl.startingPipeline"
-            >
-             <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
-             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">Saving</span>
-             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
-               <span class="fa fa-spinner fa-spin"></span>
-             </span>
-            </button>
-            <span class="num-runtime-args"
-                  ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
-                {{ BatchPipelineConfigCtrl.runtimeArguments.pairs.length }}
-              <ng-pluralize
-                count="BatchPipelineConfigCtrl.runtimeArguments.pairs.length"
-                when="{'one': 'runtime argument',
-                      'other': 'runtime arguments'}">
-              </ng-pluralize>
-            </span>
-          </div>
+        <div class="apply-run-container"
+          ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+          <button
+            class="btn btn-primary apply-run"
+            ng-if="BatchPipelineConfigCtrl.isDisabled"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline || BatchPipelineConfigCtrl.updatingPipeline"
+            ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
+            <span>Save &amp; {{ BatchPipelineConfigCtrl.pipelineAction }}</span>
+            <span ng-if="BatchPipelineConfigCtrl.startingPipeline" class="fa fa-spinner fa-spin"></span>
+          </button>
+          <button
+            class="btn btn-primary apply-run"
+            ng-if="BatchPipelineConfigCtrl.showPreviewConfig"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
+            <span>Save &amp; Run</span>
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
+            ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline || BatchPipelineConfigCtrl.startingPipeline"
+            ng-click="BatchPipelineConfigCtrl.updatePipeline()">
+            <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
+            <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">Saving</span>
+            <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
+              <span class="fa fa-spinner fa-spin"></span>
+           </span>
+          </button>
+          <button
+            class="btn btn-secondary"
+            ng-if="BatchPipelineConfigCtrl.showPreviewConfig"
+            ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.applyAndClose()">
+            Save
+          </button>
+          <span class="num-runtime-args"
+                ng-if="BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'">
+              {{ BatchPipelineConfigCtrl.runtimeArguments.pairs.length }}
+            <ng-pluralize
+              count="BatchPipelineConfigCtrl.runtimeArguments.pairs.length"
+              when="{'one': 'runtime argument',
+                    'other': 'runtime arguments'}">
+            </ng-pluralize>
+          </span>
         </div>
         <div ng-if="!BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
           <button
