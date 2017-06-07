@@ -156,6 +156,9 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         } catch (SchedulerException e) {
           LOG.warn("Scheduler exception happens when getting status of '{}' during schedule migration. Skipped.",
                    schedule.getScheduleId(), e);
+        } catch (Exception e) {
+          LOG.error("Unexpected exception happens when migrating schedule '{}'. Skipped.",
+                    schedule.getScheduleId(), e);
         }
       }
     }
