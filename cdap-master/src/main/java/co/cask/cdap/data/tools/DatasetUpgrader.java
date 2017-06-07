@@ -101,7 +101,9 @@ public class DatasetUpgrader extends AbstractUpgrader {
     ExecutorService executor =
       Executors.newFixedThreadPool(numThreads,
                                    new ThreadFactoryBuilder()
-                                     .setNameFormat("hbase-cmd-executor-%d")
+                                     // all the threads should be created as 'cdap'
+                                     .setThreadFactory(Executors.privilegedThreadFactory())
+                                     .setNameFormat("dataset-upgrader-%d")
                                      .setDaemon(true)
                                      .build());
     try {
