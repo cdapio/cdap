@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
         namespace: '@',
         store: '=',
         actionCreator: '=',
-        isDisabled: '=',
+        isDeployed: '=',
         showPreviewConfig: '='
       },
       bindToController: true,

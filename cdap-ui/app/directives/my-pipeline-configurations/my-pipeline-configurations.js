@@ -30,7 +30,7 @@ angular.module(PKG.name + '.commons')
         store: '=',
         actionCreator: '=',
         templateType: '@',
-        isDisabled: '=',
+        isDeployed: '=',
         showPreviewConfig: '='
       },
       replace: false,
