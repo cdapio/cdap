@@ -140,7 +140,7 @@ public class ContextManager {
       new LocationRuntimeModule().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules("cdap.explore.ContextManager").getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),

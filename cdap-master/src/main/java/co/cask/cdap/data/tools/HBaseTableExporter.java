@@ -115,7 +115,7 @@ public class HBaseTableExporter {
       new KafkaClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataFabricModules().getDistributedModules(),
+      new DataFabricModules(HBaseTableExporter.class.getName()).getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MessagingClientModule(),
       new MetricsClientRuntimeModule().getDistributedModules(),

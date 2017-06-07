@@ -70,7 +70,8 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
-        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)
+      ),
       RetryStrategies.retryOnConflict(20, 100)
     );
   }
@@ -109,7 +110,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
         @Override
         public NotificationFeedInfo call(DatasetContext context) throws Exception {
           MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespace(), feed.getCategory(), feed.getFeed());
-          return  getMetadataStore(context).getFirst(feedKey, NotificationFeedInfo.class);
+          return getMetadataStore(context).getFirst(feedKey, NotificationFeedInfo.class);
         }
       });
     } catch (TransactionFailureException e) {

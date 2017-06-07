@@ -23,10 +23,19 @@ import com.google.inject.Module;
  * fabric modes.
  */
 public class DataFabricModules extends RuntimeModule {
+  private final String txClientId;
+
+  public DataFabricModules(String txClientId) {
+    this.txClientId = txClientId;
+  }
+
+  public DataFabricModules() {
+    this.txClientId = "";
+  }
 
   @Override
   public Module getInMemoryModules() {
-    return new DataFabricInMemoryModule();
+    return new DataFabricInMemoryModule(txClientId);
   }
 
   @Override
@@ -36,7 +45,7 @@ public class DataFabricModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return new DataFabricDistributedModule();
+    return new DataFabricDistributedModule(txClientId);
   }
 
 } // end of DataFabricModules

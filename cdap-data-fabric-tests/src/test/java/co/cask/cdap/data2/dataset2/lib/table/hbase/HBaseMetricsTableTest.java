@@ -30,7 +30,7 @@ import co.cask.cdap.common.kerberos.DefaultOwnerAdmin;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -83,7 +83,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   public static void setup() throws Exception {
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
-    Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
+    Injector injector = Guice.createInjector(new DataFabricModules().getDistributedModules(),
                                              new ConfigModule(conf, TEST_HBASE.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),

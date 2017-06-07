@@ -27,7 +27,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
@@ -101,7 +101,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new DataFabricDistributedModule(),
+      new DataFabricModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

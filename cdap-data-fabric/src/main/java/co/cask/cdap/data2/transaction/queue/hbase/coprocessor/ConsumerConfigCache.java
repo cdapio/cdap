@@ -24,6 +24,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.io.InputSupplier;
+import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -46,15 +47,14 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Provides a RegionServer shared cache for all instances of {@code HBaseQueueRegionObserver} of the recent
  * queue consumer configuration.
  */
-public class ConsumerConfigCache {
+public class ConsumerConfigCache extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ConsumerConfigCache.class);
 
   // Number of bytes for consumer state column (groupId + instanceId)
@@ -62,19 +62,19 @@ public class ConsumerConfigCache {
   // update interval for CConfiguration
   private static final long CONFIG_UPDATE_FREQUENCY = 300 * 1000L;
 
-  private static final ConcurrentMap<TableName, ConsumerConfigCache> INSTANCES = new ConcurrentHashMap<>();
-
   private final TableName queueConfigTableName;
   private final CConfigurationReader cConfReader;
   private final Supplier<TransactionVisibilityState> transactionSnapshotSupplier;
   private final InputSupplier<HTableInterface> hTableSupplier;
   private final TransactionCodec txCodec;
 
-  private Thread refreshThread;
-  private long lastUpdated;
+  private volatile Thread refreshThread;
+  private volatile boolean stopped;
   private volatile Map<byte[], QueueConsumerConfig> configCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
-  private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
   private volatile CConfiguration conf;
+
+  private long lastUpdated;
+  private long configCacheUpdateFrequency = QueueConstants.DEFAULT_QUEUE_CONFIG_UPDATE_FREQUENCY;
   // timestamp of the last update from the configuration table
   private long lastConfigUpdate;
 
@@ -96,8 +96,20 @@ public class ConsumerConfigCache {
     this.txCodec = new TransactionCodec();
   }
 
-  private void init() {
+  @Override
+  protected void startUp() throws Exception {
+    LOG.info("Starting ConsumerConfigCache Refresh Thread for Table : {}", queueConfigTableName);
     startRefreshThread();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    LOG.info("Stopping ConsumerConfigCache Refresh Thread for Table : {}", queueConfigTableName);
+    stopped = true;
+    if (refreshThread != null) {
+      refreshThread.interrupt();
+      refreshThread.join(TimeUnit.SECONDS.toMillis(1));
+    }
   }
 
   public boolean isAlive() {
@@ -209,7 +221,7 @@ public class ConsumerConfigCache {
     refreshThread = new Thread("queue-cache-refresh") {
       @Override
       public void run() {
-        while (!isInterrupted()) {
+        while (!isInterrupted() && !stopped) {
           updateConfig();
           long now = System.currentTimeMillis();
           if (now > (lastUpdated + configCacheUpdateFrequency)) {
@@ -226,7 +238,7 @@ public class ConsumerConfigCache {
             }
           }
           try {
-            Thread.sleep(1000);
+            TimeUnit.SECONDS.sleep(1);
           } catch (InterruptedException ie) {
             // reset status
             interrupt();
@@ -234,7 +246,6 @@ public class ConsumerConfigCache {
           }
         }
         LOG.info("Config cache update for {} terminated.", queueConfigTableName);
-        INSTANCES.remove(queueConfigTableName, this);
       }
     };
     refreshThread.setDaemon(true);
@@ -254,23 +265,5 @@ public class ConsumerConfigCache {
       LOG.error("Failed to call Scan.setAttribute", e);
       throw Throwables.propagate(e);
     }
-  }
-
-  public static ConsumerConfigCache getInstance(TableName tableName,
-                                                CConfigurationReader cConfReader,
-                                                Supplier<TransactionVisibilityState> txSnapshotSupplier,
-                                                InputSupplier<HTableInterface> hTableSupplier) {
-    ConsumerConfigCache cache = INSTANCES.get(tableName);
-    if (cache == null) {
-      cache = new ConsumerConfigCache(tableName, cConfReader, txSnapshotSupplier, hTableSupplier);
-      if (INSTANCES.putIfAbsent(tableName, cache) == null) {
-        // if another thread created an instance for the same table, that's ok, we only init the one saved
-        cache.init();
-      } else {
-        // discard our instance and re-retrieve, someone else set it
-        cache = INSTANCES.get(tableName);
-      }
-    }
-    return cache;
   }
 }

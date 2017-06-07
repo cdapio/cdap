@@ -19,7 +19,11 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.common.test.MockTwillContext;
 import co.cask.cdap.data.tools.HBaseTableExporter;
+import co.cask.cdap.logging.framework.distributed.LogSaverTwillRunnable;
+import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
+import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -33,13 +37,13 @@ import org.junit.Test;
 public class TwillRunnableTest {
   @Test
   public void testExploreServiceTwillRunnableInjector() {
-    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+    ExploreServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test
   public void testDatasetOpExecutorTwillRunnableInjector() throws Exception {
     Injector injector = DatasetOpExecutorServerTwillRunnable.createInjector(CConfiguration.create(),
-                                                                            HBaseConfiguration.create());
+                                                                            HBaseConfiguration.create(), "");
     Store store = injector.getInstance(Store.class);
     Assert.assertNotNull(store);
     NamespaceQueryAdmin namespaceQueryAdmin = injector.getInstance(NamespaceQueryAdmin.class);
@@ -48,7 +52,7 @@ public class TwillRunnableTest {
 
   @Test
   public void testStreamHandlerTwillRunnableInjector() {
-    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration());
+    StreamHandlerRunnable.createInjector(CConfiguration.create(), new Configuration(), "");
   }
 
   @Test
@@ -59,5 +63,20 @@ public class TwillRunnableTest {
   @Test
   public void testMessagingServiceTwillRunnableInjector() {
     MessagingServiceTwillRunnable.createInjector(CConfiguration.create(), new Configuration());
+  }
+
+  @Test
+  public void testMetricsTwillRunnableInjector() throws Exception {
+    MetricsTwillRunnable.createGuiceInjector(CConfiguration.create(), HBaseConfiguration.create(), "");
+  }
+
+  @Test
+  public void testMetricsProcessorTwillRunnableInjector() {
+    MetricsProcessorTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), "");
+  }
+
+  @Test
+  public void testLogSaverTwillRunnableInjector() {
+    LogSaverTwillRunnable.createGuiceInjector(CConfiguration.create(), new Configuration(), new MockTwillContext());
   }
 }
