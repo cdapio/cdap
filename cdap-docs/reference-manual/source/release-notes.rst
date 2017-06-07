@@ -36,94 +36,161 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
-1. **Spark Enhancements:** Added suppport for Spark 2.x, users will have an option to configure to Spark 1.x or Spark 2.x on the cluster. Enhanced capabilitiy to run interactive Spark code within CDAP framework.
+1. **Spark Enhancements:** Added suppport for Apache Spark 2.x. Users have an option to configure CDAP to use Spark 1.x
+or Spark 2.x on their cluster. Also added capability to run interactive Spark code within CDAP.
 
-2. **Enhanced Data Prep:** Added capabilities in data prep to browse file system (local and HDFS) and databases and use the data read from the steps above for data prep. 
+2. **Enhanced Data Preparation:** Added capabilities in data preparation to connect to the File System (Local and
+HDFS) and relational databases, browse and select their existing data, and import into Data Preparation for cleansing,
+preparing and transforming.
 
-3. **Event Driven Schedules:** Added capabilities to start CDAP programs based on data availability of partitions of incoming data in HDFS and pose run contraints to intelligentally orchestrate CDAP workflows.
+3. **Event Driven Schedules:** Added capabilities to start CDAP programs based on data availability of partitions of
+data in HDFS and pose run contraints to intelligently orchestrate CDAP Workflows.
 
 New Features
 ------------
 
 Spark Enhancements
 ------------------
-- :cask-issue:`CDAP-7875` - Added support for Spark 2.x. In environments where multiple Spark versions exist, CDAP must be configured to use one or the other.
-- :cask-issue:`CDAP-11409`- Enable capabilities to run interactive Spark code within CDAP framework.
-- :cask-issue:`CDAP-11410` - Added capabilities to run arbitrary Spark code in data pipelines.
-- :cask-issues:`CDAP-11411` - Enhancements to speed up launching Spark programs.
+- :cask-issue:`CDAP-7875` - Added support for Spark 2.x. In environments where multiple Spark versions exist,
+CDAP must be configured to use one or the other
 
-Enhanced Data prep
-------------------
+- :cask-issue:`CDAP-11409`- Enable capabilities to run interactive Spark code within CDAP
 
-- :cask-issue:`CDAP-9290` - Adds File System Browser Component to browser local and HDFS file system from Data prep.
-- :cask-issue:`CDAP-9517` - Adds Data Quality information to Data Preparation table.
-- :cask-issue:`CDAP-9524` - Added point-and-click interactions for applying directives such as parsing, splitting, find and replace, filling null or empty rows, copying and deleting columns in Data Preparation. They can be invoked by using the dropdown menu for each column.
-- :cask-issue:`CDAP-11333` - Added cleanse columns - A column level directive to clean up column names via point and click directive in dataprep UI.
-- :cask-issue:`CDAP-11334` - Added Bulk set: A column level directive as point and click feature to set column names in dataprep UI.
-- :cask-issue:`CDAP-11424` - Added the ability to copy data from dataprep to CDAP dataset via UI.
-- :cask-issue:`CDAP-9556` -  Added macro support for Wrangler directives.
-- :cask-issue:`CDAP-9517` - Adds Data Quality information to Data Preparation table
-- :cask-issue:`CDAP-11341` - STEMMING directive needs String Array or List to be created.
-- :cask-issue:`CDAP-11345` - LOWER, UPPER and TITLECASE will handle cases when the record field does not exist.
-- :cask-issue:`CDAP-11367` - SET COLUMNS directive makes sure the column names are not empty.
-- :cask-issue:`CDAP-11374` - MASK-NUMBER directive issue with correctly representing mask data with pattern fixed.
+- :cask-issue:`CDAP-11410` - Added capabilities to run arbitrary Spark code in CDAP Pipelines
+
+- :cask-issues:`CDAP-11411` - Enhancements to speed up launching Spark programs
+
+
+Enhanced Data Preparation
+-------------------------
+
+- :cask-issue:`CDAP-9290` - Adds File System Browser Component to browse Local and HDFS File System from Data
+Preparation
+
+- :cask-issue:`CDAP-9517` - Adds Data Quality information to Data Preparation table. Currently, it shows the
+completeness of each column
+
+- :cask-issue:`CDAP-9524` - Added point-and-click interactions for applying directives such as parsing, splitting,
+find and replace, filling null or empty rows, copying and deleting columns in Data Preparation. They can be invoked by
+using the dropdown menu for each column
+
+- :cask-issue:`CDAP-11333` - Added point-and-click interaction for cleansing column names
+
+- :cask-issue:`CDAP-11334` - Added a point-and-click interaction to set all column names in Data Preparation
+
+- :cask-issue:`CDAP-11424` - Added the ability to ingest data one-tim from Data Preparation to a CDAP Dataset
+
+- :cask-issue:`CDAP-9556` -  Added macro support for Data Preparation directives
+
 
 Event Driven Schedules
------------------------
-- :cask-issue:`CDAP-7593` - Introduces a new, event-driven scheduling system that can start programs based on data availability in HDFS partitions.
-- :cask-issue:`CDAP-11338` - Allow users to configure constraints for schedules, such as duration since last run and allowed time range for program execution.
+----------------------
+- :cask-issue:`CDAP-7593` - Introduces a new, event-driven scheduling system that can start programs based on
+data availability in HDFS partitions
+
+- :cask-issue:`CDAP-11338` - Allow users to configure constraints for schedules, such as duration since last run and
+allowed time range for program execution
 
 
 
 Other New Features
 ------------------
-- :cask-issue:`CDAP-11498` - Added Capability for CDAP Service to Dynamically List Available Artifacts and Dynamically Load Artifacts.
-- :cask-issue:`CDAP-7873` - CDAP 4.2 supports EMR 5.0 - 5.3 added
-- :cask-issue:`CDAP-11486` - Added the ability for Wrangler to handle byte arrays of data for processing binary data.
-- :cask-issue:`CDAP-11422` - Added api to Spark Streaming source to provide number of streams being used by streaming source
+- :cask-issue:`CDAP-11498` - Added capability for CDAP Services to dynamically list available artifacts and
+dynamically load artifacts
+
+- :cask-issue:`CDAP-7873` - Added support for EMR 5.0 - 5.3
+
+- :cask-issue:`CDAP-11486` - Added the ability for Data Preparation to handle byte arrays of data for processing
+binary data
+
+- :cask-issue:`CDAP-11422` - Added an API to Spark Streaming sources to provide number of streams being used by a
+streaming source
+
 - :cask-issue:`CDAP-11681` - Users can now upload, view, and use plugins of type 'sparksink' in Studio.
-- :cask-issue:`CDAP-8396` - Added a "call-to-action" when the user had successfully created a new namespace.
-- :cask-issue:`CDAP-8668` - Modified the log viewer to only show ERROR, WARN, and INFO levels of logs by default, instead of all logs as previously.
+
+- :cask-issue:`CDAP-8668` - Modified the log viewer to only show ERROR, WARN, and INFO levels of logs by default,
+instead of all logs as previously
 
 
 Bug fixes
-----------
-- :cask-issue:`CDAP-8289` - Fix a bug that the log level was always set to INFO at the root logger
-- :cask-issue:`CDAP-7727` - Fix a bug where extra characters after an artifact version range were being ignored instead of being recognized as invalid.
-- :cask-issue:`CDAP-7884` - Fixed a bug that preview cannot read from datasets in real space.
-- :cask-issue:`CDAP-9422` - Fixed a bug that prevented from adding extra classpath to spark drivers and executors.
-- :cask-issue:`CDAP-9456` - Fixed a bug that impersonated workflow does not create local datasets with correct impersonated user.
-- :cask-issue:`CDAP-11417` - Fixed a bug in Parquet and Avro File sinks that would cause them to fail if they received ByteBuffers instead of byte arrays.
-- :cask-issue:`CDAP-11558` - Fixed a bug that write can only happen in one mongo sink even though multiple mongo sinks are present in the pipeline.
+---------
+- :cask-issue:`CDAP-8289` - Fix a bug where the log level was always set to INFO at the root logger
+
+- :cask-issue:`CDAP-7727` - Fix a bug where extra characters after an artifact version range were being ignored instead
+of being recognized as invalid
+
+- :cask-issue:`CDAP-7884` - Fixed a bug where users could not read from real Datasets while previewing CDAP Pipelines
+
+- :cask-issue:`CDAP-9422` - Fixed a bug that prevented users from adding extra classpath to Apache Spark drivers
+and executors
+
+- :cask-issue:`CDAP-9456` - Fixed a bug where impersonated workflow was not creating local datasets with the correct
+impersonated user
+
+- :cask-issue:`CDAP-11417` - Fixed a bug in Parquet and Avro File sinks that would cause them to fail if they received
+ByteBuffers instead of byte arrays.
+
+- :cask-issue:`CDAP-11558` - Fixed a bug where writes could only succeed in one MongoDB sink even when multiple
+MongoDB sinks were present in a pipeline
+
 - :cask-issue:`CDAP-11577` - Fixed a thread leakage bug in Spark (SPARK-20935) after Spark Streaming program completed
-- :cask-issue:`CDAP-11588` - Fixed a bug in TMS that fetching from the payload table raised exception if the fetch has empty result
-- :cask-issue:`CDAP-11643` - Fixed a bug in the Purchase example that could cause purchases to overwrite each other.
-- :cask-issue:`CDAP-11651` - Fixed a bug that prevented from using logback.xml in spark streaming programs.
-- :cask-issue:`CDAP-9284` -  Fixed an issue where pipeline metrics not showing up when there are a lot of nodes
-- :cask-issue:`CDAP-11795` - Fixes an issue with retrieving workflow state if it contains an exception without a message. 
-- :cask-issue:`CDAP-11445` - Fixed an issue with the CDAP Ambari service definition where the "cdap" headless user was not unique to the cluster.
-- :cask-issue:`CDAP-4887` - Fix UpgradeTool to not fail when encountering a non-CDAP table that simply follows CDAP naming convention.
-- :cask-issue:`CDAP-5067` - Fixed an issue where Workflow driver was getting restarted when it runs out of memory, causing the Workflow to be executed from start node again.
-- :cask-issue:`CDAP-7429` - Fixed an issue with Spark detection on HDP 2.5 and above, causing excess noise on the console.
-- :cask-issue:`CDAP-7616` - Fixing the stream container to terminate cleanly, also fixed the issue where master twill jar's were not cleaned up after master shutdown.
-- :cask-issue:`CDAP-8888` - Fixed an issue with the YARN container allocation logic so that the correct container size is used.
-- :cask-issue:`CDAP-8911` - Stream containers did not terminate cleanly and had to be killed by CDAP Master AM due to a non-daemon thread in stream container, this issue has been fixed now and stream containers terminate cleanly. 
-- :cask-issue:`CDAP-8918` - Fixed an issue where redeployment of an application with a deleted schedule would fail.
-- :cask-issue:`CDAP-8961` - Fixed warnings about /opt/cdap/master/artifacts not being a directory in unit tests.
-- :cask-issue:`CDAP-9026` - Fixed an issue due to which cdap entity roles were not cleanup on entity deletion.
-- :cask-issue:`CDAP-9195` - Fixes a flaky test case by disabling speculative execution.
-- :cask-issue:`CDAP-9284` - UI fixed issue where pipeline metrics not showing up when there are a lot of nodes
-- :cask-issue:`CDAP-9378` - Fixed an issue where cdap-security.xml was not written under Ambari unless security.enabled in cdap-site.xml was true.
-- :cask-issue:`CDAP-10475` - Fixed Azure Blob store to work with Avro and Parquet formats
-- :cask-issue:`CDAP-11374` - MASK-NUMBER directive issue with correctly representing mask data with pattern fixed.  
-- :cask-issue:`CDAP-11384` - Fixed AzureBlobStore to work with FileSets.
+
+- :cask-issue:`CDAP-11588` - Fixed a bug in TMS where fetching from the payload table raised an exception if the
+fetch had an empty result
+
+- :cask-issue:`CDAP-11643` - Fixed a bug in the Purchase example that could cause purchases to overwrite each other
+
+- :cask-issue:`CDAP-11651` - Fixed a bug that prevented from using logback.xml in Apache Spark Streaming programs.
+
+- :cask-issue:`CDAP-9284` -  Fixed an issue where pipeline metrics were not showing up in pipelines with a large number
+of nodes
+
+- :cask-issue:`CDAP-11795` - Fixed an issue with retrieving workflow state if it contained an exception
+without a message
+
+- :cask-issue:`CDAP-11445` - Fixed an issue with the CDAP Ambari service definition where the "cdap" headless user
+was not unique to the cluster
+
+- :cask-issue:`CDAP-4887` - Fixed the CDAP Upgrade tool to not fail when encountering a non-CDAP table that follows the
+CDAP naming convention
+
+- :cask-issue:`CDAP-5067` - Fixed an issue where the driver process of a CDAP Workflow was getting restarted when it
+ran out of memory, causing the Workflow to be executed again from the start node
+
+- :cask-issue:`CDAP-7429` - Fixed an issue with the detection of Apache Spark on HDP 2.5 and above, which caused
+excess noise on the console
+
+- :cask-issue:`CDAP-8888` - Fixed an issue with the YARN container allocation logic so that the correct container size
+is used.
+
+- :cask-issue:`CDAP-8911` - Fixed the stream container to terminate cleanly and cleaned up the CDAP Master's
+Apache Twill JAR files after master shutdown
+
+- :cask-issue:`CDAP-8918` - Fixed an issue where redeployment of an application with a deleted schedule would fail
+
+- :cask-issue:`CDAP-8961` - Fixed warnings about /opt/cdap/master/artifacts not being a directory in unit tests
+
+- :cask-issue:`CDAP-9026` - Fixed an issue due to which CDAP entity roles were not cleanup when the entity was deleted
+
+- :cask-issue:`CDAP-9378` - Fixed an issue where cdap-security.xml was not written under Ambari unless security.enabled
+in cdap-site.xml was set to true
+
+- :cask-issue:`CDAP-10475` - Fixed the Azure Blob Store source to work with Avro and Parquet formats
+
+- :cask-issue:`CDAP-11384` - Fixed the Azure Blob Store source to work with CDAP FileSets
+
 - :cask-issue:`CDAP-11557` - Fixed the "value is" filter in the Data Preparation UI
-- :cask-issue:`CDAP-11580` - Fixes a backward-compatibility issue with the scheduler APIs introduced in this release. 
-- :cask-issue:`CDAP-11815` - Fix impersonation when upgrading datasets in UpgradeTool
+
+- :cask-issue:`CDAP-11815` - Fixed impersonation while upgrading datasets in the Upgrade tool
 
 Deprecations
--------------
-- :cask-issue:`CDAP-8327` - Add property "metrics.processor.queue.size" with default value 20000 to limit the maximum size of a queue where metrics processor temporarily stores newly fetched metrics in memory before persisting them. Add property "metrics.processor.max.delay.ms" with default value 3000 milliseconds to specify the maximum delay allowed between the latest metrics timestamp and the time when it is processed. The larger this property is, Metrics Processor gets to sleep more often between fetching each batch of metrics but the delay between metrics emission and processing also increases. Deprecated property "metrics.messaging.fetcher.limit"
+------------
+- :cask-issue:`CDAP-8327` - Add property "metrics.processor.queue.size" with default value 20000 to limit the maximum
+size of a queue where metrics processor temporarily stores newly fetched metrics in memory before persisting them.
+Added property "metrics.processor.max.delay.ms" with default value 3000 milliseconds to specify the maximum delay
+allowed between the latest metrics timestamp and the time when it is processed. The larger this property is,
+Metrics Processor gets to sleep more often between fetching each batch of metrics but the delay between metrics
+emission and processing also increases. Deprecated the property "metrics.messaging.fetcher.limit"
 
 
 `Release 4.1.1 <http://docs.cask.co/cdap/4.1.1/index.html>`__
