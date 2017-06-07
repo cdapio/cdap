@@ -308,7 +308,7 @@ public abstract class IntegrationTestBase {
 
   protected ClientConfig getClientConfig(@Nullable AccessToken accessToken) {
     ClientConfig.Builder builder = new ClientConfig.Builder();
-    builder.setConnectionConfig(InstanceURIParser.DEFAULT.parse(
+    builder.setConnectionConfig(InstanceURIParser.DEFAULT.nonCLIParse(
       URI.create(getInstanceURI()).toString()));
 
     if (accessToken != null) {
