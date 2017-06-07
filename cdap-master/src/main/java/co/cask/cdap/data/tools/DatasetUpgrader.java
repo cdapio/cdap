@@ -32,8 +32,10 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -43,8 +45,11 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -148,50 +153,58 @@ public class DatasetUpgrader extends AbstractUpgrader {
 
   private void upgradeUserTables(final ExecutorService executor) throws Exception {
     final Map<String, Future<?>> allFutures = new HashMap<>();
+    final List<Closeable> toClose = new ArrayList<>();
     for (final NamespaceMeta namespaceMeta : namespaceQueryAdmin.list()) {
-      Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor);
-      allFutures.putAll(futures);
+      impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get();
+          // register it for close, after all Futures are complete
+          toClose.add(ddlExecutor);
+          Map<String, Future<?>> futures = upgradeUserTables(namespaceMeta, executor, ddlExecutor);
+          allFutures.putAll(futures);
+          return null;
+        }
+      });
     }
 
     // Wait for the user dataset upgrades to complete
-    Map<String, Throwable> failed = waitForUpgrade(allFutures);
-    if (!failed.isEmpty()) {
-      for (Map.Entry<String, Throwable> entry : failed.entrySet()) {
-        LOG.error("Failed to upgrade user table {}", entry.getKey(), entry.getValue());
+    try {
+      Map<String, Throwable> failed = waitForUpgrade(allFutures);
+      if (!failed.isEmpty()) {
+        for (Map.Entry<String, Throwable> entry : failed.entrySet()) {
+          LOG.error("Failed to upgrade user table {}", entry.getKey(), entry.getValue());
+        }
+        throw new Exception(String.format("Error upgrading user tables. %s of %s failed",
+                                          failed.size(), allFutures.size()));
       }
-      throw new Exception(String.format("Error upgrading user tables. %s of %s failed",
-                                        failed.size(), allFutures.size()));
+    } finally {
+      for (Closeable closeable : toClose) {
+        Closeables.closeQuietly(closeable);
+      }
     }
   }
 
-  private Map<String, Future<?>> upgradeUserTables(final NamespaceMeta namespaceMeta, ExecutorService executor)
-    throws Exception {
+  private Map<String, Future<?>> upgradeUserTables(final NamespaceMeta namespaceMeta, final ExecutorService executor,
+                                                   final HBaseDDLExecutor ddlExecutor) throws Exception {
     Map<String, Future<?>> futures = new HashMap<>();
     String hBaseNamespace = hBaseTableUtil.getHBaseNamespace(namespaceMeta);
-    try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
+    try (HBaseAdmin hAdmin = new HBaseAdmin(hConf)) {
       for (final HTableDescriptor desc :
         hAdmin.listTableDescriptorsByNamespace(HTableNameConverter.encodeHBaseEntity(hBaseNamespace))) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            try {
-              impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
-                @Override
-                public Void call() throws Exception {
-                  if (isCDAPUserTable(desc)) {
-                    upgradeUserTable(desc);
-                  } else if (isStreamOrQueueTable(desc.getNameAsString())) {
-                    updateTableDesc(desc, ddlExecutor);
-                  }
-                  return null;
-                }
-              });
-            } catch (Exception e) {
-              throw new RuntimeException(e);
+        Callable<Void> callable = new Callable<Void>() {
+          public Void call() throws Exception {
+            if (isCDAPUserTable(desc)) {
+              upgradeUserTable(desc);
+            } else if (isStreamOrQueueTable(desc.getNameAsString())) {
+              updateTableDesc(desc, ddlExecutor);
             }
+            return null;
           }
         };
 
-        Future<?> future = executor.submit(runnable);
+        Future<?> future =
+          executor.submit(ImpersonationUtils.createImpersonatingCallable(impersonator, namespaceMeta, callable));
         futures.put(desc.getNameAsString(), future);
       }
     }
