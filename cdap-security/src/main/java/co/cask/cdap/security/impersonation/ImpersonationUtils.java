@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
@@ -60,5 +61,25 @@ public final class ImpersonationUtils {
                ugi.getUserName(), wrappedException);
       throw Throwables.propagate(wrappedException);
     }
+  }
+
+  /**
+   * Creates a {@link Callable} which will impersonate the specified namespace before executing the specified callable.
+   * This is useful in case the impersonation needs to be delayed or will be performed later.
+   */
+  public static <T> Callable<T> createImpersonatingCallable(final Impersonator impersonator,
+                                                            final NamespaceMeta namespaceMeta,
+                                                            final Callable<T> callable) {
+    return new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<T>() {
+          @Override
+          public T call() throws Exception {
+            return callable.call();
+          }
+        });
+      }
+    };
   }
 }

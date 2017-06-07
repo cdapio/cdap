@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -160,20 +161,36 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       }
     }, RuntimeException.class);
     if (migrateComplete) {
+      LOG.debug("Schedule migration has already been completed for all namespaces. Skip migration.");
       return; // no need to migrate if migration is complete
     }
+    // Sort namespaces by their namesapceId's, so that namespaceId's with smaller lexicographical order
+    // will be migrated first. Comparing namespaceId with the last migration completed namespaceId
+    // in lexicographical order can determine whether migration is completed for the corresponding namespace.
+    // No need to check whether a namespace is added in current CDAP version because new namespace doesn't have
+    // old schedules to be migrated, or new program schedules in it since CoreSchedulerService has not started
+    Collections.sort(namespaceMetas, new Comparator<NamespaceMeta>() {
+      @Override
+      public int compare(NamespaceMeta n1, NamespaceMeta n2) {
+        return n1.getNamespaceId().toString().compareTo(n2.getNamespaceId().toString());
+      }
+    });
     String completedNamespace = null;
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
-      // Since namespaces are listed in lexicographical order, if the completedNamespace is larger than
+      // Since namespaces are sorted in lexicographical order, if the completedNamespace is larger than
       // the current namespace lexicographically, then the current namespace is already migrated. Skip this namespace.
       if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
+        LOG.debug("Skip migrating schedules in namespace '{}', since namespace with lexicographical order " +
+                    "is smaller than the last migration completed namespace '{}' should already be migrated.",
+                  namespaceId, completedNamespace);
         continue;
       }
+      LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
       completedNamespace = execute(new StoreTxRunnable<String, RuntimeException>() {
         @Override
         public String run(ProgramScheduleStoreDataset store) {
-          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore);
+          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
         }
       }, RuntimeException.class);
     }
@@ -185,6 +202,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         return null;
       }
     }, RuntimeException.class);
+    LOG.info("Schedule migration is completed for all namespaces.");
   }
 
   @Override
