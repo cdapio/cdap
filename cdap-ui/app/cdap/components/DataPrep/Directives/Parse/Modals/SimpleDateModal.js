@@ -26,13 +26,15 @@ const OPTIONS_MAP = {
   'OPTION2': 'dd/MM/yyyy',
   'OPTION3': 'MM-dd-yyyy',
   'OPTION4': 'MM-dd-yy',
-  'OPTION5': 'MM-dd-yyyy G \'at\' HH:mm:ss z',
-  'OPTION6': 'dd/MM/yy HH:mm:ss',
-  'OPTION7': 'yyyy,MM.dd\'T\'HH:mm:ss.SSSZ',
-  'OPTION8': 'EEE, d MMM yyyy HH:mm:ss Z',
-  'OPTION9': 'EEE, MMM d, \'\'yy',
-  'OPTION10': 'h:mm a',
-  'OPTION11': 'H:mm a, z',
+  'OPTION5': 'yyyy-MM-dd',
+  'OPTION6': "yyyy-MM-dd HH:mm:ss",
+  'OPTION7': 'MM-dd-yyyy G \'at\' HH:mm:ss z',
+  'OPTION8': 'dd/MM/yy HH:mm:ss',
+  'OPTION9': 'yyyy,MM.dd\'T\'HH:mm:ss.SSSZ',
+  'OPTION10': 'EEE, d MMM yyyy HH:mm:ss Z',
+  'OPTION11': 'EEE, MMM d, \'\'yy',
+  'OPTION12': 'h:mm a',
+  'OPTION13': 'H:mm a, z',
   'CUSTOM': 'CUSTOM'
 };
 
