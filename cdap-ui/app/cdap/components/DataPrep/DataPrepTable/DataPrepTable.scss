@@ -46,7 +46,6 @@ $col_type_font_color: gray;
 
       &.table-bordered { border: 0; }
       .col-type {
-        margin-left: 28px;
         color: $col_type_font_color;
         font-weight: 400;
         font-size: 11px;
@@ -94,7 +93,6 @@ $col_type_font_color: gray;
             }
           }
 
-          .directives-dropdown-button,
           .column-header-checkbox {
             visibility: hidden;
           }
@@ -155,7 +153,6 @@ $col_type_font_color: gray;
         &.selected,
         &.dropdownOpened,
         &:hover {
-          .directives-dropdown-button,
           .column-header-checkbox {
             visibility: visible;
           }
