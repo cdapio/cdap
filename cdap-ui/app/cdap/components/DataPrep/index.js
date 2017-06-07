@@ -257,7 +257,8 @@ export default class DataPrep extends Component {
 
     return (
       <div className={classnames('dataprep-container', {
-        'single-workspace': this.props.singleWorkspaceMode
+        'single-workspace': this.props.singleWorkspaceMode,
+        [this.props.className] : !isEmpty(this.props.className)
       })}>
         <DataPrepErrorAlert />
 
@@ -293,5 +294,6 @@ DataPrep.propTypes = {
   workspaceId: PropTypes.string,
   onSubmit: PropTypes.func,
   onConnectionsToggle: PropTypes.func.isRequired,
-  onWorkspaceDelete: PropTypes.func
+  onWorkspaceDelete: PropTypes.func,
+  className: PropTypes.string
 };

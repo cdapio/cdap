@@ -20,6 +20,16 @@ $toggle-btn-disabled-bg-color: #cccccc;
 .dataprep-container {
   overflow: hidden;
 
+  &.sidepanel-toggled {
+    .top-panel {
+      .dataprep-sampler-dropdown {
+        display: none;
+      }
+      .action-buttons {
+        display: none;
+      }
+    }
+  }
   &.error { padding-top: 25px; }
 
   &.single-workspace {

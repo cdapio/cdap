@@ -28,7 +28,7 @@ import T from 'i18n-react';
 import isNil from 'lodash/isNil';
 import CreateDatasetBtn from 'components/DataPrep/TopPanel/CreateDatasetBtn';
 import classnames from 'classnames';
-
+import SamplerDropdown from 'components/DataPrep/SamplerDropdown';
 require('./TopPanel.scss');
 
 export default class DataPrepTopPanel extends Component {
@@ -207,10 +207,11 @@ export default class DataPrepTopPanel extends Component {
         <div className="left-title">
           <div className="upper-section">
             {this.renderTopPanelDisplay()}
+            <SamplerDropdown />
 
-            <div className="upgrade-button">
-              {
-                this.state.higherVersion ? (
+            {
+              this.state.higherVersion ? (
+                <div className="upgrade-button">
                   <button
                     className="btn btn-info btn-sm"
                     onClick={this.toggleUpgradeModal}
@@ -218,14 +219,14 @@ export default class DataPrepTopPanel extends Component {
                     <span className="fa fa-wrench fa-fw" />
                     {T.translate('features.DataPrep.TopPanel.upgradeBtnLabel')}
                   </button>
-                ) : null
-              }
-              {this.renderUpgradeModal()}
-            </div>
+                  {this.renderUpgradeModal()}
+                </div>
+              ) : null
+            }
           </div>
         </div>
 
-        <div className="action-buttons">
+        <div className="action-buttons text-xs-right">
           {
             this.state.onSubmitError ?
               <span className="text-danger">{this.state.onSubmitError}</span>
