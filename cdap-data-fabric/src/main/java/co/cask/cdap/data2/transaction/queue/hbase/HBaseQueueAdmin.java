@@ -50,6 +50,7 @@ import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Objects;
@@ -57,6 +58,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -74,8 +76,10 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -248,6 +252,8 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
                                      .setNameFormat("hbase-cmd-executor-%d")
                                      .setDaemon(true)
                                      .build());
+
+    final List<Closeable> toClose = new ArrayList<>();
     try {
       final Map<TableId, Future<?>> allFutures = new HashMap<>();
       // For each queue config table and queue data table in each namespace, perform an upgrade
@@ -255,7 +261,10 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
         impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<Void>() {
           @Override
           public Void call() throws Exception {
-            Map<TableId, Future<?>> futures = upgradeQueues(namespaceMeta, executor);
+            HBaseAdmin hBaseAdmin = new HBaseAdmin(hConf);
+            // register it for close, after all Futures are complete
+            toClose.add(hBaseAdmin);
+            Map<TableId, Future<?>> futures = upgradeQueues(namespaceMeta, executor, hBaseAdmin);
             allFutures.putAll(futures);
             return null;
           }
@@ -272,73 +281,70 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
                                           failed.size(), allFutures.size()));
       }
     } finally {
+      for (Closeable closeable : toClose) {
+        Closeables.closeQuietly(closeable);
+      }
       // We'll have tasks pending in the executor only on an interrupt, when user wants to abort the upgrade.
       // Use shutdownNow() to interrupt the tasks and abort.
       executor.shutdownNow();
     }
   }
 
-  private Map<TableId, Future<?>> upgradeQueues(final NamespaceMeta namespaceMeta, ExecutorService executor)
-    throws Exception {
-    try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-      String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
-      List<TableId> tableIds = tableUtil.listTablesInNamespace(admin, hbaseNamespace);
-      List<TableId> stateStoreTableIds = Lists.newArrayList();
-      Map<TableId, Future<?>> futures = new HashMap<>();
+  private Map<TableId, Future<?>> upgradeQueues(final NamespaceMeta namespaceMeta, ExecutorService executor,
+                                                final HBaseAdmin admin) throws Exception {
+    String hbaseNamespace = tableUtil.getHBaseNamespace(namespaceMeta);
+    List<TableId> tableIds = tableUtil.listTablesInNamespace(admin, hbaseNamespace);
+    List<TableId> stateStoreTableIds = Lists.newArrayList();
+    Map<TableId, Future<?>> futures = new HashMap<>();
 
-      for (final TableId tableId : tableIds) {
-        // It's important to skip config table enabled.
-        if (isDataTable(tableId)) {
-          Runnable runnable = new Runnable() {
-            public void run() {
-              try {
-                LOG.info("Upgrading queue table: {}", tableId);
-                Properties properties = new Properties();
-                HTableDescriptor desc = tableUtil.getHTableDescriptor(admin, tableId);
-                if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
-                  // It's the old queue table. Set the property prefix bytes to SALT_BYTES
-                  properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
-                                         Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
-                }
-                upgrade(tableId, properties);
-                LOG.info("Upgraded queue table: {}", tableId);
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+    for (final TableId tableId : tableIds) {
+      // It's important to skip config table enabled.
+      if (isDataTable(tableId)) {
+        Callable<Void> callable = new Callable<Void>() {
+          public Void call() throws Exception {
+            LOG.info("Upgrading queue table: {}", tableId);
+            Properties properties = new Properties();
+            HTableDescriptor desc = tableUtil.getHTableDescriptor(admin, tableId);
+            if (desc.getValue(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES) == null) {
+              // It's the old queue table. Set the property prefix bytes to SALT_BYTES
+              properties.setProperty(HBaseQueueAdmin.PROPERTY_PREFIX_BYTES,
+                                     Integer.toString(SaltedHBaseQueueStrategy.SALT_BYTES));
             }
-          };
-          Future<?> future = executor.submit(runnable);
-          futures.put(tableId, future);
-        } else if (isStateStoreTable(tableId)) {
-          stateStoreTableIds.add(tableId);
-        }
-      }
-
-      // Upgrade of state store table
-      for (final TableId tableId : stateStoreTableIds) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            try {
-              LOG.info("Upgrading queue state store: {}", tableId);
-              DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());
-              DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
-              if (datasetAdmin == null) {
-                LOG.error("No dataset admin available for {}", stateStoreId);
-                return;
-              }
-              datasetAdmin.upgrade();
-              LOG.info("Upgraded queue state store: {}", tableId);
-            } catch (Exception e) {
-              new RuntimeException(e);
-            }
+            upgrade(tableId, properties);
+            LOG.info("Upgraded queue table: {}", tableId);
+            return null;
           }
         };
-        Future<?> future = executor.submit(runnable);
+        Future<?> future =
+          executor.submit(ImpersonationUtils.createImpersonatingCallable(impersonator, namespaceMeta, callable));
         futures.put(tableId, future);
+      } else if (isStateStoreTable(tableId)) {
+        stateStoreTableIds.add(tableId);
       }
-
-      return futures;
     }
+
+    // Upgrade of state store table
+    for (final TableId tableId : stateStoreTableIds) {
+      Callable<Void> callable = new Callable<Void>() {
+        public Void call() throws Exception {
+          LOG.info("Upgrading queue state store: {}", tableId);
+          DatasetId stateStoreId = createStateStoreDataset(namespaceMeta.getName());
+          DatasetAdmin datasetAdmin = datasetFramework.getAdmin(stateStoreId, null);
+          if (datasetAdmin == null) {
+            LOG.error("No dataset admin available for {}", stateStoreId);
+            return null;
+          }
+          datasetAdmin.upgrade();
+          LOG.info("Upgraded queue state store: {}", tableId);
+          return null;
+        }
+      };
+      Future<?> future =
+        executor.submit(ImpersonationUtils.createImpersonatingCallable(impersonator, namespaceMeta, callable));
+      futures.put(tableId, future);
+    }
+
+    return futures;
   }
 
   QueueConstants.QueueType getType() {
