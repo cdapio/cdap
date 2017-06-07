@@ -479,6 +479,10 @@ body.theme-cdap.state-hydrator {
             display: flex;
             align-items: center;
 
+            .label-input-container {
+              padding-right: 0;
+            }
+
             .control-label {
               padding-top: 0;
               padding-right: 0;
@@ -486,10 +490,28 @@ body.theme-cdap.state-hydrator {
             .form-input-attr {
               position: relative;
               padding-right: 0;
+
               .macro-indicator {
                 position: absolute;
                 right: 0;
               }
+            }
+          }
+        }
+      }
+    }
+    .action-table {
+      form[plugin-property-edit-view] {
+        .form-input-attr {
+          &.code-editor {
+            @media (min-width: 1200px) {
+              padding-left: 200px;
+            }
+            @media (min-width: 1800px) {
+              padding-left: 300px;
+            }
+            @media (min-width: 2400px) {
+              padding-left: 400px;
             }
           }
         }
