@@ -2753,8 +2753,7 @@
     <value>300</value>
     <description>
       The time-to-live in seconds for entries in the authorization cache
-      used by programs. This setting only takes effect if
-      ${security.authorization.cache.enabled} is set to true.
+      used by programs and system services outside of CDAP Master.
     </description>
   </property>
 

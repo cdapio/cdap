@@ -16,6 +16,13 @@
 
 import React, { Component, PropTypes } from 'react';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
+import T from 'i18n-react';
+import classnames from 'classnames';
+import {objectQuery} from 'services/helpers';
+
+require('./DataPrepServiceControl.scss');
+
+const PREFIX = `features.DataPrepServiceControl`;
 
 export default class DataPrepServiceControl extends Component {
   constructor(props) {
@@ -45,7 +52,7 @@ export default class DataPrepServiceControl extends Component {
       }, (err) => {
         this.setState({
           error: err.error,
-          extendedMessage: err.extendedMessage,
+          extendedMessage: objectQuery(err, 'extendedMessage', 'response'),
           loading: false
         });
       });
@@ -55,8 +62,8 @@ export default class DataPrepServiceControl extends Component {
     if (!this.state.error) { return null; }
 
     return (
-      <div>
-        <h5 className="text-danger text-xs-center">
+      <div className="dataprep-service-control-error">
+        <h5 className="text-danger">
           {this.state.error}
         </h5>
         <p className="text-dangertext-xs-center">
@@ -68,30 +75,50 @@ export default class DataPrepServiceControl extends Component {
 
   render() {
     return (
-      <div className="dataprep-container error">
-        <h4 className="text-xs-center">
-          Data Preparation is not enabled. Please enable it.
-        </h4>
-        <br/>
-        <div className="text-xs-center">
-          <button
-            className="btn btn-primary"
-            onClick={this.enableService}
-            disabled={this.state.loading}
-          >
-            {
-              !this.state.loading ? 'Enable Data Preparation Service' : (
-                <span>
-                  <span className="fa fa-spin fa-spinner" /> Enabling...
-                </span>
-              )
-            }
-          </button>
+      <div className={classnames("dataprep-container dataprep-service-control", {
+        'error': this.state.error
+      })}>
+        <div className="row">
+          <div className="col-xs-5">
+            <img src="/cdap_assets/img/DataPrep_preview1.png" />
+            <img src="/cdap_assets/img/DataPrep_preview2.png" />
+          </div>
+          <div className="col-xs-7">
+            <div className="description-container">
+              <h2 className="text-xs-left">
+                {T.translate(`${PREFIX}.title`)}
+              </h2>
+              <p>
+                {T.translate(`${PREFIX}.description`)}
+              </p>
+              <ul className="dataprep-checklist">
+                <li>{T.translate(`${PREFIX}.list.1`)}</li>
+                <li>{T.translate(`${PREFIX}.list.2`)}</li>
+                <li>{T.translate(`${PREFIX}.list.3`)}</li>
+                <li>{T.translate(`${PREFIX}.list.4`)}</li>
+              </ul>
+              <div className="text-xs-left">
+                <button
+                  className="btn btn-primary"
+                  onClick={this.enableService}
+                  disabled={this.state.loading}
+                >
+                  {
+                    !this.state.loading ? T.translate(`${PREFIX}.btnLabel`) : (
+                      <span>
+                        <span className="fa fa-spin fa-spinner" /> {T.translate(`${PREFIX}.btnLoadingLabel`)}
+                      </span>
+                    )
+                  }
+                </button>
+              </div>
+              {this.renderError()}
+            </div>
+          </div>
         </div>
-
         <br/>
 
-        {this.renderError()}
+        <br/>
       </div>
     );
   }

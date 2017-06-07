@@ -25,6 +25,17 @@ angular.module(PKG.name+'.filters').filter('myRemoveCamelcase', function() {
       return input;
     }
 
+    // FIXME: Hardcoded for now since we don't want to modify algorithm for these 2 cases.
+    // Also we don't know where exactly to split either
+    // Ideally this should come from the backend
+    if (input === 'CDCHBase') {
+      return 'CDC HBase';
+    }
+
+    if (input === 'ChangeTrackingSQLServer') {
+      return 'Change Tracking SQLServer';
+    }
+
     return input.replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z])([a-z])/g, ' $1$2')
     .replace(/\ +/g, ' ').trim();
