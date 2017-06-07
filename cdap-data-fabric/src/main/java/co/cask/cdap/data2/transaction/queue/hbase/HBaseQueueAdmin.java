@@ -249,7 +249,9 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin implements ProgramContex
     final ExecutorService executor =
       Executors.newFixedThreadPool(numThreads,
                                    new ThreadFactoryBuilder()
-                                     .setNameFormat("hbase-cmd-executor-%d")
+                                     // all the threads should be created as 'cdap'
+                                     .setThreadFactory(Executors.privilegedThreadFactory())
+                                     .setNameFormat("hbase-queue-upgrader-%d")
                                      .setDaemon(true)
                                      .build());
 
