@@ -34,25 +34,25 @@
         <div class="configuration-header"
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'runtimeArgs'"
-              ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+              ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           Runtime Arguments
         </div>
         <div class="configuration-header"
               ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'previewConfig'}"
               ng-click="BatchPipelineConfigCtrl.activeTab = 'previewConfig'"
-              ng-if="!BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.showPreviewConfig">
+              ng-if="!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showPreviewConfig">
           Preview Config
         </div>
         <div class="configuration-header toggle-advanced-options"
               ng-click="BatchPipelineConfigCtrl.showAdvanced = !BatchPipelineConfigCtrl.showAdvanced"
-              ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+              ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           <span class="fa"
                 ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showAdvanced, 'fa-caret-right': !BatchPipelineConfigCtrl.showAdvanced}">
           </span>
           Advanced options
         </div>
         <div class="advanced-options"
-              ng-show="BatchPipelineConfigCtrl.showAdvanced || !BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
+              ng-show="BatchPipelineConfigCtrl.showAdvanced || !BatchPipelineConfigCtrl.isDeployed && !BatchPipelineConfigCtrl.showPreviewConfig">
           <div class="configuration-header"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'pipelineConfig'}"
                 ng-click="BatchPipelineConfigCtrl.activeTab = 'pipelineConfig'">
@@ -217,7 +217,7 @@
           Set alerts for your batch pipeline
         </div>
         <my-post-run-actions
-          is-disabled="BatchPipelineConfigCtrl.isDisabled"
+          is-deployed="BatchPipelineConfigCtrl.isDeployed"
           action-creator="BatchPipelineConfigCtrl.actionCreator"
           store="BatchPipelineConfigCtrl.store">
         </my-post-run-actions>
@@ -225,7 +225,7 @@
 
       <fieldset class="configuration-content-container"
                 ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'"
-                ng-disabled="BatchPipelineConfigCtrl.isDisabled">
+                ng-disabled="BatchPipelineConfigCtrl.isDeployed">
         <div class="configuration-step-content engine-config"
               ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
           <div class="step-content-heading">
@@ -248,7 +248,7 @@
             </label>
           </div>
           <div class="add-custom-config">
-            <span ng-if="!BatchPipelineConfigCtrl.isDisabled">
+            <span ng-if="!BatchPipelineConfigCtrl.isDeployed">
               <a class="add-custom-config-label"
                   ng-click="BatchPipelineConfigCtrl.showCustomConfig = !BatchPipelineConfigCtrl.showCustomConfig">
                   <span class="fa"
@@ -270,9 +270,9 @@
                 </ng-pluralize>
               </span>
             </span>
-            <span ng-if="(BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.showCustomConfig)">
+            <span ng-if="(BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showCustomConfig)">
               <hr />
-              <span ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0">
+              <span ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0">
                 <label>Custom Config</label>
                 <i class="fa fa-info-circle"
                    uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
@@ -304,10 +304,10 @@
 
       <div class="configuration-step-navigation">
         <div class="apply-run-container"
-          ng-if="BatchPipelineConfigCtrl.isDisabled || BatchPipelineConfigCtrl.showPreviewConfig">
+          ng-if="BatchPipelineConfigCtrl.isDeployed || BatchPipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-run"
-            ng-if="BatchPipelineConfigCtrl.isDisabled"
+            ng-if="BatchPipelineConfigCtrl.isDeployed"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled() || BatchPipelineConfigCtrl.startingPipeline || BatchPipelineConfigCtrl.updatingPipeline"
             ng-click="BatchPipelineConfigCtrl.applyAndRunPipeline()">
             <span>Save &amp; {{ BatchPipelineConfigCtrl.pipelineAction }}</span>
@@ -322,14 +322,14 @@
           </button>
           <button
             class="btn btn-secondary"
-            ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
+            ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.activeTab === 'runtimeArgs'"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"
             ng-click="BatchPipelineConfigCtrl.applyAndClose()">
             Save
           </button>
           <button
             class="btn btn-secondary"
-            ng-if="BatchPipelineConfigCtrl.isDisabled && BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
+            ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
             ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline || BatchPipelineConfigCtrl.startingPipeline"
             ng-click="BatchPipelineConfigCtrl.updatePipeline()">
             <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
@@ -355,7 +355,7 @@
             </ng-pluralize>
           </span>
         </div>
-        <div ng-if="!BatchPipelineConfigCtrl.isDisabled && !BatchPipelineConfigCtrl.showPreviewConfig">
+        <div ng-if="!BatchPipelineConfigCtrl.isDeployed && !BatchPipelineConfigCtrl.showPreviewConfig">
           <button
             class="btn btn-primary apply-close"
             ng-disabled="BatchPipelineConfigCtrl.buttonsAreDisabled()"

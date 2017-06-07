@@ -27,7 +27,7 @@ angular.module(PKG.name + '.commons')
       'namespace': 'namespace',
       'store': 'store',
       'action-creator': 'actionCreator',
-      'is-disabled': 'isDisabled',
+      'is-deployed': 'isDeployed',
       'show-preview-config': 'showPreviewConfig'
     };
     let batchPipelineConfig = {
