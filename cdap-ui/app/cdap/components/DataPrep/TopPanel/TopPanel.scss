@@ -28,8 +28,7 @@ $action-btn-inactive-color: #aaaaaa;
 
     .left-title {
       padding-left: 0;
-      flex: 1;
-      overflow: hidden;
+      width: 75%;
       text-overflow: ellipsis;
 
       .upper-section {
@@ -46,7 +45,9 @@ $action-btn-inactive-color: #aaaaaa;
       .data-prep-name {
         font-size: 18px;
         padding: 0 10px;
-        width: 100%;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
 
         &.upgrade {
           width: calc(100% - 100px);
@@ -55,6 +56,7 @@ $action-btn-inactive-color: #aaaaaa;
         .title {
           overflow: hidden;
           text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .connection-type {
@@ -67,6 +69,11 @@ $action-btn-inactive-color: #aaaaaa;
         }
       }
 
+      .dataprep-sampler-dropdown {
+        margin-left: 10px;
+        padding-top: 1px;
+        margin-right: 0;
+      }
       .upgrade-button {
         margin-top: 2px;
         margin-right: 10px;
@@ -98,6 +105,7 @@ $action-btn-inactive-color: #aaaaaa;
     .action-buttons {
       padding: 0;
       margin-top: 10px;
+      width: 25%;
       margin-right: 30px;
 
       .secondary-actions {

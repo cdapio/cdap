@@ -191,6 +191,7 @@ export default class DataPrepHome extends Component {
           onWorkspaceDelete={this.props.singleWorkspaceMode ? null : this.updateWorkspaceList}
           onSubmit={this.props.onSubmit}
           singleWorkspaceMode={this.props.singleWorkspaceMode}
+          className={this.state.toggleConnectionsViewFlag ? 'sidepanel-toggled': null}
         />
       </div>
     );
