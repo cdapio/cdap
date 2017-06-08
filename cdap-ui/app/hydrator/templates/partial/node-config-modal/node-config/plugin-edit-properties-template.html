@@ -20,7 +20,7 @@
       <span class="required">Label</span>
       <small class="text-danger" ng-if="HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError">{{HydratorPlusPlusNodeConfigCtrl.state.nodeLabelError}}</small>
     </label>
-    <div class="col-xs-8">
+    <div class="col-xs-8 label-input-container">
       <input type="text" class="form-control"
            ng-disabled="isDisabled"
            ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label">
@@ -61,7 +61,7 @@
               class="form-input-attr"
               ng-class="{
                 'col-xs-8': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) === -1),
-                'col-xs-11': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) !== -1)
+                'col-xs-11 code-editor': (['javascript-editor', 'python-editor', 'scala-editor'].indexOf(field['widget-type']) !== -1)
               }"
             >
               <!--
