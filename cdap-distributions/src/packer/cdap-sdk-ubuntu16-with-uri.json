@@ -66,12 +66,21 @@
     },
     {
       "type": "amazon-ebs",
-      "ami_name": "CDAP SDK {{user `sdk_version`}} ({{timestamp}})",
+      "ami_name": "CDAP Cloud Sandbox - Community Edition {{user `sdk_version`}} ({{timestamp}})",
       "instance_type": "m4.large",
       "region": "us-east-1",
       "source_ami": "ami-1ac0120c",
       "ssh_username": "ubuntu",
-      "name": "cdap-sdk-ami"
+      "name": "cdap-cloud-sandbox-aws-community"
+    },
+    {
+      "type": "amazon-ebs",
+      "ami_name": "CDAP Cloud Sandbox {{user `sdk_version`}} ({{timestamp}})",
+      "instance_type": "m4.large",
+      "region": "us-east-1",
+      "source_ami": "ami-1ac0120c",
+      "ssh_username": "ubuntu",
+      "name": "cdap-cloud-sandbox-aws"
     },
     {
       "type": "azure-arm",
@@ -237,7 +246,7 @@
       "type": "shell",
       "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/sdk-ami-security.sh",
-      "only": ["cdap-sdk-ami"]
+      "only": ["cdap-cloud-sandbox-aws"]
     },
     {
       "type": "shell",
