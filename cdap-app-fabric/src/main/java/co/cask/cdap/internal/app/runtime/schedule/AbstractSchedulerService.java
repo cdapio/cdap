@@ -24,6 +24,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -193,7 +194,25 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
                                              String scheduleName)
     throws SchedulerException, NotFoundException {
     Scheduler scheduler = getSchedulerForSchedule(program, scheduleName);
-    return scheduler.scheduleState(program, programType, scheduleName);
+    ProgramScheduleStatus status;
+    try {
+      status = scheduler.scheduleState(program, programType, scheduleName);
+    } catch (NotFoundException e) {
+      // Directly throw the NotFoundException if scheduler has already been started
+      if (scheduler instanceof TimeScheduler) {
+        if (((TimeScheduler) scheduler).isStarted()) {
+          throw e;
+        }
+      } else {
+        if (((StreamSizeScheduler) scheduler).isStarted()) {
+          throw e;
+        }
+      }
+      // Schedules may not be all read into memory before scheduler fully starts,
+      // throw ServiceUnavailableException to retry next time
+      throw new ServiceUnavailableException(this.getClass().getSimpleName());
+    }
+    return status;
   }
 
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {

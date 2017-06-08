@@ -154,13 +154,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     throws Exception {
 
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
-    boolean migrateComplete = execute(new StoreTxRunnable<Boolean, RuntimeException>() {
-      @Override
-      public Boolean run(ProgramScheduleStoreDataset store) {
-        return store.isMigrationComplete();
-      }
-    }, RuntimeException.class);
-    if (migrateComplete) {
+    ProgramScheduleStoreDataset.MigrationStatus migrationStatus =
+      execute(new StoreTxRunnable<ProgramScheduleStoreDataset.MigrationStatus, RuntimeException>() {
+        @Override
+        public ProgramScheduleStoreDataset.MigrationStatus run(ProgramScheduleStoreDataset store) {
+          return store.getMigrationStatus();
+        }
+      }, RuntimeException.class);
+    if (migrationStatus.isMigrationCompleted()) {
       LOG.debug("Schedule migration has already been completed for all namespaces. Skip migration.");
       return; // no need to migrate if migration is complete
     }
@@ -175,22 +176,23 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         return n1.getNamespaceId().toString().compareTo(n2.getNamespaceId().toString());
       }
     });
-    String completedNamespace = null;
+    NamespaceId lastCompleteNamespace = migrationStatus.getLastMigrationCompleteNamespace();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
-      // Since namespaces are sorted in lexicographical order, if the completedNamespace is larger than
+      // Since namespaces are sorted in lexicographical order, if the lastCompleteNamespace is larger or equal to
       // the current namespace lexicographically, then the current namespace is already migrated. Skip this namespace.
-      if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
+      if (lastCompleteNamespace != null && lastCompleteNamespace.toString().compareTo(namespaceId.toString()) >= 0) {
         LOG.debug("Skip migrating schedules in namespace '{}', since namespace with lexicographical order " +
-                    "is smaller than the last migration completed namespace '{}' should already be migrated.",
-                  namespaceId, completedNamespace);
+                    "smaller or equal to the last migration completed namespace '{}' should already be migrated.",
+                  namespaceId, lastCompleteNamespace);
         continue;
       }
       LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
-      completedNamespace = execute(new StoreTxRunnable<String, RuntimeException>() {
+      execute(new StoreTxRunnable<Void, RuntimeException>() {
         @Override
-        public String run(ProgramScheduleStoreDataset store) {
-          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
+        public Void run(ProgramScheduleStoreDataset store) {
+          store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
+          return null;
         }
       }, RuntimeException.class);
     }

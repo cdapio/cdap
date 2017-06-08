@@ -150,8 +150,6 @@ public class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
-    // TODO: [CDAP-11862] Start CoreSchedulerService synchronously once schedule migration is removed
-    coreSchedulerService.start();
     Futures.allAsList(
       ImmutableList.of(
         notificationService.start(),
@@ -160,7 +158,8 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        pluginService.start()
+        pluginService.start(),
+        coreSchedulerService.start()
       )
     ).get();
 
