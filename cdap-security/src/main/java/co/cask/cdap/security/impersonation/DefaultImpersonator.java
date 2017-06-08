@@ -83,13 +83,13 @@ public class DefaultImpersonator implements Impersonator {
     }
 
     ImpersonationRequest impersonationRequest = new ImpersonationRequest(entityId, impersonatedOpType);
-    // if the current user is not same as cdap master user then it means we are already impersonating some user
-    // and hence we should not allow another impersonation. See CDAP-8641
-    if (!UserGroupInformation.getCurrentUser().getShortUserName().equals(masterShortUsername)) {
-      LOG.trace("Not impersonating for {} as the call is already impersonated as {}",
-                impersonationRequest, UserGroupInformation.getCurrentUser());
-      return UserGroupInformation.getCurrentUser();
+    UserGroupInformation configuredUGI = ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
+    // Only cdap master user is allowed to impersonate another user besides itself. See CDAP-8641
+    String currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
+    if (currUserShortName.equals(masterShortUsername) || currUserShortName.equals(configuredUGI.getShortUserName())) {
+      return configuredUGI;
     }
-    return ugiProvider.getConfiguredUGI(impersonationRequest).getUGI();
+    throw new UnsupportedOperationException(String.format("User %s is not allowed to impersonate user %s.",
+                                                          UserGroupInformation.getCurrentUser(), configuredUGI));
   }
 }
