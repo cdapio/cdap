@@ -595,6 +595,11 @@ features:
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
+    SamplerDropdownModal:
+      modalTitle: "Sampling method: {name}"
+      applyBtnLabel: Apply
+      numLinesDescription: Set the number of records to be sampled from the beginning of the {filename} file
+      fractionDescription: Probablity of choosing a record during sampling
     SamplerDropdown:
       bernoulli:
         label: Bernoulli
