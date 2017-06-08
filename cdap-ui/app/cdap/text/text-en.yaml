@@ -505,6 +505,16 @@ features:
        title:
           plural: Keep Selected Columns
           singular: Keep Column
+      MaskData:
+        menuLabel: Mask Data
+        option1: Show last 4 characters only
+        option2: Show last 2 characters only
+        option3: Custom Selection
+        option4: By Shuffling
+      MaskSelection:
+        cancelBtnLabel: Exit 'Mask Data' mode
+        description: Mask the selected characters across all rows in this column
+        popoverTitle: Mask
       Merge:
         buttonLabel: Join
         chooseDelimiter: Choose delimiter
