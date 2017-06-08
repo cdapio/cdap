@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.guice;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.AuthorizationModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -67,7 +66,6 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -153,11 +151,6 @@ public final class AppFabricTestModule extends AbstractModule {
 
       @Override
       public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-      }
-
-      @Override
-      public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                           Map<String, String> properties) {
       }
 
       @Override
