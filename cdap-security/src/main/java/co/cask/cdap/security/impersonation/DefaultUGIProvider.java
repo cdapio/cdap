@@ -24,6 +24,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -99,9 +100,9 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       }
     }
 
-    ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
-                                                                               impersonationRequest.getEntityId());
-    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, impersonationRequest.getEntityId());
+    NamespacedEntityId entityId = impersonationRequest.getEntityId();
+    ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId);
+    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, entityId);
 
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
     String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
@@ -109,31 +110,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       return new UGIWithPrincipal(impersonationInfo.getPrincipal(), UserGroupInformation.getCurrentUser());
     }
 
-    URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
-    boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
-
-    File localKeytabFile = isKeytabLocal ?
-      new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
-    try {
-      String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
-      LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
-
-      // Note: if the keytab file is not local then then localizeKeytab function call above which tries to localize the
-      // keytab from HDFS will throw IOException if the file does not exists or is not readable. Where as if the file
-      // is local then the localizeKeytab function is not called so its important that we throw IOException if the local
-      // keytab file is not readable to ensure that the client gets the same exception in both the modes.
-      if (!Files.isReadable(localKeytabFile.toPath())) {
-        throw new IOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
-      }
-
-      UserGroupInformation loggedInUGI =
-        UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
-      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), loggedInUGI);
-    } finally {
-      if (!isKeytabLocal && !localKeytabFile.delete()) {
-        LOG.warn("Failed to delete file: {}", localKeytabFile);
-      }
-    }
+    return getUGIPrincipalForEntity(impersonationInfo, entityId);
   }
 
   /**
@@ -159,5 +136,46 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     }
 
     return localKeytabFile.toFile();
+  }
+
+  private UGIWithPrincipal getUGIPrincipalForEntity(ImpersonationInfo impersonationInfo,
+                                                    NamespacedEntityId entityId) throws IOException {
+    URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
+    boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
+
+    File localKeytabFile = null;
+    try {
+    localKeytabFile = isKeytabLocal ?
+      new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
+      String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
+      LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
+
+      // Note: if the keytab file is not local then localizeKeytab function call above which tries to localize the
+      // keytab from HDFS will throw IOException if the file does not exists or is not readable. Where as if the file
+      // is local then the localizeKeytab function is not called so its important that we throw IOException if the local
+      // keytab file is not readable to ensure that the client gets the same exception in both the modes.
+      if (!Files.isReadable(localKeytabFile.toPath())) {
+        throw new IOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
+      }
+
+      UserGroupInformation loggedInUGI =
+        UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), loggedInUGI);
+    } catch (IOException e) {
+      // if the keytab file does not exist or readable for this entity, look for the namespace keytab url if their
+      // principals are the same.
+      if (!entityId.getEntityType().equals(EntityType.NAMESPACE)) {
+        ImpersonationInfo namespaceImpersonationInfo =
+          SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, entityId.getNamespaceId());
+        if (namespaceImpersonationInfo.getPrincipal().equals(impersonationInfo.getPrincipal())) {
+          return getUGIPrincipalForEntity(namespaceImpersonationInfo, entityId.getNamespaceId());
+        }
+      }
+      throw e;
+    } finally {
+      if (!isKeytabLocal && localKeytabFile != null && !localKeytabFile.delete()) {
+        LOG.warn("Failed to delete file: {}", localKeytabFile);
+      }
+    }
   }
 }
