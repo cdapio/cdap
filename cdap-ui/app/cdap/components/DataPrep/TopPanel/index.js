@@ -159,7 +159,7 @@ export default class DataPrepTopPanel extends Component {
             <div className="connection-type">
               {T.translate('features.DataPrep.TopPanel.file')}
             </div>
-            <div className="title">
+            <div className="title" title={info.properties.file}>
               {info.properties.file}
             </div>
           </div>
@@ -171,7 +171,7 @@ export default class DataPrepTopPanel extends Component {
               {T.translate('features.DataPrep.TopPanel.database')}
               <span className="connection-name">{info.properties.connectionid}</span>
             </div>
-            <div className="title">
+            <div className="title" title={info.properties.name}>
               {T.translate('features.DataPrep.TopPanel.databaseTitle', {name: info.properties.name})}
             </div>
           </div>
