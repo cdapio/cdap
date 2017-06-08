@@ -15,19 +15,18 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import DataPrepStore from 'components/DataPrep/store';
-import classnames from 'classnames';
-import shortid from 'shortid';
-import Rx from 'rx';
+import ColumnTextSelection from 'components/DataPrep/ColumnTextSelection';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import T from 'i18n-react';
+import TextboxOnValium from 'components/TextboxOnValium';
+import classnames from 'classnames';
 import isNil from 'lodash/isNil';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import T from 'i18n-react';
-import TextboxOnValium from 'components/TextboxOnValium';
+import DataPrepStore from 'components/DataPrep/store';
 
-require('../../../DataPrepTable/DataPrepTable.scss');
 require('./CutDirective.scss');
+
 const CELLHIGHLIGHTCLASSNAME = 'cl-highlight';
 const POPOVERTHETHERCLASSNAME = 'highlight-popover';
 const PREFIX = `features.DataPrep.Directives.CutDirective`;
@@ -36,56 +35,24 @@ export default class CutDirective extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      columnDimension: {},
       textSelectionRange: {start: null, end: null, index: null},
-      showPopover: false,
+      showPopover: false
     };
-
     this.newColName = null;
-    this.mouseDownHandler = this.mouseDownHandler.bind(this);
+    this.onTextSelection = this.onTextSelection.bind(this);
+    this.renderPopover = this.renderPopover.bind(this);
     this.togglePopover = this.togglePopover.bind(this);
-    this.mouseUpHandler = this.mouseUpHandler.bind(this);
-    this.preventPropagation = this.preventPropagation.bind(this);
-    this.handleColNameChange = this.handleColNameChange.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
+    this.handleColNameChange = this.handleColNameChange.bind(this);
   }
-  componentWillMount() {
-    if (this.props.columns.length) {
-      let column = this.props.columns[0];
-      let ele = document.getElementById(`column-${column}`);
-      this.setState({
-        columnDimension: ele.getBoundingClientRect()
-      });
+
+  handleColNameChange(value, isChanged, keyCode) {
+    this.newColName = value;
+    if (keyCode === 13) {
+      this.applyDirective();
     }
   }
-  componentDidMount() {
-    this.documentClick$ = Rx.DOM.fromEvent(document.body, 'click', false)
-      .subscribe((e) => {
-        if (
-          e.target.className.indexOf(CELLHIGHLIGHTCLASSNAME) === -1 &&
-          e.target.className.indexOf(`${POPOVERTHETHERCLASSNAME}-element`) === -1 &&
-          ['TR', 'TBODY'].indexOf(e.target.nodeName) === -1
-        ) {
-          if (this.props.onClose) {
-            this.props.onClose();
-          }
-        }
-      });
-    let highlightedHeader = document.getElementById('highlighted-header');
-    if (highlightedHeader) {
-      highlightedHeader.scrollIntoView();
-    }
-  }
-  componentDidUpdate() {
-    if (this.tetherRef) {
-      this.tetherRef.position();
-    }
-  }
-  componentWillUnmount() {
-    if (this.documentClick$) {
-      this.documentClick$.dispose();
-    }
-  }
+
   applyDirective() {
     let {start, end} = this.state.textSelectionRange;
     if (!isNil(start) && !isNil(end)) {
@@ -105,55 +72,21 @@ export default class CutDirective extends Component {
         });
     }
   }
-  handleColNameChange(value, isChanged, keyCode) {
-    this.newColName = value;
-    if (keyCode === 13) {
-      this.applyDirective();
-    }
-  }
-  togglePopover() {
-    if (this.state.showPopover) {
-      this.setState({
-        showPopover: false,
-        textSelectionRange: {start: null, end: null, index: null},
-      });
-      this.newColName = null;
-    }
-  }
-  mouseDownHandler() {
-    this.textSelection = true;
-    this.togglePopover();
-  }
-  mouseUpHandler(head, index) {
 
-    let currentSelection = window.getSelection().toString();
-    let startRange, endRange;
-
-    if (this.textSelection && currentSelection.length) {
-      startRange = window.getSelection().getRangeAt(0).startOffset;
-      endRange = window.getSelection().getRangeAt(0).endOffset;
-      this.textSelection = false;
-      this.setState({
-        showPopover: true,
-        textSelectionRange: {
-          start: startRange,
-          end: endRange,
-          index
-        },
-      });
-      this.newColName = this.props.columns[0] + '_copy';
-    } else {
-      if (this.state.showPopover) {
-        this.togglePopover();
-      }
-    }
+  onTextSelection({textSelectionRange}) {
+    this.setState({
+      textSelectionRange
+    });
   }
-  preventPropagation(e) {
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    e.preventDefault();
+  togglePopover(showPopover) {
+    this.setState({
+      showPopover
+    });
   }
   renderPopover() {
+    if (!this.state.showPopover) {
+      return null;
+    }
     let tetherConfig = {
       classPrefix: POPOVERTHETHERCLASSNAME,
       attachment: 'top right',
@@ -208,132 +141,24 @@ export default class CutDirective extends Component {
       </Popover>
     );
   }
+
   render() {
-    let {data, headers} = DataPrepStore.getState().dataprep;
-    let column = this.props.columns[0];
-
-    const renderTableCell = (row, index, head, highlightColumn) => {
-      if (head !== highlightColumn) {
-        return (
-          <td
-            key={shortid.generate()}
-            className="gray-out"
-          >
-            <div className="gray-out">
-              {row[head]}
-            </div>
-          </td>
-        );
-      }
-      return (
-        <td
-          key={shortid.generate()}
-          className={CELLHIGHLIGHTCLASSNAME}
-          onMouseDown={this.mouseDownHandler}
-          onMouseUp={this.mouseUpHandler.bind(this, head, index)}
-        >
-          <div
-            className={CELLHIGHLIGHTCLASSNAME}
-          >
-            {
-              index === this.state.textSelectionRange.index ?
-                (
-                  <span>
-                    <span>
-                      {
-                        row[head].slice(0, this.state.textSelectionRange.start)
-                      }
-                    </span>
-                    <span id={`highlight-cell-${index}`}>
-                      {
-                        row[head].slice(this.state.textSelectionRange.start, this.state.textSelectionRange.end)
-                      }
-                    </span>
-                    <span>
-                      {
-                        row[head].slice(this.state.textSelectionRange.end)
-                      }
-                    </span>
-                  </span>
-                )
-              :
-                row[head]
-            }
-          </div>
-        </td>
-      );
-    };
-    const renderTableHeader = (head) => {
-      if (head !== column) {
-        return (
-          <th className="gray-out">
-            <div className="gray-out">
-              {head}
-            </div>
-          </th>
-        );
-      }
-
-      return (
-        <th id="highlighted-header">
-          <div>
-            {head}
-          </div>
-        </th>
-      );
-    };
     return (
-      <div
-        id="cut-directive"
-        className="cut-directive dataprep-table"
-      >
-        <table className="table table-bordered">
-          <colgroup>
-            <col />
-            {
-              headers.map(head => {
-                return (
-                  <col className={classnames({
-                    "highlight-column": head === column
-                  })} />
-                );
-              })
-            }
-          </colgroup>
-          <thead className="thead-inverse">
-            <tr>
-              <th />
-              {
-                headers.map( head => {
-                  return renderTableHeader(head);
-                })
-              }
-            </tr>
-          </thead>
-          <tbody>
-              {
-                data.map((row, i) => {
-                  return (
-                    <tr key={i}>
-                      <td>{i}</td>
-                      {
-                        headers.map((head) => {
-                          return renderTableCell(row, i, head, column);
-                        })
-                      }
-                    </tr>
-                  );
-                })
-              }
-          </tbody>
-        </table>
-        {this.renderPopover()}
-      </div>
+      <ColumnTextSelection
+        className="cut-directive"
+        renderPopover={this.renderPopover}
+        onApply={this.applyDirective}
+        onClose={this.props.onClose}
+        columns={this.props.columns}
+        classNamesToExclude={[POPOVERTHETHERCLASSNAME]}
+        onSelect={this.onTextSelection}
+        togglePopover={this.togglePopover}
+      />
     );
   }
 }
 
 CutDirective.propTypes = {
-  columns: PropTypes.arrayOf(PropTypes.string),
-  onClose: PropTypes.func
+  onClose: PropTypes.func,
+  columns: PropTypes.string
 };
