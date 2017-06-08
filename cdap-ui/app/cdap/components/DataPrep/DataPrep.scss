@@ -22,6 +22,9 @@ $toggle-btn-disabled-bg-color: #cccccc;
 
   &.sidepanel-toggled {
     .top-panel {
+      .left-title {
+        width: 95%;
+      }
       .dataprep-sampler-dropdown {
         display: none;
       }

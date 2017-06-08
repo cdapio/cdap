@@ -26,6 +26,8 @@ import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
+import SamplerOptionsModal from 'components/DataPrep/SamplerDropdown/SamplerOptionsModal';
+
 require('./SamplerDropdown.scss');
 const samplerMethods = {
   first: 'first',
@@ -48,9 +50,13 @@ export default class SamplerDropdown extends Component {
     }));
     let defaultValue = this.dropdownOptions.filter(option => option.name === samplerMethod);
     this.state = {
-      samplerMethod: defaultValue.length ? defaultValue[0] : this.dropdownOptions[0]
+      samplerMethod: defaultValue.length ? defaultValue[0] : this.dropdownOptions[0],
+      showModal: false,
+      selectedSamplerMethod: null
     };
     this.onSamplerChange = this.onSamplerChange.bind(this);
+    this.onSamplerApply = this.onSamplerApply.bind(this);
+    this.toggleOptionsModal = this.toggleOptionsModal.bind(this);
   }
   componentDidMount() {
     this.storeSubscription = DataPrepStore.subscribe(() => {
@@ -63,7 +69,13 @@ export default class SamplerDropdown extends Component {
       }
     });
   }
-  onSamplerChange(samplerMethod) {
+  onSamplerChange(method) {
+    this.setState({
+      showModal: true,
+      selectedSamplerMethod: method
+    });
+  }
+  onSamplerApply({samplerMethod, numLines = NUMLINES, fraction = DEFAULT_FRACTION}) {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let path = objectQuery(DataPrepStore.getState(), 'dataprep', 'workspaceInfo', 'properties', 'path');
     let workspaceId = objectQuery(DataPrepStore.getState(), 'dataprep', 'workspaceId');
@@ -71,9 +83,9 @@ export default class SamplerDropdown extends Component {
     let params = {
       namespace,
       path,
-      lines: NUMLINES,
-      fraction: DEFAULT_FRACTION,
-      sampler: samplerMethod.name
+      lines: numLines,
+      fraction: fraction,
+      sampler: samplerMethod
     };
     // FIXME: Right now CONTENT_TYPE is 'text/plain' and this is because UI doesn't have the info
     // yet from backend. Will replace this with appropriate value when we get it from backend.
@@ -96,6 +108,23 @@ export default class SamplerDropdown extends Component {
           });
         }
       );
+  }
+  toggleOptionsModal() {
+    this.setState({
+      showModal: !this.state.showModal
+    });
+  }
+  renderSamplerDropdownModal() {
+    if (!this.state.showModal) {
+      return null;
+    }
+    return (
+      <SamplerOptionsModal
+        onClose={this.toggleOptionsModal}
+        onApply={this.onSamplerApply}
+        samplerMethod={this.state.selectedSamplerMethod.name}
+      />
+    );
   }
   render() {
     return (
@@ -135,6 +164,7 @@ export default class SamplerDropdown extends Component {
             }
           </DropdownMenu>
         </UncontrolledDropdown>
+        {this.renderSamplerDropdownModal()}
       </div>
     );
   }
