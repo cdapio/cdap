@@ -38,10 +38,14 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,7 +55,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class LocalLogAppender extends LogAppender {
 
   private static final ILoggingEvent SHUTDOWN_EVENT = new LoggingEvent();
-  private static final int EVENT_QUEUE_SIZE = 256;
+  // The event queue size has to be large enough to cater for logs emitted before the
+  // log processing pipeline is fully functional (e.g. pending DatasetService availability).
+  // Otherwise emitting new logs would be blocked.
+  private static final int EVENT_QUEUE_SIZE = 65536;
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
@@ -59,8 +66,9 @@ public class LocalLogAppender extends LogAppender {
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final List<LocalLogProcessorPipeline> pipelines;
-  private final AtomicBoolean started = new AtomicBoolean();
-  private final AtomicBoolean stopped = new AtomicBoolean();
+  private final AtomicBoolean started;
+  private final AtomicBoolean stopped;
+  private final Set<Thread> pipelineThreads;
 
   @Inject
   LocalLogAppender(CConfiguration cConf, DatasetFramework datasetFramework,
@@ -73,6 +81,9 @@ public class LocalLogAppender extends LogAppender {
     this.locationFactory = locationFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.pipelines = new ArrayList<>();
+    this.started = new AtomicBoolean();
+    this.stopped = new AtomicBoolean();
+    this.pipelineThreads = Collections.newSetFromMap(new IdentityHashMap<Thread, Boolean>());
     setName(getClass().getName());
   }
 
@@ -100,6 +111,7 @@ public class LocalLogAppender extends LogAppender {
                                         spec.getContext().getMetricsContext(), spec.getContext().getInstanceId());
       LocalLogProcessorPipeline pipeline = new LocalLogProcessorPipeline(context, syncIntervalMillis);
       pipeline.startAndWait();
+      pipelineThreads.add(pipeline.getAppenderThread());
       pipelines.add(pipeline);
     }
 
@@ -119,6 +131,19 @@ public class LocalLogAppender extends LogAppender {
       } catch (Throwable t) {
         addError("Exception raised when stopping log processing pipeline " + pipeline.getName(), t);
       }
+    }
+  }
+
+  @Override
+  public void doAppend(ILoggingEvent eventObject) {
+    // Ignore logs coming from the log process pipeline, otherwise it'll become an infinite loop of logs.
+    // This won't guard against the case that an appender starts a new thread and emit log per
+    // event (something like what this class does). If that's the case, the appender itself need to guard against
+    // it, similar to what's being done in here.
+    // They are still logged via other log appender (e.g. log to cdap.log), but just not being collected
+    // via the log collection system.
+    if (!pipelineThreads.contains(Thread.currentThread())) {
+      super.doAppend(eventObject);
     }
   }
 
@@ -156,11 +181,28 @@ public class LocalLogAppender extends LogAppender {
       return context.getName();
     }
 
+    Thread getAppenderThread() {
+      return appenderThread;
+    }
+
+    @Override
+    protected Executor executor() {
+      // Copy from parent, but using a different thread name
+      // Can't override the getServiceName() method as it is missing from some Guava version.
+      return new Executor() {
+        @Override
+        public void execute(Runnable command) {
+          new Thread(command, "LocalLogProcessor-" + getName()).start();
+        }
+      };
+    }
+
     @Override
     protected void startUp() throws Exception {
       addInfo("Starting log processing pipeline " + getName());
       context.start();
       addInfo("Log processing pipeline " + getName() + " started");
+      appenderThread = Thread.currentThread();
     }
 
     @Override
@@ -184,7 +226,6 @@ public class LocalLogAppender extends LogAppender {
 
     @Override
     protected void run() {
-      appenderThread = Thread.currentThread();
       try {
         ILoggingEvent event = eventQueue.take();
 
@@ -217,11 +258,8 @@ public class LocalLogAppender extends LogAppender {
      * Appends the given {@link ILoggingEvent} to the pipeline.
      */
     void append(ILoggingEvent event) {
-      // Don't append if the pipeline is already stopped or the log is coming from the same thread that do the actual
-      // call to appenders. This won't guard against the case that an appender starts a new thread and emit log per
-      // event (something like what this class does). If that's the case, the appender itself need to guard against
-      // it, similar to what's being done in here.
-      if (!isRunning() || Thread.currentThread() == appenderThread) {
+      // Don't append if the pipeline is already stopped.
+      if (!isRunning()) {
         return;
       }
 

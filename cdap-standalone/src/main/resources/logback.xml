@@ -128,7 +128,8 @@
     <appender-ref ref="EXTERNAL_AUTH_AUDIT" />
   </logger>
 
-  <root level="DEBUG">
+  <!--<root level="DEBUG">-->
+  <root level="TRACE">
     <appender-ref ref="Rolling"/>
     <appender-ref ref="Debug"/>
     <appender-ref ref="Error"/>
