@@ -526,6 +526,8 @@ features:
       Parse:
         modalTitle: Parse as {parser}
         Parsers:
+          AVRO:
+            label: Parse as Avro
           CSV:
             customPlaceholder: "Delimiter (e.g ;, #, %, ^)"
             firstRowHeader: Set first row as header

@@ -40,7 +40,8 @@ const DIRECTIVE_MAP = {
   'SIMPLEDATE': 'parse-as-simple-date',
   'NATURALDATE': 'parse-as-date',
   'FIXEDLENGTH': 'parse-as-fixed-length',
-  'HL7': 'parse-as-hl7'
+  'HL7': 'parse-as-hl7',
+  'AVRO': 'parse-as-avro-file'
 };
 
 export default class ParseDirective extends Component {
@@ -55,6 +56,7 @@ export default class ParseDirective extends Component {
 
     this.PARSE_OPTIONS = [
       'CSV',
+      'AVRO',
       'XML',
       'JSON',
       'XMLTOJSON',
@@ -120,7 +122,7 @@ export default class ParseDirective extends Component {
   }
 
   selectParse(option) {
-    if (['XML', 'HL7'].indexOf(option) !== -1) {
+    if (['XML', 'HL7', 'AVRO'].indexOf(option) !== -1) {
       this.applyDirective(option);
       return;
     }
