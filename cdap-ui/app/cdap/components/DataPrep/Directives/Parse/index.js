@@ -21,6 +21,7 @@ import SingleFieldModal from 'components/DataPrep/Directives/Parse/Modals/Single
 import CSVModal from 'components/DataPrep/Directives/Parse/Modals/CSVModal';
 import LogModal from 'components/DataPrep/Directives/Parse/Modals/LogModal';
 import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleDateModal';
+import ExcelModal from 'components/DataPrep/Directives/Parse/Modals/ExcelModal';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
@@ -41,7 +42,8 @@ const DIRECTIVE_MAP = {
   'NATURALDATE': 'parse-as-date',
   'FIXEDLENGTH': 'parse-as-fixed-length',
   'HL7': 'parse-as-hl7',
-  'AVRO': 'parse-as-avro-file'
+  'AVRO': 'parse-as-avro-file',
+  'EXCEL': 'parse-as-excel'
 };
 
 export default class ParseDirective extends Component {
@@ -57,6 +59,7 @@ export default class ParseDirective extends Component {
     this.PARSE_OPTIONS = [
       'CSV',
       'AVRO',
+      'EXCEL',
       'XML',
       'JSON',
       'XMLTOJSON',
@@ -180,6 +183,15 @@ export default class ParseDirective extends Component {
     );
   }
 
+  renderExcelModal() {
+    return (
+      <ExcelModal
+        toggle={this.selectParse.bind(this, null)}
+        onApply={this.applyDirective.bind(this, 'EXCEL')}
+      />
+    );
+  }
+
   renderModal() {
     if (!this.state.selectedParse) { return null; }
 
@@ -189,6 +201,8 @@ export default class ParseDirective extends Component {
       return this.renderLogModal();
     } else if (this.state.selectedParse === 'SIMPLEDATE') {
       return this.renderSimpleDateModal();
+    } else if (this.state.selectedParse === 'EXCEL') {
+      return this.renderExcelModal();
     } else {
       return this.renderSingleFieldModal();
     }

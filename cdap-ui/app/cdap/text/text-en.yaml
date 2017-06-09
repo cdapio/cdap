@@ -527,7 +527,7 @@ features:
         modalTitle: Parse as {parser}
         Parsers:
           AVRO:
-            label: Parse as Avro
+            label: Avro
           CSV:
             customPlaceholder: "Delimiter (e.g ;, #, %, ^)"
             firstRowHeader: Set first row as header
@@ -540,6 +540,13 @@ features:
               CUSTOM: Custom Delimiter
               PIPE: Pipe
               TAB: Tab
+          EXCEL:
+            label: Excel
+            modal:
+              description: Choose how you would like to specify the sheet in your Excel file
+              sheetNumberLabel: Sheet Number
+              sheetNameLabel: Sheet Name
+              sheetNameInputPlaceholder: Sheet Name
           FIXEDLENGTH:
             fieldLabel: Column widths
             label: Fixed Length
