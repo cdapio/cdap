@@ -64,3 +64,16 @@
     }
   }
 }
+
+.dataprep-parse-modal {
+  &.parse-as-excel {
+    input[type="number"],
+    input[type="text"] {
+      max-width: 200px;
+      margin-left: 20px;
+    }
+    input[type="number"] {
+      max-width: 100px;
+    }
+  }
+}
