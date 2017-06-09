@@ -54,11 +54,4 @@ public class AuthorizationPrivilege extends Privilege {
   public int hashCode() {
     return Objects.hash(super.hashCode(), principal);
   }
-
-  @Override
-  public String toString() {
-    return super.toString() + "AuthorizationPrivilege{" +
-      "principal=" + principal +
-      '}';
-  }
 }
