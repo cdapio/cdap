@@ -512,8 +512,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
-    String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-    final KerberosPrincipalId principalId = principal == null ? null : new KerberosPrincipalId(principal);
+    String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
+    KerberosPrincipalId principalId = null;
+    if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
+      String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+      principalId = principal == null ? null : new KerberosPrincipalId(principal);
+    }
+
+    final KerberosPrincipalId finalPrincipalId = principalId;
     for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
       final String localInstanceName = entry.getValue();
       final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
@@ -524,8 +530,14 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
           @Override
           public Void call() throws Exception {
-            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
-                                         addLocalDatasetProperty(instanceSpec.getProperties()), principalId);
+            DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties());
+            // we have to do this check since sometimes addInstance method can only be used when app impersonation is
+            // enabled
+            if (finalPrincipalId != null) {
+              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, finalPrincipalId);
+            } else {
+              datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties);
+            }
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));

@@ -26,6 +26,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetManager;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
    * Creates an instance without messaging admin support.
    */
   public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace, SecureStoreManager secureStoreManager) {
-    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry());
+    this(dsFramework, namespace, secureStoreManager, null, RetryStrategies.noRetry(), null);
   }
 
   /**
@@ -53,8 +54,8 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
    */
   public DefaultAdmin(DatasetFramework dsFramework, NamespaceId namespace,
                       SecureStoreManager secureStoreManager, @Nullable MessagingAdmin messagingAdmin,
-                      RetryStrategy retryStrategy) {
-    super(dsFramework, namespace, retryStrategy);
+                      RetryStrategy retryStrategy, KerberosPrincipalId principalId) {
+    super(dsFramework, namespace, retryStrategy, principalId);
     this.secureStoreManager = secureStoreManager;
     this.messagingAdmin = messagingAdmin;
     this.retryStrategy = retryStrategy;

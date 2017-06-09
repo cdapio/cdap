@@ -54,7 +54,7 @@ public abstract class AbstractAppenderContext extends AppenderContext {
     // No need to have retry for dataset admin operations
     // The log framework itself will perform retries and state management
     this.datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                    co.cask.cdap.common.service.RetryStrategies.noRetry());
+                                                    co.cask.cdap.common.service.RetryStrategies.noRetry(), null);
     this.transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), txClient,
