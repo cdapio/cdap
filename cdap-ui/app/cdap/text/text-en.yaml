@@ -578,13 +578,15 @@ features:
               OPTION2: "dd/MM/yyyy"
               OPTION3: "MM-dd-yyyy"
               OPTION4: "MM-dd-yy"
-              OPTION5: "MM-dd-yyyy 'at' HH:mm:ss"
-              OPTION6: "dd/MM/yy HH:mm:ss"
-              OPTION7: "MM.dd.yyyy HH:mm:ss.SSS"
-              OPTION8: "EEE, d MMM yyyy HH:mm:ss"
-              OPTION9: "EEE, MMM d, 'yy"
-              OPTION10: "h:mm AM/PM"
-              OPTION11: "H:mm with timezone"
+              OPTION5: "yyyy-MM-dd"
+              OPTION6: "yyyy-MM-dd HH:mm:ss"
+              OPTION7: "MM-dd-yyyy 'at' HH:mm:ss"
+              OPTION8: "dd/MM/yy HH:mm:ss"
+              OPTION9: "MM.dd.yyyy HH:mm:ss.SSS"
+              OPTION10: "EEE, d MMM yyyy HH:mm:ss"
+              OPTION11: "EEE, MMM d, 'yy"
+              OPTION12: "h:mm AM/PM"
+              OPTION13: "H:mm with timezone"
           XML:
             label: XML
           XMLTOJSON:
