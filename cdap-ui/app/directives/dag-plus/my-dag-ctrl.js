@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -476,8 +476,6 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
-
-
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
         if (nodesTimeout) {
@@ -485,6 +483,8 @@ angular.module(PKG.name + '.commons')
         }
         nodesTimeout = $timeout(function () {
           var nodes = document.querySelectorAll('.box');
+          endpoints = [];
+          vm.instance.deleteEveryEndpoint();
           addEndpoints();
 
           if (!vm.isDisabled) {
@@ -519,10 +519,12 @@ angular.module(PKG.name + '.commons')
           }
         });
       }, true);
+
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', vm.instance.repaintEverything);
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         vm.comments = DAGPlusPlusNodesStore.getComments();
 
         if (!vm.isDisabled) {
@@ -756,6 +758,14 @@ angular.module(PKG.name + '.commons')
 
     vm.deleteComment = function (comment) {
       DAGPlusPlusNodesActionsFactory.deleteComment(comment);
+    };
+
+    vm.undoActions = function () {
+      DAGPlusPlusNodesActionsFactory.undoActions();
+    };
+
+    vm.redoActions = function () {
+      DAGPlusPlusNodesActionsFactory.redoActions();
     };
 
     $scope.$on('$destroy', function () {

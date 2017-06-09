@@ -67,6 +67,28 @@
           tooltip-popup-delay="500">
     <i class="fa fa-commenting"></i>
   </button>
+
+  <!-- Undo Nodes Action -->
+  <button class="btn btn-default"
+          ng-click="DAGPlusPlusCtrl.undoActions()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          uib-tooltip="Undo Nodes Action"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-undo"></i>
+  </button>
+
+  <!-- Redo Nodes Action -->
+  <button class="btn btn-default"
+          ng-click="DAGPlusPlusCtrl.redoActions()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          uib-tooltip="Redo Nodes Action"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-repeat"></i>
+  </button>
 </div>
 
 <div class="my-js-dag"
