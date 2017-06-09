@@ -18,6 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import IconSVG from 'components/IconSVG';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
+import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import T from 'i18n-react';
 
 require('./AddConnection.scss');
@@ -46,10 +47,11 @@ export default class AddConnection extends Component {
       //   type: 'S3',
       //   icon: 'icon-s3'
       // },
-      // {
-      //   type: 'Kafka',
-      //   icon: 'icon-kafka'
-      // }
+      {
+        type: 'Kafka',
+        icon: 'icon-kafka',
+        component: KafkaConnection
+      }
     ];
   }
 
