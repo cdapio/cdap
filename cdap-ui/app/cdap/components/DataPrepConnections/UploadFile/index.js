@@ -45,8 +45,14 @@ export default class ConnectionsUpload extends Component {
   }
 
   fileHandler(e) {
+    const isJSONOrXML = (
+      e[0].type === "application/json" ||
+      e[0].type === "text/xml"
+    );
+
     this.setState({
       file: e[0],
+      recordDelimiter: isJSONOrXML ? '' : '\\n',
       error: e[0].size > FILE_SIZE_LIMIT
     });
   }
