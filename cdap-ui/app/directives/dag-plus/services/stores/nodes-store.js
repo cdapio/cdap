@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,11 +42,17 @@ class DAGPlusPlusNodesStore {
     dispatcher.register('onSetComments', this.setComments.bind(this));
     dispatcher.register('onDeleteComment', this.deleteComment.bind(this));
     dispatcher.register('onUpdateComment', this.updateComment.bind(this));
+    dispatcher.register('onUndoActions', this.undoActions.bind(this));
+    dispatcher.register('onRedoActions', this.redoActions.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
+      nodesHistory: {
+        past: [],
+        future: []
+      },
       connections: [],
       comments: [],
       activeNodeId: null,
@@ -119,6 +125,7 @@ class DAGPlusPlusNodesStore {
     if (!nodeConfig.name) {
       nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
+    this.addNodesToHistory();
     this.state.nodes.push(nodeConfig);
     this.emitChange();
   }
@@ -127,6 +134,7 @@ class DAGPlusPlusNodesStore {
     if (!matchNode.length) {
       return;
     }
+    this.addNodesToHistory();
     matchNode = matchNode[0];
     angular.extend(matchNode, config);
     this.emitChange();
@@ -144,6 +152,7 @@ class DAGPlusPlusNodesStore {
         this.resetSinkCount();
         break;
     }
+    this.addNodesToHistory();
     this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
     this.state.activeNodeId = null;
     this.emitChange();
@@ -243,6 +252,33 @@ class DAGPlusPlusNodesStore {
     return this.state.comments;
   }
 
+  addNodesToHistory() {
+    let oldPresent = angular.copy(this.state.nodes);
+    this.state.nodesHistory.past.push(oldPresent);
+    this.state.nodesHistory.future = [];
+  }
+
+  undoActions() {
+    let past = this.state.nodesHistory.past;
+    if (past.length > 0) {
+      let previousNodes = past[past.length - 1];
+      let presentNodes = angular.copy(this.state.nodes);
+      this.state.nodesHistory.past = past.slice(0, past.length - 1);
+      this.state.nodesHistory.future.unshift(presentNodes);
+      this.setNodes(previousNodes);
+    }
+  }
+
+  redoActions() {
+    let future = this.state.nodesHistory.future;
+    if (future.length > 0) {
+      let nextNodes = future[0];
+      let presentNodes = angular.copy(this.state.nodes);
+      this.state.nodesHistory.past.push(presentNodes);
+      this.state.nodesHistory.future.shift();
+      this.setNodes(nextNodes);
+    }
+  }
 }
 
 DAGPlusPlusNodesStore.$inject = ['DAGPlusPlusNodesDispatcher', 'uuid', 'GLOBALS'];
