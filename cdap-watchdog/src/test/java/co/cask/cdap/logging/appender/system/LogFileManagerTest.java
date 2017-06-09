@@ -119,7 +119,8 @@ public class LogFileManagerTest {
     long maxFileSizeInBytes = 104857600;
     DatasetManager datasetManager = new DefaultDatasetManager(injector.getInstance(DatasetFramework.class),
                                                               NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
+                                                              null);
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(injector.getInstance(DatasetFramework.class)),
