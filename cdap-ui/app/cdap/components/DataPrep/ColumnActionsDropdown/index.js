@@ -37,7 +37,9 @@ import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import Format from 'components/DataPrep/Directives/Format';
 import Explode from 'components/DataPrep/Directives/Explode';
+import MaskData from 'components/DataPrep/Directives/MaskData';
 import ee from 'event-emitter';
+
 require('./ColumnActionsDropdown.scss');
 
 export default class ColumnActionsDropdown extends Component {
@@ -132,6 +134,11 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Explode,
         requiredColCount: 0
+      },
+      {
+        id: shortid.generate(),
+        tag: MaskData,
+        requiredColCount: 1
       }
     ];
     this.eventEmitter = ee(ee);

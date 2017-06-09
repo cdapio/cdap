@@ -53,7 +53,7 @@ export default class ColumnTextSelection extends Component {
   componentDidMount() {
     this.documentClick$ = Rx.DOM.fromEvent(document.body, 'click', false)
       .subscribe((e) => {
-        let matchingClass = intersection(e.target.className, this.props.classNamesToExclude.concat([CELLHIGHLIGHTCLASSNAME]));
+        let matchingClass = intersection(e.target.className.split(' '), this.props.classNamesToExclude.concat([CELLHIGHLIGHTCLASSNAME]));
         if (
           !matchingClass.length &&
           ['TR', 'TBODY'].indexOf(e.target.nodeName) === -1
@@ -120,12 +120,15 @@ export default class ColumnTextSelection extends Component {
         showPopover: true,
         textSelectionRange
       });
-      this.props.onSelect({textSelectionRange});
+      this.props.onSelect({
+        textSelectionRange,
+        rowNumber: index
+      });
       this.props.togglePopover(true);
       this.newColName = this.props.columns[0] + '_copy';
     } else {
       if (this.state.showPopover) {
-        this.props.onSelect({textSelectionRange: null, showPopover:true});
+        this.props.onSelect({textSelectionRange: null, showPopover:true, rowNumber: null});
         this.togglePopover();
       }
     }

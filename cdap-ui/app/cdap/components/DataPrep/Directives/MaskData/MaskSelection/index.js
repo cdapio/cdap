@@ -86,7 +86,6 @@ export default class MaskSelection extends Component {
         }
       ]
     };
-    // let {start, end} = this.state.textSelectionRange;
     return (
       <Popover
         placement="bottom left"
