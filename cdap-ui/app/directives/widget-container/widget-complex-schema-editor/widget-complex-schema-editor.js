@@ -77,6 +77,9 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     vm.error = '';
     if (typeof vm.schemaObj !== 'string') {
       vm.model = JSON.stringify(vm.schemaObj);
+      if (vm.updateOutputSchema) {
+        vm.updateOutputSchema({outputSchema: vm.model});
+      }
     } else {
       vm.model = vm.schemaObj;
     }
@@ -217,7 +220,8 @@ angular.module(PKG.name + '.commons')
         isDisabled: '=',
         pluginProperties: '=?',
         config: '=?',
-        pluginName: '='
+        pluginName: '=',
+        updateOutputSchema: '&'
       },
       controller: ComplexSchemaEditorController,
       controllerAs: 'SchemaEditor'

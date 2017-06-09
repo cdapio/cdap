@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,19 +33,20 @@ class DAGPlusPlusNodesStore {
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
     dispatcher.register('onNodeSelectReset', this.resetActiveNode.bind(this));
     dispatcher.register('onNodeUpdate', this.updateNode.bind(this));
-    dispatcher.register('onAddSourceCount', this.addSourceCount.bind(this));
-    dispatcher.register('onAddSinkCount', this.addSinkCount.bind(this));
-    dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
     dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
     dispatcher.register('onSetCanvasPanning', this.setCanvasPanning.bind(this));
     dispatcher.register('onAddComment', this.addComment.bind(this));
     dispatcher.register('onSetComments', this.setComments.bind(this));
     dispatcher.register('onDeleteComment', this.deleteComment.bind(this));
     dispatcher.register('onUpdateComment', this.updateComment.bind(this));
+    dispatcher.register('onUndoActions', this.undoActions.bind(this));
+    dispatcher.register('onRedoActions', this.redoActions.bind(this));
+    dispatcher.register('onRemovePreviousState', this.removePreviousState.bind(this));
+    dispatcher.register('onResetFutureStates', this.resetFutureStates.bind(this));
   }
 
   setDefaults() {
-    this.state = {
+    let defaultState = {
       nodes: [],
       connections: [],
       comments: [],
@@ -56,7 +57,12 @@ class DAGPlusPlusNodesStore {
       canvasPanning: {
         top: 0,
         left: 0
-      }
+      },
+    };
+    this.state = Object.assign({}, defaultState);
+    this.stateHistory = {
+      past: [],
+      future: []
     };
   }
 
@@ -119,6 +125,18 @@ class DAGPlusPlusNodesStore {
     if (!nodeConfig.name) {
       nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
+    this.addStateToHistory();
+    switch (this.GLOBALS.pluginConvert[nodeConfig.type]) {
+      case 'source':
+        this.addSourceCount();
+        break;
+      case 'transform':
+        this.addTransformCount();
+        break;
+      case 'sink':
+        this.addSinkCount();
+        break;
+    }
     this.state.nodes.push(nodeConfig);
     this.emitChange();
   }
@@ -127,13 +145,15 @@ class DAGPlusPlusNodesStore {
     if (!matchNode.length) {
       return;
     }
+    this.addStateToHistory();
     matchNode = matchNode[0];
     angular.extend(matchNode, config);
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.name === node);
-    switch (this.GLOBALS.pluginConvert[match[0].type]) {
+    let match = this.state.nodes.filter(n => n.name === node)[0];
+    this.addStateToHistory();
+    switch (this.GLOBALS.pluginConvert[match.type]) {
       case 'source':
         this.resetSourceCount();
         break;
@@ -144,7 +164,11 @@ class DAGPlusPlusNodesStore {
         this.resetSinkCount();
         break;
     }
-    this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
+    this.state.nodes.splice(this.state.nodes.indexOf(match), 1);
+    // removes connections that contain the node we just removed, otherwise there will be a Javascript error
+    this.state.connections = this.state.connections.filter(conn => {
+      return conn.from !== match.name && conn.to !== match.name;
+    });
     this.state.activeNodeId = null;
     this.emitChange();
   }
@@ -172,6 +196,7 @@ class DAGPlusPlusNodesStore {
     return this.state.activeNodeId;
   }
   setActiveNodeId(nodeId) {
+    this.addStateToHistory(false);
     this.state.activeNodeId = nodeId;
     this.emitChange();
   }
@@ -184,14 +209,17 @@ class DAGPlusPlusNodesStore {
   }
 
   addConnection(connection) {
+    this.addStateToHistory();
     this.state.connections.push(connection);
     this.emitChange();
   }
   updateConnections(connections) {
+    this.addStateToHistory();
     this.state.connections = connections;
     this.emitChange();
   }
   removeConnection(connection) {
+    this.addStateToHistory();
     let index = this.state.connections.indexOf(connection);
     this.state.connections.splice(index, 1);
     this.emitChange();
@@ -212,6 +240,7 @@ class DAGPlusPlusNodesStore {
   }
 
   addComment(comment) {
+    this.addStateToHistory();
     this.state.comments.push(comment);
     this.emitChange();
   }
@@ -222,6 +251,7 @@ class DAGPlusPlusNodesStore {
   }
 
   deleteComment(comment) {
+    this.addStateToHistory();
     let index = this.state.comments.indexOf(comment);
     if (index > -1) {
       this.state.comments.splice(index, 1);
@@ -234,6 +264,7 @@ class DAGPlusPlusNodesStore {
     if (!matchComment.length) {
       return;
     }
+    this.addStateToHistory();
     matchComment = matchComment[0];
     angular.extend(matchComment, config);
     this.emitChange();
@@ -243,6 +274,54 @@ class DAGPlusPlusNodesStore {
     return this.state.comments;
   }
 
+  setState(state) {
+    this.state = state;
+    this.emitChange();
+  }
+
+  getUndoStates() {
+    return this.stateHistory.past;
+  }
+
+  getRedoStates() {
+    return this.stateHistory.future;
+  }
+
+  addStateToHistory(resetFuture = true) {
+    let currentState = angular.copy(this.state);
+    this.stateHistory.past.push(currentState);
+    if (resetFuture) {
+      this.resetFutureStates();
+    }
+  }
+
+  removePreviousState() {
+    this.stateHistory.past.pop();
+  }
+
+  resetFutureStates() {
+    this.stateHistory.future = [];
+  }
+
+  undoActions() {
+    let past = this.stateHistory.past;
+    if (past.length > 0) {
+      let previousState = this.stateHistory.past.pop();
+      let presentState = angular.copy(this.state);
+      this.stateHistory.future.unshift(presentState);
+      this.setState(previousState);
+    }
+  }
+
+  redoActions() {
+    let future = this.stateHistory.future;
+    if (future.length > 0) {
+      let nextState = this.stateHistory.future.shift();
+      let presentState = angular.copy(this.state);
+      this.stateHistory.past.push(presentState);
+      this.setState(nextState);
+    }
+  }
 }
 
 DAGPlusPlusNodesStore.$inject = ['DAGPlusPlusNodesDispatcher', 'uuid', 'GLOBALS'];

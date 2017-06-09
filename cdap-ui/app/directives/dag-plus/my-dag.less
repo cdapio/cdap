@@ -133,6 +133,17 @@ my-dag-plus {
   .zoom-control {
     z-index: 998;
     right: 15px;
+
+    button.btn.btn-default {
+      &[disabled] {
+        opacity: 1;
+        background-color: white;
+
+        i.fa {
+          opacity: 0.5;
+        }
+      }
+    }
   }
 
   .my-js-dag.preview-mode {
