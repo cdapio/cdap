@@ -20,6 +20,7 @@ import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import Mousetrap from 'mousetrap';
 
 const POPOVERTHETHERCLASSNAME = 'highlight-popover';
 const CELLHIGHLIGHTCLASSNAME = 'cl-highlight';
@@ -37,6 +38,13 @@ export default class MaskSelection extends Component {
     this.applyDirective = this.applyDirective.bind(this);
     this.onTextSelection = this.onTextSelection.bind(this);
     this.togglePopover = this.togglePopover.bind(this);
+  }
+
+  componentDidMount() {
+    Mousetrap.bind('enter', this.applyDirective);
+  }
+  componentWillUnmount() {
+    Mousetrap.unbind('enter');
   }
 
   getPattern() {
