@@ -37,6 +37,9 @@ import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import Format from 'components/DataPrep/Directives/Format';
 import Explode from 'components/DataPrep/Directives/Explode';
+import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
+import Decode from 'components/DataPrep/Directives/Decode';
+
 import ee from 'event-emitter';
 require('./ColumnActionsDropdown.scss');
 
@@ -132,6 +135,19 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Explode,
         requiredColCount: 0
+      },
+      {
+        tag: 'divider'
+      },
+      {
+        id: shortid.generate(),
+        tag: EncodeDecode,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: Decode,
+        requiredColCount: 1
       }
     ];
     this.eventEmitter = ee(ee);
