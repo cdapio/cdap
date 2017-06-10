@@ -89,7 +89,8 @@ public class DefaultImpersonator implements Impersonator {
     if (currUserShortName.equals(masterShortUsername) || currUserShortName.equals(configuredUGI.getShortUserName())) {
       return configuredUGI;
     }
-    throw new UnsupportedOperationException(String.format("User %s is not allowed to impersonate user %s.",
-                                                          UserGroupInformation.getCurrentUser(), configuredUGI));
+    throw new IllegalStateException(String.format("Invalid impersonation request made by the system. " +
+                                                    "User %s is not allowed to impersonate user %s.",
+                                                  UserGroupInformation.getCurrentUser(), configuredUGI));
   }
 }
