@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -52,6 +53,9 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskPublisher;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -62,6 +66,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -86,6 +91,7 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -97,7 +103,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
@@ -120,9 +125,13 @@ public class DefaultStore implements Store {
   private final Transactional transactional;
   private final AtomicBoolean upgradeComplete;
   private final LoadingCache<byte[], Boolean> upgradeCacheLoader;
+  private final MessagingService messagingService;
+  private final ScheduleTaskPublisher taskPublisher;
+  private final TopicId topicId;
 
   @Inject
-  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient) {
+  public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient,
+                      MessagingService messagingService) {
     this.configuration = conf;
     this.dsFramework = framework;
     this.transactional = Transactions.createTransactionalWithRetry(
@@ -136,6 +145,9 @@ public class DefaultStore implements Store {
     this.upgradeCacheLoader = CacheBuilder.newBuilder()
       .expireAfterWrite(1, TimeUnit.MINUTES)
       .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration, upgradeComplete));
+    this.messagingService = messagingService;
+    this.topicId = NamespaceId.SYSTEM.topic(configuration.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    this.taskPublisher = new ScheduleTaskPublisher(this.messagingService, this.topicId);
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
@@ -257,6 +269,23 @@ public class DefaultStore implements Store {
   @Override
   public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     setStop(id, pid, endTime, runStatus, null);
+    sendProgramStatusNotification(id, endTime, runStatus);
+  }
+
+  private void sendProgramStatusNotification(ProgramId id, long endTime, ProgramRunStatus runStatus) {
+    // Send program run status here, and convert to TriggerableProgramStatus in Scheduler
+    // Since we don't know which other schedule depends on this program finishing, we can't use ScheduleTaskPublisher
+    try {
+      messagingService.publish(
+              StoreRequestBuilder.of(this.topicId)
+                      .addPayloads(GSON.toJson(id))
+                      .addPayloads(GSON.toJson(runStatus))
+                      .build()
+      );
+    } catch (TopicNotFoundException | IOException e) {
+      LOG.warn("Error while publishing notification for program {}: {}", id.getProgram(), e);
+      // TODO throw new exception
+    }
   }
 
   @Override
