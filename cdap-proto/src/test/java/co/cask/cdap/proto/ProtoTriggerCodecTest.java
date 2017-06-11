@@ -21,9 +21,11 @@ import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
@@ -37,26 +39,20 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testTriggerCodec() {
+    testTriggerCodec(new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4));
 
-    Trigger trigger = new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4);
+    testTriggerCodec(new ProtoTrigger.TimeTrigger("* * * * *"));
+
+    testTriggerCodec(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 17));
+
+    testTriggerCodec(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
+                                                    ProgramType.FLOW, "myprog"),
+                                                    ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED)));
+  }
+
+  private void testTriggerCodec(ProtoTrigger trigger) {
     String json = GSON.toJson(trigger);
     Trigger trigger1 = GSON.fromJson(json, Trigger.class);
-    Assert.assertEquals(trigger, trigger1);
-    json = GSON.toJson(trigger, Trigger.class);
-    trigger1 = GSON.fromJson(json, Trigger.class);
-    Assert.assertEquals(trigger, trigger1);
-
-    trigger = new ProtoTrigger.TimeTrigger("* * * * *");
-    json = GSON.toJson(trigger);
-    trigger1 = GSON.fromJson(json, Trigger.class);
-    Assert.assertEquals(trigger, trigger1);
-    json = GSON.toJson(trigger, Trigger.class);
-    trigger1 = GSON.fromJson(json, Trigger.class);
-    Assert.assertEquals(trigger, trigger1);
-
-    trigger = new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 17);
-    json = GSON.toJson(trigger);
-    trigger1 = GSON.fromJson(json, Trigger.class);
     Assert.assertEquals(trigger, trigger1);
     json = GSON.toJson(trigger, Trigger.class);
     trigger1 = GSON.fromJson(json, Trigger.class);

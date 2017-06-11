@@ -16,7 +16,9 @@
 
 package co.cask.cdap.api.schedule;
 
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.ProgramType;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 
 import java.util.Map;
 import java.util.TimeZone;
@@ -118,15 +120,67 @@ public interface ScheduleBuilder {
    * @param cronExpression the cron expression to specify the time to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
-  ScheduleCreationSpec triggerByTime(String cronExpression);
+  ScheduleCreationBuilder triggerByTime(String cronExpression);
 
   /**
    * Create a schedule which is triggered whenever at least a certain number of new partitions
-   * are added to a certain dataset.
+   * are added to a certain dataset in the same namespace as the app.
    *
    * @param datasetName the name of the dataset in the same namespace of the app
    * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
-  ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions);
+  ScheduleCreationBuilder triggerOnPartitions(String datasetName, int numPartitions);
+
+  /**
+   * Create a schedule which is triggered whenever at least a certain number of new partitions
+   * are added to a certain dataset in the specified namespace.
+   *
+   * @param datasetNamespace the namespace where the dataset is defined
+   * @param datasetName the name of the dataset in the specified namespace of the app
+   * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
+   * @return this {@link ScheduleBuilder}
+   */
+  ScheduleCreationBuilder triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions);
+
+  /**
+   * Create a schedule which is triggered when the given program in the given namespace, application, and
+   * application version transitions to any one of the given program statuses.
+   *
+   * @param programNamespace the namespace where this program is defined
+   * @param application the name of the application where this program is defined
+   * @param appVersion the version of the application
+   * @param programType the type of the program, as supported by the system
+   * @param program the name of the program
+   * @param programStatuses the set of statuses to trigger the schedule. The schedule will be triggered if the status of
+   *                        the specific program transitioned to one of these statuses.
+   * @return this {@link ScheduleBuilder}
+   */
+  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, String appVersion,
+                                                 ProgramType programType, String program,
+                                                 ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule which is triggered in the same application version.
+   *
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   */
+  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
+                                                 String program, ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule which is triggered in the same application and application version.
+   *
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   */
+  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, ProgramType programType, String program,
+                                                 ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule which is triggered in the same namespace, application, and application version.
+   *
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   */
+  ScheduleCreationBuilder triggerOnProgramStatus(ProgramType programType, String program,
+                                                 ProgramStatus... programStatuses);
 }

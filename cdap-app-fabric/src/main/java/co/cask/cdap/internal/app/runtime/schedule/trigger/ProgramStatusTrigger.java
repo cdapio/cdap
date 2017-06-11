@@ -16,27 +16,27 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.ProtoTriggerCodec;
-import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.annotations.VisibleForTesting;
 
-import java.util.Map;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Serialization and deserialization of Triggers as Json.
+ * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
  */
-public class TriggerCodec extends ProtoTriggerCodec {
+public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
+  public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
+    super(programId, programStatuses);
+  }
 
-  private static final Map<ProtoTrigger.Type, Class<? extends Trigger>> TYPE_TO_INTERNAL_TRIGGER =
-    ImmutableMap.<ProtoTrigger.Type, Class<? extends Trigger>>builder()
-      .put(ProtoTrigger.Type.TIME, TimeTrigger.class)
-      .put(ProtoTrigger.Type.PARTITION, PartitionTrigger.class)
-      .put(ProtoTrigger.Type.STREAM_SIZE, StreamSizeTrigger.class)
-      .put(ProtoTrigger.Type.PROGRAM_STATUS, ProgramStatusTrigger.class)
-      .build();
-
-  public TriggerCodec() {
-    super(TYPE_TO_INTERNAL_TRIGGER);
+  @VisibleForTesting
+  public ProgramStatusTrigger(ProgramId programId, ProgramStatus... programStatuses) {
+    super(programId, new HashSet<>(Arrays.asList(programStatuses)));
   }
 }

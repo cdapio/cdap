@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.ConstraintProgramScheduleBuilder;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
@@ -23,10 +25,13 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTriggerBuilder;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTriggerBuilder;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTriggerBuilder;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
+import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 
@@ -108,16 +113,60 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   @Override
-  public ScheduleCreationSpec triggerByTime(String cronExpression) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new TimeTrigger(cronExpression), constraints, timeoutMillis);
+  public ScheduleCreationBuilder triggerByTime(String cronExpression) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new TimeTriggerBuilder(cronExpression));
   }
 
   @Override
-  public ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new PartitionTrigger(namespace.dataset(datasetName), numPartitions),
-                                    constraints, timeoutMillis);
+  public ScheduleCreationBuilder triggerOnPartitions(String datasetName, int numPartitions) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new PartitionTriggerBuilder(namespace.dataset(datasetName), numPartitions));
+  }
+
+  @Override
+  public ScheduleCreationBuilder triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new PartitionTriggerBuilder(new DatasetId(datasetNamespace, datasetName),
+                                                                   numPartitions));
+  }
+
+  @Override
+  public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, String appVersion,
+                                                        ProgramType programType, String program,
+                                                        ProgramStatus... programStatuses) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new ProgramStatusTriggerBuilder(programNamespace, application, appVersion,
+                                                                       programType.toString(), program,
+                                                                       programStatuses));
+  }
+
+  @Override
+  public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application,
+                                                        ProgramType programType, String program,
+                                                        ProgramStatus... programStatuses) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new ProgramStatusTriggerBuilder(programNamespace, application, null,
+                                                                       programType.toString(), program,
+                                                                       programStatuses));
+  }
+
+  @Override
+  public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, ProgramType programType,
+                                                        String program, ProgramStatus... programStatuses) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new ProgramStatusTriggerBuilder(programNamespace, null, null,
+                                                                       programType.toString(), program,
+                                                                       programStatuses));
+  }
+
+  @Override
+  public ScheduleCreationBuilder triggerOnProgramStatus(ProgramType programType, String program,
+                                                        ProgramStatus... programStatuses) {
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new ProgramStatusTriggerBuilder(null, null, null,
+                                                                       programType.toString(), program,
+                                                                       programStatuses));
   }
 
   @Override
