@@ -16,8 +16,10 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Objects;
@@ -34,7 +36,8 @@ public abstract class ProtoTrigger implements Trigger {
   public enum Type {
     TIME,
     PARTITION,
-    STREAM_SIZE
+    STREAM_SIZE,
+    PROGRAM_STATUS
   }
 
   private final Type type;
@@ -189,6 +192,50 @@ public abstract class ProtoTrigger implements Trigger {
     @Override
     public String toString() {
       return String.format("StreamSizeTrigger(%s, %d MB)", getStreamId(), getTriggerMB());
+    }
+  }
+
+  /**
+   * Represents a program status trigger for REST requests/responses
+   */
+  public static class ProgramStatusTrigger extends ProtoTrigger {
+
+    protected final ProgramId programId;
+    protected final ProgramStatus programStatus;
+
+    public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
+      super(Type.PROGRAM_STATUS);
+      this.programId = programId;
+      this.programStatus = programStatus;
+    }
+
+    public ProgramId getProgramId() {
+      return programId;
+    }
+
+    public ProgramStatus getProgramStatus() {
+      return programStatus;
+    }
+
+    @Override
+    public void validate() {
+      ProtoTrigger.validateNotNull(getProgramId(), "program id");
+      ProtoTrigger.validateNotNull(getProgramId().getNamespace(), "program id namespace");
+      ProtoTrigger.validateNotNull(getProgramId().getApplication(), "program id application");
+      ProtoTrigger.validateNotNull(getProgramId().getVersion(), "program id version");
+      ProtoTrigger.validateNotNull(getProgramId().getProgram(), "program id name");
+      ProtoTrigger.validateNotNull(getProgramStatus(), "program status");
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getProgramId(), getProgramStatus());
+    }
+
+    @Override
+    public String toString() {
+      String programName = getProgramId().getProgram();
+      return String.format("ProgramStatusTrigger(%s, %s)", programName, getProgramStatus().toString());
     }
   }
 

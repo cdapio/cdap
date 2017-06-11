@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api.schedule;
 
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
@@ -74,7 +76,7 @@ public interface ScheduleBuilder {
    * Set a certain amount of delay passed after the schedule is triggered, before launching the program.
    *
    * @param delay delay in the given <tt>unit</tt> to wait after the schedule is triggered before launching the program
-   * @param unit the time unit of the <tt>delay</tt> argument
+   * @param unit  the time unit of the <tt>delay</tt> argument
    * @return {@link ScheduleBuilder} containing the given delay. Note that the delay constraint does not have the
    * option to abort the schedule if the constraint is not met.
    */
@@ -86,7 +88,7 @@ public interface ScheduleBuilder {
    * JVM's default time zone will be used to interpret {@code startTime} and {@code endTime}.
    *
    * @param startTime the start time (inclusive) in the format of "HH:mm", for instance 2am should be "02:00"
-   * @param endTime the end time (exclusive) in the format of "HH:mm", for instance 5pm should be "17:00"
+   * @param endTime   the end time (exclusive) in the format of "HH:mm", for instance 5pm should be "17:00"
    * @return {@link ConstraintProgramScheduleBuilder} containing the time range
    */
   ConstraintProgramScheduleBuilder withTimeWindow(String startTime, String endTime);
@@ -96,8 +98,8 @@ public interface ScheduleBuilder {
    * between which the program is allowed to be launched.
    *
    * @param startTime the start time (inclusive) in the format of "HH:mm", for instance 2am should be "02:00"
-   * @param endTime the end time (exclusive) in the format of "HH:mm", for instance 5pm should be "17:00"
-   * @param timeZone the time zone of {@code startTime} and {@code endTime}
+   * @param endTime   the end time (exclusive) in the format of "HH:mm", for instance 5pm should be "17:00"
+   * @param timeZone  the time zone of {@code startTime} and {@code endTime}
    * @return {@link ConstraintProgramScheduleBuilder} containing the time range
    */
   ConstraintProgramScheduleBuilder withTimeWindow(String startTime, String endTime, TimeZone timeZone);
@@ -107,7 +109,7 @@ public interface ScheduleBuilder {
    *
    * @param duration duration in the given <tt>unit</tt> to wait after the last launch of the program
    *                 before launching the program
-   * @param unit the time unit of the <tt>duration</tt> argument
+   * @param unit     the time unit of the <tt>duration</tt> argument
    * @return {@link ConstraintProgramScheduleBuilder} containing the given duration
    */
   ConstraintProgramScheduleBuilder withDurationSinceLastRun(long duration, TimeUnit unit);
@@ -124,9 +126,37 @@ public interface ScheduleBuilder {
    * Create a schedule which is triggered whenever at least a certain number of new partitions
    * are added to a certain dataset.
    *
-   * @param datasetName the name of the dataset in the same namespace of the app
+   * @param datasetName   the name of the dataset in the same namespace of the app
    * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
   ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions);
+
+  /**
+   * Create a schedule which is triggered based upon the specified program in an application
+   * and a specific program status.
+   *
+   * @param application        the application namespace
+   * @param applicationVersion the version of the application
+   * @param programType        the type of the program, as supported by the system
+   * @param program            the name of the program
+   * @param programStatus      the status of the program to trigger the schedule
+   * @return this {@link ScheduleBuilder}
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(String application, String applicationVersion,
+                                              ProgramType programType, String program,
+                                              ProgramStatus programStatus);
+
+  /**
+   * Create a schedule which is triggered based upon the specified program in an application with
+   * the current version and a specific program status.
+   *
+   * @param application   the application namespace
+   * @param programType   the type of the program, as supported by the system
+   * @param program       the name of the program
+   * @param programStatus the status of the program to trigger the schedule
+   * @return this {@link ScheduleBuilder}
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+                                              String program, ProgramStatus programStatus);
 }
