@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.ConstraintProgramScheduleBuilder;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
@@ -29,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoConstraint;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -127,19 +126,17 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   public ScheduleCreationSpec triggerOnProgramStatus(String application, String applicationVersion,
-                                                     SchedulableProgramType programType, String program,
-                                                     TriggerableProgramStatus programStatus) {
-    ProgramType protoProgramType = ProgramType.valueOfSchedulableType(programType);
-    ProgramId programId = new ApplicationId(namespace.getNamespace(), application, applicationVersion)
-                                            .program(protoProgramType, program);
+                                                     ProgramType programType, String program,
+                                                     ProgramStatus programStatus) {
+    ProgramId programId = namespace.app(application, applicationVersion).program(programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
                                     new ProgramStatusTrigger(programId, programStatus),
                                     constraints, timeoutMillis);
   }
 
   @Override
-  public ScheduleCreationSpec triggerOnProgramStatus(String application, SchedulableProgramType programType,
-                                                     String program, TriggerableProgramStatus programStatus) {
+  public ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+                                                     String program, ProgramStatus programStatus) {
     ProgramId programId = new ProgramId(namespace.getNamespace(), application, programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
                                     new ProgramStatusTrigger(programId, programStatus),

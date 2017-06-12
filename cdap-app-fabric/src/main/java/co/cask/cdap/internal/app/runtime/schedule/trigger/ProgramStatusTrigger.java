@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.DatasetId;
@@ -28,7 +28,7 @@ import co.cask.cdap.proto.id.ProgramId;
  */
 public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
 
-  public ProgramStatusTrigger(ProgramId programId, TriggerableProgramStatus programStatus) {
+  public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
     super(programId, programStatus);
   }
 }

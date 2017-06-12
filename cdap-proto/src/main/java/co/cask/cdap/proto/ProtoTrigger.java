@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -201,9 +201,9 @@ public abstract class ProtoTrigger implements Trigger {
   public static class ProgramStatusTrigger extends ProtoTrigger {
 
     protected final ProgramId programId;
-    protected final TriggerableProgramStatus programStatus;
+    protected final ProgramStatus programStatus;
 
-    public ProgramStatusTrigger(ProgramId programId, TriggerableProgramStatus programStatus) {
+    public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
       super(Type.PROGRAM_STATUS);
       this.programId = programId;
       this.programStatus = programStatus;
@@ -213,7 +213,7 @@ public abstract class ProtoTrigger implements Trigger {
       return programId;
     }
 
-    public TriggerableProgramStatus getProgramStatus() {
+    public ProgramStatus getProgramStatus() {
       return programStatus;
     }
 

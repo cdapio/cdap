@@ -16,7 +16,8 @@
 
 package co.cask.cdap.api.schedule;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
@@ -143,8 +144,8 @@ public interface ScheduleBuilder {
    * @return this {@link ScheduleBuilder}
    */
   ScheduleCreationSpec triggerOnProgramStatus(String application, String applicationVersion,
-                                              SchedulableProgramType programType, String program,
-                                              TriggerableProgramStatus programStatus);
+                                              ProgramType programType, String program,
+                                              ProgramStatus programStatus);
 
   /**
    * Create a schedule which is triggered based upon the specified program in an application with
@@ -156,6 +157,6 @@ public interface ScheduleBuilder {
    * @param programStatus the status of the program to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
-  ScheduleCreationSpec triggerOnProgramStatus(String application, SchedulableProgramType programType,
-                                              String program, TriggerableProgramStatus programStatus);
+  ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+                                              String program, ProgramStatus programStatus);
 }
