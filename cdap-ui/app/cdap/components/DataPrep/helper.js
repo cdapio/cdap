@@ -45,23 +45,23 @@ export function isCustomOption(selectedOption) {
   return selectedOption.substr(0, 6) === 'CUSTOM';
 }
 
-export function setPopoverOffset(element, header_height = 50, footer_height = 54) {
+export function setPopoverOffset(element) {
   let elem = element;
   let elemBounding = elem.getBoundingClientRect();
-
-  const FOOTER_HEIGHT = footer_height;
 
   let popover = document.getElementsByClassName('second-level-popover');
   let popoverHeight = popover[0].getBoundingClientRect().height;
   let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
   let popoverMenuItemTop = elemBounding.top;
-  let bodyBottom = document.body.getBoundingClientRect().bottom + FOOTER_HEIGHT; // Since we have footer absolutely positioned.
+  let bodyBottom = document.body.getBoundingClientRect().bottom;
 
   let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll;
 
   if (diff < 0) {
-    diff = diff - 5; // Give that extra margin at the bottom just so that the menu doesn't stick to the bottom of the browser.
     popover[0].style.top = `${diff}px`;
+    if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
+      popover[0].style.bottom = `-1px`;
+    }
   } else {
     popover[0].style.top = 0;
   }
