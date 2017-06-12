@@ -17,5 +17,6 @@
 .cask-resource-center {
   height: 100%;
   padding: 10px;
-  overflow: auto;
+  overflow-y: auto;
+  max-height: 75vh;
 }
