@@ -39,23 +39,33 @@ const DECODEOPTIONS = [
   },
   {
     label: T.translate(`${PREFIX}.utf8`),
-    getDirective: (column) => `set-charset ${column} utf-8`
+    getDirective: (column) => `set-charset ${column} utf-8`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
   },
   {
     label: T.translate(`${PREFIX}.utf16`),
-    getDirective: (column) => `set-charset ${column} utf-16`
+    getDirective: (column) => `set-charset ${column} utf-16`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
   },
   {
     label: T.translate(`${PREFIX}.usascii`),
-    getDirective: (column) => `set-charset ${column} us-ascii`
+    getDirective: (column) => `set-charset ${column} us-ascii`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
   },
   {
     label: T.translate(`${PREFIX}.iso88591`),
-    getDirective: (column) => `set-charset ${column} iso-8859-1`
+    getDirective: (column) => `set-charset ${column} iso-8859-1`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
   },
   {
     label: T.translate(`${PREFIX}.utf16be`),
-    getDirective: (column) => `set-charset ${column} utf-16be`
+    getDirective: (column) => `set-charset ${column} utf-16be`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
+  },
+  {
+    label: T.translate(`${PREFIX}.utf16le`),
+    getDirective: (column) => `set-charset ${column} utf-16le`,
+    disabled: (column, typesMap) => typesMap[column] !== 'byte[]'
   }
 ];
 export default function Decode({onComplete, column, isOpen}) {

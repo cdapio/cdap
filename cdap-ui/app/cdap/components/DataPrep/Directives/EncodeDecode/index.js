@@ -22,7 +22,8 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import debounce from 'lodash/debounce';
 import {setPopoverOffset} from 'components/DataPrep/helper';
-
+import {preventPropagation} from 'services/helpers';
+import isNil from 'lodash/isNil';
 
 require('./EncodeDecode.scss');
 const PREFIX = 'features.DataPrep.Directives.Encode';
@@ -47,6 +48,7 @@ const ENCODEOPTIONS = [
 export default class EncodeDecode extends Component {
   constructor(props) {
     super(props);
+    this.preventPropagation = preventPropagation;
   }
   componentDidUpdate() {
     if (this.props.isOpen && this.calculateOffset) {
@@ -96,11 +98,15 @@ export default class EncodeDecode extends Component {
       >
         {
           this.props.options.map((option, i) => {
+            let {types} = DataPrepStore.getState().dataprep;
+            let isOptionDisabled = isNil(option.disabled) ? false : option.disabled(this.props.column, types);
             return (
               <div
-                className="option"
+                className={classnames("option", {
+                  'disabled': isOptionDisabled
+                })}
                 key={i}
-                onClick={this.applyDirective.bind(this, option)}
+                onClick={!isOptionDisabled && this.applyDirective.bind(this, option)}
               >
                 {option.label}
               </div>

@@ -23,6 +23,10 @@
       line-height: 1.5;
       font-size: 13px;
 
+      &.disabled {
+        cursor: not-allowed;
+        pointer-events: auto;
+      }
       &:hover {
         background-color: #dddddd;
       }
