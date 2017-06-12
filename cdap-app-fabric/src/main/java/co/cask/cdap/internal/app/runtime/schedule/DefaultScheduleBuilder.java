@@ -30,9 +30,7 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;
@@ -129,41 +127,38 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
                                                      String applicationVersion, ProgramType programType,
                                                      String program, ProgramStatus programStatus) {
-    ProgramId programId = new ApplicationId(programNamespace, application, applicationVersion)
-                            .program(programType.toString(), program);
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(programId, programStatus),
-                                    constraints, timeoutMillis);
+      return new ScheduleCreationSpec(name, description, programName, properties,
+                                  new ProgramStatusTrigger(programNamespace, application, applicationVersion,
+                                          programType.toString(), program, programStatus),
+                                  constraints, timeoutMillis);
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
                                                      ProgramType programType, String program,
                                                      ProgramStatus programStatus) {
-    ProgramId programId = new ProgramId(programNamespace, application, programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(programId, programStatus),
-                                    constraints, timeoutMillis);
+                                  new ProgramStatusTrigger(programNamespace, application, null,
+                                          programType.toString(), program, programStatus),
+                                  constraints, timeoutMillis);
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, ProgramType programType,
                                                      String program, ProgramStatus programStatus) {
-    // TODO get application name and version where program is
-    ProgramId programId = new ProgramId(programNamespace, "", programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(programId, programStatus),
-                                    constraints, timeoutMillis);
+                                  new ProgramStatusTrigger(programNamespace, null, null,
+                                          programType.toString(), program, programStatus),
+                                  constraints, timeoutMillis);
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                                      ProgramStatus programStatus) {
-    // TODO get application name and version where program is
-    ProgramId programId = new ProgramId(namespace.getNamespace(), "", programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(programId, programStatus),
-                                    constraints, timeoutMillis);
+                                  new ProgramStatusTrigger(null, null, null,
+                                          programType.toString(), program, programStatus),
+                                  constraints, timeoutMillis);
   }
 
   @Override
