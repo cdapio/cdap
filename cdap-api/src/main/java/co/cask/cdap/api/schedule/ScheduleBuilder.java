@@ -133,30 +133,41 @@ public interface ScheduleBuilder {
   ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions);
 
   /**
-   * Create a schedule which is triggered based upon the specified program in an application
-   * and a specific program status.
+   * Create a schedule which is triggered based upon the specified program in a namespace, application, application
+   * version, and a specific program status.
    *
-   * @param application        the application namespace
+   * @param programNamespace   the namespace where this program is defined
+   * @param application        the name of the application where this program is defined
    * @param applicationVersion the version of the application
    * @param programType        the type of the program, as supported by the system
    * @param program            the name of the program
    * @param programStatus      the status of the program to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
-  ScheduleCreationSpec triggerOnProgramStatus(String application, String applicationVersion,
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, String applicationVersion,
                                               ProgramType programType, String program,
                                               ProgramStatus programStatus);
 
   /**
-   * Create a schedule which is triggered based upon the specified program in an application with
-   * the current version and a specific program status.
+   * Creates a schedule which is triggered in the same application version.
    *
-   * @param application   the application namespace
-   * @param programType   the type of the program, as supported by the system
-   * @param program       the name of the program
-   * @param programStatus the status of the program to trigger the schedule
-   * @return this {@link ScheduleBuilder}
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus)
    */
-  ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
                                               String program, ProgramStatus programStatus);
+
+  /**
+   * Creates a schedule which is triggered in the same application and application version.
+   *
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus)
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, ProgramType programType,
+                                              String program, ProgramStatus programStatus);
+
+  /**
+   * Creates a schedule which is triggered in the same namespace, application, and application version.
+   *
+   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus)
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program, ProgramStatus programStatus);
 }
