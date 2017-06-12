@@ -125,19 +125,42 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
                                     constraints, timeoutMillis);
   }
 
-  public ScheduleCreationSpec triggerOnProgramStatus(String application, String applicationVersion,
-                                                     ProgramType programType, String program,
-                                                     ProgramStatus programStatus) {
-    ProgramId programId = namespace.app(application, applicationVersion).program(programType.toString(), program);
+  @Override
+  public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
+                                                     String applicationVersion, ProgramType programType,
+                                                     String program, ProgramStatus programStatus) {
+    ProgramId programId = new ApplicationId(programNamespace, application, applicationVersion)
+                            .program(programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
                                     new ProgramStatusTrigger(programId, programStatus),
                                     constraints, timeoutMillis);
   }
 
   @Override
-  public ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+  public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
+                                                     ProgramType programType, String program,
+                                                     ProgramStatus programStatus) {
+    ProgramId programId = new ProgramId(programNamespace, application, programType.toString(), program);
+    return new ScheduleCreationSpec(name, description, programName, properties,
+                                    new ProgramStatusTrigger(programId, programStatus),
+                                    constraints, timeoutMillis);
+  }
+
+  @Override
+  public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, ProgramType programType,
                                                      String program, ProgramStatus programStatus) {
-    ProgramId programId = new ProgramId(namespace.getNamespace(), application, programType.toString(), program);
+    // TODO get application name and version where program is
+    ProgramId programId = new ProgramId(programNamespace, "", programType.toString(), program);
+    return new ScheduleCreationSpec(name, description, programName, properties,
+                                    new ProgramStatusTrigger(programId, programStatus),
+                                    constraints, timeoutMillis);
+  }
+
+  @Override
+  public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
+                                                     ProgramStatus programStatus) {
+    // TODO get application name and version where program is
+    ProgramId programId = new ProgramId(namespace.getNamespace(), "", programType.toString(), program);
     return new ScheduleCreationSpec(name, description, programName, properties,
                                     new ProgramStatusTrigger(programId, programStatus),
                                     constraints, timeoutMillis);
