@@ -60,6 +60,12 @@ const MyDataPrepApi = {
   jdbcTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${baseServicePath}/methods/connections/jdbc/test`),
   getDatabaseList: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/databases`),
 
+  // Kafka
+  kafkaTestConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/kafka/test`),
+  listTopics: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/kafka`),
+  readTopic: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/read`),
+  getKafkaSpecification: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/:connectionId/kafka/:topic/specification`),
+
   // Connections
   listConnections: apiCreator(dataSrc, 'GET', 'REQUEST', `${connectionsPath}`),
   createConnection: apiCreator(dataSrc, 'POST', 'REQUEST', `${connectionsPath}/create`),

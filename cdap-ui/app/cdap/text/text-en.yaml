@@ -390,6 +390,21 @@ features:
           1: '{count} Table'
           _: "{count} Tables"
         title: Select Table
+      KafkaBrowser:
+        EmptyMessage:
+          clearLabel: Clear
+          emptyKafka: 'No topics in connection _{connectionName}_'
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        searchPlaceholder: Search table name
+        table:
+          topics: Topics
+        topicCount:
+          0: No Topics
+          1: '{count} Topic'
+          _: "{count} Topics"
+        title: Select Topic
     Directives:
       apply: Apply
       cancel: Cancel
@@ -744,6 +759,26 @@ features:
           ADD: "Add Connection: Database"
           DUPLICATE: "Duplicate Connection: {connection}"
           EDIT: "Edit Connection: {connection}"
+      Kafka:
+        brokersList: Broker Host
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        connectionType: Connection Type
+        defaultTestErrorMessage: Cannot connect to Kafka
+        kafka: Kafka
+        ModalHeader:
+          ADD: "Add Connection: Kafka"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        port: Port
+        required: Required
+        testConnection: Test Connection
+        zkQuorum: Zookeeper Host
+        zookeeper: Zookeeper
+
       label: Add Connection
       Popover:
         title: Select a source to connect
@@ -760,6 +795,7 @@ features:
       edit: Edit
     database: Database ({count})
     hdfs: File System
+    kafka: Kafka ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:

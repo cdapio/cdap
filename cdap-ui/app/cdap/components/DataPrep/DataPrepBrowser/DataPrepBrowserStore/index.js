@@ -21,13 +21,23 @@ const Actions = {
   SET_DATABASE_PROPERTIES: 'SET_DATABASE_PROPERTIES',
   SET_DATABASE_LOADING: 'SET_DATABASE_LOADING',
   SET_ACTIVEBROWSER: 'SET_ACTIVE_BROWSER',
-  SET_DATABASE_ERROR: 'SET_DATABASE_ERROR'
+  SET_DATABASE_ERROR: 'SET_DATABASE_ERROR',
+  SET_KAFKA_PROPERTIES: 'SET_KAFKA_PROPERTIES',
+  SET_KAFKA_LOADING: 'SET_KAFKA_LOADING',
+  SET_KAFKA_ERROR: 'SET_KAFKA_ERROR'
 };
 
 export {Actions} ;
 
 const defaultDatabaseValue = {
   properties: {},
+  loading: false,
+  error: null,
+  connectionId: ''
+};
+
+const defaultKafkaValue = {
+  info: {},
   loading: false,
   error: null,
   connectionId: ''
@@ -59,6 +69,28 @@ const database = (state = defaultDatabaseValue, action = defaultAction) => {
   }
 };
 
+const kafka = (state = defaultKafkaValue, action = defaultAction) => {
+  switch (action.type) {
+    case Actions.SET_KAFKA_PROPERTIES:
+      return Object.assign({}, state, {
+        info: objectQuery(action, 'payload', 'info') || state.info,
+        connectionId: objectQuery(action, 'payload', 'connectionId'),
+        error: null
+      });
+    case Actions.SET_KAFKA_LOADING:
+      return Object.assign({}, state, {
+        loading: action.payload.loading,
+        error: null
+      });
+    case Actions.SET_KAFKA_ERROR:
+      return Object.assign({}, state, {
+        error: action.payload.error
+      });
+    default:
+      return state;
+  }
+};
+
 const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => {
   switch (action.type) {
     case Actions.SET_ACTIVEBROWSER:
@@ -73,10 +105,12 @@ const activeBrowser = (state = defaultActiveBrowser, action = defaultAction) => 
 const DataPrepBrowserStore = createStore(
   combineReducers({
     database,
+    kafka,
     activeBrowser
   }),
   {
     database: defaultDatabaseValue,
+    kafka: defaultKafkaValue,
     activeBrowser: defaultActiveBrowser
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

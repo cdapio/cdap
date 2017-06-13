@@ -18,7 +18,11 @@ import React, { Component, PropTypes } from 'react';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
-import {setActiveBrowser, setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {
+  setActiveBrowser,
+  setDatabaseAsActiveBrowser,
+  setKafkaAsActiveBrowser
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
 import {preventPropagation} from 'services/helpers';
@@ -80,7 +84,8 @@ export default class DataPrepConnections extends Component {
       sidePanelExpanded: this.props.enableRouting ? true : false,
       backendChecking: true,
       backendDown: false,
-      connectionsList: [],
+      databaseList: [],
+      kafkaList: [],
       activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid'),
       activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection'),
       showUpload: false // FIXME: This is used only when showing with no routing. We can do better.
@@ -187,16 +192,30 @@ export default class DataPrepConnections extends Component {
 
     MyDataPrepApi.listConnections({
       namespace,
-      type: 'database' // currently only going to fetch database connection
+      type: '*' // currently only going to fetch database connection
     }).subscribe((res) => {
       // need to group by connection type
+
+      let databaseList = [],
+          kafkaList = [];
+
       let state = {};
       if (action === 'delete' && this.state.activeConnectionid === targetId) {
         state.activeConnectionid = null;
         state.activeConnectionType = 'file';
         setActiveBrowser({name: 'file'});
       }
-      state.connectionsList = res.values;
+
+      res.values.forEach((connection) => {
+        if (connection.type === 'DATABASE') {
+          databaseList.push(connection);
+        } else if (connection.type === 'KAFKA') {
+          kafkaList.push(connection);
+        }
+      });
+
+      state.databaseList = databaseList;
+      state.kafkaList = kafkaList;
       this.setState(state);
     });
   }
@@ -222,7 +241,7 @@ export default class DataPrepConnections extends Component {
 
     return (
       <div>
-        {this.state.connectionsList.map((database) => {
+        {this.state.databaseList.map((database) => {
           return (
             <div
               key={database.id}
@@ -241,6 +260,40 @@ export default class DataPrepConnections extends Component {
 
               <ConnectionPopover
                 connectionInfo={database}
+                onAction={this.fetchConnectionsList}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  renderKafkaDetail() {
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    const baseLinkPath = `/ns/${namespace}/connections`;
+
+    return (
+      <div>
+        {this.state.kafkaList.map((kafka) => {
+          return (
+            <div
+              key={kafka.id}
+              title={kafka.name}
+              className="clearfix"
+            >
+              <NavLinkWrapper
+                to={`${baseLinkPath}/kafka/${kafka.id}`}
+                activeClassName="active"
+                className="menu-item-expanded-list"
+                onClick={this.handlePropagation.bind(this, kafka)}
+                singleWorkspaceMode={this.props.singleWorkspaceMode}
+              >
+                {kafka.name}
+              </NavLinkWrapper>
+
+              <ConnectionPopover
+                connectionInfo={kafka}
                 onAction={this.fetchConnectionsList}
               />
             </div>
@@ -314,10 +367,22 @@ export default class DataPrepConnections extends Component {
                 <IconSVG name="icon-database" />
               </span>
               <span>
-              {T.translate(`${PREFIX}.database`, {count: this.state.connectionsList.length})}
+              {T.translate(`${PREFIX}.database`, {count: this.state.databaseList.length})}
               </span>
             </div>
             {this.renderDatabaseDetail()}
+          </ExpandableMenu>
+
+          <ExpandableMenu>
+            <div>
+              <span className="fa fa-fw">
+                <IconSVG name="icon-kafka" />
+              </span>
+              <span>
+              {T.translate(`${PREFIX}.kafka`, {count: this.state.kafkaList.length})}
+              </span>
+            </div>
+            {this.renderKafkaDetail()}
           </ExpandableMenu>
         </div>
 
@@ -362,6 +427,21 @@ export default class DataPrepConnections extends Component {
           render={(match) => {
             let id  = match.match.params.databaseId;
             setDatabaseAsActiveBrowser({name: 'database', id});
+            return (
+              <DataPrepBrowser
+                match={match}
+                location={location}
+                toggle={this.toggleSidePanel}
+                onWorkspaceCreate={this.onUploadSuccess}
+              />
+            );
+          }}
+        />
+        <Route
+          path={`${BASEPATH}/kafka/:kafkaId`}
+          render={(match) => {
+            let id  = match.match.params.kafkaId;
+            setKafkaAsActiveBrowser({name: 'kafka', id});
             return (
               <DataPrepBrowser
                 match={match}

@@ -194,11 +194,11 @@ export default class DatabaseBrowser extends Component {
   render() {
     const renderNoPluginMessage = (error) => {
       return (
-         <div className="empty-search-container">
-            <div className="empty-search">
-              <strong>{error}</strong>
-            </div>
+        <div className="empty-search-container">
+          <div className="empty-search">
+            <strong>{error}</strong>
           </div>
+        </div>
       );
     };
     const renderContents = (tables) => {
