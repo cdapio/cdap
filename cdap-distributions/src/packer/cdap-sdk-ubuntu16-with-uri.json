@@ -172,7 +172,7 @@
     {
       "type": "file",
       "source": "files/cdap-sdk.zip",
-      "destination": "/tmp/cdap-sdk.zip"
+      "destination": "/tmp/cdap-sandbox.zip"
     },
     {
       "type": "file",
@@ -191,7 +191,7 @@
           "version": "4.2.0-1",
           "sdk": {
             "comment": "COPY SDK ZIP TO files/cdap-sdk.zip BEFORE RUNNING ME",
-            "url": "file:///tmp/cdap-sdk.zip",
+            "url": "file:///tmp/cdap-sandbox.zip",
             "profile_d": {
               "node_env": "{{user `standalone_node_env`}}"
             }
