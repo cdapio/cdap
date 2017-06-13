@@ -35,6 +35,7 @@ public class ArtifactSelectorProvider {
       .or(CharMatcher.inRange('a', 'z'))
       .or(CharMatcher.inRange('0', '9'))
       .or(CharMatcher.is('_'))
+      .or(CharMatcher.is('.'))
       .or(CharMatcher.is('-'));
 
   private final String pluginType;
@@ -67,7 +68,7 @@ public class ArtifactSelectorProvider {
     String name = config.getName();
     if (name != null && !nameMatcher.matchesAllOf(name)) {
       throw new IllegalArgumentException(String.format("'%s' is an invalid artifact name. " +
-                                                         "Must contain only alphanumeric, '-', or '_' characters.",
+                                                         "Must contain only alphanumeric, '-', '.', or '_' characters.",
                                                        name));
     }
 

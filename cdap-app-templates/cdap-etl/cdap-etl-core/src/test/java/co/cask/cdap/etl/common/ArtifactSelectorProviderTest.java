@@ -42,4 +42,11 @@ public class ArtifactSelectorProviderTest {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig("usr", "abc", "1.0.0");
     PROVIDER.getPluginSelector(config);
   }
+
+  @Test
+  public void testValidArtifactNameWithDot() {
+    ArtifactSelectorConfig config = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+                                                               "cdap-artifact_2.10", "1.0.0");
+    PROVIDER.getPluginSelector(config);
+  }
 }
