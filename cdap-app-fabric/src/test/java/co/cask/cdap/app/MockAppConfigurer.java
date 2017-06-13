@@ -35,7 +35,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.util.Map;
@@ -108,7 +108,7 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   }
 
   @Override
-  public void schedule(ScheduleCreationSpec programSchedule) {
+  public void schedule(ScheduleCreationBuilder programSchedule) {
 
   }
 

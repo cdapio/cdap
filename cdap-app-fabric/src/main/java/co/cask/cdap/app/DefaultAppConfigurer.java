@@ -29,7 +29,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
-import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
@@ -54,6 +53,7 @@ import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
@@ -230,16 +230,16 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
       new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
-    ScheduleCreationBuilder creationBuilder = Schedulers.toScheduleCreationBuilder(deployNamespace.toEntityId(), schedule,
-                                                                          programName, properties);
+    ScheduleCreationBuilder creationBuilder = Schedulers.toScheduleCreationBuilder(deployNamespace.toEntityId(), 
+            schedule, programName, properties);
     doAddSchedule(creationBuilder);
   }
 
-  private void doAddSchedule(ScheduleCreationBuilder scheduleCreationBuilder) {
+  private void doAddSchedule(ScheduleCreationBuilder creationBuilder) {
     // setSchedule can not be called twice on the same configurer (semantics are not defined)
-    Preconditions.checkArgument(null == programSchedules.put(scheduleCreationBuilder.getName(), scheduleCreationBuilder),
-                                "Duplicate schedule name for schedule: '%s'", scheduleCreationBuilder.getName());
-
+    String scheduleName = creationBuilder.getName();
+    Preconditions.checkArgument(null == programSchedules.put(scheduleName, creationBuilder),
+                                "Duplicate schedule name for schedule: '%s'", scheduleName);
   }
 
   @Override
@@ -279,11 +279,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
 
-    Map<String, ScheduleCreationSpec> specs = new HashMap<>();
+    Map<String, ScheduleCreationSpec> creationSpecs = new HashMap<>();
     for (Map.Entry<String, ScheduleCreationBuilder> entry : programSchedules.entrySet()) {
       String scheduleName = entry.getKey();
       ScheduleCreationBuilder builder = entry.getValue();
-      specs.put(scheduleName,
+      creationSpecs.put(scheduleName,
               builder.build(deployNamespace.toEntityId().getNamespace(), applicationName, applicationVersion));
     }
 
@@ -291,7 +291,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, specs, workers, getPlugins());
+                                               schedules, creationSpecs, workers, getPlugins());
   }
 
   private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {

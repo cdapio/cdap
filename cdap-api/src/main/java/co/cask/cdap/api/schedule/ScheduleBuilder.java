@@ -76,7 +76,7 @@ public interface ScheduleBuilder {
    * Set a certain amount of delay passed after the schedule is triggered, before launching the program.
    *
    * @param delay delay in the given <tt>unit</tt> to wait after the schedule is triggered before launching the program
-   * @param unit  the time unit of the <tt>delay</tt> argument
+   * @param unit the time unit of the <tt>delay</tt> argument
    * @return {@link ScheduleBuilder} containing the given delay. Note that the delay constraint does not have the
    * option to abort the schedule if the constraint is not met.
    */
@@ -133,7 +133,7 @@ public interface ScheduleBuilder {
   ScheduleCreationBuilder triggerOnPartitions(String datasetName, int numPartitions);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace, application and
+   * Create a schedule which is triggered when the given program in the given namespace, application, and
    * application version transitions to the given program status.
    *
    * @param programNamespace   the namespace where this program is defined
@@ -145,8 +145,7 @@ public interface ScheduleBuilder {
    * @return this {@link ScheduleBuilder}
    */
   ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, String applicationVersion,
-                                              ProgramType programType, String program,
-                                              ProgramStatus programStatus);
+                                                 ProgramType programType, String program, ProgramStatus programStatus);
 
   /**
    * Creates a schedule which is triggered in the same application version.
@@ -154,7 +153,7 @@ public interface ScheduleBuilder {
    * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus)
    */
   ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
-                                              String program, ProgramStatus programStatus);
+                                                 String program, ProgramStatus programStatus);
 
   /**
    * Creates a schedule which is triggered in the same application and application version.
@@ -162,7 +161,7 @@ public interface ScheduleBuilder {
    * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus)
    */
   ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, ProgramType programType,
-                                              String program, ProgramStatus programStatus);
+                                                 String program, ProgramStatus programStatus);
 
   /**
    * Creates a schedule which is triggered in the same namespace, application, and application version.

@@ -25,62 +25,41 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Builder for creating a program schedule
+ * Builder for creating a ScheduleCreationSpec.
+ *
  * See {@link co.cask.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
  * for how to build an instance of this object.
  */
 public class ScheduleCreationBuilder {
 
-  private final String name;
-  private final String description;
-  private final String programName;
-  private final Map<String, String> properties;
-  private final TriggerBuilder trigger;
-  private final List<? extends Constraint> constraints;
-  private final long timeoutMillis;
+  protected final String name;
+  protected final String description;
+  protected final String programName;
+  protected final Map<String, String> properties;
+  protected final List<? extends Constraint> constraints;
+  protected final long timeoutMillis;
+  protected final TriggerBuilder triggerBuilder;
+  protected Trigger trigger;
 
   public ScheduleCreationBuilder(String name, String description, String programName, Map<String, String> properties,
-                              TriggerBuilder trigger, List<? extends Constraint> constraints, long timeoutMillis) {
+                                 List<? extends Constraint> constraints, long timeoutMillis,
+                                 TriggerBuilder triggerBuilder) {
     this.name = name;
     this.description = description;
     this.programName = programName;
     this.properties = properties;
-    this.trigger = trigger;
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
+    this.triggerBuilder = triggerBuilder;
+    this.trigger = null;
   }
 
   public String getName() {
     return name;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public String getProgramName() {
-    return programName;
-  }
-
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  public Trigger getTrigger() {
-    return trigger;
-  }
-
-  public List<? extends Constraint> getConstraints() {
-    return constraints;
-  }
-
-  public long getTimeoutMillis() {
-    return timeoutMillis;
-  }
-
   public ScheduleCreationSpec build(String namespace, String application, String applicationVersion) {
-    Trigger builtTrigger = trigger.build(namespace, application, applicationVersion);
-    return new ScheduleCreationSpec(name, description, programName,
-            properties, builtTrigger, constraints, timeoutMillis);
+    trigger = triggerBuilder.build(namespace, application, applicationVersion);
+    return new ScheduleCreationSpec(this);
   }
 }
