@@ -200,43 +200,17 @@ public abstract class ProtoTrigger implements Trigger {
    */
   public static class ProgramStatusTrigger extends ProtoTrigger {
 
+    protected final ProgramId programId;
     protected final ProgramStatus programStatus;
-    protected final String namespace;
-    protected final String application;
-    protected final String applicationVersion;
-    protected final ProgramType programType;
-    protected final String programName;
 
-    public ProgramStatusTrigger(@Nullable String namespace, @Nullable String application,
-                                @Nullable String applicationVersion, ProgramType programType, String programName,
-                                ProgramStatus programStatus) {
+    public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
       super(Type.PROGRAM_STATUS);
-      this.namespace = namespace;
-      this.application = application;
-      this.applicationVersion = applicationVersion;
-      this.programType = programType;
-      this.programName = programName;
+      this.programId = programId;
       this.programStatus = programStatus;
     }
 
-    public String getNamespace() {
-      return namespace;
-    }
-
-    public String getApplication() {
-      return application;
-    }
-
-    public String getApplicationVersion() {
-      return applicationVersion;
-    }
-
-    public ProgramType getProgramType() {
-      return programType;
-    }
-
-    public String getProgramName() {
-      return programName;
+    public ProgramId getProgramId() {
+      return programId;
     }
 
     public ProgramStatus getProgramStatus() {
@@ -245,22 +219,18 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public void validate() {
-      ProtoTrigger.validateNotNull(getNamespace(), "program namespace");
-      ProtoTrigger.validateNotNull(getApplication(), "program application");
-      ProtoTrigger.validateNotNull(getApplicationVersion(), "program application version");
-      ProtoTrigger.validateNotNull(getProgramName(), "program name");
-      ProtoTrigger.validateNotNull(getProgramType(), "program type");
+      ProtoTrigger.validateNotNull(getProgramId(), "program name");
       ProtoTrigger.validateNotNull(getProgramStatus(), "program status");
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(namespace, application, applicationVersion, programType, programName, programStatus);
+      return Objects.hash(getProgramId(), getProgramStatus());
     }
 
     @Override
     public String toString() {
-      return String.format("ProgramStatusTrigger(%s, %s)", getProgramName(), getProgramStatus().toString());
+      return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(), getProgramStatus().toString());
     }
   }
 

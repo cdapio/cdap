@@ -36,4 +36,9 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
                               ProgramStatus programStatus) {
     super(namespace, application, applicationVersion, ProgramType.valueOf(programType), programName, programStatus);
   }
+
+  public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
+    super(programId, programStatus);
+//    super(namespace, application, applicationVersion, ProgramType.valueOf(programType), programName, programStatus);
+  }
 }

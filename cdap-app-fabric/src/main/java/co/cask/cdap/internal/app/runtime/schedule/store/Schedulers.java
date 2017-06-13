@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -27,8 +28,9 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTriggerBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTriggerBuilder;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -97,20 +99,20 @@ public class Schedulers {
     }
   }
 
-  public static ScheduleCreationSpec toScheduleCreationSpec(NamespaceId deployNamespace, Schedule schedule,
-                                                            String programName, Map<String, String> properties) {
+  public static ScheduleCreationBuilder toScheduleCreationBuilder(NamespaceId deployNamespace, Schedule schedule,
+                                                                  String programName, Map<String, String> properties) {
     Trigger trigger;
     if (schedule instanceof TimeSchedule) {
-      trigger = new TimeTrigger(((TimeSchedule) schedule).getCronEntry());
+      trigger = new TimeTriggerBuilder(((TimeSchedule) schedule).getCronEntry());
     } else {
       StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
-      trigger = new StreamSizeTrigger(deployNamespace.stream(streamSizeSchedule.getStreamName()),
+      trigger = new StreamSizeTriggerBuilder(deployNamespace.stream(streamSizeSchedule.getStreamName()),
                                       streamSizeSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
-    return new ScheduleCreationSpec(schedule.getName(), schedule.getDescription(), programName,
+    return new ScheduleCreationBuilder(schedule.getName(), schedule.getDescription(), programName,
                                     properties, trigger, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
   }
 
