@@ -85,7 +85,6 @@ angular.module(PKG.name + '.commons')
     var repaintTimeout = null,
         commentsTimeout = null,
         nodesTimeout = null,
-        connectionsTimeout = null,
         fitToScreenTimeout = null,
         initTimeout = null,
         nodePopoverTimeout = null;
@@ -131,6 +130,8 @@ angular.module(PKG.name + '.commons')
       initTimeout = $timeout(function () {
         addEndpoints();
         addConnections();
+        vm.instance.bind('connection', formatConnections);
+        vm.instance.bind('connectionDetached', formatConnections);
 
         if (vm.isDisabled) {
           // Disable all endpoints
@@ -467,6 +468,59 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connectionDetached', formatConnections);
     }
 
+    function makeNodesDraggable() {
+      var nodes = document.querySelectorAll('.box');
+
+      if (!vm.isDisabled) {
+        vm.instance.draggable(nodes, {
+          start: function (drag) {
+            let currentCoOrdinates = {
+              x: drag.e.clientX,
+              y: drag.e.clientY,
+            };
+            if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
+              return;
+            }
+            localX = currentCoOrdinates.x;
+            localY = currentCoOrdinates.y;
+            if (selected.indexOf(drag.el.id) === -1) {
+              vm.clearNodeSelection();
+            }
+
+            dragged = true;
+          },
+          stop: function (dragEndEvent) {
+            var config = {
+              _uiPosition: {
+                top: dragEndEvent.el.style.top,
+                left: dragEndEvent.el.style.left
+              }
+            };
+            DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+            repaintEverything();
+          }
+        });
+      }
+    }
+
+    function makeCommentsDraggable() {
+      var comments = document.querySelectorAll('.comment-box');
+      vm.instance.draggable(comments, {
+        start: function () {
+          dragged = true;
+        },
+        stop: function (dragEndEvent) {
+          var config = {
+            _uiPosition: {
+              top: dragEndEvent.el.style.top,
+              left: dragEndEvent.el.style.left
+            }
+          };
+          DAGPlusPlusNodesActionsFactory.updateComment(dragEndEvent.el.id, config);
+        }
+      });
+    }
+
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings().default;
 
@@ -491,60 +545,6 @@ angular.module(PKG.name + '.commons')
           }
         });
       }
-      vm.instance.bind('connection', formatConnections);
-      vm.instance.bind('connectionDetached', formatConnections);
-
-      $scope.$watch('connections', function () {
-        if (connectionsTimeout) {
-          $timeout.cancel(connectionsTimeout);
-        }
-        connectionsTimeout = $timeout(function () {
-          resetEndpointsAndConnections();
-        });
-      });
-
-      // This should be removed once the node config is using FLUX
-      $scope.$watch('nodes', function () {
-        if (nodesTimeout) {
-          $timeout.cancel(nodesTimeout);
-        }
-        nodesTimeout = $timeout(function () {
-          resetEndpointsAndConnections();
-
-          var nodes = document.querySelectorAll('.box');
-
-          if (!vm.isDisabled) {
-            vm.instance.draggable(nodes, {
-              start: function (drag) {
-                let currentCoOrdinates = {
-                  x: drag.e.clientX,
-                  y: drag.e.clientY,
-                };
-                if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
-                  return;
-                }
-                localX = currentCoOrdinates.x;
-                localY = currentCoOrdinates.y;
-                if (selected.indexOf(drag.el.id) === -1) {
-                  vm.clearNodeSelection();
-                }
-
-                dragged = true;
-              },
-              stop: function (dragEndEvent) {
-                var config = {
-                  _uiPosition: {
-                    top: dragEndEvent.el.style.top,
-                    left: dragEndEvent.el.style.left
-                  }
-                };
-                DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-                repaintEverything();
-              }
-            });
-          }
-        });
-      }, true);
 
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', vm.instance.repaintEverything);
@@ -557,28 +557,23 @@ angular.module(PKG.name + '.commons')
         vm.comments = DAGPlusPlusNodesStore.getComments();
 
         if (!vm.isDisabled) {
+          if (nodesTimeout) {
+            $timeout.cancel(nodesTimeout);
+          }
+          nodesTimeout = $timeout(function () {
+            resetEndpointsAndConnections();
+            makeNodesDraggable();
+          });
+
           if (commentsTimeout) {
             $timeout.cancel(commentsTimeout);
           }
 
           commentsTimeout = $timeout(function () {
-            var comments = document.querySelectorAll('.comment-box');
-            vm.instance.draggable(comments, {
-              start: function () {
-                dragged = true;
-              },
-              stop: function (dragEndEvent) {
-                var config = {
-                  _uiPosition: {
-                    top: dragEndEvent.el.style.top,
-                    left: dragEndEvent.el.style.left
-                  }
-                };
-                DAGPlusPlusNodesActionsFactory.updateComment(dragEndEvent.el.id, config);
-              }
-            });
+            makeCommentsDraggable();
           });
         }
+
       });
 
     });
@@ -808,7 +803,6 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(repaintTimeout);
       $timeout.cancel(commentsTimeout);
       $timeout.cancel(nodesTimeout);
-      $timeout.cancel(connectionsTimeout);
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
