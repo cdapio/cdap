@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -174,9 +175,10 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   }
 
   private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
-    if (trigger instanceof TimeTrigger || trigger instanceof StreamSizeTrigger) {
-      // TimeTrigger/StreamSizeTrigger is satisfied as soon as the Notification arrive, due to how the Notification
-      // is initially created
+    if (trigger instanceof TimeTrigger || trigger instanceof StreamSizeTrigger ||
+        trigger instanceof ProgramStatusTrigger) {
+      // These triggers are satisfied as soon as the Notification arrives, due to how the Notification
+      // is initially created¡
       return true;
     }
     if (trigger instanceof PartitionTrigger) {

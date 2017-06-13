@@ -45,6 +45,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -113,6 +114,8 @@ class NotificationSubscriberService extends AbstractIdleService {
       cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC)));
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
+    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread(
+            cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
   }
 
@@ -290,6 +293,33 @@ class NotificationSubscriberService extends AbstractIdleService {
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
       for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
+        // ignore disabled schedules
+        if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
+          jobQueue.addNotification(schedule, notification);
+        }
+      }
+    }
+  }
+
+  private class ProgramStatusEventNotificationSubscriberThread extends NotificationSubscriberThread {
+
+    ProgramStatusEventNotificationSubscriberThread(String topic) {
+      super(topic);
+    }
+
+    @Override
+    protected void updateJobQueue(DatasetContext context, Notification notification)
+      throws IOException, DatasetManagementException, NotFoundException {
+
+      Map<String, String> properties = notification.getProperties();
+
+      String programIdString = notification.getProperties().get("programId");
+      if (programIdString == null) {
+        return;
+      }
+      ProgramId programId = ProgramId.fromString(programIdString);
+      // Convert programId to trigger key
+      for (ProgramScheduleRecord schedule : getSchedules(context, "INSERT PROGRAM TRIGGER KEY")) {
         // ignore disabled schedules
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
           jobQueue.addNotification(schedule, notification);

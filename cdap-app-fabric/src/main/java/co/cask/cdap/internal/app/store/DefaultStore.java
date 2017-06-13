@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -57,6 +58,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskPublisher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -269,23 +271,6 @@ public class DefaultStore implements Store {
   @Override
   public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
     setStop(id, pid, endTime, runStatus, null);
-    sendProgramStatusNotification(id, endTime, runStatus);
-  }
-
-  private void sendProgramStatusNotification(ProgramId id, long endTime, ProgramRunStatus runStatus) {
-    // Send program run status here, and convert to TriggerableProgramStatus in Scheduler
-    // Since we don't know which other schedule depends on this program finishing, we can't use ScheduleTaskPublisher
-    try {
-      messagingService.publish(
-              StoreRequestBuilder.of(this.topicId)
-                      .addPayloads(GSON.toJson(id))
-                      .addPayloads(GSON.toJson(runStatus))
-                      .build()
-      );
-    } catch (TopicNotFoundException | IOException e) {
-      LOG.warn("Error while publishing notification for program {}: {}", id.getProgram(), e);
-      // TODO throw new exception
-    }
   }
 
   @Override
@@ -297,6 +282,7 @@ public class DefaultStore implements Store {
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
         metaStore.recordProgramStop(id, pid, endTime, runStatus, failureCause);
+        sendProgramStatusNotification();
 
         // This block has been added so that completed workflow runs can be logged to the workflow dataset
         WorkflowId workflowId = new WorkflowId(id.getParent(), id.getProgram());
@@ -304,6 +290,22 @@ public class DefaultStore implements Store {
           recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, pid);
         }
         // todo: delete old history data
+      }
+
+      private void sendProgramStatusNotification() {
+        // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
+        ProgramStatus programStatus = ProgramRunStatus.toProgramStatus(runStatus);
+        Notification programStatusNotification = Notification.forProgramStatus(id, programStatus);
+        try {
+          // TODO send runtime arguments of program? Send output files created of program?
+          messagingService.publish(StoreRequestBuilder.of(topicId)
+                                                      .addPayloads(GSON.toJson(programStatusNotification))
+                                                      .build()
+          );
+        } catch (TopicNotFoundException | IOException e) {
+          LOG.warn("Error while publishing notification for program {}: {}", id.getProgram(), e);
+          // TODO throw new exception
+        }
       }
     });
   }
