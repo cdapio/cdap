@@ -85,6 +85,7 @@ angular.module(PKG.name + '.commons')
     var repaintTimeout = null,
         commentsTimeout = null,
         nodesTimeout = null,
+        connectionsTimeout = null,
         fitToScreenTimeout = null,
         initTimeout = null,
         nodePopoverTimeout = null;
@@ -129,23 +130,7 @@ angular.module(PKG.name + '.commons')
 
       initTimeout = $timeout(function () {
         addEndpoints();
-
-        angular.forEach($scope.connections, function (conn) {
-          var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
-          var targetNode = $scope.nodes.filter( node => node.name === conn.to);
-          if (!sourceNode.length || !targetNode.length) {
-            return;
-          }
-
-          var sourceId = 'Origin' + conn.from;
-          var targetId = 'Target' + conn.to;
-
-          var connObj = {
-            uuids: [sourceId, targetId]
-          };
-
-          vm.instance.connect(connObj);
-        });
+        addConnections();
 
         if (vm.isDisabled) {
           // Disable all endpoints
@@ -428,6 +413,25 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function addConnections() {
+      angular.forEach($scope.connections, function (conn) {
+        var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
+        var targetNode = $scope.nodes.filter( node => node.name === conn.to);
+        if (!sourceNode.length || !targetNode.length) {
+          return;
+        }
+
+        var sourceId = 'Origin' + conn.from;
+        var targetId = 'Target' + conn.to;
+
+        var connObj = {
+          uuids: [sourceId, targetId]
+        };
+
+        vm.instance.connect(connObj);
+      });
+    }
+
     function transformCanvas (top, left) {
       vm.panning.top += top;
       vm.panning.left += left;
@@ -447,6 +451,20 @@ angular.module(PKG.name + '.commons')
         });
       });
       DAGPlusPlusNodesActionsFactory.setConnections(connections);
+    }
+
+    function resetEndpointsAndConnections() {
+      // have to unbind and bind again, otherwise calling detachEveryConnection will call formatConnections
+      // for every connection that we detach
+      vm.instance.unbind('connection');
+      vm.instance.unbind('connectionDetached');
+      endpoints = [];
+      vm.instance.detachEveryConnection();
+      vm.instance.deleteEveryEndpoint();
+      addEndpoints();
+      addConnections();
+      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connectionDetached', formatConnections);
     }
 
     jsPlumb.ready(function() {
@@ -476,16 +494,24 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
+      $scope.$watch('connections', function () {
+        if (connectionsTimeout) {
+          $timeout.cancel(connectionsTimeout);
+        }
+        connectionsTimeout = $timeout(function () {
+          resetEndpointsAndConnections();
+        });
+      });
+
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
         if (nodesTimeout) {
           $timeout.cancel(nodesTimeout);
         }
         nodesTimeout = $timeout(function () {
+          resetEndpointsAndConnections();
+
           var nodes = document.querySelectorAll('.box');
-          endpoints = [];
-          vm.instance.deleteEveryEndpoint();
-          addEndpoints();
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
@@ -524,7 +550,10 @@ angular.module(PKG.name + '.commons')
       angular.element($window).on('resize', vm.instance.repaintEverything);
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        vm.instance.unbind('connection');
+        vm.instance.unbind('connectionDetached');
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+        $scope.connections = DAGPlusPlusNodesStore.getConnections();
         vm.comments = DAGPlusPlusNodesStore.getComments();
 
         if (!vm.isDisabled) {
@@ -779,6 +808,7 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(repaintTimeout);
       $timeout.cancel(commentsTimeout);
       $timeout.cancel(nodesTimeout);
+      $timeout.cancel(connectionsTimeout);
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);

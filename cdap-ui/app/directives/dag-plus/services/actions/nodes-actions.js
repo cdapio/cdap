@@ -50,7 +50,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (sourcePosition.top + sourceOffset) + 'px',
           left: (sourcePosition.left + sourceOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddSourceCount');
         break;
       case 'sink':
         let sinkOffset = this.DAGPlusPlusNodesStore.getSinkCount() * offset;
@@ -58,7 +57,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (sinkPosition.top + sinkOffset) + 'px',
           left: (sinkPosition.left + sinkOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddSinkCount');
         break;
       default:
         let transformOffset = this.DAGPlusPlusNodesStore.getTransformCount() * offset;
@@ -66,7 +64,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (transformPosition.top + transformOffset) + 'px',
           left: (transformPosition.left + transformOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddTransformCount');
         break;
     }
 
