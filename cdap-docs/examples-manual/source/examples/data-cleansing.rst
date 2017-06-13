@@ -105,22 +105,21 @@ Begin by uploading a file containing some newline-separated JSON records into th
 
 Starting the MapReduce
 ----------------------
-The MapReduce must be started with a runtime argument ``output.partition.key`` that
-specifies the output partition of the *cleanRecords* dataset to write to. In this
-example, we'll simply use ``1`` as the value.
+The MapReduce can be started with a runtime argument ``output.partition.key`` that
+specifies the output partition of the *cleanRecords* dataset to write to. By default,
+it uses the logical start time of the MapReduce for this value.
 
 - Using the CDAP UI, go to the |application-overview|,
-  click |example-mapreduce-italic| to get to the MapReduce detail page, set the runtime
-  arguments using ``output.partition.key`` as the key and ``1`` as the value, then click
+  click |example-mapreduce-italic| to get to the MapReduce detail page, click
   the *Start* button; or
 - From the CDAP Sandbox home directory, use the Command Line Interface:
 
   .. tabbed-parsed-literal::
 
-      $ cdap cli start mapreduce |example|.\ |example-mapreduce| output.partition.key=1
+      $ cdap cli start mapreduce |example|.\ |example-mapreduce|
 
       Successfully started mapreduce '|example-mapreduce|' of application '|example|'
-      with provided runtime arguments 'output.partition.key=1'
+      with stored runtime arguments '{}'
 
 Optionally, to specify a custom schema to match records against, the JSON of the schema can be
 specified as an additional runtime argument to the MapReduce with the key ``'schema.key'``.
@@ -128,7 +127,7 @@ Otherwise, this is the default schema that is matched against the records:
 
 .. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
     :language: java
-    :lines: 131-135
+    :lines: 134-138
     :dedent: 4
 
 Querying the Results
@@ -139,7 +138,7 @@ To sample the *cleanRecords* ``PartitionedFileSet``, execute an explore query us
 
 .. tabbed-parsed-literal::
 
-  $ cdap cli execute "\"SELECT record FROM dataset_cleanRecords where TIME = 1 LIMIT 5\""
+  $ cdap cli execute "\"SELECT record FROM dataset_cleanRecords LIMIT 5\""
 
 - Alternatively, go to the *rawRecords*
   :cdap-ui-datasets-explore:`dataset overview page, explore tab <rawRecords>`

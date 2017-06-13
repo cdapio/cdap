@@ -69,7 +69,8 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
                                    new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
 
     // Each run writes its output to a partition for the league
-    Long timeKey = Long.valueOf(context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
+    String outputPartitionKey = context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY);
+    Long timeKey = outputPartitionKey != null ? Long.valueOf(outputPartitionKey) : context.getLogicalStartTime();
     PartitionKey outputKey = PartitionKey.builder().addLongField("time", timeKey).build();
 
     Map<String, String> metadataToAssign = ImmutableMap.of("source.program", "DataCleansingMapReduce");
@@ -112,7 +113,9 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
     @Override
     public void initialize(MapReduceTaskContext<NullWritable, Text> mapReduceTaskContext) {
-      this.time = Long.valueOf(mapReduceTaskContext.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
+      String outputPartitionKey = mapReduceTaskContext.getRuntimeArguments().get(OUTPUT_PARTITION_KEY);
+      this.time =
+        outputPartitionKey != null ? Long.valueOf(outputPartitionKey) : mapReduceTaskContext.getLogicalStartTime();
       this.jsonParser = new JsonParser();
     }
 
