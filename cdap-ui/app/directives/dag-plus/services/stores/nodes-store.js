@@ -149,9 +149,9 @@ class DAGPlusPlusNodesStore {
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.name === node);
+    let match = this.state.nodes.filter(n => n.name === node)[0];
     this.addStateToHistory();
-    switch (this.GLOBALS.pluginConvert[match[0].type]) {
+    switch (this.GLOBALS.pluginConvert[match.type]) {
       case 'source':
         this.resetSourceCount();
         break;
@@ -162,7 +162,11 @@ class DAGPlusPlusNodesStore {
         this.resetSinkCount();
         break;
     }
-    this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
+    this.state.nodes.splice(this.state.nodes.indexOf(match), 1);
+    // removes connections that contain the node we just removed, otherwise there will be a Javascript error
+    this.state.connections = this.state.connections.filter(conn => {
+      return conn.from !== match.name && conn.to !== match.name;
+    });
     this.state.activeNodeId = null;
     this.emitChange();
   }
