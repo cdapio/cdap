@@ -219,10 +219,6 @@ public abstract class ProtoTrigger implements Trigger {
     @Override
     public void validate() {
       ProtoTrigger.validateNotNull(getProgramId(), "program id");
-      ProtoTrigger.validateNotNull(getProgramId().getProgram(), "program name");
-      ProtoTrigger.validateNotNull(getProgramId().getApplication(), "program application");
-      ProtoTrigger.validateNotNull(getProgramId().getVersion(), "program application version");
-      ProtoTrigger.validateNotNull(getProgramId().getNamespace(), "program namespace");
       ProtoTrigger.validateNotNull(getProgramStatus(), "program status");
     }
 

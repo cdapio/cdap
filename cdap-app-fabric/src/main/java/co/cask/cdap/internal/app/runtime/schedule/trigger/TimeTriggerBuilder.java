@@ -29,7 +29,7 @@ public class TimeTriggerBuilder implements TriggerBuilder {
   }
 
   @Override
-  public TimeTrigger build(String namespace, String application, String applicationVersion) {
+  public TimeTrigger build(String namespace, String applicationName, String applicationVersion) {
     return new TimeTrigger(cronExpression);
   }
 }

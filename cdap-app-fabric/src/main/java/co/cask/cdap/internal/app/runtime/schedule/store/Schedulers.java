@@ -108,13 +108,13 @@ public class Schedulers {
     } else {
       StreamSizeSchedule streamSizeSchedule = ((StreamSizeSchedule) schedule);
       triggerBuilder = new StreamSizeTriggerBuilder(deployNamespace.stream(streamSizeSchedule.getStreamName()),
-                                      streamSizeSchedule.getDataTriggerMB());
+                                                    streamSizeSchedule.getDataTriggerMB());
     }
     Integer maxConcurrentRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
     List<Constraint> constraints = maxConcurrentRuns == null ? ImmutableList.<Constraint>of() :
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(maxConcurrentRuns));
     return new ScheduleCreationBuilder(schedule.getName(), schedule.getDescription(), programName,
-                                    properties, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, triggerBuilder);
+                                       properties, constraints, Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, triggerBuilder);
   }
 
   public static ProgramSchedule toProgramSchedule(ApplicationId appId, ScheduleSpecification spec) {

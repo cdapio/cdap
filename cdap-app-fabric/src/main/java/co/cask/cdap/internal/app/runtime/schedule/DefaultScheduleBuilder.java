@@ -123,40 +123,35 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
 
   @Override
   public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application,
-                                                     String applicationVersion, ProgramType programType,
-                                                     String program, ProgramStatus programStatus) {
+                                                        String applicationVersion, ProgramType programType,
+                                                        String program, ProgramStatus programStatus) {
     return generateScheduleCreationBuilder(
-            new ProgramStatusTriggerBuilder(programNamespace, application, applicationVersion,
-                    programType.toString(), program, programStatus)
-    );
+            new ProgramStatusTriggerBuilder(programNamespace, application, applicationVersion, programType.toString(),
+                                            program, programStatus));
   }
 
   @Override
   public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application,
-                                                     ProgramType programType, String program,
-                                                     ProgramStatus programStatus) {
+                                                        ProgramType programType, String program,
+                                                        ProgramStatus programStatus) {
     return generateScheduleCreationBuilder(
-            new ProgramStatusTriggerBuilder(programNamespace, application, null,
-                                            programType.toString(), program, programStatus)
-    );
+            new ProgramStatusTriggerBuilder(programNamespace, application, null, programType.toString(),
+                                            program, programStatus));
   }
 
   @Override
   public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, ProgramType programType,
-                                                     String program, ProgramStatus programStatus) {
+                                                        String program, ProgramStatus programStatus) {
     return generateScheduleCreationBuilder(
-            new ProgramStatusTriggerBuilder(programNamespace, null, null,
-                                            programType.toString(), program, programStatus)
-    );
+            new ProgramStatusTriggerBuilder(programNamespace, null, null, programType.toString(),
+                                            program, programStatus));
   }
 
   @Override
   public ScheduleCreationBuilder triggerOnProgramStatus(ProgramType programType, String program,
                                                         ProgramStatus programStatus) {
     return generateScheduleCreationBuilder(
-            new ProgramStatusTriggerBuilder(null, null, null,
-                                            programType.toString(), program, programStatus)
-    );
+            new ProgramStatusTriggerBuilder(null, null, null, programType.toString(), program, programStatus));
   }
 
   @Override
@@ -174,7 +169,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   private ScheduleCreationBuilder generateScheduleCreationBuilder(TriggerBuilder triggerBuilder) {
-    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
-            triggerBuilder);
+    return new ScheduleCreationBuilder(name, description, programName, properties,
+                                       constraints, timeoutMillis, triggerBuilder);
   }
 }

@@ -58,8 +58,8 @@ public class ScheduleCreationBuilder {
     return name;
   }
 
-  public ScheduleCreationSpec build(String namespace, String application, String applicationVersion) {
-    trigger = triggerBuilder.build(namespace, application, applicationVersion);
+  public ScheduleCreationSpec build(String namespace, String applicationName, String applicationVersion) {
+    trigger = triggerBuilder.build(namespace, applicationName, applicationVersion);
     return new ScheduleCreationSpec(this);
   }
 }

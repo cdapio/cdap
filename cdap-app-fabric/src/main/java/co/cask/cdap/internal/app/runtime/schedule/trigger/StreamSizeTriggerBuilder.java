@@ -33,7 +33,7 @@ public class StreamSizeTriggerBuilder implements TriggerBuilder {
   }
 
   @Override
-  public StreamSizeTrigger build(String namespace, String application, String applicationVersion) {
+  public StreamSizeTrigger build(String namespace, String applicationName, String applicationVersion) {
     return new StreamSizeTrigger(streamId, triggerMB);
   }
 }

@@ -33,7 +33,7 @@ public class PartitionTriggerBuilder implements TriggerBuilder {
   }
 
   @Override
-  public PartitionTrigger build(String namespace, String application, String applicationVersion) {
+  public PartitionTrigger build(String namespace, String applicationName, String applicationVersion) {
     return new PartitionTrigger(dataset, numPartitions);
   }
 }

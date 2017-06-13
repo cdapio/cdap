@@ -36,32 +36,32 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   private String programName;
   private ProgramStatus programStatus;
 
-  public ProgramStatusTriggerBuilder(@Nullable String namespace, @Nullable String application,
-                                     @Nullable String applicationVersion, String programType, String programName,
-                                     ProgramStatus programStatus) {
-    this.programNamespace = namespace;
-    this.programApplication = application;
-    this.programApplicationVersion = applicationVersion;
+  public ProgramStatusTriggerBuilder(@Nullable String programNamespace, @Nullable String programApplication,
+                                     @Nullable String programApplicationVersion, String programType,
+                                     String programName, ProgramStatus programStatus) {
+    this.programNamespace = programNamespace;
+    this.programApplication = programApplication;
+    this.programApplicationVersion = programApplicationVersion;
     this.programType = ProgramType.valueOf(programType);
     this.programName = programName;
     this.programStatus = programStatus;
   }
 
   @Override
-  public ProgramStatusTrigger build(String namespace, String application, String applicationVersion) {
+  public ProgramStatusTrigger build(String namespace, String applicationName, String applicationVersion) {
     // Inherit environment attributes from the deployed application
     if (programNamespace == null) {
-      programNamespace  = namespace;
+      programNamespace = namespace;
     }
-    if (programApplication  == null) {
-      programApplication = application;
+    if (programApplication == null) {
+      programApplication = applicationName;
     }
     if (programApplicationVersion == null) {
       programApplicationVersion = applicationVersion;
     }
 
-    ProgramId programId = new ApplicationId(programNamespace, programApplication, programApplicationVersion)
-            .program(programType, programName);
+    ProgramId programId = new ApplicationId(programNamespace, programApplication,
+                                            programApplicationVersion).program(programType, programName);
     return new ProgramStatusTrigger(programId, programStatus);
   }
 }

@@ -25,10 +25,9 @@ public interface TriggerBuilder {
    * Builds a Trigger given the deployed namespace, application, and application version.
    *
    * @param namespace the namespace
-   * @param application the deployed application name
+   * @param applicationName the deployed application name
    * @param applicationVersion the deployed application version
    * @return a Trigger
    */
-  Trigger build(String namespace, String application, String applicationVersion);
+  Trigger build(String namespace, String applicationName, String applicationVersion);
 }
-

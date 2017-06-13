@@ -230,15 +230,16 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
       new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
-    ScheduleCreationBuilder creationBuilder = Schedulers.toScheduleCreationBuilder(deployNamespace.toEntityId(), 
-            schedule, programName, properties);
+    ScheduleCreationBuilder creationBuilder = Schedulers.toScheduleCreationBuilder(deployNamespace.toEntityId(),
+                                                                                   schedule, programName,
+                                                                                   properties);
     doAddSchedule(creationBuilder);
   }
 
-  private void doAddSchedule(ScheduleCreationBuilder creationBuilder) {
+  private void doAddSchedule(ScheduleCreationBuilder scheduleCreationBuilder) {
     // setSchedule can not be called twice on the same configurer (semantics are not defined)
-    String scheduleName = creationBuilder.getName();
-    Preconditions.checkArgument(null == programSchedules.put(scheduleName, creationBuilder),
+    String scheduleName = scheduleCreationBuilder.getName();
+    Preconditions.checkArgument(null == programSchedules.put(scheduleName, scheduleCreationBuilder),
                                 "Duplicate schedule name for schedule: '%s'", scheduleName);
   }
 
@@ -279,19 +280,17 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
 
-    Map<String, ScheduleCreationSpec> creationSpecs = new HashMap<>();
+    Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
     for (Map.Entry<String, ScheduleCreationBuilder> entry : programSchedules.entrySet()) {
       String scheduleName = entry.getKey();
       ScheduleCreationBuilder builder = entry.getValue();
-      creationSpecs.put(scheduleName,
-              builder.build(deployNamespace.toEntityId().getNamespace(), applicationName, applicationVersion));
+      scheduleSpecs.put(scheduleName, builder.build(deployNamespace.toEntityId().getNamespace(), appName, appVersion));
     }
-
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, creationSpecs, workers, getPlugins());
+                                               schedules, scheduleSpecs, workers, getPlugins());
   }
 
   private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {
