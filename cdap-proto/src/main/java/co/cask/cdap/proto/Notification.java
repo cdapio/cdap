@@ -16,9 +16,12 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -41,7 +44,8 @@ public class Notification {
   public enum Type {
     TIME,
     STREAM_SIZE,
-    PARTITION
+    PARTITION,
+    PROGRAM_STATUS
   }
 
   private final Type notificationType;
@@ -59,6 +63,13 @@ public class Notification {
     properties.put("numPartitions", Integer.toString(partitionKeys.size()));
     properties.put("partitionKeys", GSON.toJson(partitionKeys));
     return new Notification(Notification.Type.PARTITION, properties);
+  }
+
+  public static Notification forProgramStatus(ProgramId programId, TriggerableProgramStatus programStatus) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("programId", programId.toString());
+    properties.put("programStatus", programStatus.toString());
+    return new Notification(Notification.Type.PROGRAM_STATUS, properties);
   }
 
   public Type getNotificationType() {
