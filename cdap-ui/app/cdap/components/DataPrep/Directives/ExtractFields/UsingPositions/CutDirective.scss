@@ -28,6 +28,16 @@ $text-selection-color: #40c4ff;
           background-color: $highlight-color;
         }
       }
+      &.table.table-bordered {
+        .thead-inverse {
+          th {
+            padding: 0.5rem 0.75rem;
+            &:first-child {
+              width: 1px;
+            }
+          }
+        }
+      }
       td,
       th {
         &.gray-out {
