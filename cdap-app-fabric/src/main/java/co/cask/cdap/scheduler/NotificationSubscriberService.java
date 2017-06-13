@@ -17,6 +17,7 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -314,12 +315,16 @@ class NotificationSubscriberService extends AbstractIdleService {
       Map<String, String> properties = notification.getProperties();
 
       String programIdString = notification.getProperties().get("programId");
-      if (programIdString == null) {
+      String programStatusString = notification.getProperties().get("programStatus");
+      TriggerableProgramStatus programStatus = TriggerableProgramStatus.valueOf(programStatusString);
+
+      if (programIdString == null || programStatus == null) {
         return;
       }
+
       ProgramId programId = ProgramId.fromString(programIdString);
-      // Convert programId to trigger key
-      for (ProgramScheduleRecord schedule : getSchedules(context, "INSERT PROGRAM TRIGGER KEY")) {
+      String programStatusTriggerKey = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      for (ProgramScheduleRecord schedule : getSchedules(context, programStatusTriggerKey)) {
         // ignore disabled schedules
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
           jobQueue.addNotification(schedule, notification);

@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.workflow.NodeStatus;
 
 /**
@@ -51,15 +52,16 @@ public enum ProgramRunStatus {
     }
   }
 
-  public static ProgramStatus toProgramStatus(ProgramRunStatus status) {
+  public static TriggerableProgramStatus toTriggerableProgramStatus(ProgramRunStatus status) {
     switch(status) {
       case COMPLETED:
-        return ProgramStatus.COMPLETED;
+        return TriggerableProgramStatus.SUCCESSFUL;
       case FAILED:
       case KILLED:
-        return ProgramStatus.FAILED;
-      default: // TODO should default be ProgramStatus.FINISHED?
-          throw new IllegalStateException(String.format("ProgramRunStatus cannot be converted to ProgramStatus"));
+        return TriggerableProgramStatus.FAILED;
+      default:
+          throw new IllegalStateException(String.format("ProgramRunStatus cannot be converted to " +
+                                                        "TriggerableProgramStatus"));
     }
   }
 }

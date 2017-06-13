@@ -40,10 +40,10 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -515,6 +515,11 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     Trigger trigger = schedule.getTrigger();
     if (trigger instanceof PartitionTrigger) {
       String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDataset());
+      return Collections.singletonList(triggerKey);
+    } else if (trigger instanceof ProgramStatusTrigger) {
+      ProgramStatusTrigger programTrigger = (ProgramStatusTrigger) trigger;
+      String triggerKey = Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(),
+                                                                programTrigger.getProgramStatus());
       return Collections.singletonList(triggerKey);
     }
     return Collections.emptyList();

@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.proto.id.DatasetId;
@@ -64,7 +65,7 @@ public class Notification {
     return new Notification(Notification.Type.PARTITION, properties);
   }
 
-  public static Notification forProgramStatus(ProgramId programId, ProgramStatus programStatus) {
+  public static Notification forProgramStatus(ProgramId programId, TriggerableProgramStatus programStatus) {
     Map<String, String> properties = new HashMap<>();
     properties.put("programId", programId.toString());
     properties.put("programStatus", programStatus.toString());
