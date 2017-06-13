@@ -73,12 +73,7 @@ public final class ImpersonationUtils {
     return new Callable<T>() {
       @Override
       public T call() throws Exception {
-        return impersonator.doAs(namespaceMeta.getNamespaceId(), new Callable<T>() {
-          @Override
-          public T call() throws Exception {
-            return callable.call();
-          }
-        });
+        return impersonator.doAs(namespaceMeta.getNamespaceId(), callable);
       }
     };
   }
