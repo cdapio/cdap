@@ -16,17 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 
 /**
- * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
+ * A Trigger builder that builds a TimeTrigger.
  */
-public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
-  public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
-    super(programId, programStatus);
+public class TimeTriggerBuilder implements TriggerBuilder {
+  private String cronExpression;
+
+  public TimeTriggerBuilder(String cronExpression) {
+    this.cronExpression = cronExpression;
+  }
+
+  @Override
+  public TimeTrigger build(String namespace, String applicationName, String applicationVersion) {
+    return new TimeTrigger(cronExpression);
   }
 }

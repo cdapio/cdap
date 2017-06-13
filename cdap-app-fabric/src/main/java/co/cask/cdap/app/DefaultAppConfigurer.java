@@ -53,6 +53,7 @@ import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
@@ -83,7 +84,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, WorkflowSpecification> workflows = new HashMap<>();
   private final Map<String, ServiceSpecification> services = new HashMap<>();
   private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
-  private final Map<String, ScheduleCreationSpec> programSchedules = new HashMap<>();
+  private final Map<String, ScheduleCreationBuilder> programSchedules = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
   private String name;
   private String description;
@@ -229,21 +230,22 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
       new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
-    ScheduleCreationSpec creationSpec = Schedulers.toScheduleCreationSpec(deployNamespace.toEntityId(), schedule,
-                                                                          programName, properties);
-    doAddSchedule(creationSpec);
+    ScheduleCreationBuilder creationBuilder = Schedulers.toScheduleCreationBuilder(deployNamespace.toEntityId(),
+                                                                                   schedule, programName,
+                                                                                   properties);
+    doAddSchedule(creationBuilder);
   }
 
-  private void doAddSchedule(ScheduleCreationSpec scheduleCreationSpec) {
+  private void doAddSchedule(ScheduleCreationBuilder scheduleCreationBuilder) {
     // setSchedule can not be called twice on the same configurer (semantics are not defined)
-    Preconditions.checkArgument(null == programSchedules.put(scheduleCreationSpec.getName(), scheduleCreationSpec),
-                                "Duplicate schedule name for schedule: '%s'", scheduleCreationSpec.getName());
-
+    String scheduleName = scheduleCreationBuilder.getName();
+    Preconditions.checkArgument(null == programSchedules.put(scheduleName, scheduleCreationBuilder),
+                                "Duplicate schedule name for schedule: '%s'", scheduleName);
   }
 
   @Override
-  public void schedule(ScheduleCreationSpec scheduleCreationSpec) {
-    doAddSchedule(scheduleCreationSpec);
+  public void schedule(ScheduleCreationBuilder scheduleCreationBuilder) {
+    doAddSchedule(scheduleCreationBuilder);
   }
 
   @Override
@@ -278,11 +280,17 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
 
+    Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
+    for (Map.Entry<String, ScheduleCreationBuilder> entry : programSchedules.entrySet()) {
+      String scheduleName = entry.getKey();
+      ScheduleCreationBuilder builder = entry.getValue();
+      scheduleSpecs.put(scheduleName, builder.build(deployNamespace.toEntityId().getNamespace(), appName, appVersion));
+    }
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId, getStreams(),
                                                getDatasetModules(), getDatasetSpecs(),
                                                flows, mapReduces, sparks, workflows, services,
-                                               schedules, programSchedules, workers, getPlugins());
+                                               schedules, scheduleSpecs, workers, getPlugins());
   }
 
   private void addDatasetsAndPlugins(DefaultPluginConfigurer configurer) {

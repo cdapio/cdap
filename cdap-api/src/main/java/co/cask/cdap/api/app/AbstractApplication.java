@@ -29,7 +29,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 
 import java.util.Collections;
 import java.util.Map;
@@ -193,10 +193,10 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   /**
    * Schedules a program, using the given scheduleCreationSpec.
    *
-   * @param scheduleCreationSpec defines the schedule. Can be built using the builder obtained
+   * @param scheduleCreationBuilder defines the schedule. Can be built using the builder obtained
    *                             from {@link #buildSchedule(String, ProgramType, String)}
    */
-  protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
-    configurer.schedule(scheduleCreationSpec);
+  protected void schedule(ScheduleCreationBuilder scheduleCreationBuilder) {
+    configurer.schedule(scheduleCreationBuilder);
   }
 }

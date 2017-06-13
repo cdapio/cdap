@@ -14,19 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
-
-
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.id.ProgramId;
+package co.cask.cdap.internal.schedule.trigger;
 
 /**
- * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
+ * A builder to create a Trigger object.
  */
-public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
-  public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
-    super(programId, programStatus);
-  }
+public interface TriggerBuilder {
+
+  /**
+   * Builds a Trigger given the deployed namespace, application, and application version.
+   *
+   * @param namespace the namespace
+   * @param applicationName the deployed application name
+   * @param applicationVersion the deployed application version
+   * @return a Trigger
+   */
+  Trigger build(String namespace, String applicationName, String applicationVersion);
 }
