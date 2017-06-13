@@ -4,7 +4,7 @@ import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.id.StreamId;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
+ * A Trigger builder that builds a StreamSizeTrigger.
  */
 public class StreamSizeTriggerBuilder implements TriggerBuilder {
   private StreamId streamId;

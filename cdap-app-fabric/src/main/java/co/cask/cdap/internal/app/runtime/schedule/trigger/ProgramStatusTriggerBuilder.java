@@ -8,7 +8,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import javax.annotation.Nullable;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
+ * A Trigger builder that builds a ProgramStatusTrigger.
  */
 public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   private String programNamespace;

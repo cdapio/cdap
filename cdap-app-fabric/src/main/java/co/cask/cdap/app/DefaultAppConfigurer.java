@@ -279,13 +279,12 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     String appName = applicationName == null ? name : applicationName;
     String appVersion = applicationVersion == null ? ApplicationId.DEFAULT_VERSION : applicationVersion;
 
-
     Map<String, ScheduleCreationSpec> specs = new HashMap<>();
-
     for (Map.Entry<String, ScheduleCreationBuilder> entry : programSchedules.entrySet()) {
-      String key = entry.getKey();
-      ScheduleCreationBuilder value = entry.getValue();
-      specs.put(key, value.build(deployNamespace.toEntityId().getNamespace(), applicationName, applicationVersion));
+      String scheduleName = entry.getKey();
+      ScheduleCreationBuilder builder = entry.getValue();
+      specs.put(scheduleName,
+              builder.build(deployNamespace.toEntityId().getNamespace(), applicationName, applicationVersion));
     }
 
     return new DefaultApplicationSpecification(appName, appVersion, description,

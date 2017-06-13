@@ -19,26 +19,14 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
-
-import javax.annotation.Nullable;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
  */
 public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
-
-  public ProgramStatusTrigger(@Nullable String namespace, @Nullable String application,
-                              @Nullable String applicationVersion, String programType, String programName,
-                              ProgramStatus programStatus) {
-    super(namespace, application, applicationVersion, ProgramType.valueOf(programType), programName, programStatus);
-  }
-
   public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
     super(programId, programStatus);
-//    super(namespace, application, applicationVersion, ProgramType.valueOf(programType), programName, programStatus);
   }
 }

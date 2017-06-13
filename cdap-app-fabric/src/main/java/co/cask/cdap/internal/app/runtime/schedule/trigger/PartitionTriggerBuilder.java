@@ -4,7 +4,7 @@ import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.id.DatasetId;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
+ * A Trigger builder that builds a PartitionTrigger.
  */
 public class PartitionTriggerBuilder implements TriggerBuilder {
   private DatasetId dataset;

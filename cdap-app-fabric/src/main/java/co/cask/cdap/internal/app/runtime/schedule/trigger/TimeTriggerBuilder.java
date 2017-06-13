@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
+ * A Trigger builder that builds a TimeTrigger.
  */
 public class TimeTriggerBuilder implements TriggerBuilder {
   private String cronExpression;

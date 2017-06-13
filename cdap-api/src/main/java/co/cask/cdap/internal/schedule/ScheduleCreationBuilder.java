@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Information for creating a program schedule.
+ * Builder for creating a program schedule
  * See {@link co.cask.cdap.api.app.AbstractApplication#buildSchedule(String, ProgramType, String)}
  * for how to build an instance of this object.
  */
@@ -80,7 +80,7 @@ public class ScheduleCreationBuilder {
 
   public ScheduleCreationSpec build(String namespace, String application, String applicationVersion) {
     Trigger builtTrigger = trigger.build(namespace, application, applicationVersion);
-
-    return new ScheduleCreationSpec(name, description, programName, properties, builtTrigger, constraints, timeoutMillis);
+    return new ScheduleCreationSpec(name, description, programName,
+            properties, builtTrigger, constraints, timeoutMillis);
   }
 }
