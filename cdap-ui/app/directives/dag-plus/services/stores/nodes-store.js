@@ -285,9 +285,8 @@ class DAGPlusPlusNodesStore {
   undoActions() {
     let past = this.stateHistory.past;
     if (past.length > 0) {
-      let previousState = past[past.length - 1];
+      let previousState = this.stateHistory.past.pop();
       let presentState = angular.copy(this.state);
-      this.stateHistory.past = past.slice(0, past.length - 1);
       this.stateHistory.future.unshift(presentState);
       this.setState(previousState);
     }
@@ -296,10 +295,9 @@ class DAGPlusPlusNodesStore {
   redoActions() {
     let future = this.stateHistory.future;
     if (future.length > 0) {
-      let nextState = future[0];
+      let nextState = this.stateHistory.future.shift();
       let presentState = angular.copy(this.state);
       this.stateHistory.past.push(presentState);
-      this.stateHistory.future.shift();
       this.setState(nextState);
     }
   }
