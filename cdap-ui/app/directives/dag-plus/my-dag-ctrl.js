@@ -89,6 +89,8 @@ angular.module(PKG.name + '.commons')
         initTimeout = null,
         nodePopoverTimeout = null;
 
+    var Mousetrap = window.CaskCommon.Mousetrap;
+
     function repaintEverything() {
       if (repaintTimeout) {
         $timeout.cancel(repaintTimeout);
@@ -792,6 +794,9 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.redoActions();
     };
 
+    Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+    Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+
     $scope.$on('$destroy', function () {
       labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
@@ -806,7 +811,8 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
-
+      Mousetrap.unbind(['command+z', 'ctrl+z']);
+      Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
     });
 
   });
