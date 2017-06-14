@@ -21,6 +21,7 @@ import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import Mousetrap from 'mousetrap';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 
 const POPOVERTHETHERCLASSNAME = 'highlight-popover';
 const CELLHIGHLIGHTCLASSNAME = 'cl-highlight';
@@ -65,6 +66,16 @@ export default class MaskSelection extends Component {
       .subscribe(
         () => {
           this.props.onClose();
+        },
+        (err) => {
+          console.log('error', err);
+
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setError,
+            payload: {
+              message: err.message || err.response.message
+            }
+          });
         }
       );
   }
@@ -146,5 +157,5 @@ export default class MaskSelection extends Component {
 }
 MaskSelection.propTypes = {
   onClose: PropTypes.func,
-  columns: PropTypes.string
+  columns: PropTypes.arrayOf(PropTypes.string)
 };

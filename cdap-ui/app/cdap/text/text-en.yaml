@@ -512,7 +512,7 @@ features:
         option3: Custom Selection
         option4: By Shuffling
       MaskSelection:
-        cancelBtnLabel: Cancel
+        cancelBtnLabel: Exit 'Mask Data' mode
         description: Mask the selected characters across all rows in this column
         popoverTitle: Mask Data
       Merge:

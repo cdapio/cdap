@@ -160,5 +160,5 @@ export default class CutDirective extends Component {
 
 CutDirective.propTypes = {
   onClose: PropTypes.func,
-  columns: PropTypes.string
+  columns: PropTypes.arrayOf(PropTypes.string)
 };

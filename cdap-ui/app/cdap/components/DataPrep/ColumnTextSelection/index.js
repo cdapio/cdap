@@ -103,7 +103,6 @@ export default class ColumnTextSelection extends Component {
     this.togglePopover();
   }
   mouseUpHandler(head, index) {
-
     let currentSelection = window.getSelection().toString();
     let startRange, endRange;
 
@@ -150,7 +149,7 @@ export default class ColumnTextSelection extends Component {
             key={shortid.generate()}
             className="gray-out"
           >
-            <div className="gray-out">
+            <div>
               {row[head]}
             </div>
           </td>
@@ -198,7 +197,7 @@ export default class ColumnTextSelection extends Component {
       if (head !== column) {
         return (
           <th className="gray-out">
-            <div className="gray-out">
+            <div>
               {head}
             </div>
           </th>
