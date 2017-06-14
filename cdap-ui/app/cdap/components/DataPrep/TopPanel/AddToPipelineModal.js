@@ -192,6 +192,58 @@ export default class AddToHydratorModal extends Component {
     };
   }
 
+  constructKafkaSource(artifactsList, kafkaInfo) {
+    if (!kafkaInfo) { return null; }
+
+    let plugin = objectQuery(kafkaInfo, 'values', '0');
+    let pluginName = Object.keys(plugin)[0];
+
+    // This is a hack.. should not do this
+    // We are still shipping kafka-plugins with hydrator-plugins 1.7 but
+    // it doesn't contain the streamingsource or batchsource plugins
+    let pluginArtifact = artifactsList.filter((artifact) => artifact.name === 'kafka-plugins');
+    pluginArtifact = pluginArtifact[pluginArtifact.length - 1];
+
+    plugin = plugin[pluginName];
+
+    let batchPluginInfo = {
+      name: plugin.name,
+      label: plugin.name,
+      type: 'batchsource',
+      artifact: pluginArtifact,
+      properties: plugin.properties
+    };
+
+    let realtimePluginInfo = Object.assign({}, batchPluginInfo, {
+      type: 'streamingsource',
+      artifact: pluginArtifact
+    });
+
+    // another hack.....
+    // streamingsource property is called "brokers",
+    // but batchsource it's called "kafkaBrokers"
+    batchPluginInfo.properties.kafkaBrokers = batchPluginInfo.properties.brokers;
+
+    let batchStage = {
+      name: plugin.name,
+      plugin: batchPluginInfo
+    };
+
+    let realtimeStage = {
+      name: plugin.name,
+      plugin: realtimePluginInfo
+    };
+
+    return {
+      batchSource: batchStage,
+      realtimeSource: realtimeStage,
+      connections: [{
+        from: plugin.name,
+        to: 'Wrangler'
+      }]
+    };
+  }
+
   constructProperties(pluginVersion) {
     let namespace = NamespaceStore.getState().selectedNamespace;
     let state = DataPrepStore.getState().dataprep;
@@ -225,6 +277,15 @@ export default class AddToHydratorModal extends Component {
       };
 
       rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
+    } else if (state.workspaceInfo.properties.connection === 'kafka') {
+
+      let specParams = {
+        namespace,
+        connectionId: 'testkafka', // needs to be modified
+        topic: state.workspaceInfo.properties.topic
+      };
+
+      rxArray.push(MyDataPrepApi.getKafkaSpecification(specParams));
     }
 
     MyArtifactApi.list({ namespace })
@@ -283,6 +344,8 @@ export default class AddToHydratorModal extends Component {
           sourceConfigs = this.constructFileSource(res[0], res[2]);
         } else if (state.workspaceInfo.properties.connection === 'database') {
           sourceConfigs = this.constructDatabaseSource(res[0], res[2]);
+        } else if (state.workspaceInfo.properties.connection === 'kafka') {
+          sourceConfigs = this.constructKafkaSource(res[0], res[2]);
         }
 
         if (sourceConfigs) {

@@ -40,7 +40,7 @@ const setDatabaseError = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_ERROR,
     payload: {
-      loading: payload
+      error: payload
     }
   });
 };
@@ -49,7 +49,7 @@ const setKafkaError = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_ERROR,
     payload: {
-      loading: payload
+      error: payload
     }
   });
 };
@@ -64,6 +64,7 @@ const setActiveBrowser = (payload) => {
 const setDatabaseAsActiveBrowser = (payload) => {
   setActiveBrowser(payload);
   setDatabaseInfoLoading();
+
   let namespace = NamespaceStore.getState().selectedNamespace;
   let {id} = payload;
   let params = {
@@ -100,6 +101,14 @@ const setKafkaAsActiveBrowser = (payload) => {
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {
       let info = objectQuery(res, 'values', 0);
+
+      MyDataPrepApi.listTopics(params, info)
+        .subscribe((res) => {
+          console.log('res', res);
+
+        }, (err) => {
+          setKafkaError({payload: err});
+        });
 
       setKafkaProperties({
         info,

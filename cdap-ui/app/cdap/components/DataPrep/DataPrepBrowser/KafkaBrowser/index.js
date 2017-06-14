@@ -38,7 +38,7 @@ export default class KafkaBrowser extends Component {
     this.state = {
       connectionId: store.kafka.connectionId,
       info: store.kafka.info,
-      loading: true,
+      loading: store.kafka.loading,
       search: '',
       searchFocus: true,
       error: null,
@@ -55,9 +55,11 @@ export default class KafkaBrowser extends Component {
       if (activeBrowser.name !== 'kafka') {
         return;
       }
+
       if (kafka.connectionId === this.state.connectionId) {
         return;
       }
+
       if (kafka.loading) {
         this.setState({
           loading: true

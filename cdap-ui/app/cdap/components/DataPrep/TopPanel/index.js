@@ -152,6 +152,7 @@ export default class DataPrepTopPanel extends Component {
 
   renderTopPanelDisplay() {
     let info = this.state.workspaceInfo;
+
     if (info) {
       if (info.properties.connection === 'file') {
         return (
@@ -182,6 +183,17 @@ export default class DataPrepTopPanel extends Component {
             <div className="connection-type">
               {T.translate('features.DataPrep.TopPanel.upload')}
               <span className="connection-name">{info.properties.connectionid}</span>
+            </div>
+            <div className="title">
+              {info.properties.name}
+            </div>
+          </div>
+        );
+      } else if (info.properties.connection === 'kafka') {
+        return (
+          <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
+            <div className="connection-type">
+              {T.translate('features.DataPrep.TopPanel.kafka')}
             </div>
             <div className="title">
               {info.properties.name}

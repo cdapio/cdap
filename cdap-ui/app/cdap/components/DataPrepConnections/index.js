@@ -174,6 +174,10 @@ export default class DataPrepConnections extends Component {
       setDatabaseAsActiveBrowser({name: 'database', id: browserName.id});
       activeConnectionType = 'database';
       activeConnectionid = browserName.id;
+    } else if (typeof browserName === 'object' && browserName.type === 'KAFKA') {
+      setKafkaAsActiveBrowser({name: 'kafka', id: browserName.id});
+      activeConnectionType = 'kafka';
+      activeConnectionid = browserName.id;
     }
 
     this.setState({
@@ -469,6 +473,8 @@ export default class DataPrepConnections extends Component {
     enableRouting = this.props.singleWorkspaceMode ? false : this.props.enableRouting;
     if (this.state.activeConnectionType === 'database') {
       setDatabaseAsActiveBrowser({name: 'database', id: this.state.activeConnectionid});
+    } else if (this.state.activeConnectionType === 'kafka') {
+      setKafkaAsActiveBrowser({name: 'kafka', id: this.state.activeConnectionid});
     } else if (this.state.activeConnectionType === 'file') {
       setActiveBrowser({name: 'file'});
     }
