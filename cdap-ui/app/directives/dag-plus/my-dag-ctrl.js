@@ -134,6 +134,8 @@ angular.module(PKG.name + '.commons')
         addConnections();
         vm.instance.bind('connection', formatConnections);
         vm.instance.bind('connectionDetached', formatConnections);
+        Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+        Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
 
         if (vm.isDisabled) {
           // Disable all endpoints
@@ -557,6 +559,7 @@ angular.module(PKG.name + '.commons')
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         $scope.connections = DAGPlusPlusNodesStore.getConnections();
         vm.comments = DAGPlusPlusNodesStore.getComments();
+        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
 
         if (!vm.isDisabled) {
           if (nodesTimeout) {
@@ -576,6 +579,14 @@ angular.module(PKG.name + '.commons')
           });
         }
 
+        // can do keybindings only if no node is selected
+        if (!vm.activeNodeId) {
+          Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+          Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+        } else {
+          Mousetrap.unbind(['command+z', 'ctrl+z']);
+          Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
+        }
       });
 
     });
@@ -793,9 +804,6 @@ angular.module(PKG.name + '.commons')
     vm.redoActions = function () {
       DAGPlusPlusNodesActionsFactory.redoActions();
     };
-
-    Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
-    Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
 
     $scope.$on('$destroy', function () {
       labels = [];
