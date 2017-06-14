@@ -177,7 +177,7 @@ export default class ExcelModal extends Component {
         <ModalFooter>
           <button
             className="btn btn-primary"
-            disabled={this.isApplyDisabled() ? 'disabled': null}
+            disabled={this.isApplyDisabled() ? 'disabled' : null}
             onClick={this.applyDirective}
           >
             {T.translate('features.DataPrep.Directives.apply')}
