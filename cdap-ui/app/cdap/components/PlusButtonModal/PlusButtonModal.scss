@@ -20,6 +20,10 @@
   overflow-x: hidden;
   position: relative;
 
+  &.cask-market {
+    height: 75vh;
+  }
+
   &.modal-dialog {
     width: 70vw;
     max-width: 1200px;
@@ -65,13 +69,13 @@
           }
         }
 
-        @media (min-width: 767px) and (max-width: 1200px) {
+        @media (min-width: 992px) and (max-width: 1200px) {
           .resourcecenter-entity-card {
             width: calc((100% - 20px - 10px - (3 * 10px)) / 2);
           }
         }
 
-        @media(max-width: 992px) {
+        @media(max-width: 991px) {
           .resourcecenter-entity-card {
             width: calc((100% - 20px - 10px));
           }
