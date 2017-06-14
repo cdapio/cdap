@@ -204,8 +204,15 @@ public abstract class ProtoTrigger implements Trigger {
 
     public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
       super(Type.PROGRAM_STATUS);
+
+      if (programId.getType() != ProgramType.WORKFLOW) {
+        throw new IllegalArgumentException(String.format(
+                "Cannot trigger program %s of type %s: Only workflows can be triggered",
+                programId.getProgram(), programId.getType()));
+      }
       this.programId = programId;
       this.programStatus = programStatus;
+      validate();
     }
 
     public ProgramId getProgramId() {
