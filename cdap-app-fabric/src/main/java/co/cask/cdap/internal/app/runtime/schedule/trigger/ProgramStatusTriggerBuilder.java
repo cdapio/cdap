@@ -23,6 +23,9 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -34,17 +37,17 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   private String programApplicationVersion;
   private ProgramType programType;
   private String programName;
-  private ProgramStatus programStatus;
+  private Set<ProgramStatus> programStatus;
 
   public ProgramStatusTriggerBuilder(@Nullable String programNamespace, @Nullable String programApplication,
                                      @Nullable String programApplicationVersion, String programType,
-                                     String programName, ProgramStatus programStatus) {
+                                     String programName, ProgramStatus... programStatus) {
     this.programNamespace = programNamespace;
     this.programApplication = programApplication;
     this.programApplicationVersion = programApplicationVersion;
     this.programType = ProgramType.valueOf(programType);
     this.programName = programName;
-    this.programStatus = programStatus;
+    this.programStatus = new HashSet<>(Arrays.asList(programStatus));
   }
 
   @Override
