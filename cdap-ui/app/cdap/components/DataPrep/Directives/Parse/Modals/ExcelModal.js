@@ -35,7 +35,7 @@ export default class ExcelModal extends Component {
     this.onSheetNumberChange = this.onSheetNumberChange.bind(this);
     this.onSheetNameChange = this.onSheetNameChange.bind(this);
     this.onSheetSourceChange = this.onSheetSourceChange.bind(this);
-    this.isApplyEnabled = this.isApplyEnabled.bind(this);
+    this.isApplyDisabled = this.isApplyDisabled.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
   }
   componentDidMount() {
@@ -49,7 +49,7 @@ export default class ExcelModal extends Component {
     MouseTrap.unbind('enter');
   }
 
-  isApplyEnabled() {
+  isApplyDisabled() {
     if (this.state.sheetSource === 'sheetnumber') {
       return typeof this.state.sheetNumber !== 'number' || isNaN(this.state.sheetNumber);
     }
@@ -64,7 +64,7 @@ export default class ExcelModal extends Component {
       return;
     }
     this.setState({
-      sheetNumber: parseInt(e.target.value, 10)
+      sheetNumber: parseInt(value, 10)
     });
   }
   onSheetNameChange(e) {
@@ -78,7 +78,7 @@ export default class ExcelModal extends Component {
     });
   }
   applyDirective() {
-    if (!this.isApplyEnabled) {
+    if (this.isApplyDisabled()) {
       return;
     }
     if (this.state.sheetSource === 'sheetnumber') {
@@ -177,7 +177,7 @@ export default class ExcelModal extends Component {
         <ModalFooter>
           <button
             className="btn btn-primary"
-            disabled={this.isApplyEnabled() ? 'disabled': null}
+            disabled={this.isApplyDisabled() ? 'disabled': null}
             onClick={this.applyDirective}
           >
             {T.translate('features.DataPrep.Directives.apply')}
