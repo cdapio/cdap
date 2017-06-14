@@ -49,6 +49,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -66,9 +67,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
@@ -292,8 +297,8 @@ class NotificationSubscriberService extends AbstractIdleService {
       if (datasetIdString == null) {
         return;
       }
-      DatasetId datasetId = DatasetId.fromString(datasetIdString);
-      for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
+      String datasetTriggerKey = Schedulers.triggerKeyForPartition(DatasetId.fromString(datasetIdString));
+      for (ProgramScheduleRecord schedule : getSchedules(context, ImmutableList.of(datasetTriggerKey))) {
         // ignore disabled schedules
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
           jobQueue.addNotification(schedule, notification);
@@ -317,14 +322,20 @@ class NotificationSubscriberService extends AbstractIdleService {
       String programIdString = notification.getProperties().get("programId");
       String programStatusString = notification.getProperties().get("programStatus");
       TriggerableProgramStatus programStatus = TriggerableProgramStatus.valueOf(programStatusString);
+      TriggerableProgramStatus finishStatus = TriggerableProgramStatus.FINISHED;
 
       if (programIdString == null || programStatus == null) {
         return;
       }
 
       ProgramId programId = ProgramId.fromString(programIdString);
-      String programStatusTriggerKey = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
-      for (ProgramScheduleRecord schedule : getSchedules(context, programStatusTriggerKey)) {
+      // Look for Schedules that have either a "finished" status or the specific programStatus
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      String triggerKeyForFinish = Schedulers.triggerKeyForProgramStatus(programId, finishStatus);
+
+      Collection<ProgramScheduleRecord> allScheduleRecords =
+        getSchedules(context, ImmutableList.of(triggerKeyForProgramStatus, triggerKeyForFinish));
+      for (ProgramScheduleRecord schedule : allScheduleRecords) {
         // ignore disabled schedules
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
           jobQueue.addNotification(schedule, notification);
@@ -333,8 +344,12 @@ class NotificationSubscriberService extends AbstractIdleService {
     }
   }
 
-  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, String triggerKey)
-    throws IOException, DatasetManagementException {
-    return Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey);
+  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, List<String> triggerKeys)
+          throws IOException, DatasetManagementException {
+    Collection<ProgramScheduleRecord> schedules = new HashSet<>();
+    for (String triggerKey : triggerKeys) {
+      schedules.addAll(Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey));
+    }
+    return schedules;
   }
 }
