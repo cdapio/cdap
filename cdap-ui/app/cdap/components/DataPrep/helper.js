@@ -45,15 +45,16 @@ export function isCustomOption(selectedOption) {
   return selectedOption.substr(0, 6) === 'CUSTOM';
 }
 
-export function setPopoverOffset(element) {
+export function setPopoverOffset(element, footer_height = 54) {
   let elem = element;
   let elemBounding = elem.getBoundingClientRect();
+  const FOOTER_HEIGHT = footer_height;
 
   let popover = document.getElementsByClassName('second-level-popover');
   let popoverHeight = popover[0].getBoundingClientRect().height;
   let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
   let popoverMenuItemTop = elemBounding.top;
-  let bodyBottom = document.body.getBoundingClientRect().bottom;
+  let bodyBottom = document.body.getBoundingClientRect().bottom - FOOTER_HEIGHT;
 
   let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll;
 
@@ -62,6 +63,7 @@ export function setPopoverOffset(element) {
     // This is to align the bottom of second level popover menu with that of the main menu
     if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
       popover[0].style.bottom = `-1px`;
+      popover[0].style.top = 'inherit';
     }
   } else {
     popover[0].style.top = 0;
