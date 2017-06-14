@@ -23,6 +23,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -200,16 +201,22 @@ public abstract class ProtoTrigger implements Trigger {
    */
   public static class ProgramStatusTrigger extends ProtoTrigger {
     protected final ProgramId programId;
-    protected final ProgramStatus programStatus;
+    protected final Set<ProgramStatus> programStatus;
 
-    public ProgramStatusTrigger(ProgramId programId, ProgramStatus programStatus) {
+    public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatus) {
       super(Type.PROGRAM_STATUS);
 
       if (programId.getType() != ProgramType.WORKFLOW) {
         throw new IllegalArgumentException(String.format(
-                "Cannot trigger program %s of type %s: Only workflows can be triggered",
-                programId.getProgram(), programId.getType()));
+                  "Cannot trigger program %s of type %s: Only workflows can be triggered",
+                  programId.getProgram(), programId.getType()));
       }
+      if (programStatus.contains(ProgramStatus.INITIALIZING) || programStatus.contains(ProgramStatus.RUNNING)) {
+        throw new IllegalArgumentException(String.format(
+                  "Cannot trigger program %s of status %s: Only COMPLETED, FAILED, KILLED statuses are supported",
+                  programId.getProgram(), programId.getType()));
+      }
+
       this.programId = programId;
       this.programStatus = programStatus;
       validate();
@@ -219,24 +226,34 @@ public abstract class ProtoTrigger implements Trigger {
       return programId;
     }
 
-    public ProgramStatus getProgramStatus() {
+    public Set<ProgramStatus> getProgramStatuses() {
       return programStatus;
     }
 
     @Override
     public void validate() {
       ProtoTrigger.validateNotNull(getProgramId(), "program id");
-      ProtoTrigger.validateNotNull(getProgramStatus(), "program status");
+      ProtoTrigger.validateNotNull(getProgramStatuses(), "program statuses");
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(getProgramId(), getProgramStatus());
+      return Objects.hash(getProgramId(), getProgramStatuses());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o ||
+        o != null &&
+          getClass().equals(o.getClass()) &&
+          Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses()) &&
+          Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
     }
 
     @Override
     public String toString() {
-      return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(), getProgramStatus().toString());
+      return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(),
+                                                           getProgramStatuses().toString());
     }
   }
 
