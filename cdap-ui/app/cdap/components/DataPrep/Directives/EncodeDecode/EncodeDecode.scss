@@ -14,6 +14,8 @@
  * the License.
 */
 
+$option-hover-bg-color: #dddddd;
+
 #encode-directive {
   .encode-options {
     padding: 0;
@@ -28,7 +30,7 @@
         pointer-events: auto;
       }
       &:hover {
-        background-color: #dddddd;
+        background-color: $option-hover-bg-color;
       }
     }
   }

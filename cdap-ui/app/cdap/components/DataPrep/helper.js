@@ -59,6 +59,7 @@ export function setPopoverOffset(element) {
 
   if (diff < 0) {
     popover[0].style.top = `${diff}px`;
+    // This is to align the bottom of second level popover menu with that of the main menu
     if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
       popover[0].style.bottom = `-1px`;
     }
