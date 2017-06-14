@@ -18,12 +18,14 @@ import React, { Component, PropTypes } from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
-import {objectQuery} from 'services/helpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import isNil from 'lodash/isNil';
+import {setKafkaAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import {objectQuery} from 'services/helpers';
+import ee from 'event-emitter';
 
 const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
 
@@ -45,8 +47,11 @@ export default class KafkaBrowser extends Component {
       topics: []
     };
 
-    this.fetchTopics = this.fetchTopics.bind(this);
+    this.eventEmitter = ee(ee);
     this.handleSearch = this.handleSearch.bind(this);
+    this.eventBasedFetchTopics = this.eventBasedFetchTopics.bind(this);
+
+    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
   }
 
   componentDidMount() {
@@ -56,56 +61,33 @@ export default class KafkaBrowser extends Component {
         return;
       }
 
-      if (kafka.connectionId === this.state.connectionId) {
-        return;
-      }
-
-      if (kafka.loading) {
-        this.setState({
-          loading: true
-        });
-        return;
-      }
-
       this.setState({
         info: kafka.info,
         connectionId: kafka.connectionId,
-        error: kafka.error
-      }, this.fetchTopics);
+        topics: kafka.topics,
+        error: kafka.error,
+        loading: kafka.loading
+      });
     });
+  }
+
+  componentWillUnmount() {
+    this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
+    if (this.storeSubscription) {
+      this.storeSubscription();
+    }
+  }
+
+  eventBasedFetchTopics(connectionId) {
+    if (this.state.connectionId === connectionId) {
+      setKafkaAsActiveBrowser({name: 'database', id: connectionId});
+    }
   }
 
   handleSearch(e) {
     this.setState({
       search: e.target.value
     });
-  }
-
-  fetchTopics() {
-    if (!this.state.connectionId) { return null; }
-
-    let namespace = NamespaceStore.getState().selectedNamespace;
-    let params = {
-      namespace
-    };
-
-    MyDataPrepApi.listTopics(params, this.state.info)
-      .subscribe(
-        (res) => {
-          this.setState({
-            topics: res.values,
-            loading: false
-          });
-        },
-        (err) => {
-          let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
-
-          this.setState({
-            error: errorMessage,
-            loading: false
-          });
-        }
-      );
   }
 
   prepTopic(topic) {
@@ -178,10 +160,13 @@ export default class KafkaBrowser extends Component {
   }
 
   renderError() {
+    let error = this.state.error;
+    let errorMessage = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
+
     return (
       <div className="empty-search-container">
         <div className="empty-search">
-          <strong>{this.state.error}</strong>
+          <strong>{errorMessage}</strong>
         </div>
       </div>
     );

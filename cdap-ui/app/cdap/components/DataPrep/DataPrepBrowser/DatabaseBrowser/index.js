@@ -25,6 +25,7 @@ import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
 import ee from 'event-emitter';
 import {objectQuery} from 'services/helpers';
+import {setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 
 require('./DatabaseBrowser.scss');
 
@@ -35,7 +36,7 @@ export default class DatabaseBrowser extends Component {
     super(props);
     let store = DataPrepBrowserStore.getState();
     this.state = {
-      properties: store.database.properties,
+      info: store.database.info,
       connectionId: store.database.connectionId,
       connectionName: '',
       tables: [],
@@ -46,7 +47,6 @@ export default class DatabaseBrowser extends Component {
     };
 
     this.eventEmitter = ee(ee);
-    this.fetchTables = this.fetchTables.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
     this.prepTable = this.prepTable.bind(this);
     this.eventBasedFetchTable = this.eventBasedFetchTable.bind(this);
@@ -60,31 +60,28 @@ export default class DatabaseBrowser extends Component {
       if (activeBrowser.name !== 'database') {
         return;
       }
-      if (database.connectionId === this.state.connectionId) {
-        return;
-      }
-      if (database.loading) {
-        this.setState({
-          loading: true
-        });
-        return;
-      }
 
       this.setState({
-        properties: database.properties,
+        info: database.info,
         connectionId: database.connectionId,
+        loading: database.loading,
+        tables: database.tables,
         error: database.error
-      }, this.fetchTables);
+      });
     });
   }
 
   componentWillUnmount() {
     this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
+
+    if (this.storeSubscription) {
+      this.storeSubscription();
+    }
   }
 
   eventBasedFetchTable(connectionId) {
     if (this.state.connectionId === connectionId) {
-      this.fetchTables();
+      setDatabaseAsActiveBrowser({name: 'database', id: connectionId});
     }
   }
 
@@ -115,36 +112,6 @@ export default class DatabaseBrowser extends Component {
         },
         (err) => {
           console.log('ERROR: ', err);
-        }
-      );
-  }
-
-  fetchTables() {
-    if (!this.state.connectionId) { return null; }
-
-    let namespace = NamespaceStore.getState().selectedNamespace;
-    let params = {
-      namespace,
-      connectionId: this.state.connectionId
-    };
-
-    DataPrepApi.listTables(params)
-      .combineLatest(DataPrepApi.getConnection(params))
-      .subscribe(
-        (res) => {
-          this.setState({
-            tables: res[0].values,
-            loading: false,
-            connectionName: objectQuery(res, 1, 'values', 0, 'name')
-          });
-        },
-        (err) => {
-          let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
-
-          this.setState({
-            error: errorMessage,
-            loading: false
-          });
         }
       );
   }
@@ -193,10 +160,12 @@ export default class DatabaseBrowser extends Component {
 
   render() {
     const renderNoPluginMessage = (error) => {
+      let errorMessage = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
+
       return (
         <div className="empty-search-container">
           <div className="empty-search">
-            <strong>{error}</strong>
+            <strong>{errorMessage}</strong>
           </div>
         </div>
       );
@@ -246,6 +215,7 @@ export default class DatabaseBrowser extends Component {
     if (this.state.search) {
       filteredTables = this.state.tables.filter(table => table.name.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
     }
+
     return (
       <div className="database-browser">
         <div className="top-panel">
@@ -269,7 +239,7 @@ export default class DatabaseBrowser extends Component {
             <div>
               <div className="database-browser-header">
                 <div className="database-metadata">
-                  <h5>{this.state.properties.databasename}</h5>
+                  <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
                   <span className="tables-count">
                     {
                       T.translate(`${PREFIX}.tableCount`, {

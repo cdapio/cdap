@@ -39,18 +39,14 @@ const setKafkaInfoLoading = () => {
 const setDatabaseError = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_DATABASE_ERROR,
-    payload: {
-      error: payload
-    }
+    payload: payload
   });
 };
 
 const setKafkaError = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_KAFKA_ERROR,
-    payload: {
-      error: payload
-    }
+    payload: payload
   });
 };
 
@@ -73,13 +69,21 @@ const setDatabaseAsActiveBrowser = (payload) => {
   };
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {
-      let properties = objectQuery(res, 'values', 0, 'properties');
+      let info = objectQuery(res, 'values', 0);
 
-      setDatabaseProperties({
-        properties,
-        connectionId: params.connectionId
-      });
-
+      MyDataPrepApi.listTables(params)
+        .subscribe((tables) => {
+          setDatabaseProperties({
+            info,
+            tables: tables.values,
+            connectionId: params.connectionId,
+          });
+        }, (err) => {
+          setDatabaseError({
+            error: err,
+            info
+          });
+        });
     }, (err) => {
       setDatabaseError({
         payload: err
@@ -103,17 +107,18 @@ const setKafkaAsActiveBrowser = (payload) => {
       let info = objectQuery(res, 'values', 0);
 
       MyDataPrepApi.listTopics(params, info)
-        .subscribe((res) => {
-          console.log('res', res);
-
+        .subscribe((topics) => {
+          setKafkaProperties({
+            info,
+            topics: topics.values,
+            connectionId: params.connectionId
+          });
         }, (err) => {
-          setKafkaError({payload: err});
+          setKafkaError({
+            error: err,
+            info
+          });
         });
-
-      setKafkaProperties({
-        info,
-        connectionId: params.connectionId
-      });
 
     }, (err) => {
       setKafkaError({
