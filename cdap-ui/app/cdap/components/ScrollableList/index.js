@@ -60,6 +60,7 @@ export default class ScrollableList extends Component {
     });
   }
 
+  // This is to exclude considering line divider as a child.
   getItemsInWindow(startIndex, children = this.props.children) {
     let nonDividerChildren = children
       .filter(child => child.props.className.indexOf('column-action-divider') === -1);

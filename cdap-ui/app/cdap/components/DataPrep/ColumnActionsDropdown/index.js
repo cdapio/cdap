@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
 import isEqual from 'lodash/isEqual';
 import DataPrepStore from 'components/DataPrep/store';
+import ScrollableList from 'components/ScrollableList';
 
 // Directives List
 import ParseDirective from 'components/DataPrep/Directives/Parse';
@@ -227,47 +228,47 @@ export default class ColumnActionsDropdown extends Component {
         tether={tetherOption}
       >
         <PopoverContent>
-          <div>
-            {
-              this.directives.map((directive) => {
-                if (directive.tag === 'divider') {
-                  return (
-                    <div className="column-action-divider">
-                      <hr />
-                    </div>
-                  );
-                }
-                let Tag = directive.tag;
-                let disabled = false;
-                let column = this.props.column;
+          <ScrollableList target={`dataprep-action-${this.dropdownId}`}>
+              {
+                this.directives.map((directive) => {
+                  if (directive.tag === 'divider') {
+                    return (
+                      <div className="column-action-divider">
+                        <hr />
+                      </div>
+                    );
+                  }
+                  let Tag = directive.tag;
+                  let disabled = false;
+                  let column = this.props.column;
 
-                if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
-                  column = this.state.selectedHeaders;
+                  if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
+                    column = this.state.selectedHeaders;
 
-                  if (this.state.selectedHeaders.length !== directive.requiredColCount && directive.requiredColCount !== 0) {
+                    if (this.state.selectedHeaders.length !== directive.requiredColCount && directive.requiredColCount !== 0) {
+                      disabled = true;
+                    }
+                  } else if (directive.requiredColCount === 2) {
                     disabled = true;
                   }
-                } else if (directive.requiredColCount === 2) {
-                  disabled = true;
-                }
 
-                return (
-                  <div
-                    key={directive.id}
-                    onClick={this.directiveClick.bind(this, directive.id)}
-                    className={classnames({'disabled': disabled})}
-                  >
-                    <Tag
-                      column={column}
-                      onComplete={this.toggleDropdown.bind(this, false)}
-                      isOpen={this.state.open === directive.id}
-                      close={this.directiveClick.bind(this, null)}
-                    />
-                  </div>
-                );
-              })
-            }
-          </div>
+                  return (
+                    <div
+                      key={directive.id}
+                      onClick={this.directiveClick.bind(this, directive.id)}
+                      className={classnames({'disabled': disabled})}
+                    >
+                      <Tag
+                        column={column}
+                        onComplete={this.toggleDropdown.bind(this, false)}
+                        isOpen={this.state.open === directive.id}
+                        close={this.directiveClick.bind(this, null)}
+                      />
+                    </div>
+                  );
+                })
+              }
+          </ScrollableList>
         </PopoverContent>
       </Popover>
     );
