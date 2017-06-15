@@ -33,6 +33,7 @@ export default class MaskData extends Component {
     this.maskLast2Digits = this.maskLast2Digits.bind(this);
     this.maskCustomSelection = this.maskCustomSelection.bind(this);
     this.maskByShuffling = this.maskByShuffling.bind(this);
+    this.isDirectiveEnabled = this.isDirectiveEnabled.bind(this);
   }
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('mask-fields-directive'));
@@ -40,7 +41,7 @@ export default class MaskData extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.isOpen && this.calculateOffset) {
+    if (this.props.isOpen && this.calculateOffset && !this.isDirectiveEnabled()) {
       this.calculateOffset();
     }
   }
@@ -68,8 +69,21 @@ export default class MaskData extends Component {
       .subscribe(
         () => {
           this.props.onComplete();
+        }, (err) => {
+          console.log('error', err);
+
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setError,
+            payload: {
+              message: err.message || err.response.message
+            }
+          });
         }
       );
+  }
+  isDirectiveEnabled() {
+    let {types} = DataPrepStore.getState().dataprep;
+    return types[this.props.column] === 'string';
   }
   maskLastNDigits(N) {
     let {data} = DataPrepStore.getState().dataprep;
@@ -89,7 +103,7 @@ export default class MaskData extends Component {
     this.applyDirective(`mask-number ${this.props.column} ${pattern}`);
   }
   renderSubMenu() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen || !this.isDirectiveEnabled()) { return null; }
 
     return (
       <div
@@ -139,7 +153,8 @@ export default class MaskData extends Component {
       <div
         id="mask-fields-directive"
         className={classnames('clearfix action-item', {
-          'active': this.props.isOpen
+          'active': this.props.isOpen && this.isDirectiveEnabled(),
+          'disabled': !this.isDirectiveEnabled()
         })}
       >
         <span className="option">
