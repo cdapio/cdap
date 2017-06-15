@@ -521,7 +521,8 @@ navbar_list = [
 # Fields:
 #     directory,    intersphinx_mapping    href,         title,                             set,       expansion
 manuals_complete_list = [
-    ['developer-manual', 'developer',     'index.html', 'Developer Manual',                'guides',       -1],
+    ['user-guide',        'user',         'index.html', 'User Guide',                      'guides',       -1],
+    ['developer-manual',  'developer',    'index.html', 'Developer Manual',                'guides',       -1],
     ['admin-manual',      'admin',        'index.html', 'Administration Manual',           'guides',       -1],
     ['integrations',      'integrations', 'index.html', 'Integrations',                    'guides',       -1],
     ['examples-manual',   'examples',     'index.html', 'Examples, Guides, and Tutorials', 'guides',       -1],
