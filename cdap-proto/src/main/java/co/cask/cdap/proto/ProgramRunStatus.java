@@ -16,8 +16,6 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.workflow.NodeStatus;
 
 /**
@@ -49,19 +47,6 @@ public enum ProgramRunStatus {
       default:
         throw new IllegalArgumentException(String.format("No node status available corresponding to program status %s",
                                                          status.name()));
-    }
-  }
-
-  public static TriggerableProgramStatus toTriggerableProgramStatus(ProgramRunStatus status) {
-    switch(status) {
-      case COMPLETED:
-        return TriggerableProgramStatus.SUCCESSFUL;
-      case FAILED:
-      case KILLED:
-        return TriggerableProgramStatus.FAILED;
-      default:
-          throw new IllegalStateException(String.format("ProgramRunStatus cannot be converted to " +
-                                                        "TriggerableProgramStatus"));
     }
   }
 }

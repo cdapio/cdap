@@ -17,12 +17,13 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -50,6 +51,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -61,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -92,6 +95,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_2);
   private static final ProgramId SCHEDULED_WORKFLOW_3 =
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_3);
+  private static final RunId dummyRunId = RunIds.fromString(UUID.randomUUID().toString());
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -148,8 +152,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                   new PartitionTrigger(DS2_ID, 2), ImmutableList.<Constraint>of());
     ProgramSchedule ppsched1 = new ProgramSchedule("ppsched1", "prog status schedule from one partition",
                                                    PPROG1_ID, ImmutableMap.of("propper", "popper"),
-                                                   new ProgramStatusTrigger(WORKFLOW_2,
-                                                                            TriggerableProgramStatus.SUCCESSFUL),
+                                                   new ProgramStatusTrigger(WORKFLOW_2, ProgramStatus.COMPLETED),
                                                   ImmutableList.<Constraint>of());
     scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2, ppsched1));
     Assert.assertEquals(psched1, scheduler.getSchedule(PSCHED1_ID));
@@ -255,9 +258,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     int runs2 = getRuns(WORKFLOW_2);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
-    publishNotification(WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
     // Both workflows must run at least once.
     // If the testNewPartition() loop took longer than expected, it may be more (quartz fired multiple times)
@@ -284,16 +287,16 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   private void testProgramScheduleUpdate() throws Exception {
     // Before disabling the program schedules, send other program status notifications (should not trigger)
-    publishProgramNotification(WORKFLOW_1, TriggerableProgramStatus.SUCCESSFUL);
-    publishProgramNotification(WORKFLOW_1, TriggerableProgramStatus.FAILED);
-    publishProgramNotification(WORKFLOW_2, TriggerableProgramStatus.FAILED);
+    publishProgramNotification(WORKFLOW_1, ProgramStatus.COMPLETED);
+    publishProgramNotification(WORKFLOW_1, ProgramStatus.FAILED);
+    publishProgramNotification(WORKFLOW_2, ProgramStatus.FAILED);
     disableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE_1);
     // Now send the program status notification that would trigger the schedule, but it is disabled (should not trigger)
-    publishProgramNotification(WORKFLOW_2, TriggerableProgramStatus.SUCCESSFUL);
+    publishProgramNotification(WORKFLOW_2, ProgramStatus.COMPLETED);
 
     enableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE_1);
     // Send the notification again (this should trigger the workflow)
-    publishProgramNotification(WORKFLOW_2, TriggerableProgramStatus.SUCCESSFUL);
+    publishProgramNotification(WORKFLOW_2, ProgramStatus.COMPLETED);
     waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
 
     ScheduleId scheduleId = APP_ID.schedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE_1);
@@ -302,14 +305,15 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Update the schedule so that the scheduled workflow is triggered regardless of failure or success.
     ProgramSchedule updatedSchedule = new ProgramSchedule(schedule.getName(), schedule.getDescription(),
                                                           schedule.getProgramId(), schedule.getProperties(),
-                                                          new ProgramStatusTrigger(WORKFLOW_2,
-                                                                                   TriggerableProgramStatus.FINISHED),
+                                                          new ProgramStatusTrigger(WORKFLOW_2, ProgramStatus.COMPLETED,
+                                                                                   ProgramStatus.FAILED,
+                                                                                   ProgramStatus.KILLED),
                                                           schedule.getConstraints());
     scheduler.updateSchedule(updatedSchedule);
 
-    publishProgramNotification(WORKFLOW_2, TriggerableProgramStatus.FAILED);
+    publishProgramNotification(WORKFLOW_2, ProgramStatus.FAILED);
     waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
-    publishProgramNotification(WORKFLOW_2, TriggerableProgramStatus.SUCCESSFUL);
+    publishProgramNotification(WORKFLOW_2, ProgramStatus.COMPLETED);
     waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
   }
 
@@ -317,7 +321,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     int runs = getRuns(WORKFLOW_2);
     ScheduleId scheduleId2 = APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
     // send one notification to it; then assert that will not start the workflow
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     TimeUnit.SECONDS.sleep(5); // give it enough time to create the job
     Assert.assertEquals(runs, getRuns(WORKFLOW_2));
     if ("disable".equals(howToUpdate)) {
@@ -343,11 +347,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     }
     // single notification should not trigger workflow 2 yet (if it does, then the job was not removed)
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     TimeUnit.SECONDS.sleep(5); // give it enough time to create the job, but should not start
     Assert.assertEquals(runs, getRuns(WORKFLOW_2));
     // now this should kick off the workflow
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitForCompleteRuns(runs + 1, WORKFLOW_2);
     // WORKFLOW_2 finishing triggers SCHEDULED_WORKFLOW_3
     waitForCompleteRuns(runs + 1, SCHEDULED_WORKFLOW_3);
@@ -366,9 +370,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private void testNewPartition(int expectedNumRuns) throws Exception {
-    publishNotification(WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
-    publishNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishDataNotification(WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
     try {
       waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
@@ -392,20 +396,20 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
   }
 
-  private void publishNotification(ProgramId programId, String dataset) throws Exception {
+  private void publishDataNotification(ProgramId programId, String dataset) throws Exception {
     DatasetId datasetId = programId.getNamespaceId().dataset(dataset);
     PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
     Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
     messagingService.publish(StoreRequestBuilder.of(dataEventTopic).addPayloads(GSON.toJson(notification)).build());
   }
 
-  private void publishProgramNotification(ProgramId programId, TriggerableProgramStatus programStatus)
+  private void publishProgramNotification(ProgramId programId, ProgramStatus programStatus)
     throws Exception {
-    if (programStatus != TriggerableProgramStatus.SUCCESSFUL && programStatus != TriggerableProgramStatus.FAILED) {
-      throw new IllegalArgumentException("TriggerableProgramStatus " + programStatus + " cannot be published");
+    if (programStatus == ProgramStatus.INITIALIZING || programStatus == ProgramStatus.RUNNING) {
+      throw new IllegalArgumentException("ProgramStatus " + programStatus + " cannot be published");
     }
 
-    Notification notification = Notification.forProgramStatus(programId, programStatus);
+    Notification notification = Notification.forProgramStatus(programId, dummyRunId, programStatus);
     messagingService.publish(StoreRequestBuilder.of(programEventTopic).addPayloads(GSON.toJson(notification)).build());
   }
 }

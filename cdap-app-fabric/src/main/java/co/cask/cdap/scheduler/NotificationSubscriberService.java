@@ -16,8 +16,8 @@
 
 package co.cask.cdap.scheduler;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -44,12 +44,12 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -67,8 +67,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -119,6 +117,8 @@ class NotificationSubscriberService extends AbstractIdleService {
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
+    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread(
+      cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC)));
   }
 
   @Override
@@ -309,7 +309,7 @@ class NotificationSubscriberService extends AbstractIdleService {
         return;
       }
       String datasetTriggerKey = Schedulers.triggerKeyForPartition(DatasetId.fromString(datasetIdString));
-      addNotificationToSchedules(getSchedules(context, ImmutableList.of(datasetTriggerKey)), notification);
+      addNotificationToSchedules(getSchedules(context, datasetTriggerKey), notification);
     }
   }
 
@@ -325,29 +325,20 @@ class NotificationSubscriberService extends AbstractIdleService {
 
       String programIdString = notification.getProperties().get("programId");
       String programStatusString = notification.getProperties().get("programStatus");
-      TriggerableProgramStatus programStatus = TriggerableProgramStatus.valueOf(programStatusString);
-      TriggerableProgramStatus finishStatus = TriggerableProgramStatus.FINISHED;
+      ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
 
       if (programIdString == null || programStatus == null) {
         return;
       }
-
       ProgramId programId = ProgramId.fromString(programIdString);
-      // Look for Schedules that have either a "finished" status or the specific programStatus
+
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
-      String triggerKeyForFinishStatus = Schedulers.triggerKeyForProgramStatus(programId, finishStatus);
-      addNotificationToSchedules(getSchedules(context,
-                                              ImmutableList.of(triggerKeyForProgramStatus, triggerKeyForFinishStatus)),
-                                              notification);
+      addNotificationToSchedules(getSchedules(context, triggerKeyForProgramStatus), notification);
     }
   }
 
-  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, List<String> triggerKeys)
+  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, String triggerKey)
           throws IOException, DatasetManagementException {
-    Collection<ProgramScheduleRecord> schedules = new HashSet<>();
-    for (String triggerKey : triggerKeys) {
-      schedules.addAll(Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey));
-    }
-    return schedules;
+    return Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey);
   }
 }

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -32,7 +32,6 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -98,8 +97,9 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
                                                         ImmutableList.<Constraint>of());
     final ProgramSchedule sched31 = new ProgramSchedule("sched31", "a program status trigger", PROG3_ID,
                                                         ImmutableMap.of("propper", "popper"),
-                                                        new ProgramStatusTrigger(PROG1_ID,
-                                                                                 TriggerableProgramStatus.FINISHED),
+                                                        new ProgramStatusTrigger(PROG1_ID, ProgramStatus.COMPLETED,
+                                                                                 ProgramStatus.FAILED,
+                                                                                 ProgramStatus.KILLED),
                                                         ImmutableList.<Constraint>of());
 
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -108,9 +108,12 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
         // event for DS1 or DS2 should trigger nothing. validate it returns an empty collection
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID)).isEmpty());
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID)).isEmpty());
-        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID,
-                                                                                    TriggerableProgramStatus.FINISHED))
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))
                                .isEmpty());
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))
+                .isEmpty());
+        Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))
+                .isEmpty());
       }
     });
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -125,8 +128,15 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
         // event for ProgramStatus triggers only sched31
         Assert.assertEquals(ImmutableSet.of(sched31),
                 toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID,
-                                TriggerableProgramStatus.FINISHED))));
+                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+
+        Assert.assertEquals(ImmutableSet.of(sched31),
+                toScheduleSet(store.findSchedules(
+                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+
+        Assert.assertEquals(ImmutableSet.of(sched31),
+                toScheduleSet(store.findSchedules(
+                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
 
         // event for DS1 should trigger only sched11
         Assert.assertEquals(ImmutableSet.of(sched11),
@@ -150,8 +160,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
                                                            ImmutableList.<Constraint>of());
     final ProgramSchedule sched31New = new ProgramSchedule(sched31.getName(), "program schedule", PROG3_ID,
                                                            ImmutableMap.of("abcd", "efgh"),
-                                                           new ProgramStatusTrigger(PROG1_ID,
-                                                                                    TriggerableProgramStatus.FAILED),
+                                                           new ProgramStatusTrigger(PROG1_ID, ProgramStatus.FAILED),
                                                            ImmutableList.<Constraint>of());
 
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -172,10 +181,17 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
         // event for DS2 triggers no schedule after update
         Assert.assertEquals(ImmutableSet.<ProgramSchedule>of(),
                             toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS2_ID))));
+
+        // event for PS triggers only for failed program statuses, not completed nor killed
         Assert.assertEquals(ImmutableSet.of(sched31New),
                             toScheduleSet(store.findSchedules(
-                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID,
-                                                                                TriggerableProgramStatus.FAILED))));
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+        Assert.assertEquals(ImmutableSet.of(),
+                toScheduleSet(store.findSchedules(
+                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+        Assert.assertEquals(ImmutableSet.of(),
+                toScheduleSet(store.findSchedules(
+                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
       }
     });
   }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -184,9 +185,11 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
+              // TODO when the store can read TMS notifications to send the store, remove the store methods
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
+              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.COMPLETED);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -201,6 +204,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
+              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.KILLED);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -240,6 +244,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.FAILED);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

@@ -17,13 +17,13 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.twill.api.RunId;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,9 +65,10 @@ public class Notification {
     return new Notification(Notification.Type.PARTITION, properties);
   }
 
-  public static Notification forProgramStatus(ProgramId programId, TriggerableProgramStatus programStatus) {
+  public static Notification forProgramStatus(ProgramId programId, RunId runId, ProgramStatus programStatus) {
     Map<String, String> properties = new HashMap<>();
     properties.put("programId", programId.toString());
+    properties.put("programRunId", runId.getId());
     properties.put("programStatus", programStatus.toString());
     return new Notification(Notification.Type.PROGRAM_STATUS, properties);
   }
