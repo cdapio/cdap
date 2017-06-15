@@ -15,11 +15,11 @@
 # the License.
 
 #
-# Update SDK configuration to use CDAP Basic Authentication
+# Update Sandbox configuration to use CDAP Basic Authentication
 #
 
 # Strip closing </configuration> tag
-sed -e '/<\/configuration>/d' /opt/cdap/sdk/conf/cdap-site.xml > /opt/cdap/sdk/conf/cdap-site.xml.new
+sed -e '/<\/configuration>/d' /opt/cdap/sandbox/conf/cdap-site.xml > /opt/cdap/sandbox/conf/cdap-site.xml.new
 
 # Append our security configuration
 echo "  <property>
@@ -29,7 +29,7 @@ echo "  <property>
 
   <property>
     <name>security.authentication.basic.realmfile</name>
-    <value>/opt/cdap/sdk/conf/realmfile</value>
+    <value>/opt/cdap/sandbox/conf/realmfile</value>
   </property>
 
   <property>
@@ -37,17 +37,17 @@ echo "  <property>
     <value>co.cask.cdap.security.server.BasicAuthenticationHandler</value>
   </property>
 
-</configuration>" >> /opt/cdap/sdk/conf/cdap-site.xml.new
+</configuration>" >> /opt/cdap/sandbox/conf/cdap-site.xml.new
 
 unalias mv # in case root has a "mv -i" alias
-mv -f /opt/cdap/sdk/conf/cdap-site.xml{.new,}
+mv -f /opt/cdap/sandbox/conf/cdap-site.xml{.new,}
 
 # Create init script to populate realmfile
 echo '#!/usr/bin/env bash
 
 #
 # chkconfig: 2345 95 15
-# description: Creates /opt/cdap/sdk/conf/realmfile using AWS instance ID
+# description: Creates /opt/cdap/sandbox/conf/realmfile using AWS instance ID
 #
 ### BEGIN INIT INFO
 # Provides:          cdap-realmfile
@@ -61,14 +61,14 @@ echo '#!/usr/bin/env bash
 ### END INIT INFO
 
 if [[ ${1} == start ]]; then
-  if [[ -e /opt/cdap/sdk/conf/realmfile ]]; then
-    echo "CDAP SDK Realmfile already exists... skipping generation"
+  if [[ -e /opt/cdap/sandbox/conf/realmfile ]]; then
+    echo "CDAP Sandbox Realmfile already exists... skipping generation"
   else
     __instance_id=$(curl -q http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
-    echo "Creating CDAP SDK Realmfile with Instance ID as password"
-    echo "cdap: ${__instance_id}" > /opt/cdap/sdk/conf/realmfile
-    chown cdap:cdap /opt/cdap/sdk/conf/realmfile
-    chmod 0400 /opt/cdap/sdk/conf/realmfile
+    echo "Creating CDAP Sandbox Realmfile with Instance ID as password"
+    echo "cdap: ${__instance_id}" > /opt/cdap/sandbox/conf/realmfile
+    chown cdap:cdap /opt/cdap/sandbox/conf/realmfile
+    chmod 0400 /opt/cdap/sandbox/conf/realmfile
   fi
 fi
 exit 0' > /etc/init.d/cdap-realmfile
