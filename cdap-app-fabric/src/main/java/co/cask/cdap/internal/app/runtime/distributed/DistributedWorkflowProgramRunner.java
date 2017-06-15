@@ -34,6 +34,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
@@ -48,6 +49,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
@@ -68,6 +70,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
   private static final String HCONF_ATTR_CLUSTER_MODE = "cdap.spark.cluster.mode";
+  private static final String HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS = "cdap.spark.credentials.update.interval.ms";
 
   private final ProgramRuntimeProviderLoader runtimeProviderLoader;
 
@@ -76,7 +79,8 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
                                    TokenSecureStoreRenewer tokenSecureStoreRenewer,
                                    ProgramRuntimeProviderLoader runtimeProviderLoader,
                                    Impersonator impersonator) {
-    super(twillRunner, createConfiguration(hConf), cConf, tokenSecureStoreRenewer, impersonator);
+    super(twillRunner, createConfiguration(hConf, cConf, tokenSecureStoreRenewer), cConf, tokenSecureStoreRenewer,
+          impersonator);
     this.runtimeProviderLoader = runtimeProviderLoader;
   }
 
@@ -174,9 +178,19 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     return createProgramController(controller, program.getId(), runId);
   }
 
-  private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
+  private static YarnConfiguration createConfiguration(YarnConfiguration hConf, CConfiguration cConf,
+                                                       TokenSecureStoreRenewer secureStoreRenewer) {
     YarnConfiguration configuration = new YarnConfiguration(hConf);
     configuration.setBoolean(HCONF_ATTR_CLUSTER_MODE, true);
+    configuration.set("hive.metastore.token.signature", HiveAuthFactory.HS2_CLIENT_TOKEN);
+    if (SecurityUtil.isKerberosEnabled(cConf)) {
+      // Need to divide the interval by 0.8 because Spark logic has a 0.8 discount on the interval
+      // If we don't offset it, it will look for the new credentials too soon
+      // Also add 5 seconds to the interval to give master time to push the changes to the Spark client container
+      configuration.setLong(HCONF_ATTR_CREDENTIALS_UPDATE_INTERVAL_MS,
+                            (long) ((secureStoreRenewer.getUpdateInterval() + 5000) / 0.8));
+    }
+
     return configuration;
   }
 
