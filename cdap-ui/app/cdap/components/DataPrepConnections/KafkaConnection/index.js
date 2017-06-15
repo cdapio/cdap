@@ -191,7 +191,7 @@ export default class KafkaConnection extends Component {
       name: this.state.name,
       type: 'KAFKA',
       properties: {
-        brokers: `${this.state.brokers}:${this.state.brokersPort}`
+        brokers: this.convertBrokersList()
       }
     };
 

@@ -106,7 +106,7 @@ const setKafkaAsActiveBrowser = (payload) => {
     .subscribe((res) => {
       let info = objectQuery(res, 'values', 0);
 
-      MyDataPrepApi.listTopics(params, info)
+      MyDataPrepApi.listTopics({namespace}, info)
         .subscribe((topics) => {
           setKafkaProperties({
             info,
