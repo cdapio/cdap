@@ -1256,9 +1256,6 @@ public final class Constants {
     public static final String CONTAINER_INSTANCES = "messaging.container.instances";
     public static final String MAX_INSTANCES = "messaging.max.instances";
 
-    // directory to store the messaging system coprocessor jars
-    public static final String COPROCESSOR_DIR = "messaging.coprocessor.dir";
-
     // The following configuration keys are set by messaging service TwillRunnable only,
     // not available in cdap-default.xml
 
