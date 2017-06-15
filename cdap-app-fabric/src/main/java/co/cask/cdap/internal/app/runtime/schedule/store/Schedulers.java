@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTriggerBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
@@ -84,7 +83,7 @@ public class Schedulers {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 
-  public static String triggerKeyForProgramStatus(ProgramId programId, TriggerableProgramStatus programStatus) {
+  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
     return programId.toString() + "." + programStatus.toString().toLowerCase();
   }
 

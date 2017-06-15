@@ -16,7 +16,7 @@
 
 package co.cask.cdap;
 
-import co.cask.cdap.api.TriggerableProgramStatus;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -59,7 +59,9 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
                .triggerByTime("*/10 * * * * ?"));
     // Schedule the workflow to run every time the dataset partition schedule 2 finishes
     schedule(buildSchedule(PROGRAM_STATUS_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_3)
-               .triggerOnProgramStatus(ProgramType.WORKFLOW, ANOTHER_WORKFLOW, TriggerableProgramStatus.FINISHED));
+               .triggerOnProgramStatus(ProgramType.WORKFLOW, ANOTHER_WORKFLOW, ProgramStatus.COMPLETED,
+                                                                               ProgramStatus.FAILED,
+                                                                               ProgramStatus.KILLED));
   }
 
   /**

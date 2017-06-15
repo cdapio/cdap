@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -532,9 +533,12 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       return Collections.singletonList(triggerKey);
     } else if (trigger instanceof ProgramStatusTrigger) {
       ProgramStatusTrigger programTrigger = (ProgramStatusTrigger) trigger;
-      String triggerKey = Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(),
-                                                                programTrigger.getProgramStatus());
-      return Collections.singletonList(triggerKey);
+      List<String> triggerKeys = new ArrayList<>();
+
+      for (ProgramStatus programStatus : programTrigger.getProgramStatuses()) {
+        triggerKeys.add(Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(), programStatus));
+      }
+      return triggerKeys;
     }
     return Collections.emptyList();
   }

@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
@@ -276,22 +275,6 @@ public class DefaultStore implements Store {
           recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, pid);
         }
         // todo: delete old history data
-      }
-
-      private void sendProgramStatusNotification() {
-        // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
-        TriggerableProgramStatus programStatus = ProgramRunStatus.toTriggerableProgramStatus(runStatus);
-        Notification programStatusNotification = Notification.forProgramStatus(id, programStatus);
-        try {
-          // TODO send runtime arguments of program? Send output files created of program?
-          messagingService.publish(StoreRequestBuilder.of(topicId)
-                                                      .addPayloads(GSON.toJson(programStatusNotification))
-                                                      .build()
-          );
-        } catch (TopicNotFoundException | IOException e) {
-          LOG.warn("Error while publishing notification for program {}: {}", id.getProgram(), e);
-          // TODO throw new exception
-        }
       }
     });
   }
