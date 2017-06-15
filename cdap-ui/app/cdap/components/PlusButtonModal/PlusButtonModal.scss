@@ -59,19 +59,19 @@
 
         @media (min-width: 1601px) {
           .resourcecenter-entity-card {
-            width: calc((100% - 20px - 10px - (5 * 10px)) / 4);
+            width: calc((100% - 20px - (2 * 10px)) / 4);
           }
         }
 
         @media (min-width: 1201px) and (max-width: 1600px) {
           .resourcecenter-entity-card {
-            width: calc((100% - 20px - 10px - (4 * 10px)) / 3);
+            width: calc((100% - 20px - (1 * 10px)) / 3);
           }
         }
 
         @media (min-width: 992px) and (max-width: 1200px) {
           .resourcecenter-entity-card {
-            width: calc((100% - 20px - 10px - (3 * 10px)) / 2);
+            width: calc((100% - 20px - (0 * 10px)) / 2);
           }
         }
 
