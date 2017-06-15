@@ -17,9 +17,7 @@
 package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TriggerableProgramStatus;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
@@ -31,7 +29,6 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -55,11 +52,8 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
-import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskPublisher;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
@@ -69,7 +63,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
@@ -94,7 +87,6 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -106,6 +98,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
@@ -128,9 +121,6 @@ public class DefaultStore implements Store {
   private final Transactional transactional;
   private final AtomicBoolean upgradeComplete;
   private final LoadingCache<byte[], Boolean> upgradeCacheLoader;
-  private final MessagingService messagingService;
-  private final ScheduleTaskPublisher taskPublisher;
-  private final TopicId topicId;
 
   @Inject
   public DefaultStore(CConfiguration conf, DatasetFramework framework, TransactionSystemClient txClient,
@@ -148,9 +138,6 @@ public class DefaultStore implements Store {
     this.upgradeCacheLoader = CacheBuilder.newBuilder()
       .expireAfterWrite(1, TimeUnit.MINUTES)
       .build(new DefaultStoreUpgradeCacheLoader(transactional, dsFramework, configuration, upgradeComplete));
-    this.messagingService = messagingService;
-    this.topicId = NamespaceId.SYSTEM.topic(configuration.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-    this.taskPublisher = new ScheduleTaskPublisher(this.messagingService, this.topicId);
   }
 
   // Returns true if the upgrade flag is set. Upgrade could have completed earlier than this since this flag is
@@ -283,7 +270,6 @@ public class DefaultStore implements Store {
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
         metaStore.recordProgramStop(id, pid, endTime, runStatus, failureCause);
-        sendProgramStatusNotification();
 
         // This block has been added so that completed workflow runs can be logged to the workflow dataset
         WorkflowId workflowId = new WorkflowId(id.getParent(), id.getProgram());
@@ -291,22 +277,6 @@ public class DefaultStore implements Store {
           recordCompletedWorkflow(metaStore, getWorkflowDataset(context), workflowId, pid);
         }
         // todo: delete old history data
-      }
-
-      private void sendProgramStatusNotification() {
-        // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
-        TriggerableProgramStatus programStatus = ProgramRunStatus.toTriggerableProgramStatus(runStatus);
-        Notification programStatusNotification = Notification.forProgramStatus(id, programStatus);
-        try {
-          // TODO send runtime arguments of program? Send output files created of program?
-          messagingService.publish(StoreRequestBuilder.of(topicId)
-                                                      .addPayloads(GSON.toJson(programStatusNotification))
-                                                      .build()
-          );
-        } catch (TopicNotFoundException | IOException e) {
-          LOG.warn("Error while publishing notification for program {}: {}", id.getProgram(), e);
-          // TODO throw new exception
-        }
       }
     });
   }

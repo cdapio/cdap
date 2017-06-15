@@ -335,6 +335,14 @@ class NotificationSubscriberService extends AbstractIdleService {
       }
 
       ProgramId programId = ProgramId.fromString(programIdString);
+
+      // TODO get request to get workflow token of programId only if trigger / constraint requires it?
+      // but you need to know what schedules first and then fetch them dynamically. should be done in constraint checker
+      // service when launching a job. fetch arguments if they exist basically then and if its required
+      // this constraint only needs to be defined though if a triggerOnProgramStatus
+      // triggerOnProgramSTatus().withArguments().withArguments();
+
+
       // Look for Schedules that have either a "finished" status or the specific programStatus
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
       String triggerKeyForFinishStatus = Schedulers.triggerKeyForProgramStatus(programId, finishStatus);
