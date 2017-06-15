@@ -57,6 +57,9 @@ $col_type_font_color: gray;
       tbody {
         tr {
           td {
+            &:first-child {
+              background: $header-bg-color;
+            }
             white-space: nowrap;
           }
         }
@@ -68,14 +71,14 @@ $col_type_font_color: gray;
         border-bottom: 2px solid $border-and-selected-color;
         border-right: 1px solid #cccccc;
         border-top: 0;
-        position: relative;
-        padding: 0.5rem 0.75rem;
+        padding: 0;
 
         .quality-bar {
-          position: absolute;
-          top: -10px; // top padding of header
-          left: 0;
-          right: 0;
+          display: flex;
+          height: 5px;
+        }
+        .column-wrapper-container {
+          padding: 0.5rem 0.75rem;
         }
 
         .column-wrapper {
@@ -147,6 +150,11 @@ $col_type_font_color: gray;
             cursor: initial;
           }
 
+        }
+
+        &.row-count-header {
+          padding: 0;
+          width: 1px;
         }
 
         &:first-child { border-left: 0; }
