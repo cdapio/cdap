@@ -281,7 +281,7 @@ export default class AddToHydratorModal extends Component {
 
       let specParams = {
         namespace,
-        connectionId: 'testkafka', // needs to be modified
+        connectionId: 'testkafka', // NEEDS TO BE MODIFIED!! currently connectionid is not in the properties
         topic: state.workspaceInfo.properties.topic
       };
 

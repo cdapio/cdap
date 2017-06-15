@@ -35,6 +35,12 @@ $close-button-color: #333333;
     }
   }
 
+  .modal-footer {
+    padding: 0;
+    text-align: left;
+    border-top: 0;
+  }
+
   .kafka-detail {
     .col-form-label {
       font-weight: 500;
@@ -51,5 +57,14 @@ $close-button-color: #333333;
     .asterisk {
       color: $asterisk-color;
     }
+  }
+
+  .test-connection-button {
+    margin-left: 5px;
+  }
+
+  .loading-indicator {
+    vertical-align: middle;
+    margin-left: 5px;
   }
 }

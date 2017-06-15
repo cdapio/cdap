@@ -768,6 +768,10 @@ features:
           EDIT: Save Changes
         connectionType: Connection Type
         defaultTestErrorMessage: Cannot connect to Kafka
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
         kafka: Kafka
         ModalHeader:
           ADD: "Add Connection: Kafka"
