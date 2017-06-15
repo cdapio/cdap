@@ -134,6 +134,9 @@ class DAGPlusPlusNodesActionsFactory {
   redoActions() {
     this.nodesDispatcher.dispatch('onRedoActions');
   }
+  removePreviousState() {
+    this.nodesDispatcher.dispatch('onRemovePreviousState');
+  }
 
 }
 DAGPlusPlusNodesActionsFactory.$inject = ['DAGPlusPlusNodesDispatcher', 'GLOBALS', 'DAGPlusPlusFactory', 'DAGPlusPlusNodesStore'];

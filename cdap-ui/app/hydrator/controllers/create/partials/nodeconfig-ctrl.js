@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -35,8 +35,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.myPipelineApi = myPipelineApi;
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
+    this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
     this.LogViewerStore = LogViewerStore;
+    this.rPlugin = rPlugin;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -66,6 +68,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
 
     this.activeTab = this.isPreviewMode && !rPlugin.isAction ? 2 : 1;
+
+    this.$scope.$on('modal.closing', () => {
+      this.updateNodeStateIfDirty();
+    });
 
     // Timeouts
     this.setStateTimeout = null;
@@ -128,6 +134,8 @@ class HydratorPlusPlusNodeConfigCtrl {
       schemaAdvance: false
     };
 
+    this.defaultState = angular.copy(this.state);
+
     if (this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
       try {
         this.avsc.parse(this.state.node.outputSchema);
@@ -161,6 +169,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       propertiesFromBackend.forEach( (property) => {
         this.state.node.plugin.properties[property] = this.state.node.plugin.properties[property] || '';
       });
+      this.defaultState = angular.copy(this.state);
       this.state.watchers.push(
         this.$scope.$watch(
           'HydratorPlusPlusNodeConfigCtrl.state.node',
@@ -292,6 +301,7 @@ class HydratorPlusPlusNodeConfigCtrl {
             this.state.configfetched = true;
             this.state.config = res;
             this.state.noconfig = false;
+            this.defaultState = angular.copy(this.state);
           },
           noJsonErrorHandler
         );
@@ -353,6 +363,19 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (fields.length !== unique.length) {
       error.push('There are two or more fields with the same name.');
     }
+  }
+  updateNodeStateIfDirty() {
+    let stateIsDirty = this.stateIsDirty();
+    // because we are adding state to history before we open a node config, so if the config wasn't changed at all,
+    // then we should remove that state from history
+    if (!stateIsDirty) {
+      this.DAGPlusPlusNodesActionsFactory.removePreviousState();
+    }
+  }
+  stateIsDirty() {
+    let defaults = this.defaultState.node;
+    let state = this.state.node;
+    return !angular.equals(defaults, state);
   }
 
   // PREVIEW

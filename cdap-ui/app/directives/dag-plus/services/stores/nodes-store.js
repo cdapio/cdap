@@ -41,6 +41,7 @@ class DAGPlusPlusNodesStore {
     dispatcher.register('onUpdateComment', this.updateComment.bind(this));
     dispatcher.register('onUndoActions', this.undoActions.bind(this));
     dispatcher.register('onRedoActions', this.redoActions.bind(this));
+    dispatcher.register('onRemovePreviousState', this.removePreviousState.bind(this));
   }
 
   setDefaults() {
@@ -194,6 +195,7 @@ class DAGPlusPlusNodesStore {
     return this.state.activeNodeId;
   }
   setActiveNodeId(nodeId) {
+    this.addStateToHistory();
     this.state.activeNodeId = nodeId;
     this.emitChange();
   }
@@ -280,6 +282,10 @@ class DAGPlusPlusNodesStore {
     let currentState = angular.copy(this.state);
     this.stateHistory.past.push(currentState);
     this.stateHistory.future = [];
+  }
+
+  removePreviousState() {
+    this.stateHistory.past.pop();
   }
 
   undoActions() {
