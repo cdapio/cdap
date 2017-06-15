@@ -36,6 +36,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
@@ -44,6 +45,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
@@ -67,6 +69,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.apache.tephra.RetryStrategies;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -78,6 +81,8 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -112,6 +117,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static final Gson GSON = new Gson();
+  private static final Type NOTIFICATION_LIST = new TypeToken<List<Notification>>() { }.getType();
 
   private static MessagingService messagingService;
   private static Store store;
@@ -290,6 +296,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
         return job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger;
       }
     }));
+
+    for (RunRecordMeta runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
+                                                     0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
+      Map<String, String> sysArgs = runRecordMeta.getSystemArgs();
+      Assert.assertEquals(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1,
+                          sysArgs.get(ProgramOptionConstants.SCHEDULE_NAME));
+      List<Notification> notifications =
+        GSON.fromJson(sysArgs.get(ProgramOptionConstants.EVENT_NOTIFICATIONS), NOTIFICATION_LIST);
+      // Only one notification is enough to satisfy Time Trigger
+      Assert.assertEquals(1, notifications.size());
+      Assert.assertEquals(Notification.Type.TIME, notifications.get(0).getNotificationType());
+    }
 
     // Also verify that the two partition schedules did not trigger
     Assert.assertEquals(runs1, getRuns(WORKFLOW_1));
