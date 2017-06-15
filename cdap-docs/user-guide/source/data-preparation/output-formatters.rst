@@ -58,8 +58,8 @@ will generate this record::
 
 .. _user-guide-data-preparation-write-as-json-map:
 
-Write as JSON Map
-=================
+Write as a JSON Map
+===================
 
 The WRITE-AS-JSON-MAP directive converts the record into a JSON Map.
 
