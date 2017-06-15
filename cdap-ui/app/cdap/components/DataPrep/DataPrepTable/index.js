@@ -292,7 +292,7 @@ export default class DataPrepTable extends Component {
             data.map((row, rowIndex) => {
               return (
                 <tr key={row.uniqueId}>
-                  <td>{rowIndex}</td>
+                  <td>{rowIndex + 1}</td>
                   {
                     headers.map((head, i) => {
                       return <td key={i}><div>{row[head.name]}</div></td>;
