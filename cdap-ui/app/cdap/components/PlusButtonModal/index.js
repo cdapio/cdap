@@ -20,6 +20,7 @@ import { Modal, ModalHeader, ModalBody } from 'reactstrap';
 import Market from 'components/Market';
 import ResourceCenter from 'components/ResourceCenter';
 import IconSVG from 'components/IconSVG';
+import classnames from 'classnames';
 
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import T from 'i18n-react';
@@ -68,7 +69,9 @@ export default class PlusButtonModal extends Component {
       <Modal
         isOpen={this.props.isOpen}
         toggle={this.closeHandler.bind(this)}
-        className="plus-button-modal"
+        className={classnames("plus-button-modal", {
+          "cask-market": this.state.viewMode === 'marketplace'
+        })}
         size="lg"
         backdrop='static'
       >
