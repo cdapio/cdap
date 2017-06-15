@@ -17,25 +17,25 @@
 for i in motd welcome.txt issue issue.net ; do
 
 cat > /etc/$i << EOF
-			Welcome to the CDAP SDK VM
+			Welcome to the CDAP Sandbox VM
 
 This virtual machine uses a simple graphical interface. The menu can be accessed by
 clicking the icon at the bottom left. Included are the Eclipse and IntelliJ IDEs,
-Chromium Browser, Git, Java, Maven, Subversion, and the CDAP SDK with the Standalone CDAP.
+Chromium Browser, Git, Java, Maven, Subversion, and the CDAP Sandbox with the Standalone CDAP.
 
 The login and password to the machine is 'cdap' and the user has sudo privileges
 without a password.
 
-The SDK can be stopped/started/restarted using the /etc/init.d/cdap-sdk init
+The Sandbox can be stopped/started/restarted using the /etc/init.d/cdap-sandbox init
 script.
 
-	sudo /etc/init.d/cdap-sdk start
-	sudo /etc/init.d/cdap-sdk stop
-	sudo /etc/init.d/cdap-sdk restart
+	sudo /etc/init.d/cdap-sandbox start
+	sudo /etc/init.d/cdap-sandbox stop
+	sudo /etc/init.d/cdap-sandbox restart
 
-Logs for the SDK are found at /opt/cdap/sdk/logs, data is stored at
-/opt/cdap/sdk/data, and example applications are at
-/opt/cdap/sdk/examples.
+Logs for the Sandbox are found at /opt/cdap/sandbox/logs, data is stored at
+/opt/cdap/sandbox/data, and example applications are at
+/opt/cdap/sandbox/examples.
 
 EOF
 done

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2017 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 __tmpdir=/tmp/cdap-examples.$$
 mkdir -p ${__tmpdir}
-cp -a /opt/cdap/sdk/examples ${__tmpdir}
+cp -a /opt/cdap/sandbox/examples ${__tmpdir}
 if [ -f /tmp/mavenrepo.tar.bz2 ]; then
   mkdir -p ~cdap/.m2
   cd ~cdap/.m2
