@@ -9,18 +9,16 @@
 Date Parser
 ===========
 
-#
-Date Parser
-
 PARSE-AS-DATE is a directive for parsing date using natural language processing.
 
-## Syntax
+Syntax
+======
+::
 
-```
-parse-as-date <column> [<timezone>]
-```
+  parse-as-date <column> [<timezone>]
 
-## Usage Notes
+Usage Notes
+===========
 
 The PARSE-AS-DATE directive will apply standard language recognition and translation techniques to produce a list of
 corresponding dates with optional parse and syntax information.
@@ -31,9 +29,10 @@ relative dates (the day before next thursday), and even date alternatives (next 
 This directive will also search for date components within a larger block of text, detect their structure, and
 create dates.
 
-## Examples
+Examples
+========
+::
 
-```
-parse-as-date now
-parse-as-date June 15th 2017
-```
+  parse-as-date now
+  parse-as-date June 15th 2017
+
