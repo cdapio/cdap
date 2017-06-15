@@ -219,11 +219,6 @@ export default class AddToHydratorModal extends Component {
       artifact: pluginArtifact
     });
 
-    // another hack.....
-    // streamingsource property is called "brokers",
-    // but batchsource it's called "kafkaBrokers"
-    batchPluginInfo.properties.kafkaBrokers = batchPluginInfo.properties.brokers;
-
     let batchStage = {
       name: plugin.name,
       plugin: batchPluginInfo
@@ -278,7 +273,6 @@ export default class AddToHydratorModal extends Component {
 
       rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
     } else if (state.workspaceInfo.properties.connection === 'kafka') {
-
       let specParams = {
         namespace,
         connectionId: 'testkafka', // NEEDS TO BE MODIFIED!! currently connectionid is not in the properties
