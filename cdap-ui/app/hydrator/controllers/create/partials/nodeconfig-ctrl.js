@@ -38,7 +38,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
     this.LogViewerStore = LogViewerStore;
-    this.rPlugin = rPlugin;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
