@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
  * Provides method to create {@link PluginInstantiator} for Program Runners
  */
 public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRunnerWithPlugin.class);
   protected final CConfiguration cConf;
   private static final Gson GSON = new Gson();

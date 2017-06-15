@@ -178,7 +178,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
     if (trigger instanceof TimeTrigger || trigger instanceof StreamSizeTrigger ||
         trigger instanceof ProgramStatusTrigger) {
       // These triggers are satisfied as soon as the Notification arrives, due to how the Notification
-      // is initially created¡
+      // is initially created
       return true;
     }
     if (trigger instanceof PartitionTrigger) {

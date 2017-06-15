@@ -27,8 +27,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import java.util.Set;
-
 /**
  * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
  */
