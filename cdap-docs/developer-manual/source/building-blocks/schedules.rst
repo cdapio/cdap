@@ -24,9 +24,10 @@ be used in different applications), and additionally consists of:
 - a timeout for the run constraints to be fulfilled; when this timeout is exceeded,
   the workflow will not execute.
 
-You can add a schedule to a workflow using the ``schedule`` method of the
-`AbstractApplication class <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__
-class. For example, the Purchase example creates a schedule for the PurchaseHistoryWorkflow
+To add a schedule to an application extended from ``AbstractApplication``, use the method
+`schedule
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
+. For example, the Purchase example creates a schedule for the PurchaseHistoryWorkflow
 as follows::
 
   schedule(
@@ -54,7 +55,7 @@ HTTP RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
 :ref:`added <http-restful-api-lifecycle-schedule-add>`,
 :ref:`enabled, or disabled <http-restful-api-lifecycle-schedule-disable-enable>`.
 
-When a schedule is initially deployed, it is in a disabled state; it needs to be enabled before
+When a schedule is initially deployed, it is in a *disabled* state; it needs to be *enabled* before
 it starts executing workflows.
 
 .. _schedules-jobs-lifecycle:
