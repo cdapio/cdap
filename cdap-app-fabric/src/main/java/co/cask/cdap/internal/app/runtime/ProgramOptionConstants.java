@@ -49,6 +49,8 @@ public final class ProgramOptionConstants {
 
   public static final String SCHEDULE_NAME = "scheduleName";
 
+  public static final String EVENT_NOTIFICATIONS = "eventNotifications";
+
   public static final String RUN_DATA_SIZE = "runDataSize";
 
   public static final String LAST_SCHEDULED_RUN_DATA_SIZE = "lastScheduledRunDataSize";
