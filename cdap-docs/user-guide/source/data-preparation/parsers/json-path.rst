@@ -85,19 +85,19 @@ double quotes \(`[?(@.color == 'blue')]`or`[?(@.color == "blue")]`\).
 
 ::
 
-  | Operator | Description |
-  | :--- | :--- |
-  | == | left is equal to right \(note that 1 is not equal to '1'\) |
-  | != | left is not equal to right |
-  | &lt; | left is less than right |
-  | &lt;= | left is less or equal to right |
-  | &gt; | left is greater than right |
-  | &gt;= | left is greater than or equal to right |
-  | =~ | left matches regular expression \[?\(@.name =~ /foo.\*?/i\)\] |
-  | in | left exists in right \[?\(@.size in \['S', 'M'\]\)\] |
-  | nin | left does not exists in right |
-  | size | size of left \(array or string\) should match right |
-  | empty | left \(array or string\) should be empty |
+  | Operator 	| Description |
+  | :---     	| :--- |
+  | == 		| left is equal to right \(note that 1 is not equal to '1'\) |
+  | != 		| left is not equal to right |
+  | &lt; 	| left is less than right |
+  | &lt;= 	| left is less or equal to right |
+  | &gt; 	| left is greater than right |
+  | &gt;= 	| left is greater than or equal to right |
+  | =~ 		| left matches regular expression \[?\(@.name =~ /foo.\*?/i\)\] |
+  | in 		| left exists in right \[?\(@.size in \['S', 'M'\]\)\] |
+  | nin 	| left does not exists in right |
+  | size 	| size of left \(array or string\) should match right |
+  | empty 	| left \(array or string\) should be empty |
 
 Example
 =======
@@ -105,41 +105,41 @@ Example
 Given the JSON::
 
   {
-  "store": {
-  "book": [
-  {
-  "category": "reference",
-  "author": "Nigel Rees",
-  "title": "Sayings of the Century",
-  "price": 8.95
-  },
-  {
-  "category": "fiction",
-  "author": "Evelyn Waugh",
-  "title": "Sword of Honour",
-  "price": 12.99
-  },
-  {
-  "category": "fiction",
-  "author": "Herman Melville",
-  "title": "Moby Dick",
-  "isbn": "0-553-21311-3",
-  "price": 8.99
-  },
-  {
-  "category": "fiction",
-  "author": "J. R. R. Tolkien",
-  "title": "The Lord of the Rings",
-  "isbn": "0-395-19395-8",
-  "price": 22.99
-  }
-  ],
-  "bicycle": {
-  "color": "red",
-  "price": 19.95
-  }
-  },
-  "expensive": 10
+    "store": {
+      "book": [
+        {
+          "category": "reference",
+          "author": "Nigel Rees",
+          "title": "Sayings of the Century",
+          "price": 8.95
+        },
+        {
+          "category": "fiction",
+          "author": "Evelyn Waugh",
+          "title": "Sword of Honour",
+          "price": 12.99
+        },
+        {
+          "category": "fiction",
+          "author": "Herman Melville",
+          "title": "Moby Dick",
+          "isbn": "0-553-21311-3",
+          "price": 8.99
+        },
+        {
+          "category": "fiction",
+          "author": "J. R. R. Tolkien",
+          "title": "The Lord of the Rings",
+          "isbn": "0-395-19395-8",
+          "price": 22.99
+        }
+      ],
+      "bicycle": {
+        "color": "red",
+        "price": 19.95
+      }
+    },
+    "expensive": 10
   }
 
 ::

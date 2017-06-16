@@ -70,7 +70,7 @@ would generate these field names and field values::
 
 Applying the same directive on field ``body.name`` generates the following results::
 
-  | Field Name      | Field Values | Field Type |
+  | Field Name      | Field Values                            | Field Type |
   | --------------- | --------------------------------------- | ---------- |
   | body            | { ... }                                 | String     |       
   | body.id         | 1                                       | Integer    |

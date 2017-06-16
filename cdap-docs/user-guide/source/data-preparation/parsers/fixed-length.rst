@@ -18,7 +18,7 @@ Syntax
 ======
 ::
 
-parse-as-fixed-length <column> width[,width]* [padding]
+  parse-as-fixed-length <column> width[,width]* [padding]
 
 Usage Notes
 ===========
