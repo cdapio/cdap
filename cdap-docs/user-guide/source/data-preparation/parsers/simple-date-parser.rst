@@ -32,7 +32,6 @@ Examples
 
 The following examples show how date and time patterns are interpreted in the U.S. locale.
 The given date and time are 2001-07-04 12:08:56 local time in the U.S. Pacific Time time zone:
-::
 
   +=======================================================================+
   | Date and Time Pattern | Date String |
@@ -48,6 +47,7 @@ The given date and time are 2001-07-04 12:08:56 local time in the U.S. Pacific T
   | "yyyy-MM-dd'T'HH:mm:ss.SSSZ" | 2001-07-04T12:08:56.235-0700 |
   | "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" | 2001-07-04T12:08:56.235-07:00 |
   +=======================================================================+
+
 ::
 
   parse-as-simple-date entryTime MM/dd/yyyy HH:mm

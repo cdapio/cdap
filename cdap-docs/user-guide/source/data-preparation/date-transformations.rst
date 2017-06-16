@@ -11,7 +11,6 @@ Date Transformations
 
 - `Diff Date`_
 - `Format Date`_
-- `Format Timestamp`_
 
 
 Diff Date
@@ -63,11 +62,12 @@ will result in this record::
 
 
 Format Date
-================
+===========
 
 FORMAT-DATE directive allows user-defined patterns for date-time formatting.
 
 Syntax
+------
 ::
 
   format-date <column> <format>
