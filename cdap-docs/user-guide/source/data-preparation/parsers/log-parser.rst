@@ -45,8 +45,8 @@ So, if you are looking to parse combined log format or common log format you can
 
 If you have logs that's not supported, you can specify the format.
 
-For Nginx the log_format tokens are specified `here <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_
-and `here <http://nginx.org/en/docs/http/ngx_http_core_module.html#variables>`_.
+For Nginx the log_format tokens are specified at `Log Format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`__
+and `Variables <http://nginx.org/en/docs/http/ngx_http_core_module.html#variables>`__.
 
 Examples
 ========

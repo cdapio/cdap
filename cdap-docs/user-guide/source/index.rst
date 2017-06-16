@@ -9,7 +9,7 @@ CDAP User Guide: Introduction
 =============================
 
 This guide is intended for general users of CDAP. If you are :ref:`administrating CDAP
-<admin-index>` or :ref:`developing applications <developer-index>` for CDAP, please see
+<admin:admin-index>` or :ref:`developing applications <developer:developer-index>` for CDAP, please see
 our other documentation.
 
 Topics:
