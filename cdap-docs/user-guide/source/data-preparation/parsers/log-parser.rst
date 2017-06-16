@@ -9,18 +9,18 @@
 Log Parser
 ==========
 
-#
 Parser HTTPD or NGINX Logs
 
 PARSE-AS-LOG is a directive for parsing Apache HTTPD and NGINX access log files.
 
-## Syntax
+Syntax
+======
 
-```
-parse-as-log <column> <format>
-```
+  parse-as-log <column> <format>
 
-## Usage Notes
+
+Usage Notes
+===========
 
 The PARSE-AS-LOG directive provides a generic log parser that you can construct by specifying the ```format``` of
 the log line or the format in which the file was written. The format which specifies the configuration options of
@@ -37,73 +37,77 @@ the following are also recognized:
 * agent
 
 So, if you are looking to parse combined log format or common log format you can do the following:
+::
 
-```
 parse-as-log body combined
 parse-as-log body common
-```
+
 
 If you have logs that's not supported, you can specify the format.
 
-For Nginx the log_format tokens are specified [here](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format)
-and [here](http://nginx.org/en/docs/http/ngx_http_core_module.html#variables).
+For Nginx the log_format tokens are specified `here <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_
+and `here <http://nginx.org/en/docs/http/ngx_http_core_module.html#variables>`_.
 
-## Examples
+Examples
+========
 
 Let's take a real-life example with the common log format. The format for common log is as follows:
+::
 
-```
 %h %l %u %t "%r" %>s %b
-```
+
 
 and the corresponding log line as a record needs to be parsed into it's components.
+::
 
-```
-{
-"body" : "127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326"
-}
-```
+  {
+    "body" : "127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326"
+  }
+
 
 Using the directive as follows:
+::
 
-```
-parse-as-log body %h %l %u %t "%r" %>s %b
-```
+  parse-as-log body %h %l %u %t "%r" %>s %b
+
 
 Would result in following record
+::
 
-```
-{
-"IP_connection.client.host" : "127.0.0.1",
-"IP_connection.client.host.last" : "127.0.0.1"
-"NUMBER_connection.client.logname" : null,
-"NUMBER_connection.client.logname.last" : null,
-...
-...
-"HTTP.PATH_request.firstline.uri.path" : "/apache_pb.gif",
-"HTTP.REF_request.firstline.uri.ref" : null
-}
-```
+  {
+    "IP_connection.client.host" : "127.0.0.1",
+    "IP_connection.client.host.last" : "127.0.0.1"
+    "NUMBER_connection.client.logname" : null,
+    "NUMBER_connection.client.logname.last" : null,
+    ...
+    ...
+    "HTTP.PATH_request.firstline.uri.path" : "/apache_pb.gif",
+    "HTTP.REF_request.firstline.uri.ref" : null
+  }
+
 
 Another example with Combined Log Format
-```
-%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\
-```
+::
+
+  %h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\
+
 
 and the corresponding log line
-```
+::
+
 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326 "http://www.example.com/start.
 html" "Mozilla/4.08 [en] (Win98; I ;Nav)"
-```
+
 
 Can also parse complex formats like the one shown below:
+::
 
-```
 %t %u [%D %h %{True-Client-IP}i %{UNIQUE_ID}e %r] %{Cookie}i %s \"%{User-Agent}i\" \"%{host}i\" %l %b %{Referer}i
-```
+
 
 Log line
-```
+::
+
 [03/Dec/2013:10:53:59 +0000] - [32002 10.102.4.254 195.229.241.182 Up24RwpmBAwAAA1LWJsAAAAR GET
 /content/dam/Central_Library/Street_Shots/Youth/2012/09sep/LFW/Gallery_03/LFW_SS13_SEPT_12_777.jpg.
 image.W0N539E3452S3991w313.original.jpg HTTP/1.1] __utmc=94539802; dtCookie=EFD9D09B6A2E1789F1329FC1

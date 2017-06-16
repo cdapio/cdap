@@ -9,12 +9,13 @@
 JSON Path Parsers
 =================
 
-#
 Json Path
+=========
 
 JSON-PATH directive uses a DSL for reading json records.
 
-## Syntax
+Syntax
+======
 
 ::
 
@@ -26,11 +27,12 @@ JSON-PATH directive uses a DSL for reading json records.
   of expression will be stored.
 - ``expression`` is a JSON path expression; see below for more details.
 
-## Usage Notes
+Usage Notes
+===========
 
 The expressions always refer to a Json structure in the same way as XPath expression are
 used in combination with an XML document.The "root member object" is always referred to
-as`$`regardless if it is an object or array.
+as `$` regardless if it is an object or array.
 
 Expressions can use the dot–notation::
 
@@ -45,17 +47,17 @@ Operators
 =========
 ::
 
-  | Operator | Description |
-  | :--- | :--- |
-  | `$` | The root element to query. This starts all path expressions. |
-  | `@` | The current node being processed by a filter predicate. |
-  | `*` | Wildcard. Available anywhere a name or numeric are required. |
-  | `..` | Deep scan. Available anywhere a name is required. |
-  | `.<name>` | Dot-notated child |
-  | `['<name>' (, '<name>')]` | Bracket-notated child or children |
-  | `[<number> (, <number>)]` | Array index or indexes |
-  | `[start:end]` | Array slice operator |
-  | `[?(<expression>)]` | Filter expression. Expression must evaluate to a boolean value. |
+  | Operator 			| Description 
+  | :--- 			| :--- 	      
+  | `$` 			| The root element to query. This starts all path expressions. 
+  | `@`				| The current node being processed by a filter predicate. 
+  | `*` 			| Wildcard. Available anywhere a name or numeric are required. 
+  | `..` 			| Deep scan. Available anywhere a name is required. 
+  | `.<name>` 			| Dot-notated child 
+  | `['<name>' (, '<name>')]` 	| Bracket-notated child or children 
+  | `[<number> (, <number>)]` 	| Array index or indexes 
+  | `[start:end]` 		| Array slice operator 
+  | `[?(<expression>)]` 	| Filter expression. Expression must evaluate to a boolean value. 
 
 Functions
 =========
@@ -65,13 +67,13 @@ of the path expression. The function output is dictated by the function itself.
 
 ::
 
-  | Function | Description | Output |
-  | :--- | :--- | :--- |
-  | min\(\) | Provides the min value of an array of numbers | Double |
-  | max\(\) | Provides the max value of an array of numbers | Double |
-  | avg\(\) | Provides the average value of an array of numbers | Double |
-  | stddev\(\) | Provides the standard deviation value of an array of numbers | Double |
-  | length\(\) | Provides the length of an array | Integer |
+  | Function 	| Description 							| Output 
+  | :--- 	| :--- 	   							| :--- 
+  | min\(\) 	| Provides the min value of an array of numbers 		| Double 
+  | max\(\) 	| Provides the max value of an array of numbers 		| Double 
+  | avg\(\) 	| Provides the average value of an array of numbers 		| Double
+  | stddev\(\) 	| Provides the standard deviation value of an array of numbers 	| Double 
+  | length\(\) 	| Provides the length of an array 				| Integer 
 
 Filter Operators
 ================
