@@ -16,7 +16,7 @@ into the plugin.
 Plugin Configuration
 ====================
 .. list-table::
-   :widths: 20 80
+   :widths: 20 10 20 80
    :header-rows: 1
 
    * - Configuration
