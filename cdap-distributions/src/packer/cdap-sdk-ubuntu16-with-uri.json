@@ -245,6 +245,12 @@
     {
       "type": "shell",
       "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
+      "scripts": "scripts/sdk-ami-common.sh",
+      "only": ["cdap-cloud-sandbox-aws", "cdap-cloud-sandbox-aws-community"]
+    },
+    {
+      "type": "shell",
+      "execute_command": "sudo bash -c '{{ .Vars }} {{ .Path }}'",
       "scripts": "scripts/sdk-ami-security.sh",
       "only": ["cdap-cloud-sandbox-aws"]
     },
