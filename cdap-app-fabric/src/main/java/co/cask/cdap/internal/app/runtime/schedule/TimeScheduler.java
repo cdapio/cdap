@@ -32,7 +32,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
@@ -145,7 +144,6 @@ public final class TimeScheduler implements Scheduler {
 
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
-    checkInitialized();
     ProgramId program = schedule.getProgramId();
     SchedulableProgramType programType = program.getType().getSchedulableType();
 
@@ -237,16 +235,9 @@ public final class TimeScheduler implements Scheduler {
     }
   }
 
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                       Map<String, String> properties) throws SchedulerException {
-    schedule(program, programType, ImmutableList.of(schedule), properties);
-  }
-
   public synchronized void schedule(ProgramId program, SchedulableProgramType programType,
                                     Iterable<Schedule> schedules,
                                     Map<String, String> properties) throws SchedulerException {
-    checkInitialized();
     try {
       validateSchedules(program, programType, schedules);
     } catch (org.quartz.SchedulerException e) {
@@ -286,7 +277,6 @@ public final class TimeScheduler implements Scheduler {
 
   private List<ScheduledRuntime> getScheduledRuntime(ProgramId program, SchedulableProgramType programType,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
-    checkInitialized();
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
@@ -318,7 +308,6 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public synchronized void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-    checkInitialized();
     try {
       scheduler.pauseTrigger(getGroupedTriggerKey(program, programType, scheduleName));
     } catch (org.quartz.SchedulerException e) {
@@ -329,8 +318,6 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public synchronized void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-
-    checkInitialized();
 
     try {
       TriggerKey triggerKey = getGroupedTriggerKey(program, programType, scheduleName);
@@ -352,7 +339,6 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public synchronized void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws NotFoundException, SchedulerException {
-    checkInitialized();
     try {
       Trigger trigger = getTrigger(program, programType, scheduleName);
       scheduler.unscheduleJob(trigger.getKey());
@@ -369,7 +355,6 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public void deleteSchedules(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
-    checkInitialized();
     try {
       scheduler.deleteJob(jobKeyFor(program, programType));
     } catch (org.quartz.SchedulerException e) {
@@ -381,7 +366,6 @@ public final class TimeScheduler implements Scheduler {
   public synchronized ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
                                                           String scheduleName)
     throws SchedulerException, ScheduleNotFoundException {
-    checkInitialized();
     try {
       Trigger.TriggerState state = scheduler.getTriggerState(getGroupedTriggerKey(program, programType, scheduleName));
       // Map trigger state to schedule state.
@@ -398,10 +382,6 @@ public final class TimeScheduler implements Scheduler {
     } catch (org.quartz.SchedulerException e) {
       throw new SchedulerException(e);
     }
-  }
-
-  private void checkInitialized() {
-    Preconditions.checkNotNull(scheduler, "Scheduler not yet initialized");
   }
 
   private static JobKey jobKeyFor(ProgramId program, SchedulableProgramType programType) {

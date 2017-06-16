@@ -141,15 +141,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   @Override
-  public void schedule(ProgramId programId, SchedulableProgramType programType, Schedule schedule,
-                       Map<String, String> properties) throws SchedulerException {
-    Scheduler scheduler;
-    scheduler = getScheduler(schedule);
-
-    scheduler.schedule(programId, programType, schedule, properties);
-  }
-
-  @Override
   public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
     throws SchedulerException {
     return timeScheduler.previousScheduledRuntime(program, programType);

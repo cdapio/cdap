@@ -22,7 +22,6 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -233,14 +232,6 @@ public class StreamSizeScheduler implements Scheduler {
   public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     resumeSchedule(schedule.getProgramId(), schedule.getProgramId().getType().getSchedulableType(),
                    schedule.getName());
-  }
-
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                       Map<String, String> properties) throws SchedulerException {
-    Preconditions.checkArgument(schedule instanceof StreamSizeSchedule,
-                                "Schedule should be of type StreamSizeSchedule");
-    scheduleStreamSizeSchedule(program, programType, properties, (StreamSizeSchedule) schedule);
   }
 
   private void scheduleStreamSizeSchedule(ProgramId program, SchedulableProgramType programType,
