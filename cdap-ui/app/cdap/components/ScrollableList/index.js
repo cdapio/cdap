@@ -32,6 +32,10 @@ export default class ScrollableList extends Component {
     this.computeHeight = this.computeHeight.bind(this);
     this.scrollUp = this.scrollUp.bind(this);
     this.scrollDown = this.scrollDown.bind(this);
+    this.onMouseEnter = this.onMouseEnter.bind(this);
+    this.onMouseOut = this.onMouseOut.bind(this);
+    this.shouldScrollDown = this.shouldScrollDown.bind(this);
+    this.shouldScrollUp = this.shouldScrollUp.bind(this);
   }
   componentDidMount() {
     this.computeHeight();
@@ -72,8 +76,7 @@ export default class ScrollableList extends Component {
     };
   }
   scrollDown() {
-    let existingList = this.state.startingIndex + this.state.numberOfElemsInList;
-    if ( existingList >= this.props.children.length - 1) {
+    if (!this.shouldScrollDown()) {
       return null;
     }
     let startIndex = this.state.startingIndex + 1;
@@ -84,7 +87,7 @@ export default class ScrollableList extends Component {
     });
   }
   scrollUp() {
-    if (this.state.startingIndex === 0) {
+    if (!this.shouldScrollUp()) {
       return null;
     }
     let startIndex = this.state.startingIndex - 1;
@@ -94,26 +97,46 @@ export default class ScrollableList extends Component {
       startingIndex: startIndex
     });
   }
-  renderScrollDownContainer() {
+  onMouseEnter(listener) {
+    this.onMouseOut();
+    this.interval = setInterval(listener, 500);
+  }
+  onMouseOut() {
+    if (this.interval) {
+      clearInterval(this.interval);
+    }
+  }
+  shouldScrollDown() {
     if (this.props.children.length === this.state.startingIndex + this.state.children.length) {
-      return null;
+      return false;
     }
     let lastChildInWindow = this.state.children[this.state.children.length - 1].key;
     let lastChild = this.props.children[this.props.children.length - 1].key;
     if (lastChild === lastChildInWindow) {
-      return  null;
+      return  false;
+    }
+    return true;
+  }
+  shouldScrollUp() {
+    return this.state.startingIndex !== 0;
+  }
+  renderScrollDownContainer() {
+    if (!this.shouldScrollDown()) {
+      return null;
     }
     return (
       <div
         className="scroll-down-container text-xs-center"
         onClick={this.scrollDown}
+        onMouseEnter={this.onMouseEnter.bind(this, this.scrollDown)}
+        onMouseOut={this.onMouseOut}
       >
         <IconSVG name="icon-caret-down" />
       </div>
     );
   }
   renderScrollUpContainer() {
-    if (this.state.startingIndex === 0) {
+    if (!this.shouldScrollUp()) {
       return null;
     }
     let firstChildInWindow = this.state.children[0].key;
@@ -125,6 +148,8 @@ export default class ScrollableList extends Component {
       <div
         className="scroll-down-container text-xs-center"
         onClick={this.scrollUp}
+        onMouseEnter={this.onMouseEnter.bind(this, this.scrollUp)}
+        onMouseOut={this.onMouseOut}
       >
         <IconSVG name="icon-caret-up" />
       </div>
