@@ -39,21 +39,21 @@ RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
 :ref:`resumed <http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
 
 A workflow can have one or more :ref:`schedules` that call upon it.
-These schedules are in a *suspended* state when the application is first deployed.
-Each schedule needs to be *resumed*, changing its status to *scheduled*, in order for the
+These schedules are in a *disabled* state when the application is first deployed.
+Each schedule needs to be *enabled*, changing its status to *scheduled*, in order for the
 workflow to become executed following the schedule.
 
 Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can (optionally) add a :ref:`schedule
-<schedules>` to a workflow using the `addSchedule 
-<../../reference-manual/javadocs/co/cask/cdap/api/app/ApplicationConfigurer.html#addSchedule(co.cask.cdap.api.schedule.Schedule,%20co.cask.cdap.api.schedule.SchedulableProgramType,%20java.lang.String,%20java.util.Map)>`__
+<schedules>` to a workflow using the `schedule
+<../../reference-manual/javadocs/co/cask/cdap/api/app/ApplicationConfigurer.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
 Java API.
 
 To add a schedule to an application extended from ``AbstractApplication``, use the method
-`scheduleWorkflow 
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__
+`schedule
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#schedule(co.cask.cdap.internal.schedule.ScheduleCreationSpec)>`__
 instead::
 
   public void configure() {
@@ -62,10 +62,10 @@ instead::
     addMapReduce(new AnotherMapReduce());
     addSpark(new MySpark());
     addWorkflow(new MyWorkflow());
-    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
-                       .setDescription("Schedule running every 5 hours")
-                       .createTimeSchedule("0 */5 * * *"),
-                     "MyWorkflow");
+    schedule(
+      buildSchedule("FiveHourSchedule", ProgramType.WORKFLOW, "MyWorkflow")
+        .setDescription("Schedule running every 5 hours")
+        .triggerByTime("0 */5 * * *"));
     ...
   }
 

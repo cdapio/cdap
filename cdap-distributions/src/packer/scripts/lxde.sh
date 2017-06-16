@@ -26,7 +26,7 @@ ln -sf /opt/idea* /opt/idea || (echo "Unable to symlink IDEA" && exit 1)
 # Copy icons
 cp -f /opt/idea/bin/idea.png /usr/share/pixmaps
 cp -f /usr/local/eclipse/icon.xpm /usr/share/pixmaps/eclipse.xpm
-cp -f /opt/cdap/sdk/ui/dist/assets/img/favicon.png /usr/share/pixmaps/cdap.png
+cp -f /opt/cdap/sandbox/ui/dist/assets/img/favicon.png /usr/share/pixmaps/cdap.png
 
 # Eclipse Menu entry
 cat > /usr/share/applications/eclipse.desktop << EOF
@@ -65,13 +65,13 @@ Icon=cdap
 Categories=GNOME;GTK;Development;
 EOF
 
-# CDAP SDK Menu Entry
-cat > /usr/share/applications/cdap-sdk.desktop << EOF
+# CDAP Sandbox Menu Entry
+cat > /usr/share/applications/cdap-sandbox.desktop << EOF
 [Desktop Entry]
 Encoding=UTF-8
-Name=CDAP SDK
-Comment=CDAP SDK directory
-Exec=xdg-open /opt/cdap/sdk
+Name=CDAP Sandbox
+Comment=CDAP Sandbox directory
+Exec=xdg-open /opt/cdap/sandbox
 Type=Application
 Icon=cdap
 Categories=GNOME;GTK;Development;
@@ -83,7 +83,7 @@ cat > /usr/share/applications/cdap-examples.desktop << EOF
 Encoding=UTF-8
 Name=CDAP Examples
 Comment=CDAP Examples directory
-Exec=xdg-open /opt/cdap/sdk/examples
+Exec=xdg-open /opt/cdap/sandbox/examples
 Type=Application
 Icon=cdap
 Categories=GNOME;GTK;Development;
@@ -92,7 +92,7 @@ EOF
 # Copy welcome.txt and some icons to the desktop
 mkdir -p ~cdap/Desktop
 cp /etc/welcome.txt ~cdap/Desktop
-for i in cdap-ui cdap-sdk cdap-examples cdap-docs eclipse idea lxterminal ; do
+for i in cdap-ui cdap-sandbox cdap-examples cdap-docs eclipse idea lxterminal ; do
   cp /usr/share/applications/${i}.desktop ~cdap/Desktop
 done
 
