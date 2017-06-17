@@ -133,7 +133,10 @@ export default class EncodeDecode extends Component {
         </div>
         {
           this.props.isDisabled && this.props.disabledTooltip ? (
-            <UncontrolledTooltip target={id} delay={{show: 250, hide: 0}}>
+            <UncontrolledTooltip
+              target={id}
+              delay={{show: 250, hide: 0}}
+            >
               {this.props.disabledTooltip}
             </UncontrolledTooltip>
           ) : null
