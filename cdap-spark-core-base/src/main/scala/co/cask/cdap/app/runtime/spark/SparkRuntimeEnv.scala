@@ -18,7 +18,7 @@ package co.cask.cdap.app.runtime.spark
 
 import java.util
 import java.util.Properties
-import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
+import java.util.concurrent.{ConcurrentLinkedQueue, ExecutorService, TimeUnit}
 import javax.annotation.Nullable
 
 import com.google.common.reflect.TypeToken
@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.ExecutionContext
 
 /**
   * A singleton for holding information used by the runtime system.
@@ -47,6 +48,7 @@ object SparkRuntimeEnv {
   private var sparkContext: Option[SparkContext] = None
   private var streamingContext: Option[StreamingContext] = None
   private val batchedWALs = new mutable.ListBuffer[AnyRef]
+  private val rateControllers = new mutable.ListBuffer[AnyRef]
   private val sparkListeners = new ConcurrentLinkedQueue[SparkListener]()
 
   /**
@@ -113,7 +115,7 @@ object SparkRuntimeEnv {
   }
 
   /**
-    * Adds the refernce to BatchedWriteAheadLog instance.
+    * Adds the reference to BatchedWriteAheadLog instance.
     */
   def addBatchedWriteAheadLog(batchedWAL: AnyRef): Unit = {
     this.synchronized {
@@ -122,6 +124,19 @@ object SparkRuntimeEnv {
         throw new IllegalStateException("Spark program is already stopped")
       }
       batchedWALs += batchedWAL
+    }
+  }
+
+  /**
+    * Adds the reference to RateController instance for freeing up ExecutionContext on completion.
+    */
+  def addRateController(controller: AnyRef): Unit = {
+    this.synchronized {
+      if (stopped) {
+        stopRateController(controller)
+        throw new IllegalStateException("Spark program is already stopped")
+      }
+      rateControllers += controller
     }
   }
 
@@ -207,7 +222,7 @@ object SparkRuntimeEnv {
       })
     } finally {
       sc.foreach(context => {
-        val cleanup = createCleanup(context, batchedWALs.toList);
+        val cleanup = createCleanup(context, batchedWALs, rateControllers);
         try {
           context.stop
         } finally {
@@ -228,7 +243,8 @@ object SparkRuntimeEnv {
     * Creates a function that will stop and cleanup up all http servers and thread pools
     * associated with the given SparkContext.
     */
-  private def createCleanup(sc: SparkContext, batchedWALs: List[AnyRef]): () => Unit = {
+  private def createCleanup(sc: SparkContext,
+                            batchedWALs: Iterable[AnyRef], rateControllers: Iterable[AnyRef]): () => Unit = {
     val closers = ArrayBuffer.empty[Option[() => Unit]]
 
     // Create a closer function for the file server in Spark
@@ -263,6 +279,9 @@ object SparkRuntimeEnv {
     // Create a closer function for stopping the thead in BatchedWriteAheadLog
     closers += Some(() => batchedWALs.foreach(stopBatchedWAL))
 
+    // Create a closer function for shutting down all executor services
+    closers += Some(() => rateControllers.foreach(stopRateController))
+
     // Creates a function that calls all closers
     () => closers.foreach(_.foreach(_()))
   }
@@ -285,7 +304,7 @@ object SparkRuntimeEnv {
   /**
     * Stops the thread in the given BatchedWriteAheadLog instance
     */
-  private def stopBatchedWAL(batchedWAL: AnyRef) = {
+  private def stopBatchedWAL(batchedWAL: AnyRef) : Unit = {
     // Get the internal record queue
     batchedWAL.getField("walWriteQueue").flatMap(queue => queue match {
       case c: util.Collection[Any] => Some(c)
@@ -300,6 +319,17 @@ object SparkRuntimeEnv {
       // Now call BatchedWriteAheadLog.close()
       batchedWAL.callMethod("close")
     })
+  }
+
+  /**
+    * Stops the ExecutorContext inside the given RateController.
+    */
+  private def stopRateController(controller: AnyRef) : Unit = {
+    // Get the internal executionContext field and call shutdownNow if it is instance of ExecutorService
+    controller.getField("executionContext").flatMap(context => context match {
+      case service: ExecutorService => Some(service)
+      case _ => None
+    }).foreach(_.shutdownNow())
   }
 
   /**
