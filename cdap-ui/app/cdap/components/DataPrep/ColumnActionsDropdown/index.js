@@ -39,6 +39,7 @@ import Format from 'components/DataPrep/Directives/Format';
 import Explode from 'components/DataPrep/Directives/Explode';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
+import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
 
 import ee from 'event-emitter';
 require('./ColumnActionsDropdown.scss');
@@ -147,6 +148,11 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: Decode,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: SetCharacterEncoding,
         requiredColCount: 1
       }
     ];
@@ -270,13 +276,14 @@ export default class ColumnActionsDropdown extends Component {
                 return (
                   <div
                     key={directive.id}
-                    onClick={this.directiveClick.bind(this, directive.id)}
+                    onClick={!disabled && this.directiveClick.bind(this, directive.id)}
                     className={classnames({'disabled': disabled})}
                   >
                     <Tag
                       column={column}
                       onComplete={this.toggleDropdown.bind(this, false)}
                       isOpen={this.state.open === directive.id}
+                      isDisabled={disabled}
                       close={this.directiveClick.bind(this, null)}
                     />
                   </div>

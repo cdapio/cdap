@@ -20,10 +20,10 @@ import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import debounce from 'lodash/debounce';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {preventPropagation} from 'services/helpers';
-import isNil from 'lodash/isNil';
 
 require('./EncodeDecode.scss');
 const PREFIX = 'features.DataPrep.Directives.Encode';
@@ -51,13 +51,13 @@ export default class EncodeDecode extends Component {
     this.preventPropagation = preventPropagation;
   }
   componentDidUpdate() {
-    if (this.props.isOpen && this.calculateOffset) {
+    if (this.props.isOpen && !this.props.isDisabled && this.calculateOffset) {
       this.calculateOffset();
     }
   }
 
   componentDidMount() {
-    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('encode-directive'));
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById(`${this.props.directive}-directive`));
     this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
   }
 
@@ -88,25 +88,21 @@ export default class EncodeDecode extends Component {
       );
   }
   renderDetail() {
-    if (!this.props.isOpen) {
+    if (!this.props.isOpen || this.props.isDisabled) {
       return;
     }
     return (
       <div
-        className="encode-options second-level-popover"
+        className="encode-decode-options second-level-popover"
         onClick={this.preventPropagation}
       >
         {
           this.props.options.map((option, i) => {
-            let {types} = DataPrepStore.getState().dataprep;
-            let isOptionDisabled = isNil(option.disabled) ? false : option.disabled(this.props.column, types);
             return (
               <div
-                className={classnames("option", {
-                  'disabled': isOptionDisabled
-                })}
+                className="option"
                 key={i}
-                onClick={!isOptionDisabled && this.applyDirective.bind(this, option)}
+                onClick={this.applyDirective.bind(this, option)}
               >
                 {option.label}
               </div>
@@ -117,20 +113,31 @@ export default class EncodeDecode extends Component {
     );
   }
   render() {
+    let id = `${this.props.directive}-directive`;
     return (
-      <div
-        id="encode-directive"
-        className={classnames('fill-null-or-empty-directive clearfix action-item', {
-          'active': this.props.isOpen
-        })}
-      >
-        <span>{this.props.mainMenuLabel}</span>
+      <div>
+        <div
+          id={id}
+          className={classnames('encode-decode-directive clearfix action-item', {
+            'active': this.props.isOpen && !this.props.isDisabled,
+            'disabled': this.props.isDisabled
+          })}
+        >
+          <span>{this.props.mainMenuLabel}</span>
 
-        <span className="float-xs-right">
-          <span className="fa fa-caret-right" />
-        </span>
+          <span className="float-xs-right">
+            <span className="fa fa-caret-right" />
+          </span>
 
-        {this.renderDetail()}
+          {this.renderDetail()}
+        </div>
+        {
+          this.props.isDisabled && this.props.disabledTooltip ? (
+            <UncontrolledTooltip target={id} delay={{show: 250, hide: 0}}>
+              {this.props.disabledTooltip}
+            </UncontrolledTooltip>
+          ) : null
+        }
       </div>
     );
   }
@@ -145,6 +152,8 @@ EncodeDecode.defaultProps = {
 EncodeDecode.propTypes = {
   column: PropTypes.string,
   isOpen: PropTypes.bool,
+  isDisabled: PropTypes.bool,
+  disabledTooltip: PropTypes.string,
   onComplete: PropTypes.func,
   options: PropTypes.arrayOf(PropTypes.object),
   directive: PropTypes.string,

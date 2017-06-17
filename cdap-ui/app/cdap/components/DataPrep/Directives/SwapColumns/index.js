@@ -49,7 +49,7 @@ export default class SwapColumnsDirective extends Component {
     return (
       <div
         className="swap-column-directive clearfix action-item"
-        onClick={this.applyDirective}
+        onClick={!this.props.isDisabled && this.applyDirective}
       >
         <span>
           {T.translate('features.DataPrep.Directives.Swap.title')}
@@ -61,5 +61,6 @@ export default class SwapColumnsDirective extends Component {
 
 SwapColumnsDirective.propTypes = {
   column: PropTypes.array,
-  onComplete: PropTypes.func
+  onComplete: PropTypes.func,
+  isDisabled: PropTypes.bool
 };

@@ -16,36 +16,52 @@
 
 import React, {PropTypes} from 'react';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
+import DataPrepStore from 'components/DataPrep/store';
 import T from 'i18n-react';
 
-const PREFIX = 'features.DataPrep.Directives.Decode';
+const PREFIX = 'features.DataPrep.Directives.SetCharEncoding';
 
-const DECODEOPTIONS = [
+const CHARENCODINGOPTIONS = [
   {
-    label: T.translate(`${PREFIX}.base64`),
-    getDirective: (column) => `decode base64 ${column}`
+    label: T.translate(`${PREFIX}.utf8`),
+    getDirective: (column) => `set-charset ${column} utf-8`
   },
   {
-    label: T.translate(`${PREFIX}.base32`),
-    getDirective: (column) => `decode base32 ${column}`
+    label: T.translate(`${PREFIX}.utf16`),
+    getDirective: (column) => `set-charset ${column} utf-16`
   },
   {
-    label: T.translate(`${PREFIX}.hex`),
-    getDirective: (column) => `decode hex ${column}`
+    label: T.translate(`${PREFIX}.usascii`),
+    getDirective: (column) => `set-charset ${column} us-ascii`
   },
   {
-    label: T.translate(`${PREFIX}.urldecode`),
-    getDirective: (column) => `url-decode ${column}`
+    label: T.translate(`${PREFIX}.iso88591`),
+    getDirective: (column) => `set-charset ${column} iso-8859-1`
+  },
+  {
+    label: T.translate(`${PREFIX}.utf16be`),
+    getDirective: (column) => `set-charset ${column} utf-16be`
+  },
+  {
+    label: T.translate(`${PREFIX}.utf16le`),
+    getDirective: (column) => `set-charset ${column} utf-16le`
   }
 ];
+
 export default function Decode({onComplete, column, isOpen}) {
+  let {types} = DataPrepStore.getState().dataprep;
+  let disabled = types[column] !== 'byte[]';
+  let disabledTooltip = T.translate(`${PREFIX}.disabledTooltip`);
+
   return (
     <EncodeDecode
-      options={DECODEOPTIONS}
-      directive="decode"
+      options={CHARENCODINGOPTIONS}
+      directive="set-char-encoding"
       onComplete={onComplete}
       column={column}
       isOpen={isOpen}
+      isDisabled={disabled}
+      disabledTooltip={disabledTooltip}
       mainMenuLabel={T.translate(`${PREFIX}.title`)}
     />
   );
