@@ -66,6 +66,10 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
+  private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
+  private static final Type RATE_CONTROLLER_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/scheduler/RateController");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
     Type.getObjectType("org/apache/spark/deploy/yarn/YarnSparkHadoopUtil");
   private static final Type KRYO_TYPE = Type.getObjectType("com/esotericsoftware/kryo/Kryo");
@@ -123,6 +127,16 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.equals(SPARK_DSTREAM_GRAPH_TYPE.getClassName())) {
       // Rewrite DStreamGraph to set TaskSupport on parallel array usage to avoid Thread leak
       return rewriteDStreamGraph(input);
+    }
+    if (className.equals(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE.getClassName())) {
+      // Rewrite BatchedWriteAheadLog to register it in SparkRuntimeEnv so that we can free up the batch writer thread
+      // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935)
+      return rewriteBatchedWriteAheadLog(input);
+    }
+    if (className.equals(RATE_CONTROLLER_TYPE.getClassName())) {
+      // Rewrite the RateController class to avoid leaking a "stream-rate-update"
+      // thread when back pressure is on (CDAP-11939).
+      return rewriteRateController(input);
     }
     if (className.equals(AKKA_REMOTING_TYPE.getClassName())) {
       // Define the akka.remote.Remoting class to avoid thread leakage
@@ -201,6 +215,38 @@ public class SparkClassRewriter implements ClassRewriter {
     }, ClassReader.EXPAND_FRAMES);
 
     return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the BatchedWriteAheadLog class to register itself to SparkRuntimeEnv so that the write ahead log thread
+   * can be shutdown when the Spark program finished.
+   */
+  private byte[] rewriteBatchedWriteAheadLog(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addBatchedWriteAheadLog", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Object.class) }));
+      }
+    });
+  }
+
+  /**
+   * Rewrites the Spark streaming RateController.init() method to capture the executionContext and register it
+   * to SparkRuntimeEnv so that the thread can be terminated on Spark program completion.
+   */
+  private byte[] rewriteRateController(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(RATE_CONTROLLER_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      public void onMethodExit(GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addRateController", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Object.class) }));
+      }
+    });
   }
 
   /**
