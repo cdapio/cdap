@@ -30,6 +30,7 @@
  var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
  var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
  var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
+ var Mousetrap = require('mousetrap');
 
  export {
   Store,
@@ -45,5 +46,6 @@
   ResourceCenterButton,
   KeyValuePairs,
   KeyValueStore,
-  KeyValueStoreActions
+  KeyValueStoreActions,
+  Mousetrap
 };
