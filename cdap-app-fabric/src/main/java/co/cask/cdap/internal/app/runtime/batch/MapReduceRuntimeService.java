@@ -179,6 +179,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private Job job;
   private Transaction transaction;
   private Runnable cleanupTask;
+  private boolean success = false;
 
   // This needs to keep as a field.
   // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
@@ -355,8 +356,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } catch (LinkageError e) {
       // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
       // of the user program is missing dependencies (CDAP-2543)
+      success = false;
       throw new Exception(e.getMessage(), e);
     } catch (Throwable t) {
+      success = false;
       cleanupTask.run();
       // don't log the error. It will be logged by the ProgramControllerServiceAdapter.failed()
       if (t instanceof TransactionFailureException) {
@@ -379,7 +382,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       TimeUnit.SECONDS.sleep(1);
     }
 
-    LOG.info("MapReduce Job completed{}. Job details: [{}]", job.isSuccessful() ? " successfully" : "", context);
+    success = job.isSuccessful();
+    LOG.info("MapReduce Job completed{}. Job details: [{}]", success ? " successfully" : "", context);
     // NOTE: we want to report the final stats (they may change since last report and before job completed)
     metricsWriter.reportStats();
     // If we don't sleep, the final stats may not get sent before shutdown.
@@ -389,13 +393,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Shutdown will still get executed, but the service will notify failure after that.
     // However, if it's the job is requested to stop (via triggerShutdown, meaning it's a user action), don't throw
     if (!stopRequested) {
-      Preconditions.checkState(job.isSuccessful(), "MapReduce JobId %s failed", job.getStatus().getJobID());
+      Preconditions.checkState(success, "MapReduce JobId %s failed", job.getStatus().getJobID());
     }
   }
 
   @Override
   protected void shutDown() throws Exception {
-    boolean success = job.isSuccessful();
     String failureInfo = job.getStatus().getFailureInfo();
 
     try {
@@ -428,7 +431,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     } finally {
       // whatever happens we want to call this
       try {
-        destroy(success, failureInfo);
+        destroy(failureInfo);
       } finally {
         context.close();
         cleanupTask.run();
@@ -601,22 +604,22 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
    * If any axception is thrown by the output committer, sets the failure cause to that exception.
-   * @param succeeded whether the run was successful
    * @param outputName the name of the output
    * @param outputFormatProvider the output format provider to commit
    */
-  private void commitOutput(boolean succeeded, String outputName, OutputFormatProvider outputFormatProvider,
+  private void commitOutput(String outputName, OutputFormatProvider outputFormatProvider,
                             AtomicReference<Exception> failureCause) {
     if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
-        if (succeeded && failureCause.get() == null) {
+        if (success) {
           ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
         } else {
           ((DatasetOutputCommitter) outputFormatProvider).onFailure();
         }
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
-                                succeeded ? "onSuccess" : "onFailure", outputName), t);
+                                success ? "onSuccess" : "onFailure", outputName), t);
+        success = false;
         if (failureCause.get() != null) {
           failureCause.get().addSuppressed(t);
         } else {
@@ -642,7 +645,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
-  private void destroy(final boolean succeeded, final String failureInfo) throws Exception {
+  private void destroy(final String failureInfo) throws Exception {
 
     // if any exception happens during output committing, we want the MapReduce to fail.
     // for that to happen it is not sufficient to set the status to failed, we have to throw an exception,
@@ -658,11 +661,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
           try {
             for (Map.Entry<String, ProvidedOutput> output : context.getOutputs().entrySet()) {
-              commitOutput(succeeded, output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
-              if (succeeded && failureCause.get() != null) {
+              boolean wasSuccess = success;
+              commitOutput(output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
+              if (wasSuccess && !success) {
                 // mapreduce was successful but this output committer failed: call onFailure() for all committers
                 for (ProvidedOutput toFail : context.getOutputs().values()) {
-                  commitOutput(false, toFail.getAlias(), toFail.getOutputFormatProvider(), failureCause);
+                  commitOutput(toFail.getAlias(), toFail.getOutputFormatProvider(), failureCause);
                 }
                 break;
               }
@@ -689,7 +693,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
     }
 
-    final boolean success = succeeded && failureCause.get() == null;
     context.setState(getProgramState(success, failureInfo));
 
     final TransactionControl txControl = mapReduce instanceof ProgramLifecycle
@@ -701,11 +704,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         context.execute(new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
-            doDestroy(success);
+            doDestroy();
           }
         });
       } else {
-        doDestroy(success);
+        doDestroy();
       }
     } catch (Throwable e) {
       if (e instanceof TransactionFailureException && e.getCause() != null
@@ -721,7 +724,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  private void doDestroy(boolean success) throws Exception {
+  private void doDestroy() throws Exception {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
     try {
       if (mapReduce instanceof ProgramLifecycle) {
