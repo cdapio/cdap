@@ -62,4 +62,9 @@ public class ConfigurationCheckTest {
   public void invalidLogPartition() {
     runConfigurationCheck(Constants.Logging.LOG_PUBLISH_PARTITION_KEY, "application1");
   }
+
+  @Test (expected = RuntimeException.class)
+  public void invalidHBaseDDLExecutorConfTest() {
+    runConfigurationCheck(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, "non-existing-dir");
+  }
 }
