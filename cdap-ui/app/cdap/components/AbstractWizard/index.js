@@ -25,6 +25,7 @@ import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import PluginArtifactUploadWizard from 'components/CaskWizards/PluginArtifactUpload';
 import ApplicationUploadWizard from 'components/CaskWizards/ApplicationUpload';
 import LibraryUploadWizard from 'components/CaskWizards/LibraryUpload';
+import MicroserviceUploadWizard from 'components/CaskWizards/MicroserviceUpload';
 
 import MarketArtifactUploadWizard from 'components/CaskWizards/MarketArtifactUpload';
 import MarketHydratorPluginUpload from 'components/CaskWizards/MarketHydratorPluginUpload';
@@ -42,6 +43,7 @@ import InformationalStore from 'services/WizardStores/Informational/Informationa
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ApplicationUploadStore from 'services/WizardStores/ApplicationUpload/ApplicationUploadStore';
 import OneStepDeployStore from 'services/WizardStores/OneStepDeploy/OneStepDeployStore';
+import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 
 const WizardTypesMap = {
   'create_app': {
@@ -119,7 +121,11 @@ const WizardTypesMap = {
   'one_step_deploy_plugin_usecase': {
     tag: OneStepDeployPluginUsecase,
     store: OneStepDeployStore
-  }
+  },
+  'create_microservice_rc': {
+    tag: MicroserviceUploadWizard,
+    store: MicroserviceUploadStore
+  },
 };
 
 export default function AbstractWizard({isOpen, onClose, wizardType, input, backdrop}) {

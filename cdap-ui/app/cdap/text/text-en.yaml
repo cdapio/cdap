@@ -1004,6 +1004,11 @@ features:
       description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
       label: Library
       modalheadertitle: Add Library
+    Microservice:
+      actionbtn0: Create
+      description: A microservice is a CDAP application for creating microservices that communicate by passing messages over a reliable queue.
+      label: Microservice
+      modalheadertitle: Create Microservice
     Plugins:
       actionbtn0: Upload
       description: A plugin is an easy way to extend the functionality of an application.
@@ -1180,6 +1185,45 @@ features:
       termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
+    MicroserviceUpload:
+      callToAction: Create a Pipeline
+      headerlabel: Add Microservice
+      footertitle: Add Microservice
+      Step1:
+        description: Provide information about the microservice you want to create.
+        descriptionPlaceholder: Description of the microservice
+        namePlaceholder: Name of the microservice
+        shorttitle: General Information
+        title: General
+        versionLabel: Version
+        versionPlaceholder: Version of the microservice
+      Step2:
+        description: Upload your Microservice JAR
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
+        filePathLabel: Choose file
+        shorttitle: Upload Microservice JAR
+        title: Upload JAR
+      Step3:
+        description: Upload your Microservice Configuration JSON
+        errorMessage: Invalid microservice JSON. Microservice configuration should be in JSON format.
+        errorMessageParentArtifacts: Invalid microservice JSON. Please specify parent artifacts.
+        filePathLabel: Choose file
+        shorttitle: Upload Microservice Configuration JSON
+        title: Upload JAR
+      Step4:
+        description: Configure the settings for your Microservice
+        instancesLabel: Instances
+        instancesPlaceholder: The number of instances of the microservice
+        memoryLabel: Memory
+        memoryPlaceholder: The memory in MB for the microservice
+        shorttitle: Microservice Configuration
+        thresholdLabel: Threshold
+        thresholdPlaceholder: TBD
+        title: Configure Microservice
+        vcoresLabel: Virtual Cores
+        vcoresPlaceholder: The number of virtual cores for the microservice
+      success: You have successfully uploaded the microservice "{appName}".
+      subtitle: You can now create a pipeline using the microservice.
     OneStepDeploy:
       headerlabel: Deploy
       Step1:
