@@ -219,6 +219,7 @@ export default class ColumnTextSelection extends Component {
       >
         <table className="table table-bordered">
           <colgroup>
+            <col />
             {
               headers.map(head => {
                 return (
@@ -231,6 +232,7 @@ export default class ColumnTextSelection extends Component {
           </colgroup>
           <thead className="thead-inverse">
             <tr>
+              <th />
               {
                 headers.map( head => {
                   return renderTableHeader(head);
@@ -243,6 +245,7 @@ export default class ColumnTextSelection extends Component {
                 data.map((row, i) => {
                   return (
                     <tr key={i}>
+                      <td>{i}</td>
                       {
                         headers.map((head) => {
                           return renderTableCell(row, i, head, column);
