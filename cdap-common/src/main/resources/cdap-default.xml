@@ -356,9 +356,9 @@
 
   <property>
     <name>app.program.jvm.opts</name>
-    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
+    <value>-XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=&lt;LOG_DIR&gt; ${twill.jvm.gc.opts}</value>
     <description>
-      Java options for all program containers
+      Java options for all Apache Twill containers
     </description>
   </property>
 
