@@ -27,6 +27,10 @@ import shortid from 'shortid';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import orderBy from 'lodash/orderBy';
+import MarketAction from 'components/Market/action/market-action.js';
+import MarketStore from 'components/Market/store/market-store.js';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 const PREFIX = 'features.DataPrepConnections.AddConnections.Database.DatabaseOptions';
 
@@ -41,11 +45,21 @@ export default class DatabaseOptions extends Component {
     };
 
     this.toggleArtifactUploadWizard = this.toggleArtifactUploadWizard.bind(this);
+    this.fetchDrivers = this.fetchDrivers.bind(this);
     this.onWizardClose = this.onWizardClose.bind(this);
+    this.eventEmitter = ee(ee);
   }
 
   componentWillMount() {
     this.fetchDrivers();
+  }
+
+  componentWillUnmount() {
+    if (this.sub) {
+      this.sub();
+    }
+
+    this.eventEmitter.off(globalEvents.MARKETCLOSING, this.fetchDrivers);
   }
 
   fetchDrivers() {
@@ -85,6 +99,8 @@ export default class DatabaseOptions extends Component {
           loading: false
         });
       });
+
+    this.eventEmitter.off(globalEvents.MARKETCLOSING, this.fetchDrivers);
   }
 
   toggleArtifactUploadWizard(db) {
@@ -104,10 +120,53 @@ export default class DatabaseOptions extends Component {
     this.setState({uploadArtifact: false});
   }
 
+  caskMarket(db) {
+    let jdbcConfig = window.CDAP_UI_CONFIG.dataprep.jdbcMarketMap[db.name];
+
+    this.eventEmitter.emit(globalEvents.OPENMARKET);
+    this.sub = MarketStore.subscribe(() => {
+      let state = MarketStore.getState();
+
+      if (state.list.length === 0) { return; }
+      let entity = find(state.list, { name: jdbcConfig.name, version: jdbcConfig.version});
+
+      this.sub();
+
+      MarketStore.dispatch({
+        type: 'SET_ACTIVE_ENTITY',
+        payload: {
+          entityId: entity.id
+        }
+      });
+    });
+
+    this.eventEmitter.on(globalEvents.MARKETCLOSING, this.fetchDrivers);
+
+    MarketAction.setFilter('3rd-party-artifact');
+  }
+
   onDBClick(db) {
     if (!db.installed) { return; }
 
     this.props.onDBSelect(db);
+  }
+
+  renderMarketOption(db) {
+    let jdbcConfig = window.CDAP_UI_CONFIG.dataprep.jdbcMarketMap[db.name];
+
+    if (!jdbcConfig) { return null; }
+
+    return (
+      <span className="market-option">
+        <span
+          className="upload"
+          onClick={this.caskMarket.bind(this, db)}
+        >
+          Cask Market
+        </span>
+        <span> | </span>
+      </span>
+    );
   }
 
   renderDBInfo(db) {
@@ -115,6 +174,7 @@ export default class DatabaseOptions extends Component {
       return (
         <div className="db-installed">
           <span>{T.translate(`${PREFIX}.install`)}</span>
+          {this.renderMarketOption(db)}
           <span
             className="upload"
             onClick={this.toggleArtifactUploadWizard.bind(this, db)}

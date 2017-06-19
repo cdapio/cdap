@@ -35,6 +35,11 @@ export default class MarketPlaceEntity extends Component {
       imageError: false,
       logoIcon: null
     };
+
+    if (MarketStore.getState().activeEntity === this.props.entityId) {
+      this.fetchEntityDetail();
+    }
+
     this.unsub = MarketStore.subscribe(() => {
       let marketState = MarketStore.getState();
       if ((marketState.activeEntity !== this.props.entityId) && this.state.expandedMode) {
