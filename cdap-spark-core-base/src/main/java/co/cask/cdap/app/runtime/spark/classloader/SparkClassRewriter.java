@@ -77,6 +77,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
   private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
     Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
+  private static final Type RATE_CONTROLLER_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/scheduler/RateController");
   private static final Type SPARK_EXECUTOR_CLASSLOADER_TYPE =
     Type.getObjectType("org/apache/spark/repl/ExecutorClassLoader");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
@@ -141,6 +143,11 @@ public class SparkClassRewriter implements ClassRewriter {
       // Rewrite BatchedWriteAheadLog to register it in SparkRuntimeEnv so that we can free up the batch writer thread
       // even there is no Receiver based DStream (it's a thread leak from Spark) (CDAP-11577) (SPARK-20935)
       return rewriteBatchedWriteAheadLog(input);
+    }
+    if (className.equals(RATE_CONTROLLER_TYPE.getClassName())) {
+      // Rewrite the RateController class to avoid leaking a "stream-rate-update"
+      // thread when back pressure is on (CDAP-11939).
+      return rewriteRateController(input);
     }
     if (className.equals(SPARK_EXECUTOR_CLASSLOADER_TYPE.getClassName())) {
       // Rewrite the Spark repl ExecutorClassLoader to call `super(null)` so that it won't use the system classloader
@@ -260,6 +267,22 @@ public class SparkClassRewriter implements ClassRewriter {
         generatorAdapter.loadThis();
         generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
                                       new Method("addBatchedWriteAheadLog", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Object.class) }));
+      }
+    });
+  }
+
+  /**
+   * Rewrites the Spark streaming RateController.init() method to capture the executionContext and register it
+   * to SparkRuntimeEnv so that the thread can be terminated on Spark program completion.
+   */
+  private byte[] rewriteRateController(InputStream byteCodeStream) throws IOException {
+    return rewriteConstructor(RATE_CONTROLLER_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addRateController", Type.VOID_TYPE,
                                                  new Type[] { Type.getType(Object.class) }));
       }
     });

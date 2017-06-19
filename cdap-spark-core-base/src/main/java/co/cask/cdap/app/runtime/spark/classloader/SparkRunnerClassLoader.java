@@ -90,14 +90,17 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     // to avoid reference/thread leakage due to Spark assumption on process terminating after execution
     // Also need to define Kryo class as it is for rewriting the Kryo class to add extra default serializers
     // Also need to define janino class for code compilation to avoid leaking classloader
+    // Also the fasterxml and codahale classes to avoid leaking classloader when Spark SQL is used;
+    // it has a LRUCache inside that would caches object class.
     if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
         && !name.startsWith("co.cask.cdap.app.deploy.spark.")
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
-        && !name.startsWith("com.fasterxml.jackson.module.scala.")
         && !name.startsWith("akka.") && !name.startsWith("com.typesafe.")
         && !name.startsWith("com.esotericsoftware.kryo.") && !name.startsWith("com.twitter.chill."))
         && !name.startsWith("org.codehaus.janino.")
+        && !name.startsWith("com.fasterxml.jackson.")
+        && !name.startsWith("com.codahale.metrics.")
       ) {
       return super.loadClass(name, resolve);
     }
