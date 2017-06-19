@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,38 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@import '../../../styles/variables.scss';
 
-.cask-wizard-step-header {
-  height: 51px;
-  border-bottom: 1px solid #bbbbbb;
-  font-size: 12px;
-  color: #666666;
-  padding-left: 10px;
-  cursor: pointer;
-  font-weight: 500;
-
-  > div {
-    height: 100%;
+.artifact-upload-wizard {
+  .upload-instruction {
+    margin-top: 0;
     width: 100%;
-    display: flex;
-    align-items: center;
   }
+  .wizard-steps-content {
+    .wizard-step-content-container {
+      .step-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
 
-  &.active {
-    background: #5a84e4;
-    color: #ffffff;
-  }
-  &.completed {
-    color: #666666;
-    background: #cfcfcf;
-  }
-  &.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-
-    > div {
-      pointer-events: none;
+        .upload-step-container {
+          flex-grow: 1;
+          width: 100%;
+          height: 100%;
+          margin-bottom: 10px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          > div {
+            height: 100%;
+          }
+        }
+      }
     }
   }
 }

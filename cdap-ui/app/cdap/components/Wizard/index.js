@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,18 @@ import React, {Component, PropTypes} from 'react';
 import Rx from 'rx';
 import findIndex from 'lodash/findIndex';
 import first from 'lodash/head';
-import T from 'i18n-react';
-
-require('./Wizard.scss');
 import shortid from 'shortid';
 import isEmpty from 'lodash/isEmpty';
 import WizardStepHeader from './WizardStepHeader';
 import WizardStepContent from './WizardStepContent';
 import CardActionFeedback from 'components/CardActionFeedback';
+import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import T from 'i18n-react';
+
+require('./Wizard.scss');
 
 const currentStepIndex = (arr, id) => {
   return findIndex(arr, (step) => id === step.id);
@@ -48,17 +49,22 @@ export default class Wizard extends Component {
     this.state = {
       activeStep: this.props.wizardConfig.steps[0].id,
       loading: false,
+      loadingCTA: false,
       error: '',
-      requiredStepsCompleted: false
+      requiredStepsCompleted: false,
+      disabledStepsEnabled: false,
+      callToActionInfo: {}
     };
 
     this.handleCallToActionClick = this.handleCallToActionClick.bind(this);
+    this.handleMainCallToActionClick = this.handleMainCallToActionClick.bind(this);
     this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     this.checkRequiredSteps();
     this.storeSubscription = this.props.store.subscribe(() => {
       this.checkRequiredSteps();
+      this.checkDisabledSteps();
     });
   }
   componentWillUnmount() {
@@ -70,7 +76,7 @@ export default class Wizard extends Component {
 
     // non-required steps are marked as complete by default
     let requiredStepsCompleted = steps.every(key => {
-      return state[key].__complete;
+      return (!state[key].__disabled && state[key].__complete) || state[key].__disabled;
     });
     if (this.state.requiredStepsCompleted != requiredStepsCompleted) {
       this.setState({
@@ -78,6 +84,24 @@ export default class Wizard extends Component {
       });
     }
   }
+  checkDisabledSteps() {
+    let state = this.props.store.getState();
+    let steps = Object.keys(state);
+
+    // non-required steps are marked as complete by default
+    let disabledStepsEnabled = steps.every(key => {
+      return !state[key].__disabled;
+    });
+    if (this.state.disabledStepsEnabled != disabledStepsEnabled) {
+      // We're not really using this property in the component, this setState
+      // is just to rerender the component so that the disabled/enabled tabs are
+      // shown correctly
+      this.setState({
+        disabledStepsEnabled
+      });
+    }
+  }
+
   getChildContext() {
     return {
       activeStep: this.state.activeStep
@@ -88,19 +112,45 @@ export default class Wizard extends Component {
       activeStep: stepId
     });
   }
-  goToNextStep(stepId) {
-    let currentStep = findIndex(
-      this.props.wizardConfig.steps,
-      (step) => stepId === step.id
-    );
-    this.setActiveStep(this.props.wizardConfig.steps[currentStep + 1].id);
+  goToNextStep(currentStepId) {
+    this.goToDirectionStep(currentStepId, 'next');
   }
-  goToPreviousStep(stepId) {
+  goToPreviousStep(currentStepId) {
+    this.goToDirectionStep(currentStepId, 'previous');
+  }
+  goToDirectionStep(currentStepId, direction) {
+    let state = this.props.store.getState();
+    let steps = this.props.wizardConfig.steps;
+
     let currentStep = findIndex(
-      this.props.wizardConfig.steps,
-      (step) => stepId === step.id
+      steps,
+      (step) => currentStepId === step.id
     );
-    this.setActiveStep(this.props.wizardConfig.steps[currentStep - 1].id);
+
+    let directionStepIndex;
+    if (direction === 'next') {
+      directionStepIndex = currentStep + 1;
+    } else {
+      directionStepIndex = currentStep - 1;
+    }
+    let directionStepId = steps[directionStepIndex].id;
+
+    while (state[directionStepId] && state[directionStepId].__disabled) {
+      if (direction === 'next') {
+        directionStepIndex += 1;
+        if (directionStepIndex === steps.length) {
+          return;
+        }
+      } else {
+        directionStepIndex -= 1;
+        if (directionStepIndex === -1) {
+          return;
+        }
+      }
+      directionStepId = steps[directionStepIndex].id;
+    }
+
+    this.setActiveStep(directionStepId);
   }
   submitForm() {
     let onSubmitReturn = this.props.onSubmit(this.props.store);
@@ -134,6 +184,42 @@ export default class Wizard extends Component {
     let state = this.props.store.getState()[stepId];
     return state && state.__complete;
   }
+  isStepDisabled(stepId) {
+    let state = this.props.store.getState()[stepId];
+    return state && state.__disabled;
+  }
+
+  handleCallToActionClick() {
+    this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+  }
+
+  handleMainCallToActionClick() {
+    if (this.state.callToActionInfo.buttonOnClick) {
+      this.setState({loadingCTA: true});
+      let buttonClickReturn = this.state.callToActionInfo.buttonOnClick();
+      if (buttonClickReturn instanceof Rx.Observable) {
+        buttonClickReturn
+        .subscribe(
+          () => {
+            this.setState({
+              error: false,
+              loadingCTA: false
+            });
+            this.handleCallToActionClick();
+          },
+          (err) => {
+            this.setState({
+              error: err,
+              loadingCTA: false
+            });
+            this.handleCallToActionClick();
+          }
+        );
+      }
+    } else {
+      this.handleCallToActionClick();
+    }
+  }
 
   getNavigationButtons(matchedStep) {
     let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
@@ -144,7 +230,7 @@ export default class Wizard extends Component {
         onClick={this.goToNextStep.bind(this, matchedStep.id)}
       >
         <span>Next</span>
-        <span className="fa fa-chevron-right"></span>
+        <IconSVG name="icon-chevron-right" />
       </button>
     );
     let prevButton = (
@@ -152,7 +238,7 @@ export default class Wizard extends Component {
         className="btn btn-secondary"
         onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
       >
-        <span className="fa fa-chevron-left"></span>
+        <IconSVG name="icon-chevron-left" />
         <span>Previous</span>
       </button>
     );
@@ -204,21 +290,18 @@ export default class Wizard extends Component {
     return navButtons;
   }
 
-  handleCallToActionClick() {
-    this.eventEmitter.emit(globalEvents.CLOSEMARKET);
-  }
-
   getStepHeaders() {
     let stepHeaders = this.props
       .wizardConfig
       .steps
-      .map( (step) => (
+      .map((step) => (
         <WizardStepHeader
           label={`${step.shorttitle}`}
-          className={ this.isStepComplete(step.id) ? 'completed' : null}
+          className={this.isStepComplete(step.id) ? 'completed' : null}
           id={step.id}
           key={shortid.generate()}
           onClick={this.setActiveStep.bind(this, step.id)}
+          disabled={this.isStepDisabled(step.id)}
         />
       ));
 
@@ -258,7 +341,7 @@ export default class Wizard extends Component {
           className="close-section float-xs-right"
           onClick={this.props.onClose.bind(null, true)}
         >
-          <span className="fa fa-times" />
+          <IconSVG name="icon-close" />
         </div>
         <div className="result-container">
           <span
@@ -272,27 +355,53 @@ export default class Wizard extends Component {
             <a
               href={callToActionInfo.buttonUrl}
               title={callToActionInfo.buttonLabel}
-              className="call-to-action btn btn-primary"
-              onClick={this.handleCallToActionClick}
+              className={classnames("call-to-action btn btn-primary", {"disabled": this.state.loadingCTA})}
+              onClick={this.handleMainCallToActionClick}
             >
               {callToActionInfo.buttonLabel}
+              {
+                this.state.loadingCTA ?
+                  <IconSVG
+                    name="icon-spinner"
+                    className="fa-spin"
+                  />
+                :
+                  null
+              }
             </a>
-            <a
-              href={callToActionInfo.linkUrl}
-              className="secondary-call-to-action text-white"
-              onClick={this.handleCallToActionClick}
-            >
-              {callToActionInfo.linkLabel}
-            </a>
+            {
+              callToActionInfo.links ?
+                (
+                  callToActionInfo.links.map(link => {
+                    return (
+                      this.getCallToActionLink(link)
+                    );
+                  })
+                )
+              :
+                this.getCallToActionLink(callToActionInfo)
+            }
           </div>
         </div>
       </div>
     );
   }
 
+  getCallToActionLink(link) {
+    return (
+      <a
+        href={link.linkUrl}
+        className="secondary-call-to-action text-white"
+        onClick={this.handleCallToActionClick}
+      >
+        {link.linkLabel}
+      </a>
+    );
+  }
+
   getWizardFooter() {
     let wizardFooter = null;
-    if (this.state.callToActionInfo) {
+    if (!isEmpty(this.state.callToActionInfo)) {
       wizardFooter = this.getCallsToAction();
     }
     if (this.state.error) {
@@ -333,7 +442,7 @@ export default class Wizard extends Component {
             {this.getStepContent()}
           </div>
         </div>
-        <div className={classnames("wizard-footer", {success: this.state.callToActionInfo})}>
+        <div className={classnames("wizard-footer", {success: !isEmpty(this.state.callToActionInfo)})}>
           {this.getWizardFooter()}
         </div>
       </div>

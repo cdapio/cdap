@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,23 +16,13 @@
 
 import React, {PropTypes} from 'react';
 import { Input } from 'reactstrap';
-// WE NEED OBJECT SPREAD OPERATOR
-export default function InputWithValidations({
-  defaultValue,
-  value,
-  type,
-  placeholder,
-  onChange,
-  validationError
-}) {
+
+export default function InputWithValidations(props) {
+  const {validationError, ...moreProps} = props;
   return (
     <div>
       <Input
-        defaultValue={defaultValue}
-        value={value}
-        type={type}
-        onChange={onChange}
-        placeholder={placeholder}
+        {...moreProps}
       />
       <span className="text-danger">{validationError}</span>
     </div>
@@ -46,5 +36,7 @@ InputWithValidations.propTypes = {
   value: PropTypes.string,
   className: PropTypes.string,
   validationError: PropTypes.string,
-  onChange: PropTypes.func
+  onChange: PropTypes.func,
+  min: PropTypes.number,
+  max: PropTypes.number
 };

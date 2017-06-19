@@ -93,6 +93,14 @@ export default class ResourceCenter extends Component {
           actionLabel: T.translate('features.Resource-Center.Stream.actionbtn0'),
           iconClassName: 'icon-streams',
           wizardId: 'createStreamWizard'
+        },
+        {
+          // Microservice
+          title: T.translate('features.Resource-Center.Microservice.label'),
+          description: T.translate('features.Resource-Center.Microservice.description'),
+          actionLabel: T.translate('features.Resource-Center.Microservice.actionbtn0'),
+          iconClassName: 'icon-app',
+          wizardId: 'createMicroserviceWizard'
         }
       ]
     };
@@ -153,6 +161,16 @@ export default class ResourceCenter extends Component {
           wizardType="create_library_rc"
           input={{headerLabel: T.translate('features.Resource-Center.Library.modalheadertitle')}}
           onClose={this.toggleWizard.bind(this, 'createLibraryWizard')}
+        />
+      );
+    }
+    if (this.state.createMicroserviceWizard) {
+      return (
+        <AbstractWizard
+          isOpen={true}
+          wizardType="create_microservice_rc"
+          input={{headerLabel: T.translate('features.Resource-Center.Microservice.modalheadertitle')}}
+          onClose={this.toggleWizard.bind(this, 'createMicroserviceWizard')}
         />
       );
     }

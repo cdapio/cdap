@@ -42,13 +42,16 @@ class KeyValuePair extends Component {
         />
       );
     }
+
+    let valuePlaceholder = this.props.valuePlaceholder || T.translate('commons.keyValPairs.valuePlaceholder');
+
     return (
       <input
         type="text"
         value={this.props.value}
         onKeyDown={this.keyDown}
         onChange={this.props.onChange.bind(null, 'value')}
-        placeholder={T.translate('commons.keyValPairs.valuePlaceholder')}
+        placeholder={valuePlaceholder}
         className="form-control value-input"
       />
     );
@@ -76,6 +79,8 @@ class KeyValuePair extends Component {
   }
 
   render() {
+    let keyPlaceholder = this.props.keyPlaceholder || T.translate('commons.keyValPairs.keyPlaceholder');
+
     return (
       <div className="key-value-pair-preference">
         <input
@@ -84,7 +89,7 @@ class KeyValuePair extends Component {
           autoFocus
           onKeyDown={this.keyDown}
           onChange={this.props.onChange.bind(null, 'key')}
-          placeholder={T.translate('commons.keyValPairs.keyPlaceholder')}
+          placeholder={keyPlaceholder}
           className="form-control key-input"
           disabled={this.props.notDeletable}
         />
@@ -121,7 +126,9 @@ KeyValuePair.propTypes = {
   addRow: PropTypes.func,
   removeRow: PropTypes.func,
   onProvided: PropTypes.func,
-  getResettedKeyValue: PropTypes.func
+  getResettedKeyValue: PropTypes.func,
+  keyPlaceholder: PropTypes.string,
+  valuePlaceholder: PropTypes.string
 };
 
 export default KeyValuePair;
