@@ -1,0 +1,5 @@
+cdap4.2 use system artifact kafka-plugin 1.7 
+
+but when preview, many kafka relative class not found excepiton occurs 
+
+how to resolve that problem?
