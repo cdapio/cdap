@@ -19,8 +19,10 @@ $dropdown-expanded-caret-bg-color: #999999;
 $action-item-bg-color: white;
 $action-item-hover-color: #eeeeee;
 $action-item-active-color: #dddddd;
+$action-item-font-color: #373a3c;
 $action-item-action-font-color: #333333;
 $action-item-font-family: Helvetica, Arial, sans-serif;
+$action-item-disabled-color: lighten($action-item-font-color, 50%);
 
 .column-actions-dropdown-container {
   > .fa.fa-caret-down {
@@ -42,8 +44,12 @@ $action-item-font-family: Helvetica, Arial, sans-serif;
     box-shadow: 1px 1px 5px $border-shadow-color;
 
     .disabled {
-      pointer-events: none;
-      opacity: 0.5;
+      /* using color here instead of just opacity, because this class might be applied multiple times */
+      color: $action-item-disabled-color;
+
+      .action-item {
+        cursor: not-allowed;
+      }
     }
 
     .column-action-divider {
@@ -67,6 +73,10 @@ $action-item-font-family: Helvetica, Arial, sans-serif;
 
     &.active {
       background-color: $action-item-active-color;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
     }
 
     .second-level-popover {
