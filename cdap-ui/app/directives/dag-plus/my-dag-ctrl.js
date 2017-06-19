@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,6 +89,8 @@ angular.module(PKG.name + '.commons')
         initTimeout = null,
         nodePopoverTimeout = null;
 
+    var Mousetrap = window.CaskCommon.Mousetrap;
+
     function repaintEverything() {
       if (repaintTimeout) {
         $timeout.cancel(repaintTimeout);
@@ -125,27 +127,17 @@ angular.module(PKG.name + '.commons')
     function init() {
       $scope.nodes = DAGPlusPlusNodesStore.getNodes();
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
+      vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
+      vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
       vm.comments = DAGPlusPlusNodesStore.getComments();
 
       initTimeout = $timeout(function () {
         addEndpoints();
-
-        angular.forEach($scope.connections, function (conn) {
-          var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
-          var targetNode = $scope.nodes.filter( node => node.name === conn.to);
-          if (!sourceNode.length || !targetNode.length) {
-            return;
-          }
-
-          var sourceId = 'Origin' + conn.from;
-          var targetId = 'Target' + conn.to;
-
-          var connObj = {
-            uuids: [sourceId, targetId]
-          };
-
-          vm.instance.connect(connObj);
-        });
+        addConnections();
+        vm.instance.bind('connection', formatConnections);
+        vm.instance.bind('connectionDetached', formatConnections);
+        Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+        Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
 
         if (vm.isDisabled) {
           // Disable all endpoints
@@ -428,6 +420,25 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function addConnections() {
+      angular.forEach($scope.connections, function (conn) {
+        var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
+        var targetNode = $scope.nodes.filter( node => node.name === conn.to);
+        if (!sourceNode.length || !targetNode.length) {
+          return;
+        }
+
+        var sourceId = 'Origin' + conn.from;
+        var targetId = 'Target' + conn.to;
+
+        var connObj = {
+          uuids: [sourceId, targetId]
+        };
+
+        vm.instance.connect(connObj);
+      });
+    }
+
     function transformCanvas (top, left) {
       vm.panning.top += top;
       vm.panning.left += left;
@@ -447,6 +458,73 @@ angular.module(PKG.name + '.commons')
         });
       });
       DAGPlusPlusNodesActionsFactory.setConnections(connections);
+    }
+
+    function resetEndpointsAndConnections() {
+      // have to unbind and bind again, otherwise calling detachEveryConnection will call formatConnections
+      // for every connection that we detach
+      vm.instance.unbind('connection');
+      vm.instance.unbind('connectionDetached');
+      endpoints = [];
+      vm.instance.detachEveryConnection();
+      vm.instance.deleteEveryEndpoint();
+      addEndpoints();
+      addConnections();
+      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connectionDetached', formatConnections);
+    }
+
+    function makeNodesDraggable() {
+      var nodes = document.querySelectorAll('.box');
+
+      if (!vm.isDisabled) {
+        vm.instance.draggable(nodes, {
+          start: function (drag) {
+            let currentCoOrdinates = {
+              x: drag.e.clientX,
+              y: drag.e.clientY,
+            };
+            if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
+              return;
+            }
+            localX = currentCoOrdinates.x;
+            localY = currentCoOrdinates.y;
+            if (selected.indexOf(drag.el.id) === -1) {
+              vm.clearNodeSelection();
+            }
+
+            dragged = true;
+          },
+          stop: function (dragEndEvent) {
+            var config = {
+              _uiPosition: {
+                top: dragEndEvent.el.style.top,
+                left: dragEndEvent.el.style.left
+              }
+            };
+            DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+            repaintEverything();
+          }
+        });
+      }
+    }
+
+    function makeCommentsDraggable() {
+      var comments = document.querySelectorAll('.comment-box');
+      vm.instance.draggable(comments, {
+        start: function () {
+          dragged = true;
+        },
+        stop: function (dragEndEvent) {
+          var config = {
+            _uiPosition: {
+              top: dragEndEvent.el.style.top,
+              left: dragEndEvent.el.style.left
+            }
+          };
+          DAGPlusPlusNodesActionsFactory.updateComment(dragEndEvent.el.id, config);
+        }
+      });
     }
 
     jsPlumb.ready(function() {
@@ -473,80 +551,45 @@ angular.module(PKG.name + '.commons')
           }
         });
       }
-      vm.instance.bind('connection', formatConnections);
-      vm.instance.bind('connectionDetached', formatConnections);
 
-
-
-      // This should be removed once the node config is using FLUX
-      $scope.$watch('nodes', function () {
-        if (nodesTimeout) {
-          $timeout.cancel(nodesTimeout);
-        }
-        nodesTimeout = $timeout(function () {
-          var nodes = document.querySelectorAll('.box');
-          addEndpoints();
-
-          if (!vm.isDisabled) {
-            vm.instance.draggable(nodes, {
-              start: function (drag) {
-                let currentCoOrdinates = {
-                  x: drag.e.clientX,
-                  y: drag.e.clientY,
-                };
-                if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
-                  return;
-                }
-                localX = currentCoOrdinates.x;
-                localY = currentCoOrdinates.y;
-                if (selected.indexOf(drag.el.id) === -1) {
-                  vm.clearNodeSelection();
-                }
-
-                dragged = true;
-              },
-              stop: function (dragEndEvent) {
-                var config = {
-                  _uiPosition: {
-                    top: dragEndEvent.el.style.top,
-                    left: dragEndEvent.el.style.left
-                  }
-                };
-                DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-                repaintEverything();
-              }
-            });
-          }
-        });
-      }, true);
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', vm.instance.repaintEverything);
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        vm.instance.unbind('connection');
+        vm.instance.unbind('connectionDetached');
+        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+        $scope.connections = DAGPlusPlusNodesStore.getConnections();
+        vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
+        vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
         vm.comments = DAGPlusPlusNodesStore.getComments();
+        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
 
         if (!vm.isDisabled) {
+          if (nodesTimeout) {
+            $timeout.cancel(nodesTimeout);
+          }
+          nodesTimeout = $timeout(function () {
+            resetEndpointsAndConnections();
+            makeNodesDraggable();
+          });
+
           if (commentsTimeout) {
             $timeout.cancel(commentsTimeout);
           }
 
           commentsTimeout = $timeout(function () {
-            var comments = document.querySelectorAll('.comment-box');
-            vm.instance.draggable(comments, {
-              start: function () {
-                dragged = true;
-              },
-              stop: function (dragEndEvent) {
-                var config = {
-                  _uiPosition: {
-                    top: dragEndEvent.el.style.top,
-                    left: dragEndEvent.el.style.left
-                  }
-                };
-                DAGPlusPlusNodesActionsFactory.updateComment(dragEndEvent.el.id, config);
-              }
-            });
+            makeCommentsDraggable();
           });
+        }
+
+        // can do keybindings only if no node is selected
+        if (!vm.activeNodeId) {
+          Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
+          Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+        } else {
+          Mousetrap.unbind(['command+z', 'ctrl+z']);
+          Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
         }
       });
 
@@ -758,6 +801,14 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.deleteComment(comment);
     };
 
+    vm.undoActions = function () {
+      DAGPlusPlusNodesActionsFactory.undoActions();
+    };
+
+    vm.redoActions = function () {
+      DAGPlusPlusNodesActionsFactory.redoActions();
+    };
+
     $scope.$on('$destroy', function () {
       labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
@@ -772,7 +823,8 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
-
+      Mousetrap.unbind(['command+z', 'ctrl+z']);
+      Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
     });
 
   });

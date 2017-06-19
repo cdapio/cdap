@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,7 +50,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (sourcePosition.top + sourceOffset) + 'px',
           left: (sourcePosition.left + sourceOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddSourceCount');
         break;
       case 'sink':
         let sinkOffset = this.DAGPlusPlusNodesStore.getSinkCount() * offset;
@@ -58,7 +57,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (sinkPosition.top + sinkOffset) + 'px',
           left: (sinkPosition.left + sinkOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddSinkCount');
         break;
       default:
         let transformOffset = this.DAGPlusPlusNodesStore.getTransformCount() * offset;
@@ -66,7 +64,6 @@ class DAGPlusPlusNodesActionsFactory {
           top: (transformPosition.top + transformOffset) + 'px',
           left: (transformPosition.left + transformOffset) + 'px'
         };
-        this.nodesDispatcher.dispatch('onAddTransformCount');
         break;
     }
 
@@ -129,6 +126,19 @@ class DAGPlusPlusNodesActionsFactory {
   }
   updateComment(commentId, config) {
     this.nodesDispatcher.dispatch('onUpdateComment', commentId, config);
+  }
+
+  undoActions() {
+    this.nodesDispatcher.dispatch('onUndoActions');
+  }
+  redoActions() {
+    this.nodesDispatcher.dispatch('onRedoActions');
+  }
+  removePreviousState() {
+    this.nodesDispatcher.dispatch('onRemovePreviousState');
+  }
+  resetFutureStates() {
+    this.nodesDispatcher.dispatch('onResetFutureStates');
   }
 
 }

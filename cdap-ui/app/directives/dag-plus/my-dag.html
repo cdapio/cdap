@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -66,6 +66,30 @@
           tooltip-placement="left"
           tooltip-popup-delay="500">
     <i class="fa fa-commenting"></i>
+  </button>
+
+  <!-- Undo Nodes Action -->
+  <button class="btn btn-default"
+          ng-click="DAGPlusPlusCtrl.undoActions()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          ng-disabled="DAGPlusPlusCtrl.undoStates.length === 0"
+          uib-tooltip="Undo (Ctrl/Cmd + Z)"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-undo"></i>
+  </button>
+
+  <!-- Redo Nodes Action -->
+  <button class="btn btn-default"
+          ng-click="DAGPlusPlusCtrl.redoActions()"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          ng-disabled="DAGPlusPlusCtrl.redoStates.length === 0"
+          uib-tooltip="Redo (Ctrl/Cmd + Shift + Z)"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-repeat"></i>
   </button>
 </div>
 
