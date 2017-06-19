@@ -16,7 +16,9 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -25,6 +27,7 @@ import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -94,13 +97,31 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
       }, 5, TimeUnit.MINUTES, 2, TimeUnit.SECONDS, String.format("Waiting for %s artifact to become available.",
                                                                  artifactName));
 
-      // Find the latest artifact
+      // Get all artifacts present in system namespace
       List<ArtifactSummary> artifacts = new ArrayList<>(artifactRepository.getArtifactSummaries(
         NamespaceId.SYSTEM, artifactName, Integer.MAX_VALUE, ArtifactSortOrder.DESC));
+
+      // Get all artifacts present in the user scope
+      List<ArtifactSummary> userArtifacts = new ArrayList<>(artifactRepository.getArtifactSummaries(
+        appId.getNamespaceId(), artifactName, Integer.MAX_VALUE, ArtifactSortOrder.DESC));
+
+      ArtifactSummary highestSystemArtifact = artifacts.get(0);
+      ArtifactSummary highestUserArtifact = userArtifacts.size() > 0 ? userArtifacts.get(0) : null;
+
+      // If the user artifact version is higher, use that instead of the system artifact
+      ArtifactSummary highestArtifact = highestSystemArtifact;
+      if (highestUserArtifact != null) {
+        ArtifactVersion userVersion = new ArtifactVersion(highestUserArtifact.getVersion());
+        ArtifactVersion systemVersion = new ArtifactVersion(highestArtifact.getVersion());
+        if (userVersion.compareTo(systemVersion) > 0) {
+          highestArtifact = highestUserArtifact;
+        }
+      }
+
       if (stopping) {
         LOG.debug("{} AppCreationService is shutting down.", appId.getApplication());
       }
-      createAppAndStartProgram(artifacts.remove(0));
+      createAppAndStartProgram(highestArtifact);
     } catch (Exception ex) {
       // Not able to create application. But it is not catastrophic, hence just log a warning.
       LOG.warn("Got an exception while trying to create and start {} app.", appId, ex);
@@ -115,10 +136,13 @@ class AbstractAppCreationService extends AbstractExecutionThreadService {
 
   private void createAppAndStartProgram(ArtifactSummary artifactSummary) throws Exception {
     LOG.info("Creating and Starting {} App with config : {}", appId.getApplication(), appConfig);
-    applicationLifecycleService.deployApp(
-      appId.getParent(), appId.getApplication(), appId.getVersion(),
-      NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()).toId(),
-      appConfig, new DefaultProgramTerminator());
+
+    ArtifactId artifactId = artifactSummary.getScope().equals(ArtifactScope.SYSTEM) ?
+      NamespaceId.SYSTEM.artifact(artifactSummary.getName(), artifactSummary.getVersion()) :
+      appId.getNamespaceId().artifact(artifactSummary.getName(), artifactSummary.getVersion());
+
+    applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
+      artifactId.toId(), appConfig, new DefaultProgramTerminator());
 
     for (Map.Entry<ProgramId, Map<String, String>> programEntry : programIdMap.entrySet()) {
       try {
