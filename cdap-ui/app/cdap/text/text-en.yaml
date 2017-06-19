@@ -771,6 +771,7 @@ features:
         DatabaseOptions:
           install: "Install Driver: "
           installedLabel: Driver Installed
+          market: Cask Market
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
         ModalHeader:
