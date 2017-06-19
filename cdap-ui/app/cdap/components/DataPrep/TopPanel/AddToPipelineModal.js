@@ -275,7 +275,7 @@ export default class AddToHydratorModal extends Component {
     } else if (state.workspaceInfo.properties.connection === 'kafka') {
       let specParams = {
         namespace,
-        connectionId: 'testkafka', // NEEDS TO BE MODIFIED!! currently connectionid is not in the properties
+        connectionId: state.workspaceInfo.properties.connectionid,
         topic: state.workspaceInfo.properties.topic
       };
 

@@ -155,6 +155,76 @@ function constructDatabaseSource(artifactsList, dbInfo) {
   }
 }
 
+function constructKafkaSource(artifactsList, kafkaInfo) {
+  if (!kafkaInfo) { return null; }
+
+  let plugin = objectQuery(kafkaInfo, 'values', '0');
+  let pluginName = Object.keys(plugin)[0];
+
+  // This is a hack.. should not do this
+  // We are still shipping kafka-plugins with hydrator-plugins 1.7 but
+  // it doesn't contain the streamingsource or batchsource plugins
+  let pluginArtifact = artifactsList.filter((artifact) => artifact.name === 'kafka-plugins');
+  pluginArtifact = pluginArtifact[pluginArtifact.length - 1];
+
+  plugin = plugin[pluginName];
+
+  plugin.properties.schema = {
+    name: 'kafkaAvroSchema',
+    type: 'record',
+    fields: [
+      {
+        name: 'timestamp',
+        type: ['long', 'null']
+      },
+      {
+        name: 'key',
+        type: ['string', 'null']
+      },
+      {
+        name: 'offset',
+        type: ['long', 'null']
+      },
+      {
+        name: 'body',
+        type: ['string', 'null']
+      }
+    ]
+  };
+
+  let batchPluginInfo = {
+    name: plugin.name,
+    label: plugin.name,
+    type: 'batchsource',
+    artifact: pluginArtifact,
+    properties: plugin.properties
+  };
+
+  let realtimePluginInfo = Object.assign({}, batchPluginInfo, {
+    type: 'streamingsource',
+    artifact: pluginArtifact
+  });
+
+  let batchStage = {
+    name: plugin.name,
+    plugin: batchPluginInfo
+  };
+
+  let realtimeStage = {
+    name: plugin.name,
+    plugin: realtimePluginInfo
+  };
+
+  return {
+    batchSource: batchStage,
+    realtimeSource: realtimeStage,
+    connections: [{
+      from: plugin.name,
+      to: 'Wrangler'
+    }]
+  };
+}
+
 function constructProperties(workspaceInfo, pluginVersion) {
   let  observable = new Rx.Subject();
   let namespace = NamespaceStore.getState().selectedNamespace;
@@ -190,6 +260,14 @@ function constructProperties(workspaceInfo, pluginVersion) {
     rxArray.push(MyDataPrepApi.getDatabaseSpecification(specParams));
     let requestBody = directiveRequestBodyCreator([]);
     rxArray.push(MyDataPrepApi.getSchema(requestObj, requestBody));
+  } else if (state.workspaceInfo.properties.connection === 'kafka') {
+    let specParams = {
+      namespace,
+      connectionId: state.workspaceInfo.properties.connectionid,
+      topic: state.workspaceInfo.properties.topic
+    };
+
+    rxArray.push(MyDataPrepApi.getKafkaSpecification(specParams));
   }
 
   try {
@@ -252,6 +330,8 @@ function constructProperties(workspaceInfo, pluginVersion) {
           type: 'record',
           fields: res[3]
         });
+      } else if (state.workspaceInfo.properties.connection === 'kafka') {
+        sourceConfigs = constructKafkaSource(res[0], res[2]);
       }
 
       if (sourceConfigs) {
