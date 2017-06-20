@@ -95,7 +95,7 @@ const createApplication = () => {
         config
       }
     );
-}
+};
 
 const MicroserviceUploadActionCreator = {
   uploadArtifact,
