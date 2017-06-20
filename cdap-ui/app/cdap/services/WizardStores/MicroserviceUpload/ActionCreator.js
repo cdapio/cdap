@@ -59,9 +59,7 @@ const createApplication = () => {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let { instanceName: appId, description: appDescription, version: appVersion, microserviceName: pluginId } = state.general;
   let { name: artifactId, version: artifactVersion } = state.upload.jar.fileMetadataObj;
-  let { instances, vcores, memory, ethreshold } = state.configure;
-  let properties = state.properties;
-  let endpoints = state.endpoints;
+  let { instances, vcores, memory, ethreshold, properties } = state.configure;
 
   let config = {
     version: appVersion,
@@ -80,10 +78,24 @@ const createApplication = () => {
       vcores,
       memory,
       ethreshold,
-      endpoints,
       properties
     }
   };
+
+  let endpoints = state.endpoints;
+  if (!isNil(endpoints.fetch)) {
+    if (endpoints.in.length === 0 && isNil(endpoints.in[0])) {
+      delete endpoints.in;
+    } else {
+      endpoints.in = endpoints.in.split(',');
+    }
+    if (endpoints.out.length === 0 && isNil(endpoints.out[0])) {
+      delete endpoints.out;
+    } else {
+      endpoints.out = endpoints.out.split(',');
+    }
+    config.configuration.endpoints = endpoints;
+  }
 
   let artifact = {
     name: 'microservice-app',

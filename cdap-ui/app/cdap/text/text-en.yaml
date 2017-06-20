@@ -1225,6 +1225,16 @@ features:
         title: Resources
         vcoresLabel: Virtual Cores
         vcoresPlaceholder: The number of virtual cores for the microservice
+      Step5:
+        description: Provide inbound and outbound queue names (TMS Queue names).
+        fetchLabel: Fetch size
+        fetchPlaceholder: The fetch size across all the queues.
+        inboundLabel: Inbound queues
+        inboundPlaceholder: Comma-separated list of inbound queues
+        outboundLabel: Outbound queues
+        outboundPlaceholder: Comma-separated list of inbound queues
+        shorttitle: Endpoint Specification
+        title: Endpoint Specification
       success: You have successfully created the microservice "{appName}".
     OneStepDeploy:
       headerlabel: Deploy

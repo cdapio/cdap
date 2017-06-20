@@ -19,6 +19,7 @@ import UploadJarStep from 'components/CaskWizards/MicroserviceUpload/UploadJarSt
 import UploadJsonStep from 'components/CaskWizards/MicroserviceUpload/UploadJsonStep';
 import ConfigureStep from 'components/CaskWizards/MicroserviceUpload/ConfigureStep';
 import GeneralInfoStep from 'components/CaskWizards/MicroserviceUpload/GeneralInfoStep';
+import EndpointStep from 'components/CaskWizards/MicroserviceUpload/EndpointStep';
 
 import T from 'i18n-react';
 let commonSteps = [
@@ -52,8 +53,15 @@ let commonSteps = [
     title: T.translate('features.Wizard.MicroserviceUpload.Step4.title'),
     description: T.translate('features.Wizard.MicroserviceUpload.Step4.description'),
     content: (<ConfigureStep />),
-    requiredFields: ['instances', 'vcores', 'memory', 'ethreshold', 'endpoints']
-  }
+    requiredFields: ['instances', 'vcores', 'memory', 'ethreshold']
+  },
+  {
+    id: 'endpoints',
+    shorttitle: T.translate('features.Wizard.MicroserviceUpload.Step5.shorttitle'),
+    title: T.translate('features.Wizard.MicroserviceUpload.Step5.title'),
+    description: T.translate('features.Wizard.MicroserviceUpload.Step5.description'),
+    content: (<EndpointStep />)
+  },
 ];
 
 const MicroserviceUploadWizardConfig = {

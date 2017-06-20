@@ -14,7 +14,7 @@
  * the License.
  */
 import {combineReducers, createStore} from 'redux';
-import MicroserviceUploadAction from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
+import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
 import MicroserviceUploadWizardConfig from 'services/WizardConfigs/MicroserviceUploadWizardConfig';
 import {getArtifactNameAndVersion} from 'services/helpers';
 import head from 'lodash/head';
@@ -54,18 +54,18 @@ const defaultConfigureState = Object.assign({
   instances: 1,
   vcores: 1,
   memory: 512,
-  ethreshold: 100
-}, defaultState, { __complete: true });
-
-const defaultPropertiesState = Object.assign({
-  "dataset" : "device_fences",
-  "cache-expiration-in-seconds": 300,
-  "out-bound-stream" : "pubnubIngress"
+  ethreshold: 100,
+  properties: {
+    'dataset' : 'device_fences',
+    'cache-expiration-in-seconds': 300,
+    'out-bound-stream' : 'pubnubIngress'
+  },
 }, defaultState, { __complete: true });
 
 const defaultEndpointsState = Object.assign({
-  fetch : 100,
-  in: ["ms-ericsson-geo-events"]
+  fetch: 100,
+  in: '',
+  out: ''
 }, defaultState, { __complete: true });
 
 const defaultAction = {
@@ -76,8 +76,7 @@ const defaultInitialState = {
   general: defaultGeneralState,
   upload: defaultUploadState,
   configure: defaultConfigureState,
-  properties: defaultPropertiesState,
-  endpoints: defaultEndpointsState
+  endpoints: defaultEndpointsState,
 };
 
 // Utilities. FIXME: Move to a common place?
@@ -118,31 +117,31 @@ const onSuccessHandler = (reducerId, stateCopy, action) => {
 const general = (state = defaultGeneralState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
-    case MicroserviceUploadAction.setInstanceName:
+    case MicroserviceUploadActions.setInstanceName:
       stateCopy = Object.assign({}, state, {
         instanceName: action.payload.instanceName
       });
       break;
-    case MicroserviceUploadAction.setDescription:
+    case MicroserviceUploadActions.setDescription:
       stateCopy = Object.assign({}, state, {
         description: action.payload.description
       });
       break;
-    case MicroserviceUploadAction.setVersion:
+    case MicroserviceUploadActions.setVersion:
       stateCopy = Object.assign({}, state, {
         version: action.payload.version
       });
       break;
-    case MicroserviceUploadAction.setMicroserviceName:
+    case MicroserviceUploadActions.setMicroserviceName:
       stateCopy = Object.assign({}, state, {
         microserviceName: action.payload.microserviceName
       });
       break;
-    case MicroserviceUploadAction.onError:
+    case MicroserviceUploadActions.onError:
       return onErrorHandler('general', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onSuccess:
+    case MicroserviceUploadActions.onSuccess:
       return onSuccessHandler('general', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onReset:
+    case MicroserviceUploadActions.onReset:
       return defaultGeneralState;
     default:
       return state;
@@ -160,7 +159,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
       artifactJson,
       fileMetadataObj;
   switch (action.type) {
-    case MicroserviceUploadAction.setFilePath:
+    case MicroserviceUploadActions.setFilePath:
       if (!action.payload.file.name.endsWith('.jar')) {
         return Object.assign({}, state, {
           jar: Object.assign({}, defaultJarState, {
@@ -176,7 +175,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
         }
       });
       break;
-    case MicroserviceUploadAction.setJson:
+    case MicroserviceUploadActions.setJson:
       artifactJson = action.payload.json;
       try {
         artifactJson = JSON.parse(artifactJson);
@@ -207,7 +206,7 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
         __complete: true
       });
       return stateCopy;
-    case MicroserviceUploadAction.onReset:
+    case MicroserviceUploadActions.onReset:
       return defaultUploadState;
     default:
       return state;
@@ -220,36 +219,31 @@ const upload = (state = defaultUploadState, action = defaultAction) => {
 const configure = (state = defaultConfigureState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
-    case MicroserviceUploadAction.setInstances:
+    case MicroserviceUploadActions.setInstances:
       stateCopy = Object.assign({}, state, {
         instances: action.payload.instances
       });
       break;
-    case MicroserviceUploadAction.setVCores:
+    case MicroserviceUploadActions.setVCores:
       stateCopy = Object.assign({}, state, {
         vcores: action.payload.vcores
       });
       break;
-    case MicroserviceUploadAction.setMemory:
+    case MicroserviceUploadActions.setMemory:
       stateCopy = Object.assign({}, state, {
         memory: action.payload.memory
       });
       break;
-    case MicroserviceUploadAction.setThreshold:
+    case MicroserviceUploadActions.setThreshold:
       stateCopy = Object.assign({}, state, {
         ethreshold: action.payload.ethreshold
       });
       break;
-    case MicroserviceUploadAction.setEndpoints:
-      stateCopy = Object.assign({}, state, {
-        endpoints: action.payload.endpoints
-      });
-      break;
-    case MicroserviceUploadAction.onError:
+    case MicroserviceUploadActions.onError:
       return onErrorHandler('configure', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onSuccess:
+    case MicroserviceUploadActions.onSuccess:
       return onSuccessHandler('configure', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onReset:
+    case MicroserviceUploadActions.onReset:
       return defaultConfigureState;
     default:
       return state;
@@ -259,50 +253,39 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
     __error: action.payload.error || false
   });
 };
-const properties = (state = defaultPropertiesState, action = defaultAction) => {
-  let stateCopy;
-  switch (action.type) {
-    case MicroserviceUploadAction.setProperties:
-      stateCopy = Object.assign({}, state, {
-        properties: action.payload.properties
-      });
-      break;
-    case MicroserviceUploadAction.onError:
-      return onErrorHandler('properties', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onSuccess:
-      return onSuccessHandler('properties', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onReset:
-      return defaultPropertiesState;
-    default:
-      return state;
-  }
-  return Object.assign({}, stateCopy, {
-    __complete: !isNil(stateCopy.properties),
-    __error: action.payload.error || false
-  });
-};
+
 const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
-    case MicroserviceUploadAction.setEndpoints:
+    case MicroserviceUploadActions.setFetchSize:
       stateCopy = Object.assign({}, state, {
-        endpoints: action.payload.endpoints
+        fetch: action.payload.fetchSize
       });
       break;
-    case MicroserviceUploadAction.onError:
+    case MicroserviceUploadActions.setInboundQueues:
+      stateCopy = Object.assign({}, state, {
+        in: action.payload.inboundQueues
+      });
+      break;
+    case MicroserviceUploadActions.setOutboundQueues:
+      stateCopy = Object.assign({}, state, {
+        out: action.payload.outboundQueues
+      });
+      break;
+    case MicroserviceUploadActions.onError:
       return onErrorHandler('endpoints', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onSuccess:
+    case MicroserviceUploadActions.onSuccess:
       return onSuccessHandler('endpoints', Object.assign({}, state), action);
-    case MicroserviceUploadAction.onReset:
+    case MicroserviceUploadActions.onReset:
       return defaultEndpointsState;
     default:
       return state;
   }
   return Object.assign({}, stateCopy, {
-    __complete: !isNil(stateCopy.endpoints),
     __error: action.payload.error || false
   });
 };
+
 // Store
 const createStoreWrapper = () => {
   return createStore(
@@ -310,7 +293,6 @@ const createStoreWrapper = () => {
       general,
       upload,
       configure,
-      properties,
       endpoints
     }),
     defaultInitialState
