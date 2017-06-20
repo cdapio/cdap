@@ -65,7 +65,7 @@ export default class MicroserviceUploadWizard extends Component {
     });
   }
   buildSuccessInfo() {
-    let appName = MicroserviceUploadStore.getState().general.name;
+    let appName = MicroserviceUploadStore.getState().general.instanceName;
     let namespace = NamespaceStore.getState().selectedNamespace;
     let message = T.translate('features.Wizard.MicroserviceUpload.success', {appName});
     let buttonLabel = T.translate('features.Wizard.MicroserviceUpload.callToAction');
@@ -74,11 +74,9 @@ export default class MicroserviceUploadWizard extends Component {
       successInfo: {
         message,
         buttonLabel,
-        buttonUrl: window.getHydratorUrl({
-          stateName: 'hydrator.create',
-          stateParams: {
-            namespace
-          }
+        buttonUrl: window.getAbsUIUrl({
+          namespaceId: namespace,
+          appId: appName
         }),
         linkLabel,
         linkUrl: window.getAbsUIUrl({

@@ -57,18 +57,23 @@ const uploadConfigurationJson = () => {
 const createApplication = () => {
   const state = MicroserviceUploadStore.getState();
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let {name:appId, description: appDescription, version: appVersion} = state.general;
-  let {name:artifactId, version: artifactVersion} = state.upload.jar.fileMetadataObj;
-  let {instances, vcores, memory, ethreshold, endpoints, properties} = state.configure;
+  let { instanceName: appId, description: appDescription, version: appVersion, microserviceName: pluginId } = state.general;
+  let { name: artifactId, version: artifactVersion } = state.upload.jar.fileMetadataObj;
+  let { instances, vcores, memory, ethreshold } = state.configure;
+  let properties = state.properties;
+  let endpoints = state.endpoints;
 
   let config = {
     version: appVersion,
     id: appId,
     description: appDescription,
     plugin: {
-      name: artifactId,
-      version: artifactVersion,
-      scope: 'user'
+      name: pluginId,
+      artifact: {
+        name: artifactId,
+        version: artifactVersion,
+        scope: 'user'
+      }
     },
     configuration: {
       instances,

@@ -24,18 +24,18 @@ import T from 'i18n-react';
 
 require('./GeneralInfoStep.scss');
 
-const mapStateToMicroserviceNameProps = (state) => {
+const mapStateToInstanceNameProps = (state) => {
   return {
-    value: state.general.name,
+    value: state.general.instanceName,
     type: 'text',
-    placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.namePlaceholder')
+    placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.instanceNamePlaceholder')
   };
 };
 const mapStateToMicroserviceDescritionProps = (state) => {
   return {
     value: state.general.description,
     type: 'textarea',
-    rows: '7',
+    rows: '4',
     placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.descriptionPlaceholder')
   };
 };
@@ -47,13 +47,20 @@ const mapStateToMicroserviceVersionProps = (state) => {
     placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.versionPlaceholder')
   };
 };
+const mapStateToMicroserviceNameProps = (state) => {
+  return {
+    value: state.general.microserviceName,
+    type: 'text',
+    placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.microserviceNamePlaceholder')
+  };
+};
 
-const mapDispatchToMicroserviceNameProps = (dispatch) => {
+const mapDispatchToInstanceNameProps = (dispatch) => {
   return {
     onChange: (e) => {
       dispatch({
-        type: MicroserviceUploadActions.setName,
-        payload: {name: e.target.value}
+        type: MicroserviceUploadActions.setInstanceName,
+        payload: {instanceName: e.target.value}
       });
     }
   };
@@ -76,19 +83,33 @@ const mapDispatchToToMicroserviceVersion = (dispatch) => {
     }
   };
 };
+const mapDispatchToMicroserviceNameProps = (dispatch) => {
+  return {
+    onChange: (e) => {
+      dispatch({
+        type: MicroserviceUploadActions.setMicroserviceName,
+        payload: {microserviceName: e.target.value}
+      });
+    }
+  };
+};
 
-const InputMicroserviceName = connect(
-  mapStateToMicroserviceNameProps,
-  mapDispatchToMicroserviceNameProps
+const InputMicroserviceInstanceName = connect(
+  mapStateToInstanceNameProps,
+  mapDispatchToInstanceNameProps
 )(InputWithValidations);
 const InputMicroserviceDescription = connect(
   mapStateToMicroserviceDescritionProps,
   mapDispatchToMicroserviceDescriptionProps
-)(InputWithValidations);
+)(Input);
 const InputMicroserviceVersion = connect(
   mapStateToMicroserviceVersionProps,
   mapDispatchToToMicroserviceVersion
-)(Input);
+)(InputWithValidations);
+const InputMicroserviceName = connect(
+  mapStateToMicroserviceNameProps,
+  mapDispatchToMicroserviceNameProps
+)(InputWithValidations);
 
 export default function GeneralInfoStep() {
   return (
@@ -102,10 +123,10 @@ export default function GeneralInfoStep() {
       >
         <FormGroup row>
           <Col xs="3">
-            <Label className="control-label">{T.translate('commons.nameLabel')}</Label>
+            <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.instanceNameLabel')}</Label>
           </Col>
           <Col xs="7">
-            <InputMicroserviceName />
+            <InputMicroserviceInstanceName />
           </Col>
           <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>
@@ -123,6 +144,15 @@ export default function GeneralInfoStep() {
           </Col>
           <Col sm="7">
             <InputMicroserviceVersion />
+          </Col>
+          <i className="fa fa-asterisk text-danger float-xs-left"/>
+        </FormGroup>
+        <FormGroup row>
+          <Col xs="3">
+            <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.microserviceNameLabel')}</Label>
+          </Col>
+          <Col xs="7">
+            <InputMicroserviceName />
           </Col>
           <i className="fa fa-asterisk text-danger float-xs-left"/>
         </FormGroup>

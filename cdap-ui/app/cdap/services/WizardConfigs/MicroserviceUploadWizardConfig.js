@@ -28,7 +28,7 @@ let commonSteps = [
     title: T.translate('features.Wizard.MicroserviceUpload.Step1.title'),
     description: T.translate('features.Wizard.MicroserviceUpload.Step1.description'),
     content: (<GeneralInfoStep />),
-    requiredFields: ['name', 'version']
+    requiredFields: ['instanceName', 'version', 'microserviceName']
   },
   {
     id: 'uploadjar',

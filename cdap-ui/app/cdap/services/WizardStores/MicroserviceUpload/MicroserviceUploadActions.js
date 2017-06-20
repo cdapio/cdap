@@ -15,9 +15,10 @@
  */
 
 const MicroserviceUploadAction = {
-  setName: 'SET-MICROSERVICE-NAME',
+  setInstanceName: 'SET-MICROSERVICE-INSTANCE-NAME',
   setDescription: 'SET-MICROSERVICE-DESCRIPTION',
   setVersion: 'SET-MICROSERVICE-VERSION',
+  setMicroserviceName: 'SET-MICROSERVICE-NAME',
   setInstances: 'SET-MICROSERVICE-INSTANCES',
   setVCores: 'SET-MICROSERVICE-VCORES',
   setMemory: 'SET-MICROSERVICE-MEMORY',
