@@ -35,7 +35,7 @@ const mapStateToMicroserviceDescritionProps = (state) => {
   return {
     value: state.general.description,
     type: 'textarea',
-    rows: '4',
+    rows: '3',
     placeholder: T.translate('features.Wizard.MicroserviceUpload.Step1.descriptionPlaceholder')
   };
 };

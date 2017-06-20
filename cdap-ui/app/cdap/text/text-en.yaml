@@ -1235,6 +1235,11 @@ features:
         outboundPlaceholder: Comma-separated list of outbound queues
         shorttitle: Endpoint Specification
         title: Endpoint Specification
+      Step6:
+        description: Provide microservice specific properties.
+        propertiesLabel: Properties
+        shorttitle: Properties
+        title: Properties
       success: You have successfully created the microservice "{appName}".
     OneStepDeploy:
       headerlabel: Deploy

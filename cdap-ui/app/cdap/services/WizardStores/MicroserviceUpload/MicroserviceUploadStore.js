@@ -18,6 +18,7 @@ import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/
 import MicroserviceUploadWizardConfig from 'services/WizardConfigs/MicroserviceUploadWizardConfig';
 import {getArtifactNameAndVersion} from 'services/helpers';
 import head from 'lodash/head';
+import shortid from 'shortid';
 import T from 'i18n-react';
 
 // Defaults
@@ -54,18 +55,23 @@ const defaultConfigureState = Object.assign({
   instances: 1,
   vcores: 1,
   memory: 512,
-  ethreshold: 100,
-  properties: {
-    'dataset' : 'device_fences',
-    'cache-expiration-in-seconds': 300,
-    'out-bound-stream' : 'pubnubIngress'
-  },
+  ethreshold: 100
 }, defaultState, { __complete: true });
 
 const defaultEndpointsState = Object.assign({
   fetch: 100,
   in: '',
   out: ''
+}, defaultState, { __complete: true });
+
+const defaultPropertiesState = Object.assign({
+  keyValues : {
+    pairs : [{
+      key : '',
+      value : '',
+      uniqueId : shortid.generate()
+    }]
+  }
 }, defaultState, { __complete: true });
 
 const defaultAction = {
@@ -286,6 +292,28 @@ const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
   });
 };
 
+const properties = (state = defaultPropertiesState, action = defaultAction) => {
+  let stateCopy;
+  switch (action.type) {
+    case MicroserviceUploadActions.setProperties:
+      stateCopy = Object.assign({}, state, {
+        keyValues: action.payload.keyValues
+      });
+      break;
+    case MicroserviceUploadActions.onError:
+      return onErrorHandler('properties', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onSuccess:
+      return onSuccessHandler('properties', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onReset:
+      return defaultPropertiesState;
+    default:
+      return state;
+  }
+  return Object.assign({}, stateCopy, {
+    __error: action.payload.error || false
+  });
+};
+
 // Store
 const createStoreWrapper = () => {
   return createStore(
@@ -293,7 +321,8 @@ const createStoreWrapper = () => {
       general,
       upload,
       configure,
-      endpoints
+      endpoints,
+      properties
     }),
     defaultInitialState
   );

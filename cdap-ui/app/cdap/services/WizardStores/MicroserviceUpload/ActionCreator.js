@@ -21,6 +21,7 @@ import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/Mi
 import {MyArtifactApi} from 'api/artifact';
 import {MyPipelineApi} from 'api/pipeline';
 import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
 
 const uploadArtifact = () => {
   const state = MicroserviceUploadStore.getState();
@@ -59,7 +60,7 @@ const createApplication = () => {
   let namespace = NamespaceStore.getState().selectedNamespace;
   let { instanceName: appId, description: appDescription, version: appVersion, microserviceName: pluginId } = state.general;
   let { name: artifactId, version: artifactVersion } = state.upload.jar.fileMetadataObj;
-  let { instances, vcores, memory, ethreshold, properties } = state.configure;
+  let { instances, vcores, memory, ethreshold } = state.configure;
 
   let config = {
     version: appVersion,
@@ -77,24 +78,40 @@ const createApplication = () => {
       instances,
       vcores,
       memory,
-      ethreshold,
-      properties
+      ethreshold
     }
   };
 
   let endpoints = state.endpoints;
   if (!isNil(endpoints.fetch)) {
-    if (endpoints.in.length === 0 && isNil(endpoints.in[0])) {
+    if (endpoints.in.length === 0 || isEmpty(endpoints.in[0])) {
       delete endpoints.in;
     } else {
-      endpoints.in = endpoints.in.split(',');
+      if (typeof endpoints.in === 'string') {
+        endpoints.in = endpoints.in.split(',');
+      }
+
     }
-    if (endpoints.out.length === 0 && isNil(endpoints.out[0])) {
+    if (endpoints.out.length === 0 || isEmpty(endpoints.out[0])) {
       delete endpoints.out;
     } else {
-      endpoints.out = endpoints.out.split(',');
+      if (typeof endpoints.out === 'string') {
+        endpoints.out = endpoints.out.split(',');
+      }
     }
     config.configuration.endpoints = endpoints;
+  }
+
+  let properties = state.properties;
+  let propertiesKeyVal = properties.keyValues.pairs;
+  let propertiesObj = {};
+  propertiesKeyVal.forEach((pair) => {
+    if (pair.key.length > 0 && pair.value.length > 0) {
+      propertiesObj[pair.key] = pair.value;
+    }
+  });
+  if (!isEmpty(propertiesObj)) {
+    config.configuration.properties = propertiesObj;
   }
 
   let artifact = {
