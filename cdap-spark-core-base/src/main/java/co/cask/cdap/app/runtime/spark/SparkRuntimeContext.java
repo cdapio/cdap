@@ -151,35 +151,35 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   /**
    * Returns the {@link TransactionSystemClient} for this execution.
    */
-  TransactionSystemClient getTransactionSystemClient() {
+  public TransactionSystemClient getTransactionSystemClient() {
     return txClient;
   }
 
   /**
    * Returns the CDAP {@link CConfiguration} used for the execution.
    */
-  CConfiguration getCConfiguration() {
+  public CConfiguration getCConfiguration() {
     return cConf;
   }
 
   /**
    * Returns the {@link Configuration} used for the execution.
    */
-  Configuration getConfiguration() {
+  public Configuration getConfiguration() {
     return hConf;
   }
 
   /**
    * Returns the {@link LoggingContext} representing the program.
    */
-  LoggingContext getLoggingContext() {
+  public LoggingContext getLoggingContext() {
     return loggingContext;
   }
 
   /**
    * Returns the {@link StreamAdmin} used for this execution.
    */
-  StreamAdmin getStreamAdmin() {
+  public StreamAdmin getStreamAdmin() {
     return streamAdmin;
   }
 
