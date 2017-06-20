@@ -46,11 +46,6 @@ const defaultJsonState = Object.assign({}, {
   artifactPlugins: []
 }, defaultState);
 
-const defaultUploadState = Object.assign({
-  jar: defaultJarState,
-  json: defaultJsonState
-});
-
 const defaultConfigureState = Object.assign({
   instances: 1,
   vcores: 1,
@@ -80,9 +75,11 @@ const defaultAction = {
 };
 const defaultInitialState = {
   general: defaultGeneralState,
-  upload: defaultUploadState,
+  uploadjar: defaultJarState,
+  uploadjson: defaultJsonState,
   configure: defaultConfigureState,
   endpoints: defaultEndpointsState,
+  properties: defaultPropertiesState
 };
 
 // Utilities. FIXME: Move to a common place?
@@ -157,63 +154,74 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
     __error: action.payload.error || false
   });
 };
-const upload = (state = defaultUploadState, action = defaultAction) => {
-  let stateCopy;
-  let pluginProperties,
-      artifactExtends,
-      artifactPlugins,
-      artifactJson,
-      fileMetadataObj;
+const uploadjar = (state = defaultJarState, action = defaultAction) => {
+  let stateCopy, fileMetadataObj;
   switch (action.type) {
     case MicroserviceUploadActions.setFilePath:
       if (!action.payload.file.name.endsWith('.jar')) {
         return Object.assign({}, state, {
-          jar: Object.assign({}, defaultJarState, {
-            __error: T.translate('features.Wizard.MicroserviceUpload.Step2.errorMessage')
-          })
+          __error: T.translate('features.Wizard.MicroserviceUpload.Step2.errorMessage')
         });
       }
       fileMetadataObj = getArtifactNameAndVersion(action.payload.file.name.split('.jar')[0]);
       stateCopy = Object.assign({}, state, {
-        jar: {
-          contents: action.payload.file,
-          fileMetadataObj
-        }
+        contents: action.payload.file,
+        fileMetadataObj,
+        __complete: true
       });
       break;
+    case MicroserviceUploadActions.onError:
+      return onErrorHandler('uploadjar', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onSuccess:
+      return onSuccessHandler('uploadjar', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onReset:
+      return defaultJarState;
+    default:
+      return state;
+  }
+
+  return Object.assign({}, stateCopy, {
+    __error: action.payload.error || false
+  });
+};
+const uploadjson = (state = defaultJsonState, action = defaultAction) => {
+  let stateCopy;
+  let pluginProperties,
+      artifactExtends,
+      artifactPlugins,
+      artifactJson;
+  switch (action.type) {
     case MicroserviceUploadActions.setJson:
       artifactJson = action.payload.json;
       try {
         artifactJson = JSON.parse(artifactJson);
       } catch (e) {
         return Object.assign({}, state, {
-          json: Object.assign({}, defaultJsonState, {
-            __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessage')
-          })
+          __error: T.translate('features.Wizard.MicroserviceUpload.Step3.errorMessage')
         });
       }
       if (!artifactJson.parents) {
         return Object.assign({}, state, {
-          json: Object.assign({}, defaultJsonState, {
-            __error: T.translate('features.Wizard.PluginArtifact.Step2.errorMessageParentArtifacts')
-          })
+          __error: T.translate('features.Wizard.MicroserviceUpload.Step3.errorMessageParentArtifacts')
         });
       }
       pluginProperties = artifactJson.properties;
       artifactExtends = artifactJson.parents.reduce( (prev, curr) => `${prev}/${curr}`);
       artifactPlugins = artifactJson.plugins || [];
       stateCopy = Object.assign({}, state, {
-        json: {
-          properties: pluginProperties,
-          artifactExtends,
-          artifactPlugins,
-          contents: action.payload.jsonFile
-        },
+        properties: pluginProperties,
+        artifactExtends,
+        artifactPlugins,
+        contents: action.payload.jsonFile,
         __complete: true
       });
-      return stateCopy;
+      break;
+    case MicroserviceUploadActions.onError:
+      return onErrorHandler('uploadjson', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onSuccess:
+      return onSuccessHandler('uploadjson', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
-      return defaultUploadState;
+      return defaultJsonState;
     default:
       return state;
   }
@@ -319,7 +327,8 @@ const createStoreWrapper = () => {
   return createStore(
     combineReducers({
       general,
-      upload,
+      uploadjar,
+      uploadjson,
       configure,
       endpoints,
       properties

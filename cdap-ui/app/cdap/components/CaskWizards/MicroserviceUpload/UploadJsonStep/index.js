@@ -25,8 +25,8 @@ require('./UploadJsonStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.json.contents,
-    error: state.upload.json.__error
+    file: state.uploadjson.contents,
+    error: state.uploadjson.__error
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {

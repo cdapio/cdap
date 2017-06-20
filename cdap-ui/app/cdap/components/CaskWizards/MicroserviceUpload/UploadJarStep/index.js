@@ -23,7 +23,8 @@ require('./UploadJarStep.scss');
 
 const mapStateWithDNDFileProps = (state) => {
   return {
-    file: state.upload.jar.contents
+    file: state.uploadjar.contents,
+    error: state.uploadjar.__error
   };
 };
 const mapDispatchWithDNDFileProps = (dispatch) => {

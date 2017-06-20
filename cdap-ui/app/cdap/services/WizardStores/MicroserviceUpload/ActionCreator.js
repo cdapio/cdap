@@ -25,13 +25,13 @@ import isEmpty from 'lodash/isEmpty';
 
 const uploadArtifact = () => {
   const state = MicroserviceUploadStore.getState();
-  let {name, version} = state.upload.jar.fileMetadataObj;
+  let {name, version} = state.uploadjar.fileMetadataObj;
   let namespace = NamespaceStore.getState().selectedNamespace;
   let url = `/namespaces/${namespace}/artifacts/${name}`;
   let headers = {
     'Content-Type': 'application/octet-stream',
     'Artifact-Version': version,
-    'Artifact-Extends': state.upload.json.artifactExtends
+    'Artifact-Extends': state.uploadjson.artifactExtends
   };
   if (window.CDAP_CONFIG.securityEnabled) {
     let token = cookie.load('CDAP_Auth_Token');
@@ -39,14 +39,14 @@ const uploadArtifact = () => {
       headers.Authorization = `Bearer ${token}`;
     }
   }
-  return UploadFile({url, fileContents: state.upload.jar.contents, headers});
+  return UploadFile({url, fileContents: state.uploadjar.contents, headers});
 };
 
 const uploadConfigurationJson = () => {
   const state = MicroserviceUploadStore.getState();
-  let {name:artifactId, version} = state.upload.jar.fileMetadataObj;
+  let {name:artifactId, version} = state.uploadjar.fileMetadataObj;
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let artifactConfigurationProperties = state.upload.json.properties;
+  let artifactConfigurationProperties = state.uploadjson.properties;
   return MyArtifactApi
     .loadPluginConfiguration({
       namespace,
@@ -59,7 +59,7 @@ const createApplication = () => {
   const state = MicroserviceUploadStore.getState();
   let namespace = NamespaceStore.getState().selectedNamespace;
   let { instanceName: appId, description: appDescription, version: appVersion, microserviceName: pluginId } = state.general;
-  let { name: artifactId, version: artifactVersion } = state.upload.jar.fileMetadataObj;
+  let { name: artifactId, version: artifactVersion } = state.uploadjar.fileMetadataObj;
   let { instances, vcores, memory, ethreshold } = state.configure;
 
   let config = {
@@ -83,23 +83,19 @@ const createApplication = () => {
   };
 
   let endpoints = state.endpoints;
-  if (!isNil(endpoints.fetch)) {
-    if (endpoints.in.length === 0 || isEmpty(endpoints.in[0])) {
-      delete endpoints.in;
-    } else {
-      if (typeof endpoints.in === 'string') {
-        endpoints.in = endpoints.in.split(',');
-      }
+  let endpointsObj = {};
 
-    }
-    if (endpoints.out.length === 0 || isEmpty(endpoints.out[0])) {
-      delete endpoints.out;
-    } else {
-      if (typeof endpoints.out === 'string') {
-        endpoints.out = endpoints.out.split(',');
-      }
-    }
-    config.configuration.endpoints = endpoints;
+  if (!isNil(endpoints.fetch)) {
+    endpointsObj.fetch = endpoints.fetch;
+  }
+  if (!isNil(endpoints.in) && !isEmpty(endpoints.in) && typeof endpoints.in === 'string') {
+    endpointsObj.in = endpoints.in.split(',');
+  }
+  if (!isNil(endpoints.out) && !isEmpty(endpoints.out) && typeof endpoints.out === 'string') {
+    endpointsObj.out = endpoints.out.split(',');
+  }
+  if (!isEmpty(endpointsObj)) {
+    config.configuration.endpoints = endpointsObj;
   }
 
   let properties = state.properties;
