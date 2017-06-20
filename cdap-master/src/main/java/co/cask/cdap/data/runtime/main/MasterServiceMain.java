@@ -36,8 +36,6 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.kerberos.SecurityUtil;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -81,7 +79,6 @@ import co.cask.cdap.security.guice.SecureStoreModules;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.store.guice.NamespaceStoreModule;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSortedMap;
@@ -926,11 +923,6 @@ public class MasterServiceMain extends DaemonMain {
           // Add HBase dependencies
           preparer.withDependencies(injector.getInstance(HBaseTableUtil.class).getClass());
 
-          // Add HBase DDL executor dependency
-          Class<? extends HBaseDDLExecutor> ddlExecutorClass = new HBaseDDLExecutorFactory(cConf, hConf)
-            .get().getClass();
-          preparer.withDependencies(ddlExecutorClass);
-
           // Add secure tokens
           if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
             preparer.addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
@@ -963,19 +955,8 @@ public class MasterServiceMain extends DaemonMain {
           // Set the container to use MainClassLoader for class rewriting
           preparer.setClassLoader(MainClassLoader.class.getName());
 
-          // We need to ship the extension jar to the system service containers. In order to do this we add it
-          // in the classpath by creating CombineClassLoader.
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-            Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()),
-            Collections.singleton(ddlExecutorClass.getClassLoader())
-          ));
-          TwillController controller;
-          try {
-            controller = preparer.start(
-              cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
+          TwillController controller = preparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+                                                      TimeUnit.SECONDS);
 
           // Add a listener to delete temp files when application started/terminated.
           Runnable cleanup = new Runnable() {
