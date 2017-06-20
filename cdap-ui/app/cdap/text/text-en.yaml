@@ -1232,7 +1232,7 @@ features:
         inboundLabel: Inbound queues
         inboundPlaceholder: Comma-separated list of inbound queues
         outboundLabel: Outbound queues
-        outboundPlaceholder: Comma-separated list of inbound queues
+        outboundPlaceholder: Comma-separated list of outbound queues
         shorttitle: Endpoint Specification
         title: Endpoint Specification
       success: You have successfully created the microservice "{appName}".
