@@ -242,8 +242,7 @@ export default class CreateDatasetBtn extends Component {
         kafkaBrokers: '${kafkaBrokers}',
         topic: '${topic}',
         tableName: 'kafka-offset',
-        format: 'binary',
-        schema: "{\"name\":\"kafkaAvroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"timestamp\",\"type\":[\"long\",\"null\"]},{\"name\":\"key\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}"
+        schema: "{\"name\":\"kafkaAvroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"message\",\"type\":\"bytes\""
       },
       'TPFSOrc': dataFormatProperties,
       'TPFSParquet': dataFormatProperties,

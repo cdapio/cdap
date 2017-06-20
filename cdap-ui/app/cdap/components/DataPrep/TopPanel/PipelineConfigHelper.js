@@ -174,20 +174,8 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
     type: 'record',
     fields: [
       {
-        name: 'timestamp',
-        type: ['long', 'null']
-      },
-      {
-        name: 'key',
-        type: ['string', 'null']
-      },
-      {
-        name: 'offset',
-        type: ['long', 'null']
-      },
-      {
-        name: 'body',
-        type: ['string', 'null']
+        name: 'message',
+        type: ['bytes', 'null']
       }
     ]
   };
