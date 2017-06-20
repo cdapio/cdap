@@ -83,7 +83,7 @@ const createApplication = () => {
   let artifact = {
     name: 'microservice-app',
     version: '1.0-SNAPSHOT',
-    scope: 'SYSTEM'
+    scope: 'user'
   };
 
   return MyPipelineApi

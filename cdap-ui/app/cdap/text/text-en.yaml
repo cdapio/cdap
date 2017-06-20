@@ -1006,7 +1006,7 @@ features:
       modalheadertitle: Add Library
     Microservice:
       actionbtn0: Create
-      description: A microservice is a CDAP application for creating microservices that communicate by passing messages over a reliable queue.
+      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystem communicating over well defined protocol.
       label: Microservice
       modalheadertitle: Create Microservice
     Plugins:
@@ -1190,36 +1190,36 @@ features:
       headerlabel: Add Microservice
       footertitle: Add Microservice
       Step1:
-        description: Provide information about the microservice you want to create.
+        description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
         namePlaceholder: Name of the microservice
-        shorttitle: General Information
+        shorttitle: General
         title: General
         versionLabel: Version
         versionPlaceholder: Version of the microservice
       Step2:
-        description: Upload your Microservice JAR
+        description: An Artifact that contains implementation of a microservice interface
         errorMessage: Invalid plugin. Plugin must be a JAR file.
         filePathLabel: Choose file
-        shorttitle: Upload Microservice JAR
-        title: Upload JAR
+        shorttitle: Microservice Artifact
+        title: Microservice Artifact
       Step3:
-        description: Upload your Microservice Configuration JSON
+        description: A configuration for this microservice artifact.
         errorMessage: Invalid microservice JSON. Microservice configuration should be in JSON format.
         errorMessageParentArtifacts: Invalid microservice JSON. Please specify parent artifacts.
         filePathLabel: Choose file
-        shorttitle: Upload Microservice Configuration JSON
-        title: Upload JAR
+        shorttitle: Artifact JSON
+        title: Artifact JSON
       Step4:
-        description: Configure the settings for your Microservice
+        description: Specify resources for the runtime of this microservice.
         instancesLabel: Instances
         instancesPlaceholder: The number of instances of the microservice
         memoryLabel: Memory
         memoryPlaceholder: The memory in MB for the microservice
-        shorttitle: Microservice Configuration
+        shorttitle: Configuration
         thresholdLabel: Threshold
         thresholdPlaceholder: TBD
-        title: Configure Microservice
+        title: Configuration
         vcoresLabel: Virtual Cores
         vcoresPlaceholder: The number of virtual cores for the microservice
       success: You have successfully uploaded the microservice "{appName}".
