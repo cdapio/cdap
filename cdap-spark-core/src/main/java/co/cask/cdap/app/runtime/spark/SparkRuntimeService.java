@@ -31,14 +31,11 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
@@ -50,10 +47,8 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.security.store.SecureStoreUtils;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -553,26 +548,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     classes.add(SparkMainWrapper.class);
     classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
 
-    // Add HBase DDL executor dependency
-    Class<? extends HBaseDDLExecutor> ddlExecutorClass =
-      new HBaseDDLExecutorFactory(cConf, runtimeContext.getConfiguration()).get().getClass();
-    classes.add(ddlExecutorClass);
-
     // Add KMS class
     if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
       classes.add(SecureStoreUtils.getKMSSecureStore());
     }
 
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-      Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader()),
-      Collections.singleton(ddlExecutorClass.getClassLoader())
-    ));
-
-    try {
-      appBundler.createBundle(tempLocation, classes);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
+    appBundler.createBundle(tempLocation, classes);
     return new File(tempLocation.toURI());
   }
 

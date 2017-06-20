@@ -19,6 +19,7 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -29,11 +30,13 @@ import co.cask.cdap.logging.LoggingUtil;
 import co.cask.cdap.logging.framework.distributed.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -43,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URISyntaxException;
@@ -116,6 +120,9 @@ public class MasterTwillApplication implements TwillApplication {
                               runnableLocalizeResources.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE),
                               extraClassPath);
     }
+
+    prepareHBaseDDLExecutorResources(tempDir, containerCConf,
+                                     runnableLocalizeResources.get(Constants.Service.DATASET_EXECUTOR));
 
     Path cConfPath = saveCConf(containerCConf, Files.createTempFile(tempDir, "cConf", ".xml"));
     Path hConfPath = saveHConf(hConf, Files.createTempFile(tempDir, "hConf", ".xml"));
@@ -400,5 +407,36 @@ public class MasterTwillApplication implements TwillApplication {
     // Explore also depends on MR, hence adding MR jars to the classpath.
     // Depending on how the cluster is configured, we might need to localize the MR framework tgz as well.
     extraClassPath.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+  }
+
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(Path tempDir, CConfiguration cConf,
+                                                Map<String, LocalizeResource> localizeResources) throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return;
+    }
+
+    List<File> files = DirUtils.listFiles(new File(ddlExecutorExtensionDir));
+    // Currently we only support single HBase DDL extension
+    File moduleDir = files.get(0);
+    if (!moduleDir.isDirectory()) {
+      throw new IllegalArgumentException(String.format("'%s' is not a directory.", moduleDir.getName()));
+    }
+
+    final File target = new File(tempDir.toFile(), "hbaseddlext.jar");
+    BundleJarUtil.createArchive(moduleDir, new OutputSupplier<JarOutputStream>() {
+      @Override
+      public JarOutputStream getOutput() throws IOException {
+        return new JarOutputStream(new FileOutputStream(target));
+      }
+    });
+
+    localizeResources.put("hbase.ddl.executor", new LocalizeResource(target, true));
+
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, "$PWD");
   }
 }
