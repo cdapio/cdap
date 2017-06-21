@@ -49,6 +49,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -80,6 +81,9 @@ import javax.annotation.Nullable;
 public class HBaseTable extends BufferingTable {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTable.class);
 
+  private static final String CONFIG_HBASE_CLIENT_SCANNER_CACHING = HConstants.HBASE_CLIENT_SCANNER_CACHING;
+  private static final String CONFIG_HBASE_CLIENT_CACHE_BLOCKS = "hbase.client.cache.blocks";
+
   public static final String DELTA_WRITE = "d";
   public static final String WRITE_POINTER = "wp";
   public static final String TX_MAX_LIFETIME_MILLIS_KEY = "cdap.tx.max.lifetime.millis";
@@ -98,6 +102,8 @@ public class HBaseTable extends BufferingTable {
   // briefly during startup, the coprocessor gets it from the operation's attribute.
   private final byte[] txMaxLifetimeMillis;
 
+  private final Map<String, String> arguments;
+  private final Map<String, String> properties;
 
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
@@ -119,6 +125,8 @@ public class HBaseTable extends BufferingTable {
     this.safeReadlessIncrements = args.containsKey(SAFE_INCREMENTS) && Boolean.valueOf(args.get(SAFE_INCREMENTS));
     this.txMaxLifetimeMillis = Bytes.toBytes(TimeUnit.SECONDS.toMillis(
       cConf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME, TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME)));
+    this.arguments = args;
+    this.properties = spec.getProperties();
   }
 
   @Override
@@ -347,10 +355,29 @@ public class HBaseTable extends BufferingTable {
   protected Scanner scanPersisted(co.cask.cdap.api.dataset.table.Scan scan) throws Exception {
     ScanBuilder hScan = tableUtil.buildScan();
     hScan.addFamily(columnFamily);
-    // todo: should be configurable
-    // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
-    hScan.setCacheBlocks(false);
-    hScan.setCaching(1000);
+
+    // TODO (CDAP-11954): use common utility method to extract these configs
+    if (scan.getProperties().containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
+      hScan.setCacheBlocks(Boolean.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
+    } else if (arguments.containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
+      hScan.setCacheBlocks(Boolean.valueOf(arguments.get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
+    } else if (properties.containsKey(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)) {
+      hScan.setCacheBlocks(Boolean.valueOf(properties.get(CONFIG_HBASE_CLIENT_CACHE_BLOCKS)));
+    } else {
+      // NOTE: by default we assume scanner is used in mapreduce job, hence no cache blocks
+      hScan.setCacheBlocks(false);
+    }
+
+    if (scan.getProperties().containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
+      hScan.setCaching(Integer.valueOf(scan.getProperties().get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
+    } else if (arguments.containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
+      hScan.setCaching(Integer.valueOf(arguments.get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
+    } else if (properties.containsKey(CONFIG_HBASE_CLIENT_SCANNER_CACHING)) {
+      hScan.setCaching(Integer.valueOf(properties.get(CONFIG_HBASE_CLIENT_SCANNER_CACHING)));
+    } else {
+      // NOTE: by default we use this hard-coded value, for backwards-compatibility with CDAP<4.1.2|4.2.1|4.3
+      hScan.setCaching(1000);
+    }
 
     byte[] startRow = scan.getStartRow();
     byte[] stopRow = scan.getStopRow();

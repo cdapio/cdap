@@ -19,6 +19,9 @@ package co.cask.cdap.api.dataset.table;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -32,6 +35,8 @@ public class Scan {
   private final byte[] stopRow;
   @Nullable
   private final Filter filter;
+
+  private final Map<String, String> properties = new HashMap<>();
 
   /**
    * Creates {@link Scan} for a given start and stop row keys.
@@ -54,6 +59,17 @@ public class Scan {
     this.filter = filter;
   }
 
+  /**
+   * Set a property for the Scan. Properties may be used to optimize performance,
+   * and may not apply in all environments.
+   * 
+   * @param property the name of the property
+   * @param value the value of the property
+   */
+  public void setProperty(String property, String value) {
+    properties.put(property, value);
+  }
+
   @Nullable
   public byte[] getStartRow() {
     return startRow;
@@ -69,12 +85,17 @@ public class Scan {
     return filter;
   }
 
+  public Map<String, String> getProperties() {
+    return Collections.unmodifiableMap(properties);
+  }
+
   @Override
   public String toString() {
     return "Scan{" +
       "startRow=" + Bytes.toStringBinary(startRow) +
       ", stopRow=" + Bytes.toStringBinary(stopRow) +
       ", filter=" + filter +
+      ", properties=" + properties +
       '}';
   }
 }
