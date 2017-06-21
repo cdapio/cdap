@@ -206,14 +206,9 @@ public abstract class ProtoTrigger implements Trigger {
     public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatus) {
       super(Type.PROGRAM_STATUS);
 
-      if (programId.getType() != ProgramType.WORKFLOW) {
-        throw new IllegalArgumentException(String.format(
-                  "Cannot trigger program %s of type %s: Only workflows can be triggered",
-                  programId.getProgram(), programId.getType()));
-      }
       if (programStatus.contains(ProgramStatus.INITIALIZING) || programStatus.contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
-                  "Cannot trigger program %s of status %s: Only COMPLETED, FAILED, KILLED statuses are supported",
+                  "Cannot allow triggering program %s with status %s: COMPLETED, FAILED, KILLED statuses are supported",
                   programId.getProgram(), programId.getType()));
       }
 
