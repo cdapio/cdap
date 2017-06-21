@@ -955,7 +955,6 @@ public class MasterServiceMain extends DaemonMain {
           // Set the container to use MainClassLoader for class rewriting
           preparer.setClassLoader(MainClassLoader.class.getName());
 
-          // Add a listener to delete temp files when application started/terminated.
           TwillController controller = preparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                       TimeUnit.SECONDS);
 

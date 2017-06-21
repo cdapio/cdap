@@ -115,14 +115,15 @@ public class MasterTwillApplication implements TwillApplication {
 
     prepareLogSaverResources(tempDir, containerCConf,
                              runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
+
+    prepareHBaseDDLExecutorResources(tempDir, containerCConf,
+                                     runnableLocalizeResources.get(Constants.Service.DATASET_EXECUTOR));
+
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       prepareExploreResources(tempDir, hConf,
                               runnableLocalizeResources.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE),
                               extraClassPath);
     }
-
-    prepareHBaseDDLExecutorResources(tempDir, containerCConf,
-                                     runnableLocalizeResources.get(Constants.Service.DATASET_EXECUTOR));
 
     Path cConfPath = saveCConf(containerCConf, Files.createTempFile(tempDir, "cConf", ".xml"));
     Path hConfPath = saveHConf(hConf, Files.createTempFile(tempDir, "hConf", ".xml"));
@@ -420,23 +421,9 @@ public class MasterTwillApplication implements TwillApplication {
       return;
     }
 
-    List<File> files = DirUtils.listFiles(new File(ddlExecutorExtensionDir));
-    // Currently we only support single HBase DDL extension
-    File moduleDir = files.get(0);
-    if (!moduleDir.isDirectory()) {
-      throw new IllegalArgumentException(String.format("'%s' is not a directory.", moduleDir.getName()));
-    }
-
     final File target = new File(tempDir.toFile(), "hbaseddlext.jar");
-    BundleJarUtil.createArchive(moduleDir, new OutputSupplier<JarOutputStream>() {
-      @Override
-      public JarOutputStream getOutput() throws IOException {
-        return new JarOutputStream(new FileOutputStream(target));
-      }
-    });
-
-    localizeResources.put("hbase.ddl.executor", new LocalizeResource(target, true));
-
-    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, "$PWD");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.put(target.getName(), new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
   }
 }
