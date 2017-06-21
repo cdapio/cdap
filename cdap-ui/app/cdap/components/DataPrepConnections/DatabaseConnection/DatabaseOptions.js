@@ -162,7 +162,7 @@ export default class DatabaseOptions extends Component {
           className="upload"
           onClick={this.caskMarket.bind(this, db)}
         >
-          Cask Market
+          {T.translate(`${PREFIX}.market`)}
         </span>
         <span> | </span>
       </span>
