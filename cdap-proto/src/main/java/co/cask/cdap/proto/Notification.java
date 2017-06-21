@@ -65,14 +65,6 @@ public class Notification {
     return new Notification(Notification.Type.PARTITION, properties);
   }
 
-  public static Notification forProgramStatus(ProgramId programId, RunId runId, ProgramStatus programStatus) {
-    Map<String, String> properties = new HashMap<>();
-    properties.put("programId", programId.toString());
-    properties.put("programRunId", runId.getId());
-    properties.put("programStatus", programStatus.toString());
-    return new Notification(Notification.Type.PROGRAM_STATUS, properties);
-  }
-
   public Type getNotificationType() {
     return notificationType;
   }

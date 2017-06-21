@@ -116,7 +116,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
                                 MessagingService messagingService) {
-    super(cConf);
+    super(cConf, messagingService);
     this.injector = injector;
     this.cConf = cConf;
     this.hConf = hConf;

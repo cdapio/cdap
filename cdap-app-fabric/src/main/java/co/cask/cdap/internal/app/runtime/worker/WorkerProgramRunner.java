@@ -70,7 +70,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService) {
-    super(cConf);
+    super(cConf, messagingService);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
