@@ -466,7 +466,7 @@ public class TransactionManager extends AbstractService {
 
   public synchronized TransactionSnapshot getCurrentState() {
     return TransactionSnapshot.copyFrom(System.currentTimeMillis(), readPointer, lastWritePointer,
-                                        invalidTxList.toRawList(), inProgress, committingChangeSets,
+                                        invalidTxList, inProgress, committingChangeSets,
                                         committedChangeSets);
   }
 

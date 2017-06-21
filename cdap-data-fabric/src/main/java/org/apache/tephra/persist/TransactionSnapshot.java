@@ -19,10 +19,11 @@
 package org.apache.tephra.persist;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.apache.tephra.ChangeId;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.manager.InvalidTxList;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -164,7 +165,7 @@ public class TransactionSnapshot implements TransactionVisibilityState {
    * Creates a new {@code TransactionSnapshot} instance with copies of all of the individual collections.
    * @param readPointer current transaction read pointer
    * @param writePointer current transaction write pointer
-   * @param invalid current list of invalid write pointers
+   * @param invalidTxList current list of invalid write pointers
    * @param inProgress current map of in-progress write pointers to expiration timestamps
    * @param committing current map of write pointers to change sets which have passed {@code canCommit()} but not
    *                   yet committed
@@ -172,12 +173,12 @@ public class TransactionSnapshot implements TransactionVisibilityState {
    * @return a new {@code TransactionSnapshot} instance
    */
   public static TransactionSnapshot copyFrom(long snapshotTime, long readPointer,
-                                             long writePointer, Collection<Long> invalid,
+                                             long writePointer, InvalidTxList invalidTxList,
                                              NavigableMap<Long, TransactionManager.InProgressTx> inProgress,
                                              Map<Long, Set<ChangeId>> committing,
                                              NavigableMap<Long, Set<ChangeId>> committed) {
-    // copy invalid IDs
-    Collection<Long> invalidCopy = Lists.newArrayList(invalid);
+    // copy invalid IDs, after sorting
+    Collection<Long> invalidCopy = new LongArrayList(invalidTxList.toSortedArray());
     // copy in-progress IDs and expirations
     NavigableMap<Long, TransactionManager.InProgressTx> inProgressCopy = Maps.newTreeMap(inProgress);
 
