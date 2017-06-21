@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -49,6 +51,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -85,6 +88,7 @@ class NotificationSubscriberService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final CConfiguration cConf;
+  private final Store store;
   private ListeningExecutorService taskExecutorService;
   private volatile boolean stopping = false;
 
@@ -93,7 +97,8 @@ class NotificationSubscriberService extends AbstractIdleService {
   NotificationSubscriberService(MessagingService messagingService,
                                 CConfiguration cConf,
                                 DatasetFramework datasetFramework,
-                                TransactionSystemClient txClient) {
+                                TransactionSystemClient txClient,
+                                Store store) {
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
@@ -104,6 +109,7 @@ class NotificationSubscriberService extends AbstractIdleService {
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.datasetFramework = datasetFramework;
+    this.store = store;
   }
 
   @Override
@@ -324,13 +330,19 @@ class NotificationSubscriberService extends AbstractIdleService {
       throws IOException, DatasetManagementException, NotFoundException {
 
       String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
+      String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+
       ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
 
       if (programIdString == null || programStatus == null) {
         return;
       }
       ProgramId programId = ProgramId.fromString(programIdString);
+      if (programId instanceof WorkflowId) {
+        WorkflowToken token = store.getWorkflowToken((WorkflowId) programId, programRunId);
+        // TODO now what?
+      }
 
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
       addNotificationToSchedules(getSchedules(context, triggerKeyForProgramStatus), notification);
