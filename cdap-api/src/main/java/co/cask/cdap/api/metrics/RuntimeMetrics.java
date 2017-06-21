@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Provides access to metrics about running processors.
+ * Provides access to metrics about processors.
  */
 @Beta
 public interface RuntimeMetrics {

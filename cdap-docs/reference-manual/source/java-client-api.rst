@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2017 Cask Data, Inc.
 
 .. _client-api:
 
@@ -97,17 +97,17 @@ ApplicationClient
   ApplicationClient appClient = new ApplicationClient(clientConfig);
 
   // Fetch the list of applications
-  List<ApplicationRecord> apps = appClient.list(Id.Namespace.DEFAULT);
+  List<ApplicationRecord> apps = appClient.list(NamespaceId.DEFAULT);
 
   // Deploy an application
   File appJarFile = new File("your-app.jar");
-  appClient.deploy(Id.Namespace.DEFAULT, appJarFile);
+  appClient.deploy(NamespaceId.DEFAULT, appJarFile);
 
   // Delete an application
-  appClient.delete(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
+  appClient.delete(NamespaceId.DEFAULT.app("Purchase"));
 
   // List programs belonging to an application
-  appClient.listPrograms(Id.Application.from(Id.Namespace.DEFAULT, "Purchase"));
+  appClient.listPrograms(NamespaceId.DEFAULT.app("Purchase"));
 
 .. _dataset-client:
 
@@ -121,10 +121,10 @@ DatasetClient
   DatasetClient datasetClient = new DatasetClient(clientConfig);
 
   // Fetch the list of datasets
-  List<DatasetSpecificationSummary> datasets = datasetClient.list(Id.Namespace.DEFAULT);
+  List<DatasetSpecificationSummary> datasets = datasetClient.list(NamespaceId.DEFAULT);
 
   // Create a dataset
-  Id.DatasetInstance datasetId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "someDataset");
+  DatasetId datasetId = NamespaceId.DEFAULT.dataset("someDataset");
   datasetClient.create(datasetId, "someDatasetType");
 
   // Truncate a dataset
@@ -146,14 +146,14 @@ DatasetModuleClient
 
   // Add a dataset module
   File moduleJarFile = createAppJarFile(SomeDatasetModule.class);
-  Id.DatasetModule datasetModuleId = Id.DatasetModule.from(Id.Namespace.DEFAULT, "someDatasetModule");
+  DatasetModuleId datasetModuleId = NamespaceId.DEFAULT.datasetModule("someDatasetModule");
   datasetModuleClient.add(datasetModuleId, SomeDatasetModule.class.getName(), moduleJarFile);
 
   // Fetch the dataset module information
   DatasetModuleMeta datasetModuleMeta = datasetModuleClient.get(datasetModuleId);
 
   // Delete all dataset modules
-  datasetModuleClient.deleteAll(Id.Namespace.DEFAULT);
+  datasetModuleClient.deleteAll(NamespaceId.DEFAULT);
 
 .. _dataset-type-client:
 
@@ -167,10 +167,10 @@ DatasetTypeClient
   DatasetTypeClient datasetTypeClient = new DatasetTypeClient(clientConfig);
 
   // Fetch the dataset type information using the type name
-  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, "someDatasetType"));
+  DatasetTypeMeta datasetTypeMeta = datasetTypeClient.get(NamespaceId.DEFAULT.datasetType("someDatasetType"));
 
   // Fetch the dataset type information using the classname
-  datasetTypeMeta = datasetTypeClient.get(Id.DatasetType.from(Id.Namespace.DEFAULT, SomeDataset.class.getName()));
+  datasetTypeMeta = datasetTypeClient.get(NamespaceId.DEFAULT.datasetType(SomeDataset.class.getName()));
 
 .. _metrics-client:
 
@@ -184,7 +184,8 @@ MetricsClient
   MetricsClient metricsClient = new MetricsClient(clientConfig);
 
   // Fetch the total number of events that have been processed by a flowlet
-  RuntimeMetrics metric = metricsClient.getFlowletMetrics(Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
+  RuntimeMetrics metric = metricsClient.getFlowletMetrics(NamespaceId.DEFAULT.app("HelloWorld").flow("someFlow").flowlet("someFlowlet"));
+  long processed = metric.getProcessed();
 
 .. _monitor-client:
 
@@ -233,13 +234,13 @@ PreferencesClient
   preferencesClient.deleteInstancePreferences();
 
   // Set preferences of MyApp application which is deployed in the Dev namespace
-  preferencesClient.setApplicationPreferences(Id.Application.from("Dev", "MyApp"), propMap);
+  preferencesClient.setApplicationPreferences(Ids.namespace("Dev").app("MyApp"), propMap);
 
   // Get only the preferences of MyApp application which is deployed in the Dev namespace
-  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(Id.Application.from("Dev", "MyApp"), false);
+  Map<String, String> appPrefs = preferencesClient.getApplicationPreferences(Ids.namespace("Dev").app("MyApp"), false);
 
   // Get the resolved preferences (collapsed with higher level(s) of preferences)
-  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(Id.Application.from("Dev", "MyApp"), true);
+  Map<String, String> resolvedAppPrefs = preferencesClient.getApplicationPreferences(Ids.namespace("Dev").app("MyApp"), true);
 
 .. _program-client:
 
@@ -253,31 +254,31 @@ ProgramClient
   ProgramClient programClient = new ProgramClient(clientConfig);
 
   // Start a service in the WordCount example
-  programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"));
+  programClient.start(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"));
 
   // formatted in JSON
-  programClient.getLiveInfo(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
+  programClient.getLiveInfo(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
 
   // Fetch program logs in the WordCount example
-  programClient.getProgramLogs(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.SERVICE, "RetrieveCounts"), 0, Long.MAX_VALUE);
+  programClient.getProgramLogs(NamespaceId.DEFAULT.app("WordCount").service("RetrieveCounts"), 0, Long.MAX_VALUE);
 
   // Scale a service in the HelloWorld example
-  programClient.setServiceInstances(Id.Service.from(Id.Namespace.DEFAULT, "HelloWorld", "greet"), 3);
+  programClient.setServiceInstances(NamespaceId.DEFAULT.app("HelloWorld").service("greet"), 3);
 
   // Stop a service in the HelloWorld example
-  programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
+  programClient.stop(NamespaceId.DEFAULT.app("HelloWorld").service("greet"));
 
   // Start, scale, and stop a flow in the WordCount example
-  programClient.start(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
+  programClient.start(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
 
   // Fetch the last 10 flow runs in the WordCount example
-  programClient.getAllProgramRuns(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"), 0, Long.MAX_VALUE, 10);
+  programClient.getAllProgramRuns(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"), 0, Long.MAX_VALUE, 10);
 
   // Scale a flowlet in the WordCount example
-  programClient.setFlowletInstances(Id.Flow.Flowlet.from(Id.Application.from(Id.Namespace.DEFAULT, "WordCount"), "WordCountFlow", "Tokenizer"), 3);
+  programClient.setFlowletInstances(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow").flowlet("Tokenizer"), 3);
 
   // Stop a flow in the WordCount example
-  programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "WordCount", ProgramType.FLOW, "WordCountFlow"));
+  programClient.stop(NamespaceId.DEFAULT.app("WordCount").flow("WordCountFlow"));
 
 .. _query-client:
 
@@ -291,7 +292,7 @@ QueryClient
   QueryClient queryClient = new QueryClient(clientConfig);
 
   // Perform an ad-hoc query using the Purchase example
-  ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(Id.Namespace.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
+  ListenableFuture<ExploreExecutionResult> resultFuture = queryClient.execute(NamespaceId.DEFAULT, "SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')");
   ExploreExecutionResult results = resultFuture.get();
 
   // Fetch schema
@@ -316,7 +317,7 @@ ServiceClient
   ServiceClient serviceClient = new ServiceClient(clientConfig);
 
   // Fetch service information using the service in the PurchaseApp example
-  ServiceSpecification serviceSpec = serviceClient.get(Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
+  ServiceSpecification serviceSpec = serviceClient.get(NamespaceId.DEFAULT.app("PurchaseApp").service("CatalogLookup"));
 
 .. _stream-client:
 
@@ -330,10 +331,10 @@ StreamClient
   StreamClient streamClient = new StreamClient(clientConfig);
 
   // Fetch the stream list
-  List streams = streamClient.list(Id.Namespace.DEFAULT);
+  List streams = streamClient.list(NamespaceId.DEFAULT);
 
   // Create a stream, using the Purchase example
-  Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "purchases");
+  StreamId streamId = NamespaceId.DEFAULT.stream("purchases");
   streamClient.create(streamId);
 
   // Fetch a stream's properties
@@ -357,7 +358,7 @@ StreamClient
   streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
   // Write asynchronously to a stream
-  streamId = Id.Stream.from(Id.Namespace.DEFAULT, "testAsync");
+  streamId = NamespaceId.DEFAULT.stream("testAsync");
   events = Lists.newArrayList();
 
   streamClient.create(streamId);
