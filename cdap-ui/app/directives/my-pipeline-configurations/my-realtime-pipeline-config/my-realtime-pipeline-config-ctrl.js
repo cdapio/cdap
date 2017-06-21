@@ -64,7 +64,7 @@ class MyRealtimePipelineConfigCtrl {
       'pairs': HydratorPlusPlusHydratorService.convertMapToKeyValuePairs(this.store.getCustomConfigForDisplay())
     };
 
-    if (this.customEngineConfig.pairs.length === 0 && !this.isDisabled) {
+    if (this.customEngineConfig.pairs.length === 0 && !this.isDeployed) {
       this.customEngineConfig.pairs.push({
         key: '',
         value: '',
@@ -74,7 +74,7 @@ class MyRealtimePipelineConfigCtrl {
 
     this.activeTab = 'runtimeArgs';
     // studio config, but not in preview mode
-    if (!this.isDisabled && !this.showPreviewConfig) {
+    if (!this.isDeployed && !this.showPreviewConfig) {
       this.activeTab = 'pipelineConfig';
     }
 
@@ -145,7 +145,7 @@ class MyRealtimePipelineConfigCtrl {
 
   applyConfig() {
     this.applyRuntimeArguments();
-    if (!this.isDisabled) {
+    if (!this.isDeployed) {
       this.store.setBackpressure(this.backpressure);
       this.store.setNumExecutors(this.numExecutors);
       this.store.setCustomConfig(this.HydratorPlusPlusHydratorService.convertKeyValuePairsToMap(this.customEngineConfig));
@@ -199,7 +199,7 @@ class MyRealtimePipelineConfigCtrl {
     let runtimeArgsMissingValues = false;
     let customConfigMissingValues = false;
 
-    if (this.isDisabled || this.showPreviewConfig) {
+    if (this.isDeployed || this.showPreviewConfig) {
       runtimeArgsMissingValues = this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
     }
     customConfigMissingValues = this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.customEngineConfig);
