@@ -66,12 +66,11 @@ const DSV = (state = initialState, action = defaultAction) => {
   }
 };
 
-const DSVStore = createStore(
-  combineReducers({
-    DSV
-  }),
-  initialState,
-  window.devToolsExtension ? window.devToolsExtension() : f => f
-);
+const createDSVStore = (initialState = initialState) => {
+  return createStore(
+    combineReducers({DSV}),
+    initialState
+  );
+};
 
-export default DSVStore;
+export { createDSVStore };

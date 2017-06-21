@@ -21,6 +21,8 @@ import T from 'i18n-react';
 
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
+import DSVInboundQueues from './DSVInboundQueues.js';
+import DSVOutboundQueues from './DSVOutboundQueues.js';
 
 const mapStateToFetchSizeProps = (state) => {
   return {
@@ -28,20 +30,6 @@ const mapStateToFetchSizeProps = (state) => {
     type: 'number',
     min: '1',
     placeholder: T.translate('features.Wizard.MicroserviceUpload.Step5.fetchPlaceholder')
-  };
-};
-const mapStateToInboundQueuesProps = (state) => {
-  return {
-    value: state.endpoints.in,
-    type: 'text',
-    placeholder: T.translate('features.Wizard.MicroserviceUpload.Step5.inboundPlaceholder')
-  };
-};
-const mapStateToOutboundQueuesProps = (state) => {
-  return {
-    value: state.endpoints.out,
-    type: 'text',
-    placeholder: T.translate('features.Wizard.MicroserviceUpload.Step5.outboundPlaceholder')
   };
 };
 
@@ -54,35 +42,9 @@ const mapDispatchToFetchSizeProps = (dispatch) => {
   };
 };
 
-const mapDispatchToInboundQueuesProps = (dispatch) => {
-  return {
-    onChange: (e) => (dispatch({
-      type: MicroserviceUploadActions.setInboundQueues,
-      payload: { inboundQueues: e.target.value}
-    }))
-  };
-};
-
-const mapDispatchToOutboundQueuesProps = (dispatch) => {
-  return {
-    onChange: (e) => (dispatch({
-      type: MicroserviceUploadActions.setOutboundQueues,
-      payload: { outboundQueues: e.target.value}
-    }))
-  };
-};
-
 const InputFetchSize = connect(
   mapStateToFetchSizeProps,
   mapDispatchToFetchSizeProps
-)(InputWithValidations);
-const InputInboundQueues = connect(
-  mapStateToInboundQueuesProps,
-  mapDispatchToInboundQueuesProps
-)(InputWithValidations);
-const InputOutboundQueues = connect(
-  mapStateToOutboundQueuesProps,
-  mapDispatchToOutboundQueuesProps
 )(InputWithValidations);
 
 export default function EndpointStep() {
@@ -103,12 +65,13 @@ export default function EndpointStep() {
             <InputFetchSize />
           </Col>
         </FormGroup>
+
         <FormGroup row>
           <Col xs="3">
             <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step5.inboundLabel')}</Label>
           </Col>
           <Col xs="7">
-            <InputInboundQueues />
+            <DSVInboundQueues />
           </Col>
         </FormGroup>
         <FormGroup row>
@@ -116,7 +79,7 @@ export default function EndpointStep() {
             <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step5.outboundLabel')}</Label>
           </Col>
           <Col xs="7">
-            <InputOutboundQueues />
+            <DSVOutboundQueues />
           </Col>
         </FormGroup>
       </Form>

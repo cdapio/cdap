@@ -16,9 +16,9 @@
 
 import React, { Component, PropTypes } from 'react';
 import {connect , Provider} from 'react-redux';
-import DSVActions from 'components/DSVEditor/DSVActions';
-import DSVStore from 'components/DSVEditor/DSVStore';
-import DSVRow from 'components/DSVEditor/DSVRow';
+import DSVActions from './DSVActions';
+import {createDSVStore} from './DSVStore';
+import DSVRow from './DSVRow';
 
 require('./DSVEditor.scss');
 
@@ -66,25 +66,24 @@ let DSVRowWrapper = connect(
 export default class DSVEditor extends Component {
   constructor(props) {
     super(props);
+    let { values, onChange } = props;
 
     this.state = {
-      rows: this.props.values
+      rows: values
     };
 
-    this.sub = DSVStore.subscribe(() => {
-      let rows = DSVStore.getState().DSV.rows;
+    this.DSVStore = createDSVStore({values});
 
-      this.setState({
-        rows
-      });
-
-      this.props.onChange(rows);
+    this.sub = this.DSVStore.subscribe(() => {
+      let rows = this.DSVStore.getState().DSV.rows;
+      onChange(rows);
+      this.setState({ rows });
     });
 
-    DSVStore.dispatch({
+    this.DSVStore.dispatch({
       type: DSVActions.onUpdate,
       payload: {
-        rows: this.props.values
+        rows: values
       }
     });
   }
@@ -97,7 +96,6 @@ export default class DSVEditor extends Component {
 
   shouldComponentUpdate(nextProps) {
     let check = this.state.rows.length !== nextProps.values.length;
-
     return check;
   }
 
@@ -105,7 +103,7 @@ export default class DSVEditor extends Component {
     if (this.sub) {
       this.sub();
     }
-    DSVStore.dispatch({
+    this.DSVStore.dispatch({
       type: DSVActions.onReset
     });
   }
@@ -117,7 +115,7 @@ export default class DSVEditor extends Component {
           this.state.rows.map( (row, index) => {
             return (
               <div key={row.uniqueId}>
-                <Provider store={DSVStore}>
+                <Provider store={this.DSVStore}>
                   <DSVRowWrapper index={index} />
                 </Provider>
               </div>

@@ -83,17 +83,36 @@ const createApplication = () => {
   };
 
   let endpoints = state.endpoints;
-  let endpointsObj = {};
+  let endpointsObj = {
+    fetch: '',
+    in: [],
+    out: []
+  };
 
-  if (!isNil(endpoints.fetch)) {
+  if (typeof(endpoints.fetch) !== 'number') {
+    delete endpointsObj.fetch;
+  } else {
     endpointsObj.fetch = endpoints.fetch;
   }
-  if (!isNil(endpoints.in) && !isEmpty(endpoints.in) && typeof endpoints.in === 'string') {
-    endpointsObj.in = endpoints.in.split(',');
+
+  endpoints.in.forEach((inboundQueue) => {
+    if (inboundQueue.property.length > 0) {
+      endpointsObj.in.push(inboundQueue.property);
+    }
+  });
+  if (endpointsObj.in.length === 0) {
+    delete endpointsObj.in;
   }
-  if (!isNil(endpoints.out) && !isEmpty(endpoints.out) && typeof endpoints.out === 'string') {
-    endpointsObj.out = endpoints.out.split(',');
+
+  endpoints.out.forEach((outboundQueue) => {
+    if (outboundQueue.property.length > 0) {
+      endpointsObj.out.push(outboundQueue.property);
+    }
+  });
+  if (endpointsObj.out.length === 0) {
+    delete endpointsObj.out;
   }
+
   if (!isEmpty(endpointsObj)) {
     config.configuration.endpoints = endpointsObj;
   }

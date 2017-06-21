@@ -18,6 +18,7 @@ import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/
 import MicroserviceUploadWizardConfig from 'services/WizardConfigs/MicroserviceUploadWizardConfig';
 import {getArtifactNameAndVersion} from 'services/helpers';
 import head from 'lodash/head';
+import cloneDeep from 'lodash/cloneDeep';
 import shortid from 'shortid';
 import T from 'i18n-react';
 
@@ -55,8 +56,14 @@ const defaultConfigureState = Object.assign({
 
 const defaultEndpointsState = Object.assign({
   fetch: 100,
-  in: '',
-  out: ''
+  in: [{
+    property: '',
+    uniqueId : shortid.generate()
+  }],
+  out: [{
+    property: '',
+    uniqueId : shortid.generate()
+  }],
 }, defaultState, { __complete: true });
 
 const defaultPropertiesState = Object.assign({
@@ -278,12 +285,12 @@ const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
       break;
     case MicroserviceUploadActions.setInboundQueues:
       stateCopy = Object.assign({}, state, {
-        in: action.payload.inboundQueues
+        in: cloneDeep(action.payload.inboundQueues)
       });
       break;
     case MicroserviceUploadActions.setOutboundQueues:
       stateCopy = Object.assign({}, state, {
-        out: action.payload.outboundQueues
+        out: cloneDeep(action.payload.outboundQueues)
       });
       break;
     case MicroserviceUploadActions.onError:
