@@ -108,6 +108,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   // package visible for the dataset definition
   static final String EMBEDDED_TABLE_NAME = "it"; // indexed table
   static final String INDEX_COLUMNS = TRIGGER_KEY_COLUMN; // trigger key
+  static final MigrationStatus MIGRATION_COMPLETE = new MigrationStatus(true, null);
+  static final MigrationStatus MIGRATION_NOT_STARTED = new MigrationStatus(false, null);
 
   private static final Gson GSON =
     new GsonBuilder()
@@ -172,10 +174,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       this.lastMigrationCompleteNamespace = lastMigrationCompleteNamespace;
     }
 
-    static MigrationStatus getMigrationCompleteStatus() {
-      return new MigrationStatus(true, null);
-    }
-
     public boolean isMigrationCompleted() {
       return migrationCompleted;
     }
@@ -189,11 +187,11 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   public MigrationStatus getMigrationStatus() {
     Row row = store.get(MIGRATION_COMPLETE_STATUS_ROW_BYTES);
     if (row.isEmpty()) {
-      return new MigrationStatus(false, null);
+      return MIGRATION_NOT_STARTED;
     }
     byte[] statusBytes = row.get(MIGRATION_COMPLETE_STATUS_COLUMN_BYTES);
     if (Arrays.equals(MIGRATION_COMPLETE_BYTES, statusBytes)) {
-      return MigrationStatus.getMigrationCompleteStatus();
+      return MIGRATION_COMPLETE;
     }
     NamespaceId namespace = NamespaceId.fromString(Bytes.toString(statusBytes));
     return new MigrationStatus(false, namespace);
