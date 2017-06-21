@@ -72,7 +72,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               SecureStore secureStore, SecureStoreManager secureStoreManager,
                               MessagingService messagingService,
                               DefaultArtifactManager defaultArtifactManager) {
-    super(cConf);
+    super(cConf, messagingService);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;

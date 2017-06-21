@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -37,6 +38,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -46,10 +49,12 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRunnerWithPlugin.class);
   protected final CConfiguration cConf;
+  protected final MessagingService messagingService;
   private static final Gson GSON = new Gson();
 
-  public AbstractProgramRunnerWithPlugin(CConfiguration cConf) {
+  public AbstractProgramRunnerWithPlugin(CConfiguration cConf, MessagingService messagingService) {
     this.cConf = cConf;
+    this.messagingService = messagingService;
   }
 
   /**
@@ -72,15 +77,21 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
   /**
    * Sends a notification to TMS under the program status event topic about the status of a program
    *
-   * @param messagingService
    * @param programId the program id
    * @param runId the program run id
    * @param programStatus the program status
+   * @param userArguments the user arguments of the program
    */
-  protected void sendProgramStatusNotification(MessagingService messagingService, ProgramId programId,
-                                               RunId runId, ProgramStatus programStatus) {
+  protected void sendProgramStatusNotification(ProgramId programId, RunId runId, ProgramStatus programStatus,
+                                               Arguments userArguments) {
     // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
-    Notification programStatusNotification = Notification.forProgramStatus(programId, runId, programStatus);
+    Map<String, String> properties = new HashMap<String, String>();
+    properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
+    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
+    properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
+    // To be passed into the next program
+    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
 
     TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     try {

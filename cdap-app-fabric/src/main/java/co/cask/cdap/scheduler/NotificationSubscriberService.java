@@ -323,8 +323,8 @@ class NotificationSubscriberService extends AbstractIdleService {
     protected void updateJobQueue(DatasetContext context, Notification notification)
       throws IOException, DatasetManagementException, NotFoundException {
 
-      String programIdString = notification.getProperties().get("programId");
-      String programStatusString = notification.getProperties().get("programStatus");
+      String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
+      String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
       ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
 
       if (programIdString == null || programStatus == null) {

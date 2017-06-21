@@ -92,7 +92,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService) {
-    super(cConf);
+    super(cConf, messagingService);
     this.programRunnerFactory = programRunnerFactory;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
@@ -189,7 +189,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
-              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.COMPLETED);
+              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.COMPLETED,
+                                            options.getUserArguments());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -204,7 +205,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
-              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.KILLED);
+              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.KILLED, options.getUserArguments());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -244,7 +245,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              sendProgramStatusNotification(messagingService, program.getId(), runId, ProgramStatus.FAILED);
+              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.FAILED, options.getUserArguments());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
