@@ -379,7 +379,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         int interval = Integer.parseInt(val);
         if (interval < 1) {
-          throw new NumberFormatException("Must be at least 1.");
+          // note: this will be caught right below, to produce a similar message as an exception thrown by parseInt()
+          throw new NumberFormatException("Must be at least 1");
         }
         reportInterval = interval;
       } catch (NumberFormatException e) {
