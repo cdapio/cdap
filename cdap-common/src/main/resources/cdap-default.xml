@@ -96,6 +96,16 @@
     </description>
   </property>
 
+
+  <property>
+    <name>mapreduce.status.report.interval.seconds</name>
+    <value>60</value>
+    <description>
+      Time in seconds between reporting the status, including retrieval of
+      the job's task report, while a MapReduce program is running.
+    </description>
+  </property>
+
   <property>
     <name>master.manage.hbase.coprocessors</name>
     <value>true</value>
