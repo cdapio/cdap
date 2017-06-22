@@ -225,7 +225,8 @@
                 <span class="schedule-values">
                   <select class="form-control small-dropdown"
                           ng-model="SchedulerCtrl.maxConcurrentRuns"
-                          ng-options="option as option for option in SchedulerCtrl.CONCURRENT_RUNS_OPTIONS">
+                          ng-options="option as option for option in SchedulerCtrl.CONCURRENT_RUNS_OPTIONS"
+                          ng-change="SchedulerCtrl.isScheduleChange = true">
                   </select>
                 </span>
               </div>
