@@ -394,12 +394,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // until job is complete report stats
     while (!job.isComplete()) {
       if (System.currentTimeMillis() >= nextTimeToReport) {
+        // note: for a very large job, this may take several or even tens of seconds (it retrieves the task reports)
         metricsWriter.reportStats();
         nextTimeToReport = System.currentTimeMillis() + reportIntervalMillis;
       }
-
-      // we report to metrics backend every second, so 1 sec is enough here. That's mapreduce job anyways (not
-      // short) ;)
+      // we want to poll for job completion frequently, but once a second should be fine for a long-running MR job
       TimeUnit.SECONDS.sleep(1);
     }
 
