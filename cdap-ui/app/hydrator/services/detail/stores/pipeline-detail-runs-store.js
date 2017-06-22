@@ -34,8 +34,9 @@ angular.module(PKG.name + '.feature.hydrator')
         type: app.type,
         metricProgramType: app.metricProgramType,
         statistics: '',
-        macros: {},
-        userRuntimeArguments: {}
+        macrosMap: {},
+        userRuntimeArgumentsMap: {},
+        runtimeArgsForDisplay: {}
       };
     };
     this.setDefaults({});
@@ -99,11 +100,15 @@ angular.module(PKG.name + '.feature.hydrator')
     };
 
     this.getMacros = function() {
-      return this.state.macros;
+      return this.state.macrosMap;
     };
 
     this.getUserRuntimeArguments = function() {
-      return this.state.userRuntimeArguments;
+      return this.state.userRuntimeArgumentsMap;
+    };
+
+    this.getRuntimeArgsForDisplay = function() {
+      return this.state.runtimeArgsForDisplay;
     };
 
     this.registerOnChangeListener = function(callback) {
@@ -139,20 +144,24 @@ angular.module(PKG.name + '.feature.hydrator')
       this.emitChange();
     };
 
-    this.setMacros = function(macros) {
-      this.state.macros = macros;
+    this.setMacros = function(macrosMap) {
+      this.state.macrosMap = macrosMap;
       this.emitChange();
     };
 
-    this.setUserRuntimeArguments = function(args) {
-      this.state.userRuntimeArguments = args;
+    this.setUserRuntimeArguments = function(argsMap) {
+      this.state.userRuntimeArgumentsMap = argsMap;
       this.emitChange();
     };
 
-    this.setMacrosAndUserRuntimeArguments = function(macros, args) {
-      this.state.macros = macros;
-      this.state.userRuntimeArguments = args;
+    this.setMacrosAndUserRuntimeArguments = function(macrosMap, argsMap) {
+      this.state.macrosMap = macrosMap;
+      this.state.userRuntimeArgumentsMap = argsMap;
       this.emitChange();
+    };
+
+    this.setRuntimeArgsForDisplay = function(args) {
+      this.state.runtimeArgsForDisplay = args;
     };
 
     this.init = function(app) {
@@ -227,4 +236,5 @@ angular.module(PKG.name + '.feature.hydrator')
     dispatcher.register('onSetMacros', this.setMacros.bind(this));
     dispatcher.register('onSetUserRuntimeArguments', this.setUserRuntimeArguments.bind(this));
     dispatcher.register('onSetMacrosAndUserRuntimeArguments', this.setMacrosAndUserRuntimeArguments.bind(this));
+    dispatcher.register('onSetRuntimeArgsForDisplay', this.setRuntimeArgsForDisplay.bind(this));
   });

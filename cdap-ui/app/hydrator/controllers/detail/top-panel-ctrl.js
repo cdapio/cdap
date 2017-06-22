@@ -168,8 +168,11 @@ class HydratorDetailTopPanelController {
         value: '',
         uniqueId: 'id-' + this.uuid.v4()
       }];
+      this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
       return this.$q.when(this.runtimeArguments);
     }
+
+    let currentRuntimeArgsForDisplay = this.HydratorPlusPlusDetailRunsStore.getRuntimeArgsForDisplay();
 
     // if there are non-zero number of macros
     if (Object.keys(this.macrosMap).length !== 0) {
@@ -213,7 +216,8 @@ class HydratorDetailTopPanelController {
             }
 
             if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
-              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
+              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+              this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
             }
             this.validToStartOrSchedule = this.isValidToStartOrSchedule();
             return this.runtimeArguments;
@@ -223,7 +227,8 @@ class HydratorDetailTopPanelController {
 
     // if there are zero macros, but there are user-set runtime arguments
     } else {
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
       this.validToStartOrSchedule = this.isValidToStartOrSchedule();
       return this.$q.when(this.runtimeArguments);
     }
@@ -235,6 +240,7 @@ class HydratorDetailTopPanelController {
     this.userRuntimeArgumentsMap = macros.userRuntimeArgumentsMap;
     // have to do this because cannot do two dispatch in a row
     this.HydratorPlusPlusDetailActions.setMacrosAndUserRuntimeArguments(this.macrosMap, this.userRuntimeArgumentsMap);
+    this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
     this.validToStartOrSchedule = this.isValidToStartOrSchedule();
   }
 
