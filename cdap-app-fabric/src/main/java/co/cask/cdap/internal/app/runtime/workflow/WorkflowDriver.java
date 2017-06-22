@@ -150,8 +150,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private Workflow workflow;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
-                 WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
-                 MetricsCollectionService metricsCollectionService,
+                 WorkflowSpecification workflowSpec, @Nullable WorkflowProgramInfo workflowProgramInfo,
+                 ProgramRunnerFactory programRunnerFactory, MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
@@ -171,6 +171,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          program, options);
 
     this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+    if (workflowProgramInfo != null) {
+      this.basicWorkflowToken.mergeToken(workflowProgramInfo.getWorkflowToken());
+    }
+
     this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null,
                                                          basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, datasetFramework, txClient,

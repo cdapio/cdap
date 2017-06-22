@@ -60,6 +60,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionFailureException;
@@ -68,8 +69,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -82,6 +85,7 @@ class NotificationSubscriberService extends AbstractIdleService {
   // Sampling log only log once per 10000
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
   private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
@@ -253,21 +257,6 @@ class NotificationSubscriberService extends AbstractIdleService {
       return emptyFetch;
     }
 
-    /**
-     * Add enabled schedules and the received notification to the job queue
-     *
-     * @param allScheduleRecords the schedule records
-     * @param notification the received notification from TMS
-     */
-    protected void addNotificationToSchedules(Collection<ProgramScheduleRecord> allScheduleRecords,
-                                         Notification notification) {
-      for (ProgramScheduleRecord schedule : allScheduleRecords) {
-        if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
-          jobQueue.addNotification(schedule, notification);
-        }
-      }
-    }
-
     abstract void updateJobQueue(DatasetContext context, Notification notification) throws Exception;
   }
 
@@ -314,8 +303,13 @@ class NotificationSubscriberService extends AbstractIdleService {
       if (datasetIdString == null) {
         return;
       }
-      String datasetTriggerKey = Schedulers.triggerKeyForPartition(DatasetId.fromString(datasetIdString));
-      addNotificationToSchedules(getSchedules(context, datasetTriggerKey), notification);
+      DatasetId datasetId = DatasetId.fromString(datasetIdString);
+      for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
+        // ignore disabled schedules
+        if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
+          jobQueue.addNotification(schedule, notification);
+        }
+      }
     }
   }
 
@@ -331,26 +325,51 @@ class NotificationSubscriberService extends AbstractIdleService {
 
       String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
       String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
+      String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
-
       ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
 
-      if (programIdString == null || programStatus == null) {
+      if (programIdString == null || programRunId == null) {
         return;
       }
+
+      Map<String, String> properties = new HashMap<>();
+      properties.put(ProgramOptionConstants.USER_OVERRIDES, userOverridesString);
+
+      // Add workflow token if triggering program was a Workflow
       ProgramId programId = ProgramId.fromString(programIdString);
-      if (programId instanceof WorkflowId) {
-        WorkflowToken token = store.getWorkflowToken((WorkflowId) programId, programRunId);
-        // TODO now what?
+      if (programId.getType() == ProgramType.WORKFLOW) {
+        WorkflowId workflowId = programId.getParent().workflow(programId.getProgram());
+        WorkflowToken token = store.getWorkflowToken(workflowId, programRunId);
+
+        Map<String, String> workflowInfoProvider = new HashMap<>();
+        workflowInfoProvider.put(ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram());
+        workflowInfoProvider.put(ProgramOptionConstants.WORKFLOW_RUN_ID, programRunId);
+        workflowInfoProvider.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?");
+        workflowInfoProvider.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, "doesn't matter?");
+        workflowInfoProvider.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
+        properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(workflowInfoProvider, STRING_STRING_MAP));
       }
+      Notification workflowNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
 
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
-      addNotificationToSchedules(getSchedules(context, triggerKeyForProgramStatus), notification);
+
+      for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
+        if (schedule.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED) {
+          // If the triggered program is a workflow, send the notification that contains the workflow token to be used
+          if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW) {
+            jobQueue.addNotification(schedule, workflowNotification);
+          } else {
+            // Send the original notification
+            jobQueue.addNotification(schedule, notification);
+          }
+        }
+      }
     }
   }
 
   private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, String triggerKey)
-          throws IOException, DatasetManagementException {
+    throws IOException, DatasetManagementException {
     return Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey);
   }
 }

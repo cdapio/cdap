@@ -61,6 +61,21 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
   }
 
   /**
+   * Some Dummy Token Action
+   */
+  public static class DummyTokenAction extends AbstractCustomAction {
+    private static final Logger LOG = LoggerFactory.getLogger(SomeDummyAction.class);
+    public static final String KEY = "dummy.key";
+    public static final String VALUE = "dummy.value";
+
+    @Override
+    public void run() {
+      LOG.info("Ran some dummy action");
+      getContext().getWorkflowToken().put(KEY, VALUE);
+    }
+  }
+
+  /**
    * Another Workflow
    */
   public static class AnotherWorkflow extends AbstractWorkflow {

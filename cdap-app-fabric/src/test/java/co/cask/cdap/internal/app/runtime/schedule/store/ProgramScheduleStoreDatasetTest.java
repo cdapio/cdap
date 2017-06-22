@@ -60,7 +60,6 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
   private static final ApplicationId APP11_ID = NS_ID.app("app1", "1.1");
   private static final ApplicationId APP2_ID = NS_ID.app("app2");
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
-  private static final WorkflowId PROG11_ID = APP11_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final WorkflowId PROG3_ID = APP2_ID.workflow("wf3");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
@@ -111,9 +110,9 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))
                                .isEmpty());
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))
-                .isEmpty());
+                               .isEmpty());
         Assert.assertTrue(store.findSchedules(Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))
-                .isEmpty());
+                               .isEmpty());
       }
     });
     txExecutor.execute(new TransactionExecutor.Subroutine() {
@@ -127,16 +126,16 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
       public void apply() throws Exception {
         // event for ProgramStatus triggers only sched31
         Assert.assertEquals(ImmutableSet.of(sched31),
-                toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                            toScheduleSet(store.findSchedules(
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
 
         Assert.assertEquals(ImmutableSet.of(sched31),
-                toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+                            toScheduleSet(store.findSchedules(
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
 
         Assert.assertEquals(ImmutableSet.of(sched31),
-                toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+                            toScheduleSet(store.findSchedules(
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
 
         // event for DS1 should trigger only sched11
         Assert.assertEquals(ImmutableSet.of(sched11),
@@ -187,11 +186,11 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
                             toScheduleSet(store.findSchedules(
                                           Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
         Assert.assertEquals(ImmutableSet.of(),
-                toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+                            toScheduleSet(store.findSchedules(
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
         Assert.assertEquals(ImmutableSet.of(),
-                toScheduleSet(store.findSchedules(
-                        Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+                            toScheduleSet(store.findSchedules(
+                                          Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
       }
     });
   }

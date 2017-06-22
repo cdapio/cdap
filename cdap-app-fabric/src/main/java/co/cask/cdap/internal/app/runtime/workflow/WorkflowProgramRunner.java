@@ -122,10 +122,16 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final RunId runId = ProgramRunners.getRunId(options);
 
+    // A Workflow could have also gotten the workflow token from another Workflow
+    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(options.getArguments());
+    DatasetFramework programDatasetFramework = workflowInfo == null ?
+            datasetFramework :
+            NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
+
     // Setup dataset framework context, if required
-    if (datasetFramework instanceof ProgramContextAware) {
+    if (programDatasetFramework instanceof ProgramContextAware) {
       ProgramId programId = program.getId();
-      ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
+      ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
 
     // List of all Closeable resources that needs to be cleanup
@@ -136,10 +142,11 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
-                                                 metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                                 txClient, runtimeStore, cConf, pluginInstantiator,
-                                                 secureStore, secureStoreManager, messagingService);
+      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, workflowInfo,
+                                                 programRunnerFactory, metricsCollectionService,
+                                                 programDatasetFramework, discoveryServiceClient, txClient,
+                                                 runtimeStore, cConf, pluginInstantiator, secureStore,
+                                                 secureStoreManager, messagingService);
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
