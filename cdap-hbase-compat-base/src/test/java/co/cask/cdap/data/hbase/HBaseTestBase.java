@@ -84,6 +84,18 @@ public abstract class HBaseTestBase extends ExternalResource {
     getConfiguration().setInt("hbase.regionserver.port", 0);
     getConfiguration().setInt("hbase.regionserver.info.port", 0);
 
+    // Setup test case specific configurations.
+    // The system properties are usually setup by HBaseTestFactory class using @ClassRule
+    for (String key : System.getProperties().stringPropertyNames()) {
+      if (key.startsWith(HBaseTestFactory.PROPERTY_PREFIX)) {
+        String value = System.getProperty(key);
+        getConfiguration().set(key.substring(HBaseTestFactory.PROPERTY_PREFIX.length()), System.getProperty(key));
+        LOG.info("Custom configuration set: {} = {}", key, value);
+
+        System.clearProperty(key);
+      }
+    }
+
     doStartHBase();
   }
 
