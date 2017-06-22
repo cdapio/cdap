@@ -392,11 +392,16 @@ features:
         actions:
           bulkset: Set column names
           cleanse: Cleanse column names
+          replaceColumns: Replace column names
         Bulkset:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
           textareaplaceholder: "Enter column names seperated by comma. Special character (eg., @ - #) are not allowed"
+        ReplaceColumns:
+          modalTitle: Replace column names
+          patternLabel: Pattern
+          replaceWithLabel: Replace with
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.

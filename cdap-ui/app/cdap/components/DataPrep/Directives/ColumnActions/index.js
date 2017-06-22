@@ -22,6 +22,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Bulkset from 'components/DataPrep/Directives/ColumnActions/Bulkset';
+import ReplaceColumns from 'components/DataPrep/Directives/ColumnActions/ReplaceColumns';
 import T from 'i18n-react';
 require('./ColumnActions.scss');
 
@@ -41,6 +42,11 @@ export default class ColumnActions extends Component {
         {
           name: 'cleanse',
           label: T.translate(`${PREFIX}.actions.cleanse`)
+        },
+        {
+          name: 'replacecolumns',
+          label: T.translate(`${PREFIX}.actions.replaceColumns`),
+          component: <ReplaceColumns onClose={this.resetActiveDirective} />
         }
       ]
     };
