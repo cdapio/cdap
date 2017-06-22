@@ -124,13 +124,24 @@ public interface ScheduleBuilder {
 
   /**
    * Create a schedule which is triggered whenever at least a certain number of new partitions
-   * are added to a certain dataset.
+   * are added to a certain dataset in the same namespace as the app.
    *
    * @param datasetName the name of the dataset in the same namespace of the app
    * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
    * @return this {@link ScheduleBuilder}
    */
   ScheduleCreationBuilder triggerOnPartitions(String datasetName, int numPartitions);
+
+  /**
+   * Create a schedule which is triggered whenever at least a certain number of new partitions
+   * are added to a certain dataset in the specified namespace.
+   *
+   * @param datasetNamespace the namespace where the dataset is defined
+   * @param datasetName the name of the dataset in the specified namespace of the app
+   * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
+   * @return this {@link ScheduleBuilder}
+   */
+  ScheduleCreationBuilder triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions);
 
   /**
    * Create a schedule which is triggered when the given program in the given namespace, application, and

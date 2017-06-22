@@ -124,6 +124,13 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   }
 
   @Override
+  public ScheduleCreationBuilder triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions) {
+    NamespaceId namespaceId = new NamespaceId(datasetNamespace);
+    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
+                                       new PartitionTriggerBuilder(namespaceId.dataset(datasetName), numPartitions));
+  }
+
+  @Override
   public ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, String appVersion,
                                                         ProgramType programType, String program,
                                                         ProgramStatus... programStatus) {
