@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -179,6 +180,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
     SystemArguments.validateTransactionTimeout(options.getUserArguments().asMap(), cConf);
   }
 
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
+                                                Map<String, LocalizeResource> localizeResources) throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return;
+    }
+
+    final File target = new File(tempDir, "hbaseddlext.jar");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.put(target.getName(), new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
+  }
+
   @Override
   public final ProgramController run(final Program program, final ProgramOptions oldOptions) {
 
@@ -245,6 +263,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
+
+      prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       final String programOptions = GSON.toJson(options, ProgramOptions.class);
 
