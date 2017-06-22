@@ -75,7 +75,7 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
   }
 
   /**
-   * Sends a notification to TMS under the program status event topic about the status of a program
+   * Sends a notification under the program status event topic about the status of a program
    *
    * @param programId the program id
    * @param runId the program run id
@@ -90,9 +90,8 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
-    // To be passed into the next program
-    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
 
+    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     try {
       messagingService.publish(StoreRequestBuilder.of(topicId)

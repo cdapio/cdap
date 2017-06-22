@@ -16,14 +16,11 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.twill.api.RunId;
 
 import java.util.Collection;
 import java.util.HashMap;
