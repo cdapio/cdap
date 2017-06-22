@@ -39,7 +39,6 @@ public class ScheduleCreationBuilder {
   protected final List<? extends Constraint> constraints;
   protected final long timeoutMillis;
   protected final TriggerBuilder triggerBuilder;
-  protected Trigger trigger;
 
   public ScheduleCreationBuilder(String name, String description, String programName, Map<String, String> properties,
                                  List<? extends Constraint> constraints, long timeoutMillis,
@@ -51,7 +50,6 @@ public class ScheduleCreationBuilder {
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
     this.triggerBuilder = triggerBuilder;
-    this.trigger = null;
   }
 
   public String getName() {
@@ -59,7 +57,8 @@ public class ScheduleCreationBuilder {
   }
 
   public ScheduleCreationSpec build(String namespace, String applicationName, String applicationVersion) {
-    trigger = triggerBuilder.build(namespace, applicationName, applicationVersion);
-    return new ScheduleCreationSpec(this);
+    return new ScheduleCreationSpec(name, description, programName, properties,
+                                    triggerBuilder.build(namespace, applicationName, applicationVersion),
+                                    constraints, timeoutMillis);
   }
 }

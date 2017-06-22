@@ -194,7 +194,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * Schedules a program, using the given scheduleCreationSpec.
    *
    * @param scheduleCreationBuilder defines the schedule. Can be built using the builder obtained
-   *                             from {@link #buildSchedule(String, ProgramType, String)}
+   *                                from {@link #buildSchedule(String, ProgramType, String)}
    */
   protected void schedule(ScheduleCreationBuilder scheduleCreationBuilder) {
     configurer.schedule(scheduleCreationBuilder);

@@ -49,16 +49,6 @@ public class ScheduleCreationSpec {
     this.timeoutMillis = timeoutMillis;
   }
 
-  public ScheduleCreationSpec(ScheduleCreationBuilder creationBuilder) {
-    this.name = creationBuilder.name;
-    this.description = creationBuilder.description;
-    this.programName = creationBuilder.programName;
-    this.properties = creationBuilder.properties;
-    this.trigger = creationBuilder.trigger;
-    this.constraints = creationBuilder.constraints;
-    this.timeoutMillis = creationBuilder.timeoutMillis;
-  }
-
   public String getName() {
     return name;
   }

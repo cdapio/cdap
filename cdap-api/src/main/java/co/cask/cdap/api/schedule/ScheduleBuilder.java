@@ -134,7 +134,7 @@ public interface ScheduleBuilder {
 
   /**
    * Create a schedule which is triggered when the given program in the given namespace, application, and
-   * application version transitions to the given program status.
+   * application version transitions to any one of the given program statuses.
    *
    * @param programNamespace the namespace where this program is defined
    * @param application the name of the application where this program is defined

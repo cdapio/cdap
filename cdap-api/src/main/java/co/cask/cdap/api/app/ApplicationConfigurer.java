@@ -121,7 +121,7 @@ public interface ApplicationConfigurer extends PluginConfigurer {
    * ScheduleCreationSpec when the application is built and an ApplicationSpecification object is created.
    *
    * @param scheduleCreationBuilder defines the schedule. Can be built using the builder obtained
-   *                             from {@link #buildSchedule(String, ProgramType, String)}
+   *                                from {@link #buildSchedule(String, ProgramType, String)}
    */
   void schedule(ScheduleCreationBuilder scheduleCreationBuilder);
 }
