@@ -24,6 +24,8 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.dataset.table.Tables;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -48,6 +50,7 @@ import com.google.gson.Gson;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -56,6 +59,7 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.DetachedTxSystemClient;
@@ -88,8 +92,11 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableTest.class);
   private static final HBaseTableDefinition TABLE_DEFINITION = new HBaseTableDefinition("foo");
 
+  private static final long CLIENT_SCANNER_TIMEOUT_MILLIS = 3000;
+
   @ClassRule
-  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+  public static final HBaseTestBase TEST_HBASE =
+    new HBaseTestFactory(HConstants.HBASE_CLIENT_SCANNER_TIMEOUT_PERIOD, CLIENT_SCANNER_TIMEOUT_MILLIS).get();
 
   private static HBaseTableUtil hBaseTableUtil;
   private static CConfiguration cConf;
@@ -100,7 +107,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
-    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getConfiguration()).get();
     ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
     ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
   }
@@ -113,6 +120,45 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
                                         TEST_HBASE.getHBaseAdmin().getConfiguration());
     ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
     ddlExecutor.deleteNamespaceIfExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+  }
+
+  @Test
+  public void testScannerCache() throws Exception {
+    String tableName = "scanCache";
+    int numRows = 2;
+    DatasetAdmin admin = getTableAdmin(CONTEXT1, tableName);
+    admin.create();
+    try {
+      // write some rows and commit
+      Transaction tx1 = txClient.startShort();
+      Table myTable1 = getTable(CONTEXT1, tableName);
+      ((TransactionAware) myTable1).startTx(tx1);
+      for (int i = 0; i < numRows; i++) {
+        myTable1.put(new Put("" + i, "x", "y"));
+      }
+      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      Assert.assertTrue(((TransactionAware) myTable1).commitTx());
+      Assert.assertTrue(txClient.commit(tx1));
+
+      // Now scan and sleep for a while after each result
+      Transaction tx2 = txClient.startShort();
+      Table myTable2 = getTable(CONTEXT1, tableName, DatasetProperties.of(
+        ImmutableMap.of(HConstants.HBASE_CLIENT_SCANNER_CACHING, "1")));
+      ((TransactionAware) myTable2).startTx(tx2);
+
+      Scanner scanner = myTable2.scan(new co.cask.cdap.api.dataset.table.Scan(null, null));
+      int scanCount = 0;
+      while (scanner.next() != null) {
+        scanCount++;
+        TimeUnit.MILLISECONDS.sleep(5000 + CLIENT_SCANNER_TIMEOUT_MILLIS);
+      }
+      scanner.close();
+      txClient.abort(tx2);
+      Assert.assertEquals(numRows, scanCount);
+
+    } finally {
+      admin.drop();
+    }
   }
 
   @Override
