@@ -398,11 +398,26 @@ features:
         actions:
           bulkset: Set column names
           cleanse: Cleanse column names
+          replaceColumns: Replace column names
         Bulkset:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
           textareaplaceholder: "Enter column names seperated by comma. Special character (eg., @ - #) are not allowed"
+        ReplaceColumns:
+          applyButton: Replace
+          ignoreCase: Ignore Case
+          modalTitle: Replace Column Names
+          PatternInputPlaceholder:
+            PREFIX: "e.g. ^body_, work_"
+          patternLabel: Pattern
+          PatternTypeLabel:
+            CUSTOM: Replace Pattern
+            PATTERN: Remove Pattern
+            PREFIX: Remove Prefix
+          replaceLabel: Replace
+          replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
+          withLabel: With
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
