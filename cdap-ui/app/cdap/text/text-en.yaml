@@ -1084,7 +1084,7 @@ features:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
-      sizeLabel: Size(MB)
+      sizeLabel: Size
     nameLabel: Name
     ProgramTable:
       lastStartedLabel: Last Started
