@@ -73,15 +73,15 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   }
 
 
-  vm.formatOutput = () => {
+  vm.formatOutput = (updateDefault = false) => {
     vm.error = '';
     if (typeof vm.schemaObj !== 'string') {
       vm.model = JSON.stringify(vm.schemaObj);
-      if (vm.updateOutputSchema) {
-        vm.updateOutputSchema({outputSchema: vm.model});
-      }
     } else {
       vm.model = vm.schemaObj;
+    }
+    if (vm.updateOutputSchema && updateDefault) {
+      vm.updateOutputSchema({outputSchema: vm.model});
     }
   };
 
