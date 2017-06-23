@@ -333,7 +333,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Transaction tx = txClient.startLong();
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
-        CConfiguration cConfCopy = cConf;
+        CConfiguration cConfCopy = CConfiguration.copy(cConf);
         if (hbaseDDLExecutorDirectory != null) {
           cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
         }

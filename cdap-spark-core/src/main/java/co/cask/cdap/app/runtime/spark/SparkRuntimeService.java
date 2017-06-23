@@ -158,10 +158,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                       new DataSetFieldSetter(runtimeContext.getDatasetCache()),
                       new MetricsFieldSetter(runtimeContext));
 
-
+    // Since we are updating cConf, make a copy of it to which updates will be made.
+    CConfiguration cConfCopy = CConfiguration.copy(cConf);
     // Creates a temporary directory locally for storing all generated files.
-    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    File tempDir = DirUtils.createTempDir(new File(cConfCopy.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConfCopy.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     tempDir.mkdirs();
     this.cleanupTask = createCleanupTask(tempDir, System.getProperties());
     try {
@@ -197,12 +198,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
 
         localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
-        sparkJar = buildDependencyJar(tempDir);
+        sparkJar = buildDependencyJar(tempDir, cConfCopy);
         localizeResources.add(new LocalizeResource(sparkJar, true));
 
-        prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
+        prepareHBaseDDLExecutorResources(tempDir, cConfCopy, localizeResources);
 
-        localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
+        localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
 
         if (pluginArchive != null) {
           localizeResources.add(new LocalizeResource(pluginArchive, true));
@@ -228,7 +229,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         // Localize the hConf file to executor nodes
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
 
-        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConfCopy)) {
           extraJars.add(LocalizationUtils.getLocalizedName(jarURI));
           localizeResources.add(new LocalizeResource(jarURI, false));
         }
@@ -528,10 +529,11 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * user spark program.
    *
    * @param targetDir directory for the file to be created in
+   * @param cConfCopy copy of {@link CConfiguration}
    * @return {@link File} of the dependency jar in the given target directory
    * @throws IOException if failed to package the jar
    */
-  private File buildDependencyJar(File targetDir) throws IOException {
+  private File buildDependencyJar(File targetDir, CConfiguration cConfCopy) throws IOException {
     Location tempLocation = new LocalLocationFactory(targetDir).create(CDAP_SPARK_JAR);
 
     final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
@@ -554,7 +556,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
 
     // Add KMS class
-    if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
+    if (SecureStoreUtils.isKMSBacked(cConfCopy) && SecureStoreUtils.isKMSCapable()) {
       classes.add(SecureStoreUtils.getKMSSecureStore());
     }
 
