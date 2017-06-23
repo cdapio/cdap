@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,6 @@ $text-color: #333333;
   cursor: pointer;
 
   .btn-icon {
-
     display: inline-flex;
     flex-direction: row;
     align-items: center;
@@ -60,14 +59,10 @@ $text-color: #333333;
     display: inline-block;
     word-break: hidden;
     white-space: pre-wrap;
-    white-space: -moz-pre-wrap;
-    white-space: -pre-wrap;
-    white-space: -o-pre-wrap;
     word-wrap: break-word;
   }
 
   .btn-text {
-    padding-right: 10px;
     display: inline-block;
     vertical-align: middle;
     line-height: normal;
