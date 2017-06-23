@@ -247,6 +247,7 @@ export default class DataPrepTable extends Component {
                               value={head.name}
                               onWarning={this.showWarningMessage.bind(this, index)}
                               allowSpace={false}
+                              shouldSelect={true}
                             />
                             {
                               head.showWarning ?
