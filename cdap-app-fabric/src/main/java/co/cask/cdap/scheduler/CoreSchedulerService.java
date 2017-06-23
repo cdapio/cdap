@@ -26,6 +26,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -65,6 +66,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Service that implements the Scheduler interface. This implements the actual Scheduler using
@@ -75,6 +77,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   private final Transactional transactional;
   private final Service internalService;
+  private final AtomicBoolean schedulerStarted;
   private final DatasetFramework datasetFramework;
   private final SchedulerService scheduler;
 
@@ -93,6 +96,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       Transactions.createTransactional(datasetCache), RetryStrategies.retryOnConflict(10, 100L));
 
     this.scheduler = schedulerService;
+    this.schedulerStarted = new AtomicBoolean();
     // Use a retry on failure service to make it resilience to transient service unavailability during startup
     this.internalService = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override
@@ -109,6 +113,8 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             cleanupJobs();
             constraintCheckerService.startAndWait();
             notificationSubscriberService.startAndWait();
+            schedulerStarted.set(true);
+            LOG.info("Started core scheduler service.");
           }
 
           @Override
@@ -116,6 +122,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             notificationSubscriberService.stopAndWait();
             constraintCheckerService.stopAndWait();
             schedulerService.stopAndWait();
+            LOG.info("Stopped core scheduler service.");
           }
         };
       }
@@ -154,13 +161,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
     throws Exception {
 
     List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
-    boolean migrateComplete = execute(new StoreTxRunnable<Boolean, RuntimeException>() {
-      @Override
-      public Boolean run(ProgramScheduleStoreDataset store) {
-        return store.isMigrationComplete();
-      }
-    }, RuntimeException.class);
-    if (migrateComplete) {
+    ProgramScheduleStoreDataset.MigrationStatus migrationStatus =
+      execute(new StoreTxRunnable<ProgramScheduleStoreDataset.MigrationStatus, RuntimeException>() {
+        @Override
+        public ProgramScheduleStoreDataset.MigrationStatus run(ProgramScheduleStoreDataset store) {
+          return store.getMigrationStatus();
+        }
+      }, RuntimeException.class);
+    if (migrationStatus.isMigrationCompleted()) {
       LOG.debug("Schedule migration has already been completed for all namespaces. Skip migration.");
       return; // no need to migrate if migration is complete
     }
@@ -175,22 +183,23 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
         return n1.getNamespaceId().toString().compareTo(n2.getNamespaceId().toString());
       }
     });
-    String completedNamespace = null;
+    NamespaceId lastCompleteNamespace = migrationStatus.getLastMigrationCompleteNamespace();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       final NamespaceId namespaceId = namespaceMeta.getNamespaceId();
-      // Since namespaces are sorted in lexicographical order, if the completedNamespace is larger than
+      // Since namespaces are sorted in lexicographical order, if the lastCompleteNamespace is larger or equal to
       // the current namespace lexicographically, then the current namespace is already migrated. Skip this namespace.
-      if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
+      if (lastCompleteNamespace != null && lastCompleteNamespace.toString().compareTo(namespaceId.toString()) >= 0) {
         LOG.debug("Skip migrating schedules in namespace '{}', since namespace with lexicographical order " +
-                    "is smaller than the last migration completed namespace '{}' should already be migrated.",
-                  namespaceId, completedNamespace);
+                    "smaller or equal to the last migration completed namespace '{}' should already be migrated.",
+                  namespaceId, lastCompleteNamespace);
         continue;
       }
       LOG.info("Starting schedule migration for namespace '{}'", namespaceId);
-      completedNamespace = execute(new StoreTxRunnable<String, RuntimeException>() {
+      execute(new StoreTxRunnable<Void, RuntimeException>() {
         @Override
-        public String run(ProgramScheduleStoreDataset store) {
-          return store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
+        public Void run(ProgramScheduleStoreDataset store) {
+          store.migrateFromAppMetadataStore(namespaceId, appMetaStore, scheduler);
+          return null;
         }
       }, RuntimeException.class);
     }
@@ -203,6 +212,13 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       }
     }, RuntimeException.class);
     LOG.info("Schedule migration is completed for all namespaces.");
+  }
+
+  private void checkStarted() {
+    if (schedulerStarted.get()) {
+      return;
+    }
+    throw new ServiceUnavailableException("Core scheduler");
   }
 
   @Override
@@ -223,6 +239,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Override
   public void addSchedules(final Iterable<? extends ProgramSchedule> schedules)
     throws AlreadyExistsException, BadRequestException {
+    checkStarted();
     for (ProgramSchedule schedule: schedules) {
       if (!schedule.getProgramId().getType().equals(ProgramType.WORKFLOW)) {
         throw new BadRequestException(String.format(
@@ -253,6 +270,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void updateSchedule(final ProgramSchedule schedule) throws NotFoundException, BadRequestException {
+    checkStarted();
     ProgramScheduleStatus previousStatus = getScheduleStatus(schedule.getScheduleId());
     deleteSchedule(schedule.getScheduleId());
     try {
@@ -276,6 +294,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void enableSchedule(final ScheduleId scheduleId) throws NotFoundException, ConflictException {
+    checkStarted();
     try {
       execute(new StoreTxRunnable<Void, Exception>() {
         @Override
@@ -302,6 +321,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void disableSchedule(final ScheduleId scheduleId) throws NotFoundException, ConflictException {
+    checkStarted();
     try {
       execute(new StoreAndQueueTxRunnable<Void, Exception>() {
         @Override
@@ -360,6 +380,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void deleteSchedules(final Iterable<? extends ScheduleId> scheduleIds) throws NotFoundException {
+    checkStarted();
     execute(new StoreAndQueueTxRunnable<Void, NotFoundException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store, JobQueueDataset queue) throws NotFoundException {
@@ -376,6 +397,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void deleteSchedules(final ApplicationId appId) {
+    checkStarted();
     execute(new StoreAndQueueTxRunnable<Void, RuntimeException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store, JobQueueDataset queue) {
@@ -392,6 +414,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public void deleteSchedules(final ProgramId programId) {
+    checkStarted();
     execute(new StoreAndQueueTxRunnable<Void, RuntimeException>() {
       @Override
       public Void run(ProgramScheduleStoreDataset store, JobQueueDataset queue) {
@@ -408,6 +431,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public ProgramSchedule getSchedule(final ScheduleId scheduleId) throws NotFoundException {
+    checkStarted();
     return execute(new StoreTxRunnable<ProgramSchedule, NotFoundException>() {
       @Override
       public ProgramSchedule run(ProgramScheduleStoreDataset store) throws NotFoundException {
@@ -418,6 +442,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public ProgramScheduleStatus getScheduleStatus(final ScheduleId scheduleId) throws NotFoundException {
+    checkStarted();
     return execute(new StoreTxRunnable<ProgramScheduleStatus, NotFoundException>() {
       @Override
       public ProgramScheduleStatus run(ProgramScheduleStoreDataset store) throws NotFoundException {
@@ -428,6 +453,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public List<ProgramSchedule> listSchedules(final ApplicationId appId) {
+    checkStarted();
     return execute(new StoreTxRunnable<List<ProgramSchedule>, RuntimeException>() {
       @Override
       public List<ProgramSchedule> run(ProgramScheduleStoreDataset store) {
@@ -438,6 +464,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public List<ProgramSchedule> listSchedules(final ProgramId programId) {
+    checkStarted();
     return execute(new StoreTxRunnable<List<ProgramSchedule>, RuntimeException>() {
       @Override
       public List<ProgramSchedule> run(ProgramScheduleStoreDataset store) {
@@ -448,6 +475,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
 
   @Override
   public Collection<ProgramScheduleRecord> findSchedules(final String triggerKey) {
+    checkStarted();
     return execute(new StoreTxRunnable<Collection<ProgramScheduleRecord>, RuntimeException>() {
       @Override
       public Collection<ProgramScheduleRecord> run(ProgramScheduleStoreDataset store) {

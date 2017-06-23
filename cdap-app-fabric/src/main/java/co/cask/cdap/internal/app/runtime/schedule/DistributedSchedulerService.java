@@ -27,7 +27,6 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,13 +36,11 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSchedulerService.class);
   private final Service serviceDelegate;
-  private final CountDownLatch countDownLatch;
 
   @Inject
   public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
                                      Store store) {
     super(timeScheduler, streamSizeScheduler, store);
-    this.countDownLatch = new CountDownLatch(1);
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override
       public Service get() {
@@ -53,7 +50,6 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
             try {
               startSchedulers();
               notifyStarted();
-              countDownLatch.countDown();
             } catch (ServiceUnavailableException e) {
               // This is expected during startup. Log with a debug without the stacktrace
               LOG.debug("Service not available for schedule to start due to {}", e.getMessage());
@@ -82,7 +78,6 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
   protected void startUp() throws Exception {
     LOG.info("Starting scheduler.");
     serviceDelegate.startAndWait();
-    countDownLatch.await();
   }
 
   @Override

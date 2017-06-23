@@ -43,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -57,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,14 +101,15 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   private static final byte[] TRIGGER_KEY_COLUMN_BYTES = Bytes.toBytes(TRIGGER_KEY_COLUMN);
   private static final byte[] TRIGGER_SEPARATOR_BYTES = Bytes.toBytes("" + TRIGGER_SEPARATOR);
 
-  private static final byte[] MIGRATION_COMPLETE_NAMESPACE_ROW_BYTES = Bytes.toBytes("migration.ns");
-  private static final byte[] MIGRATION_COMPLETE_NAMESPACE_COLUMN_BYTES = Bytes.toBytes("ns");
-  private static final byte[] MIGRATION_COMPLETE_ROW_BYTES = Bytes.toBytes("migration.complete");
-  private static final byte[] MIGRATION_COMPLETE_COLUMN_BYTES = Bytes.toBytes("mc");
+  private static final byte[] MIGRATION_COMPLETE_STATUS_ROW_BYTES = Bytes.toBytes("migration.ns");
+  private static final byte[] MIGRATION_COMPLETE_STATUS_COLUMN_BYTES = Bytes.toBytes("ns");
+  private static final byte[] MIGRATION_COMPLETE_BYTES = Bytes.toBytes("migration.complete=TRUE");
 
   // package visible for the dataset definition
   static final String EMBEDDED_TABLE_NAME = "it"; // indexed table
   static final String INDEX_COLUMNS = TRIGGER_KEY_COLUMN; // trigger key
+  static final MigrationStatus MIGRATION_COMPLETE = new MigrationStatus(true, null);
+  static final MigrationStatus MIGRATION_NOT_STARTED = new MigrationStatus(false, null);
 
   private static final Gson GSON =
     new GsonBuilder()
@@ -130,14 +131,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * @param namespaceId  the namespace with schedules to be migrated
    * @param appMetaStore app metadata store with schedules to be migrated
    * @param scheduler the old scheduler to get schedule status from
-   * @return the lexicographically largest namespace id String with schedule migration completed
    */
-  public String migrateFromAppMetadataStore(NamespaceId namespaceId, Store appMetaStore, Scheduler scheduler) {
-    String completedNamespace = getMigrationCompleteNamespace();
-    if (completedNamespace != null && completedNamespace.compareTo(namespaceId.toString()) > 0) {
-      LOG.info("Schedule migration has already been completed for namespace '{}'", namespaceId);
-      return completedNamespace;
-    }
+  public void migrateFromAppMetadataStore(NamespaceId namespaceId, Store appMetaStore, Scheduler scheduler) {
     for (ApplicationSpecification appSpec : appMetaStore.getAllApplications(namespaceId)) {
       ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
       for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
@@ -162,30 +157,48 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         }
       }
     }
-    store.put(MIGRATION_COMPLETE_NAMESPACE_ROW_BYTES, MIGRATION_COMPLETE_NAMESPACE_COLUMN_BYTES,
+    store.put(MIGRATION_COMPLETE_STATUS_ROW_BYTES, MIGRATION_COMPLETE_STATUS_COLUMN_BYTES,
               Bytes.toBytes(namespaceId.toString()));
     LOG.info("Schedule migration is completed for namespace '{}'", namespaceId);
-    return namespaceId.toString();
   }
 
-  @Nullable
-  private String getMigrationCompleteNamespace() {
-    Row row = store.get(MIGRATION_COMPLETE_NAMESPACE_ROW_BYTES);
-    if (row.isEmpty()) {
-      return null;
+  /**
+   *
+   */
+  public static class MigrationStatus {
+    private final boolean migrationCompleted;
+    private final NamespaceId lastMigrationCompleteNamespace;
+
+    MigrationStatus(boolean migrationCompleted, @Nullable NamespaceId lastMigrationCompleteNamespace) {
+      this.migrationCompleted = migrationCompleted;
+      this.lastMigrationCompleteNamespace = lastMigrationCompleteNamespace;
     }
-    String namespace = Bytes.toString(row.get(MIGRATION_COMPLETE_NAMESPACE_COLUMN_BYTES));
-    NamespaceId.fromString(namespace); // verify whether the namespace is of correct format
-    return namespace;
+
+    public boolean isMigrationCompleted() {
+      return migrationCompleted;
+    }
+
+    @Nullable
+    public NamespaceId getLastMigrationCompleteNamespace() {
+      return lastMigrationCompleteNamespace;
+    }
+  }
+
+  public MigrationStatus getMigrationStatus() {
+    Row row = store.get(MIGRATION_COMPLETE_STATUS_ROW_BYTES);
+    if (row.isEmpty()) {
+      return MIGRATION_NOT_STARTED;
+    }
+    byte[] statusBytes = row.get(MIGRATION_COMPLETE_STATUS_COLUMN_BYTES);
+    if (Arrays.equals(MIGRATION_COMPLETE_BYTES, statusBytes)) {
+      return MIGRATION_COMPLETE;
+    }
+    NamespaceId namespace = NamespaceId.fromString(Bytes.toString(statusBytes));
+    return new MigrationStatus(false, namespace);
   }
 
   public void setMigrationComplete() {
-    store.put(MIGRATION_COMPLETE_ROW_BYTES, MIGRATION_COMPLETE_COLUMN_BYTES, Bytes.toBytes(true));
-  }
-
-  public boolean isMigrationComplete() {
-    Row row = store.get(MIGRATION_COMPLETE_ROW_BYTES);
-    return !row.isEmpty() && Bytes.toBoolean(row.get(MIGRATION_COMPLETE_COLUMN_BYTES));
+    store.put(MIGRATION_COMPLETE_STATUS_ROW_BYTES, MIGRATION_COMPLETE_STATUS_COLUMN_BYTES, MIGRATION_COMPLETE_BYTES);
   }
 
   /**

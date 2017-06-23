@@ -74,18 +74,6 @@ public interface Scheduler {
   void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException;
 
   /**
-   * Schedule a program to be run in a defined schedule.
-   *
-   * @param program Program that needs to be run.
-   * @param programType type of program.
-   * @param schedule Schedule with which the program runs.
-   * @param properties system properties to be passed to the schedule
-   * @throws SchedulerException on unforeseen error.
-   */
-  void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                Map<String, String> properties) throws SchedulerException;
-
-  /**
    * Get the previous run time for the program. A program may contain one or more schedules
    * the method returns the previous runtimes for all the schedules. This method only takes
    + into account {@link Schedule}s based on time. For schedules based on data, an empty list will

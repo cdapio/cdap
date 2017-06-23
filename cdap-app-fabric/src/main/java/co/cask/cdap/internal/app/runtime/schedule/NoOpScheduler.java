@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -25,7 +24,6 @@ import co.cask.cdap.proto.id.ProgramId;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Noop scheduler.
@@ -48,12 +46,6 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
-  public void schedule(ProgramId program, SchedulableProgramType programType, Schedule schedule,
-                       Map<String, String> properties) throws SchedulerException {
 
   }
 
