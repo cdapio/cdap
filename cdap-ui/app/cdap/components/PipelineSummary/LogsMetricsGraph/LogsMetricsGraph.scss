@@ -26,7 +26,7 @@ $container_border_color: lightgray;
   margin: 10px;
   height: calc(50% - 10px);
   border: 1px solid $container_border_color;
-  
+
   .graph-plot-container {
     width: calc(100% - 30px);
     margin: 15px;
@@ -90,5 +90,8 @@ $container_border_color: lightgray;
       }
     }
   }
+
   @include stickyheader(20%, 15%, 15%, 20%, 30%);
+
 }
+

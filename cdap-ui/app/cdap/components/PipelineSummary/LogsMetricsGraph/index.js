@@ -83,7 +83,6 @@ export default class LogsMetricsGraph extends Component {
       let endDomain = errors[totalErrors - 1].x > warnings[totalWarnings - 1].x ? errors[totalErrors - 1].x : warnings[totalErrors - 1].x;
       xDomain = [startDomain, endDomain];
     }
-    console.log(xDomain);
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);

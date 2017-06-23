@@ -89,5 +89,7 @@ $container_border_color: lightgray;
       }
     }
   }
+
   @include stickyheader;
+
 }
