@@ -131,7 +131,7 @@ export default class DatasetTab extends Component {
             } else if (metric.metricName === 'system.dataset.store.writes') {
               writes = metric.data[0].value;
             } else if (metric.metricName === 'system.dataset.store.bytes') {
-              bytes = metric.data[0].value;
+              bytes = bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE_NODECIMAL);
             } else if (metric.metricName === 'system.dataset.store.reads') {
               reads = metric.data[0].value;
             }

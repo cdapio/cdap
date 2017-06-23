@@ -410,10 +410,22 @@ features:
         popoverTitle: Extract Using Position
       CutMenuItem:
         menuLabel: Using Positions
+      Decode:
+        base32: Base32
+        base64: Base64
+        hex: Hex
+        title: Decode
+        urldecode: URL
       Drop:
         title:
           plural: Delete Selected Columns
           singular: Delete Column
+      Encode:
+        base32: Base32
+        base64: Base64
+        hex: Hex
+        title: Encode
+        url: URL
       Explode:
         title: Explode
         filtersSubmenuTitle: Delimited Text
@@ -505,6 +517,16 @@ features:
        title:
           plural: Keep Selected Columns
           singular: Keep Column
+      MaskData:
+        menuLabel: Mask Data
+        option1: Show last 4 characters only
+        option2: Show last 2 characters only
+        option3: Custom Selection
+        option4: By Shuffling
+      MaskSelection:
+        cancelBtnLabel: Exit 'Mask Data' mode
+        description: Mask the selected characters across all rows in this column
+        popoverTitle: Mask
       Merge:
         buttonLabel: Join
         chooseDelimiter: Choose delimiter
@@ -603,6 +625,15 @@ features:
             label: XML to JSON
             placeholder: Enter depth
         title: Parse
+      SetCharEncoding:
+        disabledTooltip: Character encoding can only be set on columns of type byte array
+        iso88591: ISO-8859-1
+        title: Set Character Encoding
+        usascii: US-ASCII
+        utf16: UTF-16
+        utf16be: UTF-16BE
+        utf16le: UTF-16LE
+        utf8: UTF-8
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
@@ -1055,7 +1086,7 @@ features:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
-      sizeLabel: Size(MB)
+      sizeLabel: Size
     nameLabel: Name
     ProgramTable:
       lastStartedLabel: Last Started

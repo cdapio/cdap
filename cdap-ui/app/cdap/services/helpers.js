@@ -183,6 +183,7 @@ const defaultEventObject = {
   },
   preventDefault: () => {}
 };
+
 function preventPropagation(e = defaultEventObject) {
   e.stopPropagation();
   e.nativeEvent.stopImmediatePropagation();
@@ -192,6 +193,10 @@ function preventPropagation(e = defaultEventObject) {
 const defaultAction = {
   action : '',
   payload : {}
+};
+
+const difference = (first, second) => {
+  return first > second ? first - second : second - first;
 };
 
 export {
@@ -206,5 +211,6 @@ export {
   contructUrl,
   getIcon,
   preventPropagation,
-  defaultAction
+  defaultAction,
+  difference
 };

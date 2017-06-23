@@ -18,12 +18,14 @@ import React, {Component} from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import CutDirective from 'components/DataPrep/Directives/ExtractFields/UsingPositions/CutDirective';
+import MaskSelection from 'components/DataPrep/Directives/MaskData/MaskSelection';
 
 import isNil from 'lodash/isNil';
 require('./ColumnHighlighter.scss');
 
 const directiveComponentMap = {
-  'CUT': CutDirective
+  'CUT': CutDirective,
+  'MASK': MaskSelection
 };
 
 export default class ColumnHighlighter extends Component {

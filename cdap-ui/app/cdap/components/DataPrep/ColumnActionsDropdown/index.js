@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import Mousetrap from 'mousetrap';
 import isEqual from 'lodash/isEqual';
 import DataPrepStore from 'components/DataPrep/store';
+import ScrollableList from 'components/ScrollableList';
 
 // Directives List
 import ParseDirective from 'components/DataPrep/Directives/Parse';
@@ -37,7 +38,13 @@ import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import Format from 'components/DataPrep/Directives/Format';
 import Explode from 'components/DataPrep/Directives/Explode';
+import MaskData from 'components/DataPrep/Directives/MaskData';
+import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
+import Decode from 'components/DataPrep/Directives/Decode';
+import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
+
 import ee from 'event-emitter';
+
 require('./ColumnActionsDropdown.scss');
 
 export default class ColumnActionsDropdown extends Component {
@@ -132,6 +139,28 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Explode,
         requiredColCount: 0
+      },
+      {
+        id: shortid.generate(),
+        tag: MaskData
+      },
+      {
+        tag: 'divider'
+      },
+      {
+        id: shortid.generate(),
+        tag: EncodeDecode,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: Decode,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: SetCharacterEncoding,
+        requiredColCount: 1
       }
     ];
     this.eventEmitter = ee(ee);
@@ -227,47 +256,47 @@ export default class ColumnActionsDropdown extends Component {
         tether={tetherOption}
       >
         <PopoverContent>
-          <div>
-            {
-              this.directives.map((directive) => {
-                if (directive.tag === 'divider') {
-                  return (
-                    <div className="column-action-divider">
-                      <hr />
-                    </div>
-                  );
-                }
-                let Tag = directive.tag;
-                let disabled = false;
-                let column = this.props.column;
+          <ScrollableList target={`dataprep-action-${this.dropdownId}`}>
+              {
+                this.directives.map((directive) => {
+                  if (directive.tag === 'divider') {
+                    return (
+                      <div className="column-action-divider">
+                        <hr />
+                      </div>
+                    );
+                  }
+                  let Tag = directive.tag;
+                  let disabled = false;
+                  let column = this.props.column;
 
-                if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
-                  column = this.state.selectedHeaders;
+                  if (this.state.selectedHeaders.indexOf(this.props.column) !== -1) {
+                    column = this.state.selectedHeaders;
 
-                  if (this.state.selectedHeaders.length !== directive.requiredColCount && directive.requiredColCount !== 0) {
+                    if (this.state.selectedHeaders.length !== directive.requiredColCount && directive.requiredColCount !== 0) {
+                      disabled = true;
+                    }
+                  } else if (directive.requiredColCount === 2) {
                     disabled = true;
                   }
-                } else if (directive.requiredColCount === 2) {
-                  disabled = true;
-                }
-
                 return (
                   <div
                     key={directive.id}
-                    onClick={this.directiveClick.bind(this, directive.id)}
+                    onClick={!disabled && this.directiveClick.bind(this, directive.id)}
                     className={classnames({'disabled': disabled})}
                   >
                     <Tag
                       column={column}
                       onComplete={this.toggleDropdown.bind(this, false)}
                       isOpen={this.state.open === directive.id}
+                      isDisabled={disabled}
                       close={this.directiveClick.bind(this, null)}
                     />
                   </div>
                 );
               })
             }
-          </div>
+          </ScrollableList>
         </PopoverContent>
       </Popover>
     );
