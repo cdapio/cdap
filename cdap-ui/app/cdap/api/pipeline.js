@@ -19,7 +19,9 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
+let statsPath = `${basepath}/workflows/:workflowId/statistics`;
 
 export const MyPipelineApi = {
-  publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath)
+  publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),
+  pollStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
 };

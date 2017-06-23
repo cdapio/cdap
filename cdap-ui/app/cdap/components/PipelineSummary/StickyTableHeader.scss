@@ -1,0 +1,71 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@mixin stickyheader($col1Width: 20%, $col2Width: 20%, $col3Width: 30%, $col4Width: 20%, $col5Width: 10%, $bgColor: white ) {
+  .table-container {
+    height: calc(100% - 50px);
+    .table {
+      margin: 0;
+      background: $bgColor;
+      thead,
+      tbody {
+        th,
+        tr td {
+          &:nth-child(1) {
+            width: $col1Width;
+          }
+          &:nth-child(2) {
+            width: $col2Width;
+          }
+          &:nth-child(3) {
+            width: $col3Width;
+          }
+          &:nth-child(4) {
+            width: $col4Width;
+          }
+          &:nth-child(5) {
+            width: $col5Width;
+          }
+        }
+      }
+      tbody {
+        tr {
+          td {
+            a {
+              &:hover {
+                border-bottom: 1px solid;
+              }
+            }
+          }
+        }
+      }
+      thead {
+        background: $bgColor;
+        tr {
+          th {
+            &:not(:first-child) {
+              padding-left: 0;
+            }
+          }
+        }
+      }
+    }
+    .table-scroll {
+      overflow-y: auto;
+      height: calc(100% - 55px);
+    }
+  }
+}
