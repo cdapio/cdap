@@ -64,6 +64,7 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandler;
+import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
@@ -260,6 +261,20 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
             @Override
             public TwillController launch(TwillApplication twillApplication) {
               TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+
+              if (twillApplication instanceof AbstractProgramTwillApplication) {
+                AbstractProgramTwillApplication programTwillApp = (AbstractProgramTwillApplication) twillApplication;
+                Map<String, AbstractProgramTwillApplication.RunnableResource> runnables = Maps.newHashMap();
+                programTwillApp.addRunnables(runnables);
+                for (Map.Entry<String, AbstractProgramTwillApplication.RunnableResource> entry : runnables.entrySet()) {
+                  String runnable = entry.getKey();
+                  AbstractProgramTwillApplication.RunnableResource runnableResource = entry.getValue();
+                  if (runnableResource.getMaxRetries() != null) {
+                    twillPreparer.withMaxRetries(runnable, runnableResource.getMaxRetries());
+                  }
+                }
+              }
+
               Iterables.addAll(additionalClassPaths, classPaths);
               if (options.isDebug()) {
                 twillPreparer.enableDebugging();

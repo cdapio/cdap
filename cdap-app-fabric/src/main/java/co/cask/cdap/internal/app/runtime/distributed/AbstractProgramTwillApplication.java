@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * An abstract base class for all program {@link TwillApplication}.
@@ -149,10 +150,16 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
   protected static final class RunnableResource {
     private final TwillRunnable runnable;
     private final ResourceSpecification resources;
+    private final Integer maxRetries;
 
     public RunnableResource(TwillRunnable runnable, ResourceSpecification resources) {
+      this(runnable, resources, null);
+    }
+
+    public RunnableResource(TwillRunnable runnable, ResourceSpecification resources, @Nullable Integer maxRetries) {
       this.runnable = runnable;
       this.resources = resources;
+      this.maxRetries = maxRetries;
     }
 
     public TwillRunnable getRunnable() {
@@ -161,6 +168,11 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
 
     public ResourceSpecification getResources() {
       return resources;
+    }
+
+    @Nullable
+    public Integer getMaxRetries() {
+      return maxRetries;
     }
   }
 }
