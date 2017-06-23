@@ -53,7 +53,7 @@ public class WorkflowTwillApplication extends AbstractProgramTwillApplication {
   protected void addRunnables(Map<String, RunnableResource> runnables) {
     runnables.put(spec.getName(), new RunnableResource(
       new WorkflowTwillRunnable(spec.getName()),
-      createResourceSpec(resources, 1)
+      createResourceSpec(resources, 1), 0
     ));
   }
 }
