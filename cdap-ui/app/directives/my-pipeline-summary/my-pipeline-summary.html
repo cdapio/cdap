@@ -13,39 +13,11 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<my-card data-title="History" class="history">
-  <my-program-history
-    data-runs="MyPipelineSummaryCtrl.runs"
-    data-type="{{ MyPipelineSummaryCtrl.programType }}"
-    data-app-id="MyPipelineSummaryCtrl.appId"
-    data-program-id="MyPipelineSummaryCtrl.programId"
-    class="history-table"></my-program-history>
-</my-card>
-<my-card data-title="Summary" class="summary">
-  <table class="table borderless">
-    <thead>
-      <tr>
-        <th>Total Runs</th>
-        <th>Average Duration</th>
-        <th>Next Run</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>{{MyPipelineSummaryCtrl.totalRunsCount}}</td>
-        <td>
-            {{ MyPipelineSummaryCtrl.avgRunTime !== 'N/A' ? MyPipelineSummaryCtrl.avgRunTime : '—' }}
-        </td>
-        <td>
-          <span ng-if="MyPipelineSummaryCtrl.nextRunTime !== 'N/A'">
-            {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
-            <small> {{ MyPipelineSummaryCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY' }}</small>
-          </span>
-          <span ng-if="MyPipelineSummaryCtrl.nextRunTime === 'N/A'">
-            —
-          </span>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</my-card>
+<pipeline-summary
+  namespace-id="MyPipelineSummaryCtrl.namespaceId"
+  app-id="MyPipelineSummaryCtrl.appId"
+  program-type="MyPipelineSummaryCtrl.programType"
+  program-id="MyPipelineSummaryCtrl.programId"
+  pipeline-config="MyPipelineSummaryCtrl.pipelineConfig"
+  total-runs-count="MyPipelineSummaryCtrl.totalRunsCount"
+> </pipeline-summary>
