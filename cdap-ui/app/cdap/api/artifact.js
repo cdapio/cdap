@@ -26,5 +26,6 @@ export const MyArtifactApi = {
   listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` ),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', baseArtifactPath),
   loadPluginConfiguration: apiCreator(dataSrc, 'PUT', 'REQUEST', basePluginArtifactJSON),
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath)
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
+  reloadSystemArtifacts: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/system/artifacts')
 };

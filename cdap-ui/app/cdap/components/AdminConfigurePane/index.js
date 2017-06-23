@@ -19,6 +19,7 @@ import ConfigureButton from '../ConfigureButton';
 import shortid from 'shortid';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import ReloadSystemArtifacts from 'components/AdminConfigurePane/ReloadSystemArtifacts';
 require('./AdminConfigurePane.scss');
 
 export default function AdminConfigurePane({ openNamespaceWizard, openPreferenceModal, preferencesSavedState, closePreferencesSavedMessage }) {
@@ -55,14 +56,16 @@ export default function AdminConfigurePane({ openNamespaceWizard, openPreference
           onClick={openNamespaceWizard}
           iconClass="icon-addnamespaces"
         />
+
+        <ReloadSystemArtifacts />
       </div>
     </div>
   );
 }
 
 AdminConfigurePane.propTypes = {
-  openNamespaceWizard : PropTypes.func,
-  openPreferenceModal : PropTypes.func,
+  openNamespaceWizard: PropTypes.func,
+  openPreferenceModal: PropTypes.func,
   preferencesSavedState: PropTypes.bool,
   closePreferencesSavedMessage: PropTypes.func
 };
