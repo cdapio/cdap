@@ -239,6 +239,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
         newCConfExtraJars.add(jarPath);
       }
 
+      prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
+
       // Copy config files to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
       // Twill will manage the cleanup of those files in HDFS.
@@ -263,8 +265,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
       }
-
-      prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       final String programOptions = GSON.toJson(options, ProgramOptions.class);
 

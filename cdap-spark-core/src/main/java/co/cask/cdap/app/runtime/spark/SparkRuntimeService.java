@@ -32,6 +32,7 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -47,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.security.store.SecureStoreUtils;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -197,6 +199,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(createLauncherJar(tempDir)));
         sparkJar = buildDependencyJar(tempDir);
         localizeResources.add(new LocalizeResource(sparkJar, true));
+
+        prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
+
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
 
         if (pluginArchive != null) {
@@ -753,5 +758,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     SettableFuture<V> future = SettableFuture.create();
     future.cancel(true);
     return future;
+  }
+
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
+                                                            List<LocalizeResource> localizeResources)
+    throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return;
+    }
+
+    final File target = new File(tempDir, "hbaseddlext.jar");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.add(new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
   }
 }
