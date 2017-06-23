@@ -175,6 +175,13 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
   };
 
+  if (vm.derivedDatasetId) {
+    vm.disabledTooltip = `The dataset '${vm.derivedDatasetId}' already exists. Its schema cannot be modified.`;
+  }
+  if (vm.isInputSchema) {
+    vm.disabledTooltip = `This input schema has been derived from the output schema of the previous node(s) and cannot be changed.`;
+  }
+
   init(vm.model);
 
   $scope.$on('$destroy', () => {
@@ -198,7 +205,10 @@ angular.module(PKG.name+'.commons')
       hideHeader: '=',
       parentFormatOutput: '&',
       isDisabled: '=',
-      schemaPrefix: '='
+      schemaPrefix: '=',
+      derivedDatasetId: '=',
+      isInputSchema: '=',
+      isInStudio: '='
     }
   };
 })

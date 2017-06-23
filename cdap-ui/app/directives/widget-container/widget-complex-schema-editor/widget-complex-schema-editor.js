@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   vm.schemaObj = vm.model;
   vm.clearDOM = false;
   vm.implicitSchemaPresent = false;
-
 
   let watchProperty = myHelpers.objectQuery(vm.config, 'property-watch') || myHelpers.objectQuery(vm.config, 'widget-attributes', 'property-watch');
 
@@ -139,11 +138,32 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     }
   }
 
-  EventPipe.on('dataset.selected', function (schema, format) {
+  EventPipe.on('dataset.selected', function (schema, format, isDisabled, datasetId) {
     if (watchProperty && format) {
       vm.pluginProperties[watchProperty] = format;
     }
-    vm.schemaObj = schema;
+    // This angular lodash doesn't seem to have isNil
+    // have to do this instead of just checking if (isDisabled) because isDisabled might be false
+    if (!_.isUndefined(isDisabled) && !_.isNull(isDisabled)) {
+      vm.isDisabled = isDisabled;
+    }
+    if (datasetId) {
+      vm.derivedDatasetId = datasetId;
+    }
+
+    if (!_.isEmpty(schema) || (_.isEmpty(schema) && vm.isDisabled)) {
+      vm.schemaObj = schema;
+    } else {
+      // if dataset name is changed to a non-existing dataset, the schemaObj will be empty,
+      // so assign to it the value of the input schema
+      if (vm.isDisabled === false && vm.inputSchema) {
+        if (vm.inputSchema.length > 0 && vm.inputSchema[0].schema) {
+          vm.schemaObj = angular.copy(vm.inputSchema[0].schema);
+        } else {
+          vm.schemaObj = '';
+        }
+      }
+    }
     reRenderComplexSchema();
   });
 
@@ -169,7 +189,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
         };
 
         jsonSchema = recordTypeSchema;
-      } else if (jsonSchema.type !== 'record'){
+      } else if (jsonSchema.type !== 'record') {
         myAlertOnValium.show({
           type: 'danger',
           content: 'Imported schema is not a valid Avro schema'
@@ -217,11 +237,13 @@ angular.module(PKG.name + '.commons')
       bindToController: true,
       scope: {
         model: '=ngModel',
+        inputSchema: '=?',
         isDisabled: '=',
         pluginProperties: '=?',
         config: '=?',
         pluginName: '=',
-        updateOutputSchema: '&'
+        updateOutputSchema: '&',
+        isInStudio: '='
       },
       controller: ComplexSchemaEditorController,
       controllerAs: 'SchemaEditor'
