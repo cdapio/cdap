@@ -1377,9 +1377,11 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return null;
     }
 
-    final File target = new File(tempDir, "hbaseddlext.jar");
+    String hbaseDDLExtensionJarName = "hbaseddlext.jar";
+    final File target = new File(tempDir, hbaseDDLExtensionJarName);
     BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
-    Location targetLocation = copyFileToLocation(target, tempLocation);
+    Location targetLocation = tempLocation.append(hbaseDDLExtensionJarName);
+    Files.copy(target, Locations.newOutputSupplier(targetLocation));
     job.addCacheArchive(targetLocation.toURI());
     return target.getName();
   }

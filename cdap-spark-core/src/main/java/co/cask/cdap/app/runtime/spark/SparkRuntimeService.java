@@ -766,7 +766,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    * Prepares the {@link HBaseDDLExecutor} implementation for localization.
    */
   private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
-                                                            List<LocalizeResource> localizeResources)
+                                                List<LocalizeResource> localizeResources)
     throws IOException {
     String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
     if (ddlExecutorExtensionDir == null) {
