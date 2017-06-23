@@ -113,25 +113,23 @@ export default class DatasetTab extends Component {
     };
     const metricsParams = {
       tag: [`namespace:${currentNamespace}`, `dataset:${dataset.name}`],
-      metric: ['system.dataset.store.bytes', 'system.dataset.store.ops', 'system.dataset.store.writes', 'system.dataset.store.reads'],
+      metric: ['system.dataset.store.bytes', 'system.dataset.store.writes', 'system.dataset.store.reads'],
       aggregate: true
     };
 
     MyMetricApi.query(metricsParams)
       .combineLatest(MyDatasetApi.getPrograms(datasetParams))
       .subscribe((res) => {
-        let ops = 0,
+        let ops = 'n/a',
             writes = 0,
             bytes = 0,
             reads = 0;
         if (res[0].series.length > 0) {
           res[0].series.forEach((metric) => {
-            if (metric.metricName === 'system.dataset.store.ops') {
-              ops = metric.data[0].value;
-            } else if (metric.metricName === 'system.dataset.store.writes') {
+            if (metric.metricName === 'system.dataset.store.writes') {
               writes = metric.data[0].value;
             } else if (metric.metricName === 'system.dataset.store.bytes') {
-              bytes = metric.data[0].value;
+              bytes = humanReadableNumber(metric.data[0].value, HUMANREADABLESTORAGE_NODECIMAL);
             } else if (metric.metricName === 'system.dataset.store.reads') {
               reads = metric.data[0].value;
             }
