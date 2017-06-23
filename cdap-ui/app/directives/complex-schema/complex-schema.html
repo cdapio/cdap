@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016 Cask Data, Inc.
+  Copyright © 2016-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -33,74 +33,83 @@
       </div>
     </div>
 
-    <fieldset ng-disabled="ComplexSchema.isDisabled">
-      <div class="error"
-           ng-if="ComplexSchema.error">
-        {{ ComplexSchema.error }}
-      </div>
-
-      <fieldset disabled>
-        <my-record-schema
-          ng-model="ComplexSchema.schemaPrefix"
-          is-disabled="ComplexSchema.isDisabled"
-          ng-if="ComplexSchema.schemaPrefix">
-        </my-record-schema>
-      </fieldset>
-
-      <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
-          class="field-row"
-          ng-class="{'nested-row': !field.nested}">
-        <div class="clearfix">
-          <div class="input-column"
-              ng-class="{'tab-header': field.nested}">
-            <div class="tab-header-inner">
-              <input type="text"
-                     id="{{ field.id }}"
-                     class="form-control"
-                     ng-model="field.name"
-                     ng-blur="ComplexSchema.formatOutput()"
-                     ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
-                     placeholder="Field Name"
-                     ng-paste="ComplexSchema.pasteFields($event)">
-            </div>
-          </div>
-
-          <div class="type-column">
-            <div class="select-wrapper">
-              <select class="form-control"
-                      ng-model="field.displayType"
-                      ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
-                      ng-change="ComplexSchema.changeType(field)">
-              </select>
-            </div>
-          </div>
-
-          <div class="fields-actions">
-            <div class="checkbox text-center">
-              <input type="checkbox"
-                     ng-model="field.nullable"
-                     ng-change="ComplexSchema.formatOutput()">
-            </div>
-
-            <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
-              <button class="btn btn-link"
-                      ng-click="ComplexSchema.removeField($index)">
-                <i class="text-danger fa fa-trash"></i>
-              </button>
-              <button class="btn btn-link"
-                      ng-click="ComplexSchema.addField($index)">
-                <i class="fa fa-plus"></i>
-              </button>
-            </div>
-          </div>
+    <fieldset
+      ng-disabled="ComplexSchema.isDisabled"
+      class="schema-fields-container"
+      ng-class="{'disabled': ComplexSchema.isDisabled }">
+      <div uib-tooltip="{{ ComplexSchema.disabledTooltip }}"
+            tooltip-placement="top"
+            tooltip-enable="ComplexSchema.isInStudio && ComplexSchema.isDisabled && ComplexSchema.disabledTooltip"
+            tooltip-append-to-body="true">
+        <div class="error"
+             ng-if="ComplexSchema.error">
+          {{ ComplexSchema.error }}
         </div>
 
-        <my-embedded-schema-selector
-          type="field.type"
-          display-type="field.displayType"
-          parent-format-output="ComplexSchema.formatOutput()"
-          is-disabled="ComplexSchema.isDisabled">
-        </my-embedded-schema-selector>
+        <fieldset disabled>
+          <my-record-schema
+            ng-model="ComplexSchema.schemaPrefix"
+            is-disabled="ComplexSchema.isDisabled"
+            ng-if="ComplexSchema.schemaPrefix">
+          </my-record-schema>
+        </fieldset>
+
+        <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
+            class="field-row"
+            ng-class="{'nested-row': !field.nested}">
+          <div class="clearfix">
+            <div class="input-column"
+                ng-class="{'tab-header': field.nested}">
+              <div class="tab-header-inner">
+                <input type="text"
+                       id="{{ field.id }}"
+                       class="form-control"
+                       ng-model="field.name"
+                       ng-blur="ComplexSchema.formatOutput()"
+                       ng-keypress="$event.keyCode === 13 && ComplexSchema.addField($index)"
+                       placeholder="Field Name"
+                       ng-paste="ComplexSchema.pasteFields($event)"
+                       ng-class="{'disabled': ComplexSchema.isDisabled }">
+              </div>
+            </div>
+
+            <div class="type-column">
+              <div class="select-wrapper">
+                <select class="form-control"
+                        ng-model="field.displayType"
+                        ng-options="option as option for option in ComplexSchema.SCHEMA_TYPES"
+                        ng-change="ComplexSchema.changeType(field)">
+                </select>
+              </div>
+            </div>
+
+            <div class="fields-actions">
+              <div class="checkbox text-center">
+                <input type="checkbox"
+                       ng-model="field.nullable"
+                       ng-change="ComplexSchema.formatOutput()">
+              </div>
+
+              <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
+                <button class="btn btn-link"
+                        ng-click="ComplexSchema.removeField($index)">
+                  <i class="text-danger fa fa-trash"></i>
+                </button>
+                <button class="btn btn-link"
+                        ng-click="ComplexSchema.addField($index)">
+                  <i class="fa fa-plus"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <my-embedded-schema-selector
+            type="field.type"
+            display-type="field.displayType"
+            parent-format-output="ComplexSchema.formatOutput()"
+            is-disabled="ComplexSchema.isDisabled">
+          </my-embedded-schema-selector>
+        </div>
       </div>
     </fieldset>
 
