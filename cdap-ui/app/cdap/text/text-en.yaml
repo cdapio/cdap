@@ -133,11 +133,17 @@ features:
         instance-preference: Instance Preference
         manage-ns: Manage Namespaces
         manage-roles: Manage Roles
+        ReloadSystemArtifacts:
+          confirmationButton: "Reload"
+          confirmationHeader: Reload System Artifacts
+          confirmationText: "Are you sure you want to reload all system artifacts?"
+          errorMessage: Failed to load system artifacts
+          label: Reload System Artifacts
         reset-instance: Reset Instance
         set-system-preferences: Set System Preferences
         tag-management: Tag Management
-        view-invalid: View Invalid Transactions
         view-config: View Configurations
+        view-invalid: View Invalid Transactions
     DetailPanel:
       headers:
         apps: Apps
