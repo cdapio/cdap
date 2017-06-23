@@ -20,6 +20,10 @@ import T from 'i18n-react';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
+import IconSVG from 'components/IconSVG';
+import MouseTrap from 'mousetrap';
+
+require('./ReplaceColumns.scss');
 
 const PREFIX = 'features.DataPrep.Directives.ColumnActions.ReplaceColumns';
 
@@ -27,14 +31,34 @@ export default class ReplaceColumns extends Component {
   constructor(props) {
     super(props);
 
+    this.OPTIONS = [
+      'PREFIX',
+      'SUFFIX',
+      'CUSTOM'
+    ];
+
     this.state = {
       loading: false,
       sourcePattern: '',
       destination: '',
+      patternType: this.OPTIONS[0],
+      ignoreCase: false,
       error: null
     };
 
     this.applyDirective = this.applyDirective.bind(this);
+    this.toggleIgnoreCase = this.toggleIgnoreCase.bind(this);
+  }
+
+  componentDidMount() {
+    if (this.patternInputRef) {
+      this.patternInputRef.focus();
+    }
+    MouseTrap.bind('enter', this.applyDirective);
+  }
+
+  componentWillUnmount() {
+    MouseTrap.unbind('enter');
   }
 
   handleChange(key, e) {
@@ -43,10 +67,44 @@ export default class ReplaceColumns extends Component {
     });
   }
 
+  toggleIgnoreCase() {
+    this.setState({ignoreCase: !this.state.ignoreCase});
+  }
+
+  selectPatternType(patternType) {
+    if (patternType === this.state.patternType) { return; }
+
+    this.setState({
+      patternType,
+      sourcePattern: ''
+    });
+  }
+
   applyDirective() {
-    let sourcePattern = this.state.sourcePattern;
+    if (!this.state.sourcePattern) { return; }
+
     let destination = this.state.destination;
-    let directive = `columns-replace s/${sourcePattern}/${destination}/g`;
+
+    let sourcePattern;
+
+    switch (this.state.patternType) {
+      case 'PREFIX':
+        sourcePattern = `^${this.state.sourcePattern}`;
+        break;
+      case 'SUFFIX':
+        sourcePattern = `${this.state.sourcePattern}$`;
+        break;
+      case 'CUSTOM':
+        sourcePattern = `${this.state.sourcePattern}`;
+        break;
+    }
+
+    let patternQualifier = 'g';
+    if (this.state.ignoreCase) {
+      patternQualifier = 'Ig';
+    }
+
+    let directive = `columns-replace s/${sourcePattern}/${destination}/${patternQualifier}`;
     this.setState({
       loading: true
     });
@@ -56,12 +114,33 @@ export default class ReplaceColumns extends Component {
           this.props.onClose();
         },
         (err) => {
+          console.log('error', err);
           this.setState({
             loading: false,
             error: err.message || err.response.message
           });
         }
       );
+  }
+
+  renderPatternTextbox(option) {
+    if (option !== this.state.patternType) { return null; }
+
+    return (
+      <div className="clearfix pattern-input">
+        <div className="col-xs-12">
+          <input
+            type="text"
+            className="form-control mousetrap"
+            value={this.state.sourcePattern}
+            onChange={this.handleChange.bind(this, 'sourcePattern')}
+            placeholder={T.translate(`${PREFIX}.PatternInputPlaceholder.${this.state.patternType}`)}
+            autoFocus={true}
+            ref={(ref) => this.patternInputRef = ref}
+          />
+        </div>
+      </div>
+    );
   }
 
   render() {
@@ -88,19 +167,51 @@ export default class ReplaceColumns extends Component {
 
         </ModalHeader>
         <ModalBody>
-          <div className="form-group clearfix">
-            <label className="control-label">
-              {T.translate(`${PREFIX}.patternLabel`)}
-            </label>
-            <div className="col-xs-12">
-              <input
-                type="text"
-                className="form-control"
-                value={this.state.sourcePattern}
-                onChange={this.handleChange.bind(this, 'sourcePattern')}
-              />
-            </div>
+          <div>
+            {
+              this.OPTIONS.map((option) => {
+                return (
+                  <div key={option}>
+                    <div
+                      className="option-item"
+                      onClick={this.selectPatternType.bind(this, option)}
+                    >
+                      <span className="fa fa-fw">
+                        <IconSVG
+                          name={option === this.state.patternType ? 'icon-circle' : 'icon-circle-o'}
+                        />
+                      </span>
+
+                      <span className="option-label">
+                        {T.translate(`${PREFIX}.PatternTypeLabel.${option}`)}
+                      </span>
+                    </div>
+
+                    {this.renderPatternTextbox(option)}
+                  </div>
+                );
+              })
+            }
           </div>
+
+          <br />
+
+          <div
+            className="ignore-case-line"
+            onClick={this.toggleIgnoreCase}
+          >
+            <span className="fa fa-fw">
+              <IconSVG
+                name={this.state.ignoreCase ? 'icon-check-square' : 'icon-square-o'}
+              />
+            </span>
+
+            <span>
+              {T.translate(`${PREFIX}.ignoreCase`)}
+            </span>
+          </div>
+
+          <br />
 
           <div className="form-group clearfix">
             <label className="control-label">
@@ -109,9 +220,10 @@ export default class ReplaceColumns extends Component {
             <div className="col-xs-12">
               <input
                 type="text"
-                className="form-control"
+                className="form-control mousetrap"
                 value={this.state.destination}
                 onChange={this.handleChange.bind(this, 'destination')}
+                placeholder={T.translate(`${PREFIX}.replaceWithPlaceholder`)}
               />
             </div>
           </div>
@@ -125,11 +237,11 @@ export default class ReplaceColumns extends Component {
             >
               {
                 this.state.loading ?
-                  <span className="fa fa-spin fa-spinner"></span>
+                  <span className="fa fa-spin fa-spinner" />
                 :
                   null
               }
-              <span className="apply-label">{T.translate('features.DataPrep.Directives.apply')}</span>
+              <span className="apply-label">{T.translate(`${PREFIX}.applyButton`)}</span>
             </button>
             <button
               className="btn btn-secondary"
