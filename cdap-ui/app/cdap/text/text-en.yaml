@@ -988,6 +988,67 @@ features:
     subtitleMessage2: View all your entities in the
   Pagination:
     dropdown-label: Page
+  PipelineSummary:
+    filterContainer:
+      view: View
+    graphs:
+      emptyMessage: No Runs
+      vizSwitcher:
+        chart: Chart
+        table: Table
+    logsMetricsGraph:
+      hint:
+        errors: Errors
+        startTime: Start Time
+        title: Log Errors & Warnings
+        viewLogs: View Logs
+        warnings: Warnings
+      legend1: Log Warning in a run
+      legend2: Log Errors in a run
+      table:
+        header:
+          errors: Errors
+          runCount: Run #
+          startTime: Start
+          warnings: Warnings
+        body:
+          viewLog: View Log
+      title: Log Errors and Warnings
+      xAxisTitle: Pipeline Run #
+      yAxisTitle: Number of Errors
+    runsHistoryGraph:
+      hint:
+        duration: Duration
+        status: Status
+        startTime: Start Time
+        title: Run History
+      legend1: Failed
+      legend2: Successful
+      table:
+        header:
+          duration: Duration
+          runCount: Run#
+          status: Status
+          startTime: Start Time
+      title: Run History
+      xAxisTitle: Pipeline Run #
+      yAxisTitle: Run Duration (min)
+    runsFilter:
+      last10Runs: Last 10 runs
+      last50Runs: Last 50 runs
+      last100Runs: Last 100 runs
+      last1Day: Last 24 hours
+      last7Days: Last 7 days
+      last30Days: Last 30 days
+      sinceInception: Since Inception
+    statsContainer:
+      avg: Average
+      currentSchedule: Current Schedule
+      min: Min
+      max: Max
+      runTime: Run Time
+      totalRuns: TotalRuns
+    title: 'Summary'
   PropertiesEditor:
     AddProperty:
       button: Add Property
