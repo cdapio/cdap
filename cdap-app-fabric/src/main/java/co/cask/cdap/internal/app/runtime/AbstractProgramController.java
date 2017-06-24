@@ -191,7 +191,7 @@ public abstract class AbstractProgramController implements ProgramController {
     if (!state.compareAndSet(State.STARTING, completionState)
       && !state.compareAndSet(State.ALIVE, completionState)
       && !state.compareAndSet(State.SUSPENDED, completionState)) {
-      LOG.warn("Cannot transit to COMPLETED state from {} state: {} {}", state.get(), name);
+      LOG.warn("Cannot transit to COMPLETED state from {} state: {}", state.get(), name);
       return;
     }
     executor.execute(new Runnable() {
