@@ -19,7 +19,7 @@ $success-color: #00c853;
 $modal-header-bg-color: #efefef;
 $close-button-color: #333333;
 
-.kafka-connection-modal {
+.kafka-connection-modal.modal-dialog {
   .modal-content { border-radius: 0; }
 
   .modal-header {
@@ -54,8 +54,22 @@ $close-button-color: #333333;
       }
     }
 
+    .input-name {
+      width: calc(100% - 100px - 50px - 80px);
+    }
+
+    .connection-check { margin-left: 5px; }
+
     .asterisk {
       color: $asterisk-color;
+    }
+
+    .action-buttons-container {
+      .btn.btn-link {
+        padding: 7px 5px;
+      }
+
+      .add-row-btn i { vertical-align: middle; }
     }
   }
 

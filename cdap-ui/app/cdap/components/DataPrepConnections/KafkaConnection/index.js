@@ -40,8 +40,8 @@ export default class KafkaConnection extends Component {
     this.state = {
       name: '',
       brokersList: [{
-        host: '',
-        port: '',
+        host: 'localhost',
+        port: '9092',
         uniqueId: shortid.generate()
       }],
       connectionResult: null,
@@ -347,13 +347,15 @@ export default class KafkaConnection extends Component {
               <span className="asterisk">*</span>
             </label>
             <div className={INPUT_COL_CLASS}>
-              <input
-                type="text"
-                className="form-control"
-                value={this.state.name}
-                onChange={this.handleChange.bind(this, 'name')}
-                disabled={this.props.mode === 'EDIT'}
-              />
+              <div className="input-name">
+                <input
+                  type="text"
+                  className="form-control"
+                  value={this.state.name}
+                  onChange={this.handleChange.bind(this, 'name')}
+                  disabled={this.props.mode === 'EDIT'}
+                />
+              </div>
             </div>
           </div>
 
