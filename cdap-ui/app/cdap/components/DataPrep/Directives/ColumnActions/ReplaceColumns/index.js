@@ -33,14 +33,14 @@ export default class ReplaceColumns extends Component {
 
     this.OPTIONS = [
       'PREFIX',
-      'SUFFIX',
+      'PATTERN',
       'CUSTOM'
     ];
 
     this.state = {
       loading: false,
       sourcePattern: '',
-      destination: '',
+      replacePattern: '',
       patternType: this.OPTIONS[0],
       ignoreCase: false,
       error: null
@@ -83,7 +83,7 @@ export default class ReplaceColumns extends Component {
   applyDirective() {
     if (!this.state.sourcePattern) { return; }
 
-    let destination = this.state.destination;
+    let replacePattern = this.state.replacePattern;
 
     let sourcePattern;
 
@@ -91,9 +91,7 @@ export default class ReplaceColumns extends Component {
       case 'PREFIX':
         sourcePattern = `^${this.state.sourcePattern}`;
         break;
-      case 'SUFFIX':
-        sourcePattern = `${this.state.sourcePattern}$`;
-        break;
+      case 'PATTERN':
       case 'CUSTOM':
         sourcePattern = `${this.state.sourcePattern}`;
         break;
@@ -104,7 +102,7 @@ export default class ReplaceColumns extends Component {
       patternQualifier = 'Ig';
     }
 
-    let directive = `columns-replace s/${sourcePattern}/${destination}/${patternQualifier}`;
+    let directive = `columns-replace s/${sourcePattern}/${replacePattern}/${patternQualifier}`;
     this.setState({
       loading: true
     });
@@ -137,6 +135,27 @@ export default class ReplaceColumns extends Component {
             placeholder={T.translate(`${PREFIX}.PatternInputPlaceholder.${this.state.patternType}`)}
             autoFocus={true}
             ref={(ref) => this.patternInputRef = ref}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  renderReplaceWithTextbox() {
+    if (this.state.patternType !== 'CUSTOM') { return null; }
+
+    return (
+      <div className="form-group clearfix">
+        <label className="control-label">
+          {T.translate(`${PREFIX}.replaceWithLabel`)}
+        </label>
+        <div className="col-xs-12">
+          <input
+            type="text"
+            className="form-control mousetrap"
+            value={this.state.replacePattern}
+            onChange={this.handleChange.bind(this, 'replacePattern')}
+            placeholder={T.translate(`${PREFIX}.replaceWithPlaceholder`)}
           />
         </div>
       </div>
@@ -194,6 +213,8 @@ export default class ReplaceColumns extends Component {
             }
           </div>
 
+          {this.renderReplaceWithTextbox()}
+
           <br />
 
           <div
@@ -209,23 +230,6 @@ export default class ReplaceColumns extends Component {
             <span>
               {T.translate(`${PREFIX}.ignoreCase`)}
             </span>
-          </div>
-
-          <br />
-
-          <div className="form-group clearfix">
-            <label className="control-label">
-              {T.translate(`${PREFIX}.replaceWithLabel`)}
-            </label>
-            <div className="col-xs-12">
-              <input
-                type="text"
-                className="form-control mousetrap"
-                value={this.state.destination}
-                onChange={this.handleChange.bind(this, 'destination')}
-                placeholder={T.translate(`${PREFIX}.replaceWithPlaceholder`)}
-              />
-            </div>
           </div>
         </ModalBody>
         <ModalFooter>

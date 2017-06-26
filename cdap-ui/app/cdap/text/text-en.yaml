@@ -404,13 +404,13 @@ features:
           modalTitle: Replace column names
           PatternInputPlaceholder:
             CUSTOM: "e.g. ^body_, work_"
-            PREFIX: Prefix
-            SUFFIX: Suffix
+            PATTERN: "e.g. eol$, body"
+            PREFIX: "e.g. ^body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
             CUSTOM: Custom Pattern
-            PREFIX: Replace Prefix
-            SUFFIX: Replace Suffix
+            PATTERN: Remove Pattern
+            PREFIX: Remove Prefix
           replaceWithLabel: Replace with
           replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement text
       Copy:
