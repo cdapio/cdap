@@ -1058,16 +1058,8 @@ public class AuthorizationTest extends TestBase {
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
 
-    // wait for scheduled runs of workflow to run to end
-    workflowManager.waitForStatus(false, 2 , 3);
-
-    // since the schedule in AppWithSchedule is to  run every second its possible that it will trigger more than one
-    // run before the schedule was suspended so check for greater than 0 rather than equal to 1
-    Assert.assertTrue(0 < workflowManager.getHistory().size());
-    // assert that all run completed
-    for (RunRecord runRecord : workflowManager.getHistory()) {
-      Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecord.getStatus());
-    }
+    // wait for at least one scheduled runs of workflow to run to end
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 1, 10, TimeUnit.SECONDS);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
