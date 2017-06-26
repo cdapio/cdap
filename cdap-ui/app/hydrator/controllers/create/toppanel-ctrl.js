@@ -424,7 +424,7 @@ class HydratorPlusPlusTopPanelCtrl {
                 this.previewActions.setMacros(this.macrosMap)
               );
             }
-            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
             this.previewStore.dispatch(
               this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
             );
@@ -442,7 +442,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setMacros(this.macrosMap)
       );
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
       this.previewStore.dispatch(
         this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
       );

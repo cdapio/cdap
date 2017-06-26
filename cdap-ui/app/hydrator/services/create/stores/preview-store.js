@@ -22,6 +22,8 @@ let getInitialState = () => {
     previewId: null,
     macros: {},
     userRuntimeArguments: {},
+    // `runtimeArgsForDisplay` combines `macros` map and `userRuntimeArguments` map
+    // to create an object that can be used as a prop to the KeyValuePairs component
     runtimeArgsForDisplay: {},
     timeoutInMinutes: 2
   };

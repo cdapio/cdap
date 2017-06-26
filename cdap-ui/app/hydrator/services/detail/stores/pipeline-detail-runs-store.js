@@ -36,6 +36,8 @@ angular.module(PKG.name + '.feature.hydrator')
         statistics: '',
         macrosMap: {},
         userRuntimeArgumentsMap: {},
+        // `runtimeArgsForDisplay` combines `macrosMap` and `userRuntimeArgumentsMap` objects
+        // to create an object that can be used as a prop to the KeyValuePairs component
         runtimeArgsForDisplay: {}
       };
     };

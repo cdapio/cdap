@@ -216,7 +216,7 @@ class HydratorDetailTopPanelController {
             }
 
             if (Object.keys(this.macrosMap).length > 0 || Object.keys(this.userRuntimeArgumentsMap).length > 0) {
-              this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+              this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
               this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
             }
             this.validToStartOrSchedule = this.isValidToStartOrSchedule();
@@ -227,7 +227,7 @@ class HydratorDetailTopPanelController {
 
     // if there are zero macros, but there are user-set runtime arguments
     } else {
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
       this.HydratorPlusPlusDetailActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments));
       this.validToStartOrSchedule = this.isValidToStartOrSchedule();
       return this.$q.when(this.runtimeArguments);
