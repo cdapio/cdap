@@ -1058,8 +1058,11 @@ public class AuthorizationTest extends TestBase {
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
 
-    // wait for at least one scheduled runs of workflow to run to end
-    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 1, 10, TimeUnit.SECONDS);
+    // Sleep for 3 seconds to wait for all workflows launched by the schedule before suspending to start
+    TimeUnit.SECONDS.sleep(3);
+    int numRuns = workflowManager.getHistory().size();
+    // wait for all scheduled runs of workflow to complete
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, numRuns, 10, TimeUnit.SECONDS);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
