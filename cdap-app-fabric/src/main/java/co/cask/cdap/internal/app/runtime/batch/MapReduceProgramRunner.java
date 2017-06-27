@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -271,6 +272,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           public Void get() {
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+            sendProgramStatusNotification(programId, runId,
+                                          ProgramStatus.valueOf(finalRunStatus.toString().toUpperCase()),
+                                          userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -284,6 +288,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           public Void get() {
             runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                  ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+            sendProgramStatusNotification(programId, runId, ProgramStatus.FAILED, userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

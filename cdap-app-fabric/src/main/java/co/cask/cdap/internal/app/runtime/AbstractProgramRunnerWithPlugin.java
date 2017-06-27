@@ -82,6 +82,7 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * @param runId the program run id
    * @param programStatus the program status
    * @param userArguments the user arguments of the program
+   * @param token the workflow token to contain payload information from a completed workflow
    */
   protected void sendProgramStatusNotification(ProgramId programId, RunId runId, ProgramStatus programStatus,
                                                Arguments userArguments, @Nullable WorkflowToken token) {

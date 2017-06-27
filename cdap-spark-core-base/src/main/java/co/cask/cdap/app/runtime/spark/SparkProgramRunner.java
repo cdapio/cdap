@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime.spark;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -114,7 +115,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService) {
-    super(cConf);
+    super(cConf, messagingService);
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -304,6 +305,9 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           public Void get() {
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+            sendProgramStatusNotification(programId, runId,
+                                          ProgramStatus.valueOf(finalRunStatus.toString().toUpperCase()),
+                                          userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -319,6 +323,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                  ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+            sendProgramStatusNotification(programId, runId, ProgramStatus.FAILED, userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

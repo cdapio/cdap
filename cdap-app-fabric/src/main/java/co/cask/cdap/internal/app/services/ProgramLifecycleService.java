@@ -21,7 +21,9 @@ import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -48,9 +50,12 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
@@ -63,6 +68,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.scheduler.Scheduler;
@@ -116,6 +122,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
+  private final MessagingService messagingService;
   private final ProgramRuntimeService runtimeService;
   private final CConfiguration cConf;
   private final NamespaceStore nsStore;
@@ -126,11 +133,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final Scheduler scheduler;
 
   @Inject
-  ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(Store store, MessagingService messagingService,
+                          NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext, Scheduler scheduler) {
     this.store = store;
+    this.messagingService = messagingService;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
@@ -322,7 +331,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
-    BasicArguments userArguments = new BasicArguments(userArgs);
+    final BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
 
@@ -370,6 +379,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.COMPLETED.getRunStatus());
+              sendProgramStatusNotification(programId, runId, co.cask.cdap.api.ProgramStatus.COMPLETED, userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -383,6 +393,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.KILLED.getRunStatus());
+              sendProgramStatusNotification(programId, runId, co.cask.cdap.api.ProgramStatus.KILLED, userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -420,6 +431,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              sendProgramStatusNotification(programId, runId, co.cask.cdap.api.ProgramStatus.FAILED, userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -1172,6 +1184,37 @@ public class ProgramLifecycleService extends AbstractIdleService {
       throw new BadRequestException("Update log levels at runtime is only supported in distributed mode");
     }
     return ((LogLevelUpdater) programController);
+  }
+
+  /**
+   * Sends a notification under the program status event topic about the status of a program
+   *
+   * @param programId the program id
+   * @param runId the program run id
+   * @param programStatus the program status
+   * @param userArguments the user arguments of the program
+   */
+  private void sendProgramStatusNotification(ProgramId programId, String runId,
+                                             co.cask.cdap.api.ProgramStatus programStatus,
+                                             Arguments userArguments) {
+    // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
+    Map<String, String> properties = new HashMap<>();
+    properties.put(ProgramOptionConstants.RUN_ID, runId);
+    properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
+    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
+    properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
+
+    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    try {
+      messagingService.publish(StoreRequestBuilder.of(topicId)
+              .addPayloads(GSON.toJson(programStatusNotification))
+              .build()
+      );
+    } catch (TopicNotFoundException | IOException e) {
+      LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
+      // TODO throw new exception
+    }
   }
 
   /**
