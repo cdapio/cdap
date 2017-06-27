@@ -124,15 +124,31 @@ export default class ReplaceColumns extends Component {
   renderPatternTextbox(option) {
     if (option !== this.state.patternType) { return null; }
 
+    // Have to hardcode this because apparently there's no way to escape
+    // [] and {} in i18n-react
+    let placeholder = "body_[0-9]{2}, eol$";
+    if (this.state.patternType === 'CUSTOM') {
+      placeholder = T.translate(`${PREFIX}.PatternInputPlaceholder.CUSTOM`);
+    }
+
     return (
       <div className="clearfix pattern-input">
+        {
+          this.state.patternType === 'CUSTOM' ?
+            (
+              <label className="control-label">
+                {T.translate(`${PREFIX}.replaceLabel`)}
+              </label>
+            )
+          : null
+        }
         <div className="col-xs-12">
           <input
             type="text"
             className="form-control mousetrap"
             value={this.state.sourcePattern}
             onChange={this.handleChange.bind(this, 'sourcePattern')}
-            placeholder={T.translate(`${PREFIX}.PatternInputPlaceholder.${this.state.patternType}`)}
+            placeholder={placeholder}
             autoFocus={true}
             ref={(ref) => this.patternInputRef = ref}
           />
@@ -145,9 +161,9 @@ export default class ReplaceColumns extends Component {
     if (this.state.patternType !== 'CUSTOM') { return null; }
 
     return (
-      <div className="form-group clearfix">
+      <div className="form-group clearfix pattern-input">
         <label className="control-label">
-          {T.translate(`${PREFIX}.replaceWithLabel`)}
+          {T.translate(`${PREFIX}.withLabel`)}
         </label>
         <div className="col-xs-12">
           <input

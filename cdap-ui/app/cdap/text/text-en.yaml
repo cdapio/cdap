@@ -401,18 +401,17 @@ features:
         ReplaceColumns:
           applyButton: Replace
           ignoreCase: Ignore Case
-          modalTitle: Replace column names
+          modalTitle: Replace Column Names
           PatternInputPlaceholder:
             CUSTOM: "e.g. ^body_, work_"
-            PATTERN: "e.g. eol$, body"
-            PREFIX: "e.g. ^body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
-            CUSTOM: Custom Pattern
+            CUSTOM: Replace Custom Pattern
             PATTERN: Remove Pattern
             PREFIX: Remove Prefix
-          replaceWithLabel: Replace with
-          replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement text
+          replaceLabel: Replace
+          replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
+          withLabel: With
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
