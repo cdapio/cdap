@@ -16,16 +16,20 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ProtoTriggerCodec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
@@ -86,6 +90,12 @@ public class TriggerCodecTest {
                               new TimeTrigger("* * * * *"));
     testSerDeserYieldsTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("test", "str"), 1000),
                               new StreamSizeTrigger(new StreamId("test", "str"), 1000));
+    testSerDeserYieldsTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
+                                                                                  ProgramType.FLOW, "myprog"),
+                                                                    ImmutableSet.of(ProgramStatus.COMPLETED)),
+                              new ProgramStatusTrigger(new ProgramId("test", "myapp",
+                                                                     ProgramType.FLOW, "myprog"),
+                                                       ImmutableSet.of(ProgramStatus.COMPLETED)));
   }
 
   private void testSerDeserYieldsTrigger(ProtoTrigger proto, Trigger trigger) {
@@ -116,42 +126,35 @@ public class TriggerCodecTest {
 
   @Test
   public void testObjectContainingTrigger() {
-    ProgramSchedule proto1 = new ProgramSchedule("sched1", "one partition schedule",
-                                                 new NamespaceId("test").app("a").worker("ww"),
-                                                 ImmutableMap.of("prop3", "abc"),
-                                                 new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of());
-    ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule",
-                                                 new NamespaceId("test").app("a").worker("ww"),
-                                                 ImmutableMap.of("prop3", "abc"),
-                                                 new PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of());
-    Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(proto1), ProgramSchedule.class));
+    testContainingTrigger(new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
+                          new PartitionTrigger(new DatasetId("test1", "pdfs1"), 1));
 
+    testContainingTrigger(new ProtoTrigger.TimeTrigger("* * * 1 1"),
+                          new TimeTrigger("* * * 1 1"));
 
-    ProgramSchedule proto2 = new ProgramSchedule("schedone", "one time schedule",
-                                                 new NamespaceId("test3").app("abc").workflow("wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of());
-    ProgramSchedule sched2 = new ProgramSchedule("schedone", "one time schedule",
-                                                 new NamespaceId("test3").app("abc").workflow("wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of());
-    Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(proto2), ProgramSchedule.class));
+    testContainingTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 1),
+                          new StreamSizeTrigger(new StreamId("x", "y"), 1));
 
-    ProgramSchedule proto3 = new ProgramSchedule("sched3", "one MB schedule",
-                                                 new NamespaceId("test3").app("abc").workflow("wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 1),
-                                                 ImmutableList.<Constraint>of());
-    ProgramSchedule sched3 = new ProgramSchedule("sched3", "one MB schedule",
-                                                 new NamespaceId("test3").app("abc").workflow("wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new StreamSizeTrigger(new StreamId("x", "y"), 1),
-                                                 ImmutableList.<Constraint>of());
-    Assert.assertEquals(sched3, GSON.fromJson(GSON.toJson(proto3), ProgramSchedule.class));
+    testContainingTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
+                                                                              ProgramType.FLOW, "myprog"),
+                                                                ImmutableSet.of(ProgramStatus.FAILED)),
+                          new ProgramStatusTrigger(new ProgramId("test", "myapp",
+                                                   ProgramType.FLOW, "myprog"),
+                                                   ImmutableSet.of(ProgramStatus.FAILED)));
+
   }
 
+  private void testContainingTrigger(ProtoTrigger proto, Trigger trigger) {
+    ProgramSchedule proto1 = new ProgramSchedule("sched1", "one partition schedule",
+                                                 new NamespaceId("test").app("a").worker("ww"),
+                                                 ImmutableMap.of("prop3", "abc"), proto,
+                                                 ImmutableList.<Constraint>of());
+
+    ProgramSchedule sched1 = new ProgramSchedule("sched1", "one partition schedule",
+                                                 new NamespaceId("test").app("a").worker("ww"),
+                                                 ImmutableMap.of("prop3", "abc"), trigger,
+                                                 ImmutableList.<Constraint>of());
+
+    Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(proto1), ProgramSchedule.class));
+  }
 }

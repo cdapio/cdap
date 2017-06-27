@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.app;
 
-import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.plugin.PluginConfigurer;
@@ -26,9 +25,8 @@ import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
-import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Workflow;
-import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
+import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
 
 import java.util.Map;
 
@@ -119,10 +117,10 @@ public interface ApplicationConfigurer extends PluginConfigurer {
                                 String programName);
 
   /**
-   * Schedules a program, using the given scheduleCreationSpec.
+   * Schedules a program, using the given scheduleCreationBuilder.
    *
-   * @param scheduleCreationSpec defines the schedule. Can be built using the builder obtained
-   *                             from {@link #buildSchedule(String, ProgramType, String)}
+   * @param scheduleCreationBuilder defines the builder for a schedule. The ScheduleCreationBuilder is built into a
+   *                                ScheduleCreationSpec when the application specification is created.
    */
-  void schedule(ScheduleCreationSpec scheduleCreationSpec);
+  void schedule(ScheduleCreationBuilder scheduleCreationBuilder);
 }

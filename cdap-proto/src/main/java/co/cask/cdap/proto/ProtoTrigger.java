@@ -16,11 +16,14 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -34,7 +37,8 @@ public abstract class ProtoTrigger implements Trigger {
   public enum Type {
     TIME,
     PARTITION,
-    STREAM_SIZE
+    STREAM_SIZE,
+    PROGRAM_STATUS
   }
 
   private final Type type;
@@ -189,6 +193,63 @@ public abstract class ProtoTrigger implements Trigger {
     @Override
     public String toString() {
       return String.format("StreamSizeTrigger(%s, %d MB)", getStreamId(), getTriggerMB());
+    }
+  }
+
+  /**
+   * Represents a program status trigger for REST requests/responses
+   */
+  public static class ProgramStatusTrigger extends ProtoTrigger {
+    protected final ProgramId programId;
+    protected final Set<ProgramStatus> programStatuses;
+
+    public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
+      super(Type.PROGRAM_STATUS);
+
+      this.programId = programId;
+      this.programStatuses = programStatuses;
+      validate();
+    }
+
+    public ProgramId getProgramId() {
+      return programId;
+    }
+
+    public Set<ProgramStatus> getProgramStatuses() {
+      return programStatuses;
+    }
+
+    @Override
+    public void validate() {
+      if (getProgramStatuses().contains(ProgramStatus.INITIALIZING) ||
+          getProgramStatuses().contains(ProgramStatus.RUNNING)) {
+        throw new IllegalArgumentException(String.format(
+                "Cannot allow triggering program %s with status %s: COMPLETED, FAILED, KILLED statuses are supported",
+                programId.getProgram(), programId.getType()));
+      }
+
+      ProtoTrigger.validateNotNull(getProgramId(), "program id");
+      ProtoTrigger.validateNotNull(getProgramStatuses(), "program statuses");
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(getProgramId(), getProgramStatuses());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o ||
+        o != null &&
+          getClass().equals(o.getClass()) &&
+          Objects.equals(getProgramStatuses(), ((ProgramStatusTrigger) o).getProgramStatuses()) &&
+          Objects.equals(getProgramId(), ((ProgramStatusTrigger) o).getProgramId());
+    }
+
+    @Override
+    public String toString() {
+      return String.format("ProgramStatusTrigger(%s, %s)", getProgramId().getProgram(),
+                                                           getProgramStatuses().toString());
     }
   }
 
