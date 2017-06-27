@@ -370,11 +370,15 @@ class HydratorPlusPlusTopPanelCtrl {
         uniqueId: 'id-' + this.uuid.v4()
       }];
       this.validToStartPreview = this.isValidToStartPreview();
+      this.previewStore.dispatch(
+        this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
+      );
       return this.$q.when(this.runtimeArguments);
     }
 
     this.macrosMap = this.previewStore.getState().preview.macros;
     this.userRuntimeArgumentsMap = this.previewStore.getState().preview.userRuntimeArguments;
+    let currentRuntimeArgsForDisplay = this.previewStore.getState().preview.runtimeArgsForDisplay;
 
     // if there are non-zero number of macros
     if (Object.keys(newMacrosMap).length !== 0) {
@@ -420,7 +424,10 @@ class HydratorPlusPlusTopPanelCtrl {
                 this.previewActions.setMacros(this.macrosMap)
               );
             }
-            this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
+            this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+            this.previewStore.dispatch(
+              this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
+            );
             this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
@@ -435,7 +442,10 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setMacros(this.macrosMap)
       );
-      this.runtimeArguments = this.HydratorPlusPlusHydratorService.convertMacrosToRuntimeArguments(this.runtimeArguments, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.runtimeArguments = this.HydratorPlusPlusHydratorService.getRuntimeArgsForDisplay(currentRuntimeArgsForDisplay, this.macrosMap, this.userRuntimeArgumentsMap);
+      this.previewStore.dispatch(
+        this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
+      );
       this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
@@ -474,6 +484,9 @@ class HydratorPlusPlusTopPanelCtrl {
     // have to do this because cannot do two `this.previewStore.dispatch` in a row
     this.previewStore.dispatch(
       this.previewActions.setMacrosAndUserRuntimeArgs(this.macrosMap, this.userRuntimeArgumentsMap)
+    );
+    this.previewStore.dispatch(
+      this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
     );
     this.validToStartPreview = this.isValidToStartPreview();
   }
