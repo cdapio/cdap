@@ -182,34 +182,46 @@ export default class PipelineSummary extends Component {
       end
     });
   }
+  renderTitleBar() {
+    return (
+      <div className="top-title-bar">
+        <div> {T.translate(`${PREFIX}.title`)}</div>
+        <div className="stats-container text-xs-right">
+          {
+            /*
+              <span>
+                <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)} </strong>
+                {this.state.totalRunsCount}
+              </span>
+              TODO: Will come in a later PR
+              <span className="run-times">
+                <strong className="run-time-label">
+                  {T.translate(`${PREFIX}.statsContainer.runTime`)}:
+                </strong>
+                <strong>{T.translate(`${PREFIX}.statsContainer.min`)}</strong>
+                <span>1:56</span>
+                <strong> {T.translate(`${PREFIX}.statsContainer.max`)} </strong>
+                <span>3:03</span>
+                <strong> {T.translate(`${PREFIX}.statsContainer.avg`)} </strong>
+                <span>2:16 min</span>
+              </span>
+              <span>
+                <strong> {T.translate(`${PREFIX}.statsContainer.currentSchedule`)} </strong>
+                <span> Runs every 20 min past the hour </span>
+              </span>
+            */
+          }
+        </div>
+      </div>
+    );
+  }
   render() {
     // FIXME: Right now run time stats and schedule summary are dummy. Will change in subsequent PR.
     return (
       <div className="pipeline-summary">
-        <div className="top-title-bar">
-          <div> {T.translate(`${PREFIX}.title`)}</div>
-          <div className="stats-container text-xs-right">
-            <span>
-              <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)} </strong>
-              {this.state.totalRunsCount}
-            </span>
-            <span className="run-times">
-              <strong className="run-time-label">
-                {T.translate(`${PREFIX}.statsContainer.runTime`)}:
-              </strong>
-              <strong>{T.translate(`${PREFIX}.statsContainer.min`)}</strong>
-              <span>1:56</span>
-              <strong> {T.translate(`${PREFIX}.statsContainer.max`)} </strong>
-              <span>3:03</span>
-              <strong> {T.translate(`${PREFIX}.statsContainer.avg`)} </strong>
-              <span>2:16 min</span>
-            </span>
-            <span>
-              <strong> {T.translate(`${PREFIX}.statsContainer.currentSchedule`)} </strong>
-              <span> Runs every 20 min past the hour </span>
-            </span>
-          </div>
-        </div>
+        {
+          this.renderTitleBar()
+        }
         <div className="filter-container">
           <span> {T.translate(`${PREFIX}.filterContainer.view`)} </span>
           <UncontrolledDropdown className="runs-dropdown">
