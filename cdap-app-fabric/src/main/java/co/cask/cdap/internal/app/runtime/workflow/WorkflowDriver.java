@@ -234,6 +234,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return workflow;
   }
 
+  public BasicWorkflowToken getBasicWorkflowToken() {
+    return basicWorkflowToken;
+  }
+
   private void blockIfSuspended() {
     lock.lock();
     try {

@@ -327,6 +327,7 @@ class NotificationSubscriberService extends AbstractIdleService {
       String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
       String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+      String workflowTokenString = notification.getProperties().get(ProgramOptionConstants.WORKFLOW_TOKEN);
       ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
 
       if (programIdString == null || programRunId == null || programStatus == null) {
@@ -345,14 +346,13 @@ class NotificationSubscriberService extends AbstractIdleService {
             Map<String, String> properties = new HashMap<>();
             properties.put(ProgramOptionConstants.USER_OVERRIDES, userOverridesString);
             WorkflowId workflowId = programId.getParent().workflow(programId.getProgram());
-            WorkflowToken token = store.getWorkflowToken(workflowId, programRunId);
 
             Map<String, String> workflowInfo = new HashMap<>();
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram());
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_RUN_ID, programRunId);
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?");
+            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?"); // TODO do we inherit from end of last one?
             workflowInfo.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, "doesn't matter?");
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
+            workflowInfo.put(ProgramOptionConstants.WORKFLOW_TOKEN, workflowTokenString);
             properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(workflowInfo, STRING_STRING_MAP));
             Notification workflowNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
             jobQueue.addNotification(schedule, workflowNotification);

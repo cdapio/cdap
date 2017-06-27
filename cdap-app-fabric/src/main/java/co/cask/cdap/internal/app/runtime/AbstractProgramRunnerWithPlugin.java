@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -83,13 +84,16 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
    * @param userArguments the user arguments of the program
    */
   protected void sendProgramStatusNotification(ProgramId programId, RunId runId, ProgramStatus programStatus,
-                                               Arguments userArguments) {
+                                               Arguments userArguments, @Nullable WorkflowToken token) {
     // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
     Map<String, String> properties = new HashMap<String, String>();
     properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
+    if (token != null) {
+      properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
+    }
 
     Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
     TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));

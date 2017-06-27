@@ -23,6 +23,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -123,7 +124,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     final RunId runId = ProgramRunners.getRunId(options);
 
     // A Workflow could have also gotten the workflow token from another Workflow
-    WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(options.getArguments());
+    final WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(options.getArguments());
     DatasetFramework programDatasetFramework = workflowInfo == null ?
             datasetFramework :
             NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
@@ -142,7 +143,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, workflowInfo,
+      final WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, workflowInfo,
                                                  programRunnerFactory, metricsCollectionService,
                                                  programDatasetFramework, discoveryServiceClient, txClient,
                                                  runtimeStore, cConf, pluginInstantiator, secureStore,
@@ -197,7 +198,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
               sendProgramStatusNotification(program.getId(), runId, ProgramStatus.COMPLETED,
-                                            options.getUserArguments());
+                                            options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -212,7 +213,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
-              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.KILLED, options.getUserArguments());
+              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.KILLED, options.getUserArguments(),
+                                            driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -252,7 +254,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.FAILED, options.getUserArguments());
+              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.FAILED, options.getUserArguments(),
+                                            driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
