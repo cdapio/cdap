@@ -1025,7 +1025,7 @@ features:
       legend1: Failed
       legend2: Successful
       table:
-        header:
+        headers:
           duration: Duration
           runCount: Run#
           status: Status

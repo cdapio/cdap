@@ -35,6 +35,7 @@ const ONE_DAY_SECONDS = 86400;
 export default class PipelineSummary extends Component {
   constructor(props) {
     super(props);
+    const RUNSFILTERPREFIX = `${PREFIX}.runsFilter`;
     let {namespaceId, appId, programType, programId, pipelineConfig} = props;
     this.state = {
       runs: [],
@@ -44,12 +45,11 @@ export default class PipelineSummary extends Component {
       runsLimit: 10,
       filterType: 'limit',
       start: 0,
-      activeRunsFilter: 'Last 10 runs',
+      activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
       loading: true
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
-    const RUNSFILTERPREFIX = `${PREFIX}.runsFilter`;
     this.runsDropdown = [
       {
         label: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
@@ -80,7 +80,19 @@ export default class PipelineSummary extends Component {
       },
       {
         label: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
-        onClick: this.fetchRunsByTime.bind(this)
+        onClick: () => {
+          this.setState({
+          activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
+          filterType: 'time'
+        });
+          fetchSummary({
+            namespaceId,
+            appId,
+            programType: convertProgramToApi(programType),
+            programId,
+            pipelineConfig
+          });
+        }
       }
     ];
     fetchSummary({

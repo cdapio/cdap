@@ -28,6 +28,8 @@ const WARNINGBARCOLOR = '#FDA639';
 const ERRORBARCOLOR = '#A40403';
 const PREFIX = `features.PipelineSummary.logsMetricsGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
+const DEFAULT_TICKS_TOTAL = 10;
+const DEFAULT_GRAPH_HEIGHT = 300;
 
 require('./LogsMetricsGraph.scss');
 /*
@@ -70,7 +72,7 @@ export default class LogsMetricsGraph extends Component {
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let {errors, warnings} = this.getDataClusters();
-    let height = 300;
+    let height = DEFAULT_GRAPH_HEIGHT;
     if (this.containerRef) {
       let clientRect = this.containerRef.getBoundingClientRect();
       height = clientRect.height - 100;
@@ -129,7 +131,7 @@ export default class LogsMetricsGraph extends Component {
           />
           <HorizontalGridLines />
           <XAxis
-            tickTotal={10}
+            tickTotal={DEFAULT_TICKS_TOTAL}
             tickFormat={(v => {
               if (this.props.xDomainType === 'time') {
                 return moment(v * 1000).format('ddd M/D/YY');
@@ -140,7 +142,7 @@ export default class LogsMetricsGraph extends Component {
           <YAxis />
           <BarSeries
             cluster="runs"
-            color="#FDA639"
+            color={WARNINGBARCOLOR}
             onValueClick={(d) => {
               if (isEqual(this.state.currentHoveredElement || {}, d)) {
                 this.setState({
@@ -155,7 +157,7 @@ export default class LogsMetricsGraph extends Component {
             data={warnings}/>
           <BarSeries
             cluster="runs"
-            color="#A40403"
+            color={ERRORBARCOLOR}
             onValueClick={(d) => {
               if (isEqual(this.state.currentHoveredElement || {}, d)) {
                 this.setState({
@@ -170,24 +172,26 @@ export default class LogsMetricsGraph extends Component {
             data={errors}/>
           {
             this.state.currentHoveredElement && popOverData ?
-              <Hint value={this.state.currentHoveredElement}>
-                <h4>{T.translate(`${PREFIX}.hint.title`)} </h4>
-                <div className="log-stats">
-                  <div>
-                    <span> {T.translate(`${PREFIX}.hint.errors`)} </span>
-                    <span  className="text-danger"> {popOverData.logsMetrics['system.app.log.error']}</span>
+              (
+                <Hint value={this.state.currentHoveredElement}>
+                  <h4>{T.translate(`${PREFIX}.hint.title`)} </h4>
+                  <div className="log-stats">
+                    <div>
+                      <span>{T.translate(`${PREFIX}.hint.errors`)}</span>
+                      <span className="text-danger">{popOverData.logsMetrics['system.app.log.error']}</span>
+                    </div>
+                    <div>
+                      <span>{T.translate(`${PREFIX}.hint.warnings`)}</span>
+                      <span className="text-warning">{popOverData.logsMetrics['system.app.log.warn']}</span>
+                    </div>
+                    <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.hint.viewLogs`)}</a>
                   </div>
                   <div>
-                    <span> {T.translate(`${PREFIX}.hint.warnings`)} </span>
-                    <span className="text-warning"> {popOverData.logsMetrics['system.app.log.warn']}</span>
+                    <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
+                    <span>{ moment(popOverData.start * 1000).format('llll')}</span>
                   </div>
-                  <a href={logUrl} target="_blank"> {T.translate(`${PREFIX}.hint.viewLogs`)} </a>
-                </div>
-                <div>
-                  <strong> {T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                  <span>{ moment(popOverData.start * 1000).format('llll')} </span>
-                </div>
-              </Hint>
+                </Hint>
+              )
             :
               null
           }

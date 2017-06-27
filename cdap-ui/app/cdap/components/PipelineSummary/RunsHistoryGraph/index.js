@@ -167,26 +167,28 @@ export default class RunsHistoryGraph extends Component {
 
           {
             this.state.currentHoveredElement && popOverData ?
-              <Hint value={this.state.currentHoveredElement}>
-                <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
-                <div className="log-stats">
-                  <div>
-                    <span> {T.translate(`${PREFIX}.hint.duration`)} </span>
-                    <span> {popOverData.duration}</span>
+              (
+                <Hint value={this.state.currentHoveredElement}>
+                  <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
+                  <div className="log-stats">
+                    <div>
+                      <span>{T.translate(`${PREFIX}.hint.duration`)}</span>
+                      <span>{popOverData.duration}</span>
+                    </div>
+                    <div>
+                      <span>{T.translate(`${PREFIX}.hint.status`)}</span>
+                      <span className={classnames({
+                        'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) !== -1,
+                        'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) === -1
+                      })}>{popOverData.status}</span>
+                    </div>
                   </div>
                   <div>
-                    <span> {T.translate(`${PREFIX}.hint.status`)} </span>
-                    <span className={classnames({
-                      'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) !== -1,
-                      'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(popOverData.status) === -1
-                    })}> {popOverData.status}</span>
+                    <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
+                    <span>{moment(popOverData.start * 1000).format('llll')}</span>
                   </div>
-                </div>
-                <div>
-                  <strong> {T.translate(`${PREFIX}.hint.startTime`)}: </strong>
-                  <span>{ moment(popOverData.start * 1000).format('llll')} </span>
-                </div>
-              </Hint>
+                </Hint>
+              )
             :
               null
           }
