@@ -403,7 +403,7 @@ features:
           ignoreCase: Ignore Case
           modalTitle: Replace Column Names
           PatternInputPlaceholder:
-            CUSTOM: "e.g. ^body_, work_"
+            PREFIX: "e.g. ^body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
             CUSTOM: Replace Custom Pattern

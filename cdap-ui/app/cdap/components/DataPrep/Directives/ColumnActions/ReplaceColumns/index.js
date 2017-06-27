@@ -126,9 +126,9 @@ export default class ReplaceColumns extends Component {
 
     // Have to hardcode this because apparently there's no way to escape
     // [] and {} in i18n-react
-    let placeholder = "body_[0-9]{2}, eol$";
-    if (this.state.patternType === 'CUSTOM') {
-      placeholder = T.translate(`${PREFIX}.PatternInputPlaceholder.CUSTOM`);
+    let placeholder = "e.g. body_[0-9]{2}, eol$";
+    if (this.state.patternType === 'PREFIX') {
+      placeholder = T.translate(`${PREFIX}.PatternInputPlaceholder.PREFIX`);
     }
 
     return (
@@ -136,7 +136,7 @@ export default class ReplaceColumns extends Component {
         {
           this.state.patternType === 'CUSTOM' ?
             (
-              <label className="control-label">
+              <label className="replace-label control-label">
                 {T.translate(`${PREFIX}.replaceLabel`)}
               </label>
             )
