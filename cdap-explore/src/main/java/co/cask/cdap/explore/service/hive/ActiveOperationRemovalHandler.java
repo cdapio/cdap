@@ -21,9 +21,12 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 
@@ -91,6 +94,18 @@ public class ActiveOperationRemovalHandler implements RemovalListener<QueryHandl
         });
       } catch (Exception e) {
         LOG.error("Failed to impersonate while closing handle {}", handle);
+      } finally {
+        try {
+          // we don't want to close FileSystems for the login user
+          if (!UserGroupInformation.getLoginUser().equals(opInfo.getUGI())) {
+            // Avoid the FileSystem.CACHE from leaking memory, since we create many different UGIs over time.
+            // See CDAP-11997 for more information.
+            FileSystem.closeAllForUGI(opInfo.getUGI());
+          }
+        } catch (IOException e) {
+          LOG.warn("Failed to close all FileSystem for UGI {}.", opInfo.getUGI(), e);
+        }
+
       }
     }
   }
