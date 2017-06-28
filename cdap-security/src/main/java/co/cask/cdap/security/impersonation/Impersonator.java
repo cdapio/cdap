@@ -59,6 +59,18 @@ public interface Impersonator {
   <T> T doAs(NamespacedEntityId entityId, Callable<T> callable, ImpersonatedOpType impersonatedOpType) throws Exception;
 
   /**
+   * Executes a callable to delete an entity as the user
+   *
+   * @param entityId the entity to use to lookup the user to impersonate
+   * @param callable the callable to execute
+   * @param <T> return type of the callable
+   *
+   * @return the return value of the callable
+   * @throws Exception if the callable throws any exception
+   */
+  <T> T deleteEntity(NamespacedEntityId entityId, Callable<T> callable) throws Exception;
+
+  /**
    * Retrieve the {@link UserGroupInformation} for the given {@link NamespaceId}
    *
    * @param entityId Entity whose effective owner's UGI will be returned

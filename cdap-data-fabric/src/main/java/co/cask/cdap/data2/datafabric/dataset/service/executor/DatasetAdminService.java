@@ -40,7 +40,6 @@ import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.SystemMetadataWriter;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import com.google.common.base.Throwables;
@@ -106,9 +105,8 @@ public class DatasetAdminService {
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
       final DatasetContext context = DatasetContext.from(datasetInstanceId.getNamespace());
-      UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
-      final DatasetType type = ImpersonationUtils.doAs(ugi, new Callable<DatasetType>() {
+      final DatasetType type = impersonator.doAs(datasetInstanceId, new Callable<DatasetType>() {
         @Override
         public DatasetType call() throws Exception {
           DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
@@ -120,7 +118,7 @@ public class DatasetAdminService {
         }
       });
 
-      DatasetSpecification spec = ImpersonationUtils.doAs(ugi, new Callable<DatasetSpecification>() {
+      DatasetSpecification spec = impersonator.doAs(datasetInstanceId, new Callable<DatasetSpecification>() {
         @Override
         public DatasetSpecification call() throws Exception {
           DatasetSpecification spec = existing == null ? type.configure(datasetInstanceId.getEntityName(), props)
@@ -141,7 +139,7 @@ public class DatasetAdminService {
       });
 
       // Writing system metadata should be done without impersonation since user may not have access to system tables.
-      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null, ugi);
+      writeSystemMetadata(datasetInstanceId, spec, props, typeMeta, type, context, existing != null);
       return spec;
     } catch (Exception e) {
       if (e instanceof IncompatibleUpdateException) {
@@ -157,14 +155,14 @@ public class DatasetAdminService {
 
   private void writeSystemMetadata(DatasetId datasetInstanceId, final DatasetSpecification spec,
                                    DatasetProperties props, final DatasetTypeMeta typeMeta, final DatasetType type,
-                                   final DatasetContext context, boolean existing, UserGroupInformation ugi)
+                                   final DatasetContext context, boolean existing)
     throws IOException {
     // add system metadata for user datasets only
     if (DatasetsUtil.isUserDataset(datasetInstanceId)) {
       Dataset dataset = null;
       try {
         try {
-          dataset = ImpersonationUtils.doAs(ugi, new Callable<Dataset>() {
+          dataset = impersonator.doAs(datasetInstanceId, new Callable<Dataset>() {
             @Override
             public Dataset call() throws Exception {
               return type.getDataset(context, spec, DatasetDefinition.NO_ARGUMENTS);
@@ -201,9 +199,8 @@ public class DatasetAdminService {
     LOG.info("Dropping dataset with spec: {}, type meta: {}", spec, typeMeta);
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
-      UserGroupInformation ugi = getUgiForDataset(impersonator, datasetInstanceId);
 
-      ImpersonationUtils.doAs(ugi, new Callable<Void>() {
+      impersonator.deleteEntity(datasetInstanceId, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
@@ -256,20 +253,5 @@ public class DatasetAdminService {
         throw Throwables.propagate(e);
       }
     }
-  }
-
-  private static UserGroupInformation getUgiForDataset(Impersonator impersonator, DatasetId datasetInstanceId)
-    throws IOException {
-    // for system dataset do not look up owner information in store as we know that it will be null.
-    // Also, this is required for CDAP to start, because initially we don't want to look up owner admin
-    // (causing its own lookup) as the SystemDatasetInitiator.getDataset is called when CDAP starts
-    UserGroupInformation ugi;
-    if (NamespaceId.SYSTEM.equals(datasetInstanceId.getParent())) {
-      ugi = UserGroupInformation.getCurrentUser();
-    } else {
-      ugi = impersonator.getUGI(datasetInstanceId);
-    }
-    LOG.debug("Using {} user for dataset {}", ugi.getUserName(), datasetInstanceId);
-    return ugi;
   }
 }

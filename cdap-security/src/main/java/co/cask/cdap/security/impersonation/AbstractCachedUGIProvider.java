@@ -18,14 +18,20 @@ package co.cask.cdap.security.impersonation;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
+import co.cask.cdap.proto.id.ParentedId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * {@link UserGroupInformation}.
  */
 public abstract class AbstractCachedUGIProvider implements UGIProvider {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractCachedUGIProvider.class);
   
   protected final CConfiguration cConf;
   private final LoadingCache<ImpersonationRequest, UGIWithPrincipal> ugiCache;
@@ -65,10 +72,28 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
     }
   }
 
+  public void invalidateCacheForEntity(NamespacedEntityId entityId) {
+    LOG.error("Yaojie - cache ugi class is: {}", this.getClass());
+    LOG.error("Yaojie - invalidate root entity: {}", entityId);
+    for (ImpersonationRequest request : ugiCache.asMap().keySet()) {
+      NamespacedEntityId requestEntityId = request.getEntityId();
+      if (isChild(entityId, requestEntityId)) {
+        for (ImpersonatedOpType type : EnumSet.allOf(ImpersonatedOpType.class)) {
+          LOG.error("Yaojie - invalidating entity: {}", requestEntityId);
+          ugiCache.invalidate(new ImpersonationRequest(requestEntityId, type));
+        }
+      }
+    }
+  }
+
   @VisibleForTesting
   void invalidCache() {
     ugiCache.invalidateAll();
     ugiCache.cleanUp();
+  }
+
+  private boolean isChild(NamespacedEntityId parent, EntityId child) {
+    return parent.equals(child) || (child instanceof ParentedId && isChild(parent, ((ParentedId) child).getParent()));
   }
 
   private LoadingCache<ImpersonationRequest, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
@@ -78,6 +103,8 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       .build(new CacheLoader<ImpersonationRequest, UGIWithPrincipal>() {
         @Override
         public UGIWithPrincipal load(ImpersonationRequest impersonationRequest) throws Exception {
+          LOG.error("Yaojie - putting cache ugi class is: {}", this.getClass());
+          LOG.error("Yaojie - putting {} in cache", impersonationRequest);
           return createUGI(impersonationRequest);
         }
       });

@@ -71,6 +71,20 @@ public class DefaultImpersonator implements Impersonator {
   }
 
   @Override
+  public <T> T deleteEntity(NamespacedEntityId entityId, Callable<T> callable) throws Exception {
+    UserGroupInformation ugi = getUGI(entityId);
+    LOG.debug("Performing doAs with UGI {} for entity {} and impersonation operation type", ugi, entityId,
+              ImpersonatedOpType.OTHER);
+    try {
+      return ImpersonationUtils.doAs(ugi, callable);
+    } finally {
+      if (ugiProvider instanceof AbstractCachedUGIProvider) {
+        ((AbstractCachedUGIProvider) ugiProvider).invalidateCacheForEntity(entityId);
+      }
+    }
+  }
+
+  @Override
   public UserGroupInformation getUGI(NamespacedEntityId entityId) throws IOException {
     return getUGI(entityId, ImpersonatedOpType.OTHER);
   }

@@ -117,7 +117,8 @@ public abstract class AbstractNamespaceResourceDeleter implements NamespaceResou
     // Another reason for not deleting the default namespace is that we do not want to call a delete on the default
     // namespace in the storage provider (Hive, HBase, etc), since we re-use their default namespace.
     if (!NamespaceId.DEFAULT.equals(namespaceId)) {
-      impersonator.doAs(namespaceId, new Callable<Void>() {
+      LOG.error("Yaojie - impersonator is: {}", impersonator.getClass());
+      impersonator.deleteEntity(namespaceId, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           // Delete namespace in storage providers

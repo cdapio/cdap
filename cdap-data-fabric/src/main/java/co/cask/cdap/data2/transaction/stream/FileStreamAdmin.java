@@ -180,7 +180,7 @@ public class FileStreamAdmin implements StreamAdmin {
   public void dropAllInNamespace(final NamespaceId namespace) throws Exception {
     // To delete all streams in a namespace, one should have admin privileges on that namespace
     ensureAccess(namespace, Action.ADMIN);
-    Iterable<Location> locations = impersonator.doAs(namespace, new Callable<Iterable<Location>>() {
+    Iterable<Location> locations = impersonator.deleteEntity(namespace, new Callable<Iterable<Location>>() {
       @Override
       public Iterable<Location> call() throws Exception {
         try {
@@ -197,7 +197,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     // Also drop the state table
-    impersonator.doAs(namespace, new Callable<Void>() {
+    impersonator.deleteEntity(namespace, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         stateStoreFactory.dropAllInNamespace(namespace);
@@ -703,7 +703,7 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
 
-          impersonator.doAs(streamId, new Callable<Void>() {
+          impersonator.deleteEntity(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               if (!configLocation.delete()) {

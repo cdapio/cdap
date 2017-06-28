@@ -161,7 +161,7 @@ public class ExploreMetadataHttpHandler extends AbstractExploreMetadataHttpHandl
       public QueryHandle execute(HttpRequest request, HttpResponder responder)
         throws IllegalArgumentException, SQLException, ExploreException, IOException {
         try {
-          return impersonator.doAs(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
+          return impersonator.deleteEntity(new NamespaceId(namespaceId), new Callable<QueryHandle>() {
             @Override
             public QueryHandle call() throws Exception {
               return exploreService.deleteNamespace(new NamespaceId(namespaceId));

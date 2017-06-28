@@ -115,7 +115,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
 
         final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
-        impersonator.doAs(appSpec.getApplicationId(), new Callable<Void>() {
+        impersonator.deleteEntity(appSpec.getApplicationId(), new Callable<Void>() {
 
           @Override
           public Void call() throws Exception {
