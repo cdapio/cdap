@@ -36,8 +36,9 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
+    int numStarting = context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.STARTING, maxConcurrency).size();
     int numRunning = context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.RUNNING, maxConcurrency).size();
-    if (numRunning >= maxConcurrency) {
+    if (numStarting + numRunning >= maxConcurrency) {
         LOG.debug("Skipping run of program {} from schedule {} because there are at least {} running runs.",
                   schedule.getProgramId(), schedule.getName(), maxConcurrency);
       return notSatisfied(context);

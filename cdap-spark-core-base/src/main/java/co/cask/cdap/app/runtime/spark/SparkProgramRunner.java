@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
@@ -49,6 +50,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -136,6 +138,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     Deque<Closeable> closeables = new LinkedList<>();
 
@@ -196,11 +199,11 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter);
 
-      sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
-                                     closeables, runtimeStore),
-        Threads.SAME_THREAD_EXECUTOR);
-      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
+      sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
+        new ProgramStorePublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(), runtimeStore);
+      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext,
+                                                                programStateWriter);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -259,69 +262,18 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   }
 
   /**
-   * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
+   * Creates a service listener to cleanup closeables on {@link SparkRuntimeService}.
    */
-  private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
-                                                        final Arguments arguments, final Arguments userArgs,
-                                                        final Iterable<Closeable> closeables,
-                                                        final RuntimeStore runtimeStore) {
-
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
+  private Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
     return new ServiceListenerAdapter() {
-      @Override
-      public void starting() {
-        //Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-
-        final long finalStartTimeInSeconds = startTimeInSeconds;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                  userArgs.asMap(), arguments.asMap());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-
       @Override
       public void terminated(Service.State from) {
         closeAll(closeables);
-        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
-        if (from == Service.State.STOPPING) {
-          // Service was killed
-          runStatus = ProgramController.State.KILLED.getRunStatus();
-        }
-
-        final ProgramRunStatus finalRunStatus = runStatus;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
 
       @Override
       public void failed(Service.State from, @Nullable final Throwable failure) {
         closeAll(closeables);
-
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
     };
   }

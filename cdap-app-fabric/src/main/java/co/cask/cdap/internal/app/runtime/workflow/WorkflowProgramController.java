@@ -15,8 +15,12 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -31,7 +35,7 @@ import java.net.InetSocketAddress;
 /**
  *
  */
-final class WorkflowProgramController extends AbstractProgramController {
+final class WorkflowProgramController extends AbstractStateChangeProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramController.class);
 
@@ -40,8 +44,9 @@ final class WorkflowProgramController extends AbstractProgramController {
   private final ServiceAnnouncer serviceAnnouncer;
   private Cancellable cancelAnnounce;
 
-  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
-    super(program.getId(), runId);
+  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId,
+                            ProgramStateWriter programStateWriter) {
+    super(program.getId(), runId, programStateWriter, null);
     this.driver = driver;
     this.serviceName = getServiceName(program, runId);
     this.serviceAnnouncer = serviceAnnouncer;
@@ -110,5 +115,9 @@ final class WorkflowProgramController extends AbstractProgramController {
   private String getServiceName(Program program, RunId runId) {
     return String.format("workflow.%s.%s.%s.%s",
                          program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
+  }
+
+  public WorkflowToken getWorkflowToken() {
+    return driver.getBasicWorkflowToken();
   }
 }

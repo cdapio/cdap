@@ -20,6 +20,7 @@ import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -57,9 +58,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository,
+                                       ArtifactRepository artifactRepository, RuntimeStore runtimeStore,
                                        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    super(cConf, programRunnerFactory, artifactRepository);
+    super(cConf, runtimeStore, programRunnerFactory, artifactRepository);
     this.hostname = hostname.getCanonicalHostName();
   }
 

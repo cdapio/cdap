@@ -21,12 +21,15 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -36,11 +39,14 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.internal.app.store.ProgramStorePublisher;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -67,6 +73,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -84,14 +91,17 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
   private final CConfiguration cConf;
+  private final RuntimeStore runtimeStore;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
 
-  protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+  protected AbstractProgramRuntimeService(CConfiguration cConf, RuntimeStore runtimeStore,
+                                          ProgramRunnerFactory programRunnerFactory,
                                           ArtifactRepository artifactRepository) {
     this.cConf = cConf;
+    this.runtimeStore = runtimeStore;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
@@ -100,10 +110,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
-    ProgramId programId = programDescriptor.getProgramId();
+    final ProgramId programId = programDescriptor.getProgramId();
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
-    RunId runId = RunIds.generate();
+    final RunId runId = RunIds.generate();
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
@@ -119,7 +129,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // Create and run the program
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
+
+      // Publish the program's starting state
+      final Arguments userArguments = options.getUserArguments();
+      final Arguments systemArguments = options.getArguments();
+      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+      new ProgramStorePublisher(programId, runId, twillRunId, userArguments, systemArguments,
+                                runtimeStore).start(System.currentTimeMillis());
+
+      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
     } catch (Exception e) {

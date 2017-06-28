@@ -43,6 +43,12 @@ public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore 
   }
 
   @Override
+  public void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                       Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+    executeRequest("setInit", id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+  }
+
+  @Override
   public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
                        Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     executeRequest("setStart", id, pid, startTime, twillRunId, runtimeArgs, systemArgs);

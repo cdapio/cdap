@@ -251,9 +251,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterAppWithNewFlowAPI.class);
     final ServiceManager countService = applicationManager.getServiceManager("CountService");
-    countService.setInstances(2);
+    countService.setInstances(3);
     Assert.assertEquals(0, countService.getProvisionedInstances());
-    Assert.assertEquals(2, countService.getRequestedInstances());
+    Assert.assertEquals(3, countService.getRequestedInstances());
     Assert.assertFalse(countService.isRunning());
 
     List<RunRecord> history = countService.getHistory();
@@ -261,14 +261,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     countService.start();
     Assert.assertTrue(countService.isRunning());
-    Assert.assertEquals(2, countService.getProvisionedInstances());
+    Assert.assertEquals(3, countService.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
     history = countService.getHistory(ProgramRunStatus.KILLED);
     Assert.assertEquals(0, history.size());
 
-    // requesting with either RUNNING or ALL will return one record
-    Tasks.waitFor(1, new Callable<Integer>() {
+    // requesting with either RUNNING or ALL will return two records because STARTING and RUNNING are separate states
+    Tasks.waitFor(2, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return countService.getHistory(ProgramRunStatus.RUNNING).size();
@@ -276,11 +276,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS);
 
     history = countService.getHistory(ProgramRunStatus.RUNNING);
-    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+    Assert.assertEquals(2, history.size());
+    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
 
     history = countService.getHistory(ProgramRunStatus.ALL);
-    Assert.assertEquals(1, history.size());
-    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+    Assert.assertEquals(2, history.size());
+    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
   }
 
   @Test

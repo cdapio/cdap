@@ -20,13 +20,17 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.NettyHttpService;
@@ -66,17 +70,19 @@ public class WebappProgramRunner implements ProgramRunner {
   private final DiscoveryService discoveryService;
   private final InetAddress hostname;
   private final WebappHttpHandlerFactory webappHttpHandlerFactory;
+  private final RuntimeStore runtimeStore;
   private final CConfiguration cConf;
 
   @Inject
   public WebappProgramRunner(ServiceAnnouncer serviceAnnouncer, DiscoveryService discoveryService,
                              @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                              WebappHttpHandlerFactory webappHttpHandlerFactory,
-                             CConfiguration cConf) {
+                             RuntimeStore runtimeStore, CConfiguration cConf) {
     this.serviceAnnouncer = serviceAnnouncer;
     this.discoveryService = discoveryService;
     this.hostname = hostname;
     this.webappHttpHandlerFactory = webappHttpHandlerFactory;
+    this.runtimeStore = runtimeStore;
     this.cConf = cConf;
   }
 
@@ -107,6 +113,7 @@ public class WebappProgramRunner implements ProgramRunner {
       final InetSocketAddress address = httpService.getBindAddress();
 
       RunId runId = ProgramRunners.getRunId(options);
+      String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
       // Register service, and the serving host names.
       final List<Cancellable> cancellables = Lists.newArrayList();
@@ -120,7 +127,11 @@ public class WebappProgramRunner implements ProgramRunner {
         cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable(sname, address))));
       }
 
-      return new WebappProgramController(program.getId(), runId, httpService, new Cancellable() {
+      ProgramStateWriter programStateWriter =
+        new ProgramStorePublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(), runtimeStore);
+      return new WebappProgramController(program.getId(), runId, programStateWriter,
+                                         httpService, new Cancellable() {
         @Override
         public void cancel() {
           for (Cancellable cancellable : cancellables) {

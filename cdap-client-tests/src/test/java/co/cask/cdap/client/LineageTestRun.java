@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -376,23 +377,23 @@ public class LineageTestRun extends MetadataTestBase {
 
   private RunId getRunId(final ProgramId program, @Nullable final RunId exclude) throws Exception {
     final AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
-    Tasks.waitFor(1, new Callable<Integer>() {
+    Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
-      public Integer call() throws Exception {
+      public Boolean call() throws Exception {
+        List<RunRecord> records = programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
+                0, Long.MAX_VALUE, Integer.MAX_VALUE);
         runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
-                                       0, Long.MAX_VALUE, Integer.MAX_VALUE),
+          records,
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {
               return exclude == null || !input.getPid().equals(exclude.getId());
             }
           }));
-        return Iterables.size(runRecords.get());
+        return Iterables.size(runRecords.get()) > 0;
       }
     }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
-    Assert.assertEquals(1, Iterables.size(runRecords.get()));
-    return RunIds.fromString(Iterables.getFirst(runRecords.get(), null).getPid());
+    return RunIds.fromString(Iterables.getLast(runRecords.get(), null).getPid());
   }
 
   @SafeVarargs

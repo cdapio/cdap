@@ -23,6 +23,7 @@ import co.cask.cdap.api.workflow.NodeStatus;
  */
 public enum ProgramRunStatus {
   ALL,
+  STARTING,
   RUNNING,
   SUSPENDED,
   COMPLETED,

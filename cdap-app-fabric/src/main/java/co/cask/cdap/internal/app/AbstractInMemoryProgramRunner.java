@@ -20,13 +20,16 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -55,10 +58,14 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
+  protected final CConfiguration cConf;
   private final String host;
+  private final RuntimeStore runtimeStore;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf, RuntimeStore runtimeStore) {
+    this.cConf = cConf;
+    this.runtimeStore = runtimeStore;
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
   }
 
@@ -84,7 +91,10 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         components.put(program.getName(), instanceId, controller);
       }
 
-      return new InMemoryProgramController(components, program, options, runId);
+      ProgramStateWriter programStateWriter =
+        new ProgramStorePublisher(program.getId(), runId, null,
+                                  options.getUserArguments(), options.getArguments(), runtimeStore);
+      return new InMemoryProgramController(components, program, runId, options, programStateWriter);
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
@@ -119,7 +129,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
    */
-  private final class InMemoryProgramController extends AbstractProgramController {
+  private final class InMemoryProgramController extends AbstractStateChangeProgramController {
     private final Table<String, Integer, ProgramController> components;
     private final Program program;
     private final ProgramOptions options;
@@ -128,8 +138,9 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, ProgramOptions options, RunId runId) {
-      super(program.getId(), runId);
+                              Program program, RunId runId, ProgramOptions options,
+                              ProgramStateWriter programStateWriter) {
+      super(program.getId(), runId, programStateWriter, null);
       this.program = program;
       this.components = components;
       this.options = options;

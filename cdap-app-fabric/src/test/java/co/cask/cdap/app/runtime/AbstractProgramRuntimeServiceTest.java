@@ -20,8 +20,10 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -35,12 +37,16 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -80,9 +86,8 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     final Program program = createDummyProgram();
-
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), createStore(), runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -134,11 +139,14 @@ public class AbstractProgramRuntimeServiceTest {
     Service service = new TestService();
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
-    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
+    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId,
+                                                                    new SimpleProgramOptions(programId));
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    RuntimeStore runtimeStore = createStore();
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
+                                                                             createStore(),
                                                                              runnerFactory, null, extraInfo);
     runtimeService.startAndWait();
 
@@ -155,8 +163,9 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory(argumentsMap);
 
     final Program program = createDummyProgram();
+    RuntimeStore runtimeStore = createStore();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), createStore(), runnerFactory, null) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -248,11 +257,59 @@ public class AbstractProgramRuntimeServiceTest {
 
             Service service = new FastService();
             ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
-                                                                               RunIds.generate());
+                                                                               RunIds.generate(),
+                                                                               new NoOpProgramStateWriter());
             service.start();
             return controller;
           }
         };
+      }
+    };
+  }
+
+  private RuntimeStore createStore() {
+    return new RuntimeStore() {
+      @Override
+      public void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                          Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                           Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+                          @Nullable BasicThrowable failureCause) {
+
+      }
+
+      @Override
+      public void setSuspend(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void setResume(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
+
+      }
+
+      @Override
+      public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+
       }
     };
   }
@@ -317,9 +374,10 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final ProgramId programId, RunId runId) {
+                                                              final ProgramId programId, RunId runId,
+                                                              ProgramOptions options) {
     final ProgramControllerServiceAdapter controller =
-      new ProgramControllerServiceAdapter(service, programId, runId);
+      new ProgramControllerServiceAdapter(service, programId, runId, new NoOpProgramStateWriter());
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {
@@ -379,10 +437,11 @@ public class AbstractProgramRuntimeServiceTest {
 
     private final RuntimeInfo extraInfo;
 
-    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+    protected TestProgramRuntimeService(CConfiguration cConf, RuntimeStore runtimeStore,
+                                        ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository);
+      super(cConf, runtimeStore, programRunnerFactory, artifactRepository);
       this.extraInfo = extraInfo;
     }
 
