@@ -19,6 +19,8 @@ package co.cask.cdap.operations;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -54,6 +56,8 @@ import javax.management.ObjectName;
  */
 public class OperationalStatsService extends AbstractExecutionThreadService {
   private static final Logger LOG = LoggerFactory.getLogger(OperationalStatsService.class);
+  private static final Logger READ_FAILURE_LOG =
+    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.HOURS.toMillis(6)));
 
   private final OperationalStatsLoader operationalStatsLoader;
   private final long statsRefreshInterval;
@@ -137,8 +141,8 @@ public class OperationalStatsService extends AbstractExecutionThreadService {
         if (rootCause instanceof InterruptedException) {
           throw (InterruptedException) rootCause;
         }
-        LOG.warn("Failed to collect stats for service {} of type {} due to {}",
-                 stats.getServiceName(), stats.getStatType(), rootCause.getMessage());
+        READ_FAILURE_LOG.warn("Failed to collect stats for service {} of type {} due to {}",
+                              stats.getServiceName(), stats.getStatType(), rootCause.getMessage());
       }
     }
   }
