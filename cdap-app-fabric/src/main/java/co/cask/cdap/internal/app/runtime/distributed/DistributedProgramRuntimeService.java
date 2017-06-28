@@ -24,6 +24,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramResourceReporter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -97,8 +98,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
-                                   ArtifactRepository artifactRepository, Impersonator impersonator) {
-    super(cConf, programRunnerFactory, artifactRepository);
+                                   ArtifactRepository artifactRepository, Impersonator impersonator,
+                                   ProgramStateWriter programStateWriter) {
+    super(cConf, programRunnerFactory, artifactRepository, programStateWriter);
     this.programRunnerFactory = programRunnerFactory;
     this.twillRunner = twillRunner;
     this.store = store;

@@ -45,6 +45,7 @@ import co.cask.cdap.app.queue.QueueSpecificationGenerator.Node;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.async.ExecutorUtils;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -103,6 +104,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -147,6 +149,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messageService;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   public FlowletProgramRunner(CConfiguration cConfiguration,
@@ -162,7 +165,8 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               RuntimeUsageRegistry runtimeUsageRegistry,
                               SecureStore secureStore,
                               SecureStoreManager secureStoreManager,
-                              MessagingService messagingService) {
+                              MessagingService messagingService,
+                              @Named("programStateWriter") ProgramStateWriter programStateWriter) {
     this.cConf = cConfiguration;
     this.schemaGenerator = schemaGenerator;
     this.datumWriterFactory = datumWriterFactory;
@@ -177,6 +181,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messageService = messagingService;
+    this.programStateWriter = programStateWriter;
   }
 
   @SuppressWarnings("unchecked")
@@ -217,6 +222,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
       ProgramId programId = program.getId();
       FlowletId flowletId = programId.flowlet(flowletName);
       ProgramRunId run = programId.run(runId);
+      String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
       ProgramContext programContext = new BasicProgramContext(run, flowletId);
       if (dsFramework instanceof ProgramContextAware) {
         ((ProgramContextAware) dsFramework).setContext(programContext);
@@ -277,10 +283,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
 
-      FlowletProgramController controller = new FlowletProgramController(program.getId(), flowletName,
+      FlowletProgramController controller = new FlowletProgramController(run, twillRunId, flowletName,
                                                                          flowletContext, driver,
                                                                          queueProducerSupplierBuilder.build(),
-                                                                         consumerSuppliers);
+                                                                         consumerSuppliers, programStateWriter);
       controllerRef.set(controller);
 
       LOG.info("Starting flowlet: {}", flowletContext);

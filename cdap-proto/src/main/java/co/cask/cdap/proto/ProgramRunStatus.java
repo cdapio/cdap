@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.cdap.api.workflow.NodeStatus;
  */
 public enum ProgramRunStatus {
   ALL,
+  STARTING,
   RUNNING,
   SUSPENDED,
   COMPLETED,
@@ -36,6 +37,8 @@ public enum ProgramRunStatus {
    */
   public static NodeStatus toNodeStatus(ProgramRunStatus status) {
     switch(status) {
+      case STARTING:
+        return NodeStatus.STARTING;
       case RUNNING:
         return NodeStatus.RUNNING;
       case COMPLETED:

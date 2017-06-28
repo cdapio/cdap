@@ -678,8 +678,8 @@ public class LineageAdminTest extends AppFabricTestBase {
 
   private void addRuns(Store store, ProgramRunId... runs) {
     for (ProgramRunId run : runs) {
-      store.setStart(run.getParent(), run.getEntityName(), RunIds.getTime(
-        RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS));
+      long startTimeSecs = RunIds.getTime(RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS);
+      store.setStartAndRun(run.getParent(), run.getEntityName(), startTimeSecs, startTimeSecs + 1);
     }
   }
 
@@ -698,8 +698,10 @@ public class LineageAdminTest extends AppFabricTestBase {
     workflowIDMap.put(ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId);
     for (ProgramRunId run : runs) {
       store.setStart(run.getParent(), run.getEntityName(), RunIds.getTime(
-        RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS), null,
+                     RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS), null,
                      emptyMap, workflowIDMap);
+      store.setRunning(run.getParent(), run.getEntityName(), RunIds.getTime(
+                       RunIds.fromString(run.getEntityName()), TimeUnit.SECONDS) + 1, null);
     }
   }
 

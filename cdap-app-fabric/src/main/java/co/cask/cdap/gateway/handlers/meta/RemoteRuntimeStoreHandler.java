@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,6 +61,20 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
     Map<String, String> runtimeArgs = deserializeNext(arguments);
     Map<String, String> systemArgs = deserializeNext(arguments);
     store.setStart(program, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/setRunning")
+  public void setRunning(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long startTime = deserializeNext(arguments);
+    String twillRunId = deserializeNext(arguments);
+    store.setRunning(program, pid, startTime, twillRunId);
 
     responder.sendStatus(HttpResponseStatus.OK);
   }
