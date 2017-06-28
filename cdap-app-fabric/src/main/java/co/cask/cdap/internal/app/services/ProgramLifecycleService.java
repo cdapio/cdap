@@ -49,7 +49,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -376,8 +375,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.COMPLETED.getRunStatus());
-              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.COMPLETED,
-                                                        userArguments, null);
+              programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.COMPLETED,
+                                                        userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -391,8 +390,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.KILLED.getRunStatus());
-              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.KILLED,
-                                                        userArguments, null);
+              programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.KILLED,
+                                                        userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -430,8 +429,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.FAILED,
-                                                        userArguments, null);
+              programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.FAILED,
+                                                        userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

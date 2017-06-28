@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -36,11 +35,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
-import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -48,7 +45,6 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -199,7 +195,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.COMPLETED,
+              programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.COMPLETED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
@@ -215,7 +211,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.KILLED,
+              programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.KILLED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
@@ -256,7 +252,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.FAILED,
+              programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.FAILED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }

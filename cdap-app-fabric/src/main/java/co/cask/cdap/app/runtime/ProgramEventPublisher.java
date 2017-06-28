@@ -54,6 +54,7 @@ public class ProgramEventPublisher {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    this.startTimeInSeconds = -1;
   }
 
   public void recordProgramStart(long startTimeInSeconds) {
@@ -61,7 +62,17 @@ public class ProgramEventPublisher {
   }
 
   /**
-   * Sends a notification under the program status event topic about the status of a program
+   * Publishes a program status notification for programs without workflow tokens
+   *
+   * @see ProgramEventPublisher#publishStatus(ProgramId, RunId, ProgramRunStatus, Arguments, WorkflowToken)
+   */
+  public void publishStatus(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
+                            Arguments userArguments) {
+    publishStatus(programId, runId, programRunStatus, userArguments, null);
+  }
+
+  /**
+   * Sends a notification under the program status event topic with the a program's run and its status
    *
    * @param programId the program id
    * @param runId the program run id
@@ -69,11 +80,28 @@ public class ProgramEventPublisher {
    * @param userArguments the user arguments of the program
    * @param token the workflow token to contain payload information from a completed workflow
    */
-  public void publishNotification(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
-                                  Arguments userArguments, @Nullable WorkflowToken token) {
+  public void publishStatus(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
+                            Arguments userArguments, @Nullable WorkflowToken token) {
+    Notification programNotification = createNotification(programId, runId, programRunStatus, userArguments, token);
+    try {
+      messagingService.publish(StoreRequestBuilder.of(topicId)
+                                                  .addPayloads(GSON.toJson(programNotification))
+                                                  .build()
+      );
+    } catch (Exception e) {
+      LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
+    }
+    // Reset start time in case this is reused so that the start time is not sent in another notification
+    this.startTimeInSeconds = -1;
+  }
+
+  private Notification createNotification(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
+                                          Arguments userArguments, @Nullable WorkflowToken token) {
     Map<String, String> properties = new HashMap<>();
     properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
-    properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds));
+    if (startTimeInSeconds != -1) { // Start time should always be specified in the notification
+      properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds));
+    }
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, programRunStatus.toProgramStatus().toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
@@ -81,14 +109,6 @@ public class ProgramEventPublisher {
       properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
     }
 
-    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
-    try {
-      messagingService.publish(StoreRequestBuilder.of(topicId)
-              .addPayloads(GSON.toJson(programStatusNotification))
-              .build()
-      );
-    } catch (Exception e) {
-      LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
-    }
+    return new Notification(Notification.Type.PROGRAM_STATUS, properties);
   }
 }
