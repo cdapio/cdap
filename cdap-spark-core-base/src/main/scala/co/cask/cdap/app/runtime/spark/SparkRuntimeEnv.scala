@@ -152,6 +152,15 @@ object SparkRuntimeEnv {
   }
 
   /**
+    * Returns an [[scala.Option]] which contains the [[org.apache.spark.streaming.StreamingContext]] if there one.
+    */
+  def getStreamingContext: Option[StreamingContext] = {
+    this.synchronized {
+      streamingContext
+    }
+  }
+
+  /**
     * Sets a local property on the [[org.apache.spark.SparkContext]] object if available.
     *
     * @param key key of the property
@@ -184,10 +193,9 @@ object SparkRuntimeEnv {
     * Stop this cache. It will stop the [[org.apache.spark.SparkContext]] in the cache and also prevent any
     * future setting of new [[org.apache.spark.SparkContext]].
     *
-    * @param thread an optional Thread to interrupt upon stopping.
     * @return [[scala.Some]] [[org.apache.spark.SparkContext]] if there is a one
     */
-  def stop(thread: Option[Thread] = None): Option[SparkContext] = {
+  def stop(): Option[SparkContext] = {
     var sc: Option[SparkContext] = None
     var ssc: Option[StreamingContext] = None
 
@@ -200,34 +208,13 @@ object SparkRuntimeEnv {
     }
 
     try {
-      ssc.foreach(context => {
-        // If running Spark streaming, interrupt the thread first to give
-        // the Spark program time to terminate gracefully.
-        thread.foreach(t => {
-          // The getState method only available since 1.4.
-          // For older version compatability, try to get the field directly
-          context.callMethod("getState").orElse(context.getField("state")).foreach(_ match {
-            case state: StreamingContextState => state match {
-              // Interrupt and wait for the running thread before stopping the context if it is ACTIVE
-              case StreamingContextState.ACTIVE => {
-                t.interrupt()
-                t.join()
-                context.stop(false, false)
-              }
-              // Otherwise, just stop it
-              case _ => context.stop(false, false)
-            }
-          })
-        })
-      })
+      ssc.foreach(_.stop(false, false))
     } finally {
       sc.foreach(context => {
         val cleanup = createCleanup(context, batchedWALs, rateControllers);
         try {
           context.stop
         } finally {
-          // Just interrupt the thread to unblock any blocking call
-          thread.foreach(_.interrupt())
           cleanup()
         }
       })

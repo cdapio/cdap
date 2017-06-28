@@ -78,7 +78,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
                                               File jobJar, final V result) {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
 
-    final List<String> args = createSubmitArguments(spec, configs, resources, jobJar);
+    final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobJar);
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
@@ -135,6 +135,11 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    */
   protected abstract void triggerShutdown();
 
+  /**
+   * Called before submitting the Spark job.
+   *
+   * @return list of extra arguments to pass to {@link SparkSubmit}.
+   */
   protected List<String> beforeSubmit() {
     return Collections.emptyList();
   }
@@ -175,14 +180,16 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   /**
    * Creates the list of arguments that will be used for calling {@link SparkSubmit#main(String[])}.
    *
-   * @param spec the {@link SparkSpecification} of the program
+   * @param runtimeContext the {@link SparkRuntimeContext} for the spark program
    * @param configs set of Spark configurations
    * @param resources list of resources that needs to be localized to Spark containers
    * @param jobJar the job jar file for Spark
    * @return a list of arguments
    */
-  private List<String> createSubmitArguments(SparkSpecification spec, Map<String, String> configs,
+  private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
                                              List<LocalizeResource> resources, File jobJar) {
+    SparkSpecification spec = runtimeContext.getSparkSpecification();
+
     ImmutableList.Builder<String> builder = ImmutableList.builder();
 
     addMaster(configs, builder);
@@ -209,10 +216,14 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       builder.add("--files").add(files);
     }
 
-    return builder
-      .add(jobJar.getAbsolutePath())
-      .add("--" + SparkMainWrapper.ARG_USER_CLASS() + "=" + spec.getMainClassName())
-      .build();
+    builder.add(jobJar.getAbsolutePath());
+
+    // Add extra arguments for easily identifying the program from command line. They don't serve actual purpose.
+    // Arguments to user program is always coming from the runtime arguments.
+    builder.add("--cdap.spark.program=" + runtimeContext.getProgramRunId().toString());
+    builder.add("--cdap.user.main.class=" + spec.getMainClassName());
+
+    return builder.build();
   }
 
   /**

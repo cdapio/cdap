@@ -16,10 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark.submit;
 
-import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.app.runtime.spark.distributed.SparkExecutionService;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -90,8 +90,9 @@ public class DistributedSparkSubmitter extends AbstractSparkSubmitter {
     }
 
     sparkExecutionService.startAndWait();
-    return Collections.singletonList("--" + SparkMainWrapper.ARG_EXECUTION_SERVICE_URI()
-                                       + "=" + sparkExecutionService.getBaseURI());
+    SparkRuntimeEnv.setProperty("spark.yarn.appMasterEnv." + SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI,
+                                sparkExecutionService.getBaseURI().toString());
+    return Collections.emptyList();
   }
 
   @Override
