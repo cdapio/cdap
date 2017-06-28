@@ -882,9 +882,8 @@ public class ArtifactStore {
     }
 
     // delete the old jar file
-
     try {
-      new EntityImpersonator(artifactId.toEntityId(), impersonator).impersonate(new Callable<Void>() {
+      impersonator.deleteEntity(artifactId.toEntityId(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           Locations.getLocationFromAbsolutePath(locationFactory, oldMeta.getLocationPath()).delete();

@@ -370,7 +370,7 @@ public class DatasetTypeManager {
           try {
             // Also delete module jar
             Location moduleJarLocation =
-              impersonator.doAs(datasetModuleId, new Callable<Location>() {
+              impersonator.deleteEntity(datasetModuleId, new Callable<Location>() {
                 @Override
                 public Location call() throws Exception {
                   return Locations.getLocationFromAbsolutePath(locationFactory, module.getJarLocationPath());

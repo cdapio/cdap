@@ -511,8 +511,15 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * Deletes the namespace meta and also invalidates the cache
    * @param namespaceId of namespace whose meta needs to be deleted
    */
-  private void deleteNamespaceMeta(NamespaceId namespaceId) {
+  private void deleteNamespaceMeta(NamespaceId namespaceId) throws Exception {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
+    impersonator.deleteEntity(namespaceId, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        // do nothing we just need to invalidate cache
+        return null;
+      }
+    });
   }
 }

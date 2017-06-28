@@ -50,7 +50,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
       public Boolean call() throws Exception {
         return delegate.exists();
       }
-    });
+    }, false);
   }
 
   @Override
@@ -61,7 +61,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
         delegate.create();
         return null;
       }
-    });
+    }, false);
   }
 
   @Override
@@ -72,7 +72,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
         delegate.drop();
         return null;
       }
-    });
+    }, true);
   }
 
   @Override
@@ -83,7 +83,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
         delegate.truncate();
         return null;
       }
-    });
+    }, false);
   }
 
   @Override
@@ -94,7 +94,7 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
         delegate.upgrade();
         return null;
       }
-    });
+    }, false);
   }
 
   @Override
@@ -105,13 +105,13 @@ class ImpersonatingDatasetAdmin implements DatasetAdmin {
         delegate.close();
         return null;
       }
-    });
+    }, false);
   }
 
   // helper method to execute a callable, while declaring only IOException as being thrown
-  private <T> T execute(final Callable<T> callable) throws IOException {
+  private <T> T execute(final Callable<T> callable, boolean isDelete) throws IOException {
     try {
-      return impersonator.doAs(datasetId, callable);
+      return isDelete ? impersonator.deleteEntity(datasetId, callable) : impersonator.doAs(datasetId, callable);
     } catch (IOException ioe) {
       throw ioe;
     } catch (Exception t) {

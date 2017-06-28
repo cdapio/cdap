@@ -197,7 +197,7 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     // Also drop the state table
-    impersonator.doAs(namespace, new Callable<Void>() {
+    impersonator.deleteEntity(namespace, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         stateStoreFactory.dropAllInNamespace(namespace);
@@ -703,7 +703,7 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
 
-          impersonator.doAs(streamId, new Callable<Void>() {
+          impersonator.deleteEntity(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               if (!configLocation.delete()) {

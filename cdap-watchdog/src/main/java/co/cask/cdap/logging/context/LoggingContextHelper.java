@@ -67,18 +67,6 @@ public final class LoggingContextHelper {
 
   private LoggingContextHelper() {}
 
-  public static Location getNamespacedBaseDirLocation(final NamespacedLocationFactory namespacedLocationFactory,
-                                                      final String logBaseDir, final NamespaceId namespaceId,
-                                                      Impersonator impersonator) throws Exception {
-    Preconditions.checkArgument(logBaseDir != null, "Log Base dir cannot be null");
-    return impersonator.doAs(namespaceId, new Callable<Location>() {
-      @Override
-      public Location call() throws Exception {
-        return namespacedLocationFactory.get(namespaceId.toId()).append(logBaseDir);
-      }
-    });
-  }
-
   /**
    * Gives the {@link NamespaceId} for  the given logging context.
    *
