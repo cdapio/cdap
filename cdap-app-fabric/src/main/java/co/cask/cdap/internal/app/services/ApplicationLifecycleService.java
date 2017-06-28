@@ -689,7 +689,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       // Remove all process states and group states for each stream
       final String namespace = String.format("%s.%s", flowProgramId.getApplicationId(), flowProgramId.getId());
 
-      impersonator.deleteEntity(appId, new Callable<Void>() {
+      impersonator.doAs(appId, new Callable<Void>() {
 
         // TODO: (CDAP-7326) since one worker or flow can only be ran by a single instance of APP, (also a single
         // version), should delete flow for each version
@@ -722,6 +722,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } catch (Exception e) {
       LOG.warn("Failed to unregister usage of app: {}", appId, e);
     }
+
+    impersonator.deleteEntity(appId, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        return null;
+      }
+    });
   }
 
   /**

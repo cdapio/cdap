@@ -703,7 +703,7 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
 
-          impersonator.deleteEntity(streamId, new Callable<Void>() {
+          impersonator.doAs(streamId, new Callable<Void>() {
             @Override
             public Void call() throws Exception {
               if (!configLocation.delete()) {
@@ -727,6 +727,12 @@ public class FileStreamAdmin implements StreamAdmin {
           // revoke all privileges on the stream
           privilegesManager.revoke(streamId);
           publishAudit(streamId, AuditType.DELETE);
+          impersonator.deleteEntity(streamId, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              return null;
+            }
+          });
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

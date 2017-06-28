@@ -200,7 +200,7 @@ public class DatasetAdminService {
     try (DatasetClassLoaderProvider classLoaderProvider =
            new DirectoryClassLoaderProvider(cConf, locationFactory)) {
 
-      impersonator.deleteEntity(datasetInstanceId, new Callable<Void>() {
+      impersonator.doAs(datasetInstanceId, new Callable<Void>() {
         @Override
         public Void call() throws Exception {
           DatasetType type = dsFramework.getDatasetType(typeMeta, null, classLoaderProvider);
@@ -218,6 +218,12 @@ public class DatasetAdminService {
 
     // Remove metadata for the dataset
     metadataStore.removeMetadata(datasetInstanceId);
+    impersonator.deleteEntity(datasetInstanceId, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        return null;
+      }
+    });
   }
 
   public void truncate(DatasetId datasetInstanceId) throws Exception {
