@@ -192,9 +192,10 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              runtimeStore.setStop(program.getId(), runId.getId(), endTime,
                                    ProgramController.State.COMPLETED.getRunStatus());
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.COMPLETED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
@@ -208,9 +209,10 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              runtimeStore.setStop(program.getId(), runId.getId(), endTime,
                                    ProgramController.State.KILLED.getRunStatus());
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.KILLED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
@@ -249,11 +251,12 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              runtimeStore.setStop(program.getId(), runId.getId(), endTime,
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(program.getId(), runId, ProgramRunStatus.FAILED,
-                                                        options.getUserArguments(), driver.getBasicWorkflowToken());
+                                                  options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

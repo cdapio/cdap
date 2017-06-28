@@ -373,8 +373,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              store.setStop(programId, runId, endTime,
                             ProgramController.State.COMPLETED.getRunStatus());
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.COMPLETED,
                                                   userArguments);
               return null;
@@ -388,8 +390,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                            ProgramController.State.KILLED.getRunStatus());
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              store.setStop(programId, runId, endTime, ProgramController.State.KILLED.getRunStatus());
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.KILLED,
                                                   userArguments);
               return null;
@@ -427,8 +430,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+              long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+              store.setStop(programId, runId, endTime,
                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              programEventPublisher.recordProgramEnd(endTime);
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.FAILED,
                                                   userArguments);
               return null;

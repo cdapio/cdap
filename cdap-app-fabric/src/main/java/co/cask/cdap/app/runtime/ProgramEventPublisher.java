@@ -47,17 +47,22 @@ public class ProgramEventPublisher {
   private final MessagingService messagingService;
   private final TopicId topicId;
   private long startTimeInSeconds;
+  private long endTimeInSeconds;
 
   @Inject
   public ProgramEventPublisher(CConfiguration cConf, MessagingService messagingService) {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-    this.startTimeInSeconds = -1;
+    resetProgramTimes();
   }
 
   public void recordProgramStart(long startTimeInSeconds) {
     this.startTimeInSeconds = startTimeInSeconds;
+  }
+
+  public void recordProgramEnd(long endTimeInSeconds) {
+    this.endTimeInSeconds = endTimeInSeconds;
   }
 
   /**
@@ -91,7 +96,7 @@ public class ProgramEventPublisher {
       LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
     }
     // Reset start time in case this is reused so that the start time is not sent in another notification
-    this.startTimeInSeconds = -1;
+    resetProgramTimes();
   }
 
   private Notification createNotification(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
@@ -101,6 +106,9 @@ public class ProgramEventPublisher {
     if (startTimeInSeconds != -1) { // Start time should always be specified in the notification
       properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds));
     }
+    if (endTimeInSeconds != -1) { // End time should always be specified in the notification
+      properties.put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds));
+    }
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, programRunStatus.toProgramStatus().toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
@@ -108,5 +116,10 @@ public class ProgramEventPublisher {
       properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
     }
     return new Notification(Notification.Type.PROGRAM_STATUS, properties);
+  }
+
+  private void resetProgramTimes() {
+    this.startTimeInSeconds = -1;
+    this.endTimeInSeconds = -1;
   }
 }

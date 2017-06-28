@@ -274,8 +274,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+            long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            runtimeStore.setStop(programId, runId.getId(), endTime, finalRunStatus);
+            programEventPublisher.recordProgramEnd(endTime);
             programEventPublisher.publishStatus(programId, runId, finalRunStatus, userArgs);
             return null;
           }
@@ -288,8 +289,10 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+            long endTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            runtimeStore.setStop(programId, runId.getId(), endTime,
                                  ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+            programEventPublisher.recordProgramEnd(endTime);
             programEventPublisher.publishStatus(programId, runId, ProgramRunStatus.FAILED, userArgs);
             return null;
           }
