@@ -23,12 +23,19 @@ import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.tephra.Transaction;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,12 +44,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * Base class for Message Table tests.
  */
 public abstract class MessageTableTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MessageTableTest.class);
+
   private static final TopicId T1 = NamespaceId.DEFAULT.topic("messaget1");
   private static final TopicId T2 = NamespaceId.DEFAULT.topic("messaget2");
   private static final int GENERATION = 1;
@@ -224,6 +239,76 @@ public abstract class MessageTableTest {
       Assert.assertEquals(2L, entry.getTransactionWritePointer());
       Assert.assertNull(entry.getPayload());
       Assert.assertTrue(entry.isPayloadReference());
+    }
+  }
+
+  @Test
+  public void testConcurrentWrites() throws Exception {
+    // Create two threads, each of them writes to a different topic with two events in one store call.
+    // The iterators in the two threads would alternate to produce payload. This is for testing CDAP-12013
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    final CountDownLatch storeCompletion = new CountDownLatch(2);
+
+    for (int i = 0; i < 2; i++) {
+      final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
+      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+
+      try (MetadataTable metadataTable = getMetadataTable()) {
+        metadataTable.createTopic(metadata);
+      }
+
+      final int threadId = i;
+      executor.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          try (MessageTable messageTable = getMessageTable()) {
+            messageTable.store(new AbstractIterator<MessageTable.Entry>() {
+              int messageCount = 0;
+
+              @Override
+              protected MessageTable.Entry computeNext() {
+                if (messageCount >= 2) {
+                  return endOfData();
+                }
+                try {
+                  barrier.await();
+                } catch (Exception e) {
+                  throw Throwables.propagate(e);
+                }
+                return new TestMessageEntry(topicId, GENERATION, System.currentTimeMillis(), messageCount, null,
+                                            Bytes.toBytes("message " + threadId + " " + messageCount++));
+              }
+            });
+            storeCompletion.countDown();
+          } catch (Exception e) {
+            LOG.error("Failed to store to MessageTable", e);
+          }
+
+          return null;
+        }
+      });
+    }
+
+    executor.shutdown();
+    Assert.assertTrue(storeCompletion.await(5, TimeUnit.SECONDS));
+
+    // Read from each topic. Each topic should have two messages
+    for (int i = 0; i < 2; i++) {
+      TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
+      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+      try (
+        MessageTable messageTable = getMessageTable();
+        CloseableIterator<MessageTable.Entry> iterator = messageTable.fetch(metadata, 0, 10, null)
+      ) {
+        List<MessageTable.Entry> entries = Lists.newArrayList(iterator);
+        Assert.assertEquals(2, entries.size());
+
+        int count = 0;
+        for (MessageTable.Entry entry : entries) {
+          Assert.assertEquals("message " + i + " " + count++, Bytes.toString(entry.getPayload()));
+        }
+      }
     }
   }
 

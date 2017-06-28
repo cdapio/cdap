@@ -22,21 +22,36 @@ import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Throwables;
+import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base class for Payload Table tests.
  */
 public abstract class PayloadTableTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(PayloadTable.class);
+
   private static final TopicId T1 = NamespaceId.DEFAULT.topic("payloadt1");
   private static final TopicId T2 = NamespaceId.DEFAULT.topic("payloadt2");
   private static final int GENERATION = 1;
@@ -116,6 +131,81 @@ public abstract class PayloadTableTest {
       try (CloseableIterator<PayloadTable.Entry> iterator = table.fetch(M2, 101, new MessageId(messageId), true,
                                                                         Integer.MAX_VALUE)) {
         checkData(iterator, 123, ImmutableSet.of(101L), 50);
+      }
+    }
+  }
+
+  @Test
+  public void testConcurrentWrites() throws Exception {
+    // Create two threads, each of them writes to a different topic with two events in one store call.
+    // The iterators in the two threads would alternate to produce payload. This is for testing CDAP-12013
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(2));
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    final CountDownLatch storeCompletion = new CountDownLatch(2);
+
+    for (int i = 0; i < 2; i++) {
+      final TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
+      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+
+      try (MetadataTable metadataTable = getMetadataTable()) {
+        metadataTable.createTopic(metadata);
+      }
+
+      final int threadId = i;
+      executor.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          try (PayloadTable payloadTable = getPayloadTable()) {
+            payloadTable.store(new AbstractIterator<PayloadTable.Entry>() {
+              short messageCount = 0;
+
+              @Override
+              protected PayloadTable.Entry computeNext() {
+                if (messageCount >= 2) {
+                  return endOfData();
+                }
+                try {
+                  barrier.await();
+                } catch (Exception e) {
+                  throw Throwables.propagate(e);
+                }
+                return new TestPayloadEntry(topicId, GENERATION, threadId, 0, messageCount,
+                                            Bytes.toBytes("message " + threadId + " " + messageCount++));
+              }
+            });
+            storeCompletion.countDown();
+          } catch (Exception e) {
+            LOG.error("Failed to store to MessageTable", e);
+          }
+
+          return null;
+        }
+      });
+    }
+
+    executor.shutdown();
+    Assert.assertTrue(storeCompletion.await(5, TimeUnit.SECONDS));
+
+    // Read from each topic. Each topic should have two messages
+    for (int i = 0; i < 2; i++) {
+      TopicId topicId = NamespaceId.DEFAULT.topic("testConcurrentWrites" + i);
+      TopicMetadata metadata = new TopicMetadata(topicId, DEFAULT_PROPERTY);
+
+      byte[] rawId = new byte[MessageId.RAW_ID_SIZE];
+      MessageId.putRawId(0L, (short) 0, 0, (short) 0, rawId, 0);
+      MessageId messageId = new MessageId(rawId);
+
+      try (
+        PayloadTable payloadTable = getPayloadTable();
+        CloseableIterator<PayloadTable.Entry> iterator = payloadTable.fetch(metadata, i, messageId, true, 10);
+      ) {
+        List<PayloadTable.Entry> entries = Lists.newArrayList(iterator);
+        Assert.assertEquals(2, entries.size());
+
+        int count = 0;
+        for (PayloadTable.Entry entry : entries) {
+          Assert.assertEquals("message " + i + " " + count++, Bytes.toString(entry.getPayload()));
+        }
       }
     }
   }
