@@ -256,6 +256,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           public Void get() {
             runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId, userArgs.asMap(),
                                   arguments.asMap());
+            programEventPublisher.recordProgramStart(finalStartTimeInSeconds);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

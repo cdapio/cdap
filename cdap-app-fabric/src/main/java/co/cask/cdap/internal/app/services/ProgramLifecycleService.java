@@ -358,6 +358,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             @Override
             public Void get() {
               store.setStart(programId, runId, finalStartTimeInSeconds, twillRunId, userArgs, systemArgs);
+              programEventPublisher.recordProgramStart(finalStartTimeInSeconds);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

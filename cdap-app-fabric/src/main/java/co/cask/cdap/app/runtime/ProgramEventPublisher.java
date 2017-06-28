@@ -46,12 +46,17 @@ public class ProgramEventPublisher {
   private final CConfiguration cConf;
   private final MessagingService messagingService;
   private final TopicId topicId;
+  private long startTimeInSeconds;
 
   @Inject
   public ProgramEventPublisher(CConfiguration cConf, MessagingService messagingService) {
     this.cConf = cConf;
     this.messagingService = messagingService;
-    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+  }
+
+  public void recordProgramStart(long startTimeInSeconds) {
+    this.startTimeInSeconds = startTimeInSeconds;
   }
 
   /**
@@ -67,6 +72,7 @@ public class ProgramEventPublisher {
                                   Arguments userArguments, @Nullable WorkflowToken token) {
     Map<String, String> properties = new HashMap<>();
     properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
+    properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds));
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
     properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));

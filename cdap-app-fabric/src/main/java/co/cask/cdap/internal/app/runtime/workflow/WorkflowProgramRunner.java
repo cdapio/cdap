@@ -174,6 +174,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
             public Void get() {
               runtimeStore.setStart(program.getId(), runId.getId(), finalStartTimeInSeconds, twillRunId,
                                     options.getUserArguments().asMap(), options.getArguments().asMap());
+              programEventPublisher.recordProgramStart(finalStartTimeInSeconds);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
