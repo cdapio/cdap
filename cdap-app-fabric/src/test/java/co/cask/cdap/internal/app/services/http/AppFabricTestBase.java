@@ -273,6 +273,8 @@ public abstract class AppFabricTestBase {
     if (updateSchedules != null) {
       cConf.set(Constants.AppFabric.APP_UPDATE_SCHEDULES, updateSchedules);
     }
+    // Use a shorter delay to speedup tests
+    cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
     return cConf;
   }
 

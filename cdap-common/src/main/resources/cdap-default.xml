@@ -490,6 +490,14 @@
   </property>
 
   <property>
+    <name>scheduler.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds that the scheduler checks again for new events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>time.event.topic</name>
     <value>timeevent</value>
     <description>
