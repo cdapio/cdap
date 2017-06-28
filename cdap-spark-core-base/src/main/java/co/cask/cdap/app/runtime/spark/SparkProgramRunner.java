@@ -196,10 +196,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter);
 
-      sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
-                                     closeables, runtimeStore),
-        Threads.SAME_THREAD_EXECUTOR);
+      sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
@@ -259,69 +256,18 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   }
 
   /**
-   * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
+   * Creates a service listener to cleanup closeables on {@link SparkRuntimeService}.
    */
-  private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
-                                                        final Arguments arguments, final Arguments userArgs,
-                                                        final Iterable<Closeable> closeables,
-                                                        final RuntimeStore runtimeStore) {
-
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
+  private Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
     return new ServiceListenerAdapter() {
-      @Override
-      public void starting() {
-        //Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-
-        final long finalStartTimeInSeconds = startTimeInSeconds;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                  userArgs.asMap(), arguments.asMap());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-
       @Override
       public void terminated(Service.State from) {
         closeAll(closeables);
-        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
-        if (from == Service.State.STOPPING) {
-          // Service was killed
-          runStatus = ProgramController.State.KILLED.getRunStatus();
-        }
-
-        final ProgramRunStatus finalRunStatus = runStatus;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
 
       @Override
       public void failed(Service.State from, @Nullable final Throwable failure) {
         closeAll(closeables);
-
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
     };
   }

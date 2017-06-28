@@ -20,8 +20,10 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -35,12 +37,16 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -80,9 +86,9 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     final Program program = createDummyProgram();
-
+    RuntimeStore runtimeStore = createStore();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, runtimeStore) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -138,8 +144,10 @@ public class AbstractProgramRuntimeServiceTest {
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
+    RuntimeStore runtimeStore = createStore();
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null, extraInfo);
+                                                                             runnerFactory, null, extraInfo,
+                                                                             runtimeStore);
     runtimeService.startAndWait();
 
     // The lookup will get deadlock for CDAP-3716
@@ -155,8 +163,9 @@ public class AbstractProgramRuntimeServiceTest {
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory(argumentsMap);
 
     final Program program = createDummyProgram();
+    RuntimeStore runtimeStore = createStore();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, runtimeStore) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -253,6 +262,53 @@ public class AbstractProgramRuntimeServiceTest {
             return controller;
           }
         };
+      }
+    };
+  }
+
+  private RuntimeStore createStore() {
+    return new RuntimeStore() {
+      @Override
+      public void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                          Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                           Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+                          @Nullable BasicThrowable failureCause) {
+
+      }
+
+      @Override
+      public void setSuspend(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void setResume(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
+
+      }
+
+      @Override
+      public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+
       }
     };
   }
@@ -381,8 +437,8 @@ public class AbstractProgramRuntimeServiceTest {
 
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository,
-                                        @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository);
+                                        @Nullable RuntimeInfo extraInfo, RuntimeStore runtimeStore) {
+      super(cConf, programRunnerFactory, artifactRepository, runtimeStore);
       this.extraInfo = extraInfo;
     }
 

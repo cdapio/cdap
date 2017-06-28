@@ -26,16 +26,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -50,14 +46,11 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -79,7 +72,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -95,7 +87,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final NamespacedLocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
@@ -111,7 +102,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
+                                DiscoveryServiceClient discoveryServiceClient,
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
@@ -126,7 +117,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -202,11 +192,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                                     context, program.getJarLocation(), locationFactory,
                                                                     streamAdmin, txSystemClient, authorizationEnforcer,
                                                                     authenticationContext);
-      mapReduceRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, closeables, arguments, options.getUserArguments()),
-        Threads.SAME_THREAD_EXECUTOR);
 
-      final ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
+      mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
+      ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
       LOG.debug("Starting MapReduce Job: {}", context);
       // if security is not enabled, start the job as the user we're using to access hdfs with.
@@ -227,66 +215,18 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   }
 
   /**
-   * Creates a service listener to reactor on state changes on {@link MapReduceRuntimeService}.
+   * Creates a service listener to cleanup closeables on {@link MapReduceRuntimeService}.
    */
-  private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
-                                                        final Iterable<Closeable> closeables,
-                                                        final Arguments arguments, final Arguments userArgs) {
-
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
+  private Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
     return new ServiceListenerAdapter() {
-      @Override
-      public void starting() {
-        //Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-
-        final long finalStartTimeInSeconds = startTimeInSeconds;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId, userArgs.asMap(),
-                                  arguments.asMap());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-
       @Override
       public void terminated(Service.State from) {
         closeAllQuietly(closeables);
-        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
-        if (from == Service.State.STOPPING) {
-          // Service was killed
-          runStatus = ProgramController.State.KILLED.getRunStatus();
-        }
-
-        final ProgramRunStatus finalRunStatus = runStatus;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
 
       @Override
       public void failed(Service.State from, @Nullable final Throwable failure) {
         closeAllQuietly(closeables);
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
     };
   }

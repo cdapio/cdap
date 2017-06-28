@@ -238,6 +238,18 @@ public class DefaultStore implements Store {
   }
 
   @Override
+  public void setInit(final ProgramId id, final String pid, final long startTime,
+                      final String twillRunId, final Map<String, String> runtimeArgs,
+                      final Map<String, String> systemArgs) {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        getAppMetadataStore(context).recordProgramInit(id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+      }
+    });
+  }
+
+  @Override
   public void setStart(final ProgramId id, final String pid, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs,
                        final Map<String, String> systemArgs) {

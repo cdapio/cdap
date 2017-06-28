@@ -23,17 +23,20 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -42,6 +45,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
 import java.io.Closeable;
@@ -61,6 +65,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
+  private final RuntimeStore runtimeStore;
   private final ProgramOptions workflowProgramOptions;
   private final Program workflowProgram;
   private final String nodeId;
@@ -70,11 +75,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private final WorkflowToken token;
   private final ProgramType programType;
 
-  DefaultProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
-                               ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
-                               WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
-                               ProgramType programType) {
+  DefaultProgramWorkflowRunner(CConfiguration cConf, RuntimeStore runtimeStore, Program workflowProgram,
+                               ProgramOptions workflowProgramOptions, ProgramRunnerFactory programRunnerFactory,
+                               WorkflowSpecification workflowSpec, WorkflowToken token, String nodeId,
+                               Map<String, WorkflowNodeState> nodeStates, ProgramType programType) {
     this.cConf = cConf;
+    this.runtimeStore = runtimeStore;
     this.workflowProgram = workflowProgram;
     this.workflowProgramOptions = workflowProgramOptions;
     this.programRunnerFactory = programRunnerFactory;
@@ -149,6 +155,13 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       Closeables.closeQuietly(closeable);
       throw t;
     }
+
+    Arguments systemArguments = options.getArguments();
+    String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    controller.addListener(
+      new ProgramStateChangeListener(runtimeStore, program.getId(), controller.getRunId(), twillRunId,
+                                     options.getUserArguments(), systemArguments),
+      Threads.SAME_THREAD_EXECUTOR);
     blockForCompletion(closeable, controller);
 
     if (controller instanceof WorkflowTokenProvider) {

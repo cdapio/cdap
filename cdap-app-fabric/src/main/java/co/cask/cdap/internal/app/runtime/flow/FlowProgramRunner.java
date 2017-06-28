@@ -46,7 +46,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +92,6 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       // Launch flowlet program runners
-      RunId runId = ProgramRunners.getRunId(options);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);

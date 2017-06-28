@@ -44,6 +44,7 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -326,106 +327,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
 
-    final ProgramController controller = runtimeInfo.getController();
-    final String runId = controller.getRunId().getId();
-    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-
-    if (programId.getType() != ProgramType.MAPREDUCE && programId.getType() != ProgramType.SPARK
-      && programId.getType() != ProgramType.WORKFLOW) {
-      // MapReduce state recording is done by the MapReduceProgramRunner, Spark state recording
-      // is done by SparkProgramRunner, and Workflow state recording is done by WorkflowProgramRunner.
-      // TODO [JIRA: CDAP-2013] Same needs to be done for other programs as well
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          // Get start time from RunId
-          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
-          if (startTimeInSeconds == -1) {
-            // If RunId is not time-based, use current time as start time
-            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-          }
-
-          final long finalStartTimeInSeconds = startTimeInSeconds;
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStart(programId, runId, finalStartTimeInSeconds, twillRunId, userArgs, systemArgs);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
-          }
-        }
-
-        @Override
-        public void completed() {
-          LOG.debug("Program {} completed successfully.", programId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                            ProgramController.State.COMPLETED.getRunStatus());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void killed() {
-          LOG.debug("Program {} killed.", programId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                            ProgramController.State.KILLED.getRunStatus());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void suspended() {
-          LOG.debug("Suspending Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setSuspend(programId, runId);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setResume(programId, runId);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void error(final Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                            ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-    }
     return runtimeInfo;
   }
 
@@ -891,17 +792,20 @@ public class ProgramLifecycleService extends AbstractIdleService {
   void validateAndCorrectRunningRunRecords(final ProgramType programType,
                                            final Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
+    com.google.common.base.Predicate<RunRecordMeta> notRunningPredicate =
+      new com.google.common.base.Predicate<RunRecordMeta>() {
+        @Override
+        public boolean apply(RunRecordMeta input) {
+          String runId = input.getPid();
+          // Check if it is not actually running.
+          return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+        }
+      };
 
     LOG.trace("Start getting run records not actually running ...");
-    Collection<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING,
-                                                           new com.google.common.base.Predicate<RunRecordMeta>() {
-      @Override
-      public boolean apply(RunRecordMeta input) {
-        String runId = input.getPid();
-        // Check if it is not actually running.
-        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
-      }
-    }).values();
+    Collection<RunRecordMeta> notActuallyRunning = store.getRuns(ProgramRunStatus.RUNNING, notRunningPredicate)
+                                                        .values();
+    notActuallyRunning.addAll(store.getRuns(ProgramRunStatus.STARTING, notRunningPredicate).values());
     LOG.trace("End getting {} run records not actually running.", notActuallyRunning.size());
 
     final Map<String, ProgramId> runIdToProgramId = new HashMap<>();
@@ -943,10 +847,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
     LOG.trace("End getting invalid run records.");
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status and the program not actually running for program type {}",
+      LOG.warn("Found {} RunRecords with STARTING or RUNNING status and the program not actually running for " +
+               "program type {}",
                invalidRunRecords.size(), programType.getPrettyName());
     } else {
-      LOG.trace("No RunRecords found with RUNNING status and the program not actually running for program type {}",
+      LOG.trace("No RunRecords found with STARTING or RUNNING status and the program not actually running for " +
+                "program type {}",
                 programType.getPrettyName());
     }
 
@@ -955,11 +861,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
       String runId = invalidRunRecordMeta.getPid();
       ProgramId targetProgramId = runIdToProgramId.get(runId);
 
-      boolean updated = store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
+      boolean updated = store.compareAndSetStatus(targetProgramId, runId, invalidRunRecordMeta.getStatus(),
                                                   ProgramController.State.ERROR.getRunStatus());
       if (updated) {
-        LOG.warn("Fixed RunRecord {} for program {} with RUNNING status because the program was not " +
-                   "actually running",
+        LOG.warn("Fixed RunRecord {} for program {} with STARTING or RUNNING status because the program was not " +
+                 "actually running",
                  runId, targetProgramId);
 
         processedInvalidRunRecordIds.add(runId);
