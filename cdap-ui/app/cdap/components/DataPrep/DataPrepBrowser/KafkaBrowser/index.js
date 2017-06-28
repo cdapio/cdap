@@ -91,6 +91,9 @@ export default class KafkaBrowser extends Component {
   }
 
   prepTopic(topic) {
+    this.setState({
+      loading: true
+    });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
       namespace,

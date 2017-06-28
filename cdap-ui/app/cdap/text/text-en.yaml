@@ -397,7 +397,7 @@ features:
           suggestionTitle: "You can try to:"
           suggestion1: your search
           title: 'No match found for "{searchText}"'
-        searchPlaceholder: Search table name
+        searchPlaceholder: Search topic
         table:
           topics: Topics
         topicCount:
