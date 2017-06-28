@@ -16,31 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.TopicId;
-import com.google.gson.Gson;
-import org.apache.twill.api.RunId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -48,14 +29,10 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramRunnerWithPlugin.class);
   protected final CConfiguration cConf;
-  protected final MessagingService messagingService;
-  private static final Gson GSON = new Gson();
 
-  public AbstractProgramRunnerWithPlugin(CConfiguration cConf, MessagingService messagingService) {
+  public AbstractProgramRunnerWithPlugin(CConfiguration cConf) {
     this.cConf = cConf;
-    this.messagingService = messagingService;
   }
 
   /**
@@ -73,39 +50,5 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
     }
     return new PluginInstantiator(
       cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
-  }
-
-  /**
-   * Sends a notification under the program status event topic about the status of a program
-   *
-   * @param programId the program id
-   * @param runId the program run id
-   * @param programStatus the program status
-   * @param userArguments the user arguments of the program
-   * @param token the workflow token to contain payload information from a completed workflow
-   */
-  protected void sendProgramStatusNotification(ProgramId programId, RunId runId, ProgramStatus programStatus,
-                                               Arguments userArguments, @Nullable WorkflowToken token) {
-    // Since we don't know which other schedules depends on this program, we can't use ScheduleTaskPublisher
-    Map<String, String> properties = new HashMap<String, String>();
-    properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
-    properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
-    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
-    properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
-    if (token != null) {
-      properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
-    }
-
-    Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
-    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-    try {
-      messagingService.publish(StoreRequestBuilder.of(topicId)
-                      .addPayloads(GSON.toJson(programStatusNotification))
-                      .build()
-      );
-    } catch (TopicNotFoundException | IOException e) {
-      LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
-      // TODO throw new exception
-    }
   }
 }

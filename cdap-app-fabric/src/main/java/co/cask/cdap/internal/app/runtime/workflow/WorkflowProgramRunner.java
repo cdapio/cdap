@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -74,6 +75,7 @@ import javax.annotation.Nullable;
 public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
   private final ProgramRunnerFactory programRunnerFactory;
+  private final ProgramEventPublisher programEventPublisher;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
   private final MetricsCollectionService metricsCollectionService;
@@ -87,14 +89,16 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final CConfiguration cConf;
 
   @Inject
-  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ServiceAnnouncer serviceAnnouncer,
+  public WorkflowProgramRunner(ProgramRunnerFactory programRunnerFactory, ProgramEventPublisher programEventPublisher,
+                               ServiceAnnouncer serviceAnnouncer,
                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                                MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                                DiscoveryServiceClient discoveryServiceClient, TransactionSystemClient txClient,
                                RuntimeStore runtimeStore, CConfiguration cConf, SecureStore secureStore,
                                SecureStoreManager secureStoreManager, MessagingService messagingService) {
-    super(cConf, messagingService);
+    super(cConf);
     this.programRunnerFactory = programRunnerFactory;
+    this.programEventPublisher = programEventPublisher;
     this.serviceAnnouncer = serviceAnnouncer;
     this.hostname = hostname;
     this.metricsCollectionService = metricsCollectionService;
@@ -193,12 +197,11 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              // TODO when the store can read TMS notifications to send the store, remove the store methods
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
-              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.COMPLETED,
-                                            options.getUserArguments(), driver.getBasicWorkflowToken());
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.COMPLETED,
+                                                        options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -213,8 +216,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
-              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.KILLED, options.getUserArguments(),
-                                            driver.getBasicWorkflowToken());
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.KILLED,
+                                                        options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -254,8 +257,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              sendProgramStatusNotification(program.getId(), runId, ProgramStatus.FAILED, options.getUserArguments(),
-                                            driver.getBasicWorkflowToken());
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.FAILED,
+                                                        options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

@@ -328,13 +328,20 @@ class NotificationSubscriberService extends AbstractIdleService {
       String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
       String workflowTokenString = notification.getProperties().get(ProgramOptionConstants.WORKFLOW_TOKEN);
-      ProgramStatus programStatus = ProgramStatus.valueOf(programStatusString);
+      ProgramStatus programStatus = null;
+      try {
+        programStatus = ProgramStatus.valueOf(programStatusString);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programIdString, e);
+        // Fall through, let the thread return normally
+      }
 
+      // Ignore notifications which specify an invalid ProgramId, RunId, or ProgramStatus
       if (programIdString == null || programRunId == null || programStatus == null) {
         return;
       }
-      ProgramId programId = ProgramId.fromString(programIdString);
 
+      ProgramId programId = ProgramId.fromString(programIdString);
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
 
       for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
@@ -350,7 +357,8 @@ class NotificationSubscriberService extends AbstractIdleService {
             Map<String, String> workflowInfo = new HashMap<>();
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram());
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_RUN_ID, programRunId);
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?"); // TODO do we inherit from end of last one?
+            // TODO do we inherit from end of last one?
+            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?");
             workflowInfo.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, "doesn't matter?");
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_TOKEN, workflowTokenString);
             properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(workflowInfo, STRING_STRING_MAP));

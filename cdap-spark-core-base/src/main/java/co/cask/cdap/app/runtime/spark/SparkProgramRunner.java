@@ -27,6 +27,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
@@ -94,6 +95,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
 
   private final CConfiguration cConf;
   private final Configuration hConf;
+  private final ProgramEventPublisher programEventPublisher;
   private final LocationFactory locationFactory;
   private final TransactionSystemClient txClient;
   private final DatasetFramework datasetFramework;
@@ -108,16 +110,17 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MessagingService messagingService;
 
   @Inject
-  SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
-                     TransactionSystemClient txClient, DatasetFramework datasetFramework,
-                     MetricsCollectionService metricsCollectionService,
+  SparkProgramRunner(CConfiguration cConf, Configuration hConf, ProgramEventPublisher programEventPublisher,
+                     LocationFactory locationFactory, TransactionSystemClient txClient,
+                     DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService) {
-    super(cConf, messagingService);
+    super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
+    this.programEventPublisher = programEventPublisher;
     this.locationFactory = locationFactory;
     this.txClient = txClient;
     this.datasetFramework = datasetFramework;
@@ -305,9 +308,9 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           public Void get() {
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            sendProgramStatusNotification(programId, runId,
-                                          ProgramStatus.valueOf(finalRunStatus.toString().toUpperCase()),
-                                          userArgs, null);
+            programEventPublisher.publishNotification(programId, runId,
+                                                      ProgramStatus.valueOf(finalRunStatus.toString().toUpperCase()),
+                                                      userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -323,7 +326,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                  ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            sendProgramStatusNotification(programId, runId, ProgramStatus.FAILED, userArgs, null);
+            programEventPublisher.publishNotification(programId, runId, ProgramStatus.FAILED, userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
