@@ -24,19 +24,17 @@ import co.cask.cdap.messaging.RollbackDetail;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.collect.AbstractIterator;
 import org.apache.tephra.Transaction;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 
 /**
  * Contains common logic for implementation of {@link MessageTable}.
  */
 public abstract class AbstractMessageTable implements MessageTable {
-
-  private final StoreIterator storeIterator = new StoreIterator();
 
   /**
    * Store the {@link RawMessageTableEntry}s persistently.
@@ -93,7 +91,7 @@ public abstract class AbstractMessageTable implements MessageTable {
 
   @Override
   public void store(Iterator<? extends Entry> entries) throws IOException {
-    persist(storeIterator.reset(entries));
+    persist(new StoreIterator(entries));
   }
 
   @Override
@@ -185,40 +183,30 @@ public abstract class AbstractMessageTable implements MessageTable {
   }
 
   /**
-   * A resettable {@link Iterator} for iterating over {@link RawMessageTableEntry} based on a given
+   * A {@link Iterator} for iterating over {@link RawMessageTableEntry} based on a given
    * iterator of {@link Entry}.
    */
-  private static class StoreIterator implements Iterator<RawMessageTableEntry> {
+  private static class StoreIterator extends AbstractIterator<RawMessageTableEntry> {
 
-    private final RawMessageTableEntry tableEntry = new RawMessageTableEntry();
-
-    private Iterator<? extends Entry> entries;
+    private final Iterator<? extends Entry> entries;
+    private final RawMessageTableEntry tableEntry;
     private TopicId topicId;
     private int generation;
     private byte[] topic;
     private byte[] rowKey;
-    private Entry nextEntry;
 
-    @Override
-    public boolean hasNext() {
-      if (nextEntry != null) {
-        return true;
-      }
-      if (!entries.hasNext()) {
-        return false;
-      }
-      nextEntry = entries.next();
-      return true;
+    private StoreIterator(Iterator<? extends Entry> entries) {
+      this.entries = entries;
+      this.tableEntry = new RawMessageTableEntry();
     }
 
     @Override
-    public RawMessageTableEntry next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
+    protected RawMessageTableEntry computeNext() {
+      if (!entries.hasNext()) {
+        return endOfData();
       }
 
-      Entry entry = nextEntry;
-      nextEntry = null;
+      Entry entry = entries.next();
       // Create new byte arrays only when the topicId is different. Else, reuse the byte arrays.
       if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
         topicId = entry.getTopicId();
@@ -236,17 +224,6 @@ public abstract class AbstractMessageTable implements MessageTable {
         txPtr = Bytes.toBytes(entry.getTransactionWritePointer());
       }
       return tableEntry.set(rowKey, txPtr, entry.getPayload());
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("Remove not supported");
-    }
-
-    private StoreIterator reset(Iterator<? extends Entry> entries) {
-      this.entries = entries;
-      this.nextEntry = null;
-      return this;
     }
   }
 }
