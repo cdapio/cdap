@@ -237,7 +237,7 @@ cdap_check_pidfile() {
   cdap_status_pidfile ${__pidfile} ${__label} > /dev/null
   __ret=$?
   case ${__ret} in
-    0) echo "$(date) Please stop ${__label} running at $(<${__pidfile}), first, or use the restart function" ;;
+    0) echo "$(date) Please stop CDAP ${__label} running as process $(<${__pidfile}) first, or use the restart function" ;;
     *) return 0 ;;
   esac
   return 1
