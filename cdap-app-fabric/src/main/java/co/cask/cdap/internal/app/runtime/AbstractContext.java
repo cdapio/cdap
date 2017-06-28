@@ -192,8 +192,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
     KerberosPrincipalId principalId = null;
     if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
-      String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-      principalId = principal == null ? null : new KerberosPrincipalId(principal);
+      principalId = new KerberosPrincipalId(programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL));
     }
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
                                   new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),

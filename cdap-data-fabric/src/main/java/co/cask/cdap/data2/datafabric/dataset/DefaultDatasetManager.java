@@ -105,8 +105,7 @@ public class DefaultDatasetManager implements DatasetManager {
       @Override
       public Void call() throws DatasetManagementException {
         try {
-          // we have to do this check since sometimes addInstance method can only be used when app impersonation is
-          // enabled
+          // we have to do this check since addInstance method can only be used when app impersonation is enabled
           if (principalId != null) {
             datasetFramework.addInstance(type, createInstanceId(name), properties, principalId);
           } else {

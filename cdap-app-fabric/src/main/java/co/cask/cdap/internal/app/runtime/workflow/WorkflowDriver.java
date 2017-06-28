@@ -515,8 +515,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
     KerberosPrincipalId principalId = null;
     if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
-      String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
-      principalId = principal == null ? null : new KerberosPrincipalId(principal);
+      principalId = new KerberosPrincipalId(programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL));
     }
 
     final KerberosPrincipalId finalPrincipalId = principalId;
@@ -531,8 +530,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           @Override
           public Void call() throws Exception {
             DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties());
-            // we have to do this check since sometimes addInstance method can only be used when app impersonation is
-            // enabled
+            // we have to do this check since addInstance method can only be used when app impersonation is enabled
             if (finalPrincipalId != null) {
               datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, finalPrincipalId);
             } else {
