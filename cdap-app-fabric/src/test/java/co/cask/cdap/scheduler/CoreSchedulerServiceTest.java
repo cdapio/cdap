@@ -290,7 +290,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   @Test
   @Category(XSlowTests.class)
-  public void testWorkflowJobs() throws Exception {
+  public void testProgramEvents() throws Exception {
     // Deploy the app
     messagingService = getInjector().getInstance(MessagingService.class);
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
@@ -322,6 +322,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1); // Turn on the 10 second scheduler
     enableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
     TimeUnit.SECONDS.sleep(10); // Give it enough time to schedule the new one
+    // TODO when other PR gets merged, change to waitUntilProcessed(dataEventTopic, messageId);
+
     waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
 
     ProgramRunId latestRun = getLatestRun(SCHEDULED_WORKFLOW_3);

@@ -352,14 +352,7 @@ class NotificationSubscriberService extends AbstractIdleService {
             // Add workflow token if triggering program was a Workflow
             Map<String, String> properties = new HashMap<>();
             properties.put(ProgramOptionConstants.USER_OVERRIDES, userOverridesString);
-            WorkflowId workflowId = programId.getParent().workflow(programId.getProgram());
-
             Map<String, String> workflowInfo = new HashMap<>();
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram());
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_RUN_ID, programRunId);
-            // TODO do we inherit from end of last one?
-            workflowInfo.put(ProgramOptionConstants.WORKFLOW_NODE_ID, "doesn't matter?");
-            workflowInfo.put(ProgramOptionConstants.PROGRAM_NAME_IN_WORKFLOW, "doesn't matter?");
             workflowInfo.put(ProgramOptionConstants.WORKFLOW_TOKEN, workflowTokenString);
             properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(workflowInfo, STRING_STRING_MAP));
             Notification workflowNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties);

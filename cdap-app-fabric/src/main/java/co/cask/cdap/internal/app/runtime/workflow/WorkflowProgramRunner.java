@@ -52,6 +52,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
@@ -74,6 +75,8 @@ import javax.annotation.Nullable;
  */
 public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
+  private static final Gson GSON = new Gson();
+
   private final ProgramRunnerFactory programRunnerFactory;
   private final ProgramEventPublisher programEventPublisher;
   private final ServiceAnnouncer serviceAnnouncer;
@@ -128,16 +131,10 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     final RunId runId = ProgramRunners.getRunId(options);
 
     // A Workflow could have also gotten the workflow token from another Workflow
-    final WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(options.getArguments());
-    DatasetFramework programDatasetFramework = workflowInfo == null ?
-            datasetFramework :
-            NameMappedDatasetFramework.createFromWorkflowProgramInfo(datasetFramework, workflowInfo, appSpec);
-
-    // Setup dataset framework context, if required
-    if (programDatasetFramework instanceof ProgramContextAware) {
-      ProgramId programId = program.getId();
-      ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
-    }
+    String workflowTokenString = options.getArguments().getOption(ProgramOptionConstants.WORKFLOW_TOKEN);
+    WorkflowToken workflowToken = workflowTokenString == null ?
+            null :
+            GSON.fromJson(workflowTokenString, BasicWorkflowToken.class);
 
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
@@ -147,9 +144,9 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      final WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, workflowInfo,
+      final WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, workflowToken,
                                                  programRunnerFactory, metricsCollectionService,
-                                                 programDatasetFramework, discoveryServiceClient, txClient,
+                                                 datasetFramework, discoveryServiceClient, txClient,
                                                  runtimeStore, cConf, pluginInstantiator, secureStore,
                                                  secureStoreManager, messagingService);
 
