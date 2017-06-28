@@ -21,20 +21,30 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Iterables;
@@ -47,6 +57,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionExecutorFactory;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,26 +65,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.annotation.Nullable;
 
 /**
  *
  */
 public final class FlowProgramRunner implements ProgramRunner {
-
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
-
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final StreamAdmin streamAdmin;
+  private final RuntimeStore runtimeStore;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
   public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
-                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
+                           RuntimeStore runtimeStore, QueueAdmin queueAdmin,
+                           TransactionExecutorFactory txExecutorFactory) {
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
+    this.runtimeStore = runtimeStore;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -92,12 +106,114 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
     try {
+      final RunId runId = ProgramRunners.getRunId(options);
+      final ProgramId programId = program.getId();
+      final Arguments systemArgs = options.getArguments();
+      final Arguments userArgs = options.getUserArguments();
+      final String twillRunId = systemArgs.getOption(ProgramOptionConstants.TWILL_RUN_ID);
       // Launch flowlet program runners
-      RunId runId = ProgramRunners.getRunId(options);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
-      return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
+      final ProgramController controller = new FlowProgramController(flowlets, program, options,
+                                                                     flowSpec, consumerQueues);
+
+      controller.addListener(new AbstractListener() {
+        @Override
+        public void init(ProgramController.State state, @Nullable Throwable cause) {
+          // Get start time from RunId
+          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+          if (startTimeInSeconds == -1) {
+            // If RunId is not time-based, use current time as start time
+            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          }
+
+          final long finalStartTimeInSeconds = startTimeInSeconds;
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
+                                    userArgs.asMap(), systemArgs.asMap());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+
+          if (state == ProgramController.State.COMPLETED) {
+            completed();
+          }
+          if (state == ProgramController.State.ERROR) {
+            error(controller.getFailureCause());
+          }
+        }
+
+        @Override
+        public void completed() {
+          LOG.debug("Program {} completed successfully.", programId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStop(programId, runId.getId(),
+                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.COMPLETED.getRunStatus());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void killed() {
+          LOG.debug("Program {} killed.", programId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStop(programId, runId.getId(),
+                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.KILLED.getRunStatus());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void suspended() {
+          LOG.debug("Suspending Program {} {}.", programId, runId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setSuspend(programId, runId.getId());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void resuming() {
+          LOG.debug("Resuming Program {} {}.", programId, runId);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setResume(programId, runId.getId());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void error(final Throwable cause) {
+          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStop(programId, runId.getId(),
+                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      return controller;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
