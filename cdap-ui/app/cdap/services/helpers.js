@@ -190,6 +190,18 @@ function preventPropagation(e = defaultEventObject) {
   e.preventDefault();
 }
 
+function isNilOrEmptyString(value) {
+  return isNil(value) || value === '';
+}
+
+function requiredFieldsCompleted(state, requiredFields) {
+  let emptyFieldsInState = Object.keys(state)
+    .filter(fieldName => {
+      return isNilOrEmptyString(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+    });
+  return !emptyFieldsInState.length ? true : false;
+}
+
 const defaultAction = {
   action : '',
   payload : {}
@@ -211,6 +223,7 @@ export {
   contructUrl,
   getIcon,
   preventPropagation,
+  requiredFieldsCompleted,
   defaultAction,
   difference
 };

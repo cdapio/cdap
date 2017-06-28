@@ -23,7 +23,8 @@ const basePluginArtifactJSON = baseArtifactPath + '/properties';
 
 export const MyArtifactApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', baseArtifactPath ),
-  listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions` ),
+  listExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions`),
+  listMicroservicePlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseArtifactPath}/extensions/microservice`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', baseArtifactPath),
   loadPluginConfiguration: apiCreator(dataSrc, 'PUT', 'REQUEST', basePluginArtifactJSON),
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),

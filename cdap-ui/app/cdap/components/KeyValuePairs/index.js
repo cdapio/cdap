@@ -117,17 +117,12 @@ export default class KeyValuePairs extends Component {
           return (
             <div key={pair.uniqueId}>
               <Provider store={KeyValueStore}>
-                {
-                  this.props.getResettedKeyValue ?
-                    (
-                      <KeyValuePairCopy
-                        index={index}
-                        getResettedKeyValue={this.props.getResettedKeyValue}
-                      />
-                    )
-                  : <KeyValuePairCopy index={index}/>
-                }
-
+                <KeyValuePairCopy
+                  index={index}
+                  getResettedKeyValue={this.props.getResettedKeyValue}
+                  keyPlaceholder={this.props.keyPlaceholder}
+                  valuePlaceholder={this.props.valuePlaceholder}
+                />
               </Provider>
             </div>
           );
@@ -150,5 +145,7 @@ KeyValuePairs.propTypes = {
     }))
   }),
   onKeyValueChange: PropTypes.func,
-  getResettedKeyValue: PropTypes.func
+  getResettedKeyValue: PropTypes.func,
+  keyPlaceholder: PropTypes.string,
+  valuePlaceholder: PropTypes.string
 };
