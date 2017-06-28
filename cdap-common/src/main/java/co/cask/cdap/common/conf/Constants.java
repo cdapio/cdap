@@ -266,6 +266,8 @@ public final class Constants {
      * Topic name for publishing time events from stream size scheduler to the messaging system
      */
     public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
+
+    public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
   }
 
   /**
