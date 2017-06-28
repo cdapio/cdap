@@ -17,6 +17,8 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -34,7 +36,6 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -46,17 +47,13 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ScheduleId;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,8 +62,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
@@ -82,7 +81,7 @@ class NotificationSubscriberService extends AbstractIdleService {
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private final CConfiguration cConf;
-  private ListeningExecutorService taskExecutorService;
+  private ExecutorService taskExecutorService;
   private volatile boolean stopping = false;
 
 
@@ -106,8 +105,8 @@ class NotificationSubscriberService extends AbstractIdleService {
   @Override
   protected void startUp() {
     LOG.info("Start running NotificationSubscriberService");
-    taskExecutorService = MoreExecutors.listeningDecorator(
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task").build()));
+    taskExecutorService =
+      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task-%d").build());
 
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC)));
@@ -165,18 +164,12 @@ class NotificationSubscriberService extends AbstractIdleService {
     }
 
     private String loadMessageId() {
-      try {
-        return Transactions.execute(transactional, new TxCallable<String>() {
-          @Override
-          public String call(DatasetContext context) throws Exception {
-            return jobQueue.retrieveSubscriberState(topic);
-          }
-        });
-      } catch (TransactionFailureException e) {
-        // if we fail to load the messageId, we want to propagate the exception, so we don't reprocess
-        // TODO: retry? What's the recovery strategy?
-        throw Throwables.propagate(e);
-      }
+      return Transactionals.execute(transactional, new TxCallable<String>() {
+        @Override
+        public String call(DatasetContext context) throws Exception {
+          return jobQueue.retrieveSubscriberState(topic);
+        }
+      });
     }
 
     /**
@@ -185,39 +178,45 @@ class NotificationSubscriberService extends AbstractIdleService {
      * @return sleep time in milliseconds before next fetch
      */
     private long processNotifications() {
-      boolean emptyFetch = false;
       try {
         final MessageFetcher fetcher = messagingContext.getMessageFetcher();
-        emptyFetch = Transactions.execute(transactional, new TxCallable<Boolean>() {
+        String lastFetchedMessageId = Transactionals.execute(transactional, new TxCallable<String>() {
           @Override
-          public Boolean call(DatasetContext context) throws Exception {
+          public String call(DatasetContext context) throws Exception {
             return fetchAndProcessNotifications(context, fetcher);
           }
-        });
+        }, ServiceUnavailableException.class, TopicNotFoundException.class);
         failureCount = 0;
+
+        // The job queue and the last fetched message id was persisted successfully, update the local field as well.
+        // Sleep for configured number of milliseconds if there's no notification, otherwise don't sleep
+        if (lastFetchedMessageId != null) {
+          messageId = lastFetchedMessageId;
+          return cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS);
+        }
+        return 0L;
+
+      } catch (ServiceUnavailableException e) {
+        SAMPLING_LOG.warn("Failed to contact service {}. Will retry in next run.", e.getServiceName(), e);
+      } catch (TopicNotFoundException e) {
+        SAMPLING_LOG.warn("Failed to fetch from TMS. Will retry in next run.", e);
       } catch (Exception e) {
         LOG.warn("Failed to get and process notifications. Will retry in next run", e);
-        failureCount++;
       }
 
       // If there is any failure during fetching of notifications or looking up of schedules,
       // delay the next fetch based on the strategy
-      if (failureCount > 0) {
-        // Exponential strategy doesn't use the time component, so doesn't matter what we passed in as startTime
-        return scheduleStrategy.nextRetry(failureCount, 0);
-      }
-
-      // Sleep for 2 seconds if there's no notification, otherwise don't sleep
-      return emptyFetch ? 2000L : 0L;
+      // Exponential strategy doesn't use the time component, so doesn't matter what we passed in as startTime
+      return scheduleStrategy.nextRetry(++failureCount, 0);
     }
 
-    private boolean fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
-      boolean emptyFetch = true;
+    @Nullable
+    private String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
+      String lastFetchedMessageId = null;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
                                                                topic, 100, messageId)) {
         LOG.trace("Fetch with messageId = {}", messageId);
         while (iterator.hasNext() && !stopping) {
-          emptyFetch = false;
           Message message = iterator.next();
           Notification notification;
           try {
@@ -225,21 +224,19 @@ class NotificationSubscriberService extends AbstractIdleService {
                                          Notification.class);
           } catch (JsonSyntaxException e) {
             LOG.warn("Failed to decode message with id {}. Skipped. ", message.getId(), e);
-            messageId = message.getId(); // update messageId to skip this message in next fetch
+            lastFetchedMessageId = message.getId(); // update messageId to skip this message in next fetch
             continue;
           }
           updateJobQueue(context, notification);
-          messageId = message.getId();
+          lastFetchedMessageId = message.getId();
         }
 
-        if (!emptyFetch) {
-          jobQueue.persistSubscriberState(topic, messageId);
+        if (lastFetchedMessageId != null) {
+          jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
         }
-      } catch (ServiceUnavailableException | TopicNotFoundException e) {
-        SAMPLING_LOG.warn("Failed to fetch from TMS. Will retry later.", e);
-        failureCount++;
+
+        return lastFetchedMessageId;
       }
-      return emptyFetch;
     }
 
     abstract void updateJobQueue(DatasetContext context, Notification notification) throws Exception;
