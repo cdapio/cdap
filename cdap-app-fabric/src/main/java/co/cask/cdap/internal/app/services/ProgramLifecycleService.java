@@ -376,7 +376,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.COMPLETED.getRunStatus());
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.COMPLETED,
-                                                        userArguments);
+                                                  userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -391,7 +391,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.KILLED.getRunStatus());
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.KILLED,
-                                                        userArguments);
+                                                  userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -430,7 +430,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
               programEventPublisher.publishStatus(programId, controller.getRunId(), ProgramRunStatus.FAILED,
-                                                        userArguments);
+                                                  userArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

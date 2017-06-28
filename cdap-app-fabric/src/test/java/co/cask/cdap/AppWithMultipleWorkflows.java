@@ -61,7 +61,7 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
   }
 
   /**
-   * Some Dummy Token Action
+   * Some Dummy Token Action that writes to the workflow token
    */
   public static class DummyTokenAction extends AbstractCustomAction {
     private static final Logger LOG = LoggerFactory.getLogger(SomeDummyAction.class);

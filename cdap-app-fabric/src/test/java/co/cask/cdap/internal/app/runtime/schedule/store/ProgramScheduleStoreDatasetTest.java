@@ -124,7 +124,7 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
     txExecutor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        // event for ProgramStatus triggers only sched31
+        // event for ProgramStatus should trigger only sched31
         Assert.assertEquals(ImmutableSet.of(sched31),
                             toScheduleSet(store.findSchedules(
                                           Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));

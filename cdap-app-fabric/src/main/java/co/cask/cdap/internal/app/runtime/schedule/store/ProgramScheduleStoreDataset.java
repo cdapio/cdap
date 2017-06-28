@@ -535,6 +535,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       ProgramStatusTrigger programTrigger = (ProgramStatusTrigger) trigger;
       List<String> triggerKeys = new ArrayList<>();
 
+      // Generate program status trigger keys for each program status
       for (ProgramStatus programStatus : programTrigger.getProgramStatuses()) {
         triggerKeys.add(Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(), programStatus));
       }

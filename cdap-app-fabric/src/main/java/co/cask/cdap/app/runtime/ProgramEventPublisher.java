@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -108,7 +107,6 @@ public class ProgramEventPublisher {
     if (token != null) { // WorkflowToken is null if the triggering program is not a workflow
       properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
     }
-
     return new Notification(Notification.Type.PROGRAM_STATUS, properties);
   }
 }
