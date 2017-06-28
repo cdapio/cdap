@@ -338,7 +338,6 @@ export default class CreateDatasetBtn extends Component {
             appId: pipelineName
           };
 
-          console.log('config', pipelineconfig);
           // If it doesn't exist create a new pipeline with macros.
           return MyAppApi.deployApp(params, pipelineconfig);
         }

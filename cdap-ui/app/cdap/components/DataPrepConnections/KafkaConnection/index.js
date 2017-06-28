@@ -183,7 +183,11 @@ export default class KafkaConnection extends Component {
   }
 
   testConnection() {
-    this.setState({testConnectionLoading: true});
+    this.setState({
+      testConnectionLoading: true,
+      connectionResult: null,
+      error: null
+    });
 
     let namespace = NamespaceStore.getState().selectedNamespace;
 

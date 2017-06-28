@@ -102,8 +102,6 @@ export default class KafkaBrowser extends Component {
     MyDataPrepApi.readTopic(params)
       .subscribe(
         (res) => {
-          console.log('test', res);
-
           let workspaceId = res.values[0].id;
           if (this.props.onWorkspaceCreate && typeof this.props.onWorkspaceCreate === 'function') {
             this.props.onWorkspaceCreate(workspaceId);

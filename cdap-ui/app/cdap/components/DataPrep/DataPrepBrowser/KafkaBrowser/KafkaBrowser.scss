@@ -19,6 +19,7 @@
 $header-border: #cccccc;
 $header-bg: #eeeeee;
 $content-font-color: #333333;
+$hr_color: #999999;
 
 .kafka-browser {
   height: calc(100vh - 50px - 54px);
@@ -87,8 +88,8 @@ $content-font-color: #333333;
       word-wrap: break-word;
 
       hr {
-        color: #999999;
-        background-color: #999999;
+        color: $hr_color;
+        background-color: $hr_color;
       }
       span {
         font-size: 14px;
