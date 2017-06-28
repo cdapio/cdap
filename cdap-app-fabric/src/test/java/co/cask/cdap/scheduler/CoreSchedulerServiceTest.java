@@ -22,6 +22,7 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
@@ -30,6 +31,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -112,6 +114,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static Store store;
   private static TopicId dataEventTopic;
   private static TopicId programEventTopic;
+  private static ProgramEventPublisher programEventPublisher;
 
   private static Scheduler scheduler;
 
@@ -125,6 +128,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     messagingService = getInjector().getInstance(MessagingService.class);
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     store = getInjector().getInstance(Store.class);
+    programEventPublisher = getInjector().getInstance(ProgramEventPublisher.class);
     programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
   }
@@ -295,11 +299,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Publish some notifications that should not trigger the program
-    publishProgramNotification(WORKFLOW_2, ProgramStatus.FAILED);
-    publishProgramNotification(WORKFLOW_1, ProgramStatus.FAILED);
+    publishProgramNotification(WORKFLOW_2, ProgramRunStatus.FAILED);
+    publishProgramNotification(WORKFLOW_1, ProgramRunStatus.FAILED);
 
     // Now send the program status notification that would trigger the schedule, but it is disabled (should not trigger)
-    publishProgramNotification(WORKFLOW_1, ProgramStatus.COMPLETED);
+    publishProgramNotification(WORKFLOW_1, ProgramRunStatus.COMPLETED);
 
     ScheduleId scheduleId = APP_ID.schedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
@@ -426,18 +430,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     messagingService.publish(StoreRequestBuilder.of(dataEventTopic).addPayloads(GSON.toJson(notification)).build());
   }
 
-  private void publishProgramNotification(ProgramId programId, ProgramStatus programStatus)
+  private void publishProgramNotification(ProgramId programId, ProgramRunStatus programRunStatus)
           throws Exception {
-    if (programStatus == ProgramStatus.INITIALIZING || programStatus == ProgramStatus.RUNNING) {
-      throw new IllegalArgumentException("ProgramStatus " + programStatus + " cannot be published");
-    }
 
-    Map<String, String> properties = new HashMap<>();
-    properties.put(ProgramOptionConstants.RUN_ID, dummyRunId.getId());
-    properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
-    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
-    Notification notification = new Notification(Notification.Type.PROGRAM_STATUS, properties);
-
-    messagingService.publish(StoreRequestBuilder.of(programEventTopic).addPayloads(GSON.toJson(notification)).build());
+    programEventPublisher.publishNotification(programId, dummyRunId, programRunStatus, new BasicArguments(), null);
   }
 }
