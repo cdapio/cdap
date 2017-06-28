@@ -122,6 +122,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
+    messagingService = getInjector().getInstance(MessagingService.class);
+    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
+    store = getInjector().getInstance(Store.class);
+    programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
   }
 
   @AfterClass
@@ -241,11 +246,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Test
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
-    messagingService = getInjector().getInstance(MessagingService.class);
-    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
-    dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
-    store = getInjector().getInstance(Store.class);
-
     deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Resume the schedule because schedules are initialized as paused
@@ -292,11 +292,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Category(XSlowTests.class)
   public void testProgramEvents() throws Exception {
     // Deploy the app
-    messagingService = getInjector().getInstance(MessagingService.class);
-    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
-    programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-    dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
-    store = getInjector().getInstance(Store.class);
     deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Publish some notifications that should not trigger the program
@@ -319,10 +314,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                           schedule.getConstraints());
     scheduler.updateSchedule(updatedSchedule);
 
-    enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1); // Turn on the 10 second scheduler
     enableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
+    // TODO when other PR gets merged, change to waitUntilProcessed(programEventTopic, messageId);
     TimeUnit.SECONDS.sleep(10); // Give it enough time to schedule the new one
-    // TODO when other PR gets merged, change to waitUntilProcessed(dataEventTopic, messageId);
 
     waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
 

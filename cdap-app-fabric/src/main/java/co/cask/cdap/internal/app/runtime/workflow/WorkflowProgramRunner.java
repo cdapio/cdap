@@ -46,6 +46,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -198,7 +199,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.COMPLETED.getRunStatus());
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.COMPLETED,
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.COMPLETED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
@@ -214,7 +215,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.KILLED.getRunStatus());
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.KILLED,
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.KILLED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }
@@ -255,7 +256,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
               runtimeStore.setStop(program.getId(), runId.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              programEventPublisher.publishNotification(program.getId(), runId, ProgramStatus.FAILED,
+              programEventPublisher.publishNotification(program.getId(), runId, ProgramRunStatus.FAILED,
                                                         options.getUserArguments(), driver.getBasicWorkflowToken());
               return null;
             }

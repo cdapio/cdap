@@ -118,7 +118,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private final ScheduledExecutorService scheduledExecutorService;
   private final Store store;
-  private final MessagingService messagingService;
   private final ProgramRuntimeService runtimeService;
   private final CConfiguration cConf;
   private final NamespaceStore nsStore;
@@ -130,14 +129,12 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final Scheduler scheduler;
 
   @Inject
-  ProgramLifecycleService(Store store, MessagingService messagingService,
-                          NamespaceStore nsStore, ProgramRuntimeService runtimeService,
+  ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext, ProgramEventPublisher programEventPublisher,
                           Scheduler scheduler) {
     this.store = store;
-    this.messagingService = messagingService;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
@@ -379,8 +376,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.COMPLETED.getRunStatus());
-              programEventPublisher.publishNotification(programId, controller.getRunId(),
-                                                        co.cask.cdap.api.ProgramStatus.COMPLETED, userArguments, null);
+              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.COMPLETED,
+                                                        userArguments, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -394,8 +391,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.KILLED.getRunStatus());
-              programEventPublisher.publishNotification(programId, controller.getRunId(),
-                                                        co.cask.cdap.api.ProgramStatus.KILLED, userArguments, null);
+              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.KILLED,
+                                                        userArguments, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -433,8 +430,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
             public Void get() {
               store.setStop(programId, runId, TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              programEventPublisher.publishNotification(programId, controller.getRunId(),
-                                                        co.cask.cdap.api.ProgramStatus.FAILED, userArguments, null);
+              programEventPublisher.publishNotification(programId, controller.getRunId(), ProgramRunStatus.FAILED,
+                                                        userArguments, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

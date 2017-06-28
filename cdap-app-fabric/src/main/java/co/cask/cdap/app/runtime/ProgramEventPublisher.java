@@ -24,6 +24,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.TopicId;
@@ -38,7 +39,7 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
- * Event publisher that publishes system-level program state events to TMS
+ * Event publisher that publishes system-level program state events
  */
 public class ProgramEventPublisher {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramEventPublisher.class);
@@ -64,19 +65,19 @@ public class ProgramEventPublisher {
    *
    * @param programId the program id
    * @param runId the program run id
-   * @param programStatus the program status
+   * @param programRunStatus the run status of the program
    * @param userArguments the user arguments of the program
    * @param token the workflow token to contain payload information from a completed workflow
    */
-  public void publishNotification(ProgramId programId, RunId runId, ProgramStatus programStatus,
+  public void publishNotification(ProgramId programId, RunId runId, ProgramRunStatus programRunStatus,
                                   Arguments userArguments, @Nullable WorkflowToken token) {
     Map<String, String> properties = new HashMap<>();
     properties.put(ProgramOptionConstants.RUN_ID, runId.getId());
     properties.put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds));
     properties.put(ProgramOptionConstants.PROGRAM_ID, programId.toString());
-    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programStatus.toString());
+    properties.put(ProgramOptionConstants.PROGRAM_STATUS, programRunStatus.toProgramStatus().toString());
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()));
-    if (token != null) {
+    if (token != null) { // WorkflowToken is null if the triggering program is not a workflow
       properties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
     }
 

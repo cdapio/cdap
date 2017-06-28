@@ -309,9 +309,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
           public Void get() {
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            programEventPublisher.publishNotification(programId, runId,
-                                                      ProgramStatus.valueOf(finalRunStatus.toString().toUpperCase()),
-                                                      userArgs, null);
+            programEventPublisher.publishNotification(programId, runId, finalRunStatus, userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -327,7 +325,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
             runtimeStore.setStop(programId, runId.getId(),
                                  TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                                  ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            programEventPublisher.publishNotification(programId, runId, ProgramStatus.FAILED, userArgs, null);
+            programEventPublisher.publishNotification(programId, runId, ProgramRunStatus.FAILED, userArgs, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
