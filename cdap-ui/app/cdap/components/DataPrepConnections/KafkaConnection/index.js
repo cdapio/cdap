@@ -274,7 +274,8 @@ export default class KafkaConnection extends Component {
   }
 
   renderTestButton() {
-    let disabled = this.state.testConnectionLoading;
+    let disabled = this.state.testConnectionLoading || !this.state.name;
+    disabled = disabled || this.state.brokersList.length === 0 || (this.state.brokersList.length === 1 && (!this.state.brokersList[0].host || !this.state.brokersList[0].port));
 
     return (
       <span className="test-connection-button">
