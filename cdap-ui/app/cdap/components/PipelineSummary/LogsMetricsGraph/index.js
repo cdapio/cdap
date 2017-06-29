@@ -95,7 +95,7 @@ export default class LogsMetricsGraph extends Component {
           endDomain;
       let {xDomainType, runsLimit, totalRunsCount} = this.props;
       if (xDomainType === 'limit') {
-        startDomain = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+        startDomain = totalRunsCount > runsLimit ? (totalRunsCount - runsLimit) + 1 : 0;
         endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
       }
       if (xDomainType === 'time') {
@@ -223,6 +223,15 @@ export default class LogsMetricsGraph extends Component {
                     </div>
                     <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.hint.viewLogs`)}</a>
                   </div>
+                  {
+                    this.props.xDomainType === 'limit' ?
+                      <div>
+                        <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
+                        <span>{this.state.currentHoveredElement.x}</span>
+                      </div>
+                    :
+                      null
+                  }
                   <div>
                     <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
                     <span>{ moment(popOverData.start * 1000).format('llll')}</span>

@@ -252,6 +252,15 @@ export default class RunsHistoryGraph extends Component {
                       })}>{popOverData.status}</span>
                     </div>
                   </div>
+                  {
+                    this.props.xDomainType === 'limit' ?
+                      <div>
+                        <strong>{T.translate(`${PREFIX}.hint.runNumber`)}: </strong>
+                        <span>{this.state.currentHoveredElement.x}</span>
+                      </div>
+                    :
+                      null
+                  }
                   <div>
                     <strong>{T.translate(`${PREFIX}.hint.startTime`)}: </strong>
                     <span>{moment(popOverData.start * 1000).format('llll')}</span>

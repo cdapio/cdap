@@ -999,6 +999,7 @@ features:
     logsMetricsGraph:
       hint:
         errors: Errors
+        runNumber: Run Number
         startTime: Start Time
         title: Log Errors & Warnings
         viewLogs: View Logs
@@ -1019,6 +1020,7 @@ features:
     runsHistoryGraph:
       hint:
         duration: Duration
+        runNumber: Run Number
         status: Status
         startTime: Start Time
         title: Run History
