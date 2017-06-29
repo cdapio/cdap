@@ -23,17 +23,15 @@ import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.collect.AbstractIterator;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Contains common logic for implementation of {@link PayloadTable}.
  */
 public abstract class AbstractPayloadTable implements PayloadTable {
-
-  private final StoreIterator storeIterator = new StoreIterator();
 
   /**
    * Store the {@link RawPayloadTableEntry}s persistently.
@@ -57,7 +55,7 @@ public abstract class AbstractPayloadTable implements PayloadTable {
 
   @Override
   public void store(Iterator<? extends Entry> entries) throws IOException {
-    persist(storeIterator.reset(entries));
+    persist(new StoreIterator(entries));
   }
 
   @Override
@@ -113,37 +111,28 @@ public abstract class AbstractPayloadTable implements PayloadTable {
    * A resettable {@link Iterator} for iterating over {@link RawPayloadTableEntry} based on a given
    * iterator of {@link Entry}.
    */
-  private static class StoreIterator implements Iterator<RawPayloadTableEntry> {
+  private static class StoreIterator extends AbstractIterator<RawPayloadTableEntry> {
 
-    private final RawPayloadTableEntry tableEntry = new RawPayloadTableEntry();
-
-    private Iterator<? extends Entry> entries;
+    private final Iterator<? extends Entry> entries;
+    private final RawPayloadTableEntry tableEntry;
     private TopicId topicId;
     private int generation;
     private byte[] topic;
     private byte[] rowKey;
     private Entry nextEntry;
 
-    @Override
-    public boolean hasNext() {
-      if (nextEntry != null) {
-        return true;
-      }
-      if (!entries.hasNext()) {
-        return false;
-      }
-      nextEntry = entries.next();
-      return true;
+    private StoreIterator(Iterator<? extends Entry> entries) {
+      this.entries = entries;
+      this.tableEntry = new RawPayloadTableEntry();
     }
 
     @Override
-    public RawPayloadTableEntry next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
+    protected RawPayloadTableEntry computeNext() {
+      if (!entries.hasNext()) {
+        return endOfData();
       }
-      Entry entry = nextEntry;
-      nextEntry = null;
 
+      Entry entry = entries.next();
       if (topicId == null || (!topicId.equals(entry.getTopicId())) || (generation != entry.getGeneration())) {
         topicId = entry.getTopicId();
         generation = entry.getGeneration();
@@ -156,17 +145,6 @@ public abstract class AbstractPayloadTable implements PayloadTable {
       Bytes.putLong(rowKey, topic.length + Bytes.SIZEOF_LONG, entry.getPayloadWriteTimestamp());
       Bytes.putShort(rowKey, topic.length + (2 * Bytes.SIZEOF_LONG), entry.getPayloadSequenceId());
       return tableEntry.set(rowKey, entry.getPayload());
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("Remove not supported");
-    }
-
-    private StoreIterator reset(Iterator<? extends Entry> entries) {
-      this.entries = entries;
-      this.nextEntry = null;
-      return this;
     }
   }
 }
