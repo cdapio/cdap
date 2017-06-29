@@ -127,10 +127,6 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
 
-    // Setup Program Event Publisher
-    final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
-                                                                                  programId, runId);
-
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
     try {
@@ -138,6 +134,10 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       if (pluginInstantiator != null) {
         closeables.add(pluginInstantiator);
       }
+
+      // Setup Program Event Publisher
+      final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                    programId, runId);
 
       WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,

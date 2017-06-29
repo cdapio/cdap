@@ -37,18 +37,14 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.security.AuthEnforce;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
@@ -71,7 +67,6 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
@@ -84,7 +79,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,14 +118,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Scheduler scheduler;
-  private final ProgramStatusService programStatusService;
+  private final ProgramStatusPersistService programStatusPersistService;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext, Scheduler scheduler,
-                          ProgramStatusService programStatusService) {
+                          ProgramStatusPersistService programStatusPersistService) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -142,7 +136,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.scheduler = scheduler;
-    this.programStatusService = programStatusService;
+    this.programStatusPersistService = programStatusPersistService;
   }
 
   @Override
@@ -157,7 +151,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
                                                     2L, interval, TimeUnit.SECONDS);
 
-    programStatusService.startAndWait();
+    programStatusPersistService.startAndWait();
   }
 
   @Override
@@ -168,7 +162,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     try {
       if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
         scheduledExecutorService.shutdownNow();
-        programStatusService.shutDown();
+        programStatusPersistService.shutDown();
       }
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();

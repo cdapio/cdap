@@ -42,7 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by sameetsapra on 6/29/17.
+ * Abstract class that fetches notifications from TMS
  */
 public abstract class AbstractNotificationSubscriberService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNotificationSubscriberService.class);
@@ -100,14 +100,14 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
    */
   protected abstract class NotificationSubscriberThread implements Runnable {
     protected final String topic;
-    private final RetryStrategy scheduleStrategy;
+    private final RetryStrategy retryStrategy;
     private int failureCount;
     protected String messageId;
 
     protected NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
-      scheduleStrategy =
+      retryStrategy =
               co.cask.cdap.common.service.RetryStrategies.exponentialDelay(100, 30000, TimeUnit.MILLISECONDS);
     }
 
@@ -162,7 +162,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       // If there is any failure during fetching of notifications or looking up of schedules,
       // delay the next fetch based on the strategy
       // Exponential strategy doesn't use the time component, so doesn't matter what we passed in as startTime
-      return scheduleStrategy.nextRetry(++failureCount, 0);
+      return retryStrategy.nextRetry(++failureCount, 0);
     }
 
     public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
