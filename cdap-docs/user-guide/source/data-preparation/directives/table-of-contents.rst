@@ -1,13 +1,10 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2017 Cask Data, Inc.
-    :description: The CDAP User Guide: Getting Started
 
-:hide-toc: true
-
-==============
-CDAP Tutorials
-==============
+=================================
+CDAP User Guide Table of Contents
+=================================
 
 .. toctree::
 
@@ -81,8 +78,3 @@ CDAP Tutorials
 	write-as-json-map <write-as-json-map>
 	write-as-json-object <write-as-json-object>
 	xpath <xpath>
-
-.. |concepts| replace:: **Concepts:**
-.. concepts: concepts.html
-
-- |concepts|_ These concepts are pretty important!

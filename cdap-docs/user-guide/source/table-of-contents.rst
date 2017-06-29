@@ -7,8 +7,13 @@ CDAP User Guide Table of Contents
 =================================
 
 .. toctree::
-   :maxdepth: 4
 
     Introduction <index>
-    Basic Concepts <basic-concepts/index>
+    Getting Started <getting-started/index>
+	Tutorials <tutorials/index>
+	Cheatsheets <cheatsheets/index>
     Data Preparation <data-preparation/index>
+    Pipelines Documentation <pipelines/index>
+    FAQ <faq/index>
+
+
