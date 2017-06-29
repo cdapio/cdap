@@ -41,7 +41,7 @@ export default class PipelineSummary extends Component {
       runs: [],
       logsMetrics: [],
       nodesMetrics: [],
-      totalRunsCount: 0,
+      totalRunsCount: props.totalRunsCount,
       runsLimit: 10,
       filterType: 'limit',
       start: 0,
@@ -137,8 +137,7 @@ export default class PipelineSummary extends Component {
         runs,
         logsMetrics,
         nodesMetrics,
-        loading,
-        totalRunsCount: runs.length
+        loading
       };
       if (this.state.filterType === 'time') {
         state = Object.assign({}, state, {
@@ -188,11 +187,11 @@ export default class PipelineSummary extends Component {
         <div> {T.translate(`${PREFIX}.title`)}</div>
         <div className="stats-container text-xs-right">
           {
+            <span>
+              <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
+              {this.state.totalRunsCount}
+            </span>
             /*
-              <span>
-                <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)} </strong>
-                {this.state.totalRunsCount}
-              </span>
               TODO: Will come in a later PR
               <span className="run-times">
                 <strong className="run-time-label">
@@ -211,6 +210,13 @@ export default class PipelineSummary extends Component {
               </span>
             */
           }
+          <IconSVG
+            name="icon-close"
+            onClick={() => {
+              console.log(this.props.onClose);
+              this.props.onClose();
+            }}
+          />
         </div>
       </div>
     );
@@ -291,5 +297,6 @@ PipelineSummary.propTypes = {
   programType: PropTypes.string.isRequired,
   programId: PropTypes.string.isRequired,
   pipelineConfig: PropTypes.object.isRequired,
-  totalRunsCount: PropTypes.number
+  totalRunsCount: PropTypes.number,
+  onClose: PropTypes.func
 };
