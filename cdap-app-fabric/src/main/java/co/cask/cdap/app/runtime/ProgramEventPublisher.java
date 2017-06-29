@@ -16,7 +16,6 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -76,6 +75,7 @@ public class ProgramEventPublisher {
       ImmutableMap.<String, String>builder().putAll(defaultProperties)
         .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
         .put(ProgramOptionConstants.PROGRAM_ID, programId.toString())
+        .put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId)
         .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArgs.asMap()))
         .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArgs.asMap()))
         .build();
@@ -83,6 +83,11 @@ public class ProgramEventPublisher {
   }
 
   public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+    if (!this.state.compareAndSet(ProgramController.State.ALIVE, ProgramController.State.STOPPING)) {
+      LOG.warn("Invalid transition from {} to State.STOPPING", this.state);
+      return;
+    }
+
     ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
       .putAll(defaultProperties)
       .put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds))
@@ -96,29 +101,47 @@ public class ProgramEventPublisher {
 
   public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, WorkflowToken workflowToken,
                    @Nullable Throwable cause) {
-    Map<String, String> properties =
-      ImmutableMap.<String, String>builder().putAll(defaultProperties)
+    if (!this.state.compareAndSet(ProgramController.State.ALIVE, ProgramController.State.STOPPING)) {
+      LOG.warn("Invalid transition from {} to State.STOPPING", this.state);
+    }
+
+    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
+        .putAll(defaultProperties)
         .put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds))
         .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString())
-        .put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(workflowToken))
-        .build();
-    publish(properties);
+        .put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(workflowToken));
+    if (cause != null) {
+      builder.put("error", GSON.toJson(cause));
+    }
+    publish(builder.build());
   }
 
   public void suspend() {
+    if (!this.state.compareAndSet(ProgramController.State.ALIVE, ProgramController.State.SUSPENDING)) {
+      LOG.warn("Invalid transition from {} to State.STOPPING", this.state);
+    }
+
     Map<String, String> properties =
       ImmutableMap.<String, String>builder().putAll(defaultProperties)
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.toString())
         .build();
     publish(properties);
+
+    this.state.compareAndSet(ProgramController.State.SUSPENDING, ProgramController.State.SUSPENDED);
   }
 
   public void resume() {
+    if (!this.state.compareAndSet(ProgramController.State.SUSPENDED, ProgramController.State.RESUMING)) {
+      LOG.warn("Invalid transition from {} to State.STOPPING", this.state);
+    }
+
     Map<String, String> properties =
       ImmutableMap.<String, String>builder().putAll(defaultProperties)
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.toString())
         .build();
     publish(properties);
+
+    this.state.compareAndSet(ProgramController.State.RESUMING, ProgramController.State.ALIVE);
   }
 
   private void publish(Map<String, String> properties) {
