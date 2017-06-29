@@ -33,7 +33,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test Spark program integration with Service
@@ -46,7 +48,7 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
   @Test
   public void testSparkWithService() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkServiceIntegrationApp.class);
-    startService(applicationManager);
+    ServiceManager serviceManager = startService(applicationManager);
 
     SparkManager sparkManager = applicationManager.getSparkManager(
       TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName()).start();
@@ -58,19 +60,24 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
       Assert.assertEquals((i * i), Integer.parseInt(Bytes.toString(results.read(key))));
     }
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   /**
    * Starts a Service
    */
-  private void startService(ApplicationManager applicationManager) {
+  private ServiceManager startService(ApplicationManager applicationManager) {
     ServiceManager serviceManager =
       applicationManager.getServiceManager(TestSparkServiceIntegrationApp.SERVICE_NAME).start();
     try {
-      serviceManager.waitForStatus(true);
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       LOG.error("Failed to start {} service", TestSparkServiceIntegrationApp.SERVICE_NAME, e);
       throw Throwables.propagate(e);
+    } catch (ExecutionException | TimeoutException e) {
+      e.printStackTrace();
     }
+    return serviceManager;
   }
 }

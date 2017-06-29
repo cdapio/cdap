@@ -84,7 +84,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
                        final SchedulerService schedulerService,
-                       final NotificationSubscriberService notificationSubscriberService,
+                       final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        final ConstraintCheckerService constraintCheckerService,
                        final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
     this.datasetFramework = datasetFramework;
@@ -112,14 +112,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             migrateSchedules(namespaceQueryAdmin, store);
             cleanupJobs();
             constraintCheckerService.startAndWait();
-            notificationSubscriberService.startAndWait();
+            scheduleNotificationSubscriberService.startAndWait();
             schedulerStarted.set(true);
             LOG.info("Started core scheduler service.");
           }
 
           @Override
           protected void shutDown() throws Exception {
-            notificationSubscriberService.stopAndWait();
+            scheduleNotificationSubscriberService.stopAndWait();
             constraintCheckerService.stopAndWait();
             schedulerService.stopAndWait();
             LOG.info("Stopped core scheduler service.");

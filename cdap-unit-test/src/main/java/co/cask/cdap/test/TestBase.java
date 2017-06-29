@@ -80,6 +80,7 @@ import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
+import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.logging.guice.LogReaderRuntimeModules;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.MessagingService;
@@ -188,6 +189,7 @@ public class TestBase {
   private static MetricsQueryService metricsQueryService;
   private static MetricsCollectionService metricsCollectionService;
   private static Scheduler scheduler;
+  private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
   private static DatasetOpExecutor dsOpService;
@@ -312,6 +314,8 @@ public class TestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
+    programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
+    programNotificationSubscriberService.startAndWait();
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
@@ -488,6 +492,7 @@ public class TestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
+    programNotificationSubscriberService.stopAndWait();
     if (exploreClient != null) {
       Closeables.closeQuietly(exploreClient);
     }

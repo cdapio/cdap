@@ -669,14 +669,8 @@ public class AuthorizationTest extends TestBase {
     assertAllAccess(ALICE, AUTH_NAMESPACE, dummyArtifact, appId, serviceId, dsId, streamId);
     // alice should be able to start and stop programs in the app she deployed
     dummyAppManager.startProgram(serviceId.toId());
-
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
     ServiceManager greetingService = dummyAppManager.getServiceManager(serviceId.getProgram());
+    greetingService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     // alice should be able to set instances for the program
     greetingService.setInstances(2);
     Assert.assertEquals(2, greetingService.getProvisionedInstances());
@@ -686,12 +680,7 @@ public class AuthorizationTest extends TestBase {
     // Alice should be able to get runtime arguments as she has ADMIN on it
     Assert.assertEquals(args, greetingService.getRuntimeArgs());
     dummyAppManager.stopProgram(serviceId.toId());
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
+    greetingService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     // Bob should not be able to start programs in dummy app because he does not have privileges on it
     SecurityRequestContext.setUserId(BOB.getName());
     try {
@@ -799,6 +788,7 @@ public class AuthorizationTest extends TestBase {
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
 
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
 
@@ -822,6 +812,7 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
+    int prevFlowRuns = flowManager.getHistory(ProgramRunStatus.KILLED).size();
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
     // is not accessible to BOB.
     flowManager.start(args);
@@ -837,6 +828,7 @@ public class AuthorizationTest extends TestBase {
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForRuns(ProgramRunStatus.KILLED, prevFlowRuns + 1, 10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -863,6 +855,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
@@ -1056,14 +1049,20 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
     // wait for workflow to start
-    workflowManager.waitForStatus(true);
+    workflowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
 
-    // stop all the runs of the workflow so that the current namespace can be deleted after the test
-    workflowManager.stop();
-    workflowManager.waitForStatus(false, 5, 10);
+    // wait for scheduled runs of workflow to run to end
+    workflowManager.waitForStatus(false, 2 , 3);
+
+    // since the schedule in AppWithSchedule is to run every second its possible that it will trigger more than one
+    // run before the schedule was suspended so check for greater than 0 rather than equal to 1
+    Assert.assertTrue(0 < workflowManager.getHistory().size());
+    // assert that all run completed
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, workflowManager.getHistory().size(), 15, TimeUnit.SECONDS);
+
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
   }

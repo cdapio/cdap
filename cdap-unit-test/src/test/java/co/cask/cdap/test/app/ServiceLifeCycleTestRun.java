@@ -26,6 +26,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
@@ -87,11 +88,11 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
     System.setProperty(ServiceHttpServer.THREAD_KEEP_ALIVE_SECONDS, "1");
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
-
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
-      final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
       // Make a call to the service, expect an init state
       Multimap<Integer, String> states = getStates(serviceManager);
@@ -117,7 +118,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
           Assert.assertEquals(ImmutableList.of("INIT"), ImmutableList.copyOf(states.get(key)));
         }
       }
-
+      serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED,  15, TimeUnit.SECONDS);
     } finally {
       // Reset the http server properties to speed up test
       System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
@@ -137,6 +139,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
       // Make 5 consecutive calls, there should be one handler instance being created,
       // since there is only one handler thread.
@@ -177,6 +180,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
             .equals(ImmutableList.copyOf(newStates.get(lastStates.keySet().iterator().next())));
         }
       }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+      serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     } finally {
       // Reset the http server properties to speed up test
       System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
@@ -278,7 +283,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
           return result.hasNext() ? result.next().getTimeValues().get(0).getValue() : 0L;
         }
       }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
+      serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 15, TimeUnit.SECONDS);
     } finally {
       System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
@@ -288,10 +294,10 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   public void testContentProducerLifecycle() throws Exception {
     // Set to have one thread only for testing context capture and release
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
-
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
-      final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
@@ -330,7 +336,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
       // Get the states again, it should still be 6 same instances
       Assert.assertEquals(states, getStates(serviceManager));
-
+      serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 15, TimeUnit.SECONDS);
     } finally {
       System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
@@ -344,6 +351,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
       final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+      serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
       final DataSetManager<KeyValueTable> datasetManager = getDataset(ServiceLifecycleApp.HANDLER_TABLE_NAME);
       // Clean up the dataset first to avoid being affected by other tests
       datasetManager.get().delete(Bytes.toBytes("called"));
@@ -402,7 +411,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
 
       // Get the states again, it should still be 6 same instances
       Assert.assertEquals(states, getStates(serviceManager));
-
+      serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 15, TimeUnit.SECONDS);
     } finally {
       System.clearProperty(ServiceHttpServer.THREAD_POOL_SIZE);
     }
@@ -412,19 +422,21 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   public void testInvalidResponder() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     CountDownLatch uploadLatch = new CountDownLatch(1);
     ListenableFuture<Integer> completion = slowUpload(serviceManager, "PUT", "invalid", uploadLatch);
 
     uploadLatch.countDown();
     Assert.assertEquals(500, completion.get().intValue());
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 15, TimeUnit.SECONDS);
   }
 
   @Test
   public void testInvalidContentProducer() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     final ServiceManager serviceManager = appManager.getServiceManager("test").start();
-
     URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
     URL url = serviceURL.toURI().resolve("invalid?methods=getContentLength").toURL();
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
@@ -461,6 +473,8 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     } finally {
       urlConn.disconnect();
     }
+    serviceManager.stop();
+    serviceManager.waitForRuns(ProgramRunStatus.KILLED, 1, 15, TimeUnit.SECONDS);
   }
 
   /**
