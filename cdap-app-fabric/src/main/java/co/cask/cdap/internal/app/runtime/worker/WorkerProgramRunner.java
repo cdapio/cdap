@@ -36,7 +36,6 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -45,6 +44,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -148,23 +148,9 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
       worker.addListener(new ServiceListenerAdapter() {
         @Override
-        public void terminated(Service.State from) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-      final ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
-                                                                        workerSpec.getName() + "-" + instanceId);
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          // Get start time from RunId
-          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
+        public void starting() {
+          //Get start time from RunId
+          long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
           if (startTimeInSeconds == -1) {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -179,82 +165,47 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
 
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
+        @Override
+        public void terminated(Service.State from) {
+          Closeables.closeQuietly(pluginInstantiator);
+
+          ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
+          if (from == Service.State.STOPPING) {
+            // Service was killed
+            runStatus = ProgramController.State.KILLED.getRunStatus();
           }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
-          }
-        }
 
-        @Override
-        public void completed() {
-          LOG.debug("Program {} completed successfully.", programId);
+          final ProgramRunStatus finalRunStatus = runStatus;
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
               runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.COMPLETED.getRunStatus());
+                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
 
         @Override
-        public void killed() {
-          LOG.debug("Program {} killed.", programId);
+        public void failed(Service.State from, @Nullable final Throwable failure) {
+          Closeables.closeQuietly(pluginInstantiator);
+
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
               runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.KILLED.getRunStatus());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void suspended() {
-          LOG.debug("Suspending Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setSuspend(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setResume(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void error(final Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+                      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+                                                                        workerSpec.getName() + "-" + instanceId);
       worker.start();
       return controller;
     } catch (Throwable t) {
