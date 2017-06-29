@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Event publisher that publishes system-level program state events
@@ -59,7 +60,7 @@ public class ProgramEventPublisher {
     this.runId = runId;
     this.defaultProperties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_ID, programId.toString(),
-      ProgramOptionConstants.RUN_ID, runId.getId()
+      ProgramOptionConstants.RUN_ID, GSON.toJson(runId.getId())
     );
     this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     this.state = new AtomicReference<>(ProgramController.State.STARTING);
@@ -81,17 +82,20 @@ public class ProgramEventPublisher {
     publish(properties);
   }
 
-  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus) {
-    Map<String, String> properties =
-      ImmutableMap.<String, String>builder().putAll(defaultProperties)
-        .put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds))
-        .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString())
-        .build();
-    publish(properties);
+  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
+      .putAll(defaultProperties)
+      .put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString());
+    if (cause != null) {
+      builder.put("error", GSON.toJson(cause));
+    }
+    publish(builder.build());
   }
 
 
-  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, WorkflowToken workflowToken) {
+  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, WorkflowToken workflowToken,
+                   @Nullable Throwable cause) {
     Map<String, String> properties =
       ImmutableMap.<String, String>builder().putAll(defaultProperties)
         .put(ProgramOptionConstants.END_TIME, String.valueOf(endTimeInSeconds))

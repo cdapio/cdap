@@ -189,7 +189,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
             @Override
             public Void get() {
               programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                         ProgramController.State.COMPLETED.getRunStatus());
+                                         ProgramController.State.COMPLETED.getRunStatus(), null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -202,7 +202,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
             @Override
             public Void get() {
               programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                         ProgramController.State.KILLED.getRunStatus());
+                                         ProgramController.State.KILLED.getRunStatus(), null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -240,7 +240,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
             @Override
             public Void get() {
               programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                         ProgramController.State.ERROR.getRunStatus());
+                                         ProgramController.State.ERROR.getRunStatus(), cause);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

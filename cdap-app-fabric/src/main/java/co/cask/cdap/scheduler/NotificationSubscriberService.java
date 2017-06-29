@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -43,15 +44,19 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionSystemClient;
@@ -59,6 +64,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Map;
@@ -75,8 +81,10 @@ class NotificationSubscriberService extends AbstractIdleService {
   // Sampling log only log once per 10000
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
   private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final Transactional transactional;
+  private final RuntimeStore runtimeStore;
   private final MultiThreadMessagingContext messagingContext;
   private final DatasetFramework datasetFramework;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
@@ -86,11 +94,10 @@ class NotificationSubscriberService extends AbstractIdleService {
 
 
   @Inject
-  NotificationSubscriberService(MessagingService messagingService,
-                                CConfiguration cConf,
-                                DatasetFramework datasetFramework,
-                                TransactionSystemClient txClient) {
+  NotificationSubscriberService(MessagingService messagingService, RuntimeStore runtimeStore, CConfiguration cConf,
+                                DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
+    this.runtimeStore = runtimeStore;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
@@ -113,6 +120,8 @@ class NotificationSubscriberService extends AbstractIdleService {
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
+    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread(
+      cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
   }
 
   @Override
@@ -292,6 +301,61 @@ class NotificationSubscriberService extends AbstractIdleService {
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
           jobQueue.addNotification(schedule, notification);
         }
+      }
+    }
+  }
+
+  private class ProgramStatusEventNotificationSubscriberThread extends NotificationSubscriberThread {
+
+    ProgramStatusEventNotificationSubscriberThread(String topic) {
+      super(topic);
+    }
+
+    @Override
+    protected void updateJobQueue(DatasetContext context, Notification notification)
+            throws IOException, DatasetManagementException, NotFoundException {
+
+      String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
+      long startTime = Long.valueOf(notification.getProperties().get(ProgramOptionConstants.LOGICAL_START_TIME));
+      long endTime = Long.valueOf(notification.getProperties().get(ProgramOptionConstants.END_TIME));
+      String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
+      String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
+      String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
+      String systemOverridesString = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+      String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+      String basicThrowableString = notification.getProperties().get("error");
+      ProgramRunStatus programRunStatus = null;
+      try {
+        programRunStatus = ProgramRunStatus.valueOf(programStatusString);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programIdString, e);
+        // Fall through, let the thread return normally
+      }
+
+      // Ignore notifications which specify an invalid ProgramId, RunId, or ProgramStatus
+      if (programIdString == null || programRunId == null || programRunStatus == null) {
+        return;
+      }
+
+      ProgramId programId = ProgramId.fromString(programIdString);
+
+      switch(programRunStatus) {
+        case RUNNING:
+          Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
+          Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
+          runtimeStore.setStart(programId, programRunId, startTime, twillRunId, userOverrides, systemOverrides);
+          break;
+        case COMPLETED:
+        case SUSPENDED:
+        case KILLED:
+          runtimeStore.setStop(programId, programRunId, endTime, programRunStatus);
+          break;
+        case FAILED:
+          BasicThrowable cause = GSON.fromJson(basicThrowableString, BasicThrowable.class);
+          runtimeStore.setStop(programId, programRunId, endTime, ProgramRunStatus.FAILED, cause);
+          break;
+        default:
+          throw new IllegalArgumentException("Well this is not good");
       }
     }
   }
