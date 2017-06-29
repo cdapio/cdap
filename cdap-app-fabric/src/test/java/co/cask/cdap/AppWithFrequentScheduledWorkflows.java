@@ -18,7 +18,6 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
@@ -29,8 +28,8 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
   public static final String DATASET_PARTITION_SCHEDULE_2 = "DataSetPartionSchedule2";
   public static final String DATASET_NAME1 = "SomeDataset";
   public static final String DATASET_NAME2 = "AnotherDataset";
-  public static final String ONE_MIN_SCHEDULE_1 = "OneMinSchedule1";
-  public static final String ONE_MIN_SCHEDULE_2 = "OneMinSchedule2";
+  public static final String TEN_SECOND_SCHEDULE_1 = "TenSecSchedule1";
+  public static final String TEN_SECOND_SCHEDULE_2 = "TenSecSchedule2";
   public static final String SCHEDULED_WORKFLOW_1 = "ScheduledWorkflow1";
   public static final String SCHEDULED_WORKFLOW_2 = "ScheduledWorkflow2";
 
@@ -47,11 +46,12 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
                .triggerOnPartitions(DATASET_NAME1, 1));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
                .triggerOnPartitions(DATASET_NAME2, 2));
-    // Schedule the workflow to run in every min
-    schedule(buildSchedule(ONE_MIN_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1).triggerByTime("* * * * *"));
-    // Schedule the workflow to run in every min with a different cron expression
-    schedule(buildSchedule(ONE_MIN_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
-               .triggerByTime("*/1 * * * *"));
+    // Schedule the workflow to run in every ten seconds
+    schedule(buildSchedule(TEN_SECOND_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1)
+               .triggerByTime("*/10 * * * * ?"));
+    // Schedule the workflow to run in every ten seconds
+    schedule(buildSchedule(TEN_SECOND_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
+               .triggerByTime("*/10 * * * * ?"));
   }
 
   /**

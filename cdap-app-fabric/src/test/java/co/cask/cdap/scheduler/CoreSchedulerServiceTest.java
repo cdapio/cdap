@@ -17,23 +17,28 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
-import co.cask.cdap.api.Config;
-import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxCallable;
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
-import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
@@ -42,11 +47,11 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -55,17 +60,16 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
-import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.RetryStrategies;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -74,14 +78,11 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
@@ -117,6 +118,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static TopicId dataEventTopic;
 
   private static Scheduler scheduler;
+  private static Transactional transactional;
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
@@ -125,6 +127,15 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
+
+    DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(
+      new SystemDatasetInstantiator(getInjector().getInstance(DatasetFramework.class)), getTxClient(),
+      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+
+    transactional = Transactions.createTransactionalWithRetry(
+      Transactions.createTransactional(datasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
+      RetryStrategies.retryOnConflict(20, 100)
+    );
   }
 
   @AfterClass
@@ -241,12 +252,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     deploy(AppWithFrequentScheduledWorkflows.class);
 
     // Resume the schedule because schedules are initialized as paused
-    enableSchedule(AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_1);
-    enableSchedule(AppWithFrequentScheduledWorkflows.ONE_MIN_SCHEDULE_2);
+    enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
+    enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_2);
     enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
     enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
 
-    long startTime = System.currentTimeMillis();
     for (int i = 0; i < 5; i++) {
       testNewPartition(i + 1);
     }
@@ -256,22 +266,32 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     int runs2 = getRuns(WORKFLOW_2);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+
     publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    long minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    // This would make sure the subscriber has processed the data event
+    waitUntilProcessed(dataEventTopic, minPublishTime);
 
-    long elapsedTime = System.currentTimeMillis() - startTime;
-    // Sleep to wait for one run of WORKFLOW_3 to complete as scheduled
-    long sleepTime = TimeUnit.SECONDS.toMillis(75) - elapsedTime;
-    if (sleepTime > 0) {
-      Thread.sleep(TimeUnit.SECONDS.toMillis(75) - elapsedTime);
-    }
     // Both workflows must run at least once.
     // If the testNewPartition() loop took longer than expected, it may be more (quartz fired multiple times)
-    Assert.assertTrue(0 < getRuns(SCHEDULED_WORKFLOW_1));
-    Assert.assertTrue(0 < getRuns(SCHEDULED_WORKFLOW_2));
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getRuns(SCHEDULED_WORKFLOW_1) > 0 && getRuns(SCHEDULED_WORKFLOW_2) > 0;
+      }
+    }, 10, TimeUnit.SECONDS);
 
-    // verify that the two partition schedules did not trigger
+    // There shouldn't be any partition trigger in the job queue
+    Assert.assertFalse(Iterables.any(getAllJobs(), new Predicate<Job>() {
+      @Override
+      public boolean apply(Job job) {
+        return job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger;
+      }
+    }));
+
+    // Also verify that the two partition schedules did not trigger
     Assert.assertEquals(runs1, getRuns(WORKFLOW_1));
     Assert.assertEquals(runs2, getRuns(WORKFLOW_2));
 
@@ -284,11 +304,27 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
     int runs = getRuns(WORKFLOW_2);
-    ScheduleId scheduleId2 = APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
-    // send one notification to it, that will not start the workflow
+    final ScheduleId scheduleId2 = APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
+
+    // send one notification to it
+    long minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
-    TimeUnit.SECONDS.sleep(5); // give it enough time to create the job
+    waitUntilProcessed(dataEventTopic, minPublishTime);
+
+    // A pending job will be created, but it won't run
+    Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
+                      Iterables.any(getAllJobs(), new Predicate<Job>() {
+      @Override
+      public boolean apply(Job job) {
+        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+          return false;
+        }
+        return scheduleId2.equals(job.getJobKey().getScheduleId()) && job.getState() == Job.State.PENDING_TRIGGER;
+      }
+    }));
+
     Assert.assertEquals(runs, getRuns(WORKFLOW_2));
+
     if ("disable".equals(howToUpdate)) {
       // disabling and enabling the schedule should remove the job
       disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
@@ -312,10 +348,24 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     }
     // single notification should not trigger workflow 2 yet (if it does, then the job was not removed)
+    minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
-    TimeUnit.SECONDS.sleep(10); // give it enough time to create the job, but should not start
+    waitUntilProcessed(dataEventTopic, minPublishTime);
+
+    // Again, a pending job will be created, but it won't run since updating the schedule would remove pending trigger
+    Assert.assertTrue("Expected a PENDING_TRIGGER job for " + scheduleId2,
+                      Iterables.any(getAllJobs(), new Predicate<Job>() {
+      @Override
+      public boolean apply(Job job) {
+        if (!(job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger)) {
+          return false;
+        }
+        return scheduleId2.equals(job.getJobKey().getScheduleId()) && job.getState() == Job.State.PENDING_TRIGGER;
+      }
+    }));
+
     Assert.assertEquals(runs, getRuns(WORKFLOW_2));
-    // now this should kick off the workflow
+    // publish one more notification, this should kick off the workflow
     publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitForCompleteRuns(runs + 1, WORKFLOW_2);
   }
@@ -346,9 +396,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
-  private void waitForCompleteRuns(int numRuns, final ProgramId program)
-    throws InterruptedException, ExecutionException, TimeoutException {
-
+  private void waitForCompleteRuns(int numRuns, final ProgramId program) throws Exception {
     Tasks.waitFor(numRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
@@ -361,13 +409,54 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
   }
 
-  private void publishNotification(TopicId topicId, ProgramId programId, String dataset)
-    throws TopicNotFoundException, IOException, TransactionFailureException,
-    AlreadyExistsException, BadRequestException {
-
+  private void publishNotification(TopicId topicId, ProgramId programId, String dataset) throws Exception {
     DatasetId datasetId = programId.getNamespaceId().dataset(dataset);
     PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
     Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());
+  }
+
+  @Nullable
+  private MessageId getLastMessageId(final TopicId topic) {
+    return Transactionals.execute(transactional, new TxCallable<MessageId>() {
+      @Override
+      public MessageId call(DatasetContext context) throws Exception {
+        JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
+                                                      Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+        String id = jobQueue.retrieveSubscriberState(topic.getTopic());
+        if (id == null) {
+          return null;
+        }
+        byte[] bytes = Bytes.fromHexString(id);
+        return new MessageId(bytes);
+      }
+    });
+  }
+
+  /**
+   * Wait until the scheduler process a message published on or after the given time.
+   */
+  private void waitUntilProcessed(final TopicId topic, final long minPublishTime) throws Exception {
+    // Wait for the persisted message changed. That means the scheduler actually consumed the last data event
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        MessageId messageId = getLastMessageId(topic);
+        return messageId != null && messageId.getPublishTimestamp() >= minPublishTime;
+      }
+    }, 5, TimeUnit.SECONDS);
+  }
+
+  private List<Job> getAllJobs() {
+    return Transactionals.execute(transactional, new TxCallable<List<Job>>() {
+      @Override
+      public List<Job> call(DatasetContext context) throws Exception {
+        JobQueueDataset jobQueue = context.getDataset(Schedulers.JOB_QUEUE_DATASET_ID.getNamespace(),
+                                                      Schedulers.JOB_QUEUE_DATASET_ID.getDataset());
+        try (CloseableIterator<Job> iterator = jobQueue.fullScan()) {
+          return Lists.newArrayList(iterator);
+        }
+      }
+    });
   }
 }
