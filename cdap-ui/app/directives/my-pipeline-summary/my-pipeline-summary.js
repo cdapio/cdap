@@ -25,7 +25,8 @@ angular.module(PKG.name + '.commons')
         store: '=',
         pipelineConfig: '=',
         actionCreator: '=',
-        pipelineType: '@'
+        pipelineType: '@',
+        onClose: '&'
       },
       replace: false,
       templateUrl: 'my-pipeline-summary/my-pipeline-summary.html',

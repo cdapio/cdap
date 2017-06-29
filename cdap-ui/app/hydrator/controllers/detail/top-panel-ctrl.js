@@ -488,6 +488,9 @@ class HydratorDetailTopPanelController {
         }
       );
   }
+  hidePipelineSummary() {
+    this.viewSummary = false;
+  }
   suspendPipeline() {
     this.scheduleLoading = true;
     this.HydratorPlusPlusDetailActions.suspendSchedule(
