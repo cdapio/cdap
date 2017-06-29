@@ -22,6 +22,7 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.RuntimeStore;
@@ -30,6 +31,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -43,13 +45,11 @@ import org.apache.twill.common.Threads;
 public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner {
 
   private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
-  private final RuntimeStore runtimeStore;
 
   @Inject
   InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
-                               RuntimeStore runtimeStore) {
-    super(cConf);
-    this.runtimeStore = runtimeStore;
+                               MessagingService messagingService) {
+    super(cConf, messagingService);
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 
@@ -72,8 +72,10 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
     Arguments systemArgs = options.getArguments();
     Arguments userArgs = options.getUserArguments();
 
+    ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                            program.getId(), runId);
     controller.addListener(
-      new ProgramStateChangeListener(runtimeStore, program.getId(), runId, null, userArgs, systemArgs),
+      new ProgramStateChangeListener(programEventPublisher, null, userArgs, systemArgs, null),
       Threads.SAME_THREAD_EXECUTOR);
     return controller;
   }

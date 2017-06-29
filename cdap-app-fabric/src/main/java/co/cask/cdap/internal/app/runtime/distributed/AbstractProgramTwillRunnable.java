@@ -24,6 +24,7 @@ import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.RuntimeStore;
@@ -40,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -118,7 +120,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private List<Service> coreServices;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runLatch;
-  private RuntimeStore runtimeStore;
+  private MessagingService messagingService;
 
   /**
    * Constructor.
@@ -183,7 +185,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       String runId = programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID);
       Injector injector = Guice.createInjector(createModule(context, programId, runId, instanceId, principal));
 
-      runtimeStore = injector.getInstance(RuntimeStore.class);
+      messagingService = injector.getInstance(MessagingService.class);
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
       coreServices.add(injector.getInstance(BrokerService.class));
@@ -296,9 +298,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     Arguments systemArgs = programOpts.getArguments();
     String twillRunId = systemArgs.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService, program.getId(),
+                                                                            controller.getRunId());
+
     ProgramController.Listener programStateListener =
-      new ProgramStateChangeListener(runtimeStore, program.getId(), controller.getRunId(), twillRunId,
-                                     programOpts.getUserArguments(), systemArgs);
+      new ProgramStateChangeListener(programEventPublisher, twillRunId, programOpts.getUserArguments(),
+                                     systemArgs, null);
 
     final SettableFuture<ProgramController.State> state =
       ((ProgramStateChangeListener) programStateListener).getState();

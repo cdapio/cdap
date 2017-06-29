@@ -39,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -89,28 +90,30 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                                       ProgramController.State.KILLED,
                                                                                       ProgramController.State.ERROR);
   private final CConfiguration cConf;
+  private final MessagingService messagingService;
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
-  protected final RuntimeStore runtimeStore;
+  protected ProgramEventPublisher programEventPublisher;
 
-  protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository, RuntimeStore runtimeStore) {
+  protected AbstractProgramRuntimeService(CConfiguration cConf, MessagingService messagingService,
+                                          ProgramRunnerFactory programRunnerFactory,
+                                          ArtifactRepository artifactRepository) {
     this.cConf = cConf;
+    this.messagingService = messagingService;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.artifactRepository = artifactRepository;
-    this.runtimeStore = runtimeStore;
   }
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
-    final ProgramId programId = programDescriptor.getProgramId();
+    ProgramId programId = programDescriptor.getProgramId();
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
-    final RunId runId = RunIds.generate();
+    RunId runId = RunIds.generate();
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
@@ -128,6 +131,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
       ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
 
+      programEventPublisher = new ProgramEventPublisher(cConf, messagingService, programId, runId);
       // Publish the program's starting state
       final Arguments userArguments = options.getUserArguments();
       final Arguments systemArguments = options.getArguments();
@@ -136,8 +140,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         @Override
         public Void get() {
           long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
-                               userArguments.asMap(), systemArguments.asMap());
+          programEventPublisher.start(startTime, twillRunId, userArguments, systemArguments);
           return null;
         }
       }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

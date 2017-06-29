@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -38,6 +39,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Throwables;
@@ -65,7 +67,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final RuntimeStore runtimeStore;
+  private final MessagingService messagingService;
   private final ProgramOptions workflowProgramOptions;
   private final Program workflowProgram;
   private final String nodeId;
@@ -75,12 +77,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private final WorkflowToken token;
   private final ProgramType programType;
 
-  DefaultProgramWorkflowRunner(CConfiguration cConf, RuntimeStore runtimeStore, Program workflowProgram,
+  DefaultProgramWorkflowRunner(CConfiguration cConf, MessagingService messagingService, Program workflowProgram,
                                ProgramOptions workflowProgramOptions, ProgramRunnerFactory programRunnerFactory,
                                WorkflowSpecification workflowSpec, WorkflowToken token, String nodeId,
                                Map<String, WorkflowNodeState> nodeStates, ProgramType programType) {
     this.cConf = cConf;
-    this.runtimeStore = runtimeStore;
+    this.messagingService = messagingService;
     this.workflowProgram = workflowProgram;
     this.workflowProgramOptions = workflowProgramOptions;
     this.programRunnerFactory = programRunnerFactory;
@@ -156,11 +158,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
       throw t;
     }
 
+    ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                            program.getId(), controller.getRunId());
     Arguments systemArguments = options.getArguments();
     String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    controller.addListener(
-      new ProgramStateChangeListener(runtimeStore, program.getId(), controller.getRunId(), twillRunId,
-                                     options.getUserArguments(), systemArguments),
+    controller.addListener(new ProgramStateChangeListener(programEventPublisher, twillRunId, options.getUserArguments(),
+                                                          systemArguments, token),
       Threads.SAME_THREAD_EXECUTOR);
     blockForCompletion(closeable, controller);
 

@@ -27,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.messaging.MessagingService;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -55,10 +56,14 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
+  protected final CConfiguration cConf;
+  protected final MessagingService messagingService;
   private final String host;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf, MessagingService messagingService) {
+    this.cConf = cConf;
+    this.messagingService = messagingService;
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
   }
 

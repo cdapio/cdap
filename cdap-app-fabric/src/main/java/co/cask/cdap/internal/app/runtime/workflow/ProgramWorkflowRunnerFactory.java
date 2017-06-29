@@ -28,6 +28,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +46,17 @@ final class ProgramWorkflowRunnerFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramWorkflowRunnerFactory.class);
 
   private final CConfiguration cConf;
-  private final RuntimeStore runtimeStore;
+  private final MessagingService messagingService;
   private final WorkflowSpecification workflowSpec;
   private final ProgramRunnerFactory programRunnerFactory;
   private final Program workflowProgram;
   private final ProgramOptions workflowProgramOptions;
 
-  ProgramWorkflowRunnerFactory(CConfiguration cConf, RuntimeStore runtimeStore,
+  ProgramWorkflowRunnerFactory(CConfiguration cConf, MessagingService messagingService,
                                WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                Program workflowProgram, ProgramOptions workflowProgramOptions) {
     this.cConf = cConf;
-    this.runtimeStore = runtimeStore;
+    this.messagingService = messagingService;
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
@@ -77,11 +78,11 @@ final class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions,
+          return new DefaultProgramWorkflowRunner(cConf, messagingService, workflowProgram, workflowProgramOptions,
                                                   programRunnerFactory, workflowSpec, token, nodeId, nodeStates,
                                                   ProgramType.MAPREDUCE);
         case SPARK:
-          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions,
+          return new DefaultProgramWorkflowRunner(cConf, messagingService, workflowProgram, workflowProgramOptions,
                                                   programRunnerFactory, workflowSpec, token, nodeId, nodeStates,
                                                   ProgramType.SPARK);
         default:

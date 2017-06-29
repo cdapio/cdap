@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -27,6 +28,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -61,9 +63,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository, RuntimeStore runtimeStore,
+                                       ArtifactRepository artifactRepository, MessagingService messagingService,
                                        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    super(cConf, programRunnerFactory, artifactRepository, runtimeStore);
+    super(cConf, messagingService, programRunnerFactory, artifactRepository);
     this.hostname = hostname.getCanonicalHostName();
   }
 
@@ -86,8 +88,8 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   @Override
   public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
                                     Runnable cleanUpTask) {
-    controller.addListener(new ProgramStateChangeListener(runtimeStore, programId, controller.getRunId(), null,
-                                                          options.getUserArguments(), options.getArguments()),
+    controller.addListener(new ProgramStateChangeListener(programEventPublisher, null,
+                                                          options.getUserArguments(), options.getArguments(), null),
                            Threads.SAME_THREAD_EXECUTOR);
     return super.monitorProgram(controller, programId, options, cleanUpTask);
   }

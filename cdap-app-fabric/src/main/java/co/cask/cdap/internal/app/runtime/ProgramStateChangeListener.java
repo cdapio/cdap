@@ -16,8 +16,10 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
@@ -40,23 +42,26 @@ import javax.annotation.Nullable;
 public class ProgramStateChangeListener extends AbstractListener {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramStateChangeListener.class);
 
-  private RuntimeStore runtimeStore;
+  private ProgramEventPublisher programEventPublisher;
   private ProgramId programId;
   private RunId runId;
   private String twillRunId;
   private Arguments userArguments;
   private Arguments systemArguments;
   private final SettableFuture<ProgramController.State> state;
+  private WorkflowToken workflowToken;
 
-  public ProgramStateChangeListener(RuntimeStore runtimeStore, ProgramId programId, RunId runId,
-                                    @Nullable String twillRunId, Arguments userArguments, Arguments systemArguments) {
-    this.runtimeStore = runtimeStore;
-    this.programId = programId;
-    this.runId = runId;
+  public ProgramStateChangeListener(ProgramEventPublisher programEventPublisher, @Nullable String twillRunId,
+                                    Arguments userArguments, Arguments systemArguments,
+                                    @Nullable WorkflowToken workflowToken) {
+    this.programEventPublisher = programEventPublisher;
+    this.programId = programEventPublisher.getProgramId();
+    this.runId = programEventPublisher.getRunId();
     this.twillRunId = twillRunId;
     this.userArguments = userArguments;
     this.systemArguments = systemArguments;
     this.state = SettableFuture.create();
+    this.workflowToken = workflowToken;
   }
 
   @Override
@@ -85,8 +90,7 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                              userArguments.asMap(), systemArguments.asMap());
+        programEventPublisher.running(finalStartTimeInSeconds, twillRunId, userArguments, systemArguments);
         return null;
       }
     }, RetryStrategies.exponentialDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, 5000, TimeUnit.SECONDS));
@@ -98,9 +102,8 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(),
-                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                             ProgramController.State.COMPLETED.getRunStatus());
+        programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.COMPLETED.getRunStatus(), workflowToken, null);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -113,9 +116,8 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(),
-                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                             ProgramController.State.KILLED.getRunStatus());
+        programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.COMPLETED.getRunStatus(), workflowToken, null);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -129,7 +131,7 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setSuspend(programId, runId.getId());
+        programEventPublisher.suspend();
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -143,7 +145,7 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setResume(programId, runId.getId());
+        programEventPublisher.resume();
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -156,9 +158,8 @@ public class ProgramStateChangeListener extends AbstractListener {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(),
-                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+        programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                   ProgramController.State.ERROR.getRunStatus(), workflowToken, null);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

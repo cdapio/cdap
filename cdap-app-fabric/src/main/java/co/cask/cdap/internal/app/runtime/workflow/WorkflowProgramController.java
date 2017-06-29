@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import com.google.common.util.concurrent.Service;
@@ -110,5 +111,9 @@ final class WorkflowProgramController extends AbstractProgramController {
   private String getServiceName(Program program, RunId runId) {
     return String.format("workflow.%s.%s.%s.%s",
                          program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
+  }
+
+  public WorkflowToken getWorkflowToken() {
+    return driver.getBasicWorkflowToken();
   }
 }
