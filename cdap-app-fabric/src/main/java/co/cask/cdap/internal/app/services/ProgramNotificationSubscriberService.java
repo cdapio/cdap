@@ -42,12 +42,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Service that receives program status notifications and persists to the store
+ * Service that receives program statuses and persists to the store
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
@@ -56,46 +54,27 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private final CConfiguration cConf;
   private final RuntimeStore store;
-  private final ExecutorService taskExecutorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, RuntimeStore store, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient);
+    super(messagingService, cConf, datasetFramework, txClient, new ThreadFactoryBuilder()
+            .setNameFormat("program-status-subscriber-task-%d")
+            .build());
     this.cConf = cConf;
     this.store = store;
-    this.taskExecutorService =
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
-                                                              .build());
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting ProgramNotificationSubscriberService");
 
-    taskExecutorService.submit(new ProgramStatusNotificationSubscriberThread(
+    getTaskExecutorService().submit(new ProgramStatusNotificationSubscriberThread(
       cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)));
   }
 
-  @Override
-  protected void shutDown() {
-    super.shutDown();
-    try {
-      taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
-    } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
-    } finally {
-      if (!taskExecutorService.isTerminated()) {
-        taskExecutorService.shutdownNow();
-      }
-    }
-    LOG.info("Stopped ProgramNotificationSubscriberService.");
-  }
-
-  /**
-   * Thread that receives TMS notifications and persists the program status notification to the store
-   */
-  private class ProgramStatusNotificationSubscriberThread extends NotificationSubscriberThread {
+  class ProgramStatusNotificationSubscriberThread extends
+      AbstractNotificationSubscriberService.NotificationSubscriberThread {
 
     ProgramStatusNotificationSubscriberThread(String topic) {
       super(topic);
@@ -118,7 +97,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         try {
           runStatus = ProgramRunStatus.valueOf(programStatusString);
         } catch (IllegalArgumentException e) {
-          LOG.warn("Invalid program run status {} passed in notification for program {}",
+          LOG.warn("Invalid program status {} passed in notification for program {}",
                    programStatusString, programRunIdString);
         }
       }
@@ -128,6 +107,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
+      final ProgramRunStatus programRunStatus = runStatus;
       final ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       final String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       final Map<String, String> userArguments = getArguments(properties, ProgramOptionConstants.USER_OVERRIDES);
@@ -135,13 +115,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
       final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
       final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
-      final ProgramRunStatus programRunStatus = runStatus;
-      System.out.println("PERSIST PROGRAM " + programRunId + " STATUS " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           if (stateChangeTime == -1) {
             throw new IllegalArgumentException("Start time was not specified in program starting notification for " +
-                                               "program run {}" + programRunId);
+                                               "program run id {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -156,7 +134,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         case RUNNING:
           if (stateChangeTime == -1) {
             throw new IllegalArgumentException("Run time was not specified in program running notification for " +
-                                               "program run {}" + programRunId);
+                                               "program run id {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -167,29 +145,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
           break;
-        case SUSPENDED:
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setSuspend(programRunId.getParent(), programRunId.getRun());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-          break;
-        case RESUMING:
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setResume(programRunId.getParent(), programRunId.getRun());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-          break;
         case COMPLETED:
+        case SUSPENDED:
         case KILLED:
           if (endTime == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run {}" + programRunId);
+                                               "program run id {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -203,17 +164,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         case FAILED:
           if (endTime == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run {}" + programRunId);
+                                               "program run id {}" + programRunId);
           }
           String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
-          final BasicThrowable cause = (errorString == null)
+          final Throwable cause = (errorString == null)
             ? null
-            : GSON.fromJson(errorString, BasicThrowable.class);
+            : GSON.fromJson(errorString, Throwable.class);
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
               store.setStop(programRunId.getParent(), programRunId.getRun(), TimeUnit.MILLISECONDS.toSeconds(endTime),
-                            programRunStatus, cause);
+                            programRunStatus, new BasicThrowable(cause));
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

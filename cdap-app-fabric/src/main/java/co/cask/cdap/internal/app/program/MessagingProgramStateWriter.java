@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -111,7 +110,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     publish(
       programRunId, null,
       ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.toString())
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.toString())
     );
   }
 
@@ -121,7 +120,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
             .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString());
 
     if (cause != null) {
-      builder.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
+      builder.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(cause));
     }
     publish(programRunId, null, builder);
   }

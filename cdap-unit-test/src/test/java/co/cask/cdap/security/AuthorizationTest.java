@@ -812,6 +812,7 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
+    int prevFlowRuns = flowManager.getHistory(ProgramRunStatus.KILLED).size();
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
     // is not accessible to BOB.
     flowManager.start(args);
@@ -827,7 +828,7 @@ public class AuthorizationTest extends TestBase {
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
-    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
+    flowManager.waitForRuns(ProgramRunStatus.KILLED, prevFlowRuns + 1, 10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -854,14 +855,7 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
-
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return flowManager.getHistory(ProgramRunStatus.RUNNING).isEmpty();
-      }
-    }, 10, TimeUnit.SECONDS);
-
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 

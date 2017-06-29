@@ -850,7 +850,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(5); // Sleep to make sure scheduled workflows are pending to run
+    TimeUnit.SECONDS.sleep(3); // Sleep to make sure scheduled workflows are pending to run
     // All runs should be completed
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override

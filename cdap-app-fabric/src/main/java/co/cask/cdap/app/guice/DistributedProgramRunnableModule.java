@@ -175,7 +175,7 @@ public class DistributedProgramRunnableModule {
           // For binding DataSet transaction stuff
           install(new DataFabricFacadeModule());
 
-          bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+          bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
           // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the DistributedProgramRunner, so there
           // will be no special case
           bind(ProgramStateWriter.class)
