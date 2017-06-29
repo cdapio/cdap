@@ -18,6 +18,7 @@ package co.cask.cdap.test.internal;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
@@ -47,6 +48,10 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A default implementation of {@link ApplicationManager}.
@@ -125,6 +130,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
           // Ignore this as this will be throw if the program is not running, which is fine as there could
           // be programs in the application that are currently not running.
         }
+        waitForStopped(application.program(programRecord.getType(), programRecord.getName()));
       }
     } catch (NamespaceNotFoundException e) {
       // This can be safely ignore if the unit-test already deleted the namespace
@@ -139,6 +145,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       appFabricClient.stopProgram(application.getNamespace(), application.getApplication(), application.getVersion(),
                                   programName, programId.getType());
+      waitForStopped(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -168,7 +175,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) {
     try {
-      return appFabricClient.getHistory(programId.toId(), status);
+      return appFabricClient.getHistory(programId, status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -197,5 +204,17 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
     return appFabricClient.getRuntimeArgs(programId);
+  }
+
+  @Override
+  public void waitForStopped(final ProgramId programId) throws Exception {
+    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
+    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
+    Tasks.waitFor(0, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return appFabricClient.getHistory(programId, ProgramRunStatus.RUNNING).size();
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }

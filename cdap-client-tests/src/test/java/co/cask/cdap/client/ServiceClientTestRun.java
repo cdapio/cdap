@@ -28,6 +28,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -116,7 +117,7 @@ public class ServiceClientTestRun extends ClientTestBase {
   @After
   public void tearDown() throws Throwable {
     programClient.stop(service);
-    assertProgramStopped(programClient, service);
+    assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1);
     try {
       appClient.delete(app);
     } catch (Exception e) {
@@ -228,7 +229,7 @@ public class ServiceClientTestRun extends ClientTestBase {
   private void stopService(ApplicationId app) throws Exception {
     ServiceId service = app.service(AppReturnsArgs.SERVICE);
     programClient.stop(service);
-    assertProgramStopped(programClient, service);
+    assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1);
   }
 
   /**

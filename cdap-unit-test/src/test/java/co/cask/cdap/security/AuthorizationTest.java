@@ -669,14 +669,8 @@ public class AuthorizationTest extends TestBase {
     assertAllAccess(ALICE, AUTH_NAMESPACE, dummyArtifact, appId, serviceId, dsId, streamId);
     // alice should be able to start and stop programs in the app she deployed
     dummyAppManager.startProgram(serviceId.toId());
-
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
     ServiceManager greetingService = dummyAppManager.getServiceManager(serviceId.getProgram());
+    greetingService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     // alice should be able to set instances for the program
     greetingService.setInstances(2);
     Assert.assertEquals(2, greetingService.getProvisionedInstances());
@@ -686,12 +680,7 @@ public class AuthorizationTest extends TestBase {
     // Alice should be able to get runtime arguments as she has ADMIN on it
     Assert.assertEquals(args, greetingService.getRuntimeArgs());
     dummyAppManager.stopProgram(serviceId.toId());
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
+    greetingService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     // Bob should not be able to start programs in dummy app because he does not have privileges on it
     SecurityRequestContext.setUserId(BOB.getName());
     try {
@@ -769,6 +758,8 @@ public class AuthorizationTest extends TestBase {
 
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
+
+    waitForStoppedPrograms(flowManager);
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -799,6 +790,7 @@ public class AuthorizationTest extends TestBase {
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
 
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
 
@@ -837,6 +829,7 @@ public class AuthorizationTest extends TestBase {
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -849,6 +842,7 @@ public class AuthorizationTest extends TestBase {
 
     // running the flow now should pass and write data in another namespace successfully
     flowManager.start(args);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
 
     // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
@@ -863,6 +857,8 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
+    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
+
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
@@ -995,6 +991,8 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
+
+    waitForStoppedPrograms(sparkManager);
   }
 
   @Test
@@ -1063,7 +1061,8 @@ public class AuthorizationTest extends TestBase {
 
     // stop all the runs of the workflow so that the current namespace can be deleted after the test
     workflowManager.stop();
-    workflowManager.waitForStatus(false, 5, 10);
+    waitForStoppedPrograms(workflowManager);
+
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
   }
@@ -1165,7 +1164,6 @@ public class AuthorizationTest extends TestBase {
 
     // switch back to BOB and run spark again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
-
     sparkManager.start(args);
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
@@ -1347,5 +1345,21 @@ public class AuthorizationTest extends TestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset(namespaceId.dataset(datasetName));
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+  }
+
+  private void waitForStoppedPrograms(final ProgramManager programManager) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        List<RunRecord> runs = programManager.getHistory();
+        for (RunRecord meta : runs) {
+          if (meta.getStatus() == ProgramRunStatus.STARTING ||
+              meta.getStatus() == ProgramRunStatus.RUNNING) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }
