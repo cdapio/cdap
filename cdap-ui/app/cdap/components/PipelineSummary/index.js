@@ -44,9 +44,10 @@ export default class PipelineSummary extends Component {
       totalRunsCount: props.totalRunsCount,
       runsLimit: 10,
       filterType: 'limit',
-      start: 0,
       activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
-      loading: true
+      loading: true,
+      start: null,
+      end: null
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
@@ -151,7 +152,9 @@ export default class PipelineSummary extends Component {
     this.setState({
       runsLimit: limit,
       activeRunsFilter: filterLabel,
-      filterType: 'limit'
+      filterType: 'limit',
+      start: null,
+      end: null
     });
     let {namespaceId, appId, programType, programId, pipelineConfig} = this.props;
     fetchSummary({
@@ -164,12 +167,15 @@ export default class PipelineSummary extends Component {
     });
   }
   fetchRunsByTime(time, filterLabel) {
-    this.setState({
-      activeRunsFilter: filterLabel,
-      filterType: 'time'
-    });
     let end = Math.floor(Date.now() / 1000);
     let start = end - time;
+    this.setState({
+      activeRunsFilter: filterLabel,
+      filterType: 'time',
+      runsLimit: null,
+      start,
+      end
+    });
     let {namespaceId, appId, programType, programId, pipelineConfig} = this.props;
     fetchSummary({
       namespaceId,
@@ -266,6 +272,8 @@ export default class PipelineSummary extends Component {
             totalRunsCount={this.state.totalRunsCount}
             runs={this.state.runs}
             runsLimit={this.state.runsLimit}
+            start={this.state.start}
+            end={this.state.end}
             xDomainType={this.state.filterType}
             runContext={this.props}
             isLoading={this.state.loading}
@@ -274,6 +282,8 @@ export default class PipelineSummary extends Component {
             totalRunsCount={this.state.totalRunsCount}
             runs={this.state.logsMetrics}
             runsLimit={this.state.runsLimit}
+            start={this.state.start}
+            end={this.state.end}
             xDomainType={this.state.filterType}
             runContext={this.props}
             isLoading={this.state.loading}

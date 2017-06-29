@@ -30,6 +30,9 @@ const PREFIX = `features.PipelineSummary.logsMetricsGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const DEFAULT_TICKS_TOTAL = 10;
 const DEFAULT_GRAPH_HEIGHT = 300;
+const ONE_MIN_SECONDS = 60;
+const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * ONE_MIN_SECONDS;
+const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
 
 require('./LogsMetricsGraph.scss');
 /*
@@ -56,13 +59,22 @@ export default class LogsMetricsGraph extends Component {
     let errors = [];
     // Clustering by runs. Stack warnings and errors by clusters.
     [].concat(this.props.runs).reverse().forEach((run, i) => {
+      let {totalRunsCount, runsLimit, xDomainType} = this.props;
+      let x;
+      if (xDomainType === 'limit') {
+        x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+        x = x + (i + 1);
+      }
+      if (xDomainType === 'time') {
+        x = run.start;
+      }
       warnings.push({
-        x: this.props.xDomainType === 'limit' ? i + 1 : run.start,
+        x,
         y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || '',
         runid: run.runid
       });
       errors.push({
-        x: this.props.xDomainType === 'limit' ? i + 1 : run.start,
+        x,
         y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || '',
         runid: run.runid
       });
@@ -77,13 +89,21 @@ export default class LogsMetricsGraph extends Component {
       let clientRect = this.containerRef.getBoundingClientRect();
       height = clientRect.height - 100;
     }
-    let xDomain = [1, this.state.runsLimit];
-    if (this.props.xDomainType === 'time' && errors.length > 0) {
-      let totalErrors = errors.length,
-          totalWarnings = warnings.length;
-      let startDomain = errors[0].x < warnings[0].x ? errors[0].x : warnings[0].x;
-      let endDomain = errors[totalErrors - 1].x > warnings[totalWarnings - 1].x ? errors[totalErrors - 1].x : warnings[totalErrors - 1].x;
+    let xDomain = [];
+    if (errors.length > 0) {
+      let startDomain,
+          endDomain;
+      let {xDomainType, runsLimit, totalRunsCount} = this.props;
+      if (xDomainType === 'limit') {
+        startDomain = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+        endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
+      }
+      if (xDomainType === 'time') {
+        startDomain = this.props.start;
+        endDomain = this.props.end;
+      }
       xDomain = [startDomain, endDomain];
+      console.log(xDomain);
     }
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
@@ -134,7 +154,17 @@ export default class LogsMetricsGraph extends Component {
             tickTotal={DEFAULT_TICKS_TOTAL}
             tickFormat={(v => {
               if (this.props.xDomainType === 'time') {
-                return moment(v * 1000).format('ddd M/D/YY');
+                let timeWindow = this.props.end - this.props.start;
+                if (timeWindow === ONE_DAY_SECONDS) {
+                  return v % 2 === 0 ? moment(v * 1000).format('H:m:s') : null;
+                }
+                if (timeWindow === ONE_DAY_SECONDS * 7) {
+                  return v % 2 === 0 ? moment(v * 1000).format('Do MMM') : null;
+                }
+                if (timeWindow === ONE_DAY_SECONDS * 30) {
+                  return v % 2 === 0 ? moment(v * 1000).format('M/D/YY') : null;
+                }
+                return moment(v).format('ddd M/D/YY');
               }
               return v;
             })}
@@ -303,5 +333,7 @@ LogsMetricsGraph.propTypes = {
   runsLimit: PropTypes.number,
   xDomainType: PropTypes.oneOf(['limit', 'time']),
   runContext: PropTypes.object,
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
+  start: PropTypes.number,
+  end: PropTypes.number
 };

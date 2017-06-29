@@ -34,6 +34,9 @@ const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const ONE_MIN_SECONDS = 60;
 const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * ONE_MIN_SECONDS;
 const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
+const MINS_RESOLUTION = 'minutes';
+const HOURS_RESOLUTION = 'hours';
+const DAYS_RESOLUTION = 'days';
 
 export default class RunsHistoryGraph extends Component {
   constructor(props) {
@@ -63,8 +66,17 @@ export default class RunsHistoryGraph extends Component {
   }
   constructData(props = this.props) {
     let data = [].concat(props.runs).reverse().map((run, id) => {
+      let {totalRunsCount, runsLimit, xDomainType} = this.props;
+      let x;
+      if (xDomainType === 'limit') {
+        x = totalRunsCount > runsLimit ? totalRunsCount - runsLimit : 0;
+        x = x + (id + 1);
+      }
+      if (xDomainType === 'time') {
+        x = run.start;
+      }
       return {
-        x: this.props.xDomainType === 'limit' ? id + 1 : run.start,
+        x,
         y: run.duration,
         color: run.status === 'FAILED' ? FAILEDRUNCOLOR : SUCCESSRUNCOLOR,
         runid: run.runid
@@ -93,18 +105,28 @@ export default class RunsHistoryGraph extends Component {
       maxYDomain = this.state.data[0];
     }
     if (maxYDomain.y > ONE_MIN_SECONDS) {
-      yAxisResolution = 'mins';
+      yAxisResolution = MINS_RESOLUTION;
     }
     if (maxYDomain.y > ONE_HOUR_SECONDS) {
-      yAxisResolution = 'hours';
+      yAxisResolution = HOURS_RESOLUTION;
     }
     if (maxYDomain.y > ONE_DAY_SECONDS) {
-      yAxisResolution = 'days';
+      yAxisResolution = DAYS_RESOLUTION;
     }
-    console.log(maxYDomain.y, yAxisResolution);
-    let xDomain = [1, this.state.runsLimit];
-    if (this.props.xDomainType === 'time' && this.state.data.length > 0) {
-      xDomain = [this.state.data[0].x, this.state.data[this.state.data.length - 1].x];
+    let xDomain = [];
+    if (this.state.data.length > 0) {
+      let startDomain, endDomain;
+      let {xDomainType, runsLimit, totalRunsCount} = this.props;
+      if (xDomainType === 'limit') {
+        startDomain = totalRunsCount > runsLimit ? (totalRunsCount - runsLimit) + 1 : 0;
+        endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
+      }
+      if (xDomainType === 'time') {
+        startDomain = this.props.start;
+        endDomain = this.props.end;
+      }
+      xDomain = [startDomain, endDomain];
+      console.log(xDomain);
     }
     let popOverData;
     if (this.state.currentHoveredElement) {
@@ -148,6 +170,41 @@ export default class RunsHistoryGraph extends Component {
               }
             ]}
           />
+          <XAxis
+            tickTotal={10}
+            tickFormat={(v => {
+              if (this.props.xDomainType === 'time') {
+                let timeWindow = this.props.end - this.props.start;
+                if (timeWindow === ONE_DAY_SECONDS) {
+                  return v % 2 === 0 ? moment(v * 1000).format('H:m:s') : null;
+                }
+                if (timeWindow === ONE_DAY_SECONDS * 7) {
+                  return v % 2 === 0 ? moment(v * 1000).format('Do MMM') : null;
+                }
+                if (timeWindow === ONE_DAY_SECONDS * 30) {
+                  return v % 2 === 0 ? moment(v * 1000).format('M/D/YY') : null;
+                }
+                return moment(v).format('ddd M/D/YY');
+              }
+              return v;
+            })}
+          />
+          <YAxis
+            tickTotal={10}
+            yDomain={[minYDomain.y, maxYDomain.y]}
+            tickFormat={(v) => {
+              if (yAxisResolution === 'mins') {
+                return v / ONE_MIN_SECONDS;
+              }
+              if (yAxisResolution === 'hours') {
+                return v / (ONE_HOUR_SECONDS);
+              }
+              if (yAxisResolution === 'days') {
+                return v / ONE_DAY_SECONDS;
+              }
+              return v;
+            }}
+          />
           <HorizontalGridLines />
           <LineSeries
             color={LINECOLOR}
@@ -169,31 +226,6 @@ export default class RunsHistoryGraph extends Component {
               }
             }}
           />
-          <XAxis
-            tickTotal={10}
-            tickFormat={(v => {
-              if (this.props.xDomainType === 'time') {
-                return moment(v * 1000).format('ddd M/D/YY');
-              }
-              return v;
-            })}
-          />
-          <YAxis
-            tickTotal={10}
-            yDomain={[minYDomain.y, maxYDomain.y]}
-            tickFormat={(v) => {
-              if (yAxisResolution === 'mins') {
-                return v / ONE_MIN_SECONDS;
-              }
-              if (yAxisResolution === 'hours') {
-                return v / (ONE_HOUR_SECONDS);
-              }
-              if (yAxisResolution === 'days') {
-                return v / ONE_DAY_SECONDS;
-              }
-              return v;
-            }}
-          />
 
           {
             this.state.currentHoveredElement && popOverData ?
@@ -203,7 +235,14 @@ export default class RunsHistoryGraph extends Component {
                   <div className="log-stats">
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.duration`)}</span>
-                      <span>{popOverData.duration}</span>
+                      <span>
+                        {
+                          popOverData.duration < ONE_MIN_SECONDS ?
+                            `${popOverData.duration} seconds`
+                          :
+                            moment.duration(popOverData.duration, yAxisResolution)
+                        }
+                      </span>
                     </div>
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.status`)}</span>
@@ -223,10 +262,10 @@ export default class RunsHistoryGraph extends Component {
               null
           }
           {
-              this.props.xDomainType === 'limit' ?
-                <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
-              :
-                null
+            this.props.xDomainType === 'limit' ?
+              <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
+            :
+              null
           }
           <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`, {
             resolution: yAxisResolution
@@ -322,5 +361,7 @@ RunsHistoryGraph.propTypes = {
   runsLimit: PropTypes.number,
   xDomainType: PropTypes.oneOf(['limit', 'time']),
   runContext: PropTypes.object,
-  isLoading: PropTypes.bool
+  isLoading: PropTypes.bool,
+  start: PropTypes.number,
+  end: PropTypes.number
 };
