@@ -27,12 +27,15 @@ $graph_containers_border_color: lightgray;
     display: flex;
     flex-wrap: wrap;
     background: $pipeline-summary-bg;
-    height: calc(100vh - 237px); // Header + Top panel = 95 + Footer = 51 + summary title bar = 49 + border 1px
+    overflow: auto;
+    height: calc(100vh - 240px); // Header + Top panel = 95 + Footer = 51 + summary title bar = 49 + border 1px
 
     > div {
       width: calc(50% - 20px);
       padding: 10px;
       border-radius: 4px;
+      height: 50%;
+      min-height: 400px;
     }
   }
   .top-title-bar {
@@ -43,8 +46,8 @@ $graph_containers_border_color: lightgray;
     > div {
       &:nth-child(1) {
         flex: 0.2;
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 16px;
+        font-weight: 500;
       }
       &:nth-child(2) {
         flex: 1;
@@ -53,6 +56,7 @@ $graph_containers_border_color: lightgray;
     .stats-container {
       > span {
         margin: 0 10px;
+        vertical-align: middle;
         &.run-times {
           > span {
             margin: 0 10px;
@@ -61,6 +65,9 @@ $graph_containers_border_color: lightgray;
             margin-right: 15px;
           }
         }
+      }
+      .icon-close {
+        cursor: pointer;
       }
     }
   }
