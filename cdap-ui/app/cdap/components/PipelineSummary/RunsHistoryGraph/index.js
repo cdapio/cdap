@@ -25,11 +25,15 @@ import T from 'i18n-react';
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
 
+const MARKSERIESSTROKECOLOR = '#999999';
 const FAILEDRUNCOLOR = '#A40403';
 const SUCCESSRUNCOLOR = '#3cc801';
 const LINECOLOR = '#DBDBDB';
 const PREFIX = `features.PipelineSummary.runsHistoryGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
+const ONE_MIN_SECONDS = 60;
+const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * ONE_MIN_SECONDS;
+const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
 
 export default class RunsHistoryGraph extends Component {
   constructor(props) {
@@ -62,7 +66,6 @@ export default class RunsHistoryGraph extends Component {
       return {
         x: this.props.xDomainType === 'limit' ? id + 1 : run.start,
         y: run.duration,
-        fill: run.status === 'FAILED' ? FAILEDRUNCOLOR : SUCCESSRUNCOLOR,
         color: run.status === 'FAILED' ? FAILEDRUNCOLOR : SUCCESSRUNCOLOR,
         runid: run.runid
       };
@@ -70,6 +73,7 @@ export default class RunsHistoryGraph extends Component {
     return data;
   }
   renderChart() {
+    let yAxisResolution = 'sec';
     let FPlot = makeWidthFlexible(XYPlot);
     let height = 300;
     if (this.containerRef) {
@@ -86,8 +90,18 @@ export default class RunsHistoryGraph extends Component {
       });
     }
     if (this.state.data.length == 1) {
-      maxYDomain = this.state.data[0].y;
+      maxYDomain = this.state.data[0];
     }
+    if (maxYDomain.y > ONE_MIN_SECONDS) {
+      yAxisResolution = 'mins';
+    }
+    if (maxYDomain.y > ONE_HOUR_SECONDS) {
+      yAxisResolution = 'hours';
+    }
+    if (maxYDomain.y > ONE_DAY_SECONDS) {
+      yAxisResolution = 'days';
+    }
+    console.log(maxYDomain.y, yAxisResolution);
     let xDomain = [1, this.state.runsLimit];
     if (this.props.xDomainType === 'time' && this.state.data.length > 0) {
       xDomain = [this.state.data[0].x, this.state.data[this.state.data.length - 1].x];
@@ -142,6 +156,7 @@ export default class RunsHistoryGraph extends Component {
           <MarkSeries
             data={this.state.data}
             colorType={'literal'}
+            stroke={MARKSERIESSTROKECOLOR}
             onValueClick={(d) => {
               if (isEqual(this.state.currentHoveredElement || {}, d)) {
                 this.setState({
@@ -163,7 +178,22 @@ export default class RunsHistoryGraph extends Component {
               return v;
             })}
           />
-          <YAxis yDomain={[minYDomain.y, maxYDomain.y]}/>
+          <YAxis
+            tickTotal={10}
+            yDomain={[minYDomain.y, maxYDomain.y]}
+            tickFormat={(v) => {
+              if (yAxisResolution === 'mins') {
+                return v / ONE_MIN_SECONDS;
+              }
+              if (yAxisResolution === 'hours') {
+                return v / (ONE_HOUR_SECONDS);
+              }
+              if (yAxisResolution === 'days') {
+                return v / ONE_DAY_SECONDS;
+              }
+              return v;
+            }}
+          />
 
           {
             this.state.currentHoveredElement && popOverData ?
@@ -193,7 +223,9 @@ export default class RunsHistoryGraph extends Component {
               null
           }
           <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
-          <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`)}</div>
+          <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`, {
+            resolution: yAxisResolution
+          })}</div>
         </FPlot>
       </div>
     );

@@ -139,7 +139,14 @@ export default class LogsMetricsGraph extends Component {
               return v;
             })}
           />
-          <YAxis />
+          <YAxis
+            tickFormat={(v) => {
+              if (Math.floor(v) !== v) {
+                return;
+              }
+              return v;
+            }}
+          />
           <BarSeries
             cluster="runs"
             color={WARNINGBARCOLOR}

@@ -24,7 +24,7 @@ $container_border_color: lightgray;
 .logs-metrics-graph {
   padding: 20px;
   margin: 10px;
-  height: calc(50% - 10px);
+  height: auto;
   border: 1px solid $container_border_color;
 
   .graph-plot-container {
@@ -73,8 +73,8 @@ $container_border_color: lightgray;
     margin: 10px;
 
     .title {
-      font-size: 15px;
-      font-weight: 500;
+      font-size: 18px;
+      font-weight: 600;
     }
     .viz-switcher {
       span {
