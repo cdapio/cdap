@@ -812,6 +812,7 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
+    int prevFlowRuns = flowManager.getHistory(ProgramRunStatus.KILLED).size();
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
     // is not accessible to BOB.
     flowManager.start(args);

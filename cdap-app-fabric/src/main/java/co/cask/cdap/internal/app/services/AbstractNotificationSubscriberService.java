@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,7 +72,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
   private final CConfiguration cConf;
   private final Transactional transactional;
-  private final DatasetFramework datasetFramework;
   private final MultiThreadMessagingContext messagingContext;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private volatile boolean stopping = false;
@@ -88,7 +88,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
       RetryStrategies.retryOnConflict(20, 100)
     );
-    this.datasetFramework = datasetFramework;
+    this.taskExecutorService = Executors.newCachedThreadPool(threadFactory);
   }
 
   protected abstract void startUp();
@@ -108,7 +108,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     private int failureCount;
     private String messageId;
 
-    NotificationSubscriberThread(String topic) {
+    protected NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       retryStrategy =
@@ -188,7 +188,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
       String lastFetchedMessageId = null;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                               topic, 100, messageId)) {
+          topic, 100, messageId)) {
         LOG.trace("Fetch with messageId = {}", messageId);
         while (iterator.hasNext() && !stopping) {
           Message message = iterator.next();
@@ -209,7 +209,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     }
 
     /**
-     * Processes the fetched notification
+     * Processes the notification
      *
      * @param context the dataset context
      * @param notification the decoded notification
