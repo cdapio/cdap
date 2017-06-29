@@ -1032,7 +1032,7 @@ features:
           startTime: Start Time
       title: Run History
       xAxisTitle: Pipeline Run #
-      yAxisTitle: Run Duration (min)
+      yAxisTitle: Run Duration ({resolution})
     runsFilter:
       last10Runs: Last 10 runs
       last50Runs: Last 50 runs
