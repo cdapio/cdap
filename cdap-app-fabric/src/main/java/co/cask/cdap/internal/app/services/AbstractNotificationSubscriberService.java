@@ -71,8 +71,8 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
   private final CConfiguration cConf;
   private final Transactional transactional;
-  private final MultiThreadMessagingContext messagingContext;
   private final DatasetFramework datasetFramework;
+  private final MultiThreadMessagingContext messagingContext;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private volatile boolean stopping = false;
 
@@ -108,7 +108,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     private int failureCount;
     private String messageId;
 
-    NotificationSubscriberThread(String topic) {
+    protected NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       retryStrategy =
