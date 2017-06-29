@@ -53,5 +53,8 @@ public class MapReduceServiceIntegrationTestRun extends TestFrameworkTestBase {
 
     String total = results.get(TestMapReduceServiceIntegrationApp.SQUARED_TOTAL_WORDS_COUNT);
     Assert.assertEquals(25, Integer.parseInt(total));
+
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 }

@@ -115,7 +115,7 @@ public class LineageTestRun extends MetadataTestBase {
       RunId flowRunId = runAndWait(flow);
       // Wait for few seconds so that the stop time secs is more than start time secs.
       TimeUnit.SECONDS.sleep(2);
-      waitForStop(flow, true);
+      waitForStop(flow, true, ProgramRunStatus.KILLED);
       long stopTime = TimeMathParser.nowInSeconds();
 
       // Fetch dataset lineage
@@ -239,13 +239,13 @@ public class LineageTestRun extends MetadataTestBase {
       RunId workerRunId = runAndWait(worker);
 
       // Wait for programs to finish
-      waitForStop(flow, true);
-      waitForStop(mapreduce, false);
-      waitForStop(mapreduce2, false);
-      waitForStop(spark, false);
-      waitForStop(workflow, false);
-      waitForStop(worker, false);
-      waitForStop(service, true);
+      waitForStop(flow, true, ProgramRunStatus.KILLED);
+      waitForStop(mapreduce, false, ProgramRunStatus.FAILED);
+      waitForStop(mapreduce2, false, ProgramRunStatus.COMPLETED);
+      waitForStop(spark, false, ProgramRunStatus.COMPLETED);
+      waitForStop(workflow, false, ProgramRunStatus.FAILED);
+      waitForStop(worker, false, ProgramRunStatus.COMPLETED);
+      waitForStop(service, true, ProgramRunStatus.KILLED);
 
       long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
       long oneHour = TimeUnit.HOURS.toSeconds(1);
@@ -345,29 +345,31 @@ public class LineageTestRun extends MetadataTestBase {
     fetchLineage(datasetInstance, 100, 200, -10, BadRequestException.class);
   }
 
-  private void waitState(final ProgramId program, ProgramStatus state) throws Exception {
-    Tasks.waitFor(state.toString(), new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        return programClient.getStatus(program);
-      }
-    }, 60000, TimeUnit.SECONDS, 1000, TimeUnit.MILLISECONDS);
-  }
-
   private RunId runAndWait(final ProgramId program) throws Exception {
     LOG.info("Starting program {}", program);
     programClient.start(program);
-    waitState(program, ProgramStatus.RUNNING);
+    waitForProgramRun(program, ProgramRunStatus.RUNNING);
     return getRunId(program);
   }
 
-  private void waitForStop(ProgramId program, boolean needsStop) throws Exception {
+  private void waitForStop(ProgramId program, boolean needsStop, ProgramRunStatus expected) throws Exception {
     if (needsStop && programClient.getStatus(program).equals(ProgramRunStatus.RUNNING.toString())) {
       LOG.info("Stopping program {}", program);
       programClient.stop(program);
     }
-    waitState(program, STOPPED);
+    waitForProgramRun(program, expected);
     LOG.info("Program {} has stopped", program);
+  }
+
+  private void waitForProgramRun(final ProgramId program, final ProgramRunStatus status) throws Exception {
+    final AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        runRecords.set(programClient.getProgramRuns(program, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE));
+        return Iterables.size(runRecords.get()) > 0;
+      }
+    }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
   }
 
   private RunId getRunId(ProgramId program) throws Exception {

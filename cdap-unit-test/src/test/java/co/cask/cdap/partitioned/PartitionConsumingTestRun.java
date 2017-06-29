@@ -87,7 +87,7 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     ApplicationManager applicationManager = deployApplication(AppWithPartitionConsumers.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager("DatasetService").start();
-    serviceManager.waitForStatus(true);
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     URL serviceURL = serviceManager.getServiceURL();
 
     // write a file to the file set using the service and run the WordCount MapReduce job on that one partition
@@ -132,6 +132,9 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
     List<String> expectedCounts = Lists.newArrayList("1", "1", "2", "2", "3");
     List<String> outputRecords = getDataFromExplore("outputLines");
     Collections.sort(outputRecords);
+
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     Assert.assertEquals(expectedCounts, outputRecords);
   }
 

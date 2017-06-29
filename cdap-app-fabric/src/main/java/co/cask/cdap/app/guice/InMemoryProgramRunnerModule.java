@@ -27,6 +27,7 @@ import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
@@ -41,7 +42,6 @@ import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
-import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -92,7 +92,7 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
     bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
 
     // Bind ProgramStateWriter
-    bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+    bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
     // For programs with multiple instances, disable the program state writer on the instances so that the higher
     // controller can record the program state based on all of the instances
     // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the InMemoryProgramRunner, so there
