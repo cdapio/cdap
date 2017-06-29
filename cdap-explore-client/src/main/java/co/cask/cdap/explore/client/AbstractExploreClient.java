@@ -33,6 +33,7 @@ import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -271,9 +272,14 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
 
   @Override
   public ListenableFuture<MetaDataInfo> info(final MetaDataInfo.InfoType infoType) {
+    final String userId = SecurityRequestContext.getUserId();
+    final String userIp = SecurityRequestContext.getUserIP();
+    // this is not an async call so we do not need to wait for the future
     return executor.submit(new Callable<MetaDataInfo>() {
       @Override
       public MetaDataInfo call() throws Exception {
+        SecurityRequestContext.setUserId(userId);
+        SecurityRequestContext.setUserIP(userIp);
         return getInfo(infoType);
       }
     });
@@ -336,9 +342,13 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
     // NOTE: here we have two levels of Future because we want to return the future that actually
     // finishes the execution of the operation - it is not enough that the future handle
     // be available
+    final String userId = SecurityRequestContext.getUserId();
+    final String userIp = SecurityRequestContext.getUserIP();
     ListenableFuture<QueryHandle> futureHandle = executor.submit(new Callable<QueryHandle>() {
       @Override
       public QueryHandle call() throws Exception {
+        SecurityRequestContext.setUserId(userId);
+        SecurityRequestContext.setUserIP(userIp);
         return handleProducer.getHandle();
       }
     });
@@ -360,9 +370,13 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
         try {
           QueryStatus status = getStatus(handle);
           if (!status.getStatus().isDone()) {
+            final String userId = SecurityRequestContext.getUserId();
+            final String userIp = SecurityRequestContext.getUserIP();
             executor.schedule(new Runnable() {
               @Override
               public void run() {
+                SecurityRequestContext.setUserId(userId);
+                SecurityRequestContext.setUserIP(userIp);
                 onSuccess(handle);
               }
             }, 300, TimeUnit.MILLISECONDS);
