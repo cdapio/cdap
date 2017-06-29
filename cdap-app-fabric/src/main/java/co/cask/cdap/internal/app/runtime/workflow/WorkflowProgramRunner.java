@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -42,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
@@ -120,12 +120,16 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     final RunId runId = ProgramRunners.getRunId(options);
+    final ProgramId programId = program.getId();
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
-      ProgramId programId = program.getId();
       ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
+
+    // Setup Program Event Publisher
+    final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                  programId, runId);
 
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
@@ -159,8 +163,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStart(program.getId(), runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                    options.getUserArguments().asMap(), options.getArguments().asMap());
+              programEventPublisher.running(twillRunId, finalStartTimeInSeconds, options.getUserArguments(),
+                                                   options.getArguments());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -184,9 +188,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.COMPLETED.getRunStatus());
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.COMPLETED.getRunStatus());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -198,9 +201,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.KILLED.getRunStatus());
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.KILLED.getRunStatus());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -212,7 +214,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setSuspend(program.getId(), runId.getId());
+              programEventPublisher.suspend();
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -224,7 +226,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setResume(program.getId(), runId.getId());
+              programEventPublisher.resume();
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -237,9 +239,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(program.getId(), runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.ERROR.getRunStatus());
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

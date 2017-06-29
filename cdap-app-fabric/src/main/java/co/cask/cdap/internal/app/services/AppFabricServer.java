@@ -83,6 +83,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramLifecycleService programLifecycleService;
+  private final ProgramStatusService programStatusService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
@@ -111,6 +112,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramRuntimeService programRuntimeService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramLifecycleService programLifecycleService,
+                         ProgramStatusService programStatusService,
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
                          @Named("appfabric.handler.hooks") Set<String> handlerHookNames,
@@ -133,6 +135,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programLifecycleService = programLifecycleService;
+    this.programStatusService = programStatusService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.appVersionUpgradeService = appVersionUpgradeService;
@@ -158,6 +161,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
+        programStatusService.start(),
         pluginService.start(),
         coreSchedulerService.start()
       )
@@ -276,6 +280,7 @@ public class AppFabricServer extends AbstractIdleService {
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
+    programStatusService.stopAndWait();
     pluginService.stopAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.stopAndWait();
