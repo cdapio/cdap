@@ -17,8 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
@@ -50,15 +49,15 @@ public class ProgramControllerServiceAdapter extends AbstractStateChangeProgramC
   private final Service service;
   private final CountDownLatch serviceStoppedLatch;
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId, String twillRunId,
-                                         RuntimeStore runtimeStore, ProgramOptions options) {
-    this(service, programId, runId, twillRunId, runtimeStore, options, null);
+  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId,
+                                         ProgramStateWriter programStateWriter) {
+    this(service, programId, runId, programStateWriter, null);
   }
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId, String twillRunId,
-                                         RuntimeStore runtimeStore, ProgramOptions options,
+  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId,
+                                         ProgramStateWriter programStateWriter,
                                          @Nullable String componentName) {
-    super(service, programId, runId, componentName, twillRunId, runtimeStore, options);
+    super(service, programId, runId, programStateWriter, componentName);
     this.service = service;
     this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);

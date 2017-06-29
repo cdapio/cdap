@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -96,9 +97,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   @Inject
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
                                    MetricsCollectionService metricsCollectionService,
-                                   Configuration hConf, CConfiguration cConf,
+                                   Configuration hConf, CConfiguration cConf, MessagingService messagingService,
                                    ArtifactRepository artifactRepository, Impersonator impersonator) {
-    super(cConf, programRunnerFactory, artifactRepository, store);
+    super(cConf, messagingService, programRunnerFactory, artifactRepository);
     this.programRunnerFactory = programRunnerFactory;
     this.twillRunner = twillRunner;
     this.store = store;

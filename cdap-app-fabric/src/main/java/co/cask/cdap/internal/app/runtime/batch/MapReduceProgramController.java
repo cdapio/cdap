@@ -16,6 +16,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -34,10 +35,9 @@ final class MapReduceProgramController extends ProgramControllerServiceAdapter i
 
   private final BasicMapReduceContext context;
 
-  MapReduceProgramController(Service mapReduceRuntimeService, BasicMapReduceContext context, String twillRunId,
-                             RuntimeStore runtimeStore) {
-    super(mapReduceRuntimeService, context.getProgram().getId(), context.getRunId(), twillRunId, runtimeStore,
-          context.getProgramOptions());
+  MapReduceProgramController(Service mapReduceRuntimeService, BasicMapReduceContext context,
+                             ProgramStateWriter programStateWriter) {
+    super(mapReduceRuntimeService, context.getProgram().getId(), context.getRunId(), programStateWriter);
     this.context = context;
   }
 

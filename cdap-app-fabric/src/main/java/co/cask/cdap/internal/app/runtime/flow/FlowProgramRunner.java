@@ -24,15 +24,18 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -47,6 +50,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionExecutorFactory;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,17 +69,19 @@ public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
-  private final RuntimeStore runtimeStore;
+  private final CConfiguration cConf;
+  private final MessagingService messagingService;
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, RuntimeStore runtimeStore,
-                           StreamAdmin streamAdmin, QueueAdmin queueAdmin,
+  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, CConfiguration cConf,
+                           MessagingService messagingService, StreamAdmin streamAdmin, QueueAdmin queueAdmin,
                            TransactionExecutorFactory txExecutorFactory) {
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
-    this.runtimeStore = runtimeStore;
+    this.cConf = cConf;
+    this.messagingService = messagingService;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
@@ -100,7 +106,12 @@ public final class FlowProgramRunner implements ProgramRunner {
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
       String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-      return new FlowProgramController(flowlets, program, twillRunId, options, runtimeStore, flowSpec, consumerQueues);
+      RunId runId = ProgramRunners.getRunId(options);
+      ProgramStateWriter programStateWriter =
+        new ProgramEventPublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(),
+                                  null, cConf, messagingService);
+      return new FlowProgramController(flowlets, program, runId, options, programStateWriter, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -176,10 +187,10 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final Lock lock = new ReentrantLock();
     private final Multimap<String, QueueName> consumerQueues;
 
-    FlowProgramController(Table<String, Integer, ProgramController> flowlets, Program program, String twillRunId,
-                          ProgramOptions options, RuntimeStore runtimeStore, FlowSpecification flowSpec,
+    FlowProgramController(Table<String, Integer, ProgramController> flowlets, Program program, RunId runId,
+                          ProgramOptions options, ProgramStateWriter programStateWriter, FlowSpecification flowSpec,
                           Multimap<String, QueueName> consumerQueues) {
-      super(program.getId(), ProgramRunners.getRunId(options), null, twillRunId, runtimeStore, options);
+      super(program.getId(), runId, programStateWriter, null);
       this.flowlets = flowlets;
       this.program = program;
       this.options = options;

@@ -27,11 +27,13 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -134,11 +136,13 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
+      ProgramStateWriter programStateWriter =
+        new ProgramEventPublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(), driver.getBasicWorkflowToken(),
+                                  cConf, messagingService);
       ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId,
-                                                                   twillRunId, runtimeStore, options);
-
+                                                                   programStateWriter);
       driver.start();
-
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);

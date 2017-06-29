@@ -26,6 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -36,6 +37,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
@@ -90,7 +92,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DatasetFramework datasetFramework;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -105,7 +106,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
                                 DiscoveryServiceClient discoveryServiceClient,
-                                RuntimeStore runtimeStore, SecureStore secureStore,
+                                SecureStore secureStore,
                                 SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
@@ -120,7 +121,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -199,8 +199,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                                     authenticationContext);
 
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
+
+      ProgramStateWriter programStateWriter =
+        new ProgramEventPublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(), null,
+                                  cConf, messagingService);
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context,
-                                                                    twillRunId, runtimeStore);
+                                                                    programStateWriter);
 
       LOG.debug("Starting MapReduce Job: {}", context);
       // if security is not enabled, start the job as the user we're using to access hdfs with.

@@ -20,15 +20,16 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.messaging.MessagingService;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
@@ -57,13 +58,15 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
+  protected final CConfiguration cConf;
+  protected final MessagingService messagingService;
   private final String host;
-  private final RuntimeStore runtimeStore;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf, RuntimeStore runtimeStore) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf, MessagingService messagingService) {
+    this.cConf = cConf;
+    this.messagingService = messagingService;
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
-    this.runtimeStore = runtimeStore;
   }
 
   /**
@@ -88,7 +91,10 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         components.put(program.getName(), instanceId, controller);
       }
 
-      return new InMemoryProgramController(components, program, options, runId, runtimeStore);
+      ProgramStateWriter programStateWriter =
+        new ProgramEventPublisher(program.getId(), runId, null, options.getUserArguments(), options.getArguments(),
+                                  null, cConf, messagingService);
+      return new InMemoryProgramController(components, program, runId, options, programStateWriter);
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
@@ -132,8 +138,9 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, ProgramOptions options, RunId runId, RuntimeStore runtimeStore) {
-      super(program.getId(), runId, null, null, runtimeStore, options);
+                              Program program, RunId runId, ProgramOptions options,
+                              ProgramStateWriter programStateWriter) {
+      super(program.getId(), runId, programStateWriter, null);
       this.program = program;
       this.components = components;
       this.options = options;

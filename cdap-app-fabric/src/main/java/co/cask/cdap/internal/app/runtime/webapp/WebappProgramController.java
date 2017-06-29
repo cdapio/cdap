@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.proto.id.ProgramId;
@@ -35,9 +36,9 @@ public class WebappProgramController extends AbstractStateChangeProgramControlle
   private final NettyHttpService httpService;
   private final Cancellable cancellable;
 
-  public WebappProgramController(ProgramId programId, RunId runId, String twillRunId, RuntimeStore runtimeStore,
-                                 ProgramOptions options, NettyHttpService httpService, Cancellable cancellable) {
-    super(programId, runId, null, twillRunId, runtimeStore, options);
+  public WebappProgramController(ProgramId programId, RunId runId, ProgramStateWriter programStateWriter,
+                                 NettyHttpService httpService, Cancellable cancellable) {
+    super(programId, runId, programStateWriter, null);
     this.httpService = httpService;
     this.cancellable = cancellable;
     started();

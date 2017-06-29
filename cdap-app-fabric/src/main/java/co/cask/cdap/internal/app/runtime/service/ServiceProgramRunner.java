@@ -25,10 +25,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -138,8 +140,9 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
+      ProgramStateWriter programStateWriter = null;
       ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
-                                                                         twillRunId, runtimeStore, options,
+                                                                         programStateWriter,
                                                                          spec.getName() + "-" + instanceId);
       component.start();
       return controller;
@@ -152,9 +155,9 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId, RunId runId, String twillRunId,
-                                    RuntimeStore runtimeStore, ProgramOptions options, String componentName) {
-      super(service, programId, runId, twillRunId, runtimeStore, options, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId, RunId runId,
+                                    ProgramStateWriter programStateWriter, String componentName) {
+      super(service, programId, runId, programStateWriter, componentName);
       this.service = service;
     }
 

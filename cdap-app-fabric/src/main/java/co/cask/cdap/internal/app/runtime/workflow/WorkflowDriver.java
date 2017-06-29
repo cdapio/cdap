@@ -605,6 +605,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     t.interrupt();
   }
 
+  public BasicWorkflowToken getBasicWorkflowToken() {
+    return basicWorkflowToken;
+  }
+
   /**
    * Returns the endpoint that the http service is bind to.
    *
