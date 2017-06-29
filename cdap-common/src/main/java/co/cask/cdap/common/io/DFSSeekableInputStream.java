@@ -31,6 +31,7 @@ final class DFSSeekableInputStream extends SeekableInputStream {
 
   private final Seekable seekable;
   private final StreamSizeProvider sizeProvider;
+  private long position;
 
   /**
    * Creates an instance with the given {@link FSDataInputStream}.
@@ -45,6 +46,36 @@ final class DFSSeekableInputStream extends SeekableInputStream {
   }
 
   @Override
+  public int read() throws IOException {
+    int b = super.read();
+    if (b >= 0) {
+      position++;
+    }
+    return b;
+  }
+
+  @Override
+  public int read(byte[] b) throws IOException {
+    return read(b, 0, b.length);
+  }
+
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    int bytesRead = super.read(b, off, len);
+    if (bytesRead > 0) {
+      position += bytesRead;
+    }
+    return bytesRead;
+  }
+
+  @Override
+  public long skip(long n) throws IOException {
+    long skipped = super.skip(n);
+    position += skipped;
+    return skipped;
+  }
+
+  @Override
   public long size() throws IOException {
     return sizeProvider.size();
   }
@@ -52,16 +83,19 @@ final class DFSSeekableInputStream extends SeekableInputStream {
   @Override
   public void seek(long pos) throws IOException {
     seekable.seek(pos);
+    position = pos;
   }
 
   @Override
   public long getPos() throws IOException {
-    return seekable.getPos();
+    return position;
   }
 
   @Override
   public boolean seekToNewSource(long targetPos) throws IOException {
-    return seekable.seekToNewSource(targetPos);
+    boolean result = seekable.seekToNewSource(targetPos);
+    position = targetPos;
+    return result;
   }
 
   @Override

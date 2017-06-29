@@ -34,6 +34,14 @@ public abstract class SeekableInputStream extends FilterInputStream implements S
    */
   public abstract long size() throws IOException;
 
+  /**
+   * Marking is not supported.
+   */
+  @Override
+  public boolean markSupported() {
+    return false;
+  }
+
   protected SeekableInputStream(InputStream in) {
     super(in);
   }

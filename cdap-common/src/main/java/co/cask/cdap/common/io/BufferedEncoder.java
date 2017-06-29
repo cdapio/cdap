@@ -78,51 +78,61 @@ public final class BufferedEncoder implements Encoder {
 
   @Override
   public Encoder writeNull() throws IOException {
-    return encoder.writeNull();
+    encoder.writeNull();
+    return this;
   }
 
   @Override
   public Encoder writeBool(boolean b) throws IOException {
-    return encoder.writeBool(b);
+    encoder.writeBool(b);
+    return this;
   }
 
   @Override
   public Encoder writeInt(int i) throws IOException {
-    return encoder.writeInt(i);
+    encoder.writeInt(i);
+    return this;
   }
 
   @Override
   public Encoder writeLong(long l) throws IOException {
-    return encoder.writeLong(l);
+    encoder.writeLong(l);
+    return this;
   }
 
   @Override
   public Encoder writeFloat(float f) throws IOException {
-    return encoder.writeFloat(f);
+    encoder.writeFloat(f);
+    return this;
   }
 
   @Override
   public Encoder writeDouble(double d) throws IOException {
-    return encoder.writeDouble(d);
+    encoder.writeDouble(d);
+    return this;
   }
 
   @Override
   public Encoder writeString(String s) throws IOException {
-    return encoder.writeString(s);
+    encoder.writeString(s);
+    return this;
   }
 
   @Override
   public Encoder writeBytes(byte[] bytes) throws IOException {
-    return encoder.writeBytes(bytes);
+    encoder.writeBytes(bytes);
+    return this;
   }
 
   @Override
   public Encoder writeBytes(byte[] bytes, int off, int len) throws IOException {
-    return encoder.writeBytes(bytes, off, len);
+    encoder.writeBytes(bytes, off, len);
+    return this;
   }
 
   @Override
   public Encoder writeBytes(ByteBuffer bytes) throws IOException {
-    return encoder.writeBytes(bytes);
+    encoder.writeBytes(bytes);
+    return this;
   }
 }
