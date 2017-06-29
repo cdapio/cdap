@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,18 @@ import React, {PropTypes} from 'react';
 import classnames from 'classnames';
 require('./WizardStepHeader.scss');
 
-export default function WizardStepHeader({id, className, label, onClick}, context) {
+export default function WizardStepHeader({id, className, label, onClick, disabled}, context) {
   return (
     <div
       className={classnames('cask-wizard-step-header', {
         'active': context.activeStep === id,
-        [className]: context.activeStep !== id
+        [className]: context.activeStep !== id,
+        'disabled': disabled
       })}
-      onClick={onClick}
     >
-      {label}
+      <div onClick={onClick}>
+        {label}
+      </div>
     </div>
   );
 }
@@ -38,5 +40,6 @@ WizardStepHeader.propTypes = {
   id: PropTypes.string,
   className: PropTypes.string,
   label: PropTypes.string,
-  onClick: PropTypes.func
+  onClick: PropTypes.func,
+  disabled: PropTypes.bool
 };

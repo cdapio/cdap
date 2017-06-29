@@ -47,33 +47,42 @@ class HydratorPlusPlusPreviewActions {
     };
   }
 
-  setMacros (macros) {
+  setMacros (macrosMap) {
     return (dispatch) => {
       dispatch({
         type: this.previewActions.SET_MACROS,
-        payload: {macros}
+        payload: {macrosMap}
       });
     };
   }
 
-  setUserRuntimeArguments (userRuntimeArguments) {
+  setUserRuntimeArguments (userRuntimeArgumentsMap) {
     return (dispatch) => {
       dispatch({
         type: this.previewActions.SET_USER_RUNTIME_ARGUMENTS,
-        payload: {userRuntimeArguments}
+        payload: {userRuntimeArgumentsMap}
       });
     };
   }
 
-  setMacrosAndUserRuntimeArgs (macros, userRuntimeArguments) {
+  setMacrosAndUserRuntimeArgs (macrosMap, userRuntimeArgumentsMap) {
     return (dispatch) => {
       dispatch({
         type: this.previewActions.SET_MACROS,
-        payload: {macros}
+        payload: {macrosMap}
       });
       dispatch({
         type: this.previewActions.SET_USER_RUNTIME_ARGUMENTS,
-        payload: {userRuntimeArguments}
+        payload: {userRuntimeArgumentsMap}
+      });
+    };
+  }
+
+  setRuntimeArgsForDisplay (args) {
+    return (dispatch) => {
+      dispatch({
+        type: this.previewActions.SET_RUNTIME_ARGS_FOR_DISPLAY,
+        payload: {args}
       });
     };
   }

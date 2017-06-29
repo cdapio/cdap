@@ -18,15 +18,42 @@ package co.cask.cdap.data.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
+import com.google.common.base.Preconditions;
+
+import java.util.Arrays;
 
 /**
  * Factory class to provide instances of the correct {@link HBaseTestBase} implementation, dependent on the version
  * of HBase that is being used.
+ *
+ * <p>
+ * Usage:
+ *
+ * <pre>{@code
+ * class MyUnitTest {
+ *
+ *
+ *   &#64;ClassRule
+ *   public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+ *
+ *   ....
+ * }
+ * }</pre>
+ *
+ * </p>
  */
 public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase> {
+  static final String PROPERTY_PREFIX = "cdap.hbase.test.";
 
-  public HBaseTestFactory() {
+  public HBaseTestFactory(Object... configs) {
     super(CConfiguration.create());
+    Preconditions.checkArgument(configs.length % 2 == 0,
+                                "Arguments must be in pair form like (k1, v1, k2, v2): %s", Arrays.toString(configs));
+
+    for (int i = 0; i < configs.length; i += 2) {
+      // Use the system properties map as a mean to communicate specific configurations to HBaseTestBase#startHBase
+      System.setProperty(PROPERTY_PREFIX + configs[i].toString(), configs[i + 1].toString());
+    }
   }
 
   @Override

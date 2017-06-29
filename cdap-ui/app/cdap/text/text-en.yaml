@@ -3,6 +3,8 @@
 commons:
   cask: CASK
   cdap: CDAP
+  DSVEditor:
+    placeholder: value
   entity:
     application:
       plural: Applications
@@ -133,11 +135,17 @@ features:
         instance-preference: Instance Preference
         manage-ns: Manage Namespaces
         manage-roles: Manage Roles
+        ReloadSystemArtifacts:
+          confirmationButton: "Reload"
+          confirmationHeader: Reload System Artifacts
+          confirmationText: "Are you sure you want to reload all system artifacts?"
+          errorMessage: Failed to load system artifacts
+          label: Reload System Artifacts
         reset-instance: Reset Instance
         set-system-preferences: Set System Preferences
         tag-management: Tag Management
-        view-invalid: View Invalid Transactions
         view-config: View Configurations
+        view-invalid: View Invalid Transactions
     DetailPanel:
       headers:
         apps: Apps
@@ -381,8 +389,8 @@ features:
           namecollabel: NAME
         tableCount:
           0: No Tables
-          1: '{count} Table'
-          _: "{count} Tables"
+          1: '{context} Table'
+          _: "{context} Tables"
         title: Select Table
     Directives:
       apply: Apply
@@ -392,11 +400,26 @@ features:
         actions:
           bulkset: Set column names
           cleanse: Cleanse column names
+          replaceColumns: Replace column names
         Bulkset:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
           textareaplaceholder: "Enter column names seperated by comma. Special character (eg., @ - #) are not allowed"
+        ReplaceColumns:
+          applyButton: Replace
+          ignoreCase: Ignore Case
+          modalTitle: Replace Column Names
+          PatternInputPlaceholder:
+            PREFIX: "e.g. ^body_, work_"
+          patternLabel: Pattern
+          PatternTypeLabel:
+            CUSTOM: Replace Pattern
+            PATTERN: Remove Pattern
+            PREFIX: Remove Prefix
+          replaceLabel: Replace
+          replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
+          withLabel: With
       Copy:
         copySuffix: _copy
         duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
@@ -410,10 +433,22 @@ features:
         popoverTitle: Extract Using Position
       CutMenuItem:
         menuLabel: Using Positions
+      Decode:
+        base32: Base32
+        base64: Base64
+        hex: Hex
+        title: Decode
+        urldecode: URL
       Drop:
         title:
           plural: Delete Selected Columns
           singular: Delete Column
+      Encode:
+        base32: Base32
+        base64: Base64
+        hex: Hex
+        title: Encode
+        url: URL
       Explode:
         title: Explode
         filtersSubmenuTitle: Delimited Text
@@ -505,6 +540,16 @@ features:
        title:
           plural: Keep Selected Columns
           singular: Keep Column
+      MaskData:
+        menuLabel: Mask Data
+        option1: Show last 4 characters only
+        option2: Show last 2 characters only
+        option3: Custom Selection
+        option4: By Shuffling
+      MaskSelection:
+        cancelBtnLabel: Exit 'Mask Data' mode
+        description: Mask the selected characters across all rows in this column
+        popoverTitle: Mask
       Merge:
         buttonLabel: Join
         chooseDelimiter: Choose delimiter
@@ -603,6 +648,15 @@ features:
             label: XML to JSON
             placeholder: Enter depth
         title: Parse
+      SetCharEncoding:
+        disabledTooltip: Character encoding can only be set on columns of type byte array
+        iso88591: ISO-8859-1
+        title: Set Character Encoding
+        usascii: US-ASCII
+        utf16: UTF-16
+        utf16be: UTF-16BE
+        utf16le: UTF-16LE
+        utf8: UTF-8
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation
@@ -1004,6 +1058,11 @@ features:
       description: A library is a JAR file that can contains reusable third-party code (e.g. External Spark Programs).
       label: Library
       modalheadertitle: Add Library
+    Microservice:
+      actionbtn0: Create
+      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystem communicating over well defined protocol.
+      label: Microservice
+      modalheadertitle: Create Microservice
     Plugins:
       actionbtn0: Upload
       description: A plugin is an easy way to extend the functionality of an application.
@@ -1138,7 +1197,7 @@ features:
       subtitle: You can now create a pipeline to extract data from Database using the driver.
     Done: Done
     FailedMessage: Failed to {step}
-    GoToHomePage: Go to Home Page
+    GoToHomePage: Go to Homepage
     HydratorPipeline:
       batchLinkLabel: Batch Pipeline
       message: Choose the pipeline type you would like to create.
@@ -1180,6 +1239,82 @@ features:
       termsandconditions: Terms and Conditions
     MarketHydratorPluginUpload:
       headerlabel: Add Hydrator Plugin
+    MicroserviceUpload:
+      callToAction: Start Microservice
+      headerlabel: Add Microservice
+      footertitle: Add Microservice
+      secondaryCallToAction: Microservice Details
+      Step1:
+        description: Provide name, description and version for a microservice you would like to create.
+        descriptionPlaceholder: Description of the microservice
+        instanceNameLabel: Instance Name
+        instanceNamePlaceholder: Name of the microservice instance
+        microserviceOptionLabel: Microservice Name
+        microserviceOptionPlaceholder: Name of the microservice
+        newMicroservicePlaceholder: Name of the new microservice
+        shorttitle: General
+        summary: "Creates an instance of Microservice '{microserviceName}' with name '{instanceName}' and version {version}."
+        title: General
+        versionLabel: Version
+        versionPlaceholder: Version of the microservice
+      Step2:
+        description: An Artifact containing implementation of a microservice interface.
+        errorMessage: Invalid plugin. Plugin must be a JAR file.
+        filePathLabel: Choose file
+        shorttitle: Artifact JAR
+        title: Artifact JAR
+      Step3:
+        description: A configuration for this microservice artifact.
+        errorMessage: Invalid microservice JSON. Microservice configuration should be in JSON format.
+        errorMessageParentArtifacts: Invalid microservice JSON. Please specify parent artifacts.
+        filePathLabel: Choose file
+        shorttitle: Artifact JSON
+        title: Artifact JSON
+      Step4:
+        description: Specify resources for the runtime of this microservice.
+        instancesLabel: Instances
+        instancesPlaceholder: The number of instances of the microservice
+        memoryLabel: Memory
+        memoryPlaceholder: The memory in MB for the microservice
+        shorttitle: Resources
+        summary:
+          count:
+            instances:
+              1: '{context} instance'
+              _: '{context} instances'
+            vcores:
+              1: '{context} core'
+              _: '{context} cores'
+            memory:
+              1: '{context} MB'
+              _: '{context} MBs'
+            ethreshold:
+              1: '{context} error'
+              _: '{context} errors'
+          text: "{instancesWithCount} of microservice '{instanceName}' will be started using {vcoresWithCount}, {memoryWithCount} of memory and with error threshold on event processing as {ethresholdWithCount}."
+        thresholdLabel: Threshold
+        thresholdPlaceholder: TBD
+        title: Resources
+        vcoresLabel: Virtual Cores
+        vcoresPlaceholder: The number of virtual cores for the microservice
+      Step5:
+        description: Provide inbound and outbound queue names (TMS Queue names).
+        fetchLabel: Fetch size (MB)
+        fetchPlaceholder: The fetch size across all the queues.
+        inboundLabel: Inbound queues
+        inboundPlaceholder: Name of inbound queue
+        outboundLabel: Outbound queues
+        outboundPlaceholder: Name of outbound queue
+        shorttitle: Endpoint Specification
+        title: Endpoint Specification
+      Step6:
+        description: Provide microservice specific properties.
+        keyPlaceholder: name
+        propertiesLabel: Properties
+        shorttitle: Properties
+        title: Properties
+      success: You have successfully created the microservice "{appName}".
+      summaryLabel: "Summary: "
     OneStepDeploy:
       headerlabel: Deploy
       Step1:

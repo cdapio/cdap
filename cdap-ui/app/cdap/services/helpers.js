@@ -183,15 +183,32 @@ const defaultEventObject = {
   },
   preventDefault: () => {}
 };
+
 function preventPropagation(e = defaultEventObject) {
   e.stopPropagation();
   e.nativeEvent.stopImmediatePropagation();
   e.preventDefault();
 }
 
+function isNilOrEmptyString(value) {
+  return isNil(value) || value === '';
+}
+
+function requiredFieldsCompleted(state, requiredFields) {
+  let emptyFieldsInState = Object.keys(state)
+    .filter(fieldName => {
+      return isNilOrEmptyString(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
+    });
+  return !emptyFieldsInState.length ? true : false;
+}
+
 const defaultAction = {
   action : '',
   payload : {}
+};
+
+const difference = (first, second) => {
+  return first > second ? first - second : second - first;
 };
 
 export {
@@ -206,5 +223,7 @@ export {
   contructUrl,
   getIcon,
   preventPropagation,
-  defaultAction
+  requiredFieldsCompleted,
+  defaultAction,
+  difference
 };

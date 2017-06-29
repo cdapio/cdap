@@ -127,10 +127,13 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       return;
     }
 
-    vm.formatOutput();
+    vm.formatOutput(true);
   }
 
-  vm.formatOutput = () => {
+  // In some cases, we edit the schema when the user opens a node, so the schema changes without the
+  // user doing anything. In those cases we should update the 'default' schema state to the state after
+  // we've done our initialzing i.e. updateDefault = true. Defaults to false.
+  vm.formatOutput = (updateDefault = false) => {
     vm.error = '';
 
     let outputFields = vm.parsedSchema.filter((field) => {
@@ -168,7 +171,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
 
     if (typeof vm.parentFormatOutput === 'function') {
-      timeout = $timeout(vm.parentFormatOutput);
+      timeout = $timeout(vm.parentFormatOutput.bind(null, {updateDefault}));
     }
   };
 

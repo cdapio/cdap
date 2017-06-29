@@ -41,7 +41,7 @@
           padding: 6px 20px;
           margin: 0 5px;
 
-          .fa {
+          .icon-svg {
             margin: 0 5px;
           }
         }
@@ -82,8 +82,8 @@
         cursor: pointer;
         height: 40px;
 
-        .fa-times {
-          padding: 15px 20px;
+        .icon-close {
+          margin: 15px 20px;
         }
       }
 
@@ -106,12 +106,20 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+
+            &.disabled {
+              pointer-events: auto;
+            }
           }
 
           .secondary-call-to-action {
             color: white;
             margin-left: 50px;
             font-size: 14px;
+          }
+
+          .icon-spinner {
+            margin-left: 5px;
           }
         }
 

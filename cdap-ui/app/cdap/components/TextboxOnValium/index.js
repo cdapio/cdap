@@ -29,6 +29,10 @@ export default class TextboxOnValium extends Component {
   componentDidMount() {
     if (this.textboxRef) {
       this.textboxRef.focus();
+
+      if (this.props.shouldSelect) {
+        this.textboxRef.select();
+      }
     }
   }
   updateTextValue(e) {
@@ -90,5 +94,6 @@ TextboxOnValium.propTypes = {
   value: PropTypes.string,
   onWarning: PropTypes.func,
   className: PropTypes.string,
-  allowSpace: PropTypes.bool
+  allowSpace: PropTypes.bool,
+  shouldSelect: PropTypes.bool
 };

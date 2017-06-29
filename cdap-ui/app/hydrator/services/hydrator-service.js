@@ -386,7 +386,7 @@ class HydratorPlusPlusHydratorService {
     return false;
   }
 
-  convertMacrosToRuntimeArguments(currentRuntimeArgs, macrosMap, userRuntimeArgumentsMap) {
+  getRuntimeArgsForDisplay(currentRuntimeArgs, macrosMap, userRuntimeArgumentsMap) {
     let runtimeArguments = {};
     let providedMacros = {};
 
