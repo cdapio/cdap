@@ -58,6 +58,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -68,6 +69,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Preconditions;
@@ -506,6 +508,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
+    String principal = programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
+    final KerberosPrincipalId principalId = principal == null ? null : new KerberosPrincipalId(principal);
     for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
       final String localInstanceName = entry.getValue();
       final DatasetId instanceId = new DatasetId(workflowRunId.getNamespace(), localInstanceName);
@@ -517,7 +521,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           @Override
           public Void call() throws Exception {
             datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId,
-                                         addLocalDatasetProperty(instanceSpec.getProperties()));
+                                         addLocalDatasetProperty(instanceSpec.getProperties()), principalId);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS, TimeUnit.SECONDS));
