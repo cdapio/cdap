@@ -222,7 +222,12 @@ export default class RunsHistoryGraph extends Component {
             :
               null
           }
-          <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
+          {
+              this.props.xDomainType === 'limit' ?
+                <div className="x-axis-title"> {T.translate(`${PREFIX}.xAxisTitle`)} </div>
+              :
+                null
+          }
           <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`, {
             resolution: yAxisResolution
           })}</div>
