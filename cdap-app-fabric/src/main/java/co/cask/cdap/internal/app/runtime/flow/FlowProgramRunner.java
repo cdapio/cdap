@@ -25,17 +25,17 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.internal.app.store.ProgramStorePublisher;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -69,17 +69,19 @@ public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
 
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
-  private final RuntimeStore runtimeStore;
+  private final CConfiguration cConf;
+  private final MessagingService messagingService;
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider,
-                           RuntimeStore runtimeStore, StreamAdmin streamAdmin, QueueAdmin queueAdmin,
+  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, CConfiguration cConf,
+                           MessagingService messagingService, StreamAdmin streamAdmin, QueueAdmin queueAdmin,
                            TransactionExecutorFactory txExecutorFactory) {
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
-    this.runtimeStore = runtimeStore;
+    this.cConf = cConf;
+    this.messagingService = messagingService;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
@@ -106,8 +108,9 @@ public final class FlowProgramRunner implements ProgramRunner {
       String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
       RunId runId = ProgramRunners.getRunId(options);
       ProgramStateWriter programStateWriter =
-        new ProgramStorePublisher(program.getId(), runId, twillRunId,
-                                  options.getUserArguments(), options.getArguments(), runtimeStore);
+        new ProgramEventPublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(),
+                                  null, cConf, messagingService);
       return new FlowProgramController(flowlets, program, runId, options, programStateWriter, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);

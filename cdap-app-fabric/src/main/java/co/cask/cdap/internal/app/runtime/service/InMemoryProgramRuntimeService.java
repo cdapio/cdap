@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -25,6 +26,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
 import co.cask.cdap.proto.ProgramLiveInfo;
@@ -58,9 +60,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository, RuntimeStore runtimeStore,
+                                       ArtifactRepository artifactRepository, MessagingService messagingService,
                                        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    super(cConf, runtimeStore, programRunnerFactory, artifactRepository);
+    super(cConf, messagingService, programRunnerFactory, artifactRepository);
     this.hostname = hostname.getCanonicalHostName();
   }
 

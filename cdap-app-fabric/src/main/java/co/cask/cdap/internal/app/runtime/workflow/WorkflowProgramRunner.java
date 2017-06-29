@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -137,8 +138,9 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
       ProgramStateWriter programStateWriter =
-        new ProgramStorePublisher(program.getId(), runId, twillRunId,
-                                  options.getUserArguments(), options.getArguments(), runtimeStore);
+        new ProgramEventPublisher(program.getId(), runId, twillRunId,
+                                  options.getUserArguments(), options.getArguments(), driver.getBasicWorkflowToken(),
+                                  cConf, messagingService);
       ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId,
                                                                    programStateWriter);
       driver.start();

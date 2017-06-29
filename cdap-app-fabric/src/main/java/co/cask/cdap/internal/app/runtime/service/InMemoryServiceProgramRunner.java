@@ -23,10 +23,10 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -42,8 +42,8 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
 
   @Inject
   InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
-                               RuntimeStore runtimeStore) {
-    super(cConf, runtimeStore);
+                               MessagingService messagingService) {
+    super(cConf, messagingService);
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 

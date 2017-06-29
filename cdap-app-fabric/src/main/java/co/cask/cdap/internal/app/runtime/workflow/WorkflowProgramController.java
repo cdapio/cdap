@@ -15,8 +15,11 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
@@ -112,5 +115,9 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
   private String getServiceName(Program program, RunId runId) {
     return String.format("workflow.%s.%s.%s.%s",
                          program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
+  }
+
+  public WorkflowToken getWorkflowToken() {
+    return driver.getBasicWorkflowToken();
   }
 }

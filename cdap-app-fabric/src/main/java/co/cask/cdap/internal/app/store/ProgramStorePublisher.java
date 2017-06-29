@@ -19,12 +19,12 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import org.apache.twill.api.RunId;
@@ -54,11 +54,11 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
   }
 
   @Override
-  public void start(final long startTime) {
+  public void start(final long startTimeInSeconds) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setInit(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(startTime), twillRunId,
+        runtimeStore.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
                              userArguments.asMap(), systemArguments.asMap());
         return null;
       }
@@ -70,8 +70,8 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId,
-                              userArguments.asMap(), systemArguments.asMap());
+        runtimeStore.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                             userArguments.asMap(), systemArguments.asMap());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -82,7 +82,7 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus, cause);
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

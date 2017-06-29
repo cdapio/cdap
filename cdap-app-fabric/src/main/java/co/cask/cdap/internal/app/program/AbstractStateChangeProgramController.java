@@ -75,8 +75,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
 
           @Override
           public void failed(Service.State from, @Nullable final Throwable failure) {
-            programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(),
-                                    new BasicThrowable(failure));
+            programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), failure);
           }
         },
         Threads.SAME_THREAD_EXECUTOR
