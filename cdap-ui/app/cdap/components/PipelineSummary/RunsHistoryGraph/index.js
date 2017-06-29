@@ -21,6 +21,15 @@ import classnames from 'classnames';
 import isEqual from 'lodash/isEqual';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import {
+  getTicksTotal,
+  xTickFormat,
+  getXDomain,
+  ONE_MIN_SECONDS,
+  tickFormatBasedOnTimeResolution,
+  getGraphHeight,
+  getTimeResolution
+} from 'components/PipelineSummary/RunsGraphHelpers';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -31,12 +40,16 @@ const SUCCESSRUNCOLOR = '#3cc801';
 const LINECOLOR = '#DBDBDB';
 const PREFIX = `features.PipelineSummary.runsHistoryGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
-const ONE_MIN_SECONDS = 60;
-const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * ONE_MIN_SECONDS;
-const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
-const MINS_RESOLUTION = 'minutes';
-const HOURS_RESOLUTION = 'hours';
-const DAYS_RESOLUTION = 'days';
+const COLORLEGENDS = [
+  {
+    title: T.translate(`${PREFIX}.legend1`),
+    color: FAILEDRUNCOLOR
+  },
+  {
+    title: T.translate(`${PREFIX}.legend2`),
+    color: SUCCESSRUNCOLOR
+  }
+];
 
 export default class RunsHistoryGraph extends Component {
   constructor(props) {
@@ -85,13 +98,8 @@ export default class RunsHistoryGraph extends Component {
     return data;
   }
   renderChart() {
-    let yAxisResolution = 'sec';
     let FPlot = makeWidthFlexible(XYPlot);
-    let height = 300;
-    if (this.containerRef) {
-      let clientRect = this.containerRef.getBoundingClientRect();
-      height = clientRect.height - 100;
-    }
+    let height = getGraphHeight(this.containerRef);
     let maxYDomain = Number.MAX_SAFE_INTEGER, minYDomain = 0;
     if (this.state.data.length > 1) {
       maxYDomain = this.state.data.reduce((prev, curr) => {
@@ -104,29 +112,10 @@ export default class RunsHistoryGraph extends Component {
     if (this.state.data.length == 1) {
       maxYDomain = this.state.data[0];
     }
-    if (maxYDomain.y > ONE_MIN_SECONDS) {
-      yAxisResolution = MINS_RESOLUTION;
-    }
-    if (maxYDomain.y > ONE_HOUR_SECONDS) {
-      yAxisResolution = HOURS_RESOLUTION;
-    }
-    if (maxYDomain.y > ONE_DAY_SECONDS) {
-      yAxisResolution = DAYS_RESOLUTION;
-    }
+    let yAxisResolution = getTimeResolution(maxYDomain.y);
     let xDomain = [];
     if (this.state.data.length > 0) {
-      let startDomain, endDomain;
-      let {xDomainType, runsLimit, totalRunsCount} = this.props;
-      if (xDomainType === 'limit') {
-        startDomain = totalRunsCount > runsLimit ? (totalRunsCount - runsLimit) + 1 : 0;
-        endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
-      }
-      if (xDomainType === 'time') {
-        startDomain = this.props.start;
-        endDomain = this.props.end;
-      }
-      xDomain = [startDomain, endDomain];
-      console.log(xDomain);
+      xDomain = getXDomain(this.props);
     }
     let popOverData;
     if (this.state.currentHoveredElement) {
@@ -159,51 +148,17 @@ export default class RunsHistoryGraph extends Component {
         >
           <DiscreteColorLegend
             style={{position: 'absolute', left: '40px', top: '0px'}}
-            orientation="horizontal" items={[
-              {
-                title: T.translate(`${PREFIX}.legend1`),
-                color: FAILEDRUNCOLOR
-              },
-              {
-                title: T.translate(`${PREFIX}.legend2`),
-                color: SUCCESSRUNCOLOR
-              }
-            ]}
+            orientation="horizontal"
+            items={COLORLEGENDS}
           />
           <XAxis
-            tickTotal={10}
-            tickFormat={(v => {
-              if (this.props.xDomainType === 'time') {
-                let timeWindow = this.props.end - this.props.start;
-                if (timeWindow === ONE_DAY_SECONDS) {
-                  return v % 2 === 0 ? moment(v * 1000).format('H:m:s') : null;
-                }
-                if (timeWindow === ONE_DAY_SECONDS * 7) {
-                  return v % 2 === 0 ? moment(v * 1000).format('Do MMM') : null;
-                }
-                if (timeWindow === ONE_DAY_SECONDS * 30) {
-                  return v % 2 === 0 ? moment(v * 1000).format('M/D/YY') : null;
-                }
-                return moment(v).format('ddd M/D/YY');
-              }
-              return v;
-            })}
+            tickTotal={getTicksTotal(this.props)}
+            tickFormat={xTickFormat(this.props)}
           />
           <YAxis
             tickTotal={10}
             yDomain={[minYDomain.y, maxYDomain.y]}
-            tickFormat={(v) => {
-              if (yAxisResolution === 'mins') {
-                return v / ONE_MIN_SECONDS;
-              }
-              if (yAxisResolution === 'hours') {
-                return v / (ONE_HOUR_SECONDS);
-              }
-              if (yAxisResolution === 'days') {
-                return v / ONE_DAY_SECONDS;
-              }
-              return v;
-            }}
+            tickFormat={tickFormatBasedOnTimeResolution(yAxisResolution)}
           />
           <HorizontalGridLines />
           <LineSeries

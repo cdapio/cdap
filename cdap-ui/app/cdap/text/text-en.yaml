@@ -1016,7 +1016,7 @@ features:
           viewLog: View Log
       title: Log Errors and Warnings
       xAxisTitle: Pipeline Run #
-      yAxisTitle: Number of Errors
+      yAxisTitle: Number of Errors and Warnings
     runsHistoryGraph:
       hint:
         duration: Duration

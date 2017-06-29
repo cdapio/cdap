@@ -218,10 +218,7 @@ export default class PipelineSummary extends Component {
           }
           <IconSVG
             name="icon-close"
-            onClick={() => {
-              console.log(this.props.onClose);
-              this.props.onClose();
-            }}
+            onClick={this.props.onClose}
           />
         </div>
       </div>

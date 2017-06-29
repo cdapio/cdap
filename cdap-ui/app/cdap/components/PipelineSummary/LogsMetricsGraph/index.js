@@ -23,17 +23,22 @@ import {convertProgramToApi} from 'services/program-api-converter';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import {getTicksTotal, xTickFormat, getXDomain, getGraphHeight} from 'components/PipelineSummary/RunsGraphHelpers';
 
 const WARNINGBARCOLOR = '#FDA639';
 const ERRORBARCOLOR = '#A40403';
 const PREFIX = `features.PipelineSummary.logsMetricsGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
-const DEFAULT_TICKS_TOTAL = 10;
-const DEFAULT_GRAPH_HEIGHT = 300;
-const ONE_MIN_SECONDS = 60;
-const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * ONE_MIN_SECONDS;
-const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
-
+const COLOR_LEGEND = [
+  {
+    title: T.translate(`${PREFIX}.legend1`),
+    color: WARNINGBARCOLOR
+  },
+  {
+    title: T.translate(`${PREFIX}.legend2`),
+    color: ERRORBARCOLOR
+  }
+];
 require('./LogsMetricsGraph.scss');
 /*
    - Better name
@@ -84,26 +89,10 @@ export default class LogsMetricsGraph extends Component {
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let {errors, warnings} = this.getDataClusters();
-    let height = DEFAULT_GRAPH_HEIGHT;
-    if (this.containerRef) {
-      let clientRect = this.containerRef.getBoundingClientRect();
-      height = clientRect.height - 100;
-    }
+    let height = getGraphHeight(this.containerRef);
     let xDomain = [];
     if (errors.length > 0) {
-      let startDomain,
-          endDomain;
-      let {xDomainType, runsLimit, totalRunsCount} = this.props;
-      if (xDomainType === 'limit') {
-        startDomain = totalRunsCount > runsLimit ? (totalRunsCount - runsLimit) + 1 : 0;
-        endDomain = totalRunsCount > runsLimit ? totalRunsCount : runsLimit;
-      }
-      if (xDomainType === 'time') {
-        startDomain = this.props.start;
-        endDomain = this.props.end;
-      }
-      xDomain = [startDomain, endDomain];
-      console.log(xDomain);
+      xDomain = getXDomain(this.props);
     }
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
@@ -138,73 +127,31 @@ export default class LogsMetricsGraph extends Component {
           height={height}>
           <DiscreteColorLegend
             style={{position: 'absolute', left: '40px', top: '0px'}}
-            orientation="horizontal" items={[
-              {
-                title: T.translate(`${PREFIX}.legend1`),
-                color: WARNINGBARCOLOR
-              },
-              {
-                title: T.translate(`${PREFIX}.legend2`),
-                color: ERRORBARCOLOR
-              }
-            ]}
+            orientation="horizontal"
+            items={COLOR_LEGEND}
           />
           <HorizontalGridLines />
           <XAxis
-            tickTotal={DEFAULT_TICKS_TOTAL}
-            tickFormat={(v => {
-              if (this.props.xDomainType === 'time') {
-                let timeWindow = this.props.end - this.props.start;
-                if (timeWindow === ONE_DAY_SECONDS) {
-                  return v % 2 === 0 ? moment(v * 1000).format('H:m:s') : null;
-                }
-                if (timeWindow === ONE_DAY_SECONDS * 7) {
-                  return v % 2 === 0 ? moment(v * 1000).format('Do MMM') : null;
-                }
-                if (timeWindow === ONE_DAY_SECONDS * 30) {
-                  return v % 2 === 0 ? moment(v * 1000).format('M/D/YY') : null;
-                }
-                return moment(v).format('ddd M/D/YY');
-              }
-              return v;
-            })}
+            tickTotal={getTicksTotal(this.props)}
+            tickFormat={xTickFormat(this.props)}
           />
-          <YAxis
-            tickFormat={(v) => {
-              if (Math.floor(v) !== v) {
-                return;
-              }
-              return v;
-            }}
-          />
+          <YAxis tickFormat={(v) => Math.floor(v) !== v ? '' : v} />
           <BarSeries
             cluster="runs"
             color={WARNINGBARCOLOR}
             onValueClick={(d) => {
-              if (isEqual(this.state.currentHoveredElement || {}, d)) {
-                this.setState({
-                  currentHoveredElement: null
-                });
-              } else {
-                this.setState({
-                  currentHoveredElement: d
-                });
-              }
+              this.setState({
+                currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+              });
             }}
             data={warnings}/>
           <BarSeries
             cluster="runs"
             color={ERRORBARCOLOR}
             onValueClick={(d) => {
-              if (isEqual(this.state.currentHoveredElement || {}, d)) {
-                this.setState({
-                  currentHoveredElement: null
-                });
-              } else {
-                this.setState({
-                  currentHoveredElement: d
-                });
-              }
+              this.setState({
+                currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+              });
             }}
             data={errors}/>
           {
