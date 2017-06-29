@@ -124,12 +124,14 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Scheduler scheduler;
+  private final ProgramStatusService programStatusService;
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
-                          AuthenticationContext authenticationContext, Scheduler scheduler) {
+                          AuthenticationContext authenticationContext, Scheduler scheduler,
+                          ProgramStatusService programStatusService) {
     this.store = store;
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
@@ -140,6 +142,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.scheduler = scheduler;
+    this.programStatusService = programStatusService;
   }
 
   @Override
@@ -153,6 +156,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
                                                     2L, interval, TimeUnit.SECONDS);
+
+    programStatusService.startAndWait();
   }
 
   @Override
@@ -163,6 +168,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     try {
       if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
         scheduledExecutorService.shutdownNow();
+        programStatusService.shutDown();
       }
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();

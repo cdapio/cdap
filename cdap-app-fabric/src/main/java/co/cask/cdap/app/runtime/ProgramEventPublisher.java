@@ -59,7 +59,7 @@ public class ProgramEventPublisher {
     this.runId = runId;
     this.defaultProperties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_ID, programId.toString(),
-      ProgramOptionConstants.RUN_ID, GSON.toJson(runId.getId())
+      ProgramOptionConstants.RUN_ID, runId.toString()
     );
     this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     this.state = new AtomicReference<>(ProgramController.State.STARTING);
@@ -71,15 +71,17 @@ public class ProgramEventPublisher {
       return;
     }
 
-    Map<String, String> properties =
-      ImmutableMap.<String, String>builder().putAll(defaultProperties)
-        .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
-        .put(ProgramOptionConstants.PROGRAM_ID, programId.toString())
-        .put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId)
-        .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArgs.asMap()))
-        .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArgs.asMap()))
-        .build();
-    publish(properties);
+    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
+      .putAll(defaultProperties)
+      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.ALIVE.getRunStatus().toString())
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArgs.asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArgs.asMap()));
+
+    if (twillRunId != null) {
+      builder.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
+    }
+    publish(builder.build());
   }
 
   public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable Throwable cause) {
