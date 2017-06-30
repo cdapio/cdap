@@ -21,8 +21,10 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.PrincipalCredentials;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.common.http.HttpMethod;
@@ -61,8 +63,8 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   @Inject
   RemoteUGIProvider(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
-                    LocationFactory locationFactory) {
-    super(cConf);
+                    LocationFactory locationFactory, OwnerAdmin ownerAdmin, NamespaceQueryAdmin namespaceQueryAdmin) {
+    super(cConf, ownerAdmin);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), "/v1/");
     this.locationFactory = locationFactory;
@@ -70,8 +72,11 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   @Override
   protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    ImpersonationRequest jsonRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
+                                                                impersonationRequest.getImpersonatedOpType(),
+                                                                impersonationRequest.getPrincipal());
     PrincipalCredentials principalCredentials =
-      GSON.fromJson(executeRequest(impersonationRequest).getResponseBodyAsString(), PrincipalCredentials.class);
+      GSON.fromJson(executeRequest(jsonRequest).getResponseBodyAsString(), PrincipalCredentials.class);
     LOG.debug("Received response: {}", principalCredentials);
 
     Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));
