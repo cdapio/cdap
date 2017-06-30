@@ -16,9 +16,10 @@
 
 package co.cask.cdap.security.impersonation;
 
+import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
+import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
@@ -26,6 +27,8 @@ import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.FileUtils;
+import co.cask.cdap.proto.NamespaceConfig;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.inject.Inject;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -51,15 +54,46 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   private final LocationFactory locationFactory;
   private final File tempDir;
-
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
                      NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(cConf, ownerAdmin, namespaceQueryAdmin);
+    super(cConf, ownerAdmin);
     this.locationFactory = locationFactory;
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+  }
+
+  @Override
+  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
+    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
+      impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
+      // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
+      // specifies that it can be impersonated with the namespace owner.
+      // This is done here rather than in the get getConfiguredUGI because the getConfiguredUGI will be called at
+      // remote location as in RemoteUGIProvider. Looking up namespace meta there will make a trip to master followed
+      // by one to get the credentials. Hence do it here in the DefaultUGIProvider which is running in master.
+      // Although, this will cause cache miss for explore implementation if the namespace config doesn't allow
+      // impersonating the namespace owner for explore queries but that a trade-off to avoid multiple remote calls in
+      // more prominent calls.
+      try {
+        NamespaceConfig nsConfig =
+          namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId()).getConfig();
+        if (!nsConfig.isExploreAsPrincipal()) {
+          throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
+                                             NamespaceConfig.class.getSimpleName() + " of " +
+                                               impersonationRequest.getEntityId(),
+                                             NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
+        }
+
+      } catch (IOException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new IOException(e);
+      }
+    }
   }
 
   /**

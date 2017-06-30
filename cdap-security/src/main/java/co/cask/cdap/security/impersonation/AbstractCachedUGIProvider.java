@@ -16,18 +16,13 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.kerberos.ImpersonatedOpType;
 import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
-import co.cask.cdap.proto.NamespaceConfig;
-import co.cask.cdap.proto.element.EntityType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
@@ -52,20 +47,21 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   protected final CConfiguration cConf;
   private final LoadingCache<UGICacheKey, UGIWithPrincipal> ugiCache;
   private final OwnerAdmin ownerAdmin;
-  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
-  protected AbstractCachedUGIProvider(CConfiguration cConf, OwnerAdmin ownerAdmin,
-                                      NamespaceQueryAdmin namespaceQueryAdmin) {
+  protected AbstractCachedUGIProvider(CConfiguration cConf, OwnerAdmin ownerAdmin) {
     this.cConf = cConf;
     this.ownerAdmin = ownerAdmin;
     this.ugiCache = createUGICache(cConf);
-    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   /**
    * Creates a new {@link UGIWithPrincipal} based on the given {@link ImpersonationRequest}.
    */
   protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
+
+  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
+    // by default it will do nothing
+  }
 
   @Override
   public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
@@ -75,7 +71,7 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       if (principal != null) {
         return principal;
       }
-      verifyExploreOperation(impersonationRequest);
+      checkImpersonationRequest(impersonationRequest);
       ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);
       return ugiCache.get(new UGICacheKey(new ImpersonationRequest(impersonationRequest.getEntityId(),
                                                                    impersonationRequest.getImpersonatedOpType(),
@@ -113,35 +109,6 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
                                                                                request.getEntityId());
     LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, request.getEntityId());
     return impersonationInfo;
-  }
-
-  private void verifyExploreOperation(ImpersonationRequest impersonationRequest) throws IOException {
-    if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
-      impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
-      // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
-      // specifies that it can be impersonated with the namespace owner.
-      // This is done here rather than in the get getConfiguredUGI because the getConfiguredUGI will be called at
-      // remote location as in RemoteUGIProvider. Looking up namespace meta there will make a trip to master followed
-      // by one to get the credentials. Hence do it here in the DefaultUGIProvider which is running in master.
-      // Although, this will cause cache miss for explore implementation if the namespace config doesn't allow
-      // impersonating the namespace owner for explore queries but that a trade-off to avoid multiple remote calls in
-      // more prominent calls.
-      try {
-        NamespaceConfig nsConfig =
-          namespaceQueryAdmin.get(impersonationRequest.getEntityId().getNamespaceId()).getConfig();
-        if (!nsConfig.isExploreAsPrincipal()) {
-          throw new FeatureDisabledException(FeatureDisabledException.Feature.EXPLORE,
-                                             NamespaceConfig.class.getSimpleName() + " of " +
-                                               impersonationRequest.getEntityId(),
-                                             NamespaceConfig.EXPLORE_AS_PRINCIPAL, String.valueOf(true));
-        }
-
-      } catch (IOException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new IOException(e);
-      }
-    }
   }
 
   private static final class UGICacheKey {
