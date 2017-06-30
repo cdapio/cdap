@@ -31,16 +31,24 @@ public class ImpersonationRequest {
   private final String principal;
   private final String keytabURI;
 
+  // used when we do not know what is the principal for the entity id
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
+    this(entityId, impersonatedOpType, null);
+  }
+
+  // principal is needed for remote side to make query to master but we should not pass the key tab uri
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
+                              @Nullable String principal) {
+    this(entityId, impersonatedOpType, principal, null);
+  }
+
+  // principal and keytabURI is needed for master side to look up the key tab file.
   public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
                               @Nullable String principal, @Nullable String keytabURI) {
     this.principal = principal;
     this.entityId = entityId;
     this.impersonatedOpType = impersonatedOpType;
     this.keytabURI = keytabURI;
-  }
-
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
-    this(entityId, impersonatedOpType, null, null);
   }
 
   public NamespacedEntityId getEntityId() {

@@ -74,8 +74,11 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   @Override
   protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+    ImpersonationRequest jsonRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
+                                                                impersonationRequest.getImpersonatedOpType(),
+                                                                impersonationRequest.getPrincipal());
     PrincipalCredentials principalCredentials =
-      GSON.fromJson(executeRequest(impersonationRequest).getResponseBodyAsString(), PrincipalCredentials.class);
+      GSON.fromJson(executeRequest(jsonRequest).getResponseBodyAsString(), PrincipalCredentials.class);
     LOG.debug("Received response: {}", principalCredentials);
 
     Location location = locationFactory.create(URI.create(principalCredentials.getCredentialsPath()));

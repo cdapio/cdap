@@ -70,8 +70,8 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   @Override
   public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     try {
-      UGIWithPrincipal principal =
-        impersonationRequest.getPrincipal() == null ? null : ugiCache.getIfPresent(impersonationRequest.getPrincipal());
+      UGIWithPrincipal principal = impersonationRequest.getPrincipal() == null ?
+        null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
       if (principal != null) {
         return principal;
       }
