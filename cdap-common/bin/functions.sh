@@ -567,7 +567,6 @@ cdap_service() {
   local readonly __pidfile=${PID_DIR}/${__service}-${IDENT_STRING}.pid
   local readonly __log_prefix=${LOG_DIR}/${__service}-${IDENT_STRING}-${HOSTNAME}
   local readonly __logfile=${__log_prefix}.log
-  local readonly __gc_file=${__log_prefix}.gc
   local readonly __svc=${__service/-server/}
   local readonly __ret
 
@@ -667,6 +666,8 @@ cdap_start_java() {
   JAVA_HEAPMAX=${JAVA_HEAPMAX:-${!JAVA_HEAP_VAR}}
   export JAVA_HEAPMAX
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
+  # Enable GC logging
+  __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__log_prefix}-heap.hprof -verbose:gc -Xloggc:${__log_prefix}-gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
   if [[ ${CDAP_SERVICE} == master ]]; then
     # Determine SPARK_HOME
     cdap_set_spark || logecho "Could not determine SPARK_HOME! Spark support unavailable!"
