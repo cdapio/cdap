@@ -198,7 +198,7 @@
 
   <property>
     <name>twill.jvm.gc.opts</name>
-    <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
+    <value>-verbose:gc -Xloggc:&lt;LOG_DIR&gt;/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M</value>
     <description>
       Java garbage collection options for all Apache Twill containers;
       "&lt;LOG_DIR&gt;" is the location of the log directory in the
@@ -358,7 +358,7 @@
     <name>app.program.jvm.opts</name>
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
     <description>
-      Java options for all program containers
+      Java options for all Apache Twill containers
     </description>
   </property>
 
