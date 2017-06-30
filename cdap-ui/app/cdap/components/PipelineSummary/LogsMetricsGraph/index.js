@@ -91,7 +91,7 @@ export default class LogsMetricsGraph extends Component {
     let {errors, warnings} = this.getDataClusters();
     let height = getGraphHeight(this.containerRef);
     let xDomain = [];
-    if (errors.length > 0) {
+    if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
     }
     let popOverData, logUrl;
@@ -136,24 +136,34 @@ export default class LogsMetricsGraph extends Component {
             tickFormat={xTickFormat(this.props)}
           />
           <YAxis tickFormat={(v) => Math.floor(v) !== v ? '' : v} />
-          <BarSeries
-            cluster="runs"
-            color={WARNINGBARCOLOR}
-            onValueClick={(d) => {
-              this.setState({
-                currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
-              });
-            }}
-            data={warnings}/>
-          <BarSeries
-            cluster="runs"
-            color={ERRORBARCOLOR}
-            onValueClick={(d) => {
-              this.setState({
-                currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
-              });
-            }}
-            data={errors}/>
+          {
+            warnings.length > 0 ?
+              <BarSeries
+                cluster="runs"
+                color={WARNINGBARCOLOR}
+                onValueClick={(d) => {
+                  this.setState({
+                    currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+                  });
+                }}
+                data={warnings}/>
+              :
+                null
+          }
+          {
+            errors.length > 0 ?
+              <BarSeries
+                cluster="runs"
+                color={ERRORBARCOLOR}
+                onValueClick={(d) => {
+                  this.setState({
+                    currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+                  });
+                }}
+                data={errors}/>
+              :
+                null
+          }
           {
             this.state.currentHoveredElement && popOverData ?
               (

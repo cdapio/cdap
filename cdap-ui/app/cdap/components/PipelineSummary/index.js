@@ -26,6 +26,8 @@ import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import {MyPipelineApi} from 'api/pipeline';
+import {getDuration} from 'components/PipelineSummary/RunsGraphHelpers';
 
 const PREFIX = 'features.PipelineSummary';
 
@@ -47,7 +49,8 @@ export default class PipelineSummary extends Component {
       activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
       loading: true,
       start: null,
-      end: null
+      end: null,
+      avgRunTime: '-'
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
@@ -113,6 +116,22 @@ export default class PipelineSummary extends Component {
     }
   }
   componentDidMount() {
+    let {namespaceId: namespace, appId, programId: workflowId} = this.props;
+    MyPipelineApi.pollStatistics({
+      namespace,
+      appId,
+      workflowId
+    })
+      .subscribe(
+        res => {
+          if (typeof res !== 'object') {
+            return;
+          }
+          this.setState({
+            avgRunTime: res.avgRunTime
+          });
+        }
+      );
     this.storeSubscription = PipelineSummaryStore.subscribe(() => {
       let {runs, loading} = PipelineSummaryStore.getState().pipelinerunssummary;
       let logsMetrics = runs.map(run => ({
@@ -192,11 +211,18 @@ export default class PipelineSummary extends Component {
       <div className="top-title-bar">
         <div> {T.translate(`${PREFIX}.title`)}</div>
         <div className="stats-container text-xs-right">
+          <span>
+            <strong>{T.translate(`${PREFIX}.statsContainer.runTime`)}: </strong>
+          </span>
+          <span>
+            <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
+            {getDuration(this.state.avgRunTime)}
+          </span>
+          <span>
+            <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
+            {this.state.totalRunsCount}
+          </span>
           {
-            <span>
-              <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
-              {this.state.totalRunsCount}
-            </span>
             /*
               TODO: Will come in a later PR
               <span className="run-times">

@@ -1050,6 +1050,7 @@ features:
       max: Max
       runTime: Run Time
       totalRuns: TotalRuns
+      avgRunTime: Average
     title: 'Summary'
   PropertiesEditor:
     AddProperty:

@@ -114,3 +114,13 @@ export function tickFormatBasedOnTimeResolution(timeResolution) {
     return v;
   };
 }
+
+export function getDuration(time) {
+  if (typeof time !== 'number') {
+    return '-';
+  }
+  if (time < ONE_MIN_SECONDS) {
+    return `${time} seconds`;
+  }
+  return moment.duration(time, 'seconds').humanize();
+}
