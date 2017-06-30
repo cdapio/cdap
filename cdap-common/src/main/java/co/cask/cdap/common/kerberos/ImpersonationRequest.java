@@ -36,7 +36,7 @@ public class ImpersonationRequest {
     this(entityId, impersonatedOpType, null);
   }
 
-  // principal is needed for remote side to make query to master but we should not pass the key tab uri
+  // principal is needed for RemoteUGIProvider to make query to master but we should not pass the key tab uri
   public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType, String principal) {
     this(entityId, impersonatedOpType, principal, null);
   }
