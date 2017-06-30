@@ -1007,13 +1007,13 @@ features:
       legend1: Log Warning in a run
       legend2: Log Errors in a run
       table:
+        body:
+          viewLog: View Log
         header:
           errors: Errors
           runCount: Run #
           startTime: Start
           warnings: Warnings
-        body:
-          viewLog: View Log
       title: Log Errors and Warnings
       xAxisTitle: Pipeline Run #
       yAxisTitle: Number of Errors and Warnings
@@ -1045,12 +1045,12 @@ features:
       sinceInception: Since Inception
     statsContainer:
       avg: Average
+      avgRunTime: Average
       currentSchedule: Current Schedule
       min: Min
       max: Max
       runTime: Run Time
       totalRuns: TotalRuns
-      avgRunTime: Average
     title: 'Summary'
   PropertiesEditor:
     AddProperty:
