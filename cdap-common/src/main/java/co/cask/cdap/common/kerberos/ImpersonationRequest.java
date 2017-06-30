@@ -37,14 +37,13 @@ public class ImpersonationRequest {
   }
 
   // principal is needed for remote side to make query to master but we should not pass the key tab uri
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
-                              @Nullable String principal) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType, String principal) {
     this(entityId, impersonatedOpType, principal, null);
   }
 
   // principal and keytabURI is needed for master side to look up the key tab file.
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
-                              @Nullable String principal, @Nullable String keytabURI) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType, String principal,
+                              String keytabURI) {
     this.principal = principal;
     this.entityId = entityId;
     this.impersonatedOpType = impersonatedOpType;
