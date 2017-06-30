@@ -84,6 +84,18 @@ export default class LogsMetricsGraph extends Component {
         runid: run.runid
       });
     });
+    if (errors.length === 1 || warnings.length === 1) {
+      // FIXME: This is a hack. Something is not right with VerticalBarSeries
+      // if it has only one data point. The width of rect element is not scaled correctly
+      errors.push({
+        x: errors[0].x + 1,
+        y: ''
+      });
+      warnings.push({
+        x: errors[0].x + 1,
+        y: ''
+      });
+    }
     return {errors, warnings};
   }
   renderChart() {

@@ -100,7 +100,7 @@ export default class RunsHistoryGraph extends Component {
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let height = getGraphHeight(this.containerRef);
-    let maxYDomain = Number.MAX_SAFE_INTEGER, minYDomain = 0;
+    let maxYDomain = Number.MAX_SAFE_INTEGER, minYDomain = {y: 0};
     if (this.state.data.length > 1) {
       maxYDomain = this.state.data.reduce((prev, curr) => {
         return (prev.y > curr.y) ? prev : curr;
