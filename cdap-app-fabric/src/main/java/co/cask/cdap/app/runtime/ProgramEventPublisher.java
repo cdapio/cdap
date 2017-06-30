@@ -58,8 +58,8 @@ public class ProgramEventPublisher {
     this.programId = programId;
     this.runId = runId;
     this.defaultProperties = ImmutableMap.of(
-      ProgramOptionConstants.PROGRAM_ID, programId.toString(),
-      ProgramOptionConstants.RUN_ID, runId.toString()
+      ProgramOptionConstants.PROGRAM_ID, GSON.toJson(programId),
+      ProgramOptionConstants.RUN_ID, runId.getId()
     );
     this.topicId = NamespaceId.SYSTEM.topic(this.cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     this.state = new AtomicReference<>(ProgramController.State.STARTING);

@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +80,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
     @Override
     protected void processNotification(DatasetContext context, Notification notification) throws Exception {
       String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
-      String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
+      String runIdString = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
       String startTimeString = notification.getProperties().get(ProgramOptionConstants.LOGICAL_START_TIME);
@@ -102,41 +103,41 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
       }
 
       // Ignore notifications which specify an invalid ProgramId, RunId, or ProgramRunStatus
-      if (programIdString == null || programRunId == null || programRunStatus == null) {
+      if (programIdString == null || runIdString == null || programRunStatus == null) {
         return;
       }
+      ProgramId programId = GSON.fromJson(programIdString, ProgramId.class);
 
-      ProgramId programId = ProgramId.fromString(programIdString);
       switch(programRunStatus) {
         case RUNNING:
           Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
           Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
           if (startTime == -1) {
-            LOG.debug("Start time not specified in notification for program id {}, not persisting" + programIdString);
+            LOG.debug("Start time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
-          runtimeStore.setStart(programId, programRunId, startTime, twillRunId, userOverrides, systemOverrides);
+          runtimeStore.setStart(programId, runIdString, startTime, twillRunId, userOverrides, systemOverrides);
           break;
         case COMPLETED:
         case SUSPENDED:
         case KILLED:
           if (endTime == -1) {
-            LOG.debug("End time not specified in notification for program id {}, not persisting" + programIdString);
+            LOG.debug("End time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
-          runtimeStore.setStop(programId, programRunId, endTime, programRunStatus);
+          runtimeStore.setStop(programId, runIdString, endTime, programRunStatus);
           break;
         case FAILED:
           if (endTime == -1) {
-            LOG.debug("End time not specified in notification for program id {}, not persisting" + programIdString);
+            LOG.debug("End time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
           BasicThrowable cause = GSON.fromJson(basicThrowableString, BasicThrowable.class);
-          runtimeStore.setStop(programId, programRunId, endTime, ProgramRunStatus.FAILED, cause);
+          runtimeStore.setStop(programId, runIdString, endTime, ProgramRunStatus.FAILED, cause);
           break;
         default:
           throw new IllegalArgumentException(String.format("Cannot persist ProgramRunStatus %s for ProgramId %s",
-                                                           programRunStatus.toString(), programIdString));
+                                                           programRunStatus.toString(), programId));
       }
     }
   }
