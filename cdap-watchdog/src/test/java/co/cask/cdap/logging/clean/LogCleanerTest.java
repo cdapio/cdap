@@ -118,7 +118,8 @@ public class LogCleanerTest {
     // scan for old files and make sure we only get the old meta data entries.
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
+                                                              null);
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),

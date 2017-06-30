@@ -26,9 +26,11 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of {@link DatasetManager} that performs operation via {@link DatasetFramework}.
@@ -38,20 +40,24 @@ public class DefaultDatasetManager implements DatasetManager {
   private final DatasetFramework datasetFramework;
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
+  @Nullable
+  private final KerberosPrincipalId principalId;
 
   /**
    * Constructor.
-   *
    * @param datasetFramework the {@link DatasetFramework} to use for performing the actual operation
    * @param namespaceId the {@link NamespaceId} for all dataset managed through this class
    * @param retryStrategy the {@link RetryStrategy} to use for {@link RetryableException}.
+   * @param principalId the {@link KerberosPrincipalId} for all datasets created.
    */
   public DefaultDatasetManager(DatasetFramework datasetFramework,
                                NamespaceId namespaceId,
-                               RetryStrategy retryStrategy) {
+                               RetryStrategy retryStrategy,
+                               @Nullable KerberosPrincipalId principalId) {
     this.datasetFramework = datasetFramework;
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
+    this.principalId = principalId;
   }
 
   @Override
@@ -99,7 +105,12 @@ public class DefaultDatasetManager implements DatasetManager {
       @Override
       public Void call() throws DatasetManagementException {
         try {
-          datasetFramework.addInstance(type, createInstanceId(name), properties);
+          // we have to do this check since addInstance method can only be used when app impersonation is enabled
+          if (principalId != null) {
+            datasetFramework.addInstance(type, createInstanceId(name), properties, principalId);
+          } else {
+            datasetFramework.addInstance(type, createInstanceId(name), properties);
+          }
         } catch (IOException ioe) {
           // not the prettiest message, but this replicates exactly what RemoteDatasetFramework throws
           throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",

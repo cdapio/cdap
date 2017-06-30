@@ -121,7 +121,8 @@ public class FileMetadataTest {
   public void testFileMetadataReadWrite() throws Exception {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
+                                                              null);
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
@@ -169,7 +170,8 @@ public class FileMetadataTest {
   public void testFileMetadataReadWriteAcrossFormats() throws Exception {
     DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
     DatasetManager datasetManager = new DefaultDatasetManager(datasetFramework, NamespaceId.SYSTEM,
-                                                              co.cask.cdap.common.service.RetryStrategies.noRetry());
+                                                              co.cask.cdap.common.service.RetryStrategies.noRetry(),
+                                                              null);
     Transactional transactional = Transactions.createTransactionalWithRetry(
       Transactions.createTransactional(new MultiThreadDatasetCache(
         new SystemDatasetInstantiator(datasetFramework), injector.getInstance(TransactionSystemClient.class),
