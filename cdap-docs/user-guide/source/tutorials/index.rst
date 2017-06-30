@@ -10,7 +10,6 @@ CDAP Tutorials
 ==============
 
 .. toctree::
-	:hidden:
 
     MySQL Customer Data <address>
 

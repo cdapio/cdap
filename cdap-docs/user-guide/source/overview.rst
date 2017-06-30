@@ -7,7 +7,6 @@
 Overview of Core CDAP Concepts
 ==============================
 
-
 What is CDAP?
 -------------
 Cask Data Application Platform (CDAP) is an open source framework to build and deploy data applications on Apache™ Hadoop®.
