@@ -75,7 +75,7 @@ function add_parcels_to_repo_staging() {
   done
   # We only build el6, so use that as key
   for p in $(ls -1 CDAP-*-el6.parcel) ; do
-    for d in el7 precise trusty wheezy ; do
+    for d in el5 el7 precise trusty wheezy ; do
       ln -sf ${p} ${p/el6/${d}} || (echo "Failed to symlink ${p/el6/${d}} to ${p}" && return 1)
     done
   done
