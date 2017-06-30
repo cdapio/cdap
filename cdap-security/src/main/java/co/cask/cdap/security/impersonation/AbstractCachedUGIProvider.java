@@ -64,12 +64,12 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
   }
 
   @Override
-  public UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     try {
-      UGIWithPrincipal principal = impersonationRequest.getPrincipal() == null ?
+      UGIWithPrincipal ugi = impersonationRequest.getPrincipal() == null ?
         null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
-      if (principal != null) {
-        return principal;
+      if (ugi != null) {
+        return ugi;
       }
       checkImpersonationRequest(impersonationRequest);
       ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);

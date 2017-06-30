@@ -73,6 +73,8 @@ public class ImpersonationRequest {
     return "ImpersonationRequest{" +
       "entityId=" + entityId +
       ", impersonatedOpType=" + impersonatedOpType +
+      ", principal=" + principal +
+      ", keytabURI=" + keytabURI +
       '}';
   }
 
@@ -86,11 +88,13 @@ public class ImpersonationRequest {
     }
     ImpersonationRequest that = (ImpersonationRequest) o;
     return Objects.equals(entityId, that.entityId) &&
-      impersonatedOpType == that.impersonatedOpType;
+      impersonatedOpType == that.impersonatedOpType &&
+      Objects.equals(principal, that.principal) &&
+      Objects.equals(keytabURI, that.keytabURI);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, impersonatedOpType);
+    return Objects.hash(entityId, impersonatedOpType, principal, keytabURI);
   }
 }
