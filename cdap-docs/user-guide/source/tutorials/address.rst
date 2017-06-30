@@ -9,22 +9,29 @@
 Example: Creating a Mailing Address from Incomplete Customer Data
 =================================================================
 
-Question
---------
-I have customer data in a MySQL database. I want to create mailing labels from this data. However, I only have street number, city, and state, but no zip. How can I generate a mailing address?
+Introduction
+------------
+I have customer data in a MySQL database. I want to create mailing labels from this data. However, I only have street number, city, and state, but no zip. 
+
+How can I generate a mailing address in the form below?
+
+``Betty\n09150 Mcbride Pass\nEvansville, IN, 47720``  
 
 Data
 ------
-Click below to donwload the file containing the required datasets.
+Click below to donwload a `.zip` file containing the data necessary to complete the tutorial.
 
 :download:`Zipfile </_include/tutorials/address-data.zip>`
 
 Video Tutorial
 --------------
-..  youtube:: ntOXeYecj7o
+..  youtube:: RGvOLcPVFT8
 
 Step-by-Step Walkthrough
 ------------------------
+
+Introduction
+~~~~~~~~~~~~
 In this tutorial, we will prepare envelope mailing addresses from customer data using two auxilary files, one which maps cities to ZIP codes and one which maps state names to abbreviated state names. 
 
 We want to create mailing addresses in the form:
@@ -33,6 +40,8 @@ We want to create mailing addresses in the form:
 
 since our mail printing system recognizes the ``\n`` delimiter.
 
+Loading the Data
+~~~~~~~~~~~~~~~~
 To start, we need to import the data. ``demo.sql`` contains the customer data. In your shell, log into MySQL (for me, this looks like ``mysql -u root``) and create a database called ``demo`` (by running ``CREATE DATABASE demo;``). Then exit mysql ('exit;``).
 
 In your shell, nagivate to the same directory as ``demo.sql,`` and run ``mysql -u root -p demo < demo.sql``. The database ``demo`` should now contain a table ``customer`` with customer data. 
@@ -45,7 +54,7 @@ In the "Add Connection" prompt, choose a name for the database (this is a name f
 
 .. figure:: /_images/tutorials/address/address_connect.jpeg
   :figwidth: 100%
-  :width: 800px
+  :width: 500px
   :align: center
   :class: bordered-image
 
@@ -53,13 +62,15 @@ Once you have connected to the database, click on the database name you chose, w
 
 Next, we need to import our two auxilary filesets, ``zips.txt`` and ``states.json``. Click the gray table with white arrow in the upper left hand corner, and navigate to where the files are stored in your system. Click the file to upload, and repeat this process to upload the next file. Both files should be loaded into Data Preparation now. 
 
+Abbreviating the State Names
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Our goal is to create a Table which maps state names to their abbreviations, since our customer data only has the full state names. Similarly, we don't have the ZIP codes of our customers, so we want to create a mapping between cities and ZIP codes.
 
 To create our first mapping, let's start with ``states.json``. In the Data Prep UI, select this tab. Using the caret icon next to the ``Body`` column, select "Parse" and "JSON". Apply this directive twice. We apply it twice because we first must parse the array, then each JSON object in the array. Change the column names ``body_name`` to ``name`` and ``body_abbreviation`` to abbreviation simply by clicking on the title and replacing the text.
 
 .. figure:: /_images/tutorials/address/address_parse_states.jpeg
   :figwidth: 100%
-  :width: 800px
+  :width: 500px
   :align: center
   :class: bordered-image
 
@@ -69,12 +80,14 @@ Now, click "Create Pipeline" and select "Batch". You are now in the Pipelines UI
 
 .. figure:: /_images/tutorials/address/address_state_pipeline.jpeg
   :figwidth: 100%
-  :width: 800px
+  :width: 500px
   :align: center
   :class: bordered-image
 
 Deploy the pipeline by clicking "Deploy." Run the pipeline by clicking "Run".
 
+Going from City Names to ZIP Codes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Now, return to Data Preparation. Select 'zips.txt', and as you did above, parse this file as JSON. 
 
 Here's where things get a little tricky. We want to use this file to create a mapping between cities and zip codes, but there could be cities with the same names in different states. 
@@ -83,7 +96,7 @@ To solve this, we will combine the city and state name into a new column so we c
 
 .. figure:: /_images/tutorials/address/address_rowkey_zip.jpeg
   :figwidth: 100%
-  :width: 800px
+  :width: 500px
   :align: center
   :class: bordered-image
 
@@ -91,11 +104,13 @@ Next, go ahead and check the boxes for ``body_loc`` and ``body_pop`` in addition
 
 Now, click "Create Pipeline," and configure the pipeline in the same way we did above, using the sink name "ZipSink" and "Row Field" as "address".
 
+Building the Mailing Addresses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Once you run this pipeline, we are now reaady to create the mailing addresses. First, return to Data Preparation and select the ``customers`` tab. From here, type the following command into the prompt at the bottom of the page:
 
 .. figure:: /_images/tutorials/address/address_state_table.jpeg
   :figwidth: 100%
-  :width: 800px
+  :width: 5 00px
   :align: center
   :class: bordered-image
 

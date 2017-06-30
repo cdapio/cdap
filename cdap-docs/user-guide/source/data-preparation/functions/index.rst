@@ -18,4 +18,4 @@ CDAP Tutorials
 	Date functions <date-functions>
 	DDL functions <ddl-functions>
 
-
+Functions are used to transform data in the Data Preparation UI.

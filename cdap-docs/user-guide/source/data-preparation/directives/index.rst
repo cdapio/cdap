@@ -82,7 +82,5 @@ CDAP Tutorials
 	write-as-json-object <write-as-json-object>
 	xpath <xpath>
 
-.. |concepts| replace:: **Concepts:**
-.. concepts: concepts.html
 
-- |concepts|_ These concepts are pretty important!
+Directives are used to transform data in the Data Preparation UI.

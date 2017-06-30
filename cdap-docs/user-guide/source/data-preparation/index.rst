@@ -5,12 +5,11 @@
 
 :hide-toc: true
 
-==============
-CDAP Tutorials
-==============
+==============================
+Data Preparation Documentation
+==============================
 
 .. toctree::
-	:hidden:
 
 	Concepts <concepts>
 	Directives <directives/index>
@@ -19,7 +18,5 @@ CDAP Tutorials
     Performance <peformance>
     Exclusion and Aliasing <exclusion-and-aliasing>
 
-.. |concepts| replace:: **Concepts:**
-.. concepts: concepts.html
-
-- |concepts|_ These concepts are pretty important!
+This section documents the functionality of the Data Preparation UI tool, which is used to explore and apply basic transformations to data loaded from files or 
+supported databases.

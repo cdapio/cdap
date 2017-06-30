@@ -22,10 +22,6 @@ CDAP Pipelines
     Running Pipelines <running-pipelines>
     Plugin Management <plugin-management>
     Plugin Reference <plugins/index>
-    Developing Pipelines <developing-pipelines>
-    Developing Plugins <developing-plugins/index>
-    How CDAP Pipelines Work <how-cdap-pipelines-work>
-
 
 ..  ..    youtube::  JeqJrBW1UCU
 ..      :align: center

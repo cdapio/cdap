@@ -15,7 +15,9 @@ CDAP Tutorials
     MySQL Customer Data <address>
 
 
-.. |address| replace:: **Address**
+Tutorials provide a quick onboarding point to understand how to use the CDAP UI and how it can help solve common use cases. 
+
+.. |address| replace:: **Address:**
 .. _address: address.html
 
 - |address|_ In this tutorial, we will prepare envelope mailing addresses from customer data using two auxilary files, one which maps cities to ZIP codes and one which maps state names to abbreviated state names. 

@@ -19,5 +19,4 @@ CDAP Tutorials
 	Schema Registry <schema-registry>
 	Services <services>
 
-
-
+Services in data preparation provide the ability ability to expose data using a RESTful interface.

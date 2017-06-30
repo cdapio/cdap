@@ -8,8 +8,7 @@ CDAP User Guide Table of Contents
 
 .. toctree::
 
-    Introduction <index>
-    Getting Started <getting-started/index>
+    Overview <overview>
 	Tutorials <tutorials/index>
 	Cheatsheets <cheatsheets/index>
     Data Preparation <data-preparation/index>
