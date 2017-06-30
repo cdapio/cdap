@@ -43,6 +43,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import com.google.common.net.HttpHeaders;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -419,19 +420,21 @@ public final class ClientMessagingService implements MessagingService {
         @Override
         public String get() {
           // If there is any error, read the response body from the error stream
-          InputStream errorStream = urlConn.getErrorStream();
-          try {
+          try (InputStream errorStream = urlConn.getErrorStream()) {
             return errorStream == null ? "" : new String(ByteStreams.toByteArray(errorStream),
                                                          StandardCharsets.UTF_8);
           } catch (IOException e) {
             return "";
+          } finally {
+            urlConn.disconnect();
           }
         }
       }, "Failed to update topic " + topicId);
       verifyContentType(urlConn.getHeaderFields(), "avro/binary");
 
       // Decode the avro array manually instead of using DatumReader in order to support streaming decode.
-      final Decoder decoder = DecoderFactory.get().binaryDecoder(urlConn.getInputStream(), null);
+      final InputStream inputStream = urlConn.getInputStream();
+      final Decoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
       final long initialItemCount = decoder.readArrayStart();
       return new AbstractCloseableIterator<RawMessage>() {
 
@@ -468,6 +471,7 @@ public final class ClientMessagingService implements MessagingService {
 
         @Override
         public void close() {
+          Closeables.closeQuietly(inputStream);
           urlConn.disconnect();
         }
       };
