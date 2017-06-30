@@ -206,6 +206,7 @@ export default class AddToHydratorModal extends Component {
 
     plugin = plugin[pluginName];
 
+    plugin.properties.schema = "{\"name\":\"kafkaAvroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}";
     let batchPluginInfo = {
       name: plugin.name,
       label: plugin.name,
