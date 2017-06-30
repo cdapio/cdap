@@ -87,12 +87,13 @@ export default class LogsMetricsGraph extends Component {
     if (errors.length === 1 || warnings.length === 1) {
       // FIXME: This is a hack. Something is not right with VerticalBarSeries
       // if it has only one data point. The width of rect element is not scaled correctly
+      let maxXValue = errors.length === 1 ? errors[0].x : warnings[0].x;
       errors.push({
-        x: errors[0].x + 1,
+        x: maxXValue + 1,
         y: ''
       });
       warnings.push({
-        x: errors[0].x + 1,
+        x: maxXValue + 1,
         y: ''
       });
     }

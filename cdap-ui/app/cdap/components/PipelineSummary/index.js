@@ -85,9 +85,9 @@ export default class PipelineSummary extends Component {
         label: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
         onClick: () => {
           this.setState({
-          activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
-          filterType: 'time'
-        });
+            activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
+            filterType: 'time'
+          });
           fetchSummary({
             namespaceId,
             appId,
