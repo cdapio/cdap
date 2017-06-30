@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -44,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -75,7 +73,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
-  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -84,7 +81,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
@@ -93,7 +90,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -144,6 +140,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService);
 
+      // Setup Program Event Publisher
+      final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                    programId, runId);
+
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
@@ -161,8 +161,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                    userArgs.asMap(), systemArgs.asMap());
+              programEventPublisher.running(twillRunId, finalStartTimeInSeconds, userArgs, systemArgs);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -182,8 +181,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         finalRunStatus, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -196,9 +195,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.ERROR.getRunStatus(), failure);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

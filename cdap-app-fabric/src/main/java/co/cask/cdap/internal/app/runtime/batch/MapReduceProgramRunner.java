@@ -25,8 +25,8 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -50,7 +50,6 @@ import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -95,7 +94,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final NamespacedLocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
@@ -111,7 +109,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
+                                DiscoveryServiceClient discoveryServiceClient,
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
@@ -126,7 +124,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -232,7 +229,9 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
                                                         final Iterable<Closeable> closeables,
                                                         final Arguments arguments, final Arguments userArgs) {
-
+    // Setup Program Event Publisher
+    final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                  programId, runId);
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     return new ServiceListenerAdapter() {
@@ -249,8 +248,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId, userArgs.asMap(),
-                                  arguments.asMap());
+            programEventPublisher.running(twillRunId, finalStartTimeInSeconds, userArgs, arguments);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -269,8 +267,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+            programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                                                       finalRunStatus, null);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -282,8 +280,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+            programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                       ProgramController.State.ERROR.getRunStatus(), failure);
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

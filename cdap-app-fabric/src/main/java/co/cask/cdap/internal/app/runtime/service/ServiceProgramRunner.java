@@ -24,9 +24,9 @@ import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -43,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -74,7 +73,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -84,7 +82,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                              SecureStore secureStore, SecureStoreManager secureStoreManager,
                               MessagingService messagingService,
                               DefaultArtifactManager defaultArtifactManager) {
     super(cConf);
@@ -93,7 +91,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -133,6 +130,10 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
     try {
+      // Setup Program Event Publisher
+      final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                    programId, runId);
+
       ServiceHttpServer component = new ServiceHttpServer(host, program, options, cConf, spec,
                                                           instanceId, instanceCount, serviceAnnouncer,
                                                           metricsCollectionService, datasetFramework,
@@ -155,8 +156,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                    userArgs.asMap(), systemArgs.asMap());
+              programEventPublisher.running(twillRunId, finalStartTimeInSeconds, userArgs, systemArgs);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -176,8 +176,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         finalRunStatus, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -190,9 +190,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.ERROR.getRunStatus(), failure);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

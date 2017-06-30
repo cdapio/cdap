@@ -23,10 +23,11 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramEventPublisher;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.common.service.Retries;
@@ -39,7 +40,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
@@ -75,19 +76,21 @@ import javax.annotation.Nullable;
  */
 public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
+  private final CConfiguration cConf;
+  private final MessagingService messagingService;
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final StreamAdmin streamAdmin;
-  private final RuntimeStore runtimeStore;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
-                           RuntimeStore runtimeStore, QueueAdmin queueAdmin,
-                           TransactionExecutorFactory txExecutorFactory) {
+  public FlowProgramRunner(CConfiguration cConf, MessagingService messagingService,
+                           Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
+                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
+    this.cConf = cConf;
+    this.messagingService = messagingService;
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
-    this.runtimeStore = runtimeStore;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -115,6 +118,9 @@ public final class FlowProgramRunner implements ProgramRunner {
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
+      // Setup Program Event Publisher
+      final ProgramEventPublisher programEventPublisher = new ProgramEventPublisher(cConf, messagingService,
+                                                                                    programId, runId);
       final ProgramController controller = new FlowProgramController(flowlets, program, options,
                                                                      flowSpec, consumerQueues);
 
@@ -132,8 +138,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                    userArgs.asMap(), systemArgs.asMap());
+              programEventPublisher.running(twillRunId, finalStartTimeInSeconds, userArgs, systemArgs);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -152,9 +157,8 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.COMPLETED.getRunStatus());
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.COMPLETED.getRunStatus(), null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -166,9 +170,8 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.KILLED.getRunStatus());
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.KILLED.getRunStatus(), null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -180,7 +183,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setSuspend(programId, runId.getId());
+              programEventPublisher.suspend();
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -192,7 +195,7 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setResume(programId, runId.getId());
+              programEventPublisher.resume();
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -204,9 +207,8 @@ public final class FlowProgramRunner implements ProgramRunner {
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+              programEventPublisher.stop(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                                         ProgramController.State.ERROR.getRunStatus(), cause);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
