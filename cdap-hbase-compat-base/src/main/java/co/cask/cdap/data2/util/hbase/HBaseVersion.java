@@ -45,6 +45,7 @@ public class HBaseVersion {
   private static final String CDH59_CLASSIFIER = "cdh5.9.";
   private static final String CDH510_CLASSIFIER = "cdh5.10.";
   private static final String CDH511_CLASSIFIER = "cdh5.11.";
+  private static final String CDH512_CLASSIFIER = "cdh5.12.";
   private static final String CDH_CLASSIFIER = "cdh";
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseVersion.class);
@@ -235,43 +236,57 @@ public class HBaseVersion {
   static Version determineVersionFromVersionString(String versionString) throws ParseException {
     if (versionString.startsWith(HBASE_94_VERSION)) {
       return Version.HBASE_94;
-    } else if (versionString.startsWith(HBASE_96_VERSION)) {
+    }
+    if (versionString.startsWith(HBASE_96_VERSION)) {
       return Version.HBASE_96;
-    } else if (versionString.startsWith(HBASE_98_VERSION)) {
+    }
+    if (versionString.startsWith(HBASE_98_VERSION)) {
       return Version.HBASE_98;
-    } else if (versionString.startsWith(HBASE_10_VERSION)) {
-      VersionNumber ver = VersionNumber.create(versionString);
-      if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
-        return Version.HBASE_10_CDH55;
-      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
-        return Version.HBASE_10_CDH56;
-      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-        return Version.HBASE_10_CDH;
-      } else {
-        return Version.HBASE_10;
-      }
-    } else if (versionString.startsWith(HBASE_11_VERSION)) {
+    }
+    VersionNumber ver = VersionNumber.create(versionString);
+    if (versionString.startsWith(HBASE_10_VERSION)) {
+      return getHBase10VersionFromVersion(ver);
+    }
+    if (versionString.startsWith(HBASE_11_VERSION)) {
       return Version.HBASE_11;
-    } else if (versionString.startsWith(HBASE_12_VERSION)) {
-      VersionNumber ver = VersionNumber.create(versionString);
-      if (ver.getClassifier() != null &&
-        (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-          // CDH 5.7 compat module can be re-used with CDH 5.[8-11].x
-          ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH511_CLASSIFIER))) {
+    }
+    if (versionString.startsWith(HBASE_12_VERSION)) {
+      return getHBase12VersionFromVersion(ver);
+    }
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      return Version.UNKNOWN_CDH;
+    }
+    return Version.UNKNOWN;
+  }
+
+  private static Version getHBase10VersionFromVersion(VersionNumber ver) {
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      if (ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
+        return Version.HBASE_10_CDH55;
+      }
+      if (ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
+        return Version.HBASE_10_CDH56;
+      }
+      return Version.HBASE_10_CDH;
+    }
+    return Version.HBASE_10;
+  }
+
+  private static Version getHBase12VersionFromVersion(VersionNumber ver) {
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      if (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
+        // CDH 5.7 compat module can be re-used with CDH 5.[8-11].x
+        ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH511_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH512_CLASSIFIER)) {
         return Version.HBASE_12_CDH57;
-      } else {
-        // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
-        return Version.HBASE_11;
       }
+      return Version.UNKNOWN_CDH;
     } else {
-      VersionNumber ver = VersionNumber.create(versionString);
-      if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-        return Version.UNKNOWN_CDH;
-      }
-      return Version.UNKNOWN;
+      // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
+      return Version.HBASE_11;
     }
   }
 }
