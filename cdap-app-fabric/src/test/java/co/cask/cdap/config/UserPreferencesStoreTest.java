@@ -17,6 +17,7 @@
 package co.cask.cdap.config;
 
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.junit.Assert;
@@ -26,10 +27,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tests for {@link ConfigStore}
+ * Tests for {@link ConfigStore}, {@link ConsoleSettingsStore}, {@link DashboardStore} and {@link PreferencesStore}.
  */
-public class ConfigStoreTest extends AppFabricTestBase {
+public class UserPreferencesStoreTest extends AppFabricTestBase {
 
+  // Config Store tests
   @Test
   public void testSimpleConfig() throws Exception {
     String namespace = "myspace";
@@ -142,5 +144,100 @@ public class ConfigStoreTest extends AppFabricTestBase {
     Assert.assertEquals(myConfig, configStore.get(namespace, type, id));
     configStore.delete(namespace, type, id);
     Assert.assertEquals(0, configStore.list(namespace, type).size());
+  }
+
+  // Testing ConsoleSettingStore
+  @Test
+  public void testConsoleStore() throws Exception {
+    ConsoleSettingsStore store = getInjector().getInstance(ConsoleSettingsStore.class);
+    int configCount = 10;
+    Map<String, String> emptyMap = ImmutableMap.of();
+    for (int i = 0; i < configCount; i++) {
+      store.put(new Config(String.valueOf(i), emptyMap));
+    }
+
+    Assert.assertEquals(configCount, store.list().size());
+    store.delete();
+    Assert.assertTrue(store.list().isEmpty());
+  }
+
+  // Testing DashboardStore
+  @Test
+  public void testDashboardDeletingNamespace() throws Exception {
+    String namespace = "myspace";
+    int dashboardCount = 10;
+    Map<String, String> emptyMap = ImmutableMap.of();
+    DashboardStore store = getInjector().getInstance(DashboardStore.class);
+    for (int i = 0; i < dashboardCount; i++) {
+      store.create(namespace, emptyMap);
+    }
+
+    Assert.assertEquals(dashboardCount, store.list(namespace).size());
+    store.delete(namespace);
+    Assert.assertTrue(store.list(namespace).isEmpty());
+  }
+
+  // Testing PrefernecesStore
+  @Test
+  public void testCleanSlate() throws Exception {
+    Map<String, String> emptyMap = ImmutableMap.of();
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    Assert.assertEquals(emptyMap, store.getProperties());
+    Assert.assertEquals(emptyMap, store.getProperties("somenamespace"));
+    Assert.assertEquals(emptyMap, store.getProperties(Id.Namespace.DEFAULT.getId()));
+    Assert.assertEquals(emptyMap, store.getResolvedProperties());
+    Assert.assertEquals(emptyMap, store.getResolvedProperties("a", "b", "c", "d"));
+    // should not throw any exception if try to delete properties without storing anything
+    store.deleteProperties();
+    store.deleteProperties(Id.Namespace.DEFAULT.getId());
+    store.deleteProperties("a", "x", "y", "z");
+  }
+
+  @Test
+  public void testBasicProperties() throws Exception {
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("key", "instance");
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    store.setProperties(propMap);
+    Assert.assertEquals(propMap, store.getProperties());
+    Assert.assertEquals(propMap, store.getResolvedProperties("a", "b", "c", "d"));
+    Assert.assertEquals(propMap, store.getResolvedProperties("myspace"));
+    Assert.assertEquals(ImmutableMap.<String, String>of(), store.getProperties("myspace"));
+    store.deleteProperties();
+    propMap.clear();
+    Assert.assertEquals(propMap, store.getProperties());
+    Assert.assertEquals(propMap, store.getResolvedProperties("a", "b", "c", "d"));
+    Assert.assertEquals(propMap, store.getResolvedProperties("myspace"));
+  }
+
+  @Test
+  public void testMultiLevelProperties() throws Exception {
+    Map<String, String> propMap = Maps.newHashMap();
+    propMap.put("key", "namespace");
+    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
+    store.setProperties("myspace", propMap);
+    propMap.put("key", "application");
+    store.setProperties("myspace", "app", propMap);
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app"));
+    Assert.assertEquals("namespace", store.getProperties("myspace").get("key"));
+    Assert.assertTrue(store.getProperties("myspace", "notmyapp").isEmpty());
+    Assert.assertEquals("namespace", store.getResolvedProperties("myspace", "notmyapp").get("key"));
+    Assert.assertTrue(store.getProperties("notmyspace").isEmpty());
+    store.deleteProperties("myspace");
+    Assert.assertTrue(store.getProperties("myspace").isEmpty());
+    Assert.assertTrue(store.getResolvedProperties("myspace", "notmyapp").isEmpty());
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app"));
+    store.deleteProperties("myspace", "app");
+    Assert.assertTrue(store.getProperties("myspace", "app").isEmpty());
+    propMap.put("key", "program");
+    store.setProperties("myspace", "app", "type", "prog", propMap);
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "type", "prog"));
+    store.setProperties(ImmutableMap.of("key", "instance"));
+    Assert.assertEquals(propMap, store.getProperties("myspace", "app", "type", "prog"));
+    store.deleteProperties("myspace", "app", "type", "prog");
+    Assert.assertTrue(store.getProperties("myspace", "app", "type", "prog").isEmpty());
+    Assert.assertEquals("instance", store.getResolvedProperties("myspace", "app", "type", "prog").get("key"));
+    store.deleteProperties();
+    Assert.assertEquals(ImmutableMap.<String, String>of(), store.getProperties("myspace", "app", "type", "prog"));
   }
 }
