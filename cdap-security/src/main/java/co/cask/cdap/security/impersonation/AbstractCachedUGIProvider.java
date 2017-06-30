@@ -118,6 +118,10 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       this.request = request;
     }
 
+    public ImpersonationRequest getRequest() {
+      return request;
+    }
+
     @Override
     public boolean equals(Object o) {
       if (this == o) {
@@ -128,10 +132,6 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       }
       UGICacheKey cachekey = (UGICacheKey) o;
       return Objects.equals(request.getPrincipal(), cachekey.getRequest().getPrincipal());
-    }
-
-    public ImpersonationRequest getRequest() {
-      return request;
     }
 
     @Override
