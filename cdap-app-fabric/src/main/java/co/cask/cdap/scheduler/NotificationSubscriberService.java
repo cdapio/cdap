@@ -188,12 +188,13 @@ class NotificationSubscriberService extends AbstractIdleService {
         }, ServiceUnavailableException.class, TopicNotFoundException.class);
         failureCount = 0;
 
-        // The job queue and the last fetched message id was persisted successfully, update the local field as well.
         // Sleep for configured number of milliseconds if there's no notification, otherwise don't sleep
-        if (lastFetchedMessageId != null) {
-          messageId = lastFetchedMessageId;
+        if (lastFetchedMessageId == null) {
           return cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS);
         }
+
+        // The job queue and the last fetched message id was persisted successfully, update the local field as well.
+        messageId = lastFetchedMessageId;
         return 0L;
 
       } catch (ServiceUnavailableException e) {

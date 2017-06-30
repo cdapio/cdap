@@ -43,6 +43,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -50,7 +51,9 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractHDFSStats extends AbstractOperationalStats {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractHDFSStats.class);
-  private static final Logger READ_FAILURE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(60000));
+  private static final Logger READ_FAILURE_LOG =
+    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.DAYS.toMillis(1)));
+
   @VisibleForTesting
   static final String SERVICE_NAME = "HDFS";
 
