@@ -103,13 +103,13 @@ export function getTimeResolution(maxYDomain) {
 export function tickFormatBasedOnTimeResolution(timeResolution) {
   return (v) => {
     if (timeResolution === MINS_RESOLUTION) {
-      return v / ONE_MIN_SECONDS;
+      return (v / ONE_MIN_SECONDS).toFixed(2);
     }
     if (timeResolution === HOURS_RESOLUTION) {
-      return v / (ONE_HOUR_SECONDS);
+      return (v / (ONE_HOUR_SECONDS)).toFixed(2);
     }
     if (timeResolution === DAYS_RESOLUTION) {
-      return v / ONE_DAY_SECONDS;
+      return (v / ONE_DAY_SECONDS).toFixed(2);
     }
     return v;
   };
