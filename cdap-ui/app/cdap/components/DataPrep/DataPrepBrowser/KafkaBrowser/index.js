@@ -14,74 +14,73 @@
  * the License.
  */
 
-import React, {Component, PropTypes} from 'react';
+import React, { Component, PropTypes } from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import DataPrepApi from 'api/dataprep';
-import isNil from 'lodash/isNil';
 import NamespaceStore from 'services/NamespaceStore';
-import T from 'i18n-react';
+import MyDataPrepApi from 'api/dataprep';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import {Input} from 'reactstrap';
 import IconSVG from 'components/IconSVG';
-import ee from 'event-emitter';
+import T from 'i18n-react';
+import isNil from 'lodash/isNil';
+import {setKafkaAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {objectQuery} from 'services/helpers';
-import {setDatabaseAsActiveBrowser} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import ee from 'event-emitter';
 
-require('./DatabaseBrowser.scss');
+const PREFIX = `features.DataPrep.DataPrepBrowser.KafkaBrowser`;
 
-const PREFIX = `features.DataPrep.DataPrepBrowser.DatabaseBrowser`;
+require('./KafkaBrowser.scss');
 
-export default class DatabaseBrowser extends Component {
+export default class KafkaBrowser extends Component {
   constructor(props) {
     super(props);
+
     let store = DataPrepBrowserStore.getState();
+
     this.state = {
-      info: store.database.info,
-      connectionId: store.database.connectionId,
-      connectionName: '',
-      tables: [],
-      loading: true,
+      connectionId: store.kafka.connectionId,
+      info: store.kafka.info,
+      loading: store.kafka.loading,
       search: '',
       searchFocus: true,
-      error: null
+      error: null,
+      topics: []
     };
 
     this.eventEmitter = ee(ee);
     this.handleSearch = this.handleSearch.bind(this);
-    this.prepTable = this.prepTable.bind(this);
-    this.eventBasedFetchTable = this.eventBasedFetchTable.bind(this);
+    this.eventBasedFetchTopics = this.eventBasedFetchTopics.bind(this);
 
-    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
+    this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
   }
 
   componentDidMount() {
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
-      let {database, activeBrowser} = DataPrepBrowserStore.getState();
-      if (activeBrowser.name !== 'database') {
+      let {kafka, activeBrowser} = DataPrepBrowserStore.getState();
+      if (activeBrowser.name !== 'kafka') {
         return;
       }
 
       this.setState({
-        info: database.info,
-        connectionId: database.connectionId,
-        loading: database.loading,
-        tables: database.tables,
-        error: database.error
+        info: kafka.info,
+        connectionId: kafka.connectionId,
+        topics: kafka.topics,
+        error: kafka.error,
+        loading: kafka.loading
       });
     });
   }
 
   componentWillUnmount() {
-    this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
-
+    this.eventEmitter.off('DATAPREP_CONNECTION_EDIT_KAFKA', this.eventBasedFetchTopics);
     if (this.storeSubscription) {
       this.storeSubscription();
     }
   }
 
-  eventBasedFetchTable(connectionId) {
+  eventBasedFetchTopics(connectionId) {
     if (this.state.connectionId === connectionId) {
-      setDatabaseAsActiveBrowser({name: 'database', id: connectionId});
+      setKafkaAsActiveBrowser({name: 'database', id: connectionId});
     }
   }
 
@@ -91,16 +90,19 @@ export default class DatabaseBrowser extends Component {
     });
   }
 
-  prepTable(tableId) {
+  prepTopic(topic) {
+    this.setState({
+      loading: true
+    });
     let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
       namespace,
       connectionId: this.state.connectionId,
-      tableId,
+      topic,
       lines: 100
     };
 
-    DataPrepApi.readTable(params)
+    MyDataPrepApi.readTopic(params)
       .subscribe(
         (res) => {
           let workspaceId = res.values[0].id;
@@ -151,73 +153,77 @@ export default class DatabaseBrowser extends Component {
       <div className="empty-search-container">
         <div className="empty-search text-xs-center">
           <strong>
-            {T.translate(`${PREFIX}.EmptyMessage.emptyDatabase`, {connectionName: this.state.connectionName})}
+            {T.translate(`${PREFIX}.EmptyMessage.emptyKafka`, {connectionName: this.state.connectionName})}
           </strong>
         </div>
       </div>
     );
   }
 
-  render() {
-    const renderNoPluginMessage = (error) => {
-      let errorMessage = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
+  renderError() {
+    let error = this.state.error;
+    let errorMessage = objectQuery(error, 'response', 'message') || objectQuery(error, 'response') || error;
 
-      return (
-        <div className="empty-search-container">
-          <div className="empty-search">
-            <strong>{errorMessage}</strong>
-          </div>
+    return (
+      <div className="empty-search-container">
+        <div className="empty-search">
+          <strong>{errorMessage}</strong>
         </div>
-      );
-    };
-    const renderContents = (tables) => {
-      if (this.state.error) {
-        return renderNoPluginMessage(this.state.error);
-      }
-      if (!tables.length) {
-        return this.renderEmpty();
-      }
-      return (
-        <div className="database-content-table">
-          <div className="database-content-header">
-            <div className="row">
-              <div className="col-xs-12">
-                <span>{T.translate(`${PREFIX}.table.namecollabel`)}</span>
-              </div>
+      </div>
+    );
+  }
+
+  renderContents(topics) {
+    if (this.state.error) {
+      return this.renderError();
+    }
+    if (!topics.length) {
+      return this.renderEmpty();
+    }
+    return (
+      <div className="kafka-content-table">
+        <div className="kafka-content-header">
+          <div className="row">
+            <div className="col-xs-12">
+              <span>{T.translate(`${PREFIX}.table.topics`)}</span>
             </div>
           </div>
-          <div className="database-content-body">
-            {
-              tables.map(table => {
-                return (
-                  <div
-                    className="row content-row"
-                    onClick={this.prepTable.bind(this, table.name)}
-                  >
-                    <div className="col-xs-12">
-                      <span>{table.name}</span>
-                    </div>
-                  </div>
-                );
-              })
-            }
-          </div>
         </div>
-      );
-    };
+        <div className="kafka-content-body">
+          {
+            topics.map(topic => {
+              return (
+                <div
+                  className="row content-row"
+                  onClick={this.prepTopic.bind(this, topic)}
+                  key={topic}
+                >
+                  <div className="col-xs-12">
+                    <span>{topic}</span>
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+      </div>
+    );
+  }
 
+  render() {
     if (this.state.loading) {
       return (
         <LoadingSVGCentered />
       );
     }
-    let filteredTables = this.state.tables;
+
+    let filteredTopics = this.state.topics;
     if (this.state.search) {
-      filteredTables = this.state.tables.filter(table => table.name.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
+      filteredTopics = this.state.topics.filter(topic => topic.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1);
     }
 
     return (
-      <div className="database-browser">
+      <div className="kafka-browser">
         <div className="top-panel">
           <div className="title">
             <h5>
@@ -237,13 +243,13 @@ export default class DatabaseBrowser extends Component {
         {
           isNil(this.state.error) ?
             <div>
-              <div className="database-browser-header">
-                <div className="database-metadata">
-                  <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
+              <div className="kafka-browser-header">
+                <div className="kafka-metadata">
+                  <h5>{this.state.info.name}</h5>
                   <span className="tables-count">
                     {
-                      T.translate(`${PREFIX}.tableCount`, {
-                        context: this.state.tables.length
+                      T.translate(`${PREFIX}.topicCount`, {
+                        count: this.state.topics.length
                       })
                     }
                   </span>
@@ -262,15 +268,15 @@ export default class DatabaseBrowser extends Component {
             null
         }
 
-        <div className="database-browser-content">
-          { renderContents(filteredTables) }
+        <div className="kafka-browser-content">
+          { this.renderContents(filteredTopics) }
         </div>
       </div>
     );
   }
 }
 
-DatabaseBrowser.propTypes = {
+KafkaBrowser.propTypes = {
   toggle: PropTypes.func,
   onWorkspaceCreate: PropTypes.func
 };

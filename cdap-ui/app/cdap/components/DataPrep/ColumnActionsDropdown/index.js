@@ -81,6 +81,14 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         id: shortid.generate(),
+        tag: SetCharacterEncoding,
+        requiredColCount: 1
+      },
+      {
+        tag: 'divider'
+      },
+      {
+        id: shortid.generate(),
         tag: Format,
         requiredColCount: 1
       },
@@ -155,11 +163,6 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: Decode,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
-        tag: SetCharacterEncoding,
         requiredColCount: 1
       }
     ];
