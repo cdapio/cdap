@@ -20,9 +20,12 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
+import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
+import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.PrincipalCredentials;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.common.http.HttpMethod;
@@ -45,6 +48,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Makes requests to ImpersonationHandler to request credentials.
@@ -61,8 +65,8 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   @Inject
   RemoteUGIProvider(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
-                    LocationFactory locationFactory) {
-    super(cConf);
+                    LocationFactory locationFactory, OwnerAdmin ownerAdmin, NamespaceQueryAdmin namespaceQueryAdmin) {
+    super(cConf, ownerAdmin, namespaceQueryAdmin);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), "/v1/");
     this.locationFactory = locationFactory;

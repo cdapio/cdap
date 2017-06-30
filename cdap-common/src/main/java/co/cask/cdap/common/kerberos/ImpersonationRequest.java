@@ -19,6 +19,7 @@ package co.cask.cdap.common.kerberos;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * A wrapper which wraps around the {@link co.cask.cdap.proto.id.NamespacedEntityId} on which impersonation needs to
@@ -27,10 +28,19 @@ import java.util.Objects;
 public class ImpersonationRequest {
   private final NamespacedEntityId entityId;
   private final ImpersonatedOpType impersonatedOpType;
+  private final String principal;
+  private final String keytabURI;
 
-  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType,
+                              @Nullable String principal, @Nullable String keytabURI) {
+    this.principal = principal;
     this.entityId = entityId;
     this.impersonatedOpType = impersonatedOpType;
+    this.keytabURI = keytabURI;
+  }
+
+  public ImpersonationRequest(NamespacedEntityId entityId, ImpersonatedOpType impersonatedOpType) {
+    this(entityId, impersonatedOpType, null, null);
   }
 
   public NamespacedEntityId getEntityId() {
@@ -39,6 +49,16 @@ public class ImpersonationRequest {
 
   public ImpersonatedOpType getImpersonatedOpType() {
     return impersonatedOpType;
+  }
+
+  @Nullable
+  public String getPrincipal() {
+    return principal;
+  }
+
+  @Nullable
+  public String getKeytabURI() {
+    return keytabURI;
   }
 
   @Override
