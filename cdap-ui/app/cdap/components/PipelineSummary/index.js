@@ -20,7 +20,6 @@ import PipelineSummaryStore from 'components/PipelineSummary/PipelineSummaryStor
 import {convertProgramToApi} from 'services/program-api-converter';
 import RunsHistoryGraph from 'components/PipelineSummary/RunsHistoryGraph';
 import LogsMetricsGraph from 'components/PipelineSummary/LogsMetricsGraph';
-// import NodesMetricsGraph from 'components/PipelineSummary/NodesMetricsGraph';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
@@ -222,26 +221,6 @@ export default class PipelineSummary extends Component {
             <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
             {this.state.totalRunsCount}
           </span>
-          {
-            /*
-              TODO: Will come in a later PR
-              <span className="run-times">
-                <strong className="run-time-label">
-                  {T.translate(`${PREFIX}.statsContainer.runTime`)}:
-                </strong>
-                <strong>{T.translate(`${PREFIX}.statsContainer.min`)}</strong>
-                <span>1:56</span>
-                <strong> {T.translate(`${PREFIX}.statsContainer.max`)} </strong>
-                <span>3:03</span>
-                <strong> {T.translate(`${PREFIX}.statsContainer.avg`)} </strong>
-                <span>2:16 min</span>
-              </span>
-              <span>
-                <strong> {T.translate(`${PREFIX}.statsContainer.currentSchedule`)} </strong>
-                <span> Runs every 20 min past the hour </span>
-              </span>
-            */
-          }
           <IconSVG
             name="icon-close"
             onClick={this.props.onClose}
@@ -251,7 +230,6 @@ export default class PipelineSummary extends Component {
     );
   }
   render() {
-    // FIXME: Right now run time stats and schedule summary are dummy. Will change in subsequent PR.
     return (
       <div className="pipeline-summary">
         {
@@ -311,13 +289,6 @@ export default class PipelineSummary extends Component {
             runContext={this.props}
             isLoading={this.state.loading}
           />
-          {
-            /* {<NodesMetricsGraph
-            totalRunsCount={this.state.totalRunsCount}
-            runs={this.state.nodesMetrics}
-            runsLimit={this.state.runsLimit}
-          />} */
-          }
         </div>
       </div>
     );
