@@ -35,6 +35,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -53,7 +54,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -84,6 +84,12 @@ import org.junit.Assert;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -92,6 +98,7 @@ import javax.annotation.Nullable;
  */
 public class AppFabricTestHelper {
   public static final TempFolder TEMP_FOLDER = new TempFolder();
+  private static final Map<Class<?>, ByteBuffer> ARTIFACTS = new HashMap<>();
 
   public static CConfiguration configuration;
   private static Injector injector;
@@ -277,10 +284,29 @@ public class AppFabricTestHelper {
 
   }
 
-
   private static Location createAppJar(Class<?> appClass, Supplier<File> folderSupplier) throws IOException {
-    LocationFactory lf = new LocalLocationFactory(DirUtils.createTempDir(folderSupplier.get()));
-    return AppJarHelper.createDeploymentJar(lf, appClass);
+    File tempDir = DirUtils.createTempDir(folderSupplier.get());
+
+    // If the artifact was generated before, just put the bytes back to the temp folder.
+    if (ARTIFACTS.containsKey(appClass)) {
+      File jarFile = File.createTempFile(appClass.getName(), ".jar", tempDir);
+      try (FileChannel channel = FileChannel.open(jarFile.toPath(), StandardOpenOption.WRITE)) {
+        ByteBuffer content = ARTIFACTS.get(appClass);
+        content.rewind();
+        channel.write(content);
+      }
+      return Locations.toLocation(jarFile);
+    }
+
+    // Generate the artifact and cache it
+    LocationFactory lf = new LocalLocationFactory(tempDir);
+    Location jarLocation = AppJarHelper.createDeploymentJar(lf, appClass);
+
+    // mmap the whole file
+    ByteBuffer content = FileChannel.open(Paths.get(jarLocation.toURI()))
+      .map(FileChannel.MapMode.READ_ONLY, 0, jarLocation.length());
+    ARTIFACTS.put(appClass, content);
+    return jarLocation;
   }
 }
 
