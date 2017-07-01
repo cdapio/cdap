@@ -29,7 +29,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
-import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Collections;
 import java.util.Map;
@@ -157,7 +157,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * Schedules the specified {@link Workflow}
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
-   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
+   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
    */
   @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName) {
@@ -170,7 +170,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * @param schedule the schedule to be added for the Workflow
    * @param workflowName the name of the Workflow
    * @param properties properties to be added for the Schedule
-   * @deprecated Deprecated as of 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
+   * @deprecated since 4.2.0. Please use {@link #schedule(ScheduleCreationSpec)} instead.
    */
   @Deprecated
   protected void scheduleWorkflow(Schedule schedule, String workflowName, Map<String, String> properties) {
@@ -193,10 +193,9 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   /**
    * Schedules a program, using the given scheduleCreationSpec.
    *
-   * @param scheduleCreationBuilder defines the schedule. Can be built using the builder obtained
-   *                                from {@link #buildSchedule(String, ProgramType, String)}
+   * @param scheduleCreationSpec defines the schedule.
    */
-  protected void schedule(ScheduleCreationBuilder scheduleCreationBuilder) {
-    configurer.schedule(scheduleCreationBuilder);
+  protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
+    configurer.schedule(scheduleCreationSpec);
   }
 }
