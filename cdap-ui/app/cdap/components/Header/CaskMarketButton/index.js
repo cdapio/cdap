@@ -40,8 +40,14 @@ export default class CaskMarketButton extends Component {
   }
 
   onClickHandler() {
+    let newState = !this.state.showMarketPlace;
+
+    if (newState === false) {
+      this.eventEmitter.emit(globalEvents.MARKETCLOSING);
+    }
+
     this.setState({
-      showMarketPlace: !this.state.showMarketPlace
+      showMarketPlace: newState
     });
   }
 
@@ -52,6 +58,7 @@ export default class CaskMarketButton extends Component {
   }
 
   closeCaskMarketModal () {
+    this.eventEmitter.emit(globalEvents.MARKETCLOSING);
     this.setState({
       showMarketPlace: false
     });

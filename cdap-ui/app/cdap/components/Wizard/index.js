@@ -349,8 +349,14 @@ export default class Wizard extends Component {
             title={callToActionInfo.message}
           >
             {callToActionInfo.message}
-            <p>{callToActionInfo.subtitle}</p>
           </span>
+          <span
+            className="success-subtitle"
+            title={callToActionInfo.subtitle}
+          >
+            {callToActionInfo.subtitle}
+          </span>
+
           <div className="clearfix">
             <a
               href={callToActionInfo.buttonUrl}

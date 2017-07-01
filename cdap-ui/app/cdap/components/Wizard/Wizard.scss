@@ -97,6 +97,11 @@
         text-overflow: ellipsis;
         white-space: nowrap;
 
+        .success-subtitle {
+          display: block;
+          white-space: initial;
+        }
+
         .clearfix {
           margin-top: 25px;
 
