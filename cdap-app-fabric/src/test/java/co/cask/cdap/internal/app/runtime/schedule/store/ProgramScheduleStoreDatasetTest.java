@@ -17,7 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.app.test.AppFabricDatasetTester;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -25,7 +27,6 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -36,10 +37,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionSystemClient;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,32 +54,32 @@ import java.util.Set;
  * in {@link co.cask.cdap.scheduler.CoreSchedulerServiceTest}, which has equivalent methods that execute
  * in a transaction.
  */
-public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
+public class ProgramScheduleStoreDatasetTest {
+
+  @ClassRule
+  public static final AppFabricDatasetTester TESTER = new AppFabricDatasetTester();
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1", "1");
-  private static final ApplicationId APP11_ID = NS_ID.app("app1", "1.1");
   private static final ApplicationId APP2_ID = NS_ID.app("app2");
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
-  private static final WorkflowId PROG11_ID = APP11_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
 
-  @Test
-  public void checkDatasetType() throws DatasetManagementException {
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(Schedulers.STORE_TYPE_NAME)));
+  @BeforeClass
+  public static void beforeClass() throws IOException, DatasetManagementException {
+    DatasetsUtil.createIfNotExists(TESTER.getDatasetFramework(), Schedulers.STORE_DATASET_ID,
+                                   Schedulers.STORE_TYPE_NAME, DatasetProperties.EMPTY);
   }
 
   @Test
   public void testFindSchedulesByEventAndUpdateSchedule() throws Exception {
+    DatasetFramework datasetFramework = TESTER.getDatasetFramework();
+    TransactionExecutorFactory txExecutorFactory = TESTER.getTxExecutorFactory();
 
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
-    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
-    final ProgramScheduleStoreDataset store = dsFramework.getDataset(Schedulers.STORE_DATASET_ID,
-                                                                     new HashMap<String, String>(), null);
+    final ProgramScheduleStoreDataset store = datasetFramework.getDataset(Schedulers.STORE_DATASET_ID,
+                                                                          new HashMap<String, String>(), null);
     Assert.assertNotNull(store);
     TransactionExecutor txExecutor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) store));
 
