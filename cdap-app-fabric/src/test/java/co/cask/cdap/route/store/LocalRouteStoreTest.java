@@ -16,22 +16,88 @@
 
 package co.cask.cdap.route.store;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.IOException;
 
 /**
  * Route Configuration Store Test.
  */
-public class LocalRouteStoreTest extends AppFabricTestBase {
+public class LocalRouteStoreTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
+  private static TransactionManager txManager;
+  private static DatasetFramework datasetFramework;
+
+  @BeforeClass
+  public static void beforeClass() throws DatasetManagementException, IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    txManager = new TransactionManager(new Configuration());
+    txManager.startAndWait();
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+
+          bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
+
+    datasetFramework = injector.getInstance(DatasetFramework.class);
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    txManager.stopAndWait();
+  }
 
   @Test
   public void testRouteStorage() throws Exception {
-    RouteStore routeStore = getInjector().getInstance(RouteStore.class);
+    RouteStore routeStore = new LocalRouteStore(datasetFramework, new InMemoryTxSystemClient(txManager));
+
     ApplicationId appId = new ApplicationId("n1", "a1");
     ProgramId service1 = appId.service("s1");
     RouteConfig routeConfig = new RouteConfig(ImmutableMap.of("v1", 100));
