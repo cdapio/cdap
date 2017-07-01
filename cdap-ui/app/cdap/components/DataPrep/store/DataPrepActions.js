@@ -27,6 +27,7 @@ const DataPrepActions = {
   disableLoading: 'DATAPREP_DISABLE_LOADING',
   reset: 'DATAPREP_RESET',
   setError: 'DATAPREP_SET_ERROR',
+  setDataError: 'DATAPREP_SET_DATA_ERROR',
   setCLIError: 'DATAPREP_CLI_ERROR',
   dismissError: 'DATAPREP_DISMISS_ERROR',
   setHighlightColumns: 'DATAPREP_SET_HIGHLIGHT_COLUMNS',

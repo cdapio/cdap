@@ -43,7 +43,9 @@ const defaultInitialState = {
 
 const errorInitialState = {
   showError: null,
-  cliError: null
+  cliError: null,
+  dataError: false,
+  dataErrorMessage: null
 };
 
 const columnsInformationInitialState = {
@@ -151,6 +153,13 @@ const error = (state = errorInitialState, action = defaultAction) => {
         cliError: null
       });
       break;
+    case DataPrepActions.setDataError:
+      stateCopy = Object.assign({}, state, {
+        dataError: true,
+        loading: false,
+        dataErrorMessage: action.payload.errorMessage
+      });
+      break;
     case DataPrepActions.setCLIError:
       stateCopy = Object.assign({}, state, {
         showError: null,
@@ -167,6 +176,12 @@ const error = (state = errorInitialState, action = defaultAction) => {
     case DataPrepActions.dismissError:
       stateCopy = Object.assign({}, state, {
         showError: null
+      });
+      break;
+    case DataPrepActions.setData:
+      stateCopy = Object.assign({}, state, {
+        dataError: false,
+        dataErrorMessage: null
       });
       break;
     case DataPrepActions.reset:

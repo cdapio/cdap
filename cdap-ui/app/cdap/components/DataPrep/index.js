@@ -32,7 +32,7 @@ import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
-import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 
@@ -250,7 +250,7 @@ export default class DataPrep extends Component {
     if (this.state.loading) {
       return (
         <div className="dataprep-container text-xs-center">
-          <LoadingSVG />
+          <LoadingSVGCentered />
         </div>
       );
     }

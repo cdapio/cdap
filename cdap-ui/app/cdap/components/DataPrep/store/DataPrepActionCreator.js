@@ -66,11 +66,14 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
           }
         });
 
-        fetchColumnsInformation(params, requestBody, res.header);
+        // fetchColumnsInformation(params, requestBody, res.header);
       }, (err) => {
         observer.onError(err);
         DataPrepStore.dispatch({
-          type: DataPrepActions.disableLoading
+          type: DataPrepActions.setDataError,
+          payload: {
+            message: err
+          }
         });
       });
   });
@@ -149,12 +152,25 @@ export function setWorkspace(workspaceId) {
 
       }, (err) => {
         console.log('get workspace err', err);
+        DataPrepStore.dispatch({
+          type: DataPrepActions.disableLoading
+        });
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setDataError,
+          payload: {
+            errorMessage: 'Something is wrong'
+          }
+        });
         observer.onError(err);
       });
   });
 }
 
 function fetchColumnsInformation(params, requestBody, headers) {
+  let x = 1;
+  if (x===1) {
+    return;
+  }
   MyDataPrepApi.summary(params, requestBody)
     .subscribe((summaryRes) => {
       let columns = {};
