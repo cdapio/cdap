@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.impersonation;
 
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.UGIWithPrincipal;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -29,7 +28,7 @@ import java.io.IOException;
 public interface UGIProvider {
 
   /**
-   * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationInfo}.
+   * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationRequest}.
    *
    * @param impersonationRequest information specifying the entity on which the impersonation is being performed and
    *                            the type of the operation

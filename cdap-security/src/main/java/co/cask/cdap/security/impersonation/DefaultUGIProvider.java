@@ -20,7 +20,6 @@ import co.cask.cdap.common.FeatureDisabledException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.kerberos.ImpersonatedOpType;
-import co.cask.cdap.common.kerberos.ImpersonationInfo;
 import co.cask.cdap.common.kerberos.ImpersonationRequest;
 import co.cask.cdap.common.kerberos.OwnerAdmin;
 import co.cask.cdap.common.kerberos.SecurityUtil;
@@ -55,29 +54,20 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
   private final LocationFactory locationFactory;
   private final File tempDir;
-  private final OwnerAdmin ownerAdmin;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
-
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
                      NamespaceQueryAdmin namespaceQueryAdmin) {
-    super(cConf);
+    super(cConf, ownerAdmin);
     this.locationFactory = locationFactory;
     this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.ownerAdmin = ownerAdmin;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
-  /**
-   * Resolves the {@link UserGroupInformation} for a given user, performing any keytab localization, if necessary.
-   *
-   * @return a {@link UserGroupInformation}, based upon the information configured for a particular user
-   * @throws IOException if there was any IOException during localization of the keytab
-   */
   @Override
-  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
+  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
     if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
       impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
@@ -104,24 +94,30 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
         throw new IOException(e);
       }
     }
+  }
 
-    ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
-                                                                               impersonationRequest.getEntityId());
-    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, impersonationRequest.getEntityId());
+  /**
+   * Resolves the {@link UserGroupInformation} for a given user, performing any keytab localization, if necessary.
+   *
+   * @return a {@link UserGroupInformation}, based upon the information configured for a particular user
+   * @throws IOException if there was any IOException during localization of the keytab
+   */
+  @Override
+  protected UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException {
 
     // no need to get a UGI if the current UGI is the one we're requesting; simply return it
-    String configuredPrincipalShortName = new KerberosName(impersonationInfo.getPrincipal()).getShortName();
+    String configuredPrincipalShortName = new KerberosName(impersonationRequest.getPrincipal()).getShortName();
     if (UserGroupInformation.getCurrentUser().getShortUserName().equals(configuredPrincipalShortName)) {
-      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), UserGroupInformation.getCurrentUser());
+      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
     }
 
-    URI keytabURI = URI.create(impersonationInfo.getKeytabURI());
+    URI keytabURI = URI.create(impersonationRequest.getKeytabURI());
     boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
     File localKeytabFile = isKeytabLocal ?
       new File(keytabURI.getPath()) : localizeKeytab(locationFactory.create(keytabURI));
     try {
-      String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationInfo.getPrincipal());
+      String expandedPrincipal = SecurityUtil.expandPrincipal(impersonationRequest.getPrincipal());
       LOG.debug("Logging in as: principal={}, keytab={}", expandedPrincipal, localKeytabFile);
 
       // Note: if the keytab file is not local then then localizeKeytab function call above which tries to localize the
@@ -134,7 +130,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
 
       UserGroupInformation loggedInUGI =
         UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
-      return new UGIWithPrincipal(impersonationInfo.getPrincipal(), loggedInUGI);
+      return new UGIWithPrincipal(impersonationRequest.getPrincipal(), loggedInUGI);
     } finally {
       if (!isKeytabLocal && !localKeytabFile.delete()) {
         LOG.warn("Failed to delete file: {}", localKeytabFile);

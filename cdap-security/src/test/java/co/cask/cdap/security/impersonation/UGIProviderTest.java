@@ -262,7 +262,8 @@ public class UGIProviderTest {
       InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
       discoveryService.register(new Discoverable(Constants.Service.APP_FABRIC_HTTP, httpService.getBindAddress()));
 
-      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory);
+      RemoteUGIProvider ugiProvider = new RemoteUGIProvider(cConf, discoveryService, locationFactory,
+                                                            ownerAdmin, namespaceClient);
 
       ImpersonationRequest aliceImpRequest = new ImpersonationRequest(aliceEntity, ImpersonatedOpType.OTHER);
       UGIWithPrincipal aliceUGIWithPrincipal = ugiProvider.getConfiguredUGI(aliceImpRequest);
