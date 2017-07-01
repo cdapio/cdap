@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
@@ -32,6 +33,10 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.AppFabricDatasetModule;
+import co.cask.http.HttpHandler;
+import co.cask.http.NettyHttpService;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -40,12 +45,19 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A lightweight tester for providing {@link DatasetFramework} and {@link TransactionManager} for testing purpose.
@@ -56,9 +68,20 @@ public class AppFabricDatasetTester extends ExternalResource {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private final List<Class<? extends HttpHandler>> handlerClasses;
+
+  private NettyHttpService httpServer;
   private TransactionManager txManager;
   private DatasetFramework datasetFramework;
   private TransactionExecutorFactory txExecutorFactory;
+  private TransactionSystemClient txClient;
+
+  /**
+   * Creates a testers with an optional set of {@link HttpHandler}. Only dataset related bindings will be available.
+   */
+  public AppFabricDatasetTester(Class<? extends HttpHandler>...handlerClasses) {
+    this.handlerClasses = Arrays.asList(handlerClasses);
+  }
 
   @Override
   public Statement apply(Statement base, Description description) {
@@ -73,7 +96,7 @@ public class AppFabricDatasetTester extends ExternalResource {
     txManager = new TransactionManager(new Configuration());
     txManager.startAndWait();
 
-    Injector injector = Guice.createInjector(
+    final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -90,16 +113,31 @@ public class AppFabricDatasetTester extends ExternalResource {
                     .build(DatasetDefinitionRegistryFactory.class));
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
           bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+
+          TransactionSystemClient txClient = new InMemoryTxSystemClient(txManager);
+          bind(TransactionSystemClient.class).toInstance(txClient);
+          bind(TransactionExecutorFactory.class).toInstance(new DynamicTransactionExecutorFactory(txClient));
         }
       }
     );
+    httpServer = new CommonNettyHttpServiceBuilder(injector.getInstance(CConfiguration.class), "testService")
+      .addHttpHandlers(Iterables.transform(handlerClasses, new Function<Class<? extends HttpHandler>, HttpHandler>() {
+        @Override
+        public HttpHandler apply(Class<? extends HttpHandler> cls) {
+          return injector.getInstance(cls);
+        }
+      }))
+      .build();
+    httpServer.startAndWait();
 
     datasetFramework = injector.getInstance(DatasetFramework.class);
-    txExecutorFactory = new DynamicTransactionExecutorFactory(new InMemoryTxSystemClient(txManager));
+    txClient = injector.getInstance(TransactionSystemClient.class);
+    txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
   }
 
   @Override
   protected void after() {
+    httpServer.stopAndWait();
     txManager.stopAndWait();
   }
 
@@ -109,5 +147,17 @@ public class AppFabricDatasetTester extends ExternalResource {
 
   public TransactionExecutorFactory getTxExecutorFactory() {
     return txExecutorFactory;
+  }
+
+  public TransactionSystemClient getTxClient() {
+    return txClient;
+  }
+
+  public URL getEndpointURL(String path) throws MalformedURLException {
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
+    InetSocketAddress addr = httpServer.getBindAddress();
+    return new URL(String.format("http://%s:%d%s", addr.getHostName(), addr.getPort(), path));
   }
 }
