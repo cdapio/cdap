@@ -33,13 +33,10 @@ import co.cask.cdap.proto.audit.payload.metadata.MetadataPayload;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.Metadata;
 import co.cask.cdap.proto.metadata.MetadataScope;
-import co.cask.cdap.scheduler.Scheduler;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -56,7 +53,6 @@ public class SystemMetadataAuditPublishTest {
   private static CConfiguration cConf;
   private static InMemoryAuditPublisher auditPublisher;
   private static NamespaceAdmin namespaceAdmin;
-  private static Scheduler scheduler;
 
   @BeforeClass
   public static void setup() {
@@ -71,17 +67,6 @@ public class SystemMetadataAuditPublishTest {
     });
     auditPublisher = injector.getInstance(InMemoryAuditPublisher.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).stopAndWait();
-    }
   }
 
   @Test
