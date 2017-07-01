@@ -35,7 +35,7 @@
       Note: Do not update this while bumping versions for a CDAP release. 
       Only update this when releasing a new UI pack.
     -->
-    <ui.pack.version>4.1.1_p3</ui.pack.version>
+    <ui.pack.version>4.2.0_p5</ui.pack.version>
   </properties>
 
   <dependencies>
