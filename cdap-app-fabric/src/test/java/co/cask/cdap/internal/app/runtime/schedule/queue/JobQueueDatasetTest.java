@@ -17,11 +17,25 @@
 package co.cask.cdap.internal.app.runtime.schedule.queue;
 
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
+import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
+import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleMeta;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -29,7 +43,6 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
-import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -42,14 +55,26 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Scopes;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.multibindings.MapBinder;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionExecutor;
-import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -57,12 +82,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link JobQueueDataset}.
  */
-public class JobQueueDatasetTest extends AppFabricTestBase {
+public class JobQueueDatasetTest {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final NamespaceId TEST_NS = new NamespaceId("jobQueueTest");
   private static final ApplicationId APP_ID = TEST_NS.app("app1");
   private static final WorkflowId WORKFLOW_ID = APP_ID.workflow("wf1");
@@ -84,18 +112,51 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
                                                       Lists.<Notification>newArrayList(),
                                                       Job.State.PENDING_TRIGGER, 0L);
 
-  private TransactionExecutor txExecutor;
-  private JobQueueDataset jobQueue;
+  private static TransactionManager txManager;
+  private static TransactionExecutor txExecutor;
+  private static JobQueueDataset jobQueue;
 
-  @Before
-  public void before() throws Exception {
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
-    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
-    jobQueue = dsFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<String, String>(), null);
-    Assert.assertNotNull(jobQueue);
-    this.txExecutor =
-      txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) jobQueue));
+  @BeforeClass
+  public static void beforeClass() throws IOException, DatasetManagementException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    txManager = new TransactionManager(new Configuration());
+    txManager.startAndWait();
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Add the app-fabric Dataset module, which is where the JobQueueDataset is defined
+          MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
+            binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
+          datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
+
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class);
+          bind(NamespaceQueryAdmin.class).to(InMemoryNamespaceClient.class).in(Scopes.SINGLETON);
+        }
+      }
+    );
+
+    DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
+    DatasetsUtil.createIfNotExists(datasetFramework, Schedulers.JOB_QUEUE_DATASET_ID,
+                                   JobQueueDataset.class.getName(), DatasetProperties.EMPTY);
+
+    jobQueue = datasetFramework.getDataset(Schedulers.JOB_QUEUE_DATASET_ID, new HashMap<String, String>(), null);
+    txExecutor = new DynamicTransactionExecutorFactory(new InMemoryTxSystemClient(txManager))
+      .createExecutor(Collections.<TransactionAware>singleton(jobQueue));
+  }
+
+  @AfterClass
+  public static void afterClass() {
+    txManager.stopAndWait();
   }
 
   @After
@@ -108,12 +169,6 @@ public class JobQueueDatasetTest extends AppFabricTestBase {
         }
       }
     });
-  }
-
-  @Test
-  public void checkDatasetType() throws DatasetManagementException {
-    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
-    Assert.assertTrue(dsFramework.hasType(NamespaceId.SYSTEM.datasetType(JobQueueDataset.class.getName())));
   }
 
   @Test
