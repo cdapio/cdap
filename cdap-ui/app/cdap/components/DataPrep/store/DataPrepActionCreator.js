@@ -51,6 +51,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
 
   let requestBody = directiveRequestBodyCreator(updatedDirectives);
 
+  console.trace('executing directives: ');
   return Rx.Observable.create((observer) => {
     MyDataPrepApi.execute(params, requestBody)
       .subscribe((res) => {
@@ -116,6 +117,7 @@ export function setWorkspace(workspaceId) {
         let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
         let workspaceInfo = objectQuery(res, 'values', '0');
 
+        console.trace('setting workspace: ');
         MyDataPrepApi.execute(params, requestBody)
           .subscribe((response) => {
             observer.onNext(response);
@@ -136,31 +138,21 @@ export function setWorkspace(workspaceId) {
             fetchColumnsInformation(params, requestBody, response.header);
 
           }, (err) => {
-            // This flow is because of the workspace is empty
-
+            // Backend returned an exception. Show default error message for now able to show data.
             observer.onNext(err);
             DataPrepStore.dispatch({
-              type: DataPrepActions.setWorkspace,
+              type: DataPrepActions.disableLoading
+            });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setDataError,
               payload: {
-                data: [],
-                headers: [],
-                workspaceId,
-                workspaceUri
+                errorMessage: 'Something is wrong'
               }
             });
           });
 
       }, (err) => {
         console.log('get workspace err', err);
-        DataPrepStore.dispatch({
-          type: DataPrepActions.disableLoading
-        });
-        DataPrepStore.dispatch({
-          type: DataPrepActions.setDataError,
-          payload: {
-            errorMessage: 'Something is wrong'
-          }
-        });
         observer.onError(err);
       });
   });
