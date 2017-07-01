@@ -84,9 +84,29 @@ export function setWorkspace(workspaceId) {
     workspaceId
   };
 
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setWorkspaceId,
+    payload: {
+      workspaceId,
+      loading: true
+    }
+  });
+
   return Rx.Observable.create((observer) => {
     MyDataPrepApi.getWorkspace(params)
       .subscribe((res) => {
+        let {dataprep} = DataPrepStore.getState();
+        /*
+          1. Open a tab with huge data (like 400 columns and 100 rows)
+          2. Change of mind, open another tab
+          3. 2nd tab's data comes in quick and you are happy browsing it
+          4. Baam 1st tab's data comes and royally overwrites the one you are seeing.
+
+          This is to prevent that. We can't cancel the request we made but we should show only that is relevant
+        */
+        if (dataprep.workspaceId !== workspaceId) {
+          return;
+        }
         let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
         let requestBody = directiveRequestBodyCreator(directives);
 

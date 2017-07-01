@@ -79,6 +79,12 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         })
       });
       break;
+    case DataPrepActions.setWorkspaceId:
+      stateCopy = Object.assign({}, state, {
+        workspaceId: action.payload.workspaceId,
+        loading: action.payload.loading
+      });
+      break;
     case DataPrepActions.setWorkspace:
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
