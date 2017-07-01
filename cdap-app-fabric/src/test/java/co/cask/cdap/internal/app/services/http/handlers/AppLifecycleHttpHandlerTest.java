@@ -87,7 +87,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), new ExtraConfig()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     deleteApp(appId, 200);
-    deleteArtifact(artifactId, 200);
+    deleteArtifact(artifactId.toEntityId(), 200);
   }
 
   @Test
@@ -104,7 +104,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
 
     deleteApp(appId, 200);
-    deleteArtifact(artifactId, 200);
+    deleteArtifact(artifactId.toEntityId(), 200);
   }
 
   @Test
@@ -428,7 +428,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     //delete app in testnamespace2
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    deleteArtifact(ns2ArtifactId, 200);
+    deleteArtifact(ns2ArtifactId.toEntityId(), 200);
 
     //verify testnamespace2 has 0 app
     apps = getAppList(TEST_NAMESPACE2);

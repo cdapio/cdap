@@ -65,6 +65,7 @@ import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
@@ -278,6 +279,19 @@ public abstract class AppFabricTestBase {
     return cConf;
   }
 
+  protected static File buildAppArtifact(Class<?> cls, String name) throws IOException {
+    return buildAppArtifact(cls, name, new Manifest());
+  }
+
+  protected static File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
+    if (!name.endsWith(".jar")) {
+      name += ".jar";
+    }
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
+    File destination = new File(tmpFolder.newFolder(), name);
+    return Locations.linkOrCopy(appJar, destination);
+  }
+
   protected static Injector getInjector() {
     return injector;
   }
@@ -399,7 +413,7 @@ public abstract class AppFabricTestBase {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
 
     try {
-      return addArtifact(artifactId, Locations.newInputSupplier(appJar), null);
+      return addArtifact(artifactId.toEntityId(), Locations.newInputSupplier(appJar), null);
     } finally {
       appJar.delete();
     }
@@ -411,19 +425,19 @@ public abstract class AppFabricTestBase {
 
     Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
     try {
-      return addArtifact(artifactId, Locations.newInputSupplier(appJar), parents);
+      return addArtifact(artifactId.toEntityId(), Locations.newInputSupplier(appJar), parents);
     } finally {
       appJar.delete();
     }
   }
 
   // add an artifact and return the response code
-  protected HttpResponse addArtifact(Id.Artifact artifactId, InputSupplier<? extends InputStream> artifactContents,
+  protected HttpResponse addArtifact(ArtifactId artifactId, InputSupplier<? extends InputStream> artifactContents,
                                      Set<ArtifactRange> parents) throws Exception {
-    String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
+    String path = getVersionedAPIPath("artifacts/" + artifactId.getArtifact(), artifactId.getNamespace());
     HttpEntityEnclosingRequestBase request = getPost(path);
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("Artifact-Version", artifactId.getVersion().getVersion());
+    request.setHeader("Artifact-Version", artifactId.getVersion());
     if (parents != null && !parents.isEmpty()) {
       request.setHeader("Artifact-Extends", Joiner.on('/').join(parents));
     }
@@ -626,15 +640,9 @@ public abstract class AppFabricTestBase {
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
-  protected List<JsonObject> getArtifacts(String namespace) throws Exception {
-    HttpResponse response = doGet(getVersionedAPIPath("artifacts", namespace));
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    return readResponse(response, LIST_JSON_OBJECT_TYPE);
-  }
-
-  protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
-    String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
-    HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
+  protected void deleteArtifact(ArtifactId artifactId, int expectedResponseCode) throws Exception {
+    String path = String.format("artifacts/%s/versions/%s", artifactId.getArtifact(), artifactId.getVersion());
+    HttpResponse response = doDelete(getVersionedAPIPath(path, artifactId.getNamespace()));
     Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
@@ -1045,20 +1053,6 @@ public abstract class AppFabricTestBase {
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));
-  }
-
-  protected File buildAppArtifact(Class<?> cls, String name) throws IOException {
-    return buildAppArtifact(cls, name, new Manifest());
-  }
-
-  protected File buildAppArtifact(Class<?> cls, String name, Manifest manifest) throws IOException {
-    if (!name.endsWith(".jar")) {
-      name += ".jar";
-    }
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, manifest);
-    File destination = new File(tmpFolder.newFolder(), name);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    return destination;
   }
 
   protected DatasetMeta getDatasetMeta (DatasetId datasetId)

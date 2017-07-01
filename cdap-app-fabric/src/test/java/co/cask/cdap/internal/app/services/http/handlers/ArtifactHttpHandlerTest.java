@@ -52,6 +52,7 @@ import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -142,7 +143,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   public void testNotFound() throws IOException, URISyntaxException {
     Assert.assertTrue(getArtifacts(Id.Namespace.DEFAULT).isEmpty());
     Assert.assertNull(getArtifacts(Id.Namespace.DEFAULT, "wordcount"));
-    Assert.assertNull(getArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0")));
+    Assert.assertNull(getArtifact(NamespaceId.DEFAULT.artifact("wordcount", "1.0.0")));
   }
 
   @Test
@@ -151,8 +152,8 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     File configTestArtifact = buildAppArtifact(ConfigTestApp.class, "cfgtest.jar");
 
     // add 2 versions of the same app that doesn't use config
-    Id.Artifact wordcountId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
-    Id.Artifact wordcountId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "2.0.0");
+    ArtifactId wordcountId1 = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
+    ArtifactId wordcountId2 = NamespaceId.DEFAULT.artifact("wordcount", "2.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addArtifact(wordcountId1, Files.newInputStreamSupplier(wordCountArtifact), null)
                           .getStatusLine().getStatusCode());
@@ -160,7 +161,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                         addArtifact(wordcountId2, Files.newInputStreamSupplier(wordCountArtifact), null)
                           .getStatusLine().getStatusCode());
     // and 1 version of another app that uses a config
-    Id.Artifact configTestAppId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfgtest", "1.0.0");
+    ArtifactId configTestAppId = NamespaceId.DEFAULT.artifact("cfgtest", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addArtifact(configTestAppId, Files.newInputStreamSupplier(configTestArtifact), null)
                           .getStatusLine().getStatusCode());
@@ -249,7 +250,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // add the app in the default namespace
     File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
 
-    Id.Artifact defaultId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         addArtifact(defaultId, Files.newInputStreamSupplier(systemArtifact), null)
                           .getStatusLine().getStatusCode());
@@ -316,7 +317,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // add the app in the default namespace
     File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
 
-    Id.Artifact defaultId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    ArtifactId defaultId = NamespaceId.DEFAULT.artifact("wordcount", "1.0.0");
     // add a system artifact. currently can't do this through the rest api (by design)
     // so bypass it and use the repository directly
     Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
@@ -367,7 +368,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     deleteArtifact(defaultId, 404);
 
     // test delete /system/artifacts/wordcount/versions/1.0.0
-    deleteArtifact(systemId, 200);
+    deleteArtifact(systemId.toEntityId(), 200);
   }
 
   @Test
@@ -782,15 +783,15 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   }
 
   // get /artifacts/{name}/versions/{version}
-  private ArtifactInfo getArtifact(Id.Artifact artifactId) throws URISyntaxException, IOException {
+  private ArtifactInfo getArtifact(ArtifactId artifactId) throws URISyntaxException, IOException {
     return getArtifact(artifactId, null);
   }
 
   // get /artifacts/{name}/versions/{version}?scope={scope}
-  private ArtifactInfo getArtifact(Id.Artifact artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
+  private ArtifactInfo getArtifact(ArtifactId artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s%s",
-                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-                                             artifactId.getName(), artifactId.getVersion().getVersion(),
+                                             Constants.Gateway.API_VERSION_3, artifactId.getNamespace(),
+                                             artifactId.getArtifact(), artifactId.getVersion(),
                                              getScopeQuery(scope)))
       .toURL();
 
