@@ -75,12 +75,12 @@ export default class LogsMetricsGraph extends Component {
       }
       warnings.push({
         x,
-        y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || '',
+        y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
         runid: run.runid
       });
       errors.push({
         x,
-        y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || '',
+        y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
         runid: run.runid
       });
     });
@@ -259,10 +259,10 @@ export default class LogsMetricsGraph extends Component {
                     <tr>
                       <td>{i+1} </td>
                       <td>
-                        <span className="text-danger">{objectQuery(run, 'logsMetrics', 'system.app.log.error')}</span>
+                        <span className="text-danger">{objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0}</span>
                       </td>
                       <td>
-                        <span className="text-warning">{objectQuery(run, 'logsMetrics', 'system.app.log.warn')}</span>
+                        <span className="text-warning">{objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0}</span>
                       </td>
                       <td>
                         <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
