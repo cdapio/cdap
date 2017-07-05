@@ -21,6 +21,8 @@ $scroll-container-bg: #cccccc;
   .scroll-up-container {
     cursor: pointer;
     background: $scroll-container-bg;
+
+    * { pointer-events: none; }
   }
   .icon-caret-down,
   .icon-caret-up {

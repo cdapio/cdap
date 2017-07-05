@@ -15,13 +15,10 @@
 */
 
 import React, {PropTypes} from 'react';
-import {Link} from 'react-router-dom';
 require('./ErrorMessageContainer.scss');
 import T from 'i18n-react';
-import NamespaceStore from 'services/NamespaceStore';
 
-export default function ErrorMessageContainer({workspaceId, workspaceName}) {
-  let {selectedNamespace: namespace} = NamespaceStore.getState();
+export default function ErrorMessageContainer({workspaceName}) {
   return (
     <div className="dataprep-error-container">
       <h4>
@@ -33,12 +30,13 @@ export default function ErrorMessageContainer({workspaceId, workspaceName}) {
       <div className="message-container">
         <div> {T.translate(`features.DataPrep.DataPrepTable.suggestionTitle`)} </div>
         <span>
-          <Link
-            to={`/ns/${namespace}/dataprep/${workspaceId}`}
+          <span
             className="btn-link"
+            onClick={() => window.location.reload()}
           >
             {T.translate(`features.DataPrep.DataPrepTable.refreshBtnLinkLabel`)}
-          </Link>
+          </span>
+
           {T.translate(`features.DataPrep.DataPrepTable.suggestion1`)}
         </span>
       </div>
@@ -47,6 +45,5 @@ export default function ErrorMessageContainer({workspaceId, workspaceName}) {
 }
 
 ErrorMessageContainer.propTypes = {
-  workspaceId: PropTypes.string,
   workspaceName: PropTypes.string
 };

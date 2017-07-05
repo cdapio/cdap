@@ -104,13 +104,14 @@ export default class DataPrepConnections extends Component {
     if (!this.props.enableRouting) {
       this.dataprepSubscription = DataPrepStore.subscribe(() => {
         let {workspaceInfo} = DataPrepStore.getState().dataprep;
+
         if (
           objectQuery(workspaceInfo, 'properties', 'connectionid') !== this.state.activeConnectionid ||
           objectQuery(workspaceInfo, 'properties', 'id') !== this.state.activeConnectionid
         ) {
           this.setState({
-            activeConnectionid: workspaceInfo.properties.connectionid || workspaceInfo.properties.id,
-            activeConnectionType: workspaceInfo.properties.connection
+            activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid') || objectQuery(workspaceInfo, 'properties', 'id'),
+            activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection')
           });
         }
       });
@@ -148,7 +149,6 @@ export default class DataPrepConnections extends Component {
   }
 
   handlePropagation(browserName, e) {
-    preventPropagation(e);
     if (this.props.enableRouting && !this.props.singleWorkspaceMode) {
       setActiveBrowser({name: browserName});
       return;

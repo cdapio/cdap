@@ -51,7 +51,6 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
 
   let requestBody = directiveRequestBodyCreator(updatedDirectives);
 
-  console.trace('executing directives: ');
   return Rx.Observable.create((observer) => {
     MyDataPrepApi.execute(params, requestBody)
       .subscribe((res) => {
@@ -67,7 +66,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
           }
         });
 
-        // fetchColumnsInformation(params, requestBody, res.header);
+        fetchColumnsInformation(params, requestBody, res.header);
       }, (err) => {
         observer.onError(err);
         DataPrepStore.dispatch({
@@ -117,7 +116,6 @@ export function setWorkspace(workspaceId) {
         let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
         let workspaceInfo = objectQuery(res, 'values', '0');
 
-        console.trace('setting workspace: ');
         MyDataPrepApi.execute(params, requestBody)
           .subscribe((response) => {
             observer.onNext(response);
@@ -159,10 +157,6 @@ export function setWorkspace(workspaceId) {
 }
 
 function fetchColumnsInformation(params, requestBody, headers) {
-  let x = 1;
-  if (x===1) {
-    return;
-  }
   MyDataPrepApi.summary(params, requestBody)
     .subscribe((summaryRes) => {
       let columns = {};

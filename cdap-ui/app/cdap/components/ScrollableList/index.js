@@ -53,11 +53,14 @@ export default class ScrollableList extends Component {
     let targetBottom = targetDimensions.bottom;
     let heightOfList = bodyBottom - targetBottom;
     let numberOfElemsInList = Math.floor(heightOfList / 39);
-    let children = this.props.children.slice(0, numberOfElemsInList);
-    let numberOfActualElements = children.filter(child => child.props.className.indexOf('column-action-divider') === -1);
-    if (children.length > numberOfActualElements.length) {
-      children = this.props.children.slice(0, numberOfElemsInList + difference(children.length, numberOfActualElements.length));
-    }
+
+    let numberOfActualElements = this.props.children.filter(child => child.props.className.indexOf('column-action-divider') === -1);
+
+    let nonDividerChildren = numberOfActualElements.slice(0, numberOfElemsInList);
+    let actualLastIndex = findIndex(this.props.children, nonDividerChildren[nonDividerChildren.length - 1]);
+
+    let children = this.props.children.slice(0, actualLastIndex + 1);
+
     this.setState({
       children,
       numberOfElemsInList,
@@ -70,6 +73,7 @@ export default class ScrollableList extends Component {
     let nonDividerChildren = children
       .filter(child => child.props.className.indexOf('column-action-divider') === -1);
     nonDividerChildren = nonDividerChildren.slice(startIndex, startIndex + this.state.numberOfElemsInList);
+
     let actualStartIndex = findIndex(children, nonDividerChildren[0]);
     let actualLastIndex = findIndex(children, nonDividerChildren[nonDividerChildren.length - 1]);
     return {
@@ -137,7 +141,7 @@ export default class ScrollableList extends Component {
   renderScrollUpContainer() {
     return (
       <div
-        className={classnames("scroll-down-container text-xs-center", {
+        className={classnames("scroll-up-container text-xs-center", {
           'disabled': !this.shouldScrollUp()
         })}
         onClick={this.scrollUp}

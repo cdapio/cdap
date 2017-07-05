@@ -170,7 +170,8 @@ const error = (state = errorInitialState, action = defaultAction) => {
     case DataPrepActions.setDirectives:
       stateCopy = Object.assign({}, state, {
         showError: null,
-        cliError: null
+        cliError: null,
+        dataError: false
       });
       break;
     case DataPrepActions.dismissError:
