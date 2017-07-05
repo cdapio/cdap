@@ -16,7 +16,6 @@
 
 import React, { Component, PropTypes } from 'react';
 import IconSVG from 'components/IconSVG';
-import {difference} from 'services/helpers';
 import findIndex from 'lodash/findIndex';
 import classnames from 'classnames';
 
