@@ -34,4 +34,4 @@ Once the data is loaded, Data Preparation allows you to inspect the data in spre
 
 Further, Data Preparation enables you to transform your data. Data Preparation is built for applying simple transforms that do not require more complex programmatic logic. You can join columns, replace values, drop values conditionally, and much more. Further, you can re-format your data -- for instance, from .csv to .json. 
 
-Finally, once you have explored your data and applied desired transformations, you can click ``Create Pipeline``. This will create a Pipeline (as described in the next section) which will apply the transformations you made to the entirety of your data in a parallelized Spark or MapReduce job.
+Finally, once you have explored your data and applied desired transformations, you can operationalize those transformations by clicking ``Create Pipeline``. This will create a Pipeline (as described in the next section) which will apply the transformations you made to the entirety of your data in a parallelized MapReduce, Spark or Spark Streaming job.

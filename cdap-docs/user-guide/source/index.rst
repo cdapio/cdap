@@ -4,8 +4,6 @@
     :description: The CDAP User Guide
 .. _user-guide:
 
-:hide-toc: true
-
 =============================
 CDAP User Guide: Introduction
 =============================
