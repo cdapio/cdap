@@ -61,12 +61,6 @@ export default class DatabaseBrowser extends Component {
       if (activeBrowser.name !== 'database') {
         return;
       }
-      if (database.loading) {
-        this.setState({
-          loading: true
-        });
-        return;
-      }
 
       this.setState({
         info: database.info,
@@ -119,44 +113,6 @@ export default class DatabaseBrowser extends Component {
         },
         (err) => {
           console.log('ERROR: ', err);
-        }
-      );
-  }
-
-  fetchTables() {
-    if (!this.state.connectionId) { return null; }
-
-    if (this.state.fetchTablesInTransit) {
-      return;
-    }
-    this.setState({
-      fetchTablesInTransit: true
-    });
-    let namespace = NamespaceStore.getState().selectedNamespace;
-    let params = {
-      namespace,
-      connectionId: this.state.connectionId
-    };
-
-    DataPrepApi.listTables(params)
-      .combineLatest(DataPrepApi.getConnection(params))
-      .subscribe(
-        (res) => {
-          this.setState({
-            tables: res[0].values,
-            loading: false,
-            fetchTablesInTransit: false,
-            connectionName: objectQuery(res, 1, 'values', 0, 'name')
-          });
-        },
-        (err) => {
-          let errorMessage = objectQuery(err, 'response', 'message') || objectQuery(err, 'response') || err;
-
-          this.setState({
-            error: errorMessage,
-            fetchTablesInTransit: false,
-            loading: false
-          });
         }
       );
   }

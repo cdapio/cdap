@@ -24,7 +24,7 @@ export default function ColumnsTabDetail({columnInfo}) {
   let headers = Object.keys(types);
   return (
     <tr className="column-tab-details">
-      <td></td>
+      <td />
       <td colSpan="4">
         <table className="table">
           <thead>
@@ -48,7 +48,7 @@ export default function ColumnsTabDetail({columnInfo}) {
           </tbody>
         </table>
       </td>
-      <td></td>
+      <td />
     </tr>
   );
 }

@@ -71,7 +71,7 @@ export default class ColumnsTabRow extends Component {
         })}
         onClick={this.props.onShowDetails}
       >
-        <td></td>
+        <td />
         <td>
           <span
             onClick={this.toggleRowSelect}
@@ -94,7 +94,7 @@ export default class ColumnsTabRow extends Component {
             {`${nonNull}%`}
           </span>
         </td>
-        <td></td>
+        <td />
       </tr>
     );
   }
