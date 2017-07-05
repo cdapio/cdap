@@ -52,8 +52,11 @@ angular.module(PKG.name + '.commons')
         // schema to an existing one, or vice versa
         var isCurrentlyExistingDataset;
         var initialized = false;
+        var schema;
+        var oldDataset;
+        var newDataset;
 
-        var debouncedPopup = _.debounce(function(schema, oldDatasetName) {
+        var showPopupFunc = function(schema, oldDatasetName) {
           let sinkName = $scope.stageName;
           let confirmModal = $uibModal.open({
               templateUrl: '/assets/features/hydrator/templates/create/popovers/change-dataset-confirmation.html',
@@ -75,7 +78,9 @@ angular.module(PKG.name + '.commons')
               $scope.model = oldDatasetName;
             }
           });
-        }, 1500);
+        };
+
+        var debouncedPopup = _.debounce(showPopupFunc, 1500);
 
         resource.list(params)
           .$promise
@@ -90,8 +95,22 @@ angular.module(PKG.name + '.commons')
             }
           });
 
+        $scope.showConfirmationModal = function(event) {
+          if (event.keyCode === 13 && oldDataset !== newDataset) {
+            if (!isCurrentlyExistingDataset && dataMap.indexOf(newDataset) !== -1) {
+              if (debouncedPopup) {
+                debouncedPopup.cancel();
+              }
+              showPopupFunc(schema, oldDataset);
+            }
+          }
+        };
+
         $scope.$watch('model', function (newDatasetName, oldDatasetName) {
-          if (debouncedPopup && typeof debouncedPopup.cancel === 'function') {
+          oldDataset = oldDatasetName;
+          newDataset = newDatasetName;
+
+          if (debouncedPopup) {
             debouncedPopup.cancel();
           }
           if (dataMap.length === 0) {
@@ -112,18 +131,17 @@ angular.module(PKG.name + '.commons')
           resource.get(params)
             .$promise
             .then(function (res) {
-              var schema;
-
               if ($scope.datasetType === 'stream') {
                 schema = JSON.stringify(res.format.schema);
                 var format = res.format.name;
                 EventPipe.emit('dataset.selected', schema, format);
 
               } else if ($scope.datasetType === 'dataset') {
+                  schema = res.spec.properties.schema;
+
                   if (initialized && !isCurrentlyExistingDataset) {
-                    debouncedPopup(res.spec.properties.schema, oldDatasetName);
+                    debouncedPopup(schema, oldDataset);
                   } else {
-                    schema = res.spec.properties.schema;
                     initialized = true;
                     EventPipe.emit('dataset.selected', schema, null, true, $scope.model);
                   }
@@ -134,6 +152,9 @@ angular.module(PKG.name + '.commons')
 
         $scope.$on('$destroy', function () {
           EventPipe.cancelEvent('dataset.selected');
+          if (debouncedPopup) {
+            debouncedPopup.cancel();
+          }
         });
 
       }
