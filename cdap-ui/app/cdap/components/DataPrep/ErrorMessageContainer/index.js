@@ -15,10 +15,11 @@
 */
 
 import React, {PropTypes} from 'react';
+import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 require('./ErrorMessageContainer.scss');
 import T from 'i18n-react';
 
-export default function ErrorMessageContainer({workspaceName}) {
+export default function ErrorMessageContainer({workspaceId, workspaceName}) {
   return (
     <div className="dataprep-error-container">
       <h4>
@@ -32,7 +33,7 @@ export default function ErrorMessageContainer({workspaceName}) {
         <span>
           <span
             className="btn-link"
-            onClick={() => window.location.reload()}
+            onClick={() => setWorkspace(workspaceId).subscribe()}
           >
             {T.translate(`features.DataPrep.DataPrepTable.refreshBtnLinkLabel`)}
           </span>
@@ -45,5 +46,6 @@ export default function ErrorMessageContainer({workspaceName}) {
 }
 
 ErrorMessageContainer.propTypes = {
+  workspaceId: PropTypes.string,
   workspaceName: PropTypes.string
 };
