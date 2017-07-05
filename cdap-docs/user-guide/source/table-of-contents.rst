@@ -10,7 +10,6 @@ CDAP User Guide Table of Contents
 
     Overview <overview>
 	Tutorials <tutorials/index>
-	Cheatsheets <cheatsheets/index>
     Data Preparation <data-preparation/index>
     Pipelines Documentation <pipelines/index>
     FAQ <faq/index>

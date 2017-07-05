@@ -11,13 +11,12 @@ CDAP Tutorials
 
 .. toctree::
 
-    MySQL Customer Data <address>
-
+    MySQL Customer Data <campaign>
 
 Tutorials provide a quick onboarding point to understand how to use the CDAP UI and how it can help solve common use cases. 
 
-.. |address| replace:: **Address:**
-.. _address: address.html
+.. |campaign| replace:: **Creating a Delivery Route from Customer Addresses:**
+.. _campaign: campaign.html
 
-- |address|_ In this tutorial, we will prepare envelope mailing addresses from customer data using two auxilary files, one which maps cities to ZIP codes and one which maps state names to abbreviated state names. 
+- |campaign|_ This tutorial demonstrates how to use CDAP's data preparation and data pipelines to clean, prepare, and store customer data stored in a MySQL database. You will learn how to connect CDAP to a data source, how to apply basic transforms, and how write to a CDAP dataset. 
 

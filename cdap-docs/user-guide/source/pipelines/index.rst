@@ -2,11 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. .. :titles-only-global-toc: true
+.. _pipelines-user-guide-index:
 
 :hide-toc: true
-
-.. _cdap-pipelines:
 
 ==============
 CDAP Pipelines
@@ -23,67 +21,20 @@ CDAP Pipelines
     Plugin Management <plugin-management>
     Plugin Reference <plugins/index>
 
-..  ..    youtube::  JeqJrBW1UCU
-..      :align: center
-..      :width: 500px
+Data Pipelines allow you to ingest, transform, and load data, taking advantage of CDAP's ability to translate transformations and programmatic logic into parallelized computations using Spark and MapReduce. Simply, this means data pipelines makes it simple to ingest and transform large quantities of data in a short amount of time.
 
-CDAP Pipelines are a capability of CDAP that combines a user interface with back-end services
-to enable the building, deploying, and managing of data pipelines.
+.. figure:: /_images/data-pipelines.jpeg
+  :figwidth: 100%
+  :width: 500px
+  :align: center
+  :class: bordered-image
 
-**Introduction**
+Data Pipelines are represented by a series of stages arranged in a Directed Acylic Graph (DAG). This forms a one-way pipeline. Stages, which are the "nodes" in the pipeline graph, can be broadly categorized into three categories: sources, transforms, and sinks.
 
-.. |concepts-design| replace:: **Concepts and Design:**
-.. _concepts-design: concepts-design.html
+Sources are databases, files, or real-time streams from which you obtain your data. They enable you to ingest data, using a simple UI so you don't have to worry about coding low-level.
 
-.. |getting-started| replace:: **Getting Started:**
-.. _getting-started: getting-started.html
+Transforms allow you to manipulate data once you have ingested it. For instance, you may want to "Join" the records produced by two different sources. Or, you might want to run a logistic regression on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. Alternatively, as described in the Developer Documentation, you may want to build you own plugin.
 
-.. |studio| replace:: **CDAP Studio:**
-.. _studio: studio.html
+Finally, the results of transforms need to be written to a sink. Sinks come in a wide variety of formats -- Avro, Parquet, or a RMBDS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
 
-- |concepts-design|_ **Pipelines**, **plugins**, and the **CDAP Studio**
-
-- |getting-started|_ A **tutorial** demonstrating the basics of building and running a pipeline
-
-- |studio|_ The **UI of CDAP** for creating pipelines
-
-
-**For users and creators of pipelines**
-
-.. |creating-pipelines| replace:: **Creating Pipelines:**
-.. _creating-pipelines: creating-pipelines.html
-
-.. |running-pipelines| replace:: **Running Pipelines:**
-.. _running-pipelines: running-pipelines.html
-
-.. |plugin-management| replace:: **Plugin Management:**
-.. _plugin-management: plugin-management.html
-
-.. |plugins| replace:: **Plugin Reference:**
-.. _plugins: plugins/index.html
-
-- |creating-pipelines|_ Including **configuring, publishing,** and **cloning** pipelines
-
-- |running-pipelines|_ Including **runtime arguments, notifications** and **upgrading existing** pipelines
-
-- |plugin-management|_ Deploying plugins and **third-party JARs**, deleting and managing versions
-
-- |plugins|_ Reference to using the **plugins included in CDAP**
-
-
-**For developers of plugins and creating pipelines programmatically**
-
-.. |developing-pipelines| replace:: **Developing Pipelines:**
-.. _developing-pipelines: developing-pipelines.html
-
-.. |developing-plugins| replace:: **Developing Plugins:**
-.. _developing-plugins: developing-plugins/index.html
-
-.. |how-cdap-pipelines-work| replace:: **How CDAP Pipelines Work:**
-.. _how-cdap-pipelines-work: how-cdap-pipelines-work.html
-
-- |developing-pipelines|_ Using tools outside of CDAP Studio to **create pipelines**
-
-- |developing-plugins|_ Developing custom plugins and using the **test framework** for plugins
-
-- |how-cdap-pipelines-work|_ A **"behind-the-scenes"** of how it works
+In total, Data Pipelines make it possible to create and deploy Big Data applications running MapReduce or Spark using only a visual interface.
