@@ -30,7 +30,7 @@ Click below to donwload a `.zip` file containing the data necessary to complete 
 Video Tutorial
 --------------
 
-..  youtube:: AzQuoIE-jak
+..  youtube:: https://www.youtube.com/embed/AzQuoIE-jak
 
 Step-by-Step Walkthrough
 ------------------------
@@ -98,7 +98,7 @@ Since you cannot perform a lookup on a ``null`` state value, you need to make su
   :align: center
   :class: bordered-image
 
-You can now use the ```table-lookup`` <table-lookup>` directive to replace the full state names. 
+You can now use the :ref:```table-lookup`` <table-lookup>` directive to replace the full state names. 
 
 In CDAP, a directive is a command that is used in Data Preparation to perform a transformation. The ``table-lookup`` directive is a directive that is used to map a value stored in a column to another, using data stored in a CDAP table. For example, you will use the ``StateNameTable`` to lookup the abbreviated state name.
 

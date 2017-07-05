@@ -11,6 +11,7 @@ CDAP User Guide: Introduction
 =============================
 
 .. toctree::
+	:maxdepth: 3
 
     Introduction <index>
     Overview <overview>

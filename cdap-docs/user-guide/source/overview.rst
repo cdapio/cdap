@@ -6,7 +6,7 @@
 ====================
 Introduction to CDAP
 ====================
-The Cask Data Application Platform (CDAP) is an easy-to-use platform that makes it simple to analyze huge datasets, without the headache of writing and debugging low-level code. CDAP provides familiar UIs that make Big Data accessible to anyone.
+The Cask Data Application Platform (CDAP) is an easy-to-use platform that makes it simple to analyze huge datasets, without the headaches of writing and debugging low-level code. CDAP provides familiar UIs that make Big Data accessible to anyone.
 
 CDAP provides two visual interfaces for working with data:
 
@@ -65,8 +65,8 @@ Data Pipelines are represented by a series of stages arranged in a Directed Acyl
 
 Sources are databases, files, or real-time streams from which you obtain your data. They enable you to ingest data, using a simple UI so you don't have to worry about coding low-level.
 
-Transforms allow you to manipulate data once you have ingested it. For instance, you may want to "Join" the records produced by two different sources. Or, you might want to run a logistic regression on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. Alternatively, as described in the Developer Documentation, `you may want to build you own plugin <cdap-pipelines-developing-pipelines>`.
+Transforms allow you to manipulate data once you have ingested it. For instance, you may want to "Join" the records produced by two different sources. Or, you might want to run a logistic regression on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. Alternatively, as described in the Developer Documentation, :ref:`you may want to build you own plugin <cdap-pipelines-developing-pipelines>`.
 
 Finally, the results of transforms need to be written to a sink. Sinks come in a wide variety of formats -- Avro, Parquet, or a RMBDS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
 
-In total, Data Pipelines make it possible to create and deploy Big Data applications running MapReduce or Spark using only a visual interface.
+In sum, Data Pipelines make it possible to create and deploy Big Data applications running MapReduce or Spark using only a visual interface.
