@@ -24,8 +24,11 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -34,12 +37,15 @@ import java.util.concurrent.TimeUnit;
  * {@link UserGroupInformation}.
  */
 public abstract class AbstractCachedUGIProvider implements UGIProvider {
-  
-  protected final CConfiguration cConf;
-  private final LoadingCache<ImpersonationRequest, UGIWithPrincipal> ugiCache;
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractCachedUGIProvider.class);
 
-  protected AbstractCachedUGIProvider(CConfiguration cConf) {
+  protected final CConfiguration cConf;
+  private final LoadingCache<UGICacheKey, UGIWithPrincipal> ugiCache;
+  private final OwnerAdmin ownerAdmin;
+
+  protected AbstractCachedUGIProvider(CConfiguration cConf, OwnerAdmin ownerAdmin) {
     this.cConf = cConf;
+    this.ownerAdmin = ownerAdmin;
     this.ugiCache = createUGICache(cConf);
   }
 
@@ -48,13 +54,26 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
    */
   protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
 
+  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
+    // by default it will do nothing
+  }
+
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
     if (impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       return createUGI(impersonationRequest);
     }
     try {
-      return ugiCache.get(impersonationRequest);
+      UGIWithPrincipal ugi = impersonationRequest.getPrincipal() == null ?
+        null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
+      if (ugi != null) {
+        return ugi;
+      }
+      checkImpersonationRequest(impersonationRequest);
+      ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);
+      return ugiCache.get(new UGICacheKey(new ImpersonationRequest(impersonationRequest.getEntityId(),
+                                                                   impersonationRequest.getImpersonatedOpType(),
+                                                                   info.getPrincipal(), info.getKeytabURI())));
     } catch (ExecutionException e) {
       // Get the root cause of the failure
       Throwable cause = Throwables.getRootCause(e);
@@ -71,15 +90,51 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
     ugiCache.cleanUp();
   }
 
-  private LoadingCache<ImpersonationRequest, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
+  private LoadingCache<UGICacheKey, UGIWithPrincipal> createUGICache(CConfiguration cConf) {
     long expirationMillis = cConf.getLong(Constants.Security.UGI_CACHE_EXPIRATION_MS);
     return CacheBuilder.newBuilder()
       .expireAfterWrite(expirationMillis, TimeUnit.MILLISECONDS)
-      .build(new CacheLoader<ImpersonationRequest, UGIWithPrincipal>() {
+      .build(new CacheLoader<UGICacheKey, UGIWithPrincipal>() {
         @Override
-        public UGIWithPrincipal load(ImpersonationRequest impersonationRequest) throws Exception {
-          return createUGI(impersonationRequest);
+        public UGIWithPrincipal load(UGICacheKey key) throws Exception {
+          return createUGI(key.getRequest());
         }
       });
+  }
+
+  private ImpersonationInfo getPrincipalForEntity(ImpersonationRequest request) throws IOException {
+    ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf,
+                                                                               request.getEntityId());
+    LOG.debug("Obtained impersonation info: {} for entity {}", impersonationInfo, request.getEntityId());
+    return impersonationInfo;
+  }
+
+  private static final class UGICacheKey {
+    private final ImpersonationRequest request;
+
+    UGICacheKey(ImpersonationRequest request) {
+      this.request = request;
+    }
+
+    public ImpersonationRequest getRequest() {
+      return request;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      UGICacheKey cachekey = (UGICacheKey) o;
+      return Objects.equals(request.getPrincipal(), cachekey.getRequest().getPrincipal());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(request.getPrincipal());
+    }
   }
 }
