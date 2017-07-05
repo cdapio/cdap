@@ -9,7 +9,8 @@ CDAP User Guide Table of Contents
 =================================
 
 .. toctree::
-	:maxdepth: 3
+	:titlesonly:
+	:maxdepth: 2
 
     Overview <overview>
 	Tutorials <tutorials/index>
