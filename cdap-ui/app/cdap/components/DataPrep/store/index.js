@@ -129,6 +129,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         loading: true
       });
       break;
+    case DataPrepActions.setDataError:
     case DataPrepActions.disableLoading:
       stateCopy = Object.assign({}, state, {
         loading: false
