@@ -41,7 +41,6 @@ export default class DatabaseBrowser extends Component {
       connectionName: '',
       tables: [],
       loading: true,
-      fetchTablesInTransit: false,
       search: '',
       searchFocus: true,
       error: null
