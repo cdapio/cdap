@@ -32,6 +32,18 @@ import javax.annotation.Nullable;
  * A store for runtime information of a {@link Program}.
  */
 public interface RuntimeStore {
+  /**
+   * Logs initialization of program run.
+
+   * @param id id of hte program
+   * @param pid run id
+   * @param startTime start timestamp in seconds
+   * @param twillRunId TWill run id
+   * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
+   */
+  void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+               Map<String, String> runtimeArgs, Map<String, String> systemArgs);
 
   /**
    * Logs start of program run.

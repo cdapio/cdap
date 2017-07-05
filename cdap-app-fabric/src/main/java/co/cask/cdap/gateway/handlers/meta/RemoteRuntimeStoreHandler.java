@@ -50,6 +50,22 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   }
 
   @POST
+  @Path("/setInit")
+  public void setInit(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long startTime = deserializeNext(arguments);
+    String twillRunId = deserializeNext(arguments);
+    Map<String, String> runtimeArgs = deserializeNext(arguments);
+    Map<String, String> systemArgs = deserializeNext(arguments);
+    store.setInit(program, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
   @Path("/setStart")
   public void setStart(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);

@@ -21,12 +21,15 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -41,6 +44,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
@@ -67,6 +71,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -88,22 +93,24 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
+  protected final RuntimeStore runtimeStore;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository) {
+                                          ArtifactRepository artifactRepository, RuntimeStore runtimeStore) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.artifactRepository = artifactRepository;
+    this.runtimeStore = runtimeStore;
   }
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
-    ProgramId programId = programDescriptor.getProgramId();
+    final ProgramId programId = programDescriptor.getProgramId();
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
-    RunId runId = RunIds.generate();
+    final RunId runId = RunIds.generate();
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
@@ -116,17 +123,39 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                programDescriptor.getApplicationSpecification());
 
+      final Arguments userArguments = options.getUserArguments();
+      final Arguments systemArguments = options.getArguments();
+      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+      Retries.supplyWithRetries(new Supplier<Void>() {
+        @Override
+        public Void get() {
+          long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
+                               userArguments.asMap(), systemArguments.asMap());
+          return null;
+        }
+      }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+
       // Create and run the program
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-      RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
-      monitorProgram(runtimeInfo, cleanUpTask);
-      return runtimeInfo;
+      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
+
+      return monitorProgram(controller, programId, options, cleanUpTask);
     } catch (Exception e) {
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  @Override
+  public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
+                                    Runnable cleanUpTask) {
+    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
+    addCleanupTask(runtimeInfo, cleanUpTask);
+
+    return runtimeInfo;
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
@@ -373,7 +402,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
-        monitorProgram(runtimeInfo, createCleanupTask());
+        addCleanupTask(runtimeInfo, createCleanupTask());
       }
     } finally {
       lock.unlock();
@@ -386,7 +415,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * @param runtimeInfo information about the running program
    * @param cleanUpTask task to run when program finished
    */
-  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
+  private void addCleanupTask(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 

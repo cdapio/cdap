@@ -98,7 +98,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
                                    ArtifactRepository artifactRepository, Impersonator impersonator) {
-    super(cConf, programRunnerFactory, artifactRepository);
+    super(cConf, programRunnerFactory, artifactRepository, store);
     this.programRunnerFactory = programRunnerFactory;
     this.twillRunner = twillRunner;
     this.store = store;

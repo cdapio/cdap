@@ -27,14 +27,9 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -44,11 +39,9 @@ import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactManager;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -60,9 +53,6 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs an HTTP Server inside a Service.
@@ -108,11 +98,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     int instanceCount = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCES, "0"));
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
-    final RunId runId = ProgramRunners.getRunId(options);
-    final ProgramId programId = program.getId();
-    final Arguments systemArgs = options.getArguments();
-    final Arguments userArgs = options.getUserArguments();
-    final String twillRunId = systemArgs.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    RunId runId = ProgramRunners.getRunId(options);
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -128,6 +114,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
+      ProgramId programId = program.getId();
       ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
 
@@ -154,102 +141,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       }, Threads.SAME_THREAD_EXECUTOR);
 
 
-      final ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
-                                                                               spec.getName() + "-" + instanceId);
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State state, @Nullable Throwable cause) {
-          // Get start time from RunId
-          long startTimeInSeconds = RunIds.getTime(controller.getRunId(), TimeUnit.SECONDS);
-          if (startTimeInSeconds == -1) {
-            // If RunId is not time-based, use current time as start time
-            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-          }
-
-          final long finalStartTimeInSeconds = startTimeInSeconds;
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                    userArgs.asMap(), systemArgs.asMap());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-
-          if (state == ProgramController.State.COMPLETED) {
-            completed();
-          }
-          if (state == ProgramController.State.ERROR) {
-            error(controller.getFailureCause());
-          }
-        }
-
-        @Override
-        public void completed() {
-          LOG.debug("Program {} completed successfully.", programId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.COMPLETED.getRunStatus());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void killed() {
-          LOG.debug("Program {} killed.", programId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.KILLED.getRunStatus());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void suspended() {
-          LOG.debug("Suspending Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setSuspend(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setResume(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void error(final Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setStop(programId, runId.getId(),
-                                   TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                   ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+                                                                         spec.getName() + "-" + instanceId);
 
       component.start();
       return controller;

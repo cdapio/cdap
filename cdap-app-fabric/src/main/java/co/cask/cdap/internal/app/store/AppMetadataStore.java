@@ -280,22 +280,28 @@ public class AppMetadataStore extends MetadataStoreDataset {
       write(key, new RunRecordMeta(record, properties));
     }
   }
+  public void recordProgramInit(ProgramId programId, String pid, long startTs, String twillRunId,
+                                 Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+    MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
+    recordProgramStart(programId, pid, ProgramRunStatus.STARTING, startTs, twillRunId,
+                       runtimeArgs, systemArgs, builder);
+  }
 
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
+    recordProgramStart(programId, pid, ProgramRunStatus.RUNNING, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
   @VisibleForTesting
   void recordProgramStartOldFormat(ProgramId programId, String pid, long startTs, String twillRunId,
                                    Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
+    recordProgramStart(programId, pid, ProgramRunStatus.RUNNING, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
-  private void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
-                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+  private void recordProgramStart(ProgramId programId, String pid, ProgramRunStatus status, long startTs,
+                                  String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                   MDSKey.Builder keyBuilder) {
     String workflowrunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
@@ -312,7 +318,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     RunRecordMeta meta =
-      new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, builder.build(), systemArgs, twillRunId);
+      new RunRecordMeta(pid, startTs, null, status, builder.build(), systemArgs, twillRunId);
     write(key, meta);
   }
 
@@ -400,7 +406,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  programId.getNamespace(), programId.getApplication(), programId.getVersion(),
                                  programId.getType().name(), programId.getProgram(), pid);
       LOG.error(msg);
-      throw new IllegalArgumentException(msg);
+      return;
     }
 
     if (started.getSystemArgs() != null && started.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
