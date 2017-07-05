@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015-2017 Cask Data, Inc.
+  Copyright © 2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,14 @@
   the License.
 -->
 
-<input type="text" class="form-control"
-  ng-model="model"
-  data-min-length="0"
-  data-auto-select="true"
-  bs-options="data.name as data.name for data in list"
-  bs-on-select="showConfirmationModal"
-  data-trigger="focus"
-  data-limit="100"
-  data-watch-options="true"
-  placeholder="{{textPlaceholder}}"
-  bs-typeahead />
+<div class="modal-body">
+  <div>
+    <span>The dataset '{{ datasetName }}' already exists. The schema of the sink '{{ sinkName }}' will be updated to the schema of '{{ datasetName }}'. Are you sure you want to continue?</span>
+  </div>
+</div>
+<div class="modal-footer">
+  <div class="pull-right">
+    <button class="btn btn-grey-cancel" ng-click="$close(false)">No</button>
+    <button class="btn btn-blue" ng-click="$close(true)">Yes</button>
+  </div>
+</div>

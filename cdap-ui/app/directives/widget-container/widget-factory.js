@@ -187,7 +187,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'dataset-type': 'dataset',
-          'config': 'myconfig'
+          'config': 'myconfig',
+          'stage-name': 'stageName'
         }
       },
       'sql-select-fields': {
