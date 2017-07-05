@@ -38,17 +38,17 @@ Data Pipelines are represented by a series of stages arranged in a Directed Acyl
 - Sinks
 - Error Handling
 
-Sources are databases, files, or real-time streams from which you obtain your data. They enable you to ingest data, using a simple UI so you don't have to worry about coding low-level connections.
+**Sources** are databases, files, or real-time streams from which you obtain your data. They enable you to ingest data, using a simple UI so you don't have to worry about coding low-level connections.
 
-Transforms allow you to manipulate data once you have ingested it. For example, you may clone a record. You can format JSON. You can even write custom transforms using the Javascript plugin. 
+**Transforms** allow you to manipulate data once you have ingested it. For example, you may clone a record. You can format JSON. You can even write custom transforms using the Javascript plugin. 
 
-Analytics plugins are used to run analytics or Machine Learning tasks on data. For instance, you might want to run a logistic regression or Naive Bayes on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. 
+**Analytics** plugins are used to run analytics or Machine Learning tasks on data. For instance, you might want to run a logistic regression or Naive Bayes on a batch source of data. CDAP provides built-in plugins for a wide variety of such use cases. 
 
-Action plugins define a custom action that is scheduled to take place during a workflow, but doesn't directly manipulate data in the workflow. For example, using the Database custom action, you can run an arbitrary database command at the end of your pipeline. Alternatively, you can trigger an action to move files within an HDFS cluster.
+**Action** plugins define a custom action that is scheduled to take place during a workflow, but doesn't directly manipulate data in the workflow. For example, using the Database custom action, you can run an arbitrary database command at the end of your pipeline. Alternatively, you can trigger an action to move files within an HDFS cluster.
 
-Additionally, when stages encounter null values, logical errors, or other sources of errors, you may use an Error Handler plugin to catch errors. This plugin is attached to the output of any transform or analytics plugin, where it catches errors. These errors can then be written to a database to be inspected or analyzed.
+Additionally, when stages encounter null values, logical errors, or other sources of errors, you may use an **Error Handler** plugin to catch errors. This plugin is attached to the output of any transform or analytics plugin, where it catches errors. These errors can then be written to a database to be inspected or analyzed.
 
-Finally, data must be written to a sink. Sinks come in a wide variety of formats -- Avro, Parquet, or a RMBDS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
+Finally, data must be written to a **Sink**. Sinks come in a wide variety of formats -- Avro, Parquet, or a RMBDS, for example -- and the connection is created from a simple UI. Data written to these sinks can then be queried from the CDAP UI or using a RESTful API. 
 
 If a plugin you need does not exist, :ref:`you may want to build you own plugin <cdap-pipelines-developing-pipelines>` as described in the Developer Documentation.
 

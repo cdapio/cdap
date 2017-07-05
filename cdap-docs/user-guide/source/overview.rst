@@ -32,4 +32,4 @@ CDAP makes it simple for data scientists and analysts to explore their data and 
 
 Advanced Users
 --------------
-In addition to the capabilities provided by Data Preparation, Data Pipelines, and Metatada, CDAP is full Unified Integration Platform that allows you to quickly develop and deploy custom Java applications. If you organization needs to develop a custom application, please visit :ref:`the Developer Manual <developer-index>`.
+In addition to the capabilities provided by Data Preparation, Data Pipelines, and Metatada, CDAP is a full Unified Integration Platform that allows you to quickly develop and deploy custom Java applications. If you organization needs to develop a custom application, please visit :ref:`the Developer Manual <developer:developer-index>`.
