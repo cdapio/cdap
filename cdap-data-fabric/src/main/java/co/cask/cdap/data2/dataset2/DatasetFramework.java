@@ -145,6 +145,9 @@ public interface DatasetFramework {
    * method to build {@link DatasetSpecification} which describes dataset instance
    * and later used to initialize {@link DatasetAdmin} and {@link Dataset} for the dataset instance.
    *
+   * Note this method can only be used when app impersonation is enabled, since it will assume the keytab url is in the
+   * default keytab path.
+   *
    * @param datasetTypeName dataset instance type name
    * @param datasetInstanceId dataset instance name
    * @param props dataset instance properties
