@@ -114,7 +114,7 @@ def visit_youtube_node(self, node):
         }
         style = combine(style, style_margins)
         attrs = {
-            "src": "http://www.youtube.com/embed/%s" % node["id"],
+            "src": "https://www.youtube.com/embed/%s" % node["id"],
             "style": css(style),
         }
         self.body.append(self.starttag(node, "iframe", **attrs))

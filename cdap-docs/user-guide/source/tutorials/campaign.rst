@@ -30,7 +30,7 @@ Click below to donwload a `.zip` file containing the data necessary to complete 
 Video Tutorial
 --------------
 
-..  youtube:: https://www.youtube.com/embed/AzQuoIE-jak
+..  youtube:: AzQuoIE-jak
 
 Step-by-Step Walkthrough
 ------------------------

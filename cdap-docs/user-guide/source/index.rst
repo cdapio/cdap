@@ -10,16 +10,6 @@
 CDAP User Guide: Introduction
 =============================
 
-.. toctree::
-	:titlesonly:
-	:maxdepth: 2
-
-    Introduction <index>
-    Overview <overview>
-	Tutorials <tutorials/index>
-    Data Preparation <data-preparation/index>
-    Pipelines Documentation <pipelines/index>
-
 Welcome to CDAP!
 ----------------
 CDAP is an open source, Apache 2.0 licensed, distributed, application framework for
