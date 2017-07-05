@@ -37,6 +37,17 @@
         overflow-x: hidden;
       }
       .wizard-navigation {
+        display: flex;
+        align-items: center;
+
+        .step-helper-text {
+          color: red;
+        }
+
+        .navigation-btn {
+          margin-left: auto;
+        }
+
         .btn {
           padding: 6px 20px;
           margin: 0 5px;

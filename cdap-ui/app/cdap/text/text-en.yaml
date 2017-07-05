@@ -1355,6 +1355,7 @@ features:
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
+        helperText: Please load the microservice-app artifact for creating and managing microservices using the _load artifact <artifact-jar-file>_ CLI command.
         instanceNameLabel: Instance Name
         instanceNamePlaceholder: Name of the microservice instance
         microserviceOptionLabel: Microservice Name
@@ -1423,6 +1424,10 @@ features:
         title: Properties
       success: You have successfully created the microservice "{appName}".
       summaryLabel: "Summary: "
+    NavigationButtons:
+      finish: Finish
+      next: Next
+      previous: Previous
     OneStepDeploy:
       headerlabel: Deploy
       Step1:

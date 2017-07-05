@@ -32,18 +32,28 @@ export default class MicroserviceUploadWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: props.isOpen || false,
+      showWizard: false,
       successInfo: {}
     };
     this.eventEmitter = ee(ee);
   }
   componentWillMount() {
     return MicroserviceUploadActionCreator
-      .listMicroservicePlugins()
+      .findMicroserviceArtifact()
+      .flatMap((artifact) => {
+        MicroserviceUploadStore.dispatch({
+          type: MicroserviceUploadActions.setMicroserviceArtifact,
+          payload: { artifact }
+        });
+        return MicroserviceUploadActionCreator.listMicroservicePlugins(artifact);
+      })
       .subscribe((plugins) => {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setDefaultMicroservicePlugins,
           payload: { plugins }
+        });
+        this.setState({
+          showWizard: true
         });
       });
   }

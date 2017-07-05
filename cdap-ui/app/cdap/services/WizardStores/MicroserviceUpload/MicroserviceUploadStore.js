@@ -19,18 +19,20 @@ import MicroserviceUploadWizardConfig from 'services/WizardConfigs/MicroserviceU
 import {getArtifactNameAndVersion, defaultAction, requiredFieldsCompleted} from 'services/helpers';
 import head from 'lodash/head';
 import cloneDeep from 'lodash/cloneDeep';
+import isEmpty from 'lodash/isEmpty';
 import shortid from 'shortid';
 import T from 'i18n-react';
 
 // Defaults
+// Disabled means that the step tab is not clickable at all
+// Readonly means that the step is clickable, but all the contents are non-editable
 const defaultState = {
   __complete: false,
   __skipped: false,
-  __error: false
+  __error: false,
+  __disabled: false,
+  __readOnly: false
 };
-const defaultUploadStep = Object.assign({
-  __disabled: false
-}, defaultState);
 
 const defaultGeneralState = Object.assign({
   instanceName: '',
@@ -46,14 +48,14 @@ const defaultGeneralState = Object.assign({
 const defaultJarState = Object.assign({}, {
   contents: '',
   fileMetadataObj: {}
-}, defaultUploadStep);
+}, defaultState);
 
 const defaultJsonState = Object.assign({}, {
   contents: '',
   properties: {},
   artifactExtends: '',
   artifactPlugins: []
-}, defaultUploadStep);
+}, defaultState);
 
 const defaultConfigureState = Object.assign({
   instances: 1,
@@ -172,12 +174,20 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
         defaultMicroserviceOptions,
         showNewMicroserviceTextbox
       });
-
       break;
     case MicroserviceUploadActions.setNewMicroserviceName:
       stateCopy = Object.assign({}, state, {
         newMicroserviceName: action.payload.newMicroserviceName
       });
+      break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __readOnly: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('general', Object.assign({}, state), action);
@@ -225,6 +235,17 @@ const uploadjar = (state = defaultJarState, action = defaultAction) => {
         stateCopy = Object.assign({}, state, {
           __disabled: true
         });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
+      break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
       }
       break;
     case MicroserviceUploadActions.onError:
@@ -289,6 +310,17 @@ const uploadjson = (state = defaultJsonState, action = defaultAction) => {
         stateCopy = Object.assign({}, state, {
           __disabled: true
         });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
+      break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
       }
       break;
     case MicroserviceUploadActions.onError:
@@ -328,6 +360,15 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
         ethreshold: action.payload.ethreshold
       });
       break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
+      break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('configure', Object.assign({}, state), action);
     case MicroserviceUploadActions.onSuccess:
@@ -361,6 +402,15 @@ const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
         out: cloneDeep(action.payload.outboundQueues)
       });
       break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
+      break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('endpoints', Object.assign({}, state), action);
     case MicroserviceUploadActions.onSuccess:
@@ -382,6 +432,15 @@ const properties = (state = defaultPropertiesState, action = defaultAction) => {
       stateCopy = Object.assign({}, state, {
         keyValues: action.payload.keyValues
       });
+      break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('properties', Object.assign({}, state), action);

@@ -70,6 +70,11 @@ const mapStateToGeneralStepSummaryProps = (state) => {
     version: state.general.version
   };
 };
+const mapStateToGeneralStepReadOnlyProps = (state) => {
+  return {
+    disabled: state.general.__readOnly
+  };
+};
 
 const mapDispatchToInstanceNameProps = (dispatch) => {
   return {
@@ -160,6 +165,19 @@ Summary.propTypes = {
   version: PropTypes.number
 };
 
+let Fieldset = ({disabled, children}) => {
+  return (
+    <fieldset disabled={disabled}>
+      {children}
+    </fieldset>
+  );
+};
+
+Fieldset.propTypes = {
+  disabled: PropTypes.bool,
+  children: PropTypes.node
+};
+
 // FIXME: Should pass validationError to the InputWithValidations, or just switch
 // to using Input if we don't need validations
 
@@ -187,6 +205,10 @@ Summary = connect(
   mapStateToGeneralStepSummaryProps,
   null
 )(Summary);
+const CustomFieldset = connect(
+  mapStateToGeneralStepReadOnlyProps,
+  null
+)(Fieldset);
 
 export default function GeneralInfoStep() {
   return (
@@ -198,46 +220,48 @@ export default function GeneralInfoStep() {
           return false;
         }}
       >
-        <FormGroup row>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.instanceNameLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            <InputMicroserviceInstanceName />
-          </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
-        </FormGroup>
-        <FormGroup row>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('commons.descriptionLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            <InputMicroserviceDescription />
-          </Col>
-        </FormGroup>
-        <FormGroup row>
-          <Col sm="3">
-            <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.versionLabel')}</Label>
-          </Col>
-          <Col sm="7">
-            <InputMicroserviceVersion />
-          </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
-        </FormGroup>
-        <FormGroup row>
-          <Col xs="3">
-            <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.microserviceOptionLabel')}</Label>
-          </Col>
-          <Col xs="7">
-            <SelectMicroserviceOption />
-            <NewMicroserviceTextbox />
-          </Col>
-          <i className="fa fa-asterisk text-danger float-xs-left" />
-        </FormGroup>
-        <div className="step-summary">
-          <Label className="summary-label">{T.translate('features.Wizard.MicroserviceUpload.summaryLabel')}</Label>
-          <Summary />
-        </div>
+        <CustomFieldset>
+          <FormGroup row>
+            <Col xs="3">
+              <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.instanceNameLabel')}</Label>
+            </Col>
+            <Col xs="7">
+              <InputMicroserviceInstanceName />
+            </Col>
+            <i className="fa fa-asterisk text-danger float-xs-left" />
+          </FormGroup>
+          <FormGroup row>
+            <Col xs="3">
+              <Label className="control-label">{T.translate('commons.descriptionLabel')}</Label>
+            </Col>
+            <Col xs="7">
+              <InputMicroserviceDescription />
+            </Col>
+          </FormGroup>
+          <FormGroup row>
+            <Col sm="3">
+              <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.versionLabel')}</Label>
+            </Col>
+            <Col sm="7">
+              <InputMicroserviceVersion />
+            </Col>
+            <i className="fa fa-asterisk text-danger float-xs-left" />
+          </FormGroup>
+          <FormGroup row>
+            <Col xs="3">
+              <Label className="control-label">{T.translate('features.Wizard.MicroserviceUpload.Step1.microserviceOptionLabel')}</Label>
+            </Col>
+            <Col xs="7">
+              <SelectMicroserviceOption />
+              <NewMicroserviceTextbox />
+            </Col>
+            <i className="fa fa-asterisk text-danger float-xs-left" />
+          </FormGroup>
+          <div className="step-summary">
+            <Label className="summary-label">{T.translate('features.Wizard.MicroserviceUpload.summaryLabel')}</Label>
+            <Summary />
+          </div>
+        </CustomFieldset>
       </Form>
     </Provider>
   );
