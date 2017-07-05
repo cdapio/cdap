@@ -241,10 +241,13 @@ public class DefaultStore implements Store {
   public void setStart(final ProgramId id, final String pid, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs,
                        final Map<String, String> systemArgs) {
+    LOG.debug("BEGINNING OF TRANSACTION");
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
+        LOG.debug("ABOUT TO START " + id);
         getAppMetadataStore(context).recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+        LOG.debug("Program " + id + " has STARTED.");
       }
     });
   }

@@ -98,7 +98,7 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
 
   @Override
   public void waitForStatus(boolean status) throws InterruptedException {
-    waitForStatus(status, 50, 5000, TimeUnit.MILLISECONDS);
+    waitForStatus(status, 50, 10000, TimeUnit.MILLISECONDS);
   }
 
   @Override

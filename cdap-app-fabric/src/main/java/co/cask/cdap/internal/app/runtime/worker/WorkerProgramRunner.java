@@ -217,30 +217,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
 
         @Override
-        public void suspended() {
-          LOG.debug("Suspending Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setSuspend(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
-        public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              runtimeStore.setResume(programId, runId.getId());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-        }
-
-        @Override
         public void error(final Throwable cause) {
           LOG.info("Program stopped with error {}, {}", programId, runId, cause);
           Retries.supplyWithRetries(new Supplier<Void>() {
