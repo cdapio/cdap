@@ -225,6 +225,8 @@ const uploadjar = (state = defaultJarState, action = defaultAction) => {
         stateCopy = Object.assign({}, state, {
           __disabled: true
         });
+      } else {
+        stateCopy = Object.assign({}, state);
       }
       break;
     case MicroserviceUploadActions.onError:
@@ -289,6 +291,8 @@ const uploadjson = (state = defaultJsonState, action = defaultAction) => {
         stateCopy = Object.assign({}, state, {
           __disabled: true
         });
+      } else {
+        stateCopy = Object.assign({}, state);
       }
       break;
     case MicroserviceUploadActions.onError:

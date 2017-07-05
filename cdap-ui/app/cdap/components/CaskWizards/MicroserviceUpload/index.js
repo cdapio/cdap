@@ -32,7 +32,7 @@ export default class MicroserviceUploadWizard extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      showWizard: props.isOpen || false,
+      showWizard: false,
       successInfo: {}
     };
     this.eventEmitter = ee(ee);
@@ -44,6 +44,9 @@ export default class MicroserviceUploadWizard extends Component {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setDefaultMicroservicePlugins,
           payload: { plugins }
+        });
+        this.setState({
+          showWizard: true
         });
       });
   }
