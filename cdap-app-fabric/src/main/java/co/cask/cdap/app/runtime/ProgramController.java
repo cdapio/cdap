@@ -61,7 +61,7 @@ public interface ProgramController {
     /**
      * Program is starting.
      */
-    STARTING(ProgramRunStatus.RUNNING),
+    STARTING(ProgramRunStatus.STARTING),
 
     /**
      * Program is alive.

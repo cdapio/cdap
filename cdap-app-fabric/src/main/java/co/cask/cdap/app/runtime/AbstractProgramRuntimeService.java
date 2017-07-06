@@ -154,6 +154,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
                                     Runnable cleanUpTask) {
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
+    add(runtimeInfo);
     addCleanupTaskListener(runtimeInfo, cleanUpTask);
     return runtimeInfo;
   }
@@ -421,9 +422,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        if (!COMPLETED_STATES.contains(currentState)) {
-          add(runtimeInfo);
-        } else {
+        if (COMPLETED_STATES.contains(currentState)) {
           cleanUpTask.run();
         }
       }
