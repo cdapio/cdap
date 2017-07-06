@@ -128,6 +128,8 @@ cdap_create_log_dir() { test -d "${LOG_DIR}" || mkdir -p "${LOG_DIR}"; };
 #
 cdap_create_pid_dir() { test -d "${PID_DIR}" || mkdir -p "${PID_DIR}"; };
 
+cdap_create_dir() { test -d "$1" || mkdir -p "$1"; }
+
 # Locates CDAP_HOME and returns its location
 #
 cdap_home() {
@@ -654,6 +656,7 @@ cdap_service() {
   shift; shift
   local readonly __args=${@}
   local readonly __pidfile=${PID_DIR}/${__service}-${IDENT_STRING}.pid
+  local readonly __gc_log_and_heapdump_dir=${LOG_DIR}/${__service}-${IDENT_STRING}
   local readonly __log_prefix=${LOG_DIR}/${__service}-${IDENT_STRING}-${HOSTNAME}
   local readonly __logfile=${__log_prefix}.log
   local readonly __svc=${__service/-server/}
@@ -758,7 +761,8 @@ cdap_start_java() {
   eval split_jvm_opts ${!JAVA_OPTS_VAR} ${OPTS} ${JAVA_OPTS}
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   # Enable GC logging
-  __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__log_prefix}-$(date +%Y-%d-%mT%T)-heap.hprof -verbose:gc -Xloggc:${__log_prefix}-gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  cdap_create_dir ${__gc_log_and_heapdump_dir}
+  __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir} -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir} -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
   if [[ ${CDAP_SERVICE} == master ]]; then
