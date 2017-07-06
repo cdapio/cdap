@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.common.AlreadyExistsException;
+import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.FileAlreadyExistsException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,7 +53,11 @@ public final class DefaultNamespaceEnsurer extends AbstractService {
               // if there is no exception, assume successfully created and break
               LOG.info("Successfully created namespace '{}'.", NamespaceMeta.DEFAULT);
               notifyStarted();
-            } catch (AlreadyExistsException e) {
+            } catch (FileAlreadyExistsException e) {
+              LOG.warn("Got exception while trying to create namespace '{}'.", NamespaceMeta.DEFAULT, e);
+              // avoid retrying if its a FileAlreadyExistsException
+              notifyStarted();
+            } catch (NamespaceAlreadyExistsException e) {
               // default namespace already exists
               LOG.info("Default namespace already exists.");
               notifyStarted();
