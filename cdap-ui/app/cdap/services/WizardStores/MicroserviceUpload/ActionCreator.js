@@ -77,7 +77,7 @@ const findMicroserviceArtifact = () => {
       });
 
       if (microserviceArtifacts.length === 0) {
-        return null;
+        return Rx.Observable.of([]);
       }
 
       let highestVersion = findHighestVersion(microserviceArtifacts.map((artifact) => {
@@ -103,6 +103,9 @@ const findMicroserviceArtifact = () => {
 const listMicroservicePlugins = () => {
   return findMicroserviceArtifact()
     .flatMap((artifact) => {
+      if (artifact.length === 0) {
+        return Rx.Observable.of([]);
+      }
       let namespace = NamespaceStore.getState().selectedNamespace;
       let {name: artifactId, version, scope} = artifact;
 
