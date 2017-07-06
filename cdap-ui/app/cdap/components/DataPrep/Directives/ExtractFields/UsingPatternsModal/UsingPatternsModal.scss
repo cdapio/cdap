@@ -36,6 +36,13 @@ $link-color: #0275d8;
     .dropdown-item {
       cursor: initial;
     }
+
+    .using-patterns-modal-dropdown {
+      min-height: 20px;
+      // max-height = Full viewport height - margin top of modal - distance between top of modal to bottom of dropdown
+      max-height: calc(100vh - 1.625em - 440px);
+      overflow-y: auto;
+    }
   }
   .showhidelink {
     color: $link-color;
