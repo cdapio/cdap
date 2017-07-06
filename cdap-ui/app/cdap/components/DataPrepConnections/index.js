@@ -94,6 +94,7 @@ export default class DataPrepConnections extends Component {
     this.onServiceStart = this.onServiceStart.bind(this);
     this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
     this.onUploadSuccess = this.onUploadSuccess.bind(this);
+
   }
 
   componentWillMount() {
