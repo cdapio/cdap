@@ -1351,6 +1351,7 @@ features:
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
+        helperText: Please load the microservice artifact before continuing
         instanceNameLabel: Instance Name
         instanceNamePlaceholder: Name of the microservice instance
         microserviceOptionLabel: Microservice Name

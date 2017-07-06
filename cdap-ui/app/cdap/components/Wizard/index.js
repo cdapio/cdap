@@ -188,6 +188,10 @@ export default class Wizard extends Component {
     let state = this.props.store.getState()[stepId];
     return state && state.__disabled;
   }
+  isStepReadOnly(stepId) {
+    let state = this.props.store.getState()[stepId];
+    return state && state.__readOnly;
+  }
 
   handleCallToActionClick() {
     this.eventEmitter.emit(globalEvents.CLOSEMARKET);
@@ -322,8 +326,19 @@ export default class Wizard extends Component {
             currentStep={currentStepIndex(this.props.wizardConfig.steps, matchedStep.id) + 1}
           >
             {matchedStep.content}
-            <div className="text-xs-right wizard-navigation">
-              {this.getNavigationButtons(matchedStep)}
+            <div className="wizard-navigation">
+              {
+                this.isStepReadOnly(matchedStep.id) ?
+                  (
+                    <span className="step-helper-text">
+                      {matchedStep.helperText}
+                    </span>
+                  )
+                : null
+              }
+              <span className="navigation-btn">
+                {this.getNavigationButtons(matchedStep)}
+              </span>
             </div>
           </WizardStepContent>
         );

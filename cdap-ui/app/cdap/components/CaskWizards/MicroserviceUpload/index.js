@@ -39,7 +39,14 @@ export default class MicroserviceUploadWizard extends Component {
   }
   componentWillMount() {
     return MicroserviceUploadActionCreator
-      .listMicroservicePlugins()
+      .findMicroserviceArtifact()
+      .flatMap((artifact) => {
+        MicroserviceUploadStore.dispatch({
+          type: MicroserviceUploadActions.setMicroserviceArtifact,
+          payload: { artifact }
+        });
+        return MicroserviceUploadActionCreator.listMicroservicePlugins(artifact);
+      })
       .subscribe((plugins) => {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setDefaultMicroservicePlugins,

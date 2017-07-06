@@ -77,7 +77,7 @@ const findMicroserviceArtifact = () => {
       });
 
       if (microserviceArtifacts.length === 0) {
-        return Rx.Observable.of([]);
+        return Rx.Observable.of({});
       }
 
       let highestVersion = findHighestVersion(microserviceArtifacts.map((artifact) => {
@@ -100,24 +100,21 @@ const findMicroserviceArtifact = () => {
     });
 };
 
-const listMicroservicePlugins = () => {
-  return findMicroserviceArtifact()
-    .flatMap((artifact) => {
-      if (artifact.length === 0) {
-        return Rx.Observable.of([]);
-      }
-      let namespace = NamespaceStore.getState().selectedNamespace;
-      let {name: artifactId, version, scope} = artifact;
+const listMicroservicePlugins = (artifact) => {
+  if (isEmpty(artifact)) {
+    return Rx.Observable.of([]);
+  }
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let {name: artifactId, version, scope} = artifact;
 
-      let pluginParams = {
-        namespace,
-        artifactId,
-        version,
-        scope
-      };
+  let pluginParams = {
+    namespace,
+    artifactId,
+    version,
+    scope
+  };
 
-      return MyArtifactApi.listMicroservicePlugins(pluginParams);
-    });
+  return MyArtifactApi.listMicroservicePlugins(pluginParams);
 };
 
 const createApplication = () => {
@@ -229,6 +226,7 @@ const MicroserviceUploadActionCreator = {
   uploadArtifact,
   uploadConfigurationJson,
   createApplication,
+  findMicroserviceArtifact,
   listMicroservicePlugins
 };
 
