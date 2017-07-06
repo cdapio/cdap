@@ -1420,6 +1420,10 @@ features:
         title: Properties
       success: You have successfully created the microservice "{appName}".
       summaryLabel: "Summary: "
+    NavigationButtons:
+      finish: Finish
+      next: Next
+      previous: Previous
     OneStepDeploy:
       headerlabel: Deploy
       Step1:

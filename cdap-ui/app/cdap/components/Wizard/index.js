@@ -225,15 +225,16 @@ export default class Wizard extends Component {
     }
   }
 
-  getNavigationButtons(matchedStep) {
+  getNavigationButtons(matchedStep, btnsDisabled = false) {
     let matchedIndex = currentStepIndex(this.props.wizardConfig.steps, matchedStep.id);
     let navButtons;
     let nextButton = (
       <button
         className="btn btn-secondary"
         onClick={this.goToNextStep.bind(this, matchedStep.id)}
+        disabled={btnsDisabled}
       >
-        <span>Next</span>
+        <span>{T.translate('features.Wizard.NavigationButtons.next')}</span>
         <IconSVG name="icon-chevron-right" />
       </button>
     );
@@ -241,18 +242,19 @@ export default class Wizard extends Component {
       <button
         className="btn btn-secondary"
         onClick={this.goToPreviousStep.bind(this, matchedStep.id)}
+        disabled={btnsDisabled}
       >
         <IconSVG name="icon-chevron-left" />
-        <span>Previous</span>
+        <span>{T.translate('features.Wizard.NavigationButtons.previous')}</span>
       </button>
     );
     let finishButton = (
       <button
         className="btn btn-primary"
         onClick={this.submitForm.bind(this)}
-        disabled={(!this.state.requiredStepsCompleted || this.state.loading) ? 'disabled' : null}
+        disabled={(!this.state.requiredStepsCompleted || this.state.loading || btnsDisabled) ? 'disabled' : null}
       >
-        Finish
+        <span>{T.translate('features.Wizard.NavigationButtons.finish')}</span>
       </button>
     );
     // This is ugly. We need to find a better way.
@@ -318,6 +320,8 @@ export default class Wizard extends Component {
       .steps
       .filter(step => step.id === this.state.activeStep)
       .map((matchedStep) => {
+        let isStepReadOnly = this.isStepReadOnly(matchedStep.id);
+
         return (
           <WizardStepContent
             title={matchedStep.title}
@@ -328,7 +332,7 @@ export default class Wizard extends Component {
             {matchedStep.content}
             <div className="wizard-navigation">
               {
-                this.isStepReadOnly(matchedStep.id) ?
+                isStepReadOnly ?
                   (
                     <span className="step-helper-text">
                       {matchedStep.helperText}
@@ -337,7 +341,7 @@ export default class Wizard extends Component {
                 : null
               }
               <span className="navigation-btn">
-                {this.getNavigationButtons(matchedStep)}
+                {this.getNavigationButtons(matchedStep, isStepReadOnly)}
               </span>
             </div>
           </WizardStepContent>
