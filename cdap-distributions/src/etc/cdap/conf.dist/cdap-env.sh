@@ -38,6 +38,8 @@ LOCAL_DIR="/var/tmp/cdap"
 # temporary storage for Apache Twill
 TEMP_DIR="/tmp"
 
+HEAPDUMP_ON_OOM=true
+
 # Service-specific Java heap settings (overrides defaults)
 # export AUTH_JAVA_HEAPMAX="-Xmx1024m"
 # export KAFKA_JAVA_HEAPMAX="-Xmx1024m"
