@@ -25,18 +25,22 @@
 # Adds Hadoop and HBase libs to the classpath on startup.
 # If the "hbase" command is on the PATH, this will be done automatically.
 # Or uncomment the line below to point to the HBase installation directly.
-# HBASE_HOME=
+# export HBASE_HOME=
 
 # Extra CLASSPATH locations to add to CDAP Java processes
-# EXTRA_CLASSPATH=""
+# export EXTRA_CLASSPATH=""
 
 # LOCAL_DIR sets the JVM -Duser.dir property of the CDAP processes, and provides a
 # local working directory for application jars during startup if needed
-LOCAL_DIR="/var/tmp/cdap"
+export LOCAL_DIR="/var/tmp/cdap"
 
 # TEMP_DIR sets the JVM -Djava.io.tmpdir property of the CDAP processes, and provides
 # temporary storage for Apache Twill
-TEMP_DIR="/tmp"
+export TEMP_DIR="/tmp"
+
+# Create heapdump upon OutOfMemoryError (true by default)
+# It will use the CDAP log directory
+# export HEAPDUMP_ON_OOM=true
 
 # Service-specific Java heap settings (overrides defaults)
 # export AUTH_JAVA_HEAPMAX="-Xmx1024m"
