@@ -37,6 +37,7 @@ public class FileSetExample extends AbstractApplication {
   public void configure() {
     setName("FileSetExample");
     setDescription("Application with a MapReduce that uses a FileSet dataset");
+
     createDataset("lines", FileSet.class, FileSetProperties.builder()
       .setBasePath("/tmp/vini/data/lines")
       .setInputFormat(WranglerInputFormat.class)
@@ -59,7 +60,7 @@ public class FileSetExample extends AbstractApplication {
         "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
         "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +
         ",\"null\"]}]}")
-      .setTableProperty("output.schema", "{\"type\":\"record\",\"name\":\"etlSchemaBody\"," +
+      .setTableProperty("wrangler.explore.output.schema", "{\"type\":\"record\",\"name\":\"etlSchemaBody\"," +
         "\"fields\":[{\"name\":\"id\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\"," +
         "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
         "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +

@@ -31,7 +31,6 @@ import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -70,6 +69,17 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
     Map<String, String> newProperties = new HashMap<>(properties.getProperties());
     validateProperties(properties.getProperties());
     newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
+
+    for (String key : newProperties.keySet()) {
+      if (key.contains("wrangler")) {
+        // TODO Add wrangler input/output format
+        newProperties.put("explore.input.format", "co.cask.cdap.hive.wrangler.WranglerExploreInputFormat");
+        newProperties.put("explore.output.format", "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
+        newProperties.put("explore.serde", "co.cask.cdap.hive.wrangler.WranglerExploreInputFormat");
+      }
+    }
+
+
     return DatasetSpecification
       .builder(instanceName, getName())
       .properties(newProperties)
