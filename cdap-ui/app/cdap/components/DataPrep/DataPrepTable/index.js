@@ -30,19 +30,23 @@ import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
 import captialize from 'lodash/capitalize';
+import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
     super(props);
 
     let storeState = DataPrepStore.getState();
-
+    let workspaceId = storeState.dataprep.workspaceId;
+    let currentWorkspace = storeState.workspaces.list.find(workspace => workspace.id === workspaceId) || {};
+    let currentWorkspaceName = currentWorkspace.name;
     this.state = {
       headers: storeState.dataprep.headers.map(header => ({name: header, edit: false})),
       data: storeState.dataprep.data,
       loading: !storeState.dataprep.initialized,
       directivesLength: storeState.dataprep.directives.length,
-      workspaceId: storeState.dataprep.workspaceId,
+      workspaceId,
+      currentWorkspaceName,
       columns: storeState.columnsInformation.columns,
       selectedHeaders: storeState.dataprep.selectedHeaders
     };
@@ -60,11 +64,13 @@ export default class DataPrepTable extends Component {
       this.setState({
         data: state.dataprep.data.map(d => Object.assign({}, d, {uniqueId: shortid.generate()})),
         headers: state.dataprep.headers.map(header => ({name: header, edit: false})),
-        loading: !state.dataprep.initialized,
+        loading: !state.dataprep.initialized && !state.error.dataError,
         directivesLength: state.dataprep.directives.length,
         workspaceId: state.dataprep.workspaceId,
+        workspaceInfo: state.dataprep.workspaceInfo,
         selectedHeaders: state.dataprep.selectedHeaders,
-        columns: state.columnsInformation.columns
+        columns: state.columnsInformation.columns,
+        error: state.error.dataError
       });
     });
   }
@@ -329,6 +335,15 @@ export default class DataPrepTable extends Component {
             <h5 className="text-xs-center">Please select or upload a file to wrangle data</h5>
           </div>
         </div>
+      );
+    }
+
+    if (this.state.error) {
+      return (
+        <ErrorMessageContainer
+          workspaceName={this.state.currentWorkspaceName}
+          workspaceId={this.state.workspaceId}
+        />
       );
     }
 

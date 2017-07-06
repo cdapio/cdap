@@ -25,7 +25,6 @@ import {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import {Route, NavLink, Redirect, Switch} from 'react-router-dom';
 import NamespaceStore from 'services/NamespaceStore';
-import {preventPropagation} from 'services/helpers';
 import T from 'i18n-react';
 import LoadingSVG from 'components/LoadingSVG';
 import MyDataPrepApi from 'api/dataprep';
@@ -36,7 +35,7 @@ import isNil from 'lodash/isNil';
 import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
 import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
 import DataPrepStore from 'components/DataPrep/store';
-import {objectQuery} from 'services/helpers';
+import {objectQuery, preventPropagation} from 'services/helpers';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -95,6 +94,7 @@ export default class DataPrepConnections extends Component {
     this.onServiceStart = this.onServiceStart.bind(this);
     this.fetchConnectionsList = this.fetchConnectionsList.bind(this);
     this.onUploadSuccess = this.onUploadSuccess.bind(this);
+
   }
 
   componentWillMount() {
@@ -105,13 +105,14 @@ export default class DataPrepConnections extends Component {
     if (!this.props.enableRouting) {
       this.dataprepSubscription = DataPrepStore.subscribe(() => {
         let {workspaceInfo} = DataPrepStore.getState().dataprep;
+
         if (
           objectQuery(workspaceInfo, 'properties', 'connectionid') !== this.state.activeConnectionid ||
           objectQuery(workspaceInfo, 'properties', 'id') !== this.state.activeConnectionid
         ) {
           this.setState({
-            activeConnectionid: workspaceInfo.properties.connectionid || workspaceInfo.properties.id,
-            activeConnectionType: workspaceInfo.properties.connection
+            activeConnectionid: objectQuery(workspaceInfo, 'properties', 'connectionid') || objectQuery(workspaceInfo, 'properties', 'id'),
+            activeConnectionType: objectQuery(workspaceInfo, 'properties', 'connection')
           });
         }
       });

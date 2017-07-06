@@ -14,18 +14,29 @@
  * the License.
 */
 
-$scroll-container-bg: #cccccc;
+@import '../../../styles/variables.scss';
 
-.scrollable-list {
-  .scroll-down-container,
-  .scroll-up-container {
-    cursor: pointer;
-    background: $scroll-container-bg;
+$hr_color: #999999;
 
-    * { pointer-events: none; }
+.dataprep-error-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 40%;
+  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+  width: auto;
+  padding: 0 20px;
+  hr {
+    width: 100%;
+    color: $hr_color;
+    background-color: $hr_color;
   }
-  .icon-caret-down,
-  .icon-caret-up {
-    height: 20px;
+  .btn-link {
+    margin: 0 5px 0 0;
+    color: $cdap-orange;
+    cursor: pointer;
   }
 }

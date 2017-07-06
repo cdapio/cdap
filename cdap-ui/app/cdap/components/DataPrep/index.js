@@ -32,7 +32,7 @@ import WorkspaceTabs from 'components/DataPrep/WorkspaceTabs';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import {checkDataPrepHigherVersion} from 'components/DataPrep/helper';
-import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import T from 'i18n-react';
 import isEmpty from 'lodash/isEmpty';
 
@@ -56,9 +56,12 @@ export default class DataPrep extends Component {
 
     this.toggleBackendDown = this.toggleBackendDown.bind(this);
     this.onSidePanelToggle = this.onSidePanelToggle.bind(this);
+    this.closeSidePanel = this.closeSidePanel.bind(this);
     this.eventEmitter = ee(ee);
 
     this.eventEmitter.on('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+    this.eventEmitter.on('DATAPREP_CLOSE_SIDEPANEL', this.closeSidePanel);
+
     this.eventEmitter.on('REFRESH_DATAPREP', () => {
       this.setState({
         loading: true
@@ -101,6 +104,7 @@ export default class DataPrep extends Component {
       type: DataPrepActions.reset
     });
     this.eventEmitter.off('DATAPREP_BACKEND_DOWN', this.toggleBackendDown);
+    this.eventEmitter.off('DATAPREP_CLOSE_SIDEPANEL', this.closeSidePanel);
     if (this.dataprepStoreSubscription) {
       this.dataprepStoreSubscription();
     }
@@ -184,6 +188,12 @@ export default class DataPrep extends Component {
     }
   }
 
+  closeSidePanel() {
+    this.setState({
+      sidePanelToggle: false
+    });
+  }
+
   renderBackendDown() {
     return (
       <DataPrepServiceControl
@@ -250,7 +260,7 @@ export default class DataPrep extends Component {
     if (this.state.loading) {
       return (
         <div className="dataprep-container text-xs-center">
-          <LoadingSVG />
+          <LoadingSVGCentered />
         </div>
       );
     }

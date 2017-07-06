@@ -374,7 +374,11 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+      dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
       emptyWorkspace: No data
+      refreshBtnLinkLabel: Refresh
+      suggestionTitle: "You can try to:"
+      suggestion1: the page
       noData: No data. Try removing some directives.
     DataPrepBrowser:
       DatabaseBrowser:

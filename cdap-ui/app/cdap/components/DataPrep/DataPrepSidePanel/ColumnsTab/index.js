@@ -241,6 +241,7 @@ export default class ColumnsTab extends Component {
           <table className="table table-sm table-responsive table-hover">
             <thead>
               <tr>
+                <th />
                 <th>
                   { this.renderDropdown() }
                 </th>
@@ -253,6 +254,7 @@ export default class ColumnsTab extends Component {
                 <th>
                   {T.translate(`${PREFIX}.Header.completion`)}
                 </th>
+                <th />
               </tr>
             </thead>
             <tbody>
