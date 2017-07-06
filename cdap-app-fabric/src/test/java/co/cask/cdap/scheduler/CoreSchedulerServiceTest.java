@@ -283,6 +283,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     }, 10, TimeUnit.SECONDS);
 
+    // Add timeout to allow jobs to get deleted on time
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
