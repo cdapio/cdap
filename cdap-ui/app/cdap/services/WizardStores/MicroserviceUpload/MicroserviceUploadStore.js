@@ -24,6 +24,8 @@ import shortid from 'shortid';
 import T from 'i18n-react';
 
 // Defaults
+// Disabled means that the step tab is not clickable at all
+// Readonly means that the step is clickable, but all the contents are non-editable
 const defaultState = {
   __complete: false,
   __skipped: false,
