@@ -31,7 +31,7 @@ import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -52,9 +52,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  LookupProvider lookup,
                                  long logicalStartTime,
                                  Admin admin,
-                                 StageInfo stageInfo,
+                                 StageSpec stageSpec,
                                  BasicArguments arguments) {
-    super(pluginContext, serviceDiscoverer, metrics, lookup, stageInfo, arguments);
+    super(pluginContext, serviceDiscoverer, metrics, lookup, stageSpec, arguments);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.admin = admin;
@@ -63,8 +63,8 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   protected <T extends PluginContext & DatasetContext & ServiceDiscoverer> AbstractBatchContext(
     T context, Metrics metrics, LookupProvider lookup, long logicalStartTime,
-    Admin admin, StageInfo stageInfo, BasicArguments arguments) {
-    this(context, context, context, metrics, lookup, logicalStartTime, admin, stageInfo, arguments);
+    Admin admin, StageSpec stageSpec, BasicArguments arguments) {
+    this(context, context, context, metrics, lookup, logicalStartTime, admin, stageSpec, arguments);
   }
 
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)

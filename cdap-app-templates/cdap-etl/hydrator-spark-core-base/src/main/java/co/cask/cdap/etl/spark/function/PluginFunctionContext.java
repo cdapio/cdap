@@ -29,9 +29,9 @@ import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -51,12 +51,12 @@ public class PluginFunctionContext implements Serializable {
   private final Metrics metrics;
   private final SecureStore secureStore;
   private final DataTracer dataTracer;
-  private final StageInfo stageInfo;
+  private final StageSpec stageSpec;
   private transient PipelinePluginContext pipelinePluginContext;
 
-  public PluginFunctionContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
+  public PluginFunctionContext(StageSpec stageSpec, JavaSparkExecutionContext sec) {
     this.namespace = sec.getNamespace();
-    this.stageInfo = stageInfo;
+    this.stageSpec = stageSpec;
     this.logicalStartTime = sec.getLogicalStartTime();
     Map<String, String> arguments = new HashMap<>();
     arguments.putAll(sec.getRuntimeArguments());
@@ -71,29 +71,29 @@ public class PluginFunctionContext implements Serializable {
     this.serviceDiscoverer = sec.getServiceDiscoverer();
     this.metrics = sec.getMetrics();
     this.secureStore = sec.getSecureStore();
-    this.dataTracer = sec.getDataTracer(stageInfo.getName());
+    this.dataTracer = sec.getDataTracer(stageSpec.getName());
     this.pipelinePluginContext = getPluginContext();
   }
 
   public <T> T createPlugin() throws Exception {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
-    return getPluginContext().newPluginInstance(stageInfo.getName(), macroEvaluator);
+    return getPluginContext().newPluginInstance(stageSpec.getName(), macroEvaluator);
   }
 
   public String getStageName() {
-    return stageInfo.getName();
+    return stageSpec.getName();
   }
 
-  public StageInfo getStageInfo() {
-    return stageInfo;
+  public StageSpec getStageSpec() {
+    return stageSpec;
   }
 
   public StageMetrics createStageMetrics() {
-    return new DefaultStageMetrics(metrics, stageInfo.getName());
+    return new DefaultStageMetrics(metrics, stageSpec.getName());
   }
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(getPluginContext(), serviceDiscoverer, metrics, logicalStartTime, stageInfo,
+    return new SparkBatchRuntimeContext(getPluginContext(), serviceDiscoverer, metrics, logicalStartTime, stageSpec,
                                         new BasicArguments(arguments));
   }
 
@@ -104,8 +104,8 @@ public class PluginFunctionContext implements Serializable {
   private PipelinePluginContext getPluginContext() {
     if (pipelinePluginContext == null) {
       pipelinePluginContext = new SparkPipelinePluginContext(pluginContext, metrics,
-                                                             stageInfo.isStageLoggingEnabled(),
-                                                             stageInfo.isProcessTimingEnabled());
+                                                             stageSpec.isStageLoggingEnabled(),
+                                                             stageSpec.isProcessTimingEnabled());
     }
     return pipelinePluginContext;
   }

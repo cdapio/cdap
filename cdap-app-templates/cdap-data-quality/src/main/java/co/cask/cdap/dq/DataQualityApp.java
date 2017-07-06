@@ -42,7 +42,8 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.mapreduce.MapReduceBatchContext;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.PluginSpec;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -188,8 +189,11 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       BatchSource batchSource = context.newPluginInstance(PLUGIN_ID);
       // Constructs a BatchSourceContext. The stageId needs to match the format expected by PluginID
       String sourceName = "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0";
-      StageInfo stageInfo = StageInfo.builder(sourceName, BatchSource.PLUGIN_TYPE).build();
-      BatchSourceContext sourceContext = new MapReduceBatchContext(context, metrics, stageInfo);
+      StageSpec stageSpec = StageSpec.builder(sourceName,
+                                              new PluginSpec(BatchSource.PLUGIN_TYPE, sourceName,
+                                                             context.getPluginProperties(PLUGIN_ID).getProperties(),
+                                                             null)).build();
+      BatchSourceContext sourceContext = new MapReduceBatchContext(context, metrics, stageSpec);
       batchSource.prepareRun(sourceContext);
       context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }

@@ -29,7 +29,6 @@ import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.batch.mapreduce.ConnectorSourceEmitter;
 import co.cask.cdap.etl.batch.mapreduce.ErrorOutputWriter;
 import co.cask.cdap.etl.batch.mapreduce.OutputWriter;
-import co.cask.cdap.etl.batch.mapreduce.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.mapreduce.SinkEmitter;
 import co.cask.cdap.etl.batch.mapreduce.TransformEmitter;
 import co.cask.cdap.etl.common.Constants;
@@ -37,7 +36,7 @@ import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformExecutor;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -78,9 +77,9 @@ public abstract class TransformExecutorFactory<T> {
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
   }
 
-  protected abstract BatchRuntimeContext createRuntimeContext(StageInfo stageInfo);
+  protected abstract BatchRuntimeContext createRuntimeContext(StageSpec stageInfo);
 
-  protected abstract TrackedTransform getTransformation(StageInfo stageInfo) throws Exception;
+  protected abstract TrackedTransform getTransformation(StageSpec stageInfo) throws Exception;
 
   /**
    * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
@@ -101,7 +100,7 @@ public abstract class TransformExecutorFactory<T> {
 
     // Set input and output schema for this stage
     for (String pluginType : pipeline.getPluginTypes()) {
-      for (StageInfo stageInfo : pipeline.getStagesOfType(pluginType)) {
+      for (StageSpec stageInfo : pipeline.getStagesOfType(pluginType)) {
         String stageName = stageInfo.getName();
         outputSchemas.put(stageName, stageInfo.getOutputSchema());
         perStageInputSchemas.put(stageName, stageInfo.getInputSchemas());
@@ -125,7 +124,7 @@ public abstract class TransformExecutorFactory<T> {
                                                          OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
     throws Exception {
     if (pipeline.getSinks().contains(stageName)) {
-      StageInfo stageInfo = pipeline.getStage(stageName);
+      StageSpec stageInfo = pipeline.getStage(stageName);
       // If there is a connector sink/ joiner at the end of pipeline, do not remove stage name. This is needed to save
       // stageName along with the record in connector sink and joiner takes input along with stageName
       String pluginType = stageInfo.getPluginType();
@@ -158,7 +157,7 @@ public abstract class TransformExecutorFactory<T> {
                                  Map<String, PipeTransformDetail> transformations,
                                  Map<String, ErrorOutputWriter<Object, Object>> transformErrorSinkMap)
     throws Exception {
-    StageInfo stageInfo = pipeline.getStage(stageName);
+    StageSpec stageInfo = pipeline.getStage(stageName);
     String pluginType = stageInfo.getPluginType();
     ErrorOutputWriter<Object, Object> errorOutputWriter = transformErrorSinkMap.containsKey(stageName) ?
       transformErrorSinkMap.get(stageName) : null;
@@ -193,7 +192,7 @@ public abstract class TransformExecutorFactory<T> {
    * @throws Exception              if there was a problem initializing the plugin
    */
   protected <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
-  getInitializedTransformation(StageInfo stageInfo) throws Exception {
+  getInitializedTransformation(StageSpec stageInfo) throws Exception {
     BatchRuntimeContext runtimeContext = createRuntimeContext(stageInfo);
     T plugin = pluginInstantiator.newPluginInstance(stageInfo.getName(), macroEvaluator);
     plugin.initialize(runtimeContext);

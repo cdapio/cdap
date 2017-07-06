@@ -24,7 +24,6 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -37,13 +36,13 @@ import co.cask.cdap.etl.spark.streaming.function.DynamicSparkCompute;
 import co.cask.cdap.etl.spark.streaming.function.DynamicTransform;
 import co.cask.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import co.cask.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
-import org.apache.tephra.TransactionFailureException;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -81,12 +80,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> transform(StageInfo stageInfo) {
-    return wrap(stream.transform(new DynamicTransform<T, Object>(new DynamicDriverContext(stageInfo, sec))));
+  public SparkCollection<Tuple2<Boolean, Object>> transform(StageSpec stageSpec) {
+    return wrap(stream.transform(new DynamicTransform<T, Object>(new DynamicDriverContext(stageSpec, sec))));
   }
 
   @Override
-  public <U> SparkCollection<U> flatMap(StageInfo stageInfo, FlatMapFunction<T, U> function) {
+  public <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function) {
     return wrap(stream.flatMap(function));
   }
 
@@ -96,8 +95,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageInfo stageInfo, @Nullable Integer partitions) {
-    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageInfo, sec);
+  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
+    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec);
     JavaPairDStream<Object, T> keyedCollection =
       stream.transformToPair(new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext));
 
@@ -108,34 +107,34 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> compute(final StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
+  public <U> SparkCollection<U> compute(final StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
-      new DynamicSparkCompute<>(new DynamicDriverContext(stageInfo, sec), compute);
+      new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec), compute);
     Transactionals.execute(sec, new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
         SparkExecutionPluginContext sparkPluginContext =
           new BasicSparkExecutionPluginContext(sec, JavaSparkContext.fromSparkContext(stream.context().sparkContext()),
-                                               datasetContext, stageInfo);
+                                               datasetContext, stageSpec);
         wrappedCompute.initialize(sparkPluginContext);
       }
     }, Exception.class);
-    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageInfo, wrappedCompute)));
+    return wrap(stream.transform(new ComputeTransformFunction<>(sec, stageSpec, wrappedCompute)));
   }
 
   @Override
-  public void store(StageInfo stageInfo, PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sinkFunction, sec, stageInfo));
+  public void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
+    Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
   }
 
   @Override
-  public void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception {
-    Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageInfo));
+  public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+    Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
   }
 
   @Override
-  public SparkCollection<T> window(StageInfo stageInfo, Windower windower) {
-    String stageName = stageInfo.getName();
+  public SparkCollection<T> window(StageSpec stageSpec, Windower windower) {
+    String stageName = stageSpec.getName();
     return wrap(stream.transform(new CountingTransformFunction<T>(stageName, sec.getMetrics(), "records.in", null))
                   .window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval()))
                   .transform(new CountingTransformFunction<T>(stageName, sec.getMetrics(), "records.out",

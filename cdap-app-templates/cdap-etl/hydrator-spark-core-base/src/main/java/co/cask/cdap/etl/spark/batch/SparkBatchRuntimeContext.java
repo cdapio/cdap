@@ -25,8 +25,8 @@ import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.NoLookupProvider;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Map;
 
@@ -39,8 +39,8 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   private final long logicalStartTime;
 
   public SparkBatchRuntimeContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                                  long logicalStartTime, StageInfo stageInfo, BasicArguments arguments) {
-    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageInfo, arguments);
+                                  long logicalStartTime, StageSpec stageSpec, BasicArguments arguments) {
+    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageSpec, arguments);
     this.logicalStartTime = logicalStartTime;
   }
 

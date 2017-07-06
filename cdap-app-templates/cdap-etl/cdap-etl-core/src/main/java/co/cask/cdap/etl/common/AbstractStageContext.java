@@ -26,7 +26,7 @@ import co.cask.cdap.etl.api.StageContext;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Throwables;
 
 import java.net.URL;
@@ -53,7 +53,7 @@ public abstract class AbstractStageContext implements StageContext {
   protected final BasicArguments arguments;
 
   protected AbstractStageContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                                 StageInfo stageInfo, BasicArguments arguments) {
+                                 StageSpec stageInfo, BasicArguments arguments) {
     this.pluginContext = pluginContext;
     this.serviceDiscoverer = serviceDiscoverer;
     this.stageName = stageInfo.getName();

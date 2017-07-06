@@ -17,8 +17,8 @@
 package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -35,7 +35,7 @@ import java.io.ObjectOutput;
  */
 public class DynamicDriverContext implements Externalizable {
   private String serializationVersion;
-  private StageInfo stageInfo;
+  private StageSpec stageSpec;
   private JavaSparkExecutionContext sec;
   private PluginFunctionContext pluginFunctionContext;
 
@@ -43,31 +43,31 @@ public class DynamicDriverContext implements Externalizable {
     // for deserialization
   }
 
-  public DynamicDriverContext(StageInfo stageInfo, JavaSparkExecutionContext sec) {
-    this.serializationVersion = "4.0";
-    this.stageInfo = stageInfo;
+  public DynamicDriverContext(StageSpec stageSpec, JavaSparkExecutionContext sec) {
+    this.serializationVersion = "4.3";
+    this.stageSpec = stageSpec;
     this.sec = sec;
-    this.pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    this.pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
   }
 
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeUTF(serializationVersion);
-    out.writeObject(stageInfo);
+    out.writeObject(stageSpec);
     out.writeObject(sec);
   }
 
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     serializationVersion = in.readUTF();
-    stageInfo = (StageInfo) in.readObject();
+    stageSpec = (StageSpec) in.readObject();
     sec = (JavaSparkExecutionContext) in.readObject();
 
     // we intentionally do not serialize this context in order to ensure that the runtime arguments
     // and logical start time are picked up from the JavaSparkExecutionContext. If we serialized it,
     // the arguments and start time of the very first pipeline run would get serialized, then
     // used for every subsequent run that loads from the checkpoint.
-    pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
   }
 
   public JavaSparkExecutionContext getSparkExecutionContext() {

@@ -27,7 +27,7 @@ import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -46,8 +46,8 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   private final Caller caller;
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
-                                 LookupProvider lookup, Map<String, String> runtimeArgs, StageInfo stageInfo) {
-    super(context, context, metrics, lookup, stageInfo, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
+                                 LookupProvider lookup, Map<String, String> runtimeArgs, StageSpec stageSpec) {
+    super(context, context, metrics, lookup, stageSpec, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);

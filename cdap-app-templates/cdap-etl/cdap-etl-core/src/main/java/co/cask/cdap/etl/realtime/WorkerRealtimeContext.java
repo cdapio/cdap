@@ -23,7 +23,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
@@ -31,8 +31,8 @@ import co.cask.cdap.etl.planner.StageInfo;
 public class WorkerRealtimeContext extends AbstractTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
-  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, StageInfo stageInfo) {
-    super(context, context, metrics, lookup, stageInfo, new BasicArguments(context.getRuntimeArguments()));
+  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, StageSpec stageSpec) {
+    super(context, context, metrics, lookup, stageSpec, new BasicArguments(context.getRuntimeArguments()));
     this.context = context;
   }
 

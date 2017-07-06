@@ -22,7 +22,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.hadoop.mapreduce.Job;
 
 /**
@@ -34,15 +34,15 @@ public class DefaultAggregatorContext extends AbstractBatchContext implements Ba
   private Class<?> groupKeyClass;
   private Class<?> groupValueClass;
 
-  public DefaultAggregatorContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+  public DefaultAggregatorContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
     super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageInfo, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context));
     this.job = context.getHadoopJob();
   }
 
-  public DefaultAggregatorContext(SparkClientContext context, StageInfo stageInfo) {
+  public DefaultAggregatorContext(SparkClientContext context, StageSpec stageSpec) {
     super(context, context.getMetrics(), new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageInfo, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context));
     this.job = null;
   }
 

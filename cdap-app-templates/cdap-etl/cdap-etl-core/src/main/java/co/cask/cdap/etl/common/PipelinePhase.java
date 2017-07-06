@@ -17,7 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.planner.Dag;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Joiner;
 
 import java.util.Collection;
@@ -33,19 +33,19 @@ import javax.annotation.Nullable;
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
  */
-public class PipelinePhase implements Iterable<StageInfo> {
+public class PipelinePhase implements Iterable<StageSpec> {
   // plugin type -> stage info
-  private final Map<String, Set<StageInfo>> stagesByType;
-  private final Map<String, StageInfo> stagesByName;
+  private final Map<String, Set<StageSpec>> stagesByType;
+  private final Map<String, StageSpec> stagesByName;
   private final Dag dag;
 
-  private PipelinePhase(Set<StageInfo> stages, @Nullable Dag dag) {
+  private PipelinePhase(Set<StageSpec> stages, @Nullable Dag dag) {
     stagesByType = new HashMap<>();
     stagesByName = new HashMap<>();
-    for (StageInfo stage : stages) {
+    for (StageSpec stage : stages) {
       stagesByName.put(stage.getName(), stage);
       String pluginType = stage.getPluginType();
-      Set<StageInfo> typeStages = stagesByType.get(pluginType);
+      Set<StageSpec> typeStages = stagesByType.get(pluginType);
       if (typeStages == null) {
         typeStages = new HashSet<>();
         stagesByType.put(pluginType, typeStages);
@@ -61,24 +61,24 @@ public class PipelinePhase implements Iterable<StageInfo> {
    * @param pluginType the plugin type
    * @return unmodifiable set of stages that use the specified plugin type
    */
-  public Set<StageInfo> getStagesOfType(String pluginType) {
-    Set<StageInfo> stagesOfType = stagesByType.get(pluginType);
-    return Collections.unmodifiableSet(stagesOfType == null ? new HashSet<StageInfo>() : stagesOfType);
+  public Set<StageSpec> getStagesOfType(String pluginType) {
+    Set<StageSpec> stagesOfType = stagesByType.get(pluginType);
+    return Collections.unmodifiableSet(stagesOfType == null ? new HashSet<StageSpec>() : stagesOfType);
   }
 
-  public Set<StageInfo> getStagesOfType(String... pluginTypes) {
-    Set<StageInfo> stageInfos = new HashSet<>();
+  public Set<StageSpec> getStagesOfType(String... pluginTypes) {
+    Set<StageSpec> stageSpecs = new HashSet<>();
     for (String pluginType: pluginTypes) {
-      Set<StageInfo> typeStages = stagesByType.get(pluginType);
+      Set<StageSpec> typeStages = stagesByType.get(pluginType);
       if (typeStages != null) {
-        stageInfos.addAll(typeStages);
+        stageSpecs.addAll(typeStages);
       }
     }
-    return Collections.unmodifiableSet(stageInfos);
+    return Collections.unmodifiableSet(stageSpecs);
   }
 
   @Nullable
-  public StageInfo getStage(String stageName) {
+  public StageSpec getStage(String stageName) {
     return stagesByName.get(stageName);
   }
 
@@ -126,8 +126,8 @@ public class PipelinePhase implements Iterable<StageInfo> {
   }
 
   private PipelinePhase getSubset(final Dag subsetDag) {
-    Set<StageInfo> subsetStages = new HashSet<>();
-    for (StageInfo stage : stagesByName.values()) {
+    Set<StageSpec> subsetStages = new HashSet<>();
+    for (StageSpec stage : stagesByName.values()) {
       if (subsetDag.getNodes().contains(stage.getName())) {
         subsetStages.add(stage);
       }
@@ -176,7 +176,7 @@ public class PipelinePhase implements Iterable<StageInfo> {
   }
 
   @Override
-  public Iterator<StageInfo> iterator() {
+  public Iterator<StageSpec> iterator() {
     return stagesByName.values().iterator();
   }
 
@@ -185,7 +185,7 @@ public class PipelinePhase implements Iterable<StageInfo> {
    */
   public static class Builder {
     private final Set<String> supportedPluginTypes;
-    private final Set<StageInfo> stages;
+    private final Set<StageSpec> stages;
     private final Set<co.cask.cdap.etl.proto.Connection> connections;
 
     public Builder(Set<String> supportedPluginTypes) {
@@ -194,19 +194,19 @@ public class PipelinePhase implements Iterable<StageInfo> {
       this.connections = new HashSet<>();
     }
 
-    public Builder addStage(StageInfo stageInfo) {
-      String pluginType = stageInfo.getPluginType();
+    public Builder addStage(StageSpec stageSpec) {
+      String pluginType = stageSpec.getPluginType();
       if (!supportedPluginTypes.contains(pluginType)) {
         throw new IllegalArgumentException(
           String.format("%s is an unsupported plugin type. Plugin type must be one of %s.",
                         pluginType, Joiner.on(',').join(supportedPluginTypes)));
       }
-      stages.add(stageInfo);
+      stages.add(stageSpec);
       return this;
     }
 
-    public Builder addStages(Collection<StageInfo> stages) {
-      for (StageInfo stage : stages) {
+    public Builder addStages(Collection<StageSpec> stages) {
+      for (StageSpec stage : stages) {
         addStage(stage);
       }
       return this;

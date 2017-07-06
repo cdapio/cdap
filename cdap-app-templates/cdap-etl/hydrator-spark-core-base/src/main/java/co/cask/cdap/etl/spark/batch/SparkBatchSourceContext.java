@@ -21,7 +21,7 @@ import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.UUID;
 
@@ -33,10 +33,10 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext implement
   private final boolean isPreviewEnabled;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 StageInfo stageInfo) {
-    super(sparkContext, new DatasetContextLookupProvider(sparkContext), stageInfo);
+                                 StageSpec stageSpec) {
+    super(sparkContext, new DatasetContextLookupProvider(sparkContext), stageSpec);
     this.sourceFactory = sourceFactory;
-    this.isPreviewEnabled = sparkContext.getDataTracer(stageInfo.getName()).isEnabled();
+    this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
 
   @Override

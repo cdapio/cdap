@@ -27,8 +27,8 @@ import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,6 +53,7 @@ public class ETLWorkflow extends AbstractWorkflow {
   private final Engine engine;
   private final BatchPipelineSpec spec;
   private Map<String, PostAction> postActions;
+  private Map<String, StageSpec> postActionSpecs;
 
   // injected by cdap
   @SuppressWarnings("unused")
@@ -89,9 +90,14 @@ public class ETLWorkflow extends AbstractWorkflow {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
+    postActionSpecs = new HashMap<>();
     for (ActionSpec actionSpec : batchPipelineSpec.getEndingActions()) {
-      postActions.put(actionSpec.getName(), (PostAction) context.newPluginInstance(actionSpec.getName(),
-                                                                                   macroEvaluator));
+      String name = actionSpec.getName();
+      postActions.put(name, (PostAction) context.newPluginInstance(name, macroEvaluator));
+      postActionSpecs.put(name, StageSpec.builder(name, actionSpec.getPluginSpec())
+        .setProcessTimingEnabled(batchPipelineSpec.isProcessTimingEnabled())
+        .setStageLoggingEnabled(batchPipelineSpec.isStageLoggingEnabled())
+        .build());
     }
   }
 
@@ -105,12 +111,9 @@ public class ETLWorkflow extends AbstractWorkflow {
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
-      StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE)
-        .setStageLoggingEnabled(spec.isStageLoggingEnabled())
-        .setProcessTimingEnabled(spec.isProcessTimingEnabled())
-        .build();
+      StageSpec stageSpec = postActionSpecs.get(name);
       BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
-                                                                   stageInfo, arguments);
+                                                                   stageSpec, arguments);
       try {
         action.run(context);
       } catch (Throwable t) {

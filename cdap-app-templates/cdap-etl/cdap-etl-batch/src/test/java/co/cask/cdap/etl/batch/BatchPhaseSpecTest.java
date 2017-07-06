@@ -17,16 +17,22 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.PluginSpec;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests description of BatchPhaseSpec.
@@ -40,13 +46,16 @@ public class BatchPhaseSpecTest {
      *           |--> sink.connector
      * source2 --|
      */
+    Map<String, String> props = new HashMap<>();
+    ArtifactId artifactId = new ArtifactId("art", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
     PipelinePhase.Builder builder =
       PipelinePhase.builder(ImmutableSet.of(BatchSource.PLUGIN_TYPE, Constants.CONNECTOR_TYPE))
-        .addStage(StageInfo.builder("source1", BatchSource.PLUGIN_TYPE).build())
-        .addStage(StageInfo.builder("source2", BatchSource.PLUGIN_TYPE)
+        .addStage(StageSpec.builder("source1", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
+                    .build())
+        .addStage(StageSpec.builder("source2", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
                     .addInputSchema("a", Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT))))
                     .build())
-        .addStage(StageInfo.builder("sink.connector", Constants.CONNECTOR_TYPE).build())
+        .addStage(StageSpec.builder("sink.connector", Constants.CONNECTOR_SPEC).build())
         .addConnection("source1", "sink.connector")
         .addConnection("source2", "sink.connector");
 

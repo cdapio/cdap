@@ -31,7 +31,7 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
@@ -75,20 +75,20 @@ public class PipelineAction extends AbstractCustomAction {
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
-    StageInfo stageInfo = phase.iterator().next();
+    StageSpec stageSpec = phase.iterator().next();
     PluginContext pluginContext = new PipelinePluginContext(context, metrics,
                                                             phaseSpec.isStageLoggingEnabled(),
                                                             phaseSpec.isProcessTimingEnabled());
     Action action =
-      pluginContext.newPluginInstance(stageInfo.getName(),
+      pluginContext.newPluginInstance(stageSpec.getName(),
                                       new DefaultMacroEvaluator(context.getWorkflowToken(),
                                                                 context.getRuntimeArguments(),
                                                                 context.getLogicalStartTime(),
                                                                 context,
                                                                 context.getNamespace()));
     BasicArguments arguments = new BasicArguments(context);
-    ActionContext actionContext = new BasicActionContext(context, metrics, stageInfo.getName(), arguments);
-    if (!context.getDataTracer(stageInfo.getName()).isEnabled()) {
+    ActionContext actionContext = new BasicActionContext(context, metrics, stageSpec, arguments);
+    if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {
       action.run(actionContext);
     }
     WorkflowToken token = context.getWorkflowToken();

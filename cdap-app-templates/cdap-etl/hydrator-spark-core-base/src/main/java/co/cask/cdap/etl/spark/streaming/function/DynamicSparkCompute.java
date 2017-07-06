@@ -22,13 +22,12 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.tephra.TransactionFailureException;
 
 /**
  * This class is required to make sure that macro substitution occurs each time a pipeline is run instead of just
@@ -65,13 +64,13 @@ public class DynamicSparkCompute<T, U> extends SparkCompute<T, U> {
     if (delegate == null) {
       PluginFunctionContext pluginFunctionContext = dynamicDriverContext.getPluginFunctionContext();
       delegate = pluginFunctionContext.createPlugin();
-      final StageInfo stageInfo = pluginFunctionContext.getStageInfo();
+      final StageSpec stageSpec = pluginFunctionContext.getStageSpec();
       final JavaSparkExecutionContext sec = dynamicDriverContext.getSparkExecutionContext();
       Transactionals.execute(sec, new TxRunnable() {
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkExecutionPluginContext sparkPluginContext =
-            new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
+            new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
           delegate.initialize(sparkPluginContext);
         }
       }, Exception.class);

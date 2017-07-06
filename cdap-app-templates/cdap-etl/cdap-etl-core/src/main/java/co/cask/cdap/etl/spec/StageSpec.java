@@ -21,6 +21,7 @@ import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.collect.ImmutableSet;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,10 +34,9 @@ import javax.annotation.Nullable;
  *
  * This is like an {@link ETLStage}, but has additional attributes calculated at configure time of the application.
  * The spec contains the input and output schema (if known) for the stage, as well as any output stages it writes to.
- *
- * TODO: add other useful information, like the datasets, streams, and other plugins used by this stage.
  */
-public class StageSpec {
+public class StageSpec implements Serializable {
+  private static final long serialVersionUID = 8178852817751037188L;
   private final String name;
   private final PluginSpec plugin;
   private final String errorDatasetName;
@@ -44,12 +44,15 @@ public class StageSpec {
   private final Map<String, Port> outputPorts;
   private final Schema outputSchema;
   private final Schema errorSchema;
+  private final boolean stageLoggingEnabled;
+  private final boolean processTimingEnabled;
   // here for backwards compatible with UI
   private final Set<String> inputs;
   private final Set<String> outputs;
 
-  private StageSpec(String name, PluginSpec plugin, String errorDatasetName,
-                    Map<String, Schema> inputSchemas, Map<String, Port> outputPorts, Schema errorSchema) {
+  private StageSpec(String name, PluginSpec plugin, String errorDatasetName, Map<String, Schema> inputSchemas,
+                    Map<String, Port> outputPorts, Schema errorSchema,
+                    boolean stageLoggingEnabled, boolean processTimingEnabled) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = errorDatasetName;
@@ -60,6 +63,8 @@ public class StageSpec {
     this.errorSchema = errorSchema;
     this.inputs = ImmutableSet.copyOf(inputSchemas.keySet());
     this.outputs = ImmutableSet.copyOf(outputPorts.keySet());
+    this.stageLoggingEnabled = stageLoggingEnabled;
+    this.processTimingEnabled = processTimingEnabled;
   }
 
   public String getName() {
@@ -68,6 +73,10 @@ public class StageSpec {
 
   public PluginSpec getPlugin() {
     return plugin;
+  }
+
+  public String getPluginType() {
+    return plugin.getType();
   }
 
   public String getErrorDatasetName() {
@@ -98,6 +107,14 @@ public class StageSpec {
     return outputs;
   }
 
+  public boolean isStageLoggingEnabled() {
+    return stageLoggingEnabled;
+  }
+
+  public boolean isProcessTimingEnabled() {
+    return processTimingEnabled;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -117,13 +134,15 @@ public class StageSpec {
       Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(errorSchema, that.errorSchema) &&
       Objects.equals(inputs, that.inputs) &&
-      Objects.equals(outputs, that.outputs);
+      Objects.equals(outputs, that.outputs) &&
+      stageLoggingEnabled == that.stageLoggingEnabled &&
+      processTimingEnabled == that.processTimingEnabled;
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(name, plugin, errorDatasetName, inputSchemas, outputPorts,
-                        outputSchema, errorSchema, inputs, outputs);
+                        outputSchema, errorSchema, inputs, outputs, stageLoggingEnabled, processTimingEnabled);
   }
 
   @Override
@@ -134,7 +153,12 @@ public class StageSpec {
       ", errorDatasetName='" + errorDatasetName + '\'' +
       ", inputSchemas=" + inputSchemas +
       ", outputPorts=" + outputPorts +
+      ", outputSchema=" + outputSchema +
       ", errorSchema=" + errorSchema +
+      ", stageLoggingEnabled=" + stageLoggingEnabled +
+      ", processTimingEnabled=" + processTimingEnabled +
+      ", inputs=" + inputs +
+      ", outputs=" + outputs +
       '}';
   }
 
@@ -152,12 +176,16 @@ public class StageSpec {
     private Map<String, Schema> inputSchemas;
     private Map<String, Port> outputPortSchemas;
     private Schema errorSchema;
+    private boolean stageLoggingEnabled;
+    private boolean processTimingEnabled;
 
     public Builder(String name, PluginSpec plugin) {
       this.name = name;
       this.plugin = plugin;
       this.inputSchemas = new HashMap<>();
       this.outputPortSchemas = new HashMap<>();
+      this.stageLoggingEnabled = true;
+      this.processTimingEnabled = true;
     }
 
     public Builder setErrorDatasetName(String errorDatasetName) {
@@ -197,8 +225,19 @@ public class StageSpec {
       return this;
     }
 
+    public Builder setStageLoggingEnabled(boolean stageLoggingEnabled) {
+      this.stageLoggingEnabled = stageLoggingEnabled;
+      return this;
+    }
+
+    public Builder setProcessTimingEnabled(boolean processTimingEnabled) {
+      this.processTimingEnabled = processTimingEnabled;
+      return this;
+    }
+
     public StageSpec build() {
-      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputPortSchemas, errorSchema);
+      return new StageSpec(name, plugin, errorDatasetName, inputSchemas, outputPortSchemas, errorSchema,
+                           stageLoggingEnabled, processTimingEnabled);
     }
 
   }
@@ -206,7 +245,8 @@ public class StageSpec {
   /**
    * Represents an output port.
    */
-  public static class Port {
+  public static class Port implements Serializable {
+    private static final long serialVersionUID = -8265114217209734806L;
     private final String port;
     private final Schema schema;
 

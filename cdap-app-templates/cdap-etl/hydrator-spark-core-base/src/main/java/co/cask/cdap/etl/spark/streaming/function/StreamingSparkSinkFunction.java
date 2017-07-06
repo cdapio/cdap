@@ -25,11 +25,11 @@ import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.BasicSparkPluginContext;
 import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
@@ -45,11 +45,11 @@ import org.slf4j.LoggerFactory;
 public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time, Void> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamingSparkSinkFunction.class);
   private final JavaSparkExecutionContext sec;
-  private final StageInfo stageInfo;
+  private final StageSpec stageSpec;
 
-  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageInfo stageInfo) {
+  public StreamingSparkSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec) {
     this.sec = sec;
-    this.stageInfo = stageInfo;
+    this.stageSpec = stageSpec;
   }
 
   @Override
@@ -62,10 +62,10 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                          sec.getNamespace());
 
     final PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                       stageInfo.isStageLoggingEnabled(),
-                                                                       stageInfo.isProcessTimingEnabled());
+                                                                       stageSpec.isStageLoggingEnabled(),
+                                                                       stageSpec.isProcessTimingEnabled());
 
-    final String stageName = stageInfo.getName();
+    final String stageName = stageSpec.getName();
     final SparkSink<T> sparkSink = pluginContext.newPluginInstance(stageName, evaluator);
     boolean isPrepared = false;
     boolean isDone = false;
@@ -74,7 +74,7 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
       sec.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
-          SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageInfo);
+          SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageSpec);
           sparkSink.prepareRun(context);
         }
       });
@@ -82,7 +82,7 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
       final SparkExecutionPluginContext sparkExecutionPluginContext
         = new SparkStreamingExecutionContext(sec, JavaSparkContext.fromSparkContext(data.rdd().context()),
-                                             logicalStartTime, stageInfo);
+                                             logicalStartTime, stageSpec);
       final JavaRDD<T> countedRDD = data.map(new CountingFunction<T>(stageName, sec.getMetrics(),
                                                                      "records.in", null)).cache();
       sec.execute(new TxRunnable() {
@@ -95,7 +95,7 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
       sec.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
-          SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageInfo);
+          SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageSpec);
           sparkSink.onRunFinish(true, context);
         }
       });
@@ -106,7 +106,7 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
         sec.execute(new TxRunnable() {
           @Override
           public void run(DatasetContext datasetContext) throws Exception {
-            SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageInfo);
+            SparkPluginContext context = new BasicSparkPluginContext(sec, datasetContext, stageSpec);
             sparkSink.onRunFinish(false, context);
           }
         });

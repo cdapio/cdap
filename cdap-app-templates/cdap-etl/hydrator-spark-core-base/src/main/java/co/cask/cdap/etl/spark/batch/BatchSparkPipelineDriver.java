@@ -30,7 +30,6 @@ import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -39,12 +38,12 @@ import co.cask.cdap.etl.spark.function.BatchSourceFunction;
 import co.cask.cdap.etl.spark.function.JoinMergeFunction;
 import co.cask.cdap.etl.spark.function.JoinOnFunction;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.tephra.TransactionFailureException;
 import scala.Tuple2;
 
 import java.io.BufferedReader;
@@ -75,28 +74,28 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageInfo stageInfo) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageSpec stageSpec) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
-                               sourceFactory.createRDD(sec, jsc, stageInfo.getName(), Object.class, Object.class)
+                               sourceFactory.createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
                                  .flatMap(Compat.convert(new BatchSourceFunction(pluginFunctionContext,
                                                                                  numOfRecordsPreview))));
   }
 
   @Override
-  protected SparkPairCollection<Object, Object> addJoinKey(StageInfo stageInfo, String inputStageName,
+  protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec, String inputStageName,
                                                            SparkCollection<Object> inputCollection) throws Exception {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     return inputCollection.flatMapToPair(
       Compat.convert(new JoinOnFunction<>(pluginFunctionContext, inputStageName)));
   }
 
   @Override
   protected SparkCollection<Object> mergeJoinResults(
-    StageInfo stageInfo,
+    StageSpec stageSpec,
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception {
 
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(pluginFunctionContext)));
   }
 
