@@ -35,6 +35,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -137,6 +138,9 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
       Preconditions.checkArgument(inputContext instanceof PartitionedFileSetInputContext);
       PartitionedFileSetInputContext pfsInputcontext = (PartitionedFileSetInputContext) inputContext;
       Preconditions.checkNotNull(pfsInputcontext.getInputPartitionKey());
+      Preconditions.checkArgument(
+        pfsInputcontext.getInputPartitionKey().equals(Iterables.getOnlyElement(pfsInputcontext.getInputPartitionKeys()))
+      );
 
       Map<String, String> dsArguments =
         RuntimeArguments.extractScope(Scope.DATASET, PARTITIONED, context.getRuntimeArguments());

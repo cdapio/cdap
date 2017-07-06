@@ -19,6 +19,8 @@ package co.cask.cdap.api.data.batch;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 
+import java.util.List;
+
 /**
  * Exposes information about the {@link PartitionedFileSet} input configured for this task.
  */
@@ -26,6 +28,14 @@ public interface PartitionedFileSetInputContext extends InputContext {
 
   /**
    * Returns the {@link PartitionKey} of the input configured for this task.
+   * This method should be avoided if using CombineFileInputFormat, since in that case, there can be multiple
+   * PartitionKeys for this task.
    */
   PartitionKey getInputPartitionKey();
+
+  /**
+   * Returns a list of {@link PartitionKey}s of the input configured for this task. There can be multiple PartitionKeys
+   * for a single task if using CombineFileInputFormat.
+   */
+  List<PartitionKey> getInputPartitionKeys();
 }

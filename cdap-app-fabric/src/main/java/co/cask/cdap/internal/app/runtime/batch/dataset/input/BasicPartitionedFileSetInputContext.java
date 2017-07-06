@@ -25,10 +25,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -42,29 +46,50 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
 
   private static final Type STRING_PARTITION_KEY_MAP_TYPE = new TypeToken<Map<String, PartitionKey>>() { }.getType();
 
-  private final Path inputPath;
   private final String mappingString;
 
-  private PartitionKey partitionKey;
+  private final List<Path> inputPaths;
+  private List<PartitionKey> partitionKeys;
 
   BasicPartitionedFileSetInputContext(MultiInputTaggedSplit multiInputTaggedSplit) {
     super(multiInputTaggedSplit.getName());
 
     InputSplit inputSplit = multiInputTaggedSplit.getInputSplit();
-    if (!(inputSplit instanceof FileSplit)) {
-      throw new IllegalArgumentException(String.format("Expected a '%s', but got '%s'.",
-                                                       FileSplit.class.getName(), inputSplit.getClass().getName()));
+
+    inputPaths = new ArrayList<>();
+
+    if (inputSplit instanceof FileSplit) {
+      inputPaths.add(((FileSplit) inputSplit).getPath());
+    } else if (inputSplit instanceof CombineFileSplit) {
+      Collections.addAll(inputPaths, ((CombineFileSplit) inputSplit).getPaths());
+    } else {
+      throw new IllegalArgumentException(String.format("Expected either a '%s' or a '%s', but got '%s'.",
+                                                       FileSplit.class.getName(), CombineFileSplit.class.getName(),
+                                                       inputSplit.getClass().getName()));
     }
-    this.inputPath = ((FileSplit) inputSplit).getPath();
+
     this.mappingString = multiInputTaggedSplit.getConf().get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
   }
 
   @Override
   public PartitionKey getInputPartitionKey() {
-    if (partitionKey == null) {
-      partitionKey = getPartitionKey(inputPath.toUri());
+    List<PartitionKey> inputPartitionKeys = getInputPartitionKeys();
+    if (inputPartitionKeys.size() != 1) {
+      throw new IllegalArgumentException(String.format("Expected only a single PartitionKey, but found: %s",
+                                                       inputPartitionKeys));
     }
-    return partitionKey;
+    return inputPartitionKeys.get(0);
+  }
+
+  @Override
+  public List<PartitionKey> getInputPartitionKeys() {
+    if (partitionKeys == null) {
+      partitionKeys = new ArrayList<>();
+      for (Path inputPath : inputPaths) {
+        partitionKeys.add(getPartitionKey(inputPath.toUri()));
+      }
+    }
+    return partitionKeys;
   }
 
   private PartitionKey getPartitionKey(URI inputPathURI) {
@@ -80,7 +105,7 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     }
     throw new IllegalArgumentException(
       String.format("Failed to derive PartitionKey from input path '%s' and path to key mapping '%s'.",
-                    inputPath, pathToPartitionMapping));
+                    inputPathURI, pathToPartitionMapping));
   }
 
   // compares only the paths of the URI, ignoring the scheme, host, port, etc. of the URIs.
