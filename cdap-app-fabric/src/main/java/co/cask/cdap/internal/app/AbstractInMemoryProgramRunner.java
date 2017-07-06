@@ -20,7 +20,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
@@ -57,12 +56,10 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
   private final String host;
-  protected final RuntimeStore runtimeStore;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf, RuntimeStore runtimeStore) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
-    this.runtimeStore = runtimeStore;
   }
 
   /**

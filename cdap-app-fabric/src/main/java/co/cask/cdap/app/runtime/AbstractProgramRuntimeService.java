@@ -123,6 +123,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       ProgramOptions optionsWithPlugins = createPluginSnapshot(runtimeProgramOptions, programId, tempDir,
                                                                programDescriptor.getApplicationSpecification());
 
+      // Create and run the program
+      Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+      cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
+      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
+
+      // Publish the program's starting state
       final Arguments userArguments = options.getUserArguments();
       final Arguments systemArguments = options.getArguments();
       final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
@@ -136,10 +142,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
         }
       }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
 
-      // Create and run the program
-      Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
-      cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
       return monitorProgram(controller, programId, options, cleanUpTask);
     } catch (Exception e) {
       cleanUpTask.run();
@@ -152,7 +154,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
                                     Runnable cleanUpTask) {
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
-    addCleanupTask(runtimeInfo, cleanUpTask);
+    addCleanupTaskListener(runtimeInfo, cleanUpTask);
     return runtimeInfo;
   }
 
@@ -400,7 +402,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
-        addCleanupTask(runtimeInfo, createCleanupTask());
+        addCleanupTaskListener(runtimeInfo, createCleanupTask());
       }
     } finally {
       lock.unlock();
@@ -408,12 +410,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   /**
-   * Starts monitoring a running program.
+   * Adds the listener to the program controller to remove the runtime info when the program has terminated.
    *
    * @param runtimeInfo information about the running program
    * @param cleanUpTask task to run when program finished
    */
-  private void addCleanupTask(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
+  private void addCleanupTaskListener(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 

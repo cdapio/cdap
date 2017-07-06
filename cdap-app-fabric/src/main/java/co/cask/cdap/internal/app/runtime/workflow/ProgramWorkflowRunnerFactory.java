@@ -52,7 +52,7 @@ final class ProgramWorkflowRunnerFactory {
   private final ProgramOptions workflowProgramOptions;
 
   ProgramWorkflowRunnerFactory(CConfiguration cConf, RuntimeStore runtimeStore,
-                              WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
+                               WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                                Program workflowProgram, ProgramOptions workflowProgramOptions) {
     this.cConf = cConf;
     this.runtimeStore = runtimeStore;

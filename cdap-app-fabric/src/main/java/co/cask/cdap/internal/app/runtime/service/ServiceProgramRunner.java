@@ -22,11 +22,9 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -58,7 +56,7 @@ import org.slf4j.LoggerFactory;
  * A {@link ProgramRunner} that runs an HTTP Server inside a Service.
  */
 public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
-  private static final Logger LOG = LoggerFactory.getLogger(ServiceProgramRunner.class);
+
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -141,7 +139,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                          spec.getName() + "-" + instanceId);
-
       component.start();
       return controller;
     } catch (Throwable t) {

@@ -61,7 +61,6 @@ public class ProgramStateChangeListener extends AbstractListener {
 
   @Override
   public void init(ProgramController.State state, @Nullable Throwable cause) {
-    LOG.debug("FOR Program {}, state is {}", programId, state);
     if (state == ProgramController.State.ALIVE) {
       alive();
     } else if (state == ProgramController.State.COMPLETED) {

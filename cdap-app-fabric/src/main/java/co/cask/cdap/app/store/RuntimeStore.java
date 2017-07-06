@@ -35,10 +35,10 @@ public interface RuntimeStore {
   /**
    * Logs initialization of program run.
 
-   * @param id id of hte program
+   * @param id id of the program
    * @param pid run id
    * @param startTime start timestamp in seconds
-   * @param twillRunId TWill run id
+   * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
    */
