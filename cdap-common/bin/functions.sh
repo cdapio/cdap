@@ -762,7 +762,10 @@ cdap_start_java() {
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   # Enable GC logging
   cdap_create_dir ${__gc_log_and_heapdump_dir}
-  __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir} -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
+  if [ "$HEAPDUMP_ON_OOM" = true ] ; then
+    __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir}"
+  fi
+  __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
   if [[ ${CDAP_SERVICE} == master ]]; then
@@ -1460,5 +1463,7 @@ export TEMP_DIR=${CDAP_TEMP_DIR:-/tmp}
 
 # Default SDK options
 CDAP_SDK_OPTS="${OPTS} -Djava.security.krb5.realm= -Djava.security.krb5.kdc= -Djava.awt.headless=true"
+
+export HEAPDUMP_ON_OOM=${HEAPDUMP_ON_OOM:-true}
 
 export NICENESS=${NICENESS:-0}
