@@ -60,64 +60,45 @@ public class PipelinePlannerTest {
     Schema schema = Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     Set<StageSpec> stageSpecs = ImmutableSet.of(
       StageSpec.builder("n1", nodePlugin)
-        .setOutputSchema(schema)
-        .addOutputs("n2", "n3", "n4")
+        .addOutputSchema(schema, "n2", "n3", "n4")
         .build(),
       StageSpec.builder("n2", reducePlugin)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
       StageSpec.builder("n3", reducePlugin)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n5")
+        .addOutputSchema(schema, "n5")
         .build(),
       StageSpec.builder("n4", reducePlugin)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
       StageSpec.builder("n5", nodePlugin)
         .addInputSchema("n3", schema)
-        .setOutputSchema(schema)
-        .addInputs("n3")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
       StageSpec.builder("n6", nodePlugin)
         .addInputSchemas(ImmutableMap.of("n2", schema, "n5", schema, "n4", schema))
-        .setOutputSchema(schema)
-        .addInputs("n2", "n5", "n4")
-        .addOutputs("n7")
+        .addOutputSchema(schema, "n7")
         .build(),
       StageSpec.builder("n7", reducePlugin)
         .addInputSchema("n6", schema)
-        .setOutputSchema(schema)
-        .addInputs("n6")
-        .addOutputs("n8")
+        .addOutputSchema(schema, "n8")
         .build(),
       StageSpec.builder("n8", nodePlugin)
         .addInputSchema("n7", schema)
-        .setOutputSchema(schema)
-        .addInputs("n7")
-        .addOutputs("n9")
+        .addOutputSchema(schema, "n9")
         .build(),
       StageSpec.builder("n9", reducePlugin)
         .addInputSchema("n8", schema)
-        .setOutputSchema(schema)
-        .addInputs("n8")
-        .addOutputs("n10", "n11")
+        .addOutputSchema(schema, "n10", "n11")
         .build(),
       StageSpec.builder("n10", nodePlugin)
         .addInputSchema("n9", schema)
-        .addInputs("n9")
         .build(),
       StageSpec.builder("n11", nodePlugin)
         .addInputSchema("n9", schema)
-        .addInputs("n9")
         .build()
     );
     Set<Connection> connections = ImmutableSet.of(

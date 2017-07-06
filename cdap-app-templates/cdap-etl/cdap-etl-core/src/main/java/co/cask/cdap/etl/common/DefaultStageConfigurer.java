@@ -20,6 +20,7 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.MultiInputStageConfigurer;
+import co.cask.cdap.etl.api.MultiOutputStageConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 
 import java.util.HashMap;
@@ -33,14 +34,16 @@ import javax.annotation.Nullable;
  * Currently we only allow multiple input/output schema per stage except for {@link co.cask.cdap.etl.api.Joiner}
  * where we allow multiple input schemas
  */
-public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer {
+public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageConfigurer, MultiOutputStageConfigurer {
   private Schema outputSchema;
   private Schema outputErrorSchema;
   private boolean errorSchemaSet;
   protected Map<String, Schema> inputSchemas;
+  protected Map<String, Schema> outputPortSchemas;
 
   public DefaultStageConfigurer() {
     this.inputSchemas = new HashMap<>();
+    this.outputPortSchemas = new HashMap<>();
     this.errorSchemaSet = false;
   }
 
@@ -49,10 +52,19 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
     return outputSchema;
   }
 
+  public Map<String, Schema> getOutputPortSchemas() {
+    return outputPortSchemas;
+  }
+
   @Override
   @Nullable
   public Schema getInputSchema() {
     return inputSchemas.isEmpty() ? null : inputSchemas.entrySet().iterator().next().getValue();
+  }
+
+  @Override
+  public void setOutputSchemas(Map<String, Schema> outputSchemas) {
+    outputPortSchemas.putAll(outputSchemas);
   }
 
   @Nullable
