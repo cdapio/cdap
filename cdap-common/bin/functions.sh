@@ -128,7 +128,7 @@ cdap_create_log_dir() { test -d "${LOG_DIR}" || mkdir -p "${LOG_DIR}"; };
 #
 cdap_create_pid_dir() { test -d "${PID_DIR}" || mkdir -p "${PID_DIR}"; };
 
-cdap_create_dir() { test -d "$1" || mkdir -p "$1"; }
+cdap_create_dir() { test -d "${1}" || mkdir -p "${1}"; }
 
 # Locates CDAP_HOME and returns its location
 #
@@ -762,7 +762,7 @@ cdap_start_java() {
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
   # Enable GC logging
   cdap_create_dir ${__gc_log_and_heapdump_dir}
-  if [ "$HEAPDUMP_ON_OOM" = true ] ; then
+  if [[ ${HEAPDUMP_ON_OOM} == true ]]; then
     __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__gc_log_and_heapdump_dir}"
   fi
   __defines+=" -verbose:gc -Xloggc:${__gc_log_and_heapdump_dir}/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
