@@ -160,7 +160,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     controller.addListener(
       new ProgramStateChangeListener(runtimeStore, program.getId(), controller.getRunId(), twillRunId,
-              options.getUserArguments(), systemArguments),
+                                     options.getUserArguments(), systemArguments),
       Threads.SAME_THREAD_EXECUTOR);
     blockForCompletion(closeable, controller);
 

@@ -287,6 +287,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertFalse(Iterables.any(getAllJobs(), new Predicate<Job>() {
       @Override
       public boolean apply(Job job) {
+        System.out.println(job.getSchedule().getTrigger());
         return job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger;
       }
     }));
@@ -294,6 +295,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Also verify that the two partition schedules did not trigger
     Assert.assertEquals(runs1, getRuns(WORKFLOW_1));
     Assert.assertEquals(runs2, getRuns(WORKFLOW_2));
+    System.out.println("JOB SIZE IS " + getAllJobs().size());
 
     // enable partition schedule 2
     enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);

@@ -77,11 +77,13 @@ final class ProgramWorkflowRunnerFactory {
     if (actionSpec.getProperties().containsKey(ProgramWorkflowAction.PROGRAM_TYPE)) {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
-          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE);
+          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions,
+                                                  programRunnerFactory, workflowSpec, token, nodeId, nodeStates,
+                                                  ProgramType.MAPREDUCE);
         case SPARK:
-          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK);
+          return new DefaultProgramWorkflowRunner(cConf, runtimeStore, workflowProgram, workflowProgramOptions,
+                                                  programRunnerFactory, workflowSpec, token, nodeId, nodeStates,
+                                                  ProgramType.SPARK);
         default:
           LOG.debug("No workflow program runner found for this program");
       }
