@@ -56,7 +56,6 @@ import co.cask.cdap.etl.common.plugin.WrappedTransform;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.spec.PipelineSpec;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
@@ -237,9 +236,9 @@ public class ETLWorker extends AbstractWorker {
   private void initializeSinks(WorkerContext context,
                                Map<String, TransformDetail> transformationMap,
                                PipelinePhase pipeline) throws Exception {
-    Set<StageInfo> sinkInfos = pipeline.getStagesOfType(RealtimeSink.PLUGIN_TYPE);
+    Set<StageSpec> sinkInfos = pipeline.getStagesOfType(RealtimeSink.PLUGIN_TYPE);
     sinks = new HashMap<>(sinkInfos.size());
-    for (StageInfo sinkInfo : sinkInfos) {
+    for (StageSpec sinkInfo : sinkInfos) {
       String sinkName = sinkInfo.getName();
       RealtimeSink sink = context.newPluginInstance(sinkName);
       sink = new LoggedRealtimeSink(sinkName, sink);
@@ -270,11 +269,11 @@ public class ETLWorker extends AbstractWorker {
   private void initializeTransforms(WorkerContext context,
                                     Map<String, TransformDetail> transformDetailMap,
                                     PipelinePhase pipeline) throws Exception {
-    Set<StageInfo> transformInfos = pipeline.getStagesOfType(Transform.PLUGIN_TYPE);
+    Set<StageSpec> transformInfos = pipeline.getStagesOfType(Transform.PLUGIN_TYPE);
     Preconditions.checkArgument(transformInfos != null);
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
-    for (StageInfo transformInfo : transformInfos) {
+    for (StageSpec transformInfo : transformInfos) {
       String transformName = transformInfo.getName();
       try {
         Transform<?, ?> transform = context.newPluginInstance(transformName);;

@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spec;
 
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.v2.ETLConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import com.google.common.collect.ImmutableList;
 
@@ -35,17 +36,21 @@ public class ValidatedPipeline {
   private final List<ETLStage> traversalOrder;
   // stage name -> output stage -> port
   private final Map<String, Map<String, String>> connectionTable;
+  private final boolean stageLoggingEnabled;
+  private final boolean processTimingEnabled;
 
-  public ValidatedPipeline(List<ETLStage> traversalOrder, Collection<Connection> connections) {
+  public ValidatedPipeline(List<ETLStage> traversalOrder, ETLConfig config) {
     this.traversalOrder = ImmutableList.copyOf(traversalOrder);
     this.connectionTable = new HashMap<>();
-    for (Connection connection : connections) {
+    for (Connection connection : config.getConnections()) {
       if (!connectionTable.containsKey(connection.getFrom())) {
         connectionTable.put(connection.getFrom(), new HashMap<String, String>());
       }
       Map<String, String> outputPorts = connectionTable.get(connection.getFrom());
       outputPorts.put(connection.getTo(), connection.getPort());
     }
+    this.stageLoggingEnabled = config.isStageLoggingEnabled();
+    this.processTimingEnabled = config.isProcessTimingEnabled();
   }
 
   public List<ETLStage> getTraversalOrder() {
@@ -60,5 +65,13 @@ public class ValidatedPipeline {
   public Map<String, String> getOutputPorts(String stageName) {
     return connectionTable.containsKey(stageName) ?
       connectionTable.get(stageName) : Collections.<String, String>emptyMap();
+  }
+
+  public boolean isStageLoggingEnabled() {
+    return stageLoggingEnabled;
+  }
+
+  public boolean isProcessTimingEnabled() {
+    return processTimingEnabled;
   }
 }

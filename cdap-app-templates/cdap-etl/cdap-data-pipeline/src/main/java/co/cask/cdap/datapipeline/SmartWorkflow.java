@@ -50,7 +50,6 @@ import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -187,6 +186,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     postActions = new LinkedHashMap<>();
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
+    stageSpecs = new HashMap<>();
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
@@ -194,8 +194,12 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                             spec.isStageLoggingEnabled(),
                                                             spec.isProcessTimingEnabled());
     for (ActionSpec actionSpec : spec.getEndingActions()) {
-      postActions.put(actionSpec.getName(), (PostAction) pluginContext.newPluginInstance(actionSpec.getName(),
-                                                                                         macroEvaluator));
+      String stageName = actionSpec.getName();
+      postActions.put(stageName, (PostAction) pluginContext.newPluginInstance(stageName, macroEvaluator));
+      stageSpecs.put(stageName, StageSpec.builder(stageName, actionSpec.getPluginSpec())
+        .setStageLoggingEnabled(spec.isStageLoggingEnabled())
+        .setProcessTimingEnabled(spec.isProcessTimingEnabled())
+        .build());
     }
 
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
@@ -211,12 +215,9 @@ public class SmartWorkflow extends AbstractWorkflow {
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
-        StageInfo stageInfo = StageInfo.builder(name, PostAction.PLUGIN_TYPE)
-          .setStageLoggingEnabled(spec.isStageLoggingEnabled())
-          .setProcessTimingEnabled(spec.isProcessTimingEnabled())
-          .build();
+        StageSpec stageSpec = stageSpecs.get(name);
         BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
-                                                                     stageInfo, arguments);
+                                                                     stageSpec, arguments);
         try {
           action.run(context);
         } catch (Throwable t) {
@@ -289,7 +290,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     phaseNum++;
 
     // if this phase uses connectors, add the local dataset for that connector if we haven't already
-    for (StageInfo connectorInfo : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
+    for (StageSpec connectorInfo : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
       String connectorName = connectorInfo.getName();
       String datasetName = connectorDatasets.get(connectorName);
       if (datasetName == null) {
@@ -302,7 +303,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     Map<String, String> phaseConnectorDatasets = new HashMap<>();
-    for (StageInfo connectorStage : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
+    for (StageSpec connectorStage : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
       phaseConnectorDatasets.put(connectorStage.getName(), connectorDatasets.get(connectorStage.getName()));
     }
     BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),

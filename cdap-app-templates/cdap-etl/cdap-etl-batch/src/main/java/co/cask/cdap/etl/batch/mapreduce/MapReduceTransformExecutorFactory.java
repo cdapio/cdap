@@ -41,7 +41,7 @@ import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
@@ -85,7 +85,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
   }
 
   @Override
-  protected MapReduceRuntimeContext createRuntimeContext(StageInfo stageInfo) {
+  protected MapReduceRuntimeContext createRuntimeContext(StageSpec stageInfo) {
     Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageInfo.getName());
     if (stageRuntimeArgs == null) {
       stageRuntimeArgs = new HashMap<>();
@@ -96,7 +96,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
 
   @SuppressWarnings("unchecked")
   @Override
-  protected TrackedTransform getTransformation(StageInfo stageInfo)
+  protected TrackedTransform getTransformation(StageSpec stageInfo)
     throws Exception {
     DefaultMacroEvaluator macroEvaluator = new DefaultMacroEvaluator(taskContext.getWorkflowToken(),
                                                                      taskContext.getRuntimeArguments(),

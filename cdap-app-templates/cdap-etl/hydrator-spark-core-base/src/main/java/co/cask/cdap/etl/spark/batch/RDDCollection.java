@@ -22,7 +22,6 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -33,6 +32,7 @@ import co.cask.cdap.etl.spark.function.FlatMapFunc;
 import co.cask.cdap.etl.spark.function.PairFlatMapFunc;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -82,20 +82,20 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> transform(StageInfo stageInfo) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+  public SparkCollection<Tuple2<Boolean, Object>> transform(StageSpec stageSpec) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     return wrap(rdd.flatMap(Compat.convert(
       new TransformFunction<T, Tuple2<Boolean, Object>>(pluginFunctionContext))));
   }
 
   @Override
-  public <U> SparkCollection<U> flatMap(StageInfo stageInfo, FlatMapFunction<T, U> function) {
+  public <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function) {
     return wrap(rdd.flatMap(function));
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageInfo stageInfo, @Nullable Integer partitions) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageInfo, sec);
+  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(pluginFunctionContext);
     PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
 
@@ -118,10 +118,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public <U> SparkCollection<U> compute(StageInfo stageInfo, SparkCompute<T, U> compute) throws Exception {
-    String stageName = stageInfo.getName();
+  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    String stageName = stageSpec.getName();
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
     compute.initialize(sparkPluginContext);
 
     JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
@@ -132,23 +132,23 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public void store(StageInfo stageInfo, PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
     JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
-    sinkFactory.writeFromRDD(sinkRDD, sec, stageInfo.getName(), Object.class, Object.class);
+    sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName(), Object.class, Object.class);
   }
 
   @Override
-  public void store(StageInfo stageInfo, SparkSink<T> sink) throws Exception {
-    String stageName = stageInfo.getName();
+  public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+    String stageName = stageSpec.getName();
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageInfo);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
 
     JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     sink.run(sparkPluginContext, countedRDD);
   }
 
   @Override
-  public SparkCollection<T> window(StageInfo stageInfo, Windower windower) {
+  public SparkCollection<T> window(StageSpec stageSpec, Windower windower) {
     throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
   }
 

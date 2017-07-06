@@ -25,13 +25,14 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.batch.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -88,7 +89,7 @@ public class TransformRunner<KEY, VALUE> {
     String sourceStage = (inputContext != null) ? inputAliasToStage.get(inputContext.getInputName()) : null;
 
     PipelinePhase phase = phaseSpec.getPhase();
-    Set<StageInfo> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+    Set<StageSpec> reducers = phase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
     if (!reducers.isEmpty()) {
       String reducerName = reducers.iterator().next().getName();
       // if we're in the mapper, get the part of the pipeline starting from sources and ending at aggregator
@@ -102,7 +103,7 @@ public class TransformRunner<KEY, VALUE> {
 
     // setup error dataset information
     this.transformErrorSinkMap = new HashMap<>();
-    for (StageInfo transformInfo : phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE)) {
+    for (StageSpec transformInfo : phaseSpec.getPhase().getStagesOfType(Transform.PLUGIN_TYPE)) {
       String errorDatasetName = transformInfo.getErrorDatasetName();
       if (errorDatasetName != null) {
         transformErrorSinkMap.put(transformInfo.getName(), new ErrorOutputWriter<>(context, errorDatasetName));
@@ -119,7 +120,7 @@ public class TransformRunner<KEY, VALUE> {
   private OutputWriter<Object, Object> getSinkWriter(MapReduceTaskContext<Object, Object> context,
                                                      PipelinePhase pipelinePhase,
                                                      Configuration hConf) {
-    Set<StageInfo> reducers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
+    Set<StageSpec> reducers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE);
     JobContext hadoopContext = context.getHadoopContext();
     if (!reducers.isEmpty() && hadoopContext instanceof Mapper.Context) {
       return new SingleOutputWriter<>(context);
@@ -134,9 +135,9 @@ public class TransformRunner<KEY, VALUE> {
       new SingleOutputWriter<>(context) : new MultiOutputWriter<>(context, sinkOutputs);
   }
 
-  private boolean hasSingleOutput(Set<StageInfo> transformInfos, Map<String, SinkOutput> sinkOutputs) {
+  private boolean hasSingleOutput(Set<StageSpec> transformInfos, Map<String, SinkOutput> sinkOutputs) {
     // if there are any error datasets, we know we have at least one sink, and one error dataset
-    for (StageInfo info : transformInfos) {
+    for (StageSpec info : transformInfos) {
       if (info.getErrorDatasetName() != null) {
         return false;
       }

@@ -23,7 +23,7 @@ import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.SparkConf;
 
 /**
@@ -33,15 +33,15 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
 
   private final SparkClientContext sparkContext;
 
-  public BasicSparkPluginContext(SparkClientContext sparkContext, StageInfo stageInfo) {
+  public BasicSparkPluginContext(SparkClientContext sparkContext, StageSpec stageSpec) {
     super(sparkContext, sparkContext.getMetrics(), new DatasetContextLookupProvider(sparkContext),
-          sparkContext.getLogicalStartTime(), sparkContext.getAdmin(), stageInfo, new BasicArguments(sparkContext));
+          sparkContext.getLogicalStartTime(), sparkContext.getAdmin(), stageSpec, new BasicArguments(sparkContext));
     this.sparkContext = sparkContext;
   }
 
-  public BasicSparkPluginContext(JavaSparkExecutionContext sec, DatasetContext datasetContext, StageInfo stageInfo) {
+  public BasicSparkPluginContext(JavaSparkExecutionContext sec, DatasetContext datasetContext, StageSpec stageSpec) {
     super(sec.getPluginContext(), sec.getServiceDiscoverer(), datasetContext, sec.getMetrics(),
-          new DatasetContextLookupProvider(datasetContext), sec.getLogicalStartTime(), sec.getAdmin(), stageInfo,
+          new DatasetContextLookupProvider(datasetContext), sec.getLogicalStartTime(), sec.getAdmin(), stageSpec,
           new BasicArguments(sec));
     this.sparkContext = null;
   }

@@ -278,6 +278,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .addInputSchemas(inputSchemas)
       .addOutputPortSchemas(outputSchemas)
       .setErrorSchema(stageConfigurer.getErrorSchema())
+      .setProcessTimingEnabled(validatedPipeline.isProcessTimingEnabled())
+      .setStageLoggingEnabled(validatedPipeline.isStageLoggingEnabled())
       .build();
     return new ConfiguredStage(stageSpec, pluginConfigurer.getPipelineProperties());
   }
@@ -389,7 +391,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     if (config.getConnections().isEmpty()) {
       if (actionStages.size() == 1 && stageNames.size() == 1) {
         traversalOrder.add(config.getStages().iterator().next());
-        return new ValidatedPipeline(traversalOrder, config.getConnections());
+        return new ValidatedPipeline(traversalOrder, config);
       } else {
         throw new IllegalArgumentException(
           "Invalid pipeline. There are no connections between stages. " +
@@ -453,7 +455,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       traversalOrder.add(stages.get(stageName));
     }
 
-    return new ValidatedPipeline(traversalOrder, config.getConnections());
+    return new ValidatedPipeline(traversalOrder, config);
   }
 
   // will soon have another action type

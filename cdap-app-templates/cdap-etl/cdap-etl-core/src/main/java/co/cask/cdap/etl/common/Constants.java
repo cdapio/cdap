@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.spec.PluginSpec;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Constants used in ETL Applications.
@@ -38,6 +40,8 @@ public final class Constants {
     Schema.Field.of(ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING))
   );
   public static final String MDC_STAGE_KEY = "pipeline.stage";
+  public static final PluginSpec CONNECTOR_SPEC =
+    new PluginSpec(CONNECTOR_TYPE, "connector", ImmutableMap.<String, String>of(), null);
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

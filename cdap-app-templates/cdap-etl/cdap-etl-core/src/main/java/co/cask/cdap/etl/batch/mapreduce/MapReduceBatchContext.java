@@ -31,7 +31,7 @@ import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,14 +50,14 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
   private final Set<String> inputNames;
   private final Caller caller;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
     super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageInfo, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context));
     this.mrContext = context;
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
-    this.isPreviewEnabled = context.getDataTracer(stageInfo.getName()).isEnabled();
+    this.isPreviewEnabled = context.getDataTracer(stageSpec.getName()).isEnabled();
   }
 
   @Override
