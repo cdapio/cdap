@@ -27,7 +27,6 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;

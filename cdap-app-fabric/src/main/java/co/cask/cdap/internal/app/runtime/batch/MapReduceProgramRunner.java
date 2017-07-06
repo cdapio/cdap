@@ -86,7 +86,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final NamespacedLocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
@@ -102,7 +101,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                 DatasetFramework datasetFramework,
                                 TransactionSystemClient txSystemClient,
                                 MetricsCollectionService metricsCollectionService,
-                                DiscoveryServiceClient discoveryServiceClient, RuntimeStore runtimeStore,
+                                DiscoveryServiceClient discoveryServiceClient,
                                 SecureStore secureStore, SecureStoreManager secureStoreManager,
                                 AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext,
@@ -117,7 +116,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.datasetFramework = datasetFramework;
     this.txSystemClient = txSystemClient;
     this.discoveryServiceClient = discoveryServiceClient;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;

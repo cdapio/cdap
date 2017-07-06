@@ -67,17 +67,14 @@ public final class FlowProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final StreamAdmin streamAdmin;
-  private final RuntimeStore runtimeStore;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
   public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
-                           RuntimeStore runtimeStore, QueueAdmin queueAdmin,
-                           TransactionExecutorFactory txExecutorFactory) {
+                           QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory) {
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
-    this.runtimeStore = runtimeStore;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
   }
@@ -96,19 +93,11 @@ public final class FlowProgramRunner implements ProgramRunner {
     Preconditions.checkNotNull(flowSpec, "Missing FlowSpecification for %s", program.getName());
 
     try {
-      final RunId runId = ProgramRunners.getRunId(options);
-      final ProgramId programId = program.getId();
-      final Arguments systemArgs = options.getArguments();
-      final Arguments userArgs = options.getUserArguments();
-      final String twillRunId = systemArgs.getOption(ProgramOptionConstants.TWILL_RUN_ID);
       // Launch flowlet program runners
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
-      final ProgramController controller = new FlowProgramController(flowlets, program, options,
-                                                                     flowSpec, consumerQueues);
-
-      return controller;
+      return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

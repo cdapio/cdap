@@ -140,7 +140,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
       ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
-
       return monitorProgram(controller, programId, options, cleanUpTask);
     } catch (Exception e) {
       cleanUpTask.run();
@@ -154,7 +153,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                     Runnable cleanUpTask) {
     RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
     addCleanupTask(runtimeInfo, cleanUpTask);
-
     return runtimeInfo;
   }
 

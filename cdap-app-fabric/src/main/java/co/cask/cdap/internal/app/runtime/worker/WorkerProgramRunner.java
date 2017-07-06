@@ -64,7 +64,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
-  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -73,7 +72,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
@@ -82,7 +81,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
