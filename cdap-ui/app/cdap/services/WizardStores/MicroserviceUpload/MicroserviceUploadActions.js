@@ -20,6 +20,7 @@ const MicroserviceUploadAction = {
   setVersion: 'SET-MICROSERVICE-VERSION',
   setMicroserviceOption: 'SET-MICROSERVICE-OPTION',
   setDefaultMicroservicePlugins: 'SET-DEFAULT-MICROSERVICE-PLUGINS',
+  setMicroserviceArtifact: 'SET-MICROSERVICE-ARTIFACT',
   setNewMicroserviceName: 'SET-NEW-MICROSERVICE-NAME',
   setInstances: 'SET-MICROSERVICE-INSTANCES',
   setVCores: 'SET-MICROSERVICE-VCORES',
