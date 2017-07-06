@@ -123,11 +123,18 @@ public class DefaultStoreTest {
     Assert.assertEquals("ToyFlow", flowSpec.getName());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testStopBeforeStart() throws RuntimeException {
     ProgramId programId = new ProgramId("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
-    store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
+
+    Exception exception = null;
+    try {
+      store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
+    } catch (Exception e) {
+      exception = e;
+    }
+    Assert.assertEquals(null, exception);
   }
 
   @Test
