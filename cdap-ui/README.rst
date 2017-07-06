@@ -1,4 +1,107 @@
 ==============
+CDAP UI Pack 5
+==============
+
+The CDAP UI Pack is a UI-only release that can be applied on top of an existing CDAP installation.
+The CDAP UI Pack 5 applies on CDAP 4.2.0.
+
+Details
+=======
+- Release Date: 07/07/2017
+- Base CDAP Version: 4.2.0
+- Release branch: release/4.2
+
+Installation
+============
+
+*Note:* The CDAP UI works with node version 4.5.0 and above.
+
+UNIX/Linux Flavors
+------------------
+**CDAP Sandbox**
+::
+
+  $ cd <CDAP_HOME>
+  $ ./bin/cdap sandbox stop
+  $ ./bin/cdap apply-pack /path/to/download/cdap-ui-pack-4.2.0_p5.zip
+  $ ./bin/cdap sandbox start
+
+
+**Distributed CDAP**
+
+*Note:* In the instructions below, ``<CDAP_HOME>`` is either:
+
+- ``/opt/cdap`` on RPM (manual or Apache Ambari) installations; or
+- the *CDAP* sub-directory of the *Parcel Directory* on Cloudera Manager installations (e.g. ``/opt/cloudera/parcels/CDAP``)
+
+::
+
+  $ cd <CDAP_HOME>
+  $ /etc/init.d/cdap-ui stop
+  $ cdap apply-pack /path/to/download/cdap-ui-pack-4.2.0_p5.zip
+  $ /etc/init.d/cdap-ui start
+
+
+
+Windows
+-------
+
+::
+
+  > cd <CDAP_HOME>
+  > bin\cdap sandbox stop
+  > bin\cdap apply-pack \path\to\download\cdap-ui-pack-4.2.0_p5.zip
+  > bin\cdap sandbox start
+
+
+Upgrading Data Preparation and Kafka Plugins
+============================================
+This UI Pack also requires newer versions of Data Preparation and Kafka Plugins to support the newer UI features. To
+upgrade these, please follow the Data Preparation Solution v1.3.0, and also install Kafka Plugins v1.7.3 from the Cask
+Market.
+
+
+Release Notes
+=============
+
+New Features
+------------
+
+* `CDAP-11977 <https://issues.cask.co/browse/CDAP-11977>`__ - Added point and click interaction for replacing patterns in column names
+* `CDAP-11940 <https://issues.cask.co/browse/CDAP-11940>`__ - Added support for microservices in CDAP
+* `CDAP-11869 <https://issues.cask.co/browse/CDAP-11869>`__ - Added point and click interaction for parsing as Avro File and Excel File
+* `CDAP-11618 <https://issues.cask.co/browse/CDAP-11618>`__ - Added the ability to connect to your existing Apache Kafka through Data Preparation
+* `CDAP-11621 <https://issues.cask.co/browse/CDAP-11621>`__ - Added the ability to browse your existing Kafka topics in Data Preparation
+* `CDAP-9507 <https://issues.cask.co/browse/CDAP-9507>`__ - Added point-and-click interaction for Encoding, Decoding and Specifying Character Encoding
+* `CDAP-9530 <https://issues.cask.co/browse/CDAP-9530>`__ - Added point-and-click interaction for Masking
+* `CDAP-9323 <https://issues.cask.co/browse/CDAP-9323>`__ - Added a way to add a driver from Cask Market while adding a Database connection in Data Preparation
+* `CDAP-9107 <https://issues.cask.co/browse/CDAP-9107>`__ - Added support for undoing/redoing actions while building pipelines in the Pipeline Studio
+
+Improvements
+------------
+* `CDAP-11636 <https://issues.cask.co/browse/CDAP-11636>`__ - Added row numbers to the data prep table
+* `CDAP-9090 <https://issues.cask.co/browse/CDAP-9090>`__ - Improved the handling of schemas of existing datasets as sinks while building pipelines
+
+Bug Fixes
+---------
+* `CDAP-11964 <https://issues.cask.co/browse/CDAP-11964>`__ - On a deployed pipeline, if arguments are not specified, fixed the arguments dropdown to pop down after clicking run
+* `CDAP-11992 <https://issues.cask.co/browse/CDAP-11992>`__ - Handled errors correctly in the Data Prep UI
+* `CDAP-11827 <https://issues.cask.co/browse/CDAP-11886>`__ - Added scrolling to the data prep dropdown menu
+* `CDAP-11627 <https://issues.cask.co/browse/CDAP-11627>`__ - Fixed the extract fields dropdown in data prep to scroll when it doesn't fit the screen size
+* `CDAP-11438 <https://issues.cask.co/browse/CDAP-11438>`__ - Selected the entire column name when the user wants to rename it
+* `CDAP-8419 <https://issues.cask.co/browse/CDAP-8419>`__ - Fixed the height calculation for the add new entity modal
+
+Known Issues
+------------
+* `CDAP-11943 <https://issues.cask.co/browse/CDAP-11943>`__ - Due to a known issue, even after upgrading the Data Preparation version that ships with CDAP 4.2,
+after restarting CDAP, CDAP may use the older version of Data Preparation. As a workaround, click the Upgrade button that shows up on the main page of Data Preparation
+when this happens. Alternatively, you can also replace the existing data preparation (wrangler) artifacts from the system artifacts directory with newer artifacts and
+restart CDAP.
+* `CDAP-12028 <https://issues.cask.co/browse/CDAP-12028>`__ - Currently, the Kafka connection in Data Preparation only supports text data. Support for binary data will be added in a later release
+* `CDAP-12079 <https://issues.cask.co/browse/CDAP-12079>`__ - Testing a Kafka connection does not return if a wrong port is specified.
+
+
+==============
 CDAP UI Pack 3
 ==============
 

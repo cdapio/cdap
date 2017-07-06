@@ -430,7 +430,7 @@ features:
           ignoreCase: Ignore Case
           modalTitle: Replace Column Names
           PatternInputPlaceholder:
-            PREFIX: "e.g. ^body_, work_"
+            PREFIX: "e.g. body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
             CUSTOM: Replace Pattern
@@ -1168,7 +1168,7 @@ features:
       modalheadertitle: Add Library
     Microservice:
       actionbtn0: Create
-      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystem communicating over well defined protocol.
+      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystems communicating over a well defined protocol.
       label: Microservice
       modalheadertitle: Create Microservice
     Plugins:
