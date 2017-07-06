@@ -5,7 +5,7 @@
 =====================================
 Cask Data Application Platform - CDAP
 =====================================
-.. image:: cdap-docs/developers-manual/source/_images/CDAP.png
+.. image:: cdap-docs/developer-manual/source/_images/CDAP.png
 
 .. image:: https://cdap-users.herokuapp.com/badge.svg?t=1
     :target: https://cdap-users.herokuapp.com
