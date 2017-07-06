@@ -50,6 +50,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-spark-python</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-api</artifactId>
       <scope>provided</scope>
@@ -361,7 +366,7 @@
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteSnapshots>false</overWriteSnapshots>
                   <overWriteIfNewer>true</overWriteIfNewer>
-                  <includeArtifactIds>cdap-api-spark2_2.11</includeArtifactIds>
+                  <includeArtifactIds>cdap-api-spark2_2.11,cdap-spark-python</includeArtifactIds>
                   <prependGroupId>true</prependGroupId>
                   <silent>true</silent>
                   <includeScope>runtime</includeScope>

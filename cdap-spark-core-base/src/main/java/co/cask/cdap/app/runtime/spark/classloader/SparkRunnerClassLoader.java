@@ -102,6 +102,7 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
         && !name.startsWith("org.codehaus.janino.")
         && !name.startsWith("com.fasterxml.jackson.")
         && !name.startsWith("com.codahale.metrics.")
+        && !name.startsWith("py4j.")
       ) {
       return super.loadClass(name, resolve);
     }

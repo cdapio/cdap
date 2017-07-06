@@ -20,6 +20,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
@@ -54,6 +55,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -64,7 +66,7 @@ import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 /**
- * A utility class to help determine Spark supports and locating Spark jar.
+ * A utility class to help determine Spark supports and locating Spark jars and PySpark libraries.
  * This class shouldn't use any classes from Spark/Scala.
  */
 public final class SparkPackageUtils {
@@ -82,6 +84,9 @@ public final class SparkPackageUtils {
   // Environment variable name for the location to the spark framework direction in local file system.
   // It is setup for the YARN container to find the spark framework in the container directory.
   private static final String SPARK_LIBRARY = "SPARK_LIBRARY";
+  // Environment variable name for a comma separated list of local file paths that contains
+  // the pyspark.zip and py4j-*.zip
+  private static final String PYSPARK_ARCHIVES_PATH = "PYSPARK_ARCHIVES_PATH";
   // File name for the spark default config
   private static final String SPARK_DEFAULTS_CONF = "spark-defaults.conf";
   // Spark1 conf key for spark-assembly jar location
@@ -98,6 +103,9 @@ public final class SparkPackageUtils {
 
   // The spark framework on the local file system.
   private static final EnumMap<SparkCompat, Set<File>> LOCAL_SPARK_LIBRARIES = new EnumMap<>(SparkCompat.class);
+
+  // The pyspark archive files on the local file system.
+  private static final EnumMap<SparkCompat, Set<File>> LOCAL_PY_SPARK_ARCHIVES = new EnumMap<>(SparkCompat.class);
 
   // The spark framework ready to be localized
   private static final EnumMap<SparkCompat, SparkFramework> SPARK_FRAMEWORKS = new EnumMap<>(SparkCompat.class);
@@ -139,6 +147,39 @@ public final class SparkPackageUtils {
   }
 
   /**
+   * Returns the set of PySpark archive files.
+   */
+  public static synchronized Set<File> getLocalPySparkArchives(SparkCompat sparkCompat) {
+    Set<File> archives = LOCAL_PY_SPARK_ARCHIVES.get(sparkCompat);
+    if (archives != null) {
+      return archives;
+    }
+
+    archives = new LinkedHashSet<>();
+    String archivesPath = System.getenv(PYSPARK_ARCHIVES_PATH);
+    String sparkHome = System.getenv(SPARK_HOME);
+
+    if (sparkHome == null && archivesPath == null) {
+      LOG.warn("Failed to determine location of PySpark libraries. Running PySpark program might fail. " +
+                 "Please set environment variable {} to make PySpark available.", SPARK_HOME);
+    } else {
+      if (archivesPath != null) {
+        // If the archives path is explicitly set, use it
+        for (String path : archivesPath.split(",")) {
+          archives.add(new File(path).getAbsoluteFile());
+        }
+      } else {
+        // Otherwise, grab all .zip files under $SPARK_HOME/python/lib/*.zip
+        archives.addAll(DirUtils.listFiles(Paths.get(sparkHome, "python", "lib").toFile(), "zip"));
+      }
+    }
+
+    archives = Collections.unmodifiableSet(archives);
+    LOCAL_PY_SPARK_ARCHIVES.put(sparkCompat, archives);
+    return archives;
+  }
+
+  /**
    * Prepares the resources that need to be localized to the Spark client container.
    *
    * @param sparkCompat the spark version to prepare for
@@ -158,6 +199,16 @@ public final class SparkPackageUtils {
     framework.addLocalizeResource(localizeResources);
     framework.updateSparkConf(sparkConf);
     framework.updateSparkEnv(env);
+
+    // Localize PySpark.
+    List<String> pySparkArchives = new ArrayList<>();
+    for (File archive : getLocalPySparkArchives(sparkCompat)) {
+      localizeResources.put(archive.getName(), new LocalizeResource(archive));
+      pySparkArchives.add(archive.getName());
+    }
+    // Set the PYSPARK_ARCHIVES_PATH environment variable in the YARN container.
+    env.put(PYSPARK_ARCHIVES_PATH, Joiner.on(",").join(pySparkArchives));
+
 
     // Localize the spark-defaults.conf file
     File sparkDefaultConfFile = saveSparkDefaultConf(sparkConf,

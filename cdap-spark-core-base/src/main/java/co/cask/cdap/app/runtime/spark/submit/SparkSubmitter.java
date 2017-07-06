@@ -20,7 +20,7 @@ import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -37,7 +37,7 @@ public interface SparkSubmitter {
    * @param runtimeContext the {@link SparkRuntimeContext} representing the Spark program
    * @param configs configurations for the Spark framework
    * @param resources list of resources to be localized to Spark containers
-   * @param jobJar location of the job JAR file required by the framework
+   * @param jobFile location of the job file required by the framework
    * @param result object instance to be available through the returned {@link ListenableFuture} when it completes
    * @param <V> Type of the result object
    * @return An {@link ListenableFuture} that will be completed when the job finished. If the job execution failed,
@@ -46,5 +46,5 @@ public interface SparkSubmitter {
    *         the running job will be terminated immediately.
    */
   <V> ListenableFuture<V> submit(SparkRuntimeContext runtimeContext, Map<String, String> configs,
-                                 List<LocalizeResource> resources, File jobJar, V result);
+                                 List<LocalizeResource> resources, URI jobFile, V result);
 }

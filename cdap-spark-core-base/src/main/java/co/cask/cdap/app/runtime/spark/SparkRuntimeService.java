@@ -26,6 +26,7 @@ import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.app.runtime.spark.distributed.SparkContainerLauncher;
+import co.cask.cdap.app.runtime.spark.python.PySparkUtil;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
@@ -45,25 +46,32 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.common.internal.io.UnsupportedTypeException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ShutdownHookManager;
 import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
@@ -72,20 +80,24 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -110,6 +122,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private static final String CDAP_LAUNCHER_JAR = "cdap-spark-launcher.jar";
   private static final String CDAP_SPARK_JAR = "cdap-spark.jar";
   private static final String CDAP_METRICS_PROPERTIES = "metrics.properties";
+  private static final Function<File, URI> FILE_TO_URI = new Function<File, URI>() {
+    @Override
+    public URI apply(File input) {
+      return input.toURI();
+    }
+  };
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeService.class);
 
@@ -118,6 +136,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final SparkRuntimeContext runtimeContext;
   private final File pluginArchive;
   private final SparkSubmitter sparkSubmitter;
+  private final LocationFactory locationFactory;
   private final AtomicReference<ListenableFuture<RunId>> completion;
   private final BasicSparkClientContext context;
 
@@ -125,12 +144,14 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private Runnable cleanupTask;
 
   SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
-                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter) {
+                      SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
+                      LocationFactory locationFactory) {
     this.cConf = cConf;
     this.spark = spark;
     this.runtimeContext = runtimeContext;
     this.pluginArchive = pluginArchive;
     this.sparkSubmitter = sparkSubmitter;
+    this.locationFactory = locationFactory;
     this.completion = new AtomicReference<>();
     this.context = new BasicSparkClientContext(runtimeContext);
   }
@@ -165,8 +186,9 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       initialize();
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(runtimeContext.getConfiguration());
 
-      final File jobJar = generateJobJar(tempDir, contextConfig.isLocal(), cConfCopy);
       final List<LocalizeResource> localizeResources = new ArrayList<>();
+      final URI jobFile = context.isPySpark() ? getPySparkScript(tempDir) : createJobJar(tempDir);
+      List<File> extraPySparkFiles = new ArrayList<>();
 
       String metricsConfPath;
       String classpath = "";
@@ -183,6 +205,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         File metricsConf = SparkMetricsSink.writeConfig(new File(tempDir, CDAP_METRICS_PROPERTIES));
         metricsConfPath = metricsConf.getAbsolutePath();
+
+        extractPySparkLibrary(tempDir, extraPySparkFiles);
       } else {
         // Localize all user requested files in distributed mode
         distributedUserResources(context.getLocalizeResources(), localizeResources);
@@ -249,9 +273,17 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         classpath = joiner.join(classpath, joiner.join(extraJars));
       }
 
+      Iterable<URI> pyFiles = Collections.emptyList();
+      if (context.isPySpark()) {
+        extraPySparkFiles.add(PySparkUtil.createPySparkLib(tempDir));
+        pyFiles = Iterables.concat(Iterables.transform(extraPySparkFiles, FILE_TO_URI),
+                                   context.getAdditionalPythonLocations());
+      }
+
       final Map<String, String> configs = createSubmitConfigs(tempDir, metricsConfPath, classpath,
                                                               context.getLocalizeResources(),
-                                                              contextConfig.isLocal());
+                                                              contextConfig.isLocal(),
+                                                              pyFiles);
       submitSpark = new Callable<ListenableFuture<RunId>>() {
         @Override
         public ListenableFuture<RunId> call() throws Exception {
@@ -260,7 +292,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
           if (!isRunning()) {
             return immediateCancelledFuture();
           }
-          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobJar, runtimeContext.getRunId());
+          return sparkSubmitter.submit(runtimeContext, configs, localizeResources, jobFile, runtimeContext.getRunId());
         }
       };
     } catch (LinkageError e) {
@@ -446,7 +478,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   private Map<String, String> createSubmitConfigs(File localDir, String metricsConfPath, String classpath,
                                                   Map<String, LocalizeResource> localizedResources,
-                                                  boolean localMode) throws Exception {
+                                                  boolean localMode,
+                                                  Iterable<URI> pyFiles) throws Exception {
     Map<String, String> configs = new HashMap<>();
 
     // Make Spark UI runs on random port. By default, Spark UI runs on port 4040 and it will do a sequential search
@@ -487,6 +520,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // Set extraClasspath config by appending user specified extra classpath
       prependConfig(configs, "spark.driver.extraClassPath", extraClassPath, File.pathSeparator);
       prependConfig(configs, "spark.executor.extraClassPath", extraClassPath, File.pathSeparator);
+
+      // Prepend the extra java opts
+      prependConfig(configs, "spark.driver.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
+      prependConfig(configs, "spark.executor.extraJavaOptions", cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS), " ");
     } else {
       // Only need to set this for local mode.
       // In distributed mode, Spark will not use this but instead use the yarn container directory.
@@ -495,6 +532,26 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     configs.put("spark.metrics.conf", metricsConfPath);
     SparkRuntimeUtils.setLocalizedResources(localizedResources.keySet(), configs);
+
+    if (context.isPySpark()) {
+      Iterable<String> pyFilePaths = Iterables.transform(pyFiles, new Function<URI, String>() {
+        @Override
+        public String apply(URI input) {
+          if (input.getScheme() == null || "file".equals(input.getScheme())) {
+            return input.getPath();
+          }
+          return input.toString();
+        }
+      });
+      String pyFilesConfig = Joiner.on(",").join(pyFilePaths);
+      configs.put("spark.submit.pyFiles", pyFilesConfig);
+
+      // In local mode, since SPARK_HOME is not set, we need to set this property such that it will get pickup
+      // in PythonWorkerFactory (via SparkClassRewriter) so that the pyspark library is available.
+      if (SparkRuntimeContextConfig.isLocal(runtimeContext.getConfiguration())) {
+        SparkRuntimeEnv.setProperty("cdap.spark.pyFiles", Joiner.on(File.pathSeparator).join(pyFilePaths));
+      }
+    }
 
     return configs;
   }
@@ -547,24 +604,136 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
-   * Generates an empty JAR file.
+   * Extracts pyspark and py4j libraries into the given temporary directory. This method is only used in local mode.
+   *
+   * @param tempDir temporary directory for storing the file
+   * @param result the collection for storing the result
+   */
+  private void extractPySparkLibrary(File tempDir, Collection<File> result) throws IOException {
+    URL py4jURL = getClass().getClassLoader().getResource("pyspark/py4j-src.zip");
+    if (py4jURL == null) {
+      // This shouldn't happen
+      throw new IOException("Failed to locate py4j-src.zip, which is required to run PySpark");
+    }
+    File file = new File(tempDir, "py4j-src.zip");
+    try (FileOutputStream fos = new FileOutputStream(file)) {
+      Resources.copy(py4jURL, fos);
+    }
+    result.add(file);
+
+    URL pysparkURL = getClass().getClassLoader().getResource("pyspark/pyspark.zip");
+    if (pysparkURL == null) {
+      // This shouldn't happen
+      throw new IOException("Failed to locate pyspark.zip, which is required to run PySpark");
+    }
+
+    file = new File(tempDir, "pyspark.zip");
+    try (FileOutputStream fos = new FileOutputStream(file)) {
+      Resources.copy(pysparkURL, fos);
+    }
+    result.add(file);
+  }
+
+  /**
+   * Gets the {@link URI} for the Python script for submitting to PySpark.
+   *
+   * @param tempDir a temporary directory for copying the python script if necessary.
+   * @return the {@link URI} for submitting to PySpark.
+   * @throws IOException if failed to retrieve the Python script.
+   */
+  private URI getPySparkScript(File tempDir) throws IOException, URISyntaxException {
+    // This shouldn't happen, caller should already checked
+    Preconditions.checkState(context.isPySpark());
+
+    ProgramRunId programRunId = runtimeContext.getProgramRunId();
+    File pythonFile = new File(tempDir, String.format("%s.%s.%s.%s.py",
+                                                      programRunId.getNamespace(),
+                                                      programRunId.getApplication(),
+                                                      programRunId.getProgram(),
+                                                      programRunId.getRun()));
+    if (context.getPySparkScript() != null) {
+      Files.write(context.getPySparkScript(), pythonFile, StandardCharsets.UTF_8);
+      return pythonFile.toURI();
+    }
+
+    URI scriptURI = context.getPySparkScriptLocation();
+    if (scriptURI == null) {
+      // This shouldn't happen since context.isPySpark guarantees either the script or the location is not null
+      throw new IllegalStateException("Missing Python script to run PySpark");
+    }
+
+    URI homeURI = locationFactory.getHomeLocation().toURI();
+
+    // If no scheme, default it to the location factory.
+    if (scriptURI.getScheme() == null) {
+      scriptURI = new URI(homeURI.getScheme(), homeURI.getAuthority(), scriptURI.getPath(), scriptURI.getFragment());
+    }
+
+    // See if the scriptURI is on the same cluster.
+    if (Objects.equals(homeURI.getScheme(), scriptURI.getScheme())
+        && Objects.equals(homeURI.getAuthority(), scriptURI.getAuthority())) {
+      // If the extension is ".py", just return it.
+      if (scriptURI.getPath().endsWith(".py")) {
+        return scriptURI;
+      }
+      return Locations.linkOrCopy(locationFactory.create(scriptURI), pythonFile).toURI();
+    }
+
+    // Local file
+    if ("file".equals(scriptURI.getScheme())) {
+      // If the extension is ".py", just return it.
+      if (scriptURI.getPath().endsWith(".py")) {
+        return scriptURI;
+      }
+      // Otherwise, need to link/copy it.
+      return Locations.linkOrCopy(Locations.toLocation(new File(scriptURI.getPath())), pythonFile).toURI();
+    }
+
+    try {
+      // The URI is from some unknown scheme. Try to use FileSystem to copy the script.
+      Configuration hConf = runtimeContext.getConfiguration();
+      hConf.set(String.format("fs.%s.impl.disable.cache", scriptURI.getScheme()), "true");
+      try (
+        FileSystem fs = FileSystem.get(scriptURI, hConf);
+        InputStream is = fs.open(new Path(scriptURI))
+      ) {
+        ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+        return pythonFile.toURI();
+      }
+    } catch (IOException e) {
+      // Not able to copy it with FileSystem. Just log a debug as we'll try to open the URL as last resort
+      LOG.debug("Failed to copy python script from uri {}.", scriptURI, e);
+    }
+
+    // Last resort, turn the URI to URL and try to copy from it.
+    try (InputStream is = scriptURI.toURL().openStream()) {
+      ByteStreams.copy(is, Files.newOutputStreamSupplier(pythonFile));
+    }
+    return pythonFile.toURI();
+  }
+
+  /**
+   * Generates the job jar, which is always be an empty jar file
    *
    * @return The generated {@link File} in the given target directory
    */
-  private File generateJobJar(File tempDir, boolean isLocal, CConfiguration cConf) throws IOException {
-    // in local mode, Spark Streaming with checkpointing will expect the same job jar to exist
+  private URI createJobJar(File tempDir) throws IOException {
+    // In local mode, Spark Streaming with checkpointing will expect the same job jar to exist
     // in all runs of the program. This means it can't be created in the temporary directory for the run,
     // but must persist between runs
-    File targetDir = isLocal ?
-      new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "runtime"), "spark") : tempDir;
-    File tempFile = new File(targetDir, "emptyJob.jar");
-    if (tempFile.exists()) {
-      return tempFile;
-    }
+    File targetDir = SparkRuntimeContextConfig.isLocal(runtimeContext.getConfiguration())
+      ? new File(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "runtime"), "spark")
+      : tempDir;
+
     DirUtils.mkdirs(targetDir.getAbsoluteFile());
-    JarOutputStream output = new JarOutputStream(new FileOutputStream(tempFile));
-    output.close();
-    return tempFile;
+    File tempFile = new File(targetDir, "cdapSparkJob.jar");
+    if (tempFile.exists()) {
+      return tempFile.toURI();
+    }
+
+    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(tempFile))) {
+      return tempFile.toURI();
+    }
   }
 
   /**

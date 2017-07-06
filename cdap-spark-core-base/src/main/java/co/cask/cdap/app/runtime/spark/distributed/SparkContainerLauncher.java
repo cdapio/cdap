@@ -17,7 +17,9 @@
 package co.cask.cdap.app.runtime.spark.distributed;
 
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
+import co.cask.cdap.app.runtime.spark.python.SparkPythonUtil;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.logging.StandardOutErrorRedirector;
@@ -27,6 +29,10 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.LinkedHashSet;
@@ -106,10 +112,15 @@ public final class SparkContainerLauncher {
       // Get the SparkRuntimeContext to initialize all necessary services and logging context
       // Need to do it using the SparkRunnerClassLoader through reflection.
       classLoader.loadClass(SparkRuntimeContextProvider.class.getName()).getMethod("get").invoke(null);
-      // Invoke StandardOutErrorRedirector.redirectToLogger()
-      classLoader.loadClass(StandardOutErrorRedirector.class.getName())
-        .getDeclaredMethod("redirectToLogger", String.class)
-        .invoke(null, mainClassName);
+
+      // For non-PySpark, do the logs redirection. Otherwise the log redirect is done
+      // in the PythonRunner/PythonWorkerFactory via SparkClassRewriter.
+      if (!isPySpark()) {
+        // Invoke StandardOutErrorRedirector.redirectToLogger()
+        classLoader.loadClass(StandardOutErrorRedirector.class.getName())
+          .getDeclaredMethod("redirectToLogger", String.class)
+          .invoke(null, mainClassName);
+      }
 
       // Force setting the system property CDAP_LOG_DIR to <LOG_DIR>. This is to workaround bug in Spark 1.2
       // that it passes executor environment via command line properties, which get resolved by yarn launcher,
@@ -118,9 +129,15 @@ public final class SparkContainerLauncher {
         System.setProperty("spark.executorEnv.CDAP_LOG_DIR", "<LOG_DIR>");
       }
 
-      LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
-      classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
-      LOG.info("Main method returned {}", mainClassName);
+      // Optionally starts Py4j Gateway server in the executor container
+      Runnable stopGatewayServer = startGatewayServerIfNeeded(classLoader);
+      try {
+        LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
+        classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
+        LOG.info("Main method returned {}", mainClassName);
+      } finally {
+        stopGatewayServer.run();
+      }
     } catch (Throwable t) {
       // LOG the exception since this exception will be propagated back to JVM
       // and kill the main thread (hence the JVM process).
@@ -139,5 +156,55 @@ public final class SparkContainerLauncher {
       throw new IllegalStateException("Failed to find .class file resource for class " + className);
     }
     return ClassLoaders.getClassPathURL(className, resource);
+  }
+
+  /**
+   * Starts Py4j gateway server if in executor container and running PySpark.
+   *
+   * @param classLoader the classloader to use for loading classes
+   * @return a {@link Runnable} that calling the {@link Runnable#run()} method will stop the server.
+   */
+  private static Runnable startGatewayServerIfNeeded(ClassLoader classLoader) {
+    Runnable noopRunnable = new Runnable() {
+      @Override
+      public void run() {
+        // no-op
+      }
+    };
+
+    // If we are not running PySpark or
+    // if this process is the AM, no need to start gateway server
+    // The spark execution service uri is always set for the driver (AM) process
+    if (!isPySpark() || System.getenv(SparkRuntimeUtils.CDAP_SPARK_EXECUTION_SERVICE_URI) != null) {
+      return noopRunnable;
+    }
+
+    // Otherwise start the gateway server using reflection. Also write the port number to a local file
+    Path portFile = Paths.get("cdap.py4j.gateway.port.txt");
+    try {
+      final Object server = classLoader.loadClass(SparkPythonUtil.class.getName())
+        .getMethod("startPy4jGateway", Path.class).invoke(null, portFile);
+
+      LOG.info("Py4j GatewayServer started, listening at port {}",
+               new String(Files.readAllBytes(portFile), StandardCharsets.UTF_8));
+
+      return new Runnable() {
+        @Override
+        public void run() {
+          try {
+            server.getClass().getMethod("shutdown").invoke(server);
+          } catch (Exception e) {
+            LOG.warn("Failed to shutdown Py4j GatewayServer", e);
+          }
+        }
+      };
+    } catch (Exception e) {
+      LOG.warn("Failed to start Py4j GatewayServer. No CDAP functionality will be available in executor", e);
+      return noopRunnable;
+    }
+  }
+
+  private static boolean isPySpark() {
+    return System.getenv("PYTHONPATH") != null;
   }
 }

@@ -184,7 +184,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                         options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE));
 
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
-                                                            runtimeContext, submitter);
+                                                            runtimeContext, submitter, locationFactory);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);

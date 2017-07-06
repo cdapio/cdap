@@ -34,6 +34,7 @@ import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -45,6 +46,7 @@ import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ClassicSparkProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
 import co.cask.cdap.spark.app.Person;
+import co.cask.cdap.spark.app.PythonSpark;
 import co.cask.cdap.spark.app.ScalaCharCountProgram;
 import co.cask.cdap.spark.app.ScalaClassicSparkProgram;
 import co.cask.cdap.spark.app.ScalaCrossNSProgram;
@@ -88,6 +90,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -288,6 +292,52 @@ public class SparkTestRun extends TestFrameworkTestBase {
       Assert.assertEquals(ImmutableMap.of("Old Man", 50, "Legal Drinker", 21), result);
     }
   }
+
+  @Test
+  public void testPySpark() throws Exception {
+    ApplicationManager appManager = deploy(TestSparkApp.class);
+
+    // Write something to the stream
+    StreamManager streamManager = getStreamManager("SparkStream");
+    for (int i = 0; i < 100; i++) {
+      streamManager.send("Event " + i);
+    }
+
+    File outputDir = new File(TMP_FOLDER.newFolder(), "output");
+    SparkManager sparkManager = appManager.getSparkManager(PythonSpark.class.getSimpleName())
+      .start(ImmutableMap.of("input.stream", "SparkStream", "output.path", outputDir.getAbsolutePath()));
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+
+    // Verify the result
+    File resultFile = Iterables.find(DirUtils.listFiles(outputDir), new Predicate<File>() {
+      @Override
+      public boolean apply(File input) {
+        return !input.getName().endsWith(".crc") && !input.getName().startsWith("_SUCCESS");
+      }
+    });
+
+
+    List<String> lines = Files.readAllLines(resultFile.toPath(), StandardCharsets.UTF_8);
+    Assert.assertTrue(!lines.isEmpty());
+
+    // Expected only even number
+    int count = 0;
+    for (String line : lines) {
+      line = line.trim();
+      if (!line.isEmpty()) {
+        Assert.assertEquals("Event " + count, line);
+        count += 2;
+      }
+    }
+
+    Assert.assertEquals(100, count);
+
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
+                                               Constants.Metrics.Tag.APP, TestSparkApp.class.getSimpleName(),
+                                               Constants.Metrics.Tag.SPARK, PythonSpark.class.getSimpleName());
+    Assert.assertEquals(100, getMetricsManager().getTotalMetric(tags, "user.body"));
+  }
+
 
   @Test
   public void testSparkProgramStatusSchedule() throws Exception {
