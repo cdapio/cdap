@@ -19,14 +19,14 @@ package co.cask.cdap.examples.fileset;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
@@ -43,7 +43,6 @@ public class WordCount extends AbstractMapReduce {
   @Override
   public void configure() {
     setMapperResources(new Resources(1024));
-    setReducerResources(new Resources(1024));
   }
 
   @Override
@@ -51,7 +50,6 @@ public class WordCount extends AbstractMapReduce {
     MapReduceContext context = getContext();
     Job job = context.getHadoopJob();
     job.setMapperClass(Tokenizer.class);
-    job.setReducerClass(Counter.class);
     job.setNumReduceTasks(1);
 
     String inputDataset = context.getRuntimeArguments().get("input");
@@ -67,34 +65,14 @@ public class WordCount extends AbstractMapReduce {
   /**
    * A mapper that tokenizes each input line and emits each token with a value of 1.
    */
-  public static class Tokenizer extends Mapper<LongWritable, Text, Text, IntWritable> {
-
-    private Text word = new Text();
-    private static final IntWritable ONE = new IntWritable(1);
-
+  public static class Tokenizer extends Mapper<Void, StructuredRecord, IntWritable, Text> {
     @Override
-    public void map(LongWritable key, Text data, Context context)
-      throws IOException, InterruptedException {
-      for (String token : data.toString().split(" ")) {
-        word.set(token);
-        context.write(word, ONE);
+    public void map(Void key, StructuredRecord data, Context context) throws IOException, InterruptedException {
+      int count = 1;
+      for (Schema.Field field : data.getSchema().getFields()) {
+        context.write(new IntWritable(count), new Text((String) data.get(field.getName())));
+        count++;
       }
-    }
-  }
-
-  /**
-   * A reducer that sums up the counts for each key.
-   */
-  public static class Counter extends Reducer<Text, IntWritable, String, Long> {
-
-    @Override
-    public void reduce(Text key, Iterable<IntWritable> values, Context context)
-      throws IOException, InterruptedException {
-      long sum = 0L;
-      for (IntWritable value : values) {
-        sum += value.get();
-      }
-      context.write(key.toString(), sum);
     }
   }
 }

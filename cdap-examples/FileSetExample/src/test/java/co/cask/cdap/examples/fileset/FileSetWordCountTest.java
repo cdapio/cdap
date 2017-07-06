@@ -61,8 +61,10 @@ public class FileSetWordCountTest extends TestBase {
     // deploy the application
     ApplicationManager applicationManager = deployApplication(FileSetExample.class);
 
-    final String line1 = "a b a";
-    final String line2 = "b a b";
+    // 1, vinisha, 150 grant avenue, palo alto, california
+    // 2, priyanka, 150 grant avenue1, mountain view, japan
+    final String line1 = "1000, vinisha vyasa, 150 grant avenue, palo alto, california";
+    final String line2 = "2, priyanka, 150 grant avenue1, mountain view, japan";
 
     // discover the file set service
     ServiceManager serviceManager = applicationManager.getServiceManager("FileSetService").start();

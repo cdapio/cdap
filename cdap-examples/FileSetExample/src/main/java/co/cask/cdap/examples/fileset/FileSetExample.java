@@ -19,6 +19,7 @@ package co.cask.cdap.examples.fileset;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -37,11 +38,35 @@ public class FileSetExample extends AbstractApplication {
     setName("FileSetExample");
     setDescription("Application with a MapReduce that uses a FileSet dataset");
     createDataset("lines", FileSet.class, FileSetProperties.builder()
-      .setBasePath("example/data/lines")
-      .setInputFormat(TextInputFormat.class)
+      .setBasePath("/tmp/vini/data/lines")
+      .setInputFormat(WranglerInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
+      .setDataExternal(true)
+      .setEnableExploreOnCreate(true)
+      .setExploreInputFormat(WranglerExploreInputFormat.class)
+      .setExploreOutputFormat(HiveIgnoreKeyTextOutputFormat.class)
+      .setSerDe(WranglerSerde.class)
+      .setInputProperty("wrangler.column.name", "hivetext")
+      .setInputProperty("wrangler.directives", "parse-as-csv hivetext ,\n" +
+        "drop hivetext\n" +
+        "rename hivetext_1 id\n" +
+        "rename hivetext_2 name\n" +
+        "rename hivetext_3 street_address\n" +
+        "rename hivetext_4 city\n" +
+        "rename hivetext_5 state")
+      .setInputProperty("wrangler.output.schema", "{\"type\":\"record\",\"name\":\"etlSchemaBody\"," +
+        "\"fields\":[{\"name\":\"id\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\"," +
+        "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
+        "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +
+        ",\"null\"]}]}")
+      .setTableProperty("output.schema", "{\"type\":\"record\",\"name\":\"etlSchemaBody\"," +
+        "\"fields\":[{\"name\":\"id\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\"," +
+        "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
+        "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +
+        ",\"null\"]}]}")
       .setDescription("Store input lines")
       .build());
+
     createDataset("counts", FileSet.class, FileSetProperties.builder()
       .setInputFormat(TextInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)

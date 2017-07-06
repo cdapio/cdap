@@ -85,10 +85,10 @@ public class DatasetStorageHandler extends DefaultStorageHandler {
     // NOTE: the jobProperties map will be put in the jobConf passed to the DatasetOutputFormat/DatasetInputFormat.
     // Hive ensures that the properties of the right table will be passed at the right time to those classes.
     String datasetName = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAME);
-    String namespce = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAMESPACE);
+    String namespace = tableDesc.getProperties().getProperty(Constants.Explore.DATASET_NAMESPACE);
     jobProperties.put(Constants.Explore.DATASET_NAME, datasetName);
-    jobProperties.put(Constants.Explore.DATASET_NAMESPACE, namespce);
-    LOG.debug("Got dataset {} in namespace {} for external table {}", datasetName, namespce, tableDesc.getTableName());
+    jobProperties.put(Constants.Explore.DATASET_NAMESPACE, namespace);
+    LOG.debug("Got dataset {} in namespace {} for external table {}", datasetName, namespace, tableDesc.getTableName());
   }
 
   private boolean writesEnabled() {

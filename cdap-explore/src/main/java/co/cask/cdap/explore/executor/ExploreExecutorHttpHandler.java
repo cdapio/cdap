@@ -211,15 +211,20 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
                              final DatasetSpecification datasetSpec, final boolean truncating) {
     LOG.debug("Enabling explore for dataset instance {}", datasetId);
     try {
-      QueryHandle handle = impersonator.doAs(datasetId, new Callable<QueryHandle>() {
-        @Override
-        public QueryHandle call() throws Exception {
-          return exploreTableManager.enableDataset(datasetId, datasetSpec, truncating);
-        }
-      });
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
+      try {
+        QueryHandle handle = impersonator.doAs(datasetId, new Callable<QueryHandle>() {
+          @Override
+          public QueryHandle call() throws Exception {
+            return exploreTableManager.enableDataset(datasetId, datasetSpec, truncating);
+          }
+        });
+        JsonObject json = new JsonObject();
+        json.addProperty("handle", handle.getHandle());
+        responder.sendJson(HttpResponseStatus.OK, json);
+      } catch (Exception e) {
+        LOG.error("Got error.", e);
+        throw e;
+      }
     } catch (IllegalArgumentException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (ExploreException e) {
