@@ -757,5 +757,11 @@ Enabling Spark2
 ---------------
 In order to use Spark2, you must first install Spark2 on your cluster. If both Spark1
 and Spark2 are installed, you must set SPARK_MAJOR_VERSION to 2 in cdap-env.
+In addition, you must set Spark2 as a service dependency of CDAP. This can be done
+in the Configuration section of CDAP, by searching for 'dependency'.
+
+You can verify that Spark2 is being used by CDAP by looking at stdout of the CDAP master.
+As the master is starting up, you should see a line with 'SPARK_COMPAT=spark2_2.11'.
+
 When Spark2 is in use, Spark1 programs cannot be run. Similarly, when Spark1 is in use,
 Spark2 programs cannot be run.
