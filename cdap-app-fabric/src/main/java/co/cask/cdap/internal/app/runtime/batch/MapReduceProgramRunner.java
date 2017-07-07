@@ -26,7 +26,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -63,7 +62,9 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,6 +193,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                                     streamAdmin, txSystemClient, authorizationEnforcer,
                                                                     authenticationContext);
 
+      mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);
 
       LOG.debug("Starting MapReduce Job: {}", context);
@@ -210,6 +212,23 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       closeAllQuietly(closeables);
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Creates a service listener to cleanup closeables on {@link MapReduceRuntimeService}.
+   */
+  private Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
+    return new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        closeAllQuietly(closeables);
+      }
+
+      @Override
+      public void failed(Service.State from, @Nullable final Throwable failure) {
+        closeAllQuietly(closeables);
+      }
+    };
   }
 
   private void closeAllQuietly(Iterable<Closeable> closeables) {

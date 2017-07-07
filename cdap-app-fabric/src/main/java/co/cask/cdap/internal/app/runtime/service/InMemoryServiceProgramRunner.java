@@ -43,11 +43,13 @@ import org.apache.twill.common.Threads;
 public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner {
 
   private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
+  private final RuntimeStore runtimeStore;
 
   @Inject
   InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
                                RuntimeStore runtimeStore) {
-    super(cConf, runtimeStore);
+    super(cConf);
+    this.runtimeStore = runtimeStore;
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 
