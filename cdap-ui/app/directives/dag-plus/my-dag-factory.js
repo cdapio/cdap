@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,14 +49,14 @@ angular.module(PKG.name + '.commons')
       connectorOverlays: [
         [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
       ],
-      anchor: [ 0.5, 1, 1, 0, 26, -43 ]
+      anchor: [ 1, 0.5, 1, 0 ]
     }, commonSettings);
     var targetSettings = angular.extend({
       isTarget: true,
       connectorOverlays: [
         [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
       ],
-      anchor: [ 0.5, 1, -1, 0, -27, -43 ],
+      anchor: [ 0, 0.5, -1, 0 ],
       connectorStyle: connectorStyle
     }, commonSettings);
 
