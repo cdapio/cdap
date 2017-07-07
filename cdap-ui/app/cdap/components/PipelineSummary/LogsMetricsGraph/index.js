@@ -157,7 +157,12 @@ export default class LogsMetricsGraph extends Component {
             tickTotal={getTicksTotal(this.props)}
             tickFormat={xTickFormat(this.props)}
           />
-          <YAxis tickFormat={(v) => Math.floor(v) !== v ? '' : v} />
+          <YAxis tickFormat={(v) => {
+            if (v < 0) {
+              return '';
+            }
+            return Math.floor(v) !== v ? '' : v;
+          }} />
           {
             warnings.length > 0 ?
               <BarSeries

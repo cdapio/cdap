@@ -120,6 +120,9 @@ export default class RunsHistoryGraph extends Component {
         return (prev.y > curr.y) ? prev : curr;
       });
       minYDomain = this.state.data.reduce((prev, curr) => {
+        if (prev.y === curr.y) {
+          return prev;
+        }
         return (prev.y < curr.y) ? prev : curr;
       });
     }
@@ -152,6 +155,7 @@ export default class RunsHistoryGraph extends Component {
       <div className="graph-plot-container">
         <FPlot
           xType="linear"
+          yType="linear"
           xDomain={xDomain}
           height={height}
           className="run-history-fp-plot"
@@ -167,7 +171,7 @@ export default class RunsHistoryGraph extends Component {
           />
           <YAxis
             tickTotal={10}
-            yDomain={[minYDomain.y, maxYDomain.y]}
+            yDomain={[minYDomain.y === maxYDomain.y ? 0 : minYDomain.y, maxYDomain.y]}
             tickFormat={tickFormatBasedOnTimeResolution(yAxisResolution)}
           />
           <HorizontalGridLines />
@@ -241,9 +245,13 @@ export default class RunsHistoryGraph extends Component {
             :
               null
           }
-          <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`, {
-            resolution: yAxisResolution
-          })}</div>
+          <div className="y-axis-title">
+            {
+              T.translate(`${PREFIX}.yAxisTitle`, {
+                resolution: yAxisResolution
+              })
+            }
+            </div>
         </FPlot>
       </div>
     );

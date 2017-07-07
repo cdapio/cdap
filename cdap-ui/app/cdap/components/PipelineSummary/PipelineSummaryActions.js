@@ -29,7 +29,7 @@ function setRuns(runs) {
         runid: run.runid,
         start: run.start,
         end: run.end,
-        duration: isNil(run.end) ? -1 : (run.end - run.start),
+        duration: isNil(run.end) ? (Math.ceil(Date.now()/1000) - run.start) : (run.end - run.start),
         status: run.status
       }))
     }
