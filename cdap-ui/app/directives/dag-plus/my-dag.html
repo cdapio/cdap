@@ -105,7 +105,6 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)"
                ng-class="{'wrangler': node.plugin.name === 'Wrangler'}">
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
@@ -136,9 +135,21 @@
             <div class="fa fa-close"
                  ng-if="!DAGPlusPlusCtrl.isDisabled"
                  ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)"></div>
-            <div class="icon fa {{node.icon}}"></div>
+            <div>
+            <div class="plugin-info">
+              <div class="plugin-icon {{node.icon}}"></div>
+              <div class="plugin-metadata">
+                <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
+                <div class="plugin-version" ng-bind="node.plugin.artifact.version"></div>
+                <button class="plugin-configure-btn"
+                        ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
+                  <span class="plugin-configure-btn-label">
+                    Configure Properties
+                  </span>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
         </div>
 
         <div ng-repeat="comment in DAGPlusPlusCtrl.comments"

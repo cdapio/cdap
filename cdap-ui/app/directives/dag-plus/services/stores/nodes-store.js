@@ -130,11 +130,11 @@ class DAGPlusPlusNodesStore {
       case 'source':
         this.addSourceCount();
         break;
-      case 'transform':
-        this.addTransformCount();
-        break;
       case 'sink':
         this.addSinkCount();
+        break;
+      default:
+        this.addTransformCount();
         break;
     }
     this.state.nodes.push(nodeConfig);
