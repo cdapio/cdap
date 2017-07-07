@@ -120,9 +120,6 @@ export default class RunsHistoryGraph extends Component {
         return (prev.y > curr.y) ? prev : curr;
       });
       minYDomain = this.state.data.reduce((prev, curr) => {
-        if (prev.y === curr.y) {
-          return prev;
-        }
         return (prev.y < curr.y) ? prev : curr;
       });
     }
