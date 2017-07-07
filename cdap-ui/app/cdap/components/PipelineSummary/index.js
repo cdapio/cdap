@@ -87,7 +87,9 @@ export default class PipelineSummary extends Component {
         onClick: () => {
           this.setState({
             activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.sinceInception`),
-            filterType: 'time'
+            filterType: 'time',
+            start: null,
+            end: null
           });
           fetchSummary({
             namespaceId,
@@ -167,8 +169,9 @@ export default class PipelineSummary extends Component {
             end = runs[0].start;
             start = runs[runs.length - 1].start;
           }
-          return !isNil(start) && !isNil(end) ? {start, end}: {};
+          return !isNil(start) && !isNil(end) ? {start, end} : {};
         };
+
         state = Object.assign({}, state, getStartAndEnd() , {
           limit: runs.length
         });
