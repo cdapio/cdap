@@ -41,7 +41,7 @@ export default class MaskData extends Component {
   }
 
   componentDidUpdate() {
-    if (this.props.isOpen && this.calculateOffset && !this.isDirectiveEnabled()) {
+    if (this.props.isOpen && this.calculateOffset && this.isDirectiveEnabled()) {
       this.calculateOffset();
     }
   }
