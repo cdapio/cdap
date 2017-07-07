@@ -1581,15 +1581,6 @@
   </property>
 
   <property>
-    <name>messaging.coprocessor.dir</name>
-    <value>tms</value>
-    <description>
-      Directory to store messaging service table coprocessors. This path is
-      relative to ${hdfs.namespace}.
-    </description>
-  </property>
-
-  <property>
     <name>messaging.coprocessor.metadata.cache.expiration.seconds</name>
     <value>120</value>
     <description>

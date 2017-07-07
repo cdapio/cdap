@@ -257,7 +257,6 @@ public class MasterServiceMain extends DaemonMain {
     logAppenderInitializer.initialize();
     resetShutdownTime();
     createDirectory("twill");
-    createDirectory(cConf.get(Constants.MessagingSystem.COPROCESSOR_DIR));
     createSystemHBaseNamespace();
     updateConfigurationTable();
     Services.startAndWait(zkClient, cConf.getLong(Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
