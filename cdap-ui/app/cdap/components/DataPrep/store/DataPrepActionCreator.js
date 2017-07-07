@@ -70,10 +70,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
       }, (err) => {
         observer.onError(err);
         DataPrepStore.dispatch({
-          type: DataPrepActions.setDataError,
-          payload: {
-            message: err
-          }
+          type: DataPrepActions.disableLoading
         });
       });
   });
