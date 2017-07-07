@@ -21,11 +21,9 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -35,7 +33,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -49,7 +46,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +60,9 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  */
 public final class FlowProgramRunner implements ProgramRunner {
+
   private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
+
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;

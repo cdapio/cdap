@@ -49,8 +49,6 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.ServiceListenerAdapter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A {@link ProgramRunner} that runs an HTTP Server inside a Service.
