@@ -55,7 +55,7 @@ export default function enableDataPreparationService(shouldStopService) {
 
         let highestVersion = findHighestVersion(versionsArray, true);
 
-        let minimumVersion = new Version('2.0.0-SNAPSHOT');
+        let minimumVersion = new Version('2.1.0-SNAPSHOT');
 
         if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
           observer.onError({
