@@ -30,6 +30,7 @@ import {
   getGraphHeight,
   getTimeResolution
 } from 'components/PipelineSummary/RunsGraphHelpers';
+import {humanReadableDuration} from 'services/helpers';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -151,6 +152,7 @@ export default class RunsHistoryGraph extends Component {
       <div className="graph-plot-container">
         <FPlot
           xType="linear"
+          yType="linear"
           xDomain={xDomain}
           height={height}
           className="run-history-fp-plot"
@@ -166,7 +168,7 @@ export default class RunsHistoryGraph extends Component {
           />
           <YAxis
             tickTotal={10}
-            yDomain={[minYDomain.y, maxYDomain.y]}
+            yDomain={[minYDomain.y === maxYDomain.y ? 0 : minYDomain.y, maxYDomain.y]}
             tickFormat={tickFormatBasedOnTimeResolution(yAxisResolution)}
           />
           <HorizontalGridLines />
@@ -204,7 +206,7 @@ export default class RunsHistoryGraph extends Component {
                           popOverData.duration < ONE_MIN_SECONDS ?
                             `${popOverData.duration} seconds`
                           :
-                            moment.duration(popOverData.duration, yAxisResolution)
+                            humanReadableDuration(popOverData.duration)
                         }
                       </span>
                     </div>
@@ -240,9 +242,13 @@ export default class RunsHistoryGraph extends Component {
             :
               null
           }
-          <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`, {
-            resolution: yAxisResolution
-          })}</div>
+          <div className="y-axis-title">
+            {
+              T.translate(`${PREFIX}.yAxisTitle`, {
+                resolution: yAxisResolution
+              })
+            }
+            </div>
         </FPlot>
       </div>
     );
