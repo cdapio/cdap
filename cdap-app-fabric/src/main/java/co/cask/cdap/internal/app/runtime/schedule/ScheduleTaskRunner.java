@@ -95,6 +95,8 @@ public final class ScheduleTaskRunner {
       Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
       systemArgs.putAll(systemOverrides);
     }
+    systemArgs.put(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
+    systemArgs.put(ProgramOptionConstants.EVENT_NOTIFICATIONS, GSON.toJson(job.getNotifications()));
 
     execute(programId, systemArgs, userArgs);
     LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
