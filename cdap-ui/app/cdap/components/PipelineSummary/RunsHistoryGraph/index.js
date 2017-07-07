@@ -30,6 +30,7 @@ import {
   getGraphHeight,
   getTimeResolution
 } from 'components/PipelineSummary/RunsGraphHelpers';
+import {humanReadableDuration} from 'services/helpers';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -204,7 +205,7 @@ export default class RunsHistoryGraph extends Component {
                           popOverData.duration < ONE_MIN_SECONDS ?
                             `${popOverData.duration} seconds`
                           :
-                            moment.duration(popOverData.duration, yAxisResolution)
+                            humanReadableDuration(popOverData.duration)
                         }
                       </span>
                     </div>

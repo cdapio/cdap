@@ -92,6 +92,23 @@ function humanReadableDate(date, isMilliseconds) {
   return (moment(date * 1000)).format(format);
 }
 
+function humanReadableDuration(timeInSeconds) {
+  const ONE_MIN_SECONDS = 60;
+  const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
+  const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
+  if (timeInSeconds < 60) {
+    return `${timeInSeconds} seconds`;
+  }
+  if (timeInSeconds < ONE_HOUR_SECONDS) {
+    let mins = Math.floor(timeInSeconds / ONE_MIN_SECONDS);
+    let secs = timeInSeconds % ONE_MIN_SECONDS;
+    return `${mins} mins ${secs} secs`;
+  }
+  if (timeInSeconds < ONE_DAY_SECONDS) {
+    let hours = Math.floor(timeInSeconds / ONE_HOUR_SECONDS);
+    return `${hours} hours ${humanReadableDuration(timeInSeconds - (ONE_HOUR_SECONDS * hours))}`;
+  }
+}
 function contructUrl ({path}) {
   return [
     window.CDAP_CONFIG.sslEnabled? 'https://': 'http://',
@@ -215,6 +232,7 @@ export {
   objectQuery,
   convertBytesToHumanReadable,
   humanReadableNumber,
+  humanReadableDuration,
   isDescendant,
   getArtifactNameAndVersion,
   insertAt,
