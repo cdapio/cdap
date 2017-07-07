@@ -32,7 +32,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -65,7 +64,6 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
 import org.apache.twill.api.EventHandler;
-import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
@@ -337,7 +335,6 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
 
               Iterable<Class<?>> dependencies = Iterables.concat(
                 Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
-                Collections.singletonList(new HBaseDDLExecutorFactory(cConf, hConf).get().getClass()),
                 getKMSSecureStore(cConf), this.dependencies);
 
               Iterable<String> yarnAppClassPath = Arrays.asList(
