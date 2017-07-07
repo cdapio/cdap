@@ -117,7 +117,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static final Gson GSON = new Gson();
-  private static final Type NOTIFICATION_LIST = new TypeToken<List<Notification>>() { }.getType();
+  private static final Type NOTIFICATION_LIST_TYPE = new TypeToken<List<Notification>>() { }.getType();
 
   private static MessagingService messagingService;
   private static Store store;
@@ -303,7 +303,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       Assert.assertEquals(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1,
                           sysArgs.get(ProgramOptionConstants.SCHEDULE_NAME));
       List<Notification> notifications =
-        GSON.fromJson(sysArgs.get(ProgramOptionConstants.EVENT_NOTIFICATIONS), NOTIFICATION_LIST);
+        GSON.fromJson(sysArgs.get(ProgramOptionConstants.EVENT_NOTIFICATIONS), NOTIFICATION_LIST_TYPE);
       // Only one notification is enough to satisfy Time Trigger
       Assert.assertEquals(1, notifications.size());
       Assert.assertEquals(Notification.Type.TIME, notifications.get(0).getNotificationType());
