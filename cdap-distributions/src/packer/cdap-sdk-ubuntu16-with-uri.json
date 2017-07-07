@@ -199,7 +199,7 @@
         },
         "java": {
           "install_flavor": "openjdk",
-          "jdk_version": 7
+          "jdk_version": 8
         },
         "nodejs": {
           "install_method": "binary",
