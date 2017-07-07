@@ -267,7 +267,7 @@ export default class LogsMetricsGraph extends Component {
                       <td>
                         <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
                       </td>
-                      <td> {moment(run.start).format('llll')}</td>
+                      <td> {moment(run.start * 1000).format('llll')}</td>
                     </tr>
                   );
                 })
