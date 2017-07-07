@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -60,6 +61,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
+  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -69,7 +71,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              SecureStore secureStore, SecureStoreManager secureStoreManager,
+                              RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
                               MessagingService messagingService,
                               DefaultArtifactManager defaultArtifactManager) {
     super(cConf);
@@ -78,6 +80,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
+    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -93,6 +96,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
     RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -134,8 +138,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-
       ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+                                                                         twillRunId, runtimeStore, options,
                                                                          spec.getName() + "-" + instanceId);
       component.start();
       return controller;
@@ -148,9 +152,9 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId,
-                                    RunId runId, String componentName) {
-      super(service, programId, runId, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId, RunId runId, String twillRunId,
+                                    RuntimeStore runtimeStore, ProgramOptions options, String componentName) {
+      super(service, programId, runId, twillRunId, runtimeStore, options, componentName);
       this.service = service;
     }
 

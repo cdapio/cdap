@@ -127,7 +127,6 @@ public class DefaultStoreTest {
   public void testStopBeforeStart() throws RuntimeException {
     ProgramId programId = new ProgramId("account1", "invalidApp", ProgramType.FLOW, "InvalidFlowOperation");
     long now = System.currentTimeMillis();
-
     store.setStop(programId, "runx", now, ProgramController.State.ERROR.getRunStatus());
   }
 

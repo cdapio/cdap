@@ -93,7 +93,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
-  protected final RuntimeStore runtimeStore;
+  private final RuntimeStore runtimeStore;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                           ArtifactRepository artifactRepository, RuntimeStore runtimeStore) {
@@ -126,38 +126,32 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // Create and run the program
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
+
       ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
 
       // Publish the program's starting state
       final Arguments userArguments = options.getUserArguments();
       final Arguments systemArguments = options.getArguments();
       final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-      LOG.debug("Program {} initing", programId);
+
       Retries.supplyWithRetries(new Supplier<Void>() {
         @Override
         public Void get() {
           long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
-                               userArguments.asMap(), systemArguments.asMap());
+                  userArguments.asMap(), systemArguments.asMap());
           return null;
         }
       }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
 
-      return monitorProgram(controller, programId, options, cleanUpTask);
+      RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
+      monitorProgram(runtimeInfo, cleanUpTask);
+      return runtimeInfo;
     } catch (Exception e) {
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);
     }
-  }
-
-  @Override
-  public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
-                                    Runnable cleanUpTask) {
-    RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
-    add(runtimeInfo);
-    addCleanupTaskListener(runtimeInfo, cleanUpTask);
-    return runtimeInfo;
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
@@ -404,7 +398,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     lock.lock();
     try {
       if (!runtimeInfos.contains(type, runId)) {
-        addCleanupTaskListener(runtimeInfo, createCleanupTask());
+        monitorProgram(runtimeInfo, createCleanupTask());
       }
     } finally {
       lock.unlock();
@@ -412,18 +406,20 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   /**
-   * Adds the listener to the program controller to remove the runtime info when the program has terminated.
+   * Starts monitoring a running program.
    *
    * @param runtimeInfo information about the running program
    * @param cleanUpTask task to run when program finished
    */
-  private void addCleanupTaskListener(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
+  private void monitorProgram(final RuntimeInfo runtimeInfo, final Runnable cleanUpTask) {
     final ProgramController controller = runtimeInfo.getController();
     controller.addListener(new AbstractListener() {
 
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-        if (COMPLETED_STATES.contains(currentState)) {
+        if (!COMPLETED_STATES.contains(currentState)) {
+          add(runtimeInfo);
+        } else {
           cleanUpTask.run();
         }
       }

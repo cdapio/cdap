@@ -319,7 +319,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
     RunRecordMeta meta =
       new RunRecordMeta(pid, startTs, null, runStatus, builder.build(), systemArgs, twillRunId);
-    LOG.debug("Writing status RUNNING for program " + programId);
     write(key, meta);
   }
 
@@ -417,7 +416,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // Since the key contains the RunId/PID in addition to the programId, it is ok to deleteAll.
     deleteAll(key);
     key = builder.add(getInvertedTsKeyPart(started.getStartTs())).add(pid).build();
-    LOG.debug("Writing status " + runStatus + "for program " + programId);
     write(key, new RunRecordMeta(started, stopTs, runStatus));
   }
 

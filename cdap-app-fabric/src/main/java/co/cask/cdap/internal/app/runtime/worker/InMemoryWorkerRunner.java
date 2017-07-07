@@ -20,22 +20,18 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 
 /**
  * For running {@link Worker}. Only used in in-memory/standalone mode.

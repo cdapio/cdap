@@ -16,12 +16,19 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -30,6 +37,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -58,7 +66,9 @@ public class ProgramControllerTest {
       // Creates a controller for a guava service do nothing in start/stop.
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
-      ProgramController controller = new ProgramControllerServiceAdapter(service, programId, RunIds.generate());
+      ProgramController controller = new ProgramControllerServiceAdapter(service, programId, RunIds.generate(),
+                                                                         null, createStore(),
+                                                                         new SimpleProgramOptions(programId));
       ListenableFuture<Service.State> startCompletion = service.start();
 
       controller.addListener(new AbstractListener() {
@@ -108,5 +118,52 @@ public class ProgramControllerTest {
     protected void shutDown() throws Exception {
       TimeUnit.MILLISECONDS.sleep(stopDelay);
     }
+  }
+
+  private RuntimeStore createStore() {
+    return new RuntimeStore() {
+      @Override
+      public void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                          Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                           Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
+
+      }
+
+      @Override
+      public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+                          @Nullable BasicThrowable failureCause) {
+
+      }
+
+      @Override
+      public void setSuspend(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void setResume(ProgramId id, String pid) {
+
+      }
+
+      @Override
+      public void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token) {
+
+      }
+
+      @Override
+      public void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail) {
+
+      }
+    };
   }
 }

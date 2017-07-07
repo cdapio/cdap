@@ -28,26 +28,19 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.inject.Inject;
@@ -55,7 +48,6 @@ import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,8 +56,6 @@ import java.io.Closeable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Workflow}.
@@ -121,6 +111,7 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     final RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
@@ -143,7 +134,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
-      ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId);
+      ProgramController controller = new WorkflowProgramController(program, driver, serviceAnnouncer, runId,
+                                                                   twillRunId, runtimeStore, options);
 
       driver.start();
 

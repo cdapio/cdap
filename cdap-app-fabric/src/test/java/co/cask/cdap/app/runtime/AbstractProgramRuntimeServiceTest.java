@@ -140,7 +140,8 @@ public class AbstractProgramRuntimeServiceTest {
     Service service = new TestService();
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
-    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
+    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId,
+                                                                    new SimpleProgramOptions(programId));
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
@@ -257,7 +258,8 @@ public class AbstractProgramRuntimeServiceTest {
 
             Service service = new FastService();
             ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
-                                                                               RunIds.generate());
+                                                                               RunIds.generate(), null,
+                                                                               createStore(), options);
             service.start();
             return controller;
           }
@@ -373,9 +375,10 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final ProgramId programId, RunId runId) {
+                                                              final ProgramId programId, RunId runId,
+                                                              ProgramOptions options) {
     final ProgramControllerServiceAdapter controller =
-      new ProgramControllerServiceAdapter(service, programId, runId);
+      new ProgramControllerServiceAdapter(service, programId, runId, null, createStore(), options);
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {

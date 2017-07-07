@@ -136,6 +136,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     Deque<Closeable> closeables = new LinkedList<>();
 
@@ -197,7 +198,8 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
-      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
+      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext,
+                                                                twillRunId, runtimeStore);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {

@@ -26,6 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
@@ -60,6 +61,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final StreamWriterFactory streamWriterFactory;
+  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
@@ -68,7 +70,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
-                             SecureStore secureStore, SecureStoreManager secureStoreManager,
+                             RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
                              MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
@@ -77,6 +79,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.streamWriterFactory = streamWriterFactory;
+    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
@@ -94,6 +97,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
     RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
@@ -139,7 +143,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId, twillRunId,
+                                                                        runtimeStore, options,
                                                                         workerSpec.getName() + "-" + instanceId);
       worker.start();
       return controller;
@@ -152,8 +157,9 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String componentName) {
-      super(workerDriver, programId, runId, componentName);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String twillRunId,
+                                   RuntimeStore runtimeStore, ProgramOptions options, String componentName) {
+      super(workerDriver, programId, runId, twillRunId, runtimeStore, options, componentName);
       this.workerDriver = workerDriver;
     }
 

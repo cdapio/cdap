@@ -26,7 +26,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -35,7 +34,6 @@ import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
@@ -118,7 +116,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private List<Service> coreServices;
   private LogAppenderInitializer logAppenderInitializer;
   private CountDownLatch runLatch;
-  private RuntimeStore runtimeStore;
 
   /**
    * Constructor.
@@ -183,7 +180,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       String runId = programOpts.getArguments().getOption(ProgramOptionConstants.RUN_ID);
       Injector injector = Guice.createInjector(createModule(context, programId, runId, instanceId, principal));
 
-      runtimeStore = injector.getInstance(RuntimeStore.class);
       coreServices.add(injector.getInstance(ZKClientService.class));
       coreServices.add(injector.getInstance(KafkaClientService.class));
       coreServices.add(injector.getInstance(BrokerService.class));
@@ -293,16 +289,39 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     LOG.info("Starting runnable: {}", name);
     controller = programRunner.run(program, programOpts);
+    final SettableFuture<ProgramController.State> state = SettableFuture.create();
+    controller.addListener(new AbstractListener() {
 
-    Arguments systemArgs = programOpts.getArguments();
-    String twillRunId = systemArgs.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-    ProgramController.Listener programStateListener =
-      new ProgramStateChangeListener(runtimeStore, program.getId(), controller.getRunId(), twillRunId,
-                                     programOpts.getUserArguments(), systemArgs);
+      @Override
+      public void alive() {
+        runLatch.countDown();
+      }
 
-    final SettableFuture<ProgramController.State> state =
-      ((ProgramStateChangeListener) programStateListener).getState();
-    controller.addListener(programStateListener, MoreExecutors.sameThreadExecutor());
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        if (currentState == ProgramController.State.ALIVE) {
+          alive();
+        } else {
+          super.init(currentState, cause);
+        }
+      }
+
+      @Override
+      public void completed() {
+        state.set(ProgramController.State.COMPLETED);
+      }
+
+      @Override
+      public void killed() {
+        state.set(ProgramController.State.KILLED);
+      }
+
+      @Override
+      public void error(Throwable cause) {
+        LOG.error("Program runner error out.", cause);
+        state.setException(cause);
+      }
+    }, MoreExecutors.sameThreadExecutor());
 
     try {
       state.get();

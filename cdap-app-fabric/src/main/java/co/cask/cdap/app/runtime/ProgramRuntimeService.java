@@ -65,18 +65,6 @@ public interface ProgramRuntimeService extends Service {
   RuntimeInfo lookup(ProgramId programId, RunId runId);
 
   /**
-   * Monitors the program after its controller has been returned.
-   *
-   * @param controller the controller corresponding to the program
-   * @param programId the id of the program
-   * @param options the options the program was configured with
-   * @param cleanupTask the cleanup task to run after the program has terminated
-   * @return a {@link RuntimeInfo} for the running program
-   */
-  RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
-                             Runnable cleanupTask);
-
-  /**
    * Get {@link RuntimeInfo} for all running programs of the given type.
    *
    * @param type Type of running programs to list.

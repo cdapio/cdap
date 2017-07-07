@@ -18,14 +18,12 @@ package co.cask.cdap.internal.app.runtime.service;
 
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.ProgramStateChangeListener;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.InMemoryProgramLiveInfo;
 import co.cask.cdap.proto.NotRunningProgramLiveInfo;
@@ -38,7 +36,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.api.RunId;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,15 +78,6 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
   @Override
   protected void shutDown() throws Exception {
     stopAllPrograms();
-  }
-
-  @Override
-  public RuntimeInfo monitorProgram(ProgramController controller, ProgramId programId, ProgramOptions options,
-                                    Runnable cleanUpTask) {
-    controller.addListener(new ProgramStateChangeListener(runtimeStore, programId, controller.getRunId(), null,
-                                                          options.getUserArguments(), options.getArguments()),
-                           Threads.SAME_THREAD_EXECUTOR);
-    return super.monitorProgram(controller, programId, options, cleanUpTask);
   }
 
   private void stopAllPrograms() {
