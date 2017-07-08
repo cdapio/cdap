@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.LogLevelUpdater;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
@@ -37,14 +38,19 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.security.AuthEnforce;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
@@ -67,6 +73,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
@@ -79,6 +86,7 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -319,6 +327,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
+
+    ProgramController controller = runtimeInfo.getController();
+    final RunId runId = controller.getRunId();
+    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
+
+    ((AbstractStateChangeProgramController) controller).addProgramStateListener(programId, runId, twillRunId,
+            store, new SimpleProgramOptions(programId.getProgram(), systemArguments, userArguments));
 
     return runtimeInfo;
   }

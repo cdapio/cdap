@@ -31,6 +31,7 @@ import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
@@ -146,6 +147,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId, twillRunId,
                                                                         runtimeStore, options,
                                                                         workerSpec.getName() + "-" + instanceId);
+
       worker.start();
       return controller;
     } catch (Throwable t) {

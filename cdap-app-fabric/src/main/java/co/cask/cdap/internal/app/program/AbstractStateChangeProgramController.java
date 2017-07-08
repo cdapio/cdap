@@ -26,6 +26,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import org.apache.twill.api.RunId;
@@ -43,12 +44,27 @@ import javax.annotation.Nullable;
 public abstract class AbstractStateChangeProgramController extends AbstractProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStateChangeProgramController.class);
+  private final ProgramId programId;
+  private final RunId runId;
+  private final String twillRunId;
+  private final RuntimeStore runtimeStore;
+  private final ProgramOptions options;
 
   public AbstractStateChangeProgramController(final ProgramId programId, final RunId runId,
                                               @Nullable String componentName, final String twillRunId,
                                               final RuntimeStore runtimeStore, final ProgramOptions options) {
     super(programId, runId, componentName);
+    this.programId = programId;
+    this.runId = runId;
+    this.twillRunId = twillRunId;
+    this.runtimeStore = runtimeStore;
+    this.options = options;
 
+//      addProgramStateListener(programId, runId, twillRunId, runtimeStore, options);
+  }
+
+  public void addProgramStateListener(final ProgramId programId, final RunId runId, final String twillRunId,
+                                      final RuntimeStore runtimeStore, final ProgramOptions options) {
     addListener(new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
@@ -77,7 +93,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
           @Override
           public Void get() {
             runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                  options.getUserArguments().asMap(), options.getArguments().asMap());
+                    options.getUserArguments().asMap(), options.getArguments().asMap());
             return null;
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

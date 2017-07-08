@@ -233,10 +233,16 @@ public class LineageTestRun extends MetadataTestBase {
       RunId sparkRunId = runAndWait(spark);
       runAndWait(workflow);
       RunId workflowMrRunId = getRunId(mapreduce, mrRunId);
-      RunId serviceRunId = runAndWait(service);
+//      RunId serviceRunId = runAndWait(service);
+      programClient.start(service, true);
+      waitState(service, ProgramStatus.RUNNING);
+      RunId serviceRunId = getRunId(service);
       // Worker makes a call to service to make it access datasets,
       // hence need to make sure service starts before worker, and stops after it.
-      RunId workerRunId = runAndWait(worker);
+//      RunId workerRunId = runAndWait(worker);
+      programClient.start(worker, true);
+      waitState(worker, ProgramStatus.RUNNING);
+      RunId workerRunId = getRunId(worker);
 
       // Wait for programs to finish
       waitForStop(flow, true);
