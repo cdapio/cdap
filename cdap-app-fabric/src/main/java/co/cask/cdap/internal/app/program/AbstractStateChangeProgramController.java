@@ -26,11 +26,14 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
+import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,12 +63,14 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
     this.runtimeStore = runtimeStore;
     this.options = options;
 
-    addProgramStateListener(programId, runId, twillRunId, runtimeStore, options);
+    addListener(
+      createProgramListener(),
+      Threads.SAME_THREAD_EXECUTOR
+    );
   }
 
-  public void addProgramStateListener(final ProgramId programId, final RunId runId, final String twillRunId,
-                                      final RuntimeStore runtimeStore, final ProgramOptions options) {
-    addListener(new AbstractListener() {
+  public Listener createProgramListener() {
+    return new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
         if (state == ProgramController.State.ALIVE) {
@@ -164,6 +169,6 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
           }
         }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
       }
-    }, Threads.SAME_THREAD_EXECUTOR);
+    };
   }
 }
