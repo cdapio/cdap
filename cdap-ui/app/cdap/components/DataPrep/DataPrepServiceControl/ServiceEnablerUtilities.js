@@ -23,6 +23,7 @@ import T from 'i18n-react';
 import Rx from 'rx';
 
 const PREFIX = 'features.DataPrep.Upgrade';
+const MIN_DATAPREP_VERSION = '2.1.0';
 
 export default function enableDataPreparationService(shouldStopService) {
   function enableService(observer) {
@@ -55,11 +56,14 @@ export default function enableDataPreparationService(shouldStopService) {
 
         let highestVersion = findHighestVersion(versionsArray, true);
 
-        let minimumVersion = new Version('2.1.0-SNAPSHOT');
+        let minimumVersion = new Version(MIN_DATAPREP_VERSION);
 
         if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
           observer.onError({
-            error: T.translate(`${PREFIX}.minimumVersionError`, { highestVersion })
+            error: T.translate(`${PREFIX}.minimumVersionError`, {
+              highestVersion,
+              minimumVersion: MIN_DATAPREP_VERSION
+            })
           });
           return;
         }
