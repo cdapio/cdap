@@ -27,18 +27,25 @@
 @configure-btn-label-color: #5c6788;
 @configure-btn-label-hover-color: #454a57;
 @configure-btn-bg-hover-color: #f5f5f5;
+@hamburger-menu-color: #b9c0d8;
+@hamburger-node-hover-color: #5c6788;
+@hamburger-hover-color: #454a57;
+@node-menu-delete-color: #cc0821;
+@node-menu-action-bg-color: #eeeeee;
 @badge-warning-color: #ffcc00;
 @badge-danger-color: #e33d3d;
 @comment-box-color: lighten(#ffff99, 10%);
 @preview-outline-color: lighten(#f1c40f, 20%);
 
 .border-color-hover() {
-  .node {
-    border: 1px solid currentColor;
+  border: 1px solid currentColor;
 
-    &:hover {
-      border-width: 2px;
-    }
+  &:hover {
+    border-width: 2px;
+    margin: -1px;
+    width: 202px;
+    height: 82px;
+    cursor: pointer;
   }
 }
 
@@ -126,32 +133,87 @@ my-dag-plus {
           .transition(opacity 0.2s ease);
         }
 
-        .plugin-info {
+        .node-info {
           display: flex;
 
-          .plugin-icon {
+          .node-icon {
             font-size: 25px;
             display: inline-block;
           }
 
-          .plugin-metadata {
+          .node-metadata {
             display: inline-block;
             transform: translateY(-5px);
             margin-left: 8px;
 
-            .plugin-name,
-            .plugin-version {
+            .node-name,
+            .node-version {
               text-overflow: ellipsis;
               overflow: hidden;
             }
 
-            .plugin-name {
+            .node-name {
               font-size: 14px;
               font-weight: bold;
             }
 
-            .plugin-version {
+            .node-version {
               font-size: 11px;
+            }
+          }
+        }
+
+        .menu-icon {
+          font-size: 16px;
+          color: @hamburger-menu-color;
+        }
+
+        .menu-icon-node {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          padding-bottom: inherit;
+          padding-right: inherit;
+          transform: translateY(3px);
+
+          &.fa.fa-bars {
+            &.disabled {
+              cursor: not-allowed;
+            }
+
+            &:not(.disabled) {
+              &:hover {
+                color: @hamburger-hover-color;
+              }
+            }
+          }
+        }
+
+        .node-popover-menu {
+          width: 85px;
+          border: 1px solid black;
+          position: absolute;
+          background-color: white;
+          right: -53px;
+          top: 47px;
+          z-index: 1000;
+
+          .menu-icon {
+            color: @hamburger-hover-color;
+            padding: 5px;
+          }
+
+          .menu-content {
+            padding: 10px;
+
+            .menu-content-action {
+              &:hover {
+                background-color: @node-menu-action-bg-color;
+              }
+            }
+
+            .menu-content-delete {
+              color: @node-menu-delete-color;
             }
           }
         }
@@ -169,7 +231,7 @@ my-dag-plus {
           }
         }
 
-        .plugin-configure-btn {
+        .node-configure-btn {
           font-size: 11px;
           border: 1px solid currentColor;
           padding: 3px;
@@ -177,20 +239,24 @@ my-dag-plus {
           border-radius: 5px;
           display: none;
 
-          .plugin-configure-btn-label {
+          .node-configure-btn-label {
             color: @configure-btn-label-color;
           }
 
           &:hover {
             background-color: @configure-btn-bg-hover-color;
 
-            .plugin-configure-btn-label {
+            .node-configure-btn-label {
               color: @configure-btn-label-hover-color;
             }
           }
 
           &:focus {
             outline: none;
+          }
+
+          &.btn-shown {
+            display: initial;
           }
         }
 
@@ -200,12 +266,16 @@ my-dag-plus {
             .opacity(1);
           }
 
-          .plugin-version {
+          .node-version {
             display: none;
           }
 
-          .plugin-configure-btn {
+          .node-configure-btn {
             display: initial;
+          }
+
+          .menu-icon-node {
+            color: @hamburger-node-hover-color;
           }
         }
       }
