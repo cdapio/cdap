@@ -60,7 +60,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
     this.runtimeStore = runtimeStore;
     this.options = options;
 
-//      addProgramStateListener(programId, runId, twillRunId, runtimeStore, options);
+    addProgramStateListener(programId, runId, twillRunId, runtimeStore, options);
   }
 
   public void addProgramStateListener(final ProgramId programId, final RunId runId, final String twillRunId,

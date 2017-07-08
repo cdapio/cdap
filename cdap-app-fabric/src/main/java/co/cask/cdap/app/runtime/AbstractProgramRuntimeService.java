@@ -129,20 +129,20 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
 
-      // Publish the program's starting state
-      final Arguments userArguments = options.getUserArguments();
-      final Arguments systemArguments = options.getArguments();
-      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
-      Retries.supplyWithRetries(new Supplier<Void>() {
-        @Override
-        public Void get() {
-          long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
-                  userArguments.asMap(), systemArguments.asMap());
-          return null;
-        }
-      }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+//      // Publish the program's starting state
+//      final Arguments userArguments = options.getUserArguments();
+//      final Arguments systemArguments = options.getArguments();
+//      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
+//
+//      Retries.supplyWithRetries(new Supplier<Void>() {
+//        @Override
+//        public Void get() {
+//          long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+//          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
+//                               userArguments.asMap(), systemArguments.asMap());
+//          return null;
+//        }
+//      }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
       monitorProgram(runtimeInfo, cleanUpTask);
@@ -426,16 +426,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       @Override
       public void completed() {
+        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
 
       @Override
       public void killed() {
+        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
 
       @Override
       public void error(Throwable cause) {
+        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
     }, Threads.SAME_THREAD_EXECUTOR);

@@ -328,13 +328,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
       programId.getProgram(), systemArguments, userArguments, debug));
 
-    ProgramController controller = runtimeInfo.getController();
-    final RunId runId = controller.getRunId();
-    final String twillRunId = runtimeInfo.getTwillRunId() == null ? null : runtimeInfo.getTwillRunId().getId();
-
-    ((AbstractStateChangeProgramController) controller).addProgramStateListener(programId, runId, twillRunId,
-            store, new SimpleProgramOptions(programId.getProgram(), systemArguments, userArguments));
-
     return runtimeInfo;
   }
 

@@ -283,25 +283,81 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void recordProgramInit(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramStart(programId, pid, ProgramRunStatus.STARTING, startTs, twillRunId,
-                       runtimeArgs, systemArgs, builder);
+//    recordProgramInit(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramStart(programId, pid, ProgramRunStatus.RUNNING, startTs, twillRunId, runtimeArgs, systemArgs, builder);
+    recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
   @VisibleForTesting
   void recordProgramStartOldFormat(ProgramId programId, String pid, long startTs, String twillRunId,
                                    Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-    recordProgramStart(programId, pid, ProgramRunStatus.RUNNING, startTs, twillRunId, runtimeArgs, systemArgs, builder);
+    recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
-  private void recordProgramStart(ProgramId programId, String pid, ProgramRunStatus runStatus, long startTs,
-                                  String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+//  private void recordProgramStart(ProgramId programId, String pid, long startTs,
+//                                 String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+//                                 MDSKey.Builder keyBuilder) {
+//    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId)
+//            .add(pid)
+//            .build();
+//    RunRecordMeta started = getFirst(key, RunRecordMeta.class);
+//
+//    // Check without the version string only for default version
+//    if (!upgradeComplete.get() && started == null && (programId.getVersion().equals(ApplicationId.DEFAULT_VERSION))) {
+//      key = getVersionLessProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId)
+//              .add(pid)
+//              .build();
+//      started = getFirst(key, RunRecordMeta.class);
+//    }
+//
+//    String workflowrunId = null;
+//    if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
+//      // Program is started by Workflow. Add row corresponding to its node state.
+//      addWorkflowNodeState(programId, pid, systemArgs, ProgramRunStatus.RUNNING, null);
+//      workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
+//    }
+//
+//    if (started == null && workflowrunId == null) {
+//      String msg = String.format("No meta for started run record for namespace %s app %s version %s " +
+//                      "program type %s program %s pid %s exists",
+//              programId.getNamespace(), programId.getApplication(), programId.getVersion(),
+//              programId.getType().name(), programId.getProgram(), pid);
+//      LOG.error(msg);
+//      throw new IllegalArgumentException(msg);
+//    }
+//
+//    // Since the key contains the RunId/PID in addition to the programId, it is ok to deleteAll.
+//    deleteAll(key);
+//    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+//    key = keyBuilder.add(pid).build();
+//    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
+//    if (workflowrunId != null) {
+//      builder.put("workflowrunid", workflowrunId);
+//    }
+//
+//    RunRecordMeta meta = new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, builder.build(),
+//                                           systemArgs, twillRunId);
+//    write(key, meta);
+//  }
+//
+//  private void recordProgramInit(ProgramId programId, String pid, long startTs,
+//                                  String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+//                                  MDSKey.Builder keyBuilder) {
+//    MDSKey key = keyBuilder.add(pid).build();
+//    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+//    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
+//
+//    RunRecordMeta meta =
+//      new RunRecordMeta(pid, startTs, null, ProgramRunStatus.STARTING, builder.build(), systemArgs, twillRunId);
+//    write(key, meta);
+//  }
+  private void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
+                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                   MDSKey.Builder keyBuilder) {
     String workflowrunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
@@ -318,7 +374,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
 
     RunRecordMeta meta =
-      new RunRecordMeta(pid, startTs, null, runStatus, builder.build(), systemArgs, twillRunId);
+            new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, builder.build(), systemArgs, twillRunId);
     write(key, meta);
   }
 

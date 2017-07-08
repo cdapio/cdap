@@ -51,6 +51,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -233,16 +234,10 @@ public class LineageTestRun extends MetadataTestBase {
       RunId sparkRunId = runAndWait(spark);
       runAndWait(workflow);
       RunId workflowMrRunId = getRunId(mapreduce, mrRunId);
-//      RunId serviceRunId = runAndWait(service);
-      programClient.start(service, true);
-      waitState(service, ProgramStatus.RUNNING);
-      RunId serviceRunId = getRunId(service);
+      RunId serviceRunId = runAndWait(service);
       // Worker makes a call to service to make it access datasets,
       // hence need to make sure service starts before worker, and stops after it.
-//      RunId workerRunId = runAndWait(worker);
-      programClient.start(worker, true);
-      waitState(worker, ProgramStatus.RUNNING);
-      RunId workerRunId = getRunId(worker);
+      RunId workerRunId = runAndWait(worker);
 
       // Wait for programs to finish
       waitForStop(flow, true);
@@ -385,9 +380,10 @@ public class LineageTestRun extends MetadataTestBase {
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
+        List<RunRecord> records = programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
+                0, Long.MAX_VALUE, Integer.MAX_VALUE);
         runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
-                                       0, Long.MAX_VALUE, Integer.MAX_VALUE),
+          records,
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {

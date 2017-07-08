@@ -36,6 +36,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import org.apache.hadoop.hbase.util.Threads;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
