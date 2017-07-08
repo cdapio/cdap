@@ -81,6 +81,7 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.comments = [];
+    vm.showNodeMenu = {};
 
     var repaintTimeout = null,
         commentsTimeout = null,
@@ -678,6 +679,14 @@ angular.module(PKG.name + '.commons')
 
       DAGPlusPlusNodesActionsFactory.resetPluginCount();
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
+    };
+
+    vm.toggleMenu = function (nodeName) {
+      if (!vm.showNodeMenu.hasOwnProperty(nodeName)) {
+        vm.showNodeMenu[nodeName] = true;
+      } else {
+        vm.showNodeMenu[nodeName] = !vm.showNodeMenu[nodeName];
+      }
     };
 
     // This algorithm is f* up

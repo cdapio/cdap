@@ -132,21 +132,40 @@
                 </span>
               </div>
             </div>
-            <div class="fa fa-close"
-                 ng-if="!DAGPlusPlusCtrl.isDisabled"
-                 ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)"></div>
-            <div>
-            <div class="plugin-info">
-              <div class="plugin-icon {{node.icon}}"></div>
-              <div class="plugin-metadata">
-                <div class="plugin-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
-                <div class="plugin-version" ng-bind="node.plugin.artifact.version"></div>
-                <button class="plugin-configure-btn"
+            <div class="node-info">
+              <div class="node-icon {{node.icon}}"></div>
+              <div class="node-metadata">
+                <div class="node-name" ng-bind="node.plugin.label || node.name | myEllipsis: 25"></div>
+                <div class="node-version"
+                      ng-class="{ 'hidden': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
+                      ng-bind="node.plugin.artifact.version">
+                </div>
+                <button class="node-configure-btn"
+                        ng-class="{'btn-shown': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
                         ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
-                  <span class="plugin-configure-btn-label">
+                  <span class="node-configure-btn-label">
                     Configure Properties
                   </span>
                 </button>
+              </div>
+            </div>
+            <div
+              ng-if="!DAGPlusPlusCtrl.showNodeMenu[node.name]"
+              ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
+              class="menu-icon menu-icon-node fa fa-bars"
+              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
+            </div>
+            <div ng-if="DAGPlusPlusCtrl.showNodeMenu[node.name]"
+                  class="node-popover-menu">
+              <div
+                class="menu-icon fa fa-bars"
+                ng-click="DAGPlusPlusCtrl.toggleMenu(node.name)">
+              </div>
+              <div class="menu-content">
+                <div class="menu-content-action menu-content-delete"
+                  ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
+                  Delete
+                </div>
               </div>
             </div>
           </div>
