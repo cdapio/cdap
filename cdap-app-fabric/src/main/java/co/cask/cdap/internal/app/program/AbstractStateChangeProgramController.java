@@ -53,6 +53,74 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
   private final RuntimeStore runtimeStore;
   private final ProgramOptions options;
 
+  public AbstractStateChangeProgramController(Service service, final ProgramId programId, final RunId runId,
+                                              @Nullable String componentName, final String twillRunId,
+                                              final RuntimeStore runtimeStore, final ProgramOptions options) {
+    super(programId, runId, componentName);
+    this.programId = programId;
+    this.runId = runId;
+    this.twillRunId = twillRunId;
+    this.runtimeStore = runtimeStore;
+    this.options = options;
+
+    service.addListener(
+      new ServiceListenerAdapter() {
+        @Override
+        public void starting() {
+          //Get start time from RunId
+          long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+          if (startTimeInSeconds == -1) {
+            // If RunId is not time-based, use current time as start time
+            startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          }
+
+          final long finalStartTimeInSeconds = startTimeInSeconds;
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
+                                    options.getUserArguments().asMap(), options.getArguments().asMap());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void terminated(Service.State from) {
+          ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
+          if (from == Service.State.STOPPING) {
+            // Service was killed
+            runStatus = ProgramController.State.KILLED.getRunStatus();
+          }
+
+          final ProgramRunStatus finalRunStatus = runStatus;
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStop(programId, runId.getId(),
+                      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+
+        @Override
+        public void failed(Service.State from, @Nullable final Throwable failure) {
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              runtimeStore.setStop(programId, runId.getId(),
+                      TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                      ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        }
+      },
+      Threads.SAME_THREAD_EXECUTOR
+    );
+  }
+
   public AbstractStateChangeProgramController(final ProgramId programId, final RunId runId,
                                               @Nullable String componentName, final String twillRunId,
                                               final RuntimeStore runtimeStore, final ProgramOptions options) {

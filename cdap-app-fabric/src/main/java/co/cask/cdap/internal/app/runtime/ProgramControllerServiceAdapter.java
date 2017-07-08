@@ -58,7 +58,7 @@ public class ProgramControllerServiceAdapter extends AbstractStateChangeProgramC
   public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId, String twillRunId,
                                          RuntimeStore runtimeStore, ProgramOptions options,
                                          @Nullable String componentName) {
-    super(programId, runId, componentName, twillRunId, runtimeStore, options);
+    super(service, programId, runId, componentName, twillRunId, runtimeStore, options);
     this.service = service;
     this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);

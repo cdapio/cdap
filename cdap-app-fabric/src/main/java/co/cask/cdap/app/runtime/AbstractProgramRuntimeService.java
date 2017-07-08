@@ -426,19 +426,16 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       @Override
       public void completed() {
-        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
 
       @Override
       public void killed() {
-        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
 
       @Override
       public void error(Throwable cause) {
-        System.out.println("REMOVING RUNTIME INFO FOR " + controller.getProgramRunId().getProgram());
         remove(runtimeInfo, cleanUpTask);
       }
     }, Threads.SAME_THREAD_EXECUTOR);
