@@ -56,7 +56,12 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
   public AbstractStateChangeProgramController(Service service, final ProgramId programId, final RunId runId,
                                               @Nullable String componentName, final String twillRunId,
                                               final RuntimeStore runtimeStore, final ProgramOptions options) {
-    this(programId, runId, componentName, twillRunId, runtimeStore, options);
+    super(programId, runId, componentName);
+    this.programId = programId;
+    this.runId = runId;
+    this.twillRunId = twillRunId;
+    this.runtimeStore = runtimeStore;
+    this.options = options;
 
     // Add listener to the service for Spark and MapReduce programs
     if (programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) {
