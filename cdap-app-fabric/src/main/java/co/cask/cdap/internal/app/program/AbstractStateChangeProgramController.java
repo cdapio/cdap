@@ -56,35 +56,15 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
   public AbstractStateChangeProgramController(Service service, final ProgramId programId, final RunId runId,
                                               @Nullable String componentName, final String twillRunId,
                                               final RuntimeStore runtimeStore, final ProgramOptions options) {
-    super(programId, runId, componentName);
+    this(programId, runId, componentName, twillRunId, runtimeStore, options);
 
-    this.programId = programId;
-    this.runId = runId;
-    this.twillRunId = twillRunId;
-    this.runtimeStore = runtimeStore;
-    this.options = options;
-
+    // Add listener to the service for Spark and MapReduce programs
     if (programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) {
       service.addListener(
         new ServiceListenerAdapter() {
           @Override
           public void starting() {
-            //Get start time from RunId
-            long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-            if (startTimeInSeconds == -1) {
-              // If RunId is not time-based, use current time as start time
-              startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-            }
-
-            final long finalStartTimeInSeconds = startTimeInSeconds;
-            Retries.supplyWithRetries(new Supplier<Void>() {
-              @Override
-              public Void get() {
-                runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                        options.getUserArguments().asMap(), options.getArguments().asMap());
-                return null;
-              }
-            }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+            recordProgramStart();
           }
 
           @Override
@@ -95,28 +75,12 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
               runStatus = ProgramController.State.KILLED.getRunStatus();
             }
 
-            final ProgramRunStatus finalRunStatus = runStatus;
-            Retries.supplyWithRetries(new Supplier<Void>() {
-              @Override
-              public Void get() {
-                runtimeStore.setStop(programId, runId.getId(),
-                        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-                return null;
-              }
-            }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+            recordProgramTerminated(runStatus);
           }
 
           @Override
           public void failed(Service.State from, @Nullable final Throwable failure) {
-            Retries.supplyWithRetries(new Supplier<Void>() {
-              @Override
-              public Void get() {
-                runtimeStore.setStop(programId, runId.getId(),
-                        TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                        ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-                return null;
-              }
-            }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+            recordProgramError(failure);
           }
         },
         Threads.SAME_THREAD_EXECUTOR
@@ -140,7 +104,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
     );
   }
 
-  public Listener createProgramListener() {
+  private Listener createProgramListener() {
     return new AbstractListener() {
       @Override
       public void init(ProgramController.State state, @Nullable Throwable cause) {
@@ -157,50 +121,19 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
 
       @Override
       public void alive() {
-        // Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-
-        final long finalStartTimeInSeconds = startTimeInSeconds;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                    options.getUserArguments().asMap(), options.getArguments().asMap());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        recordProgramStart();
       }
 
       @Override
       public void completed() {
         LOG.debug("Program {} completed successfully.", programId);
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                    ProgramController.State.COMPLETED.getRunStatus());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        recordProgramTerminated(State.COMPLETED.getRunStatus());
       }
 
       @Override
       public void killed() {
         LOG.debug("Program {} killed.", programId);
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                    ProgramController.State.KILLED.getRunStatus());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        recordProgramTerminated(State.KILLED.getRunStatus());
       }
 
       @Override
@@ -230,16 +163,51 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
       @Override
       public void error(final Throwable cause) {
         LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                    ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+        recordProgramError(cause);
       }
     };
+  }
+
+  private void recordProgramStart() {
+    // Get start time from RunId
+    long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
+    if (startTimeInSeconds == -1) {
+      // If RunId is not time-based, use current time as start time
+      startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    }
+
+    final long finalStartTimeInSeconds = startTimeInSeconds;
+    Retries.supplyWithRetries(new Supplier<Void>() {
+      @Override
+      public Void get() {
+        runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
+                              options.getUserArguments().asMap(), options.getArguments().asMap());
+        return null;
+      }
+    }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+  }
+
+  private void recordProgramTerminated(final ProgramRunStatus runStatus) {
+    Retries.supplyWithRetries(new Supplier<Void>() {
+      @Override
+      public Void get() {
+        runtimeStore.setStop(programId, runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             runStatus);
+        return null;
+      }
+    }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+  }
+
+  private void recordProgramError(final Throwable cause) {
+    Retries.supplyWithRetries(new Supplier<Void>() {
+      @Override
+      public Void get() {
+        runtimeStore.setStop(programId, runId.getId(),
+                             TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
+                             ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(cause));
+        return null;
+      }
+    }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
   }
 }

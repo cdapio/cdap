@@ -147,7 +147,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId, twillRunId,
                                                                         runtimeStore, options,
                                                                         workerSpec.getName() + "-" + instanceId);
-
       worker.start();
       return controller;
     } catch (Throwable t) {
