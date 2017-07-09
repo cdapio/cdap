@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
@@ -40,8 +41,9 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
   private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
 
   @Inject
-  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider) {
-    super(cConf);
+  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
+                               RuntimeStore runtimeStore) {
+    super(cConf, runtimeStore);
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 

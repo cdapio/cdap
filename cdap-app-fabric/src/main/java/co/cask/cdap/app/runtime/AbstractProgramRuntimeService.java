@@ -127,22 +127,22 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
-      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
+      // Publish the program's starting state
+      final Arguments userArguments = options.getUserArguments();
+      final Arguments systemArguments = options.getArguments();
+      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
-//      // Publish the program's starting state
-//      final Arguments userArguments = options.getUserArguments();
-//      final Arguments systemArguments = options.getArguments();
-//      final String twillRunId = systemArguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-//
-//      Retries.supplyWithRetries(new Supplier<Void>() {
-//        @Override
-//        public Void get() {
-//          long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-//          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
-//                               userArguments.asMap(), systemArguments.asMap());
-//          return null;
-//        }
-//      }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+      Retries.supplyWithRetries(new Supplier<Void>() {
+        @Override
+        public Void get() {
+          long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          runtimeStore.setInit(programId, runId.getId(), startTime, twillRunId,
+                               userArguments.asMap(), systemArguments.asMap());
+          return null;
+        }
+      }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+
+      ProgramController controller = runner.run(executableProgram, optionsWithPlugins);
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(controller, programId);
       monitorProgram(runtimeInfo, cleanUpTask);

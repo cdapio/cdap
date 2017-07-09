@@ -267,25 +267,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     history = countService.getHistory(ProgramRunStatus.KILLED);
     Assert.assertEquals(0, history.size());
 
-//    // requesting with either RUNNING or ALL will return two records because STARTING and RUNNING are separate states
-//    Tasks.waitFor(2, new Callable<Integer>() {
-//      @Override
-//      public Integer call() throws Exception {
-//        return countService.getHistory(ProgramRunStatus.RUNNING).size();
-//      }
-//    }, 5, TimeUnit.SECONDS);
-//
-//    history = countService.getHistory(ProgramRunStatus.RUNNING);
-//    Assert.assertEquals(2, history.size());
-//    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
-//    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
-//
-//    history = countService.getHistory(ProgramRunStatus.ALL);
-//    Assert.assertEquals(2, history.size());
-//    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
-//    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
-    // requesting with either RUNNING or ALL will return one record
-    Tasks.waitFor(1, new Callable<Integer>() {
+    // requesting with either RUNNING or ALL will return two records because STARTING and RUNNING are separate states
+    Tasks.waitFor(2, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
         return countService.getHistory(ProgramRunStatus.RUNNING).size();
@@ -293,11 +276,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 5, TimeUnit.SECONDS);
 
     history = countService.getHistory(ProgramRunStatus.RUNNING);
-    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+    Assert.assertEquals(2, history.size());
+    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
 
     history = countService.getHistory(ProgramRunStatus.ALL);
-    Assert.assertEquals(1, history.size());
-    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+    Assert.assertEquals(2, history.size());
+    Assert.assertEquals(ProgramRunStatus.STARTING, history.get(0).getStatus());
+    Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(1).getStatus());
   }
 
   @Test

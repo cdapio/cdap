@@ -283,7 +283,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public void recordProgramInit(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId);
-//    recordProgramInit(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
+    recordProgramInit(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
@@ -345,20 +345,25 @@ public class AppMetadataStore extends MetadataStoreDataset {
 //    write(key, meta);
 //  }
 //
-//  private void recordProgramInit(ProgramId programId, String pid, long startTs,
-//                                  String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
-//                                  MDSKey.Builder keyBuilder) {
-//    MDSKey key = keyBuilder.add(pid).build();
-//    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-//    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
-//
-//    RunRecordMeta meta =
-//      new RunRecordMeta(pid, startTs, null, ProgramRunStatus.STARTING, builder.build(), systemArgs, twillRunId);
-//    write(key, meta);
-//  }
+  private void recordProgramInit(ProgramId programId, String pid, long startTs,
+                                  String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+                                  MDSKey.Builder keyBuilder) {
+    MDSKey key = keyBuilder.add(pid).build();
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
+
+    RunRecordMeta meta =
+      new RunRecordMeta(pid, startTs, null, ProgramRunStatus.STARTING, builder.build(), systemArgs, twillRunId);
+    write(key, meta);
+  }
+
   private void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                   Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                   MDSKey.Builder keyBuilder) {
+    MDSKey key = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTED, programId)
+            .add(pid)
+            .build();
+
     String workflowrunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       // Program is started by Workflow. Add row corresponding to its node state.
@@ -366,12 +371,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
       workflowrunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     }
 
-    MDSKey key = keyBuilder.add(pid).build();
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
     builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
     if (workflowrunId != null) {
       builder.put("workflowrunid", workflowrunId);
     }
+
+    // Since the key contains the RunId/PID in addition to the programId, it is ok to deleteAll.
+    deleteAll(key);
+    key = keyBuilder.add(pid).build();
 
     RunRecordMeta meta =
             new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING, builder.build(), systemArgs, twillRunId);

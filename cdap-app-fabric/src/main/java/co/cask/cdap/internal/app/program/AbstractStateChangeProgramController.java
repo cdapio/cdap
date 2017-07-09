@@ -121,11 +121,6 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
         },
         Threads.SAME_THREAD_EXECUTOR
       );
-    } else {
-      addListener(
-        createProgramListener(),
-        Threads.SAME_THREAD_EXECUTOR
-      );
     }
   }
 
