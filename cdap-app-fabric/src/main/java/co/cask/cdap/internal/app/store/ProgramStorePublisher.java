@@ -19,11 +19,12 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import org.apache.twill.api.RunId;
@@ -77,11 +78,14 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
   }
 
   @Override
-  public void stop(final long endTime, final ProgramRunStatus runStatus, @Nullable Throwable cause) {
+  public void stop(final long endTime, final ProgramRunStatus runStatus, final @Nullable BasicThrowable cause) {
+    if (programId.getType() == ProgramType.MAPREDUCE) {
+      System.out.println("MR PROGRAM " + programId + " HAS STATUS " + runStatus);
+    }
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus);
+        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus, cause);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

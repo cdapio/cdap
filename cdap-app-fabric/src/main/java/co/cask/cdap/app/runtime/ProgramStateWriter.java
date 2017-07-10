@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 
 import javax.annotation.Nullable;
@@ -48,7 +49,7 @@ public interface ProgramStateWriter {
    * @param runStatus the final run status of the program
    * @param cause the reason for the program run's failure, if the program terminated with an error
    */
-  void stop(long endTime, ProgramRunStatus runStatus, @Nullable Throwable cause);
+  void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
 
   /**
    * Updates the program state as suspending

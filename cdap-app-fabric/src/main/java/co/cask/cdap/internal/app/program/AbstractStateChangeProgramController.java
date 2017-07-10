@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
@@ -74,7 +75,8 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
 
           @Override
           public void failed(Service.State from, @Nullable final Throwable failure) {
-            programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), failure);
+            programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(),
+                                    new BasicThrowable(failure));
           }
         },
         Threads.SAME_THREAD_EXECUTOR
@@ -140,7 +142,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
         @Override
         public void error(final Throwable cause) {
           LOG.info("Program stopped with error {}, {}", programId, runId, cause);
-          programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), cause);
+          programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), new BasicThrowable(cause));
         }
       },
       Threads.SAME_THREAD_EXECUTOR

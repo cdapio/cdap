@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.common.base.Throwables;
