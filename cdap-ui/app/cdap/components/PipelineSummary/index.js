@@ -15,11 +15,12 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import {fetchSummary} from 'components/PipelineSummary/PipelineSummaryActions';
-import PipelineSummaryStore from 'components/PipelineSummary/PipelineSummaryStore';
+import {fetchSummary} from 'components/PipelineSummary/Store/PipelineSummaryActions';
+import PipelineSummaryStore from 'components/PipelineSummary/Store/PipelineSummaryStore';
 import {convertProgramToApi} from 'services/program-api-converter';
 import RunsHistoryGraph from 'components/PipelineSummary/RunsHistoryGraph';
 import LogsMetricsGraph from 'components/PipelineSummary/LogsMetricsGraph';
+import NodesMetricsGraph from 'components/PipelineSummary/NodesMetricsGraph';
 import { DropdownToggle, DropdownItem } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import {UncontrolledDropdown} from 'components/UncontrolledComponents';
@@ -28,6 +29,8 @@ import T from 'i18n-react';
 import {MyPipelineApi} from 'api/pipeline';
 import {humanReadableDuration} from 'services/helpers';
 import isNil from 'lodash/isNil';
+import Mousetrap from 'mousetrap';
+import ee from 'event-emitter';
 
 const PREFIX = 'features.PipelineSummary';
 
@@ -48,9 +51,11 @@ export default class PipelineSummary extends Component {
       filterType: 'limit',
       activeRunsFilter: T.translate(`${RUNSFILTERPREFIX}.last10Runs`),
       loading: true,
+      nodeMetricsLoading: true,
       start: null,
       end: null,
-      avgRunTime: '--'
+      avgRunTime: '--',
+      nodesMap: {}
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
@@ -109,6 +114,7 @@ export default class PipelineSummary extends Component {
       pipelineConfig,
       limit: this.state.runsLimit
     });
+    this.eventEmitter = ee(ee);
   }
   componentWillReceiveProps(nextProps) {
     if (nextProps.totalRunsCount !== this.state.totalRunsCount) {
@@ -116,6 +122,9 @@ export default class PipelineSummary extends Component {
         totalRunsCount: nextProps.totalRunsCount
       });
     }
+  }
+  componentWillUnmount() {
+    Mousetrap.unbind('esc');
   }
   componentDidMount() {
     let {namespaceId: namespace, appId, programId: workflowId} = this.props;
@@ -134,17 +143,17 @@ export default class PipelineSummary extends Component {
           });
         }
       );
+    Mousetrap.bind('esc', () => {
+      this.eventEmitter.emit('CLOSE_HINT_TOOLTIP');
+      this.setState({
+        currentHoveredElement: null
+      });
+    });
     this.storeSubscription = PipelineSummaryStore.subscribe(() => {
-      let {runs, loading} = PipelineSummaryStore.getState().pipelinerunssummary;
+      let {runs, loading, nodesMap, nodeMetricsLoading} = PipelineSummaryStore.getState().pipelinerunssummary;
       let logsMetrics = runs.map(run => ({
         runid: run.runid,
-        logsMetrics: run.logsMetrics,
-        start: run.start,
-        end: run.end
-      }));
-      let nodesMetrics = runs.map(run => ({
-        runid: run.runid,
-        nodesMetrics: run.nodesMetrics,
+        logsMetrics: run.logsMetrics || {},
         start: run.start,
         end: run.end
       }));
@@ -158,8 +167,9 @@ export default class PipelineSummary extends Component {
       let state = {
         runs,
         logsMetrics,
-        nodesMetrics,
-        loading
+        nodesMap,
+        loading,
+        nodeMetricsLoading
       };
       if (this.state.filterType === 'time') {
         const getStartAndEnd = () => {
@@ -252,7 +262,7 @@ export default class PipelineSummary extends Component {
           <UncontrolledDropdown className="runs-dropdown">
             <DropdownToggle caret>
               <span>{this.state.activeRunsFilter}</span>
-              <IconSVG name="icon-chevron-down" />
+              <IconSVG name="icon-caret-down" />
             </DropdownToggle>
             <CustomDropdownMenu>
               {
@@ -302,6 +312,32 @@ export default class PipelineSummary extends Component {
             xDomainType={this.state.filterType}
             runContext={this.props}
             isLoading={this.state.loading}
+          />
+          <NodesMetricsGraph
+            activeFilterLabel={this.state.activeRunsFilter}
+            totalRunsCount={this.state.totalRunsCount}
+            runs={this.state.nodesMetrics}
+            runsLimit={this.state.runsLimit}
+            start={this.state.start}
+            end={this.state.end}
+            xDomainType={this.state.filterType}
+            runContext={this.props}
+            isLoading={this.state.nodeMetricsLoading}
+            recordType="recordsin"
+            nodesMap={this.state.nodesMap['sources']}
+          />
+          <NodesMetricsGraph
+            activeFilterLabel={this.state.activeRunsFilter}
+            totalRunsCount={this.state.totalRunsCount}
+            runs={this.state.nodesMetrics}
+            runsLimit={this.state.runsLimit}
+            start={this.state.start}
+            end={this.state.end}
+            xDomainType={this.state.filterType}
+            runContext={this.props}
+            isLoading={this.state.nodeMetricsLoading}
+            recordType="recordsout"
+            nodesMap={this.state.nodesMap['sinks']}
           />
         </div>
       </div>

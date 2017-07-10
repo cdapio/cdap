@@ -18,7 +18,6 @@ import React, {Component, PropTypes} from 'react';
 import {XYPlot, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, DiscreteColorLegend, Hint} from 'react-vis';
 import moment from 'moment';
 import classnames from 'classnames';
-import isEqual from 'lodash/isEqual';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {
@@ -26,11 +25,16 @@ import {
   xTickFormat,
   getXDomain,
   ONE_MIN_SECONDS,
-  tickFormatBasedOnTimeResolution,
   getGraphHeight,
-  getTimeResolution
+  getTimeResolution,
+  getYAxisProps
 } from 'components/PipelineSummary/RunsGraphHelpers';
 import {humanReadableDuration} from 'services/helpers';
+import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import SortableStickyTable from 'components/SortableStickyTable';
+import ee from 'event-emitter';
+import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
+import isEqual from 'lodash/isEqual';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -51,6 +55,24 @@ const COLORLEGENDS = [
     color: SUCCESSRUNCOLOR
   }
 ];
+const tableHeaders = [
+  {
+    label: T.translate(`${PREFIX}.table.headers.runCount`),
+    property: 'index'
+  },
+  {
+    label: T.translate(`${PREFIX}.table.headers.status`),
+    property: 'status'
+  },
+  {
+    label: T.translate(`${PREFIX}.table.headers.startTime`),
+    property: 'start'
+  },
+  {
+    label: T.translate(`${PREFIX}.table.headers.duration`),
+    property: 'duration'
+  }
+];
 
 export default class RunsHistoryGraph extends Component {
   constructor(props) {
@@ -64,10 +86,19 @@ export default class RunsHistoryGraph extends Component {
     };
     this.renderChart = this.renderChart.bind(this);
     this.renderTable = this.renderTable.bind(this);
+    this.eventEmitter = ee(ee);
+    this.closeTooltip = this.closeTooltip.bind(this);
+    this.renderTableBody = this.renderTableBody.bind(this);
   }
   componentDidMount() {
     this.setState({
       data: this.constructData()
+    });
+    this.eventEmitter.on('CLOSE_HINT_TOOLTIP', this.closeTooltip);
+  }
+  closeTooltip() {
+    this.setState({
+      currentHoveredElement: null
     });
   }
   componentWillReceiveProps(nextProps) {
@@ -77,6 +108,9 @@ export default class RunsHistoryGraph extends Component {
       currentHoveredElement: null,
       runsLimit: nextProps.runsLimit
     });
+  }
+  componentWillUnmount() {
+    this.eventEmitter.off('CLOSE_HINT_TOOLTIP', this.closeTooltip);
   }
   constructData(props = this.props) {
     let data = [].concat(props.runs).reverse().map((run, id) => {
@@ -100,33 +134,17 @@ export default class RunsHistoryGraph extends Component {
   }
   renderEmptyMessage() {
     return (
-      <div className="empty-runs-container">
-        <h1>
-          {
-            T.translate(`${GRAPHPREFIX}.emptyMessage`, {
-              filter: this.props.xDomainType === 'time' ? `in ${this.props.activeFilterLabel}` : ''
-            })
-          }
-        </h1>
-      </div>
+      <EmptyMessageContainer
+        xDomainType={this.props.xDomainType}
+        label={this.props.activeFilterLabel}
+      />
     );
   }
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let height = getGraphHeight(this.containerRef);
-    let maxYDomain = Number.MAX_SAFE_INTEGER, minYDomain = {y: 0};
-    if (this.state.data.length > 1) {
-      maxYDomain = this.state.data.reduce((prev, curr) => {
-        return (prev.y > curr.y) ? prev : curr;
-      });
-      minYDomain = this.state.data.reduce((prev, curr) => {
-        return (prev.y < curr.y) ? prev : curr;
-      });
-    }
-    if (this.state.data.length == 1) {
-      maxYDomain = this.state.data[0];
-    }
-    let yAxisResolution = getTimeResolution(maxYDomain.y);
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps(this.state.data);
+    let yAxisResolution = getTimeResolution(yDomain.y);
     let xDomain = [];
     if (this.state.data.length > 0) {
       xDomain = getXDomain(this.props);
@@ -145,15 +163,13 @@ export default class RunsHistoryGraph extends Component {
         </div>
       );
     }
-    if (!this.props.runs.length) {
-      return this.renderEmptyMessage();
-    }
     return (
       <div className="graph-plot-container">
         <FPlot
           xType="linear"
           yType="linear"
           xDomain={xDomain}
+          yDomain={yDomain}
           height={height}
           className="run-history-fp-plot"
         >
@@ -167,9 +183,8 @@ export default class RunsHistoryGraph extends Component {
             tickFormat={xTickFormat(this.props)}
           />
           <YAxis
-            tickTotal={10}
-            yDomain={[minYDomain.y === maxYDomain.y ? 0 : minYDomain.y, maxYDomain.y]}
-            tickFormat={tickFormatBasedOnTimeResolution(yAxisResolution)}
+            tickTotal={tickTotals}
+            tickFormat={tickFormat}
           />
           <HorizontalGridLines />
           <LineSeries
@@ -180,16 +195,18 @@ export default class RunsHistoryGraph extends Component {
             data={this.state.data}
             colorType={'literal'}
             stroke={MARKSERIESSTROKECOLOR}
-            onValueClick={(d) => {
-              if (isEqual(this.state.currentHoveredElement || {}, d)) {
-                this.setState({
-                  currentHoveredElement: null
-                });
-              } else {
-                this.setState({
-                  currentHoveredElement: d
-                });
+            onValueMouseOver={(d) => {
+              if (isEqual(this.state.currentHoveredElement, d)) {
+                return;
               }
+              this.setState({
+                currentHoveredElement: d
+              });
+            }}
+            onValueMouseOut={() => {
+              this.setState({
+                currentHoveredElement: null
+              });
             }}
           />
 
@@ -197,7 +214,17 @@ export default class RunsHistoryGraph extends Component {
             this.state.currentHoveredElement && popOverData ?
               (
                 <Hint value={this.state.currentHoveredElement}>
-                  <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
+                  <div className="title">
+                    <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
+                    <IconSVG
+                      name="icon-close"
+                      onClick={() => {
+                        this.setState({
+                          currentHoveredElement: null
+                        });
+                      }}
+                    />
+                  </div>
                   <div className="log-stats">
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.duration`)}</span>
@@ -253,49 +280,64 @@ export default class RunsHistoryGraph extends Component {
       </div>
     );
   }
+  renderTableBody(runs) {
+    return (
+      <table className="table">
+        <tbody>
+          {
+            runs.map(run => {
+              return (
+                <tr>
+                  <td>
+                    <span>{run.index}</span>
+                    <CopyableRunID
+                      runid={run.runid}
+                      idprefix="runs-history"
+                    />
+                  </td>
+                  <td>
+                    <span className={classnames({
+                      'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) !== -1,
+                      'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) === -1
+                    })}>
+                      {run.status}
+                    </span>
+                  </td>
+                  <td> {moment(run.start * 1000).format('llll')}</td>
+                  <td> {humanReadableDuration(run.duration)}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+  }
   renderTable() {
+    return (
+      <SortableStickyTable
+        tableHeaders={tableHeaders}
+        entities={this.props.runs.map((run, i) => Object.assign({}, run, {index: i + 1}))}
+        renderTableBody={this.renderTableBody}
+      />
+    );
+  }
+  renderLoading() {
+    return (<EmptyMessageContainer loading={true} />);
+  }
+  renderContent() {
+    if (this.props.isLoading) {
+      return this.renderLoading();
+    }
     if (!this.props.runs.length) {
       return this.renderEmptyMessage();
     }
-    return (
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{T.translate(`${PREFIX}.table.headers.runCount`)}</th>
-              <th>{T.translate(`${PREFIX}.table.headers.status`)}</th>
-              <th>{T.translate(`${PREFIX}.table.headers.startTime`)}</th>
-              <th>{T.translate(`${PREFIX}.table.headers.duration`)}</th>
-            </tr>
-          </thead>
-        </table>
-        <div className="table-scroll">
-          <table className="table">
-            <tbody>
-              {
-                this.props.runs.map((run, i) => {
-                  return (
-                    <tr>
-                      <td> {i+1} </td>
-                      <td>
-                        <span className={classnames({
-                          'text-danger': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) !== -1,
-                          'text-success': ['FAILED', 'KILLED', 'RUN_FAILED'].indexOf(run.status) === -1
-                        })}>
-                          {run.status}
-                        </span>
-                      </td>
-                      <td> {moment(run.start * 1000).format('llll')}</td>
-                      <td> {run.duration}</td>
-                    </tr>
-                  );
-                })
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
+    if (this.state.viewState === 'chart') {
+      return this.renderChart();
+    }
+    if (this.state.viewState === 'table') {
+      return this.renderTable();
+    }
   }
   render() {
     return (
@@ -307,7 +349,7 @@ export default class RunsHistoryGraph extends Component {
           <div className="title">{T.translate(`${PREFIX}.title`)} </div>
           <div className="viz-switcher">
             <span
-              className={classnames({"active": this.state.viewState === 'chart'})}
+              className={classnames("chart", {"active": this.state.viewState === 'chart'})}
               onClick={() => this.setState({viewState: 'chart'})}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.chart`)}
@@ -321,10 +363,7 @@ export default class RunsHistoryGraph extends Component {
           </div>
         </div>
         {
-          this.state.viewState === 'chart' ?
-            this.renderChart()
-          :
-            this.renderTable()
+          this.renderContent()
         }
       </div>
     );

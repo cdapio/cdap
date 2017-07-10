@@ -1,0 +1,89 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$dropdown_border_color: lightgray;
+$option-hover-bg-color: #eeeeee;
+$menu_bg_color: gray;
+
+@import '../StickyTableHeader.scss';
+
+.nods-metrics-graph {
+  .runs-dropdown {
+    display: inline-block;
+    margin: 0 10px;
+    .btn.btn-secondary {
+      border: 0;
+      border-bottom: 1px solid $dropdown_border_color;
+      border-radius: 0;
+      background: transparent;
+      padding-left: 5px;
+      padding-right: 5px;
+      &:focus,
+      &:active,
+      &.active,
+      &:hover {
+        background: transparent;
+        outline: none;
+        box-shadow: none;
+      }
+      span {
+        &:first-child {
+          margin-right: 5px;
+        }
+      }
+      .icon-chevron-down {
+        font-size: 12px;
+        margin-left: 5px;
+      }
+    }
+    .dropdown-menu {
+      padding: 0;
+      .dropdown-item {
+        padding: 10px;
+        cursor: pointer;
+        &:focus,
+        &:active,
+        &.active,
+        &:hover {
+          background: transparent;
+          outline: none;
+        }
+        &:hover {
+          background-color: $option-hover-bg-color;
+        }
+      }
+      .dropdown-divider {
+        height: 1px;
+        background: $menu_bg_color;
+        margin: 1px 0;
+      }
+    }
+  }
+  .x-axis-title {
+    position: absolute;
+    bottom: -20px;
+    right: 0;
+  }
+  .y-axis-title {
+    position: absolute;
+    right: -65px;
+    transform: rotate(-90deg);
+    top: 40%;
+  }
+
+  @include stickyheader(33%, 33%, 33%);
+
+}
