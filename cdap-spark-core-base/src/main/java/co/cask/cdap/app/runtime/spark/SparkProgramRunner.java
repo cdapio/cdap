@@ -102,7 +102,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final RuntimeStore runtimeStore;
+  private final RuntimeStore store;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -114,7 +114,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
-                     RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                     RuntimeStore store, SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService) {
     super(cConf);
@@ -126,7 +126,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
-    this.runtimeStore = runtimeStore;
+    this.store = store;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;

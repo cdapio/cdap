@@ -18,8 +18,7 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
@@ -36,7 +35,7 @@ import javax.annotation.Nullable;
  * An implementation of the ProgramStateWriter that persists directly to the store
  */
 public final class ProgramStorePublisher implements ProgramStateWriter {
-  private final RuntimeStore runtimeStore;
+  private final Store store;
   private final ProgramId programId;
   private final RunId runId;
   private final String twillRunId;
@@ -44,13 +43,13 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
   private final Arguments systemArguments;
 
   public ProgramStorePublisher(ProgramId programId, RunId runId, String twillRunId,
-                               Arguments userArguments, Arguments systemArguments, RuntimeStore runtimeStore) {
+                               Arguments userArguments, Arguments systemArguments, Store store) {
     this.programId = programId;
     this.runId = runId;
     this.twillRunId = twillRunId;
     this.userArguments = userArguments;
     this.systemArguments = systemArguments;
-    this.runtimeStore = runtimeStore;
+    this.store = store;
   }
 
   @Override
@@ -58,8 +57,8 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
-                             userArguments.asMap(), systemArguments.asMap());
+        store.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                      userArguments.asMap(), systemArguments.asMap());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -70,8 +69,8 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
-                             userArguments.asMap(), systemArguments.asMap());
+        store.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                      userArguments.asMap(), systemArguments.asMap());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -82,7 +81,7 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus);
+        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -93,7 +92,7 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setSuspend(programId, runId.getId());
+        store.setSuspend(programId, runId.getId());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -104,7 +103,7 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setResume(programId, runId.getId());
+        store.setResume(programId, runId.getId());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

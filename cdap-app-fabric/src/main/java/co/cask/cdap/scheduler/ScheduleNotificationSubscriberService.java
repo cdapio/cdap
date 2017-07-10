@@ -21,12 +21,10 @@ import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.messaging.MessageFetcher;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
@@ -57,10 +55,10 @@ class ScheduleNotificationSubscriberService extends AbstractNotificationSubscrib
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleNotificationSubscriberService.class);
 
   @Inject
-  ScheduleNotificationSubscriberService(MessagingService messagingService, RuntimeStore runtimeStore,
+  ScheduleNotificationSubscriberService(MessagingService messagingService, Store store,
                                         CConfiguration cConf, DatasetFramework datasetFramework,
                                         TransactionSystemClient txClient) {
-    super(messagingService, runtimeStore, cConf, datasetFramework, txClient);
+    super(messagingService, store, cConf, datasetFramework, txClient);
   }
 
   @Override

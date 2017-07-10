@@ -18,7 +18,6 @@ package co.cask.cdap.app.preview;
 
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.store.preview.PreviewStore;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -120,13 +119,12 @@ public class PreviewRunnerModule extends PrivateModule {
     );
 
     bind(Store.class).to(DefaultStore.class);
+    expose(Store.class);
     bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 
     bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
     expose(UGIProvider.class);
 
-    bind(RuntimeStore.class).to(DefaultStore.class);
-    expose(RuntimeStore.class);
 
     // we don't delete namespaces in preview as we just delete preview directory when its done
     bind(NamespaceResourceDeleter.class).to(NoopNamespaceResourceDeleter.class).in(Scopes.SINGLETON);

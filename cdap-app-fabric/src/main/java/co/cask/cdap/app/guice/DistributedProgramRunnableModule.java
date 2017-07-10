@@ -17,7 +17,7 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -39,8 +39,8 @@ import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -172,7 +172,7 @@ public class DistributedProgramRunnableModule {
           // For binding DataSet transaction stuff
           install(new DataFabricFacadeModule());
 
-          bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
+          bind(Store.class).to(DefaultStore.class);
 
           // For binding StreamWriter
           install(createStreamFactoryModule());

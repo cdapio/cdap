@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -27,7 +27,6 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramId;
@@ -36,7 +35,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,9 +51,9 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   @Inject
-  ProgramStatusPersistService(MessagingService messagingService, RuntimeStore runtimeStore, CConfiguration cConf,
+  ProgramStatusPersistService(MessagingService messagingService, Store store, CConfiguration cConf,
                               DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, runtimeStore, cConf, datasetFramework, txClient);
+    super(messagingService, store, cConf, datasetFramework, txClient);
   }
 
   @Override
@@ -117,7 +115,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
 
       ProgramStateWriter programStateWriter =
         new ProgramStorePublisher(programId, RunIds.fromString(runIdString), twillRunId,
-                                  new BasicArguments(userOverrides), new BasicArguments(systemOverrides), runtimeStore);
+                                  new BasicArguments(userOverrides), new BasicArguments(systemOverrides), store);
 
       switch(programRunStatus) {
         case STARTING:

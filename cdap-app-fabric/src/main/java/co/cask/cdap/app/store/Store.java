@@ -21,17 +21,16 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
-import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -54,7 +53,87 @@ import javax.annotation.Nullable;
 /**
  * Responsible for managing {@link Program} and {@link Application} metadata.
  */
-public interface Store extends RuntimeStore {
+public interface Store {
+  /**
+   * Logs initialization of program run.
+
+   * @param id id of the program
+   * @param pid run id
+   * @param startTime start timestamp in seconds
+   * @param twillRunId Twill run id
+   * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
+   */
+  void setInit(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+               Map<String, String> runtimeArgs, Map<String, String> systemArgs);
+
+  /**
+   * Logs start of program run.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
+   * @param twillRunId Twill run id
+   * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
+   */
+  void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                Map<String, String> runtimeArgs, Map<String, String> systemArgs);
+
+  /**
+   * Logs end of program run.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param endTime end timestamp in seconds
+   * @param runStatus {@link ProgramRunStatus} of program run
+   */
+  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs end of program run.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param endTime end timestamp in seconds
+   * @param runStatus {@link ProgramRunStatus} of program run
+   * @param failureCause failure cause if the program failed to execute
+   */
+  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+               @Nullable BasicThrowable failureCause);
+
+  /**
+   * Logs suspend of a program run.
+   *
+   * @param id id of the program
+   * @param pid run id
+   */
+  void setSuspend(ProgramId id, String pid);
+
+  /**
+   * Logs resume of a program run.
+   *
+   * @param id id of the program
+   * @param pid run id
+   */
+  void setResume(ProgramId id, String pid);
+
+  /**
+   * Updates the {@link WorkflowToken} for a specified run of a workflow.
+   *
+   * @param workflowRunId workflow run for which the {@link WorkflowToken} is to be updated
+   * @param token the {@link WorkflowToken} to update
+   */
+  void updateWorkflowToken(ProgramRunId workflowRunId, WorkflowToken token);
+
+  /**
+   * Add node state for the given {@link Workflow} run. This method is used to update the
+   * state of the custom actions started by Workflow.
+   *
+   * @param workflowRunId the Workflow run
+   * @param nodeStateDetail the node state to be added for the Workflow run
+   */
+  void addWorkflowNodeState(ProgramRunId workflowRunId, WorkflowNodeStateDetail nodeStateDetail);
 
   /**
    * Loads a given program.

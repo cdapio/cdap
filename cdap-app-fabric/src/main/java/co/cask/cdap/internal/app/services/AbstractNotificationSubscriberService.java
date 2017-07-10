@@ -24,7 +24,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -68,7 +68,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   protected final Transactional transactional;
-  protected final RuntimeStore runtimeStore;
+  protected final Store store;
   protected final MultiThreadMessagingContext messagingContext;
   protected final DatasetFramework datasetFramework;
   protected final MultiThreadDatasetCache multiThreadDatasetCache;
@@ -77,11 +77,11 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   protected volatile boolean stopping = false;
 
   @Inject
-  protected AbstractNotificationSubscriberService(MessagingService messagingService, RuntimeStore runtimeStore,
+  protected AbstractNotificationSubscriberService(MessagingService messagingService, Store store,
                                         CConfiguration cConf, DatasetFramework datasetFramework,
                                         TransactionSystemClient txClient) {
     this.cConf = cConf;
-    this.runtimeStore = runtimeStore;
+    this.store = store;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
             new SystemDatasetInstantiator(datasetFramework), txClient,

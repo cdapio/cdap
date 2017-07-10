@@ -22,7 +22,6 @@ import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.mapreduce.DistributedMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.LocalMRJobInfoFetcher;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -344,8 +343,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
       bind(Store.class).to(DefaultStore.class);
-      // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
-      bind(RuntimeStore.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
