@@ -16,9 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.http.NettyHttpService;

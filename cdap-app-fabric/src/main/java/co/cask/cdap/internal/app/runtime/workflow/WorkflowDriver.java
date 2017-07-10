@@ -47,7 +47,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
@@ -133,7 +133,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final NameMappedDatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
-  private final RuntimeStore runtimeStore;
+  private final Store store;
   private final ProgramRunId workflowRunId;
   private final BasicWorkflowContext basicWorkflowContext;
   private final BasicWorkflowToken basicWorkflowToken;
@@ -153,7 +153,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  WorkflowSpecification workflowSpec, ProgramRunnerFactory programRunnerFactory,
                  MetricsCollectionService metricsCollectionService,
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
-                 TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
+                 TransactionSystemClient txClient, Store store, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
                  SecureStoreManager secureStoreManager, MessagingService messagingService) {
     this.program = program;
@@ -166,7 +166,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
-    this.runtimeStore = runtimeStore;
+    this.store = store;
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options);
 
@@ -226,7 +226,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     basicWorkflowToken.setCurrentNode(workflowSpec.getName());
     basicWorkflowContext.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
     basicWorkflowContext.initializeProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
-    runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
+    store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     return workflow;
   }
 
@@ -293,7 +293,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     try {
       basicWorkflowToken.setCurrentNode(workflowSpec.getName());
       basicWorkflowContext.destroyProgram((ProgramLifecycle) workflow, basicWorkflowContext, txControl, false);
-      runtimeStore.updateWorkflowToken(workflowRunId, basicWorkflowToken);
+      store.updateWorkflowToken(workflowRunId, basicWorkflowToken);
     } catch (Throwable t) {
       LOG.error(String.format("Failed to destroy the Workflow %s", workflowRunId), t);
     }
@@ -334,7 +334,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       executorTerminateLatch.await();
       status.remove(node.getNodeId());
     }
-    runtimeStore.updateWorkflowToken(workflowRunId, token);
+    store.updateWorkflowToken(workflowRunId, token);
   }
 
   private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
@@ -394,7 +394,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       }
     } finally {
       // Update the WorkflowToken after the execution of the FORK node completes.
-      runtimeStore.updateWorkflowToken(workflowRunId, token);
+      store.updateWorkflowToken(workflowRunId, token);
       executorService.shutdownNow();
       // Wait for the executor termination
       executorTerminateLatch.await();
@@ -433,7 +433,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
 
     status.put(node.getNodeId(), node);
-    runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
+    store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), NodeStatus.RUNNING));
     Throwable failureCause = null;
     try {
       customActionExecutor.execute();
@@ -442,11 +442,11 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       throw t;
     } finally {
       status.remove(node.getNodeId());
-      runtimeStore.updateWorkflowToken(workflowRunId, token);
+      store.updateWorkflowToken(workflowRunId, token);
       NodeStatus status = failureCause == null ? NodeStatus.COMPLETED : NodeStatus.FAILED;
       nodeStates.put(node.getNodeId(), new WorkflowNodeState(node.getNodeId(), status, null, failureCause));
       BasicThrowable defaultThrowable = failureCause == null ? null : new BasicThrowable(failureCause);
-      runtimeStore.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
+      store.addWorkflowNodeState(workflowRunId, new WorkflowNodeStateDetail(node.getNodeId(), status, null,
                                                                                    defaultThrowable));
     }
   }
@@ -498,7 +498,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // If a workflow updates its token at a condition node, it will be persisted after the execution of the next node.
     // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
     // condition node are also persisted.
-    runtimeStore.updateWorkflowToken(workflowRunId, token);
+    store.updateWorkflowToken(workflowRunId, token);
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
