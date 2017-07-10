@@ -630,11 +630,6 @@ angular.module(PKG.name + '.commons')
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
 
-      if (dragged) {
-        dragged = false;
-        return;
-      }
-
       if ((event.ctrlKey || event.metaKey)) {
         node.selected = !node.selected;
         DAGPlusPlusNodesActionsFactory.resetSelectedNode();
