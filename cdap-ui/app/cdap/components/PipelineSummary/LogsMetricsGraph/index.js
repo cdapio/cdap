@@ -25,7 +25,7 @@ import IconSVG from 'components/IconSVG';
 import {getTicksTotal, xTickFormat, getXDomain, getGraphHeight} from 'components/PipelineSummary/RunsGraphHelpers';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import SortableStickyTable from 'components/SortableStickyTable';
-import {getYDomain, getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 
@@ -155,8 +155,7 @@ export default class LogsMetricsGraph extends Component {
     if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
     }
-    let {minYDomain, maxYDomain} = getYDomain({data: errors.concat(warnings)});
-    let {tickTotals, yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps(errors.concat(warnings));
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);

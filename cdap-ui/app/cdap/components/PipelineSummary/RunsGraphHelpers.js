@@ -55,7 +55,7 @@ export function getXDomain({xDomainType, runsLimit, totalRunsCount, start, end})
   return [startDomain, endDomain];
 }
 
-export function getYDomain({data = {}}) {
+export function getYDomain(data = {}) {
   let maxYDomain = {y: 1}, minYDomain = {y: 0};
   if (data.length > 1) {
     maxYDomain = cloneDeep(data.reduce((prev, curr) => {
@@ -71,13 +71,13 @@ export function getYDomain({data = {}}) {
   if (data.length == 1) {
     maxYDomain = data[0];
   }
-  return {minYDomain, maxYDomain};
+  return [minYDomain.y, maxYDomain.y];
 }
 
-export function getYAxisProps({domain = []}) {
+export function getYAxisProps(data) {
   let props = {
     tickTotals: 10,
-    yDomain: domain,
+    yDomain: getYDomain(data),
     tickFormat: function(d) {
       if (d < 999) {
         return d;
@@ -85,8 +85,8 @@ export function getYAxisProps({domain = []}) {
       return numeral(d).format('0.0a');
     }
   };
-  if (domain[1] === 0) {
-    domain[1] = 10;
+  if (props.yDomain[1] === 0) {
+    props.yDomain[1] = 10;
   }
   return props;
 }

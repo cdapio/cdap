@@ -19,7 +19,6 @@ import {XYPlot, AreaSeries, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines
 import {
   getXDomain,
   getTicksTotal,
-  getYDomain,
   getYAxisProps,
   xTickFormat
 } from 'components/PipelineSummary/RunsGraphHelpers';
@@ -93,8 +92,7 @@ export default class NodesRecordsGraph extends Component {
   }
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
-    let {minYDomain, maxYDomain} = getYDomain({data: this.state.data});
-    let {yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
+    let {yDomain, tickFormat} = getYAxisProps(this.state.data);
     let popOverData;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.records.find(run => this.state.currentHoveredElement.runid === run.runid);
@@ -126,8 +124,7 @@ export default class NodesRecordsGraph extends Component {
             data={this.state.data}
           />
           <AreaSeries
-            className="area-series-example"
-            curve="curveLinearClosed"
+            curve="curveLinear"
             color={getAreaColor(this.props.recordType)}
             stroke={getAreaColor(this.props.recordType)}
             data={this.state.data}

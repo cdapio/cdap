@@ -27,8 +27,7 @@ import {
   ONE_MIN_SECONDS,
   getGraphHeight,
   getTimeResolution,
-  getYAxisProps,
-  getYDomain
+  getYAxisProps
 } from 'components/PipelineSummary/RunsGraphHelpers';
 import {humanReadableDuration} from 'services/helpers';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
@@ -143,9 +142,8 @@ export default class RunsHistoryGraph extends Component {
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let height = getGraphHeight(this.containerRef);
-    let {minYDomain, maxYDomain} = getYDomain({data: this.state.data});
-    let {tickTotals, yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
-    let yAxisResolution = getTimeResolution(maxYDomain.y);
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps(this.state.data);
+    let yAxisResolution = getTimeResolution(yDomain.y);
     let xDomain = [];
     if (this.state.data.length > 0) {
       xDomain = getXDomain(this.props);
