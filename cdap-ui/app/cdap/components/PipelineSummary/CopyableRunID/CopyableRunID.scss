@@ -1,0 +1,61 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$tooltip_text_color: white;
+$tooltip_bg_color: #000000;
+
+.tooltip.run-id-tooltip-element {
+  .tooltip-inner {
+    background-color: $tooltip_bg_color;
+    color: $tooltip_text_color;
+    border: 0;
+    max-width: 300px;
+    display: inline-flex;
+    align-items: center;
+
+    .copied-label {
+      display: inline-flex;
+      align-items: center;
+      height: 15px;
+      .icon-svg {
+        margin: 5px;
+        align-items: center;
+      }
+    }
+    &:before {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-color: transparent;
+      border-style: solid;
+    }
+  }
+  &.run-id-tooltip-target-attached-right {
+    .tooltip-inner {
+      &:before {
+        bottom: 0;
+        top: 35%;
+        margin-left: -11px;
+        content: "";
+        border-width: 0;
+        border-left-color: $tooltip_bg_color;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-right: 5px solid $tooltip_bg_color;
+      }
+    }
+  }
+}
