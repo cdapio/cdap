@@ -94,7 +94,7 @@ export default class NodesRecordsGraph extends Component {
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
     let {minYDomain, maxYDomain} = getYDomain({data: this.state.data});
-    let yAxisProps = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
+    let {yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
     let popOverData;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.records.find(run => this.state.currentHoveredElement.runid === run.runid);
@@ -103,25 +103,13 @@ export default class NodesRecordsGraph extends Component {
     if (this.state.data.length > 0) {
       xDomain = getXDomain(this.props);
     }
-    if (this.props.isLoading) {
-      return (
-        <div className="empty-runs-container">
-          <IconSVG
-            name="icon-spinner"
-            className="fa-spin"
-          />
-        </div>
-      );
-    }
-    if (!this.props.records.length) {
-      return this.renderEmptyMessage();
-    }
     return (
       <div className="graph-plot-container">
         <FPlot
           xType="linear"
           yType="linear"
           xDomain={xDomain}
+          yDomain={yDomain}
           height={this.props.graphHeight}
           className="run-history-fp-plot"
         >
@@ -130,7 +118,7 @@ export default class NodesRecordsGraph extends Component {
             tickFormat={xTickFormat(this.props)}
           />
           <YAxis
-            {...yAxisProps}
+            tickFormat={tickFormat}
           />
           <HorizontalGridLines />
           <LineSeries

@@ -86,8 +86,7 @@ export function getYAxisProps({domain = []}) {
     }
   };
   if (domain[1] === 0) {
-    props.tickValues = [0, 1];
-    props.tickTotals = 2;
+    domain[1] = 10;
   }
   return props;
 }

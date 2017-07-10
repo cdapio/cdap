@@ -156,7 +156,7 @@ export default class LogsMetricsGraph extends Component {
       xDomain = getXDomain(this.props);
     }
     let {minYDomain, maxYDomain} = getYDomain({data: errors.concat(warnings)});
-    let yAxisProps = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);
@@ -169,6 +169,7 @@ export default class LogsMetricsGraph extends Component {
           className="logs-metrics-fp-plot"
           xType="linear"
           xDomain={xDomain}
+          yDomain={yDomain}
           stackBy="y"
           height={height}>
           <DiscreteColorLegend
@@ -182,7 +183,8 @@ export default class LogsMetricsGraph extends Component {
             tickFormat={xTickFormat(this.props)}
           />
           <YAxis
-            {...yAxisProps}
+            tickTotal={tickTotals}
+            tickFormat={tickFormat}
           />
           {
             warnings.length > 0 ?

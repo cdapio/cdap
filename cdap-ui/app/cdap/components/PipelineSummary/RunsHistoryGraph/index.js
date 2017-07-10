@@ -144,7 +144,7 @@ export default class RunsHistoryGraph extends Component {
     let FPlot = makeWidthFlexible(XYPlot);
     let height = getGraphHeight(this.containerRef);
     let {minYDomain, maxYDomain} = getYDomain({data: this.state.data});
-    let yAxisProps = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps({domain: [minYDomain.y, maxYDomain.y]});
     let yAxisResolution = getTimeResolution(maxYDomain.y);
     let xDomain = [];
     if (this.state.data.length > 0) {
@@ -170,6 +170,7 @@ export default class RunsHistoryGraph extends Component {
           xType="linear"
           yType="linear"
           xDomain={xDomain}
+          yDomain={yDomain}
           height={height}
           className="run-history-fp-plot"
         >
@@ -183,7 +184,8 @@ export default class RunsHistoryGraph extends Component {
             tickFormat={xTickFormat(this.props)}
           />
           <YAxis
-            {...yAxisProps}
+            tickTotal={tickTotals}
+            tickFormat={tickFormat}
           />
           <HorizontalGridLines />
           <LineSeries
