@@ -20,6 +20,8 @@ $summary_border_color: #e1e1e1;
 $option-hover-bg-color: #eeeeee;
 $run_menu_bg_color: gray;
 $graph_containers_border_color: lightgray;
+$hint_body_font_color: black;
+$hint_bg_color: white;
 
 .pipeline-summary {
   .graphs-container {
@@ -32,10 +34,77 @@ $graph_containers_border_color: lightgray;
 
     > div {
       width: calc(50% - 20px);
-      padding: 10px;
       border-radius: 4px;
-      height: 50%;
-      min-height: 400px;
+      height: calc(50% - 20px);
+      min-height: 340px;
+      padding: 10px;
+      margin: 5px 10px;
+      border: 1px solid lightgray;
+
+      .title-container {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px;
+
+        .title {
+          font-size: 18px;
+          font-weight: 600;
+        }
+        .viz-switcher {
+          > span {
+            cursor: pointer;
+            &.chart {
+              border-right: 1px solid;
+              margin-right: 5px;
+              padding-right: 8px;
+            }
+            &.active {
+              font-weight: bold;
+            }
+          }
+        }
+      }
+
+      .rv-xy-plot__inner {
+        .rv-xy-plot__series--bar {
+          rect {
+            cursor: pointer;
+          }
+        }
+      }
+      .rv-hint {
+        background: $hint_bg_color;
+        padding: 10px;
+        box-shadow: 0px 10px 15px -5px rgba(0, 0, 0, 0.4);
+        color: $hint_body_font_color;
+        pointer-events: auto;
+
+        .title {
+          display: flex;
+          justify-content: space-between;
+
+          .icon-close {
+            cursor: pointer;
+          }
+        }
+
+        h4 {
+          margin: 0;
+          font-weight: bold;
+          color: $hint_body_font_color;
+        }
+        .log-stats {
+          margin: 5px 0;
+          > div {
+            > span {
+              &:first-child {
+                width: 40%;
+                display: inline-block;
+              }
+            }
+          }
+        }
+      }
     }
   }
   .top-title-bar {
