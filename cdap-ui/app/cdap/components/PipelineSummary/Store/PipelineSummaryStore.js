@@ -19,10 +19,12 @@ import {defaultAction} from 'services/helpers';
 const PIPELINESSUMMARYACTIONS = {
   SETRUNS: 'SETRUNS',
   SETMETRICS: 'SETMETRICS',
-  SETLOADING: 'SETLOADING'
+  SETLOADING: 'SETLOADING',
+  SETNODESMETRICSMAP: 'SETNODESMETRICSMAP'
 };
 const defaultRunsSummary = {
   runs: [],
+  nodesMap: {},
   loading: false
 };
 
@@ -33,9 +35,15 @@ const pipelinerunssummary = (state = defaultRunsSummary, action = defaultAction)
         runs: action.payload.runs || [],
         loading: false
       });
+    case PIPELINESSUMMARYACTIONS.SETNODESMETRICSMAP:
+      return Object.assign({}, state, {
+        nodesMap: action.payload.nodesMap
+      });
     case PIPELINESSUMMARYACTIONS.SETLOADING:
       return Object.assign({}, state, {
-        loading: action.payload.loading
+        loading: action.payload.loading,
+        runs: [],
+        nodesMap: {}
       });
     default:
       return state;
