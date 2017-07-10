@@ -123,19 +123,27 @@ public class HBaseVersion {
 
   /**
    * Utility class to parse apart version number components.  The version string provided is expected to be in
-   * the format: major[.minor[.patch[.last]][-classifier][-SNAPSHOT]
+   * one of the formats below.
    *
-   * <p>Only the major version number is actually required.</p>
+   * <p>Only the major version number and classifier are actually required.</p>
    */
   public static class VersionNumber {
+    // Common pattern (for CDH, open source distro, etc.)
+    // major[.minor[.patch[.last]][-classifier][-SNAPSHOT]
     private static final Pattern PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-SNAPSHOT)?");
+      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-SNAPSHOT)?");
+
+    // HDP has a different format:
+    // major.minor.patch.hdp_major.hdp_minor.hdp_patch.hdp_last-package_number[-hadoop2],
+    // For now, we support only non-snapshot versions
+    private static final Pattern HDP_PATTERN =
+      Pattern.compile("(\\d+)(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(-(\\d+))(-hadoop2)?");
 
     // IBM has a different format where they add build number at the end,
     // major[.minor[.patch[.last]][-classifier][-buildNumber],
     // we ignore build number for now and support only non-snapshot versions.
     private static final Pattern IBM_PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-(\\d+))?");
+      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-(\\d+))?");
 
     private Integer major;
     private Integer minor;
@@ -180,6 +188,7 @@ public class HBaseVersion {
 
     public static VersionNumber create(String versionString) throws ParseException {
       Matcher matcher = PATTERN.matcher(versionString);
+      Matcher hdpMatcher = HDP_PATTERN.matcher(versionString);
       Matcher ibmMatcher = IBM_PATTERN.matcher(versionString);
       if (matcher.matches()) {
         String majorString = matcher.group(1);
@@ -194,6 +203,14 @@ public class HBaseVersion {
                                  last != null ? new Integer(last) : null,
                                  classifier,
                                  "-SNAPSHOT".equals(snapshotString));
+      } else if (hdpMatcher.matches()) {
+        String majorString = hdpMatcher.group(1);
+        String minorString = hdpMatcher.group(3);
+        String patchString = hdpMatcher.group(5);
+        return new VersionNumber(new Integer(majorString),
+                                 minorString != null ? new Integer(minorString) : null,
+                                 patchString != null ? new Integer(patchString) : null,
+                                 null, null, false);
       } else if (ibmMatcher.matches()) {
         String majorString = ibmMatcher.group(1);
         String minorString = ibmMatcher.group(3);
