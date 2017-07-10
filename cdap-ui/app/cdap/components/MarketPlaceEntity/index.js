@@ -35,6 +35,11 @@ export default class MarketPlaceEntity extends Component {
       imageError: false,
       logoIcon: null
     };
+
+    if (MarketStore.getState().activeEntity === this.props.entityId) {
+      this.fetchEntityDetail(MarketStore.getState().displayCTA);
+    }
+
     this.unsub = MarketStore.subscribe(() => {
       let marketState = MarketStore.getState();
       if ((marketState.activeEntity !== this.props.entityId) && this.state.expandedMode) {
@@ -53,13 +58,13 @@ export default class MarketPlaceEntity extends Component {
       entity: this.props.entity
     };
   }
-  fetchEntityDetail() {
+  fetchEntityDetail(displayCTA = true) {
     MyMarketApi.get({
       packageName: this.props.entity.name,
       version: this.props.entity.version
     }).subscribe((res) => {
       this.setState({entityDetail: res});
-      this.toggleDetailedMode();
+      this.toggleDetailedMode(displayCTA);
     }, (err) => {
       console.log('Error', err);
     });
@@ -70,7 +75,7 @@ export default class MarketPlaceEntity extends Component {
     }
     this.fetchEntityDetail();
   }
-  toggleDetailedMode() {
+  toggleDetailedMode(displayCTA = true) {
     this.setState({
       expandedMode: !this.state.expandedMode,
       actionsComplete: false
@@ -78,7 +83,8 @@ export default class MarketPlaceEntity extends Component {
     MarketStore.dispatch({
       type: 'SET_ACTIVE_ENTITY',
       payload: {
-        entityId: this.props.entityId
+        entityId: this.props.entityId,
+        displayCTA: displayCTA
       }
     });
   }
@@ -164,6 +170,7 @@ export default class MarketPlaceEntity extends Component {
                   onClose={() => this.setState({performSingleAction: false})}
                   wizardType={this.state.entityDetail.actions[0].type}
                   input={{action: this.state.entityDetail.actions[0], package: this.props.entity}}
+                  displayCTA={MarketStore.getState().displayCTA}
                 />
               </button>
               <button

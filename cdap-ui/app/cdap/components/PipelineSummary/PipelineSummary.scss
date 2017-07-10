@@ -1,0 +1,130 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$pipeline-summary-bg: white;
+$summary_titlebar_bg: #f5f5f5;
+$summary_border_color: #e1e1e1;
+$option-hover-bg-color: #eeeeee;
+$run_menu_bg_color: gray;
+$graph_containers_border_color: lightgray;
+
+.pipeline-summary {
+  .graphs-container {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    background: $pipeline-summary-bg;
+    overflow: auto;
+    height: calc(100vh - 240px); // Header + Top panel = 95 + Footer = 51 + summary title bar = 49 + border 1px
+
+    > div {
+      width: calc(50% - 20px);
+      padding: 10px;
+      border-radius: 4px;
+      height: 50%;
+      min-height: 400px;
+    }
+  }
+  .top-title-bar {
+    padding: 15px 10px;
+    background: $summary_titlebar_bg;
+    display: flex;
+    border: 1px solid $summary_border_color;
+    > div {
+      &:nth-child(1) {
+        flex: 0.2;
+        font-size: 16px;
+        font-weight: 500;
+      }
+      &:nth-child(2) {
+        flex: 1;
+      }
+    }
+    .stats-container {
+      > span {
+        margin: 0 10px;
+        vertical-align: middle;
+        &.run-times {
+          > span {
+            margin: 0 10px;
+          }
+          .run-time-label {
+            margin-right: 15px;
+          }
+        }
+      }
+      .icon-close {
+        cursor: pointer;
+        margin-left: 20px;
+      }
+    }
+  }
+  .filter-container {
+    padding: 5px 10px 5px 10px;
+    background: white;
+    .runs-dropdown {
+      display: inline-block;
+      margin-left: 10px;
+      .btn.btn-secondary {
+        border: 0;
+        border-bottom: 1px solid lightgray;
+        border-radius: 0;
+        background: transparent;
+        padding-left: 5px;
+        padding-right: 5px;
+        &:focus,
+        &:active,
+        &.active,
+        &:hover {
+          background: transparent;
+          outline: none;
+          box-shadow: none;
+        }
+        span {
+          &:first-child {
+            margin-right: 5px;
+          }
+        }
+        .icon-chevron-down {
+          font-size: 12px;
+          margin-left: 5px;
+        }
+      }
+      .dropdown-menu {
+        padding: 0;
+        .dropdown-item {
+          padding: 10px;
+          cursor: pointer;
+          &:focus,
+          &:active,
+          &.active,
+          &:hover {
+            background: transparent;
+            outline: none;
+          }
+          &:hover {
+            background-color: $option-hover-bg-color;
+          }
+        }
+        .dropdown-divider {
+          height: 1px;
+          background: $run_menu_bg_color;
+          margin: 1px 0;
+        }
+      }
+    }
+  }
+}

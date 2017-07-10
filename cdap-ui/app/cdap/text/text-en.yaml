@@ -374,7 +374,11 @@ features:
       noColumns: No Columns
     DataPrepTable:
       columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+      dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
       emptyWorkspace: No data
+      refreshBtnLinkLabel: Refresh
+      suggestionTitle: "You can try to:"
+      suggestion1: the page
       noData: No data. Try removing some directives.
     DataPrepBrowser:
       DatabaseBrowser:
@@ -392,6 +396,21 @@ features:
           1: '{context} Table'
           _: "{context} Tables"
         title: Select Table
+      KafkaBrowser:
+        EmptyMessage:
+          clearLabel: Clear
+          emptyKafka: 'No topics in connection _{connectionName}_'
+          suggestionTitle: "You can try to:"
+          suggestion1: your search
+          title: 'No match found for "{searchText}"'
+        searchPlaceholder: Search topic
+        table:
+          topics: Topics
+        topicCount:
+          0: No Topics
+          1: '{count} Topic'
+          _: "{count} Topics"
+        title: Select Topic
     Directives:
       apply: Apply
       cancel: Cancel
@@ -411,7 +430,7 @@ features:
           ignoreCase: Ignore Case
           modalTitle: Replace Column Names
           PatternInputPlaceholder:
-            PREFIX: "e.g. ^body_, work_"
+            PREFIX: "e.g. body_, work_"
           patternLabel: Pattern
           PatternTypeLabel:
             CUSTOM: Replace Pattern
@@ -674,6 +693,7 @@ features:
       invalidFieldNameRemedies2: "You can try to "
       cleanseLinkLabel: "cleanse "
       invalidFieldNameRemedies3: column names.
+      kafka: Kafka
       SchemaModal:
         defaultErrorMessage: Error generating schema.
       PipelineModal:
@@ -719,7 +739,7 @@ features:
         uploadSubTitle: Select the file to be uploaded to the workspace
         uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version 2.0.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
@@ -757,12 +777,37 @@ features:
         DatabaseOptions:
           install: "Install Driver: "
           installedLabel: Driver Installed
+          market: Cask Market
           optionsTitle: Select the type of database you want to connect to
           upload: Upload
         ModalHeader:
           ADD: "Add Connection: Database"
           DUPLICATE: "Duplicate Connection: {connection}"
           EDIT: "Edit Connection: {connection}"
+      Kafka:
+        brokersList: Broker Host
+        Buttons:
+          ADD: Add Connection
+          DUPLICATE: Duplicate Connection
+          EDIT: Save Changes
+        connectionType: Connection Type
+        defaultTestErrorMessage: Cannot connect to Kafka
+        ErrorMessages:
+          ADD: Failed to add connection
+          DUPLICATE: Failed to duplicate connection
+          EDIT: Failed to edit connection
+        kafka: Kafka
+        ModalHeader:
+          ADD: "Add Connection: Kafka"
+          DUPLICATE: "Duplicate Connection: {connection}"
+          EDIT: "Edit Connection: {connection}"
+        name: Name
+        port: Port
+        required: Required
+        testConnection: Test Connection
+        zkQuorum: Zookeeper Host
+        zookeeper: Zookeeper
+
       label: Add Connection
       Popover:
         title: Select a source to connect
@@ -779,6 +824,7 @@ features:
       edit: Edit
     database: Database ({count})
     hdfs: File System
+    kafka: Kafka ({count})
     title: "Connections in \"{namespace}\""
     upload: Upload
     UploadComponent:
@@ -1013,6 +1059,70 @@ features:
     subtitleMessage2: View all your entities in the
   Pagination:
     dropdown-label: Page
+  PipelineSummary:
+    filterContainer:
+      view: View
+    graphs:
+      emptyMessage: No Runs {filter}
+      vizSwitcher:
+        chart: Chart
+        table: Table
+    logsMetricsGraph:
+      hint:
+        errors: Errors
+        runNumber: Run Number
+        startTime: Start Time
+        title: Log Errors & Warnings
+        viewLogs: View Logs
+        warnings: Warnings
+      legend1: Warnings
+      legend2: Errors
+      table:
+        body:
+          viewLog: View Log
+        header:
+          errors: Errors
+          runCount: Run#
+          startTime: Start Time
+          warnings: Warnings
+      title: Log Errors and Warnings
+      xAxisTitle: Pipeline Run #
+      yAxisTitle: Number of Errors and Warnings
+    runsHistoryGraph:
+      hint:
+        duration: Duration
+        runNumber: Run Number
+        status: Status
+        startTime: Start Time
+        title: Run History
+      legend1: Failed
+      legend2: Successful
+      table:
+        headers:
+          duration: Duration
+          runCount: Run#
+          status: Status
+          startTime: Start Time
+      title: Run History
+      xAxisTitle: Pipeline Run #
+      yAxisTitle: Run Duration ({resolution})
+    runsFilter:
+      last10Runs: Last 10 runs
+      last50Runs: Last 50 runs
+      last100Runs: Last 100 runs
+      last1Day: Last 24 hours
+      last7Days: Last 7 days
+      last30Days: Last 30 days
+      sinceInception: Since Inception
+    statsContainer:
+      avg: Average
+      avgRunTime: Average Run Time
+      currentSchedule: Current Schedule
+      min: Min
+      max: Max
+      runTime: Run Time
+      totalRuns: TotalRuns
+    title: 'Summary'
   PropertiesEditor:
     AddProperty:
       button: Add Property
@@ -1060,7 +1170,7 @@ features:
       modalheadertitle: Add Library
     Microservice:
       actionbtn0: Create
-      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystem communicating over well defined protocol.
+      description: A Reactive Microservice is a decomposition of system into discrete, isolated subsystems communicating over a well defined protocol.
       label: Microservice
       modalheadertitle: Create Microservice
     Plugins:
@@ -1114,7 +1224,7 @@ features:
       readsLabel: Reads
       writesLabel: Writes
       eventsLabel: Events
-      sizeLabel: Size(MB)
+      sizeLabel: Size
     nameLabel: Name
     ProgramTable:
       lastStartedLabel: Last Started
@@ -1247,6 +1357,7 @@ features:
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
+        helperText: Please load the microservice-app artifact for creating and managing microservices using the _load artifact <artifact-jar-file>_ CLI command.
         instanceNameLabel: Instance Name
         instanceNamePlaceholder: Name of the microservice instance
         microserviceOptionLabel: Microservice Name
@@ -1315,6 +1426,10 @@ features:
         title: Properties
       success: You have successfully created the microservice "{appName}".
       summaryLabel: "Summary: "
+    NavigationButtons:
+      finish: Finish
+      next: Next
+      previous: Previous
     OneStepDeploy:
       headerlabel: Deploy
       Step1:

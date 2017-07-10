@@ -78,7 +78,11 @@ public final class ProgramOptionConstants {
   /**
    * Options for impersonation
    */
+  // This is the principal that the program will be run as. Currently, it will be either the app principal if that
+  // exists or it will be the namespace principal.
   public static final String PRINCIPAL = "principal";
+
+  public static final String APP_PRINCIPAL_EXISTS = "appPrincipalExists";
 
   public static final String KEYTAB_URI = "keytabURI";
 }

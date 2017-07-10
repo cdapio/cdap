@@ -30,6 +30,7 @@
  var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
  var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
  var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
+ var PipelineSummary = require('../cdap/components/PipelineSummary').default;
  var Mousetrap = require('mousetrap');
 
  export {
@@ -47,5 +48,6 @@
   KeyValuePairs,
   KeyValueStore,
   KeyValueStoreActions,
-  Mousetrap
+  Mousetrap,
+  PipelineSummary
 };

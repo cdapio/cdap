@@ -27,6 +27,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import DataPrepConnections from 'components/DataPrepConnections';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
+import ee from 'event-emitter';
 
 require('./DataPrepHome.scss');
 /**
@@ -51,6 +52,7 @@ export default class DataPrepHome extends Component {
     this.toggleConnectionsView = this.toggleConnectionsView.bind(this);
     this.onWorkspaceCreate = this.onWorkspaceCreate.bind(this);
     this.updateWorkspaceList = this.updateWorkspaceList.bind(this);
+    this.eventEmitter = ee(ee);
     this.fetching = false;
   }
 
@@ -106,6 +108,8 @@ export default class DataPrepHome extends Component {
       currentWorkspaceId: workspaceId,
       toggleConnectionsViewFlag: !this.state.toggleConnectionsViewFlag
     });
+
+    this.eventEmitter.emit('DATAPREP_CLOSE_SIDEPANEL');
   }
 
   updateWorkspaceList() {

@@ -19,13 +19,15 @@ import shortid from 'shortid';
 import VersionRange from 'services/VersionRange';
 import Version from 'services/VersionRange/Version';
 import VersionStore from 'services/VersionStore';
+import isNil from 'lodash/isNil';
 
 const initialState = {
   list: [],
   activeEntity: undefined,
   filter: '*',
   loading: true,
-  isError: false
+  isError: false,
+  displayCTA: true
 };
 
 const market = (state=initialState, action) => {
@@ -38,7 +40,8 @@ const market = (state=initialState, action) => {
       });
     case 'SET_ACTIVE_ENTITY':
       return Object.assign({}, state, {
-        activeEntity: action.payload.entityId
+        activeEntity: action.payload.entityId,
+        displayCTA: !isNil(action.payload.displayCTA) ? action.payload.displayCTA : true
       });
     case 'SET_FILTER':
       return Object.assign({}, state, {

@@ -53,12 +53,15 @@ export default class ArtifactUploadWizard extends Component {
   }
 
   onSubmit() {
-    if (!this.props.buildSuccessInfo) {
+    if (!this.props.buildSuccessInfo && this.props.displayCTA) {
       this.buildSuccessInfo();
     }
     return ArtifactUploadActionCreator
       .uploadArtifact()
       .flatMap((res) => {
+        if (this.props.displayCTA === false) {
+          this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+        }
         this.eventEmitter.emit(globalEvents.ARTIFACTUPLOAD);
         return res; // needs to return something
     });
@@ -136,7 +139,8 @@ ArtifactUploadWizard.defaultProps = {
       arguments: {}
     },
     package: {},
-  }
+  },
+  displayCTA: true
 };
 ArtifactUploadWizard.childContextTypes = {
   isMarket: PropTypes.bool
@@ -146,5 +150,6 @@ ArtifactUploadWizard.propTypes = {
   input: PropTypes.any,
   onClose: PropTypes.func,
   buildSuccessInfo: PropTypes.func,
-  hideUploadHelper: PropTypes.bool
+  hideUploadHelper: PropTypes.bool,
+  displayCTA: PropTypes.bool
 };

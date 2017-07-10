@@ -293,12 +293,14 @@
       is-pipeline="true">
     </my-log-viewer>
   </div>
-  <div class="pipeline-settings">
+  <div class="pipeline-settings pipeline-summary">
     <div
       store="TopPanelCtrl.HydratorPlusPlusDetailRunsStore"
+      pipeline-config="TopPanelCtrl.cloneConfig"
       action-creator="TopPanelCtrl.HydratorPlusPlusDetailActions"
       pipeline-type="{{TopPanelCtrl.pipelineType}}"
       ng-if="TopPanelCtrl.viewSummary"
+      on-close="TopPanelCtrl.hidePipelineSummary()"
       my-pipeline-summary>
     </div>
   </div>

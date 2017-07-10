@@ -20,6 +20,7 @@
 
 @type-column-width: 80px;
 @fields-right-offset: 70px;
+@disabled-input-bg-color: #eeeeee;
 
 my-complex-schema {
   div.complex-schema-container {
@@ -29,6 +30,22 @@ my-complex-schema {
       padding-left: 7px;
     }
 
+    fieldset.schema-fields-container {
+      &.disabled {
+        background-color: @disabled-input-bg-color;
+
+        .tab-header-inner {
+          background-color: @disabled-input-bg-color;
+        }
+
+        my-embedded-schema-selector {
+          div.tab-toggle.expanded:before {
+            background-color: @disabled-input-bg-color;
+          }
+        }
+      }
+    }
+
     .field-row {
       .form-control {
         background-color: transparent;
@@ -36,6 +53,11 @@ my-complex-schema {
         box-shadow: none;
         border-radius: 0;
         outline-offset: -4px;
+
+        &.disabled {
+          background-color: @disabled-input-bg-color;
+        }
+
         .placeholder-color(@color: #666666, @font-weight: 500);
       }
       &:not(.nested-row) { box-shadow: 2px 0 2px 0 rgba(1, 0, 0, 0.2); }

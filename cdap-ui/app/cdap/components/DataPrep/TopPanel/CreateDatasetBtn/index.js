@@ -178,6 +178,7 @@ export default class CreateDatasetBtn extends Component {
     let pipelineConfig = cloneDeep(this.state.batchPipelineConfig);
     let wranglerStage = pipelineConfig.config.stages.find(stage => stage.name === 'Wrangler');
     let dbStage = pipelineConfig.config.stages.find(stage => stage.name === 'Database');
+    let kafkaStage = pipelineConfig.config.stages.find(stage => stage.name === 'Kafka');
     let databaseConfig = objectQuery(workspaceInfo, 'properties', 'databaseConfig');
     let macroMap = {};
     if (databaseConfig) {
@@ -197,7 +198,9 @@ export default class CreateDatasetBtn extends Component {
       query: objectQuery(dbStage, 'plugin', 'properties', 'importQuery') || '',
       connectionString: objectQuery(dbStage, 'plugin', 'properties', 'connectionString') || '',
       password: objectQuery(dbStage, 'plugin', 'properties', 'password') || '',
-      userName: objectQuery(dbStage, 'plugin', 'properties', 'user') || ''
+      userName: objectQuery(dbStage, 'plugin', 'properties', 'user') || '',
+      topic: objectQuery(kafkaStage, 'plugin', 'properties', 'topic') || '',
+      kafkaBrokers: objectQuery(kafkaStage, 'plugin', 'properties', 'kafkaBrokers') || ''
     });
   }
 
@@ -234,6 +237,13 @@ export default class CreateDatasetBtn extends Component {
         password: '${password}',
         importQuery: '${query}'
       },
+      'Kafka': {
+        referenceName: 'KafkaNode',
+        kafkaBrokers: '${kafkaBrokers}',
+        topic: '${topic}',
+        tableName: 'kafka-offset',
+        schema: "{\"name\":\"kafkaAvroSchema\",\"type\":\"record\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+      },
       'TPFSOrc': dataFormatProperties,
       'TPFSParquet': dataFormatProperties,
       'TPFSAvro': dataFormatProperties
@@ -244,6 +254,7 @@ export default class CreateDatasetBtn extends Component {
       }
       return stage;
     });
+
     return {pipelineConfig, macroMap};
   }
 
@@ -263,6 +274,7 @@ export default class CreateDatasetBtn extends Component {
     }
     pipelineconfig.config.stages.push(sink);
     let {pipelineConfig: appConfig, macroMap} = this.addMacrosToPipelineConfig(pipelineconfig);
+
     let connections = this.state.batchPipelineConfig.config.connections;
     let sinkConnection = [
       {
@@ -295,11 +307,15 @@ export default class CreateDatasetBtn extends Component {
       pipelineName = `one_time_copy_to_fs_${this.state.format}`;
       if (workspaceProps.connection === 'database') {
         pipelineName = `one_time_copy_to_fs_from_${dbStage.plugin.properties.jdbcPluginName}`;
+      } else if (workspaceProps.connection === 'kafka') {
+        pipelineName = 'one_time_copy_to_fs_from_kafka';
       }
     } else {
       pipelineName = `one_time_copy_to_table`;
       if (workspaceProps.connection === 'database') {
         pipelineName = `one_time_copy_to_table_from_${dbStage.plugin.properties.jdbcPluginName}`;
+      } else if (workspaceProps.connection === 'kafka') {
+        pipelineName = 'one_time_copy_to_table_from_kafka';
       }
     }
 
@@ -311,6 +327,7 @@ export default class CreateDatasetBtn extends Component {
     MyAppApi.list({namespace})
       .flatMap(res => {
         let appAlreadyDeployed = res.find(app => app.id === pipelineName);
+
         if (!appAlreadyDeployed) {
           let appConfigWithMacros= this.preparePipelineConfig();
           pipelineconfig = appConfigWithMacros.appConfig;
@@ -320,6 +337,7 @@ export default class CreateDatasetBtn extends Component {
             namespace,
             appId: pipelineName
           };
+
           // If it doesn't exist create a new pipeline with macros.
           return MyAppApi.deployApp(params, pipelineconfig);
         }
@@ -405,6 +423,8 @@ export default class CreateDatasetBtn extends Component {
           });
         },
         (err) => {
+          console.log('err', err);
+
           let copyingSteps = this.state.copyingSteps.map((step) => {
             if (step.status === 'running') {
               return Object.assign({}, step, {status: 'failure'});

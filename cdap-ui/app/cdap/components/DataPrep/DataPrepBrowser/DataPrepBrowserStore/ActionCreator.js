@@ -26,14 +26,30 @@ const setDatabaseInfoLoading = () => {
     }
   });
 };
-const setDatabaseError = (payload) => {
+
+const setKafkaInfoLoading = () => {
   DataPrepBrowserStore.dispatch({
-    type: BrowserStoreActions.SET_DATABASE_ERROR,
+    type: BrowserStoreActions.SET_KAFKA_LOADING,
     payload: {
-      loading: payload
+      loading: !DataPrepBrowserStore.getState().kafka.loading
     }
   });
 };
+
+const setDatabaseError = (payload) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_DATABASE_ERROR,
+    payload: payload
+  });
+};
+
+const setKafkaError = (payload) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_KAFKA_ERROR,
+    payload: payload
+  });
+};
+
 const setActiveBrowser = (payload) => {
   DataPrepBrowserStore.dispatch({
     type: BrowserStoreActions.SET_ACTIVEBROWSER,
@@ -44,6 +60,7 @@ const setActiveBrowser = (payload) => {
 const setDatabaseAsActiveBrowser = (payload) => {
   setActiveBrowser(payload);
   setDatabaseInfoLoading();
+
   let namespace = NamespaceStore.getState().selectedNamespace;
   let {id} = payload;
   let params = {
@@ -52,15 +69,59 @@ const setDatabaseAsActiveBrowser = (payload) => {
   };
   MyDataPrepApi.getConnection(params)
     .subscribe((res) => {
-      let properties = objectQuery(res, 'values', 0, 'properties');
+      let info = objectQuery(res, 'values', 0);
 
-      setDatabaseProperties({
-        properties,
-        connectionId: params.connectionId
-      });
-
+      MyDataPrepApi.listTables(params)
+        .subscribe((tables) => {
+          setDatabaseProperties({
+            info,
+            tables: tables.values,
+            connectionId: params.connectionId,
+          });
+        }, (err) => {
+          setDatabaseError({
+            error: err,
+            info
+          });
+        });
     }, (err) => {
       setDatabaseError({
+        payload: err
+      });
+    });
+};
+
+const setKafkaAsActiveBrowser = (payload) => {
+  setActiveBrowser(payload);
+  setKafkaInfoLoading();
+
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let {id} = payload;
+  let params = {
+    namespace,
+    connectionId: id
+  };
+
+  MyDataPrepApi.getConnection(params)
+    .subscribe((res) => {
+      let info = objectQuery(res, 'values', 0);
+
+      MyDataPrepApi.listTopics({namespace}, info)
+        .subscribe((topics) => {
+          setKafkaProperties({
+            info,
+            topics: topics.values,
+            connectionId: params.connectionId
+          });
+        }, (err) => {
+          setKafkaError({
+            error: err,
+            info
+          });
+        });
+
+    }, (err) => {
+      setKafkaError({
         payload: err
       });
     });
@@ -74,8 +135,17 @@ const setDatabaseProperties = (payload) => {
   setDatabaseInfoLoading();
 };
 
+const setKafkaProperties = (payload) => {
+  DataPrepBrowserStore.dispatch({
+    type: BrowserStoreActions.SET_KAFKA_PROPERTIES,
+    payload
+  });
+  setKafkaInfoLoading();
+};
+
 export {
   setActiveBrowser,
   setDatabaseProperties,
-  setDatabaseAsActiveBrowser
+  setDatabaseAsActiveBrowser,
+  setKafkaAsActiveBrowser
 };

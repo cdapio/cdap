@@ -18,10 +18,12 @@ import React, {Component, PropTypes} from 'react';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
 import DatabaseBrowser from 'components/DataPrep/DataPrepBrowser/DatabaseBrowser';
 import FileBrowser from 'components/FileBrowser';
+import KafkaBrowser from 'components/DataPrep/DataPrepBrowser/KafkaBrowser';
 
 const browserMap = {
   database: DatabaseBrowser,
-  file: FileBrowser
+  file: FileBrowser,
+  kafka: KafkaBrowser
 };
 
 export default class DataPrepBrowser extends Component {

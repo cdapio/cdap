@@ -26,7 +26,7 @@ import java.io.IOException;
 public interface UGIProvider {
 
   /**
-   * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationInfo}.
+   * Returns a {@link UserGroupInformation} based on the given {@link ImpersonationRequest}.
    *
    * @param impersonationRequest information specifying the entity on which the impersonation is being performed and
    *                            the type of the operation

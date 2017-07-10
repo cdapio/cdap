@@ -43,7 +43,9 @@ const defaultInitialState = {
 
 const errorInitialState = {
   showError: null,
-  cliError: null
+  cliError: null,
+  dataError: false,
+  dataErrorMessage: null
 };
 
 const columnsInformationInitialState = {
@@ -77,6 +79,12 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         selectedHeaders: state.selectedHeaders.filter((head) => {
           return action.payload.headers.indexOf(head) !== -1;
         })
+      });
+      break;
+    case DataPrepActions.setWorkspaceId:
+      stateCopy = Object.assign({}, state, {
+        workspaceId: action.payload.workspaceId,
+        loading: action.payload.loading
       });
       break;
     case DataPrepActions.setWorkspace:
@@ -121,6 +129,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         loading: true
       });
       break;
+    case DataPrepActions.setDataError:
     case DataPrepActions.disableLoading:
       stateCopy = Object.assign({}, state, {
         loading: false
@@ -145,6 +154,13 @@ const error = (state = errorInitialState, action = defaultAction) => {
         cliError: null
       });
       break;
+    case DataPrepActions.setDataError:
+      stateCopy = Object.assign({}, state, {
+        dataError: true,
+        loading: false,
+        dataErrorMessage: action.payload.errorMessage
+      });
+      break;
     case DataPrepActions.setCLIError:
       stateCopy = Object.assign({}, state, {
         showError: null,
@@ -155,12 +171,19 @@ const error = (state = errorInitialState, action = defaultAction) => {
     case DataPrepActions.setDirectives:
       stateCopy = Object.assign({}, state, {
         showError: null,
-        cliError: null
+        cliError: null,
+        dataError: false
       });
       break;
     case DataPrepActions.dismissError:
       stateCopy = Object.assign({}, state, {
         showError: null
+      });
+      break;
+    case DataPrepActions.setData:
+      stateCopy = Object.assign({}, state, {
+        dataError: false,
+        dataErrorMessage: null
       });
       break;
     case DataPrepActions.reset:

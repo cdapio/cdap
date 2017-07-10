@@ -81,12 +81,30 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         id: shortid.generate(),
+        tag: SetCharacterEncoding,
+        requiredColCount: 1
+      },
+      {
+        tag: 'divider'
+      },
+      {
+        id: shortid.generate(),
         tag: Format,
         requiredColCount: 1
       },
       {
         id: shortid.generate(),
         tag: FilterDirective,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: FindAndReplaceDirective,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: FillNullOrEmpty,
         requiredColCount: 1
       },
       {
@@ -122,16 +140,6 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         id: shortid.generate(),
-        tag: FindAndReplaceDirective,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
-        tag: FillNullOrEmpty,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
         tag: ExtractFields,
         requiredColCount: 1
       },
@@ -141,11 +149,11 @@ export default class ColumnActionsDropdown extends Component {
         requiredColCount: 0
       },
       {
-        id: shortid.generate(),
-        tag: MaskData
+        tag: 'divider'
       },
       {
-        tag: 'divider'
+        id: shortid.generate(),
+        tag: MaskData
       },
       {
         id: shortid.generate(),
@@ -155,11 +163,6 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: Decode,
-        requiredColCount: 1
-      },
-      {
-        id: shortid.generate(),
-        tag: SetCharacterEncoding,
         requiredColCount: 1
       }
     ];

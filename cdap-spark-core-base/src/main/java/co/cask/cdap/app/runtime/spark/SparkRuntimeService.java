@@ -33,6 +33,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
@@ -153,17 +154,18 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                       new DataSetFieldSetter(runtimeContext.getDatasetCache()),
                       new MetricsFieldSetter(runtimeContext));
 
-
+    // Since we are updating cConf, make a copy of it to which updates will be made.
+    CConfiguration cConfCopy = CConfiguration.copy(cConf);
     // Creates a temporary directory locally for storing all generated files.
-    File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
+    File tempDir = DirUtils.createTempDir(new File(cConfCopy.get(Constants.CFG_LOCAL_DATA_DIR),
+                                                   cConfCopy.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     tempDir.mkdirs();
     this.cleanupTask = createCleanupTask(tempDir, System.getProperties());
     try {
       initialize();
       SparkRuntimeContextConfig contextConfig = new SparkRuntimeContextConfig(runtimeContext.getConfiguration());
 
-      final File jobJar = generateJobJar(tempDir, contextConfig.isLocal(), cConf);
+      final File jobJar = generateJobJar(tempDir, contextConfig.isLocal(), cConfCopy);
       final List<LocalizeResource> localizeResources = new ArrayList<>();
 
       String metricsConfPath;
@@ -195,7 +197,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(programJar));
         localizeResources.add(new LocalizeResource(expandedProgramJar, true));
 
-        // Localize plugins
         if (pluginArchive != null) {
           localizeResources.add(new LocalizeResource(pluginArchive, true));
         }
@@ -210,8 +211,10 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         metricsConfPath = metricsConf.getName();
         localizeResources.add(new LocalizeResource(metricsConf));
 
+        prepareHBaseDDLExecutorResources(tempDir, cConfCopy, localizeResources);
+
         // Localize the cConf file
-        localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
+        localizeResources.add(new LocalizeResource(saveCConf(cConfCopy, tempDir)));
 
         // Preserves and localize runtime information in the hConf
         Configuration hConf = contextConfig.set(runtimeContext, pluginArchive).getConfiguration();
@@ -239,7 +242,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
         // Localize extra jars and append to the end of the classpath
         List<String> extraJars = new ArrayList<>();
-        for (URI jarURI : CConfigurationUtil.getExtraJars(cConf)) {
+        for (URI jarURI : CConfigurationUtil.getExtraJars(cConfCopy)) {
           extraJars.add(Paths.get("$PWD", LocalizationUtils.getLocalizedName(jarURI)).toString());
           localizeResources.add(new LocalizeResource(jarURI, false));
         }
@@ -766,5 +769,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     SettableFuture<V> future = SettableFuture.create();
     future.cancel(true);
     return future;
+  }
+
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(File tempDir, CConfiguration cConf,
+                                                List<LocalizeResource> localizeResources)
+    throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return;
+    }
+
+    final File target = new File(tempDir, "hbaseddlext.jar");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.add(new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
   }
 }

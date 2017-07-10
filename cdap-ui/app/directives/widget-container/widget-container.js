@@ -26,6 +26,7 @@ angular.module(PKG.name + '.commons')
         properties: '=',
         widgetDisabled: '=',
         inputSchema: '=',
+        stageName: '=',
         isFieldRequired: '='
       },
       replace: false,

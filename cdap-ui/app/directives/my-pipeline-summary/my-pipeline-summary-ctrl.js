@@ -15,7 +15,8 @@
  */
 
 class MyPipelineSummaryCtrl {
-  constructor($scope, moment, $interval, GLOBALS) {
+  constructor($scope, moment, $interval, GLOBALS, $stateParams) {
+    this.$stateParams = $stateParams;
     this.runs = [];
     this.programId = '';
     this.programType = '';
@@ -51,7 +52,7 @@ class MyPipelineSummaryCtrl {
       if (nextRunTimeInterval) {
         $interval.cancel(nextRunTimeInterval);
       }
-      if(statisticsInterval) {
+      if (statisticsInterval) {
         $interval.cancel(statisticsInterval);
       }
     });
@@ -63,6 +64,7 @@ class MyPipelineSummaryCtrl {
     this.programType = params.programType.toUpperCase();
     this.programId = params.programName;
     this.appId = params.app;
+    this.namespaceId = this.$stateParams.namespace;
 
     var averageRunTime = this.store.getStatistics().avgRunTime;
     // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
@@ -81,7 +83,7 @@ class MyPipelineSummaryCtrl {
 
   }
 }
-MyPipelineSummaryCtrl.$inject = ['$scope', 'moment', '$interval', 'GLOBALS'];
+MyPipelineSummaryCtrl.$inject = ['$scope', 'moment', '$interval', 'GLOBALS', '$stateParams'];
 
  angular.module(PKG.name + '.commons')
   .controller('MyPipelineSummaryCtrl', MyPipelineSummaryCtrl);

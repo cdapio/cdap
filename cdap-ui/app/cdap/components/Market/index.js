@@ -32,12 +32,27 @@ import shortid from 'shortid';
 export default class Market extends Component {
   constructor(props) {
     super(props);
+
+    let searchFilter = find(TabConfig.tabs, { filter: MarketStore.getState().filter });
+
     this.state = {
       tabsList: [],
-      tabConfig: cloneDeep(TabConfig)
+      tabConfig: cloneDeep(TabConfig),
+      activeTab: searchFilter ? searchFilter.id : 1
     };
   }
   componentWillMount () {
+    this.sub = MarketStore.subscribe(() => {
+      let activeFilter = MarketStore.getState().filter;
+      let filter = find(this.state.tabConfig.tabs, { filter: activeFilter });
+
+      if (filter && filter.id !== this.state.activeTab) {
+        this.setState({
+          activeTab: filter.id
+        });
+      }
+    });
+
     MyMarketApi.list()
       .subscribe((res) => {
         MarketAction.setList(res);
@@ -74,18 +89,25 @@ export default class Market extends Component {
 
   handleTabClick(id) {
     let searchFilter = find(this.state.tabConfig.tabs, { id }).filter;
+
+    this.setState({ activeTab: id });
     MarketAction.setFilter(searchFilter);
   }
 
   componentWillUnmount() {
     MarketStore.dispatch({type: 'RESET'});
     this.marketStoreSubscription();
+
+    if (this.sub) {
+      this.sub();
+    }
   }
   render() {
     return (
       <ConfigurableTab
         tabConfig={this.state.tabConfig}
         onTabClick={this.handleTabClick.bind(this)}
+        activeTab={this.state.activeTab}
       />
     );
   }

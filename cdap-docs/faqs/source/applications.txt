@@ -88,7 +88,7 @@ There are a number of ways to solve problems with Spark:
       <property>
           <name>app.program.jvm.opts</name>
           <value>-Dhdp.version=${hdp.version} -XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
-          <description>Java options for all program containers</description>
+          <description>Java options for all Apache Twill containers</description>
       </property>
     
 #. To further debug: when launching a Spark program, CDAP will first launch a YARN

@@ -20,6 +20,7 @@ import shortid from 'shortid';
 import classnames from 'classnames';
 import AbstractWizard from 'components/AbstractWizard';
 import IconSVG from 'components/IconSVG';
+import MarketStore from 'components/Market/store/market-store';
 
 require('./MarketActionsContainer.scss');
 
@@ -141,6 +142,7 @@ export default class MarketActionsContainer extends Component {
             package: this.context.entity,
             isLastStepInMarket: this.state.wizard.actionIndex === this.props.actions.length - 1
           }}
+          displayCTA={MarketStore.getState().displayCTA}
         />
       </div>
     );

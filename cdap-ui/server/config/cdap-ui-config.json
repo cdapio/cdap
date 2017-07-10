@@ -17,5 +17,17 @@
     },
     "appId": "_ClouderaNavigator",
     "programId": "MetadataFlow"
+  },
+  "dataprep": {
+    "jdbcMarketMap": {
+      "mysql": {
+        "name": "jdbc-driver-mysql-connector",
+        "version": "5.1.39"
+      },
+      "postgresql": {
+        "name": "jdbc-driver-postgres-connector",
+        "version": "9.4.1211.jre8"
+      }
+    }
   }
 }

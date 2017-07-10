@@ -656,7 +656,6 @@ cdap_service() {
   local readonly __pidfile=${PID_DIR}/${__service}-${IDENT_STRING}.pid
   local readonly __log_prefix=${LOG_DIR}/${__service}-${IDENT_STRING}-${HOSTNAME}
   local readonly __logfile=${__log_prefix}.log
-  local readonly __gc_file=${__log_prefix}.gc
   local readonly __svc=${__service/-server/}
   local readonly __ret
 
@@ -758,6 +757,8 @@ cdap_start_java() {
   # Split JVM_OPTS array
   eval split_jvm_opts ${!JAVA_OPTS_VAR} ${OPTS} ${JAVA_OPTS}
   local __defines="-Dcdap.service=${CDAP_SERVICE} ${JAVA_HEAPMAX} -Duser.dir=${LOCAL_DIR} -Djava.io.tmpdir=${TEMP_DIR}"
+  # Enable GC logging
+  __defines+=" -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${__log_prefix}-heap.hprof -verbose:gc -Xloggc:${__log_prefix}-gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=1M"
   logecho "$(date) Starting CDAP ${__name} service on ${HOSTNAME}"
   echo
   if [[ ${CDAP_SERVICE} == master ]]; then

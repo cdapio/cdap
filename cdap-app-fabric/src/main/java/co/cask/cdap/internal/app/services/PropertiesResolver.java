@@ -66,6 +66,8 @@ public class PropertiesResolver {
     if (SecurityUtil.isKerberosEnabled(cConf)) {
       ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id.toEntityId());
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
+      systemArgs.put(ProgramOptionConstants.APP_PRINCIPAL_EXISTS,
+                     String.valueOf(ownerAdmin.exists(id.toEntityId().getParent())));
     }
     return systemArgs;
   }

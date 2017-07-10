@@ -42,7 +42,8 @@ var webpackConfig = {
       'reactstrap',
       'i18n-react',
       'react-cookie',
-      'whatwg-fetch'
+      'whatwg-fetch',
+      'react-vis'
     ]
   },
   output: {

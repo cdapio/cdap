@@ -92,6 +92,43 @@ function humanReadableDate(date, isMilliseconds) {
   return (moment(date * 1000)).format(format);
 }
 
+function humanReadableDuration(timeInSeconds) {
+  if (typeof timeInSeconds !== 'number') {
+    return timeInSeconds;
+  }
+  const ONE_MIN_SECONDS = 60;
+  const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
+  const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
+  const ONE_WEEK_SECONDS = ONE_DAY_SECONDS * 7;
+  const ONE_MONTH_SECONDS = ONE_DAY_SECONDS * 30;
+  const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
+  const pluralize = (number, label) => number > 1 ? `${label}s` : label;
+  if (timeInSeconds < 60) {
+    return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, 'sec')}`;
+  }
+  if (timeInSeconds < ONE_HOUR_SECONDS) {
+    let mins = Math.floor(timeInSeconds / ONE_MIN_SECONDS);
+    let secs = Math.floor(timeInSeconds % ONE_MIN_SECONDS);
+    return `${mins} ${pluralize(mins, 'min')} ${secs} secs`;
+  }
+  if (timeInSeconds < ONE_DAY_SECONDS) {
+    let hours = Math.floor(timeInSeconds / ONE_HOUR_SECONDS);
+    return `${hours} ${pluralize(hours, 'hour')} ${humanReadableDuration(timeInSeconds - (ONE_HOUR_SECONDS * hours))}`;
+  }
+  if (timeInSeconds < ONE_WEEK_SECONDS) {
+    let days = Math.floor(timeInSeconds / ONE_DAY_SECONDS);
+    return `${days} ${pluralize(days, 'day')} ${humanReadableDuration(timeInSeconds - (ONE_DAY_SECONDS * days))}`;
+  }
+  // Hopefully we don't reach beyond this point.
+  if (timeInSeconds < ONE_MONTH_SECONDS) {
+    let weeks = Math.floor(timeInSeconds / ONE_WEEK_SECONDS);
+    return `${weeks} ${pluralize(weeks, 'week')} ${humanReadableDuration(timeInSeconds - (ONE_WEEK_SECONDS * weeks))}`;
+  }
+  if (timeInSeconds < ONE_YEAR_SECONDS) {
+    let months = Math.floor(timeInSeconds / ONE_MONTH_SECONDS);
+    return `${months} ${pluralize(months, 'month')} ${humanReadableDuration(timeInSeconds - (ONE_MONTH_SECONDS * months))}`;
+  }
+}
 function contructUrl ({path}) {
   return [
     window.CDAP_CONFIG.sslEnabled? 'https://': 'http://',
@@ -215,6 +252,7 @@ export {
   objectQuery,
   convertBytesToHumanReadable,
   humanReadableNumber,
+  humanReadableDuration,
   isDescendant,
   getArtifactNameAndVersion,
   insertAt,

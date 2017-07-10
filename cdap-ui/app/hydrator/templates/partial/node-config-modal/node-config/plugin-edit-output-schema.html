@@ -91,11 +91,13 @@
       <my-complex-schema-editor
         ng-if="!HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
         ng-model="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+        input-schema="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
         is-disabled="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="HydratorPlusPlusNodeConfigCtrl.state.node.plugin.properties"
         config="::HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties"
         plugin-name="::HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name"
-        update-output-schema="HydratorPlusPlusNodeConfigCtrl.updateDefaultOutputSchema(outputSchema)">
+        update-output-schema="HydratorPlusPlusNodeConfigCtrl.updateDefaultOutputSchema(outputSchema)"
+        is-in-studio="true">
       </my-complex-schema-editor>
 
       <div ng-if="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">

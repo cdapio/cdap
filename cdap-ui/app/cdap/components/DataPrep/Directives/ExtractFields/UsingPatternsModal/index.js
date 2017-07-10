@@ -375,17 +375,21 @@ export default class UsingPatternsModal extends Component {
                   this.state.patternLabel
               }
             </DropdownToggle>
+
             <DropdownMenu>
-              {
-                this.patterns.map((pattern, index) => {
-                  return (
-                    <DropdownItem onClick={this.onPatternChange.bind(this, index)}>
-                      <span>{pattern.label}</span>
-                    </DropdownItem>
-                  );
-                })
-              }
+              <div className="using-patterns-modal-dropdown">
+                {
+                  this.patterns.map((pattern, index) => {
+                    return (
+                      <DropdownItem onClick={this.onPatternChange.bind(this, index)}>
+                        <span>{pattern.label}</span>
+                      </DropdownItem>
+                    );
+                  })
+                }
+              </div>
             </DropdownMenu>
+
           </UncontrolledDropdown>
           {showHideLink}
 

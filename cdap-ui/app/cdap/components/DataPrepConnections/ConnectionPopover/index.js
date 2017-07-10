@@ -21,12 +21,18 @@ import NamespaceStore from 'services/NamespaceStore';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import LoadingSVG from 'components/LoadingSVG';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
+import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import T from 'i18n-react';
 import {objectQuery} from 'services/helpers';
 
 require('./ConnectionPopover.scss');
 
 const PREFIX = 'features.DataPrepConnections.ConnectionManagement';
+
+const COMPONENT_MAP = {
+  'DATABASE': DatabaseConnection,
+  'KAFKA': KafkaConnection
+};
 
 export default class ConnectionPopover extends Component {
   constructor(props) {
@@ -156,8 +162,10 @@ export default class ConnectionPopover extends Component {
   renderEdit() {
     if (!this.state.edit) { return null; }
 
+    let Tag = COMPONENT_MAP[this.props.connectionInfo.type];
+
     return (
-      <DatabaseConnection
+      <Tag
         close={this.toggleEdit}
         mode="EDIT"
         connectionId={this.props.connectionInfo.id}
@@ -169,8 +177,10 @@ export default class ConnectionPopover extends Component {
   renderDuplicate() {
     if (!this.state.duplicate) { return null; }
 
+    let Tag = COMPONENT_MAP[this.props.connectionInfo.type];
+
     return (
-      <DatabaseConnection
+      <Tag
         close={this.toggleDuplicate}
         mode="DUPLICATE"
         connectionId={this.props.connectionInfo.id}

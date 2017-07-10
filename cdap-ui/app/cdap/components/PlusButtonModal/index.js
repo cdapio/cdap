@@ -74,6 +74,7 @@ export default class PlusButtonModal extends Component {
         })}
         size="lg"
         backdrop='static'
+        zIndex="1061"
       >
         <ModalHeader>
           <span className="float-xs-left">

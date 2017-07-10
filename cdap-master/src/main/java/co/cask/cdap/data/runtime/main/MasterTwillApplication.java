@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
@@ -25,6 +26,7 @@ import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.logging.LoggingUtil;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -111,6 +113,10 @@ public class MasterTwillApplication implements TwillApplication {
 
     prepareLogSaverResources(tempDir, containerCConf,
                              runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
+
+    prepareHBaseDDLExecutorResources(tempDir, containerCConf,
+                                     runnableLocalizeResources.get(Constants.Service.DATASET_EXECUTOR));
+
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       prepareExploreResources(tempDir, hConf,
                               runnableLocalizeResources.get(Constants.Service.EXPLORE_HTTP_USER_SERVICE),
@@ -413,5 +419,22 @@ public class MasterTwillApplication implements TwillApplication {
     MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
     MapReduceContainerHelper.addMapReduceClassPath(hConf, extraClassPath);
     LOG.trace("Jars in extra classpath after adding jars in explore classpath: {}", extraClassPath);
+  }
+
+  /**
+   * Prepares the {@link HBaseDDLExecutor} implementation for localization.
+   */
+  private void prepareHBaseDDLExecutorResources(Path tempDir, CConfiguration cConf,
+                                                Map<String, LocalizeResource> localizeResources) throws IOException {
+    String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
+    if (ddlExecutorExtensionDir == null) {
+      // Nothing to localize
+      return;
+    }
+
+    final File target = new File(tempDir.toFile(), "hbaseddlext.jar");
+    BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
+    localizeResources.put(target.getName(), new LocalizeResource(target, true));
+    cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
   }
 }

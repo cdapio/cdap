@@ -78,6 +78,7 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -188,9 +189,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
+    String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
+    KerberosPrincipalId principalId = null;
+    if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
+      principalId = new KerberosPrincipalId(programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL));
+    }
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
                                   new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),
-                                  retryStrategy);
+                                  retryStrategy, principalId);
     this.secureStore = secureStore;
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
