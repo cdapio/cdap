@@ -57,7 +57,7 @@ Windows
 Upgrading Data Preparation and Kafka Plugins
 ============================================
 This UI Pack also requires newer versions of Data Preparation and Kafka Plugins to support the newer UI features. To
-upgrade these, please follow the Data Preparation Solution v1.3.0, and also install Kafka Plugins v1.7.3 from the Cask
+upgrade these, please follow the Data Preparation Solution v2.1.0, and also install Kafka Plugins v1.7.3 from the Cask
 Market.
 
 
