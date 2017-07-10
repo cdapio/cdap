@@ -20,11 +20,14 @@ import co.cask.cdap.api.data.batch.PartitionedFileSetInputContext;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.partitioned.PartitionKeyCodec;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
@@ -48,6 +51,9 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
 
   private final String mappingString;
 
+  private final boolean isCombineInputFormat;
+  private final Configuration conf;
+
   private final List<Path> inputPaths;
   private List<PartitionKey> partitionKeys;
 
@@ -55,12 +61,12 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     super(multiInputTaggedSplit.getName());
 
     InputSplit inputSplit = multiInputTaggedSplit.getInputSplit();
-
     inputPaths = new ArrayList<>();
-
     if (inputSplit instanceof FileSplit) {
+      isCombineInputFormat = false;
       inputPaths.add(((FileSplit) inputSplit).getPath());
     } else if (inputSplit instanceof CombineFileSplit) {
+      isCombineInputFormat = true;
       Collections.addAll(inputPaths, ((CombineFileSplit) inputSplit).getPaths());
     } else {
       throw new IllegalArgumentException(String.format("Expected either a '%s' or a '%s', but got '%s'.",
@@ -68,17 +74,25 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
                                                        inputSplit.getClass().getName()));
     }
 
-    this.mappingString = multiInputTaggedSplit.getConf().get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
+    this.conf = multiInputTaggedSplit.getConf();
+    this.mappingString = conf.get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
   }
 
   @Override
   public PartitionKey getInputPartitionKey() {
-    List<PartitionKey> inputPartitionKeys = getInputPartitionKeys();
-    if (inputPartitionKeys.size() != 1) {
-      throw new IllegalArgumentException(String.format("Expected only a single PartitionKey, but found: %s",
-                                                       inputPartitionKeys));
+    if (isCombineInputFormat) {
+      // org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader sets this in its initNextRecordReader method
+      String inputFileName = conf.get(MRJobConfig.MAP_INPUT_FILE);
+      Preconditions.checkNotNull(inputFileName);
+      return getPartitionKey(URI.create(inputFileName));
+    } else {
+      List<PartitionKey> inputPartitionKeys = getInputPartitionKeys();
+      if (inputPartitionKeys.size() != 1) {
+        throw new IllegalArgumentException(String.format("Expected only a single PartitionKey, but found: %s",
+                                                         inputPartitionKeys));
+      }
+      return inputPartitionKeys.get(0);
     }
-    return inputPartitionKeys.get(0);
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -35,11 +36,12 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -50,7 +52,7 @@ import java.util.Map;
  * App used to test whether M/R works well with time-partitioned file sets.
  * It uses M/R to read from a table and write partitions, and another M/R to read partitions and write to a table.
  */
-public class AppWithPartitionedFileSet extends AbstractApplication {
+public class AppWithPartitionedFileSet extends AbstractApplication<AppWithPartitionedFileSet.AppConfig> {
 
   public static final String INPUT = "in-table";
   public static final String PARTITIONED = "partitioned";
@@ -66,6 +68,8 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
     createDataset(INPUT, "table");
     createDataset(OUTPUT, "table");
 
+    Class<? extends InputFormat> inputFormatClass =
+      getConfig().isUseCombineFileInputFormat() ? CombineTextInputFormat.class : TextInputFormat.class;
     createDataset(PARTITIONED, "partitionedFileSet", PartitionedFileSetProperties.builder()
       .setPartitioning(Partitioning.builder()
                          .addStringField("type")
@@ -73,13 +77,25 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
                          .build())
         // properties for file set
       .setBasePath("partitioned")
-      .setInputFormat(TextInputFormat.class)
+      .setInputFormat(inputFormatClass)
       .setOutputFormat(TextOutputFormat.class)
       .setOutputProperty(TextOutputFormat.SEPERATOR, SEPARATOR)
         // don't configure properties for the Hive table - this is used in a context where explore is disabled
       .build());
     addMapReduce(new PartitionWriter());
     addMapReduce(new PartitionReader());
+  }
+
+  public static final class AppConfig extends Config {
+    private final boolean useCombineFileInputFormat;
+
+    public AppConfig(boolean useCombineFileInputFormat) {
+      this.useCombineFileInputFormat = useCombineFileInputFormat;
+    }
+
+    public boolean isUseCombineFileInputFormat() {
+      return useCombineFileInputFormat;
+    }
   }
 
   /**
@@ -109,7 +125,7 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
   }
 
   /**
-   * Map/Reduce that reads the "input" table and writes to a partition.
+   * Map/Reduce that reads the "partitioned" PFS and writes to an "output" table.
    */
   public static final class PartitionReader extends AbstractMapReduce {
 
@@ -130,16 +146,17 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
     implements ProgramLifecycle<MapReduceTaskContext<byte[], Put>> {
 
     private static byte[] rowToWrite;
+    private PartitionedFileSetInputContext pfsInputcontext;
 
     @Override
     public void initialize(MapReduceTaskContext<byte[], Put> context) throws Exception {
       InputContext inputContext = context.getInputContext();
       Preconditions.checkArgument(PARTITIONED.equals(inputContext.getInputName()));
       Preconditions.checkArgument(inputContext instanceof PartitionedFileSetInputContext);
-      PartitionedFileSetInputContext pfsInputcontext = (PartitionedFileSetInputContext) inputContext;
+      this.pfsInputcontext = (PartitionedFileSetInputContext) inputContext;
       Preconditions.checkNotNull(pfsInputcontext.getInputPartitionKey());
       Preconditions.checkArgument(
-        pfsInputcontext.getInputPartitionKey().equals(Iterables.getOnlyElement(pfsInputcontext.getInputPartitionKeys()))
+        pfsInputcontext.getInputPartitionKeys().contains(pfsInputcontext.getInputPartitionKey())
       );
 
       Map<String, String> dsArguments =
@@ -166,6 +183,8 @@ public class AppWithPartitionedFileSet extends AbstractApplication {
       String line = text.toString();
       String[] fields = line.split(SEPARATOR);
       context.write(rowToWrite, new Put(rowToWrite, Bytes.toBytes(fields[0]), Bytes.toBytes(fields[1])));
+      context.write(rowToWrite, new Put(rowToWrite, Bytes.toBytes(fields[0] + "_key"),
+                                        Bytes.toBytes(pfsInputcontext.getInputPartitionKey().toString())));
     }
   }
 }

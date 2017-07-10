@@ -28,8 +28,7 @@ public interface PartitionedFileSetInputContext extends InputContext {
 
   /**
    * Returns the {@link PartitionKey} of the input configured for this task.
-   * This method should be avoided if using CombineFileInputFormat, since in that case, there can be multiple
-   * PartitionKeys for this task.
+   * In case of CombineFileInputFormat, this will be the PartitionKey currently being processed by the task.
    */
   PartitionKey getInputPartitionKey();
 
