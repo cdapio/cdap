@@ -737,7 +737,7 @@ features:
         uploadSubTitle: Select the file to be uploaded to the workspace
         uploadBtnLabel: Upload
     Upgrade:
-      minimumVersionError: "Data Preparation requires wrangler-service artifact version 2.0.0 or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
+      minimumVersionError: "Data Preparation requires wrangler-service artifact version {minimumVersion} or above. Version {highestVersion} found. Please install the latest wrangler-service from Cask Market."
     WorkspaceTabs:
       DeleteModal:
         cancelButton: No, keep tab open
@@ -1114,7 +1114,7 @@ features:
       sinceInception: Since Inception
     statsContainer:
       avg: Average
-      avgRunTime: Average
+      avgRunTime: Average Run Time
       currentSchedule: Current Schedule
       min: Min
       max: Max

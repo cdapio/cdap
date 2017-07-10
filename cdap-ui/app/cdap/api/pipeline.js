@@ -19,7 +19,7 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/namespaces/:namespace/apps/:appId';
-let statsPath = `${basepath}/workflows/:workflowId/statistics`;
+let statsPath = `${basepath}/workflows/:workflowId/statistics?start=0`;
 
 export const MyPipelineApi = {
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', basepath),

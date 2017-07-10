@@ -26,7 +26,7 @@ import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {MyPipelineApi} from 'api/pipeline';
-import {getDuration} from 'components/PipelineSummary/RunsGraphHelpers';
+import {humanReadableDuration} from 'services/helpers';
 import isNil from 'lodash/isNil';
 
 const PREFIX = 'features.PipelineSummary';
@@ -50,7 +50,7 @@ export default class PipelineSummary extends Component {
       loading: true,
       start: null,
       end: null,
-      avgRunTime: '-'
+      avgRunTime: '--'
     };
     this.fetchRunsByLimit = this.fetchRunsByLimit.bind(this);
     this.fetchRunsByTime = this.fetchRunsByTime.bind(this);
@@ -224,11 +224,10 @@ export default class PipelineSummary extends Component {
         <div> {T.translate(`${PREFIX}.title`)}</div>
         <div className="stats-container text-xs-right">
           <span>
-            <strong>{T.translate(`${PREFIX}.statsContainer.runTime`)}: </strong>
-          </span>
-          <span>
             <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
-            {getDuration(this.state.avgRunTime)}
+            {
+              humanReadableDuration(this.state.avgRunTime)
+            }
           </span>
           <span>
             <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
