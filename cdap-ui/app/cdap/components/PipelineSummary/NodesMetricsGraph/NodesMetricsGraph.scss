@@ -84,5 +84,7 @@ $menu_bg_color: gray;
     transform: rotate(-90deg);
     top: 40%;
   }
+
   @include stickyheader(33%, 33%, 33%);
+
 }

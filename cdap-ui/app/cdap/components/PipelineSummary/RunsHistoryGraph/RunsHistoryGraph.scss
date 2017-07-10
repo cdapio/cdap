@@ -53,6 +53,7 @@ $container_border_color: lightgray;
     transform: rotate(-90deg);
     top: 40%;
   }
+
   @include stickyheader;
 
 }
