@@ -17,7 +17,6 @@
 package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.proto.ProgramRunStatus;
-import org.apache.twill.api.RunId;
 
 import javax.annotation.Nullable;
 
@@ -27,23 +26,25 @@ import javax.annotation.Nullable;
 public interface ProgramStateWriter {
 
   /**
-   * Updates the program to be starting
+   * Marks the program's run status as starting
    *
-   * @param startTime start time of the program in milliseconds when it has reached ProgramRunStatus.STARTING
+   * @param startTime the start time of the program in milliseconds when it has reached
+   *                  {@link ProgramRunStatus#STARTING}
    */
   void start(long startTime);
 
   /**
-   * Updates the program to be running
+   * Marks the program's run status as running
    *
-   * @param startTimeInSeconds the start time of the program in seconds when it has reached ProgramRunStatus.RUNNING
+   * @param startTimeInSeconds the start time of the program in seconds when it has reached
+   *                           {@link ProgramRunStatus#RUNNING}
    */
   void running(long startTimeInSeconds);
 
   /**
    * Updates the program state to be terminated at the given time with the given run status
    *
-   * @param endTime the end time of the program when it terminated
+   * @param endTime the end time of the program when it has terminated
    * @param runStatus the final run status of the program
    * @param cause the reason for the program run's failure, if the program terminated with an error
    */

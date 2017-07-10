@@ -200,6 +200,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
+      ProgramStateWriter programStateWriter =
         new ProgramStorePublisher(program.getId(), runId, twillRunId,
                                   options.getUserArguments(), options.getArguments(), runtimeStore);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext,

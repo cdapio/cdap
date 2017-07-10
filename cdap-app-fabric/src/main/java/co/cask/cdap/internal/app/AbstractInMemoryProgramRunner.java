@@ -58,13 +58,11 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
-  protected final CConfiguration cConf;
   private final String host;
   private final RuntimeStore runtimeStore;
 
   @Inject
   protected AbstractInMemoryProgramRunner(CConfiguration cConf, RuntimeStore runtimeStore) {
-    this.cConf = cConf;
     this.runtimeStore = runtimeStore;
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
   }

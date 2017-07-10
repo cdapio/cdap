@@ -51,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -380,10 +379,9 @@ public class LineageTestRun extends MetadataTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        List<RunRecord> records = programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
-                0, Long.MAX_VALUE, Integer.MAX_VALUE);
         runRecords.set(Iterables.filter(
-          records,
+          programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
+                                       0, Long.MAX_VALUE, Integer.MAX_VALUE),
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {
@@ -393,6 +391,7 @@ public class LineageTestRun extends MetadataTestBase {
         return Iterables.size(runRecords.get()) > 0;
       }
     }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
+    // Return last since there may be a record with ProgramRunStatus.STARTING first
     return RunIds.fromString(Iterables.getLast(runRecords.get(), null).getPid());
   }
 

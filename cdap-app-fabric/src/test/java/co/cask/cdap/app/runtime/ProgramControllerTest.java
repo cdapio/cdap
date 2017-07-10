@@ -16,19 +16,12 @@
 
 package co.cask.cdap.app.runtime;
 
-import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -37,7 +30,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;

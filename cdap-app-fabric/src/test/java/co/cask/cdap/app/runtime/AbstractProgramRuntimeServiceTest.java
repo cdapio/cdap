@@ -139,8 +139,7 @@ public class AbstractProgramRuntimeServiceTest {
     Service service = new TestService();
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
-    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId,
-                                                                    new SimpleProgramOptions(programId));
+    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
@@ -374,8 +373,7 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final ProgramId programId, RunId runId,
-                                                              ProgramOptions options) {
+                                                              final ProgramId programId, RunId runId) {
     final ProgramControllerServiceAdapter controller =
       new ProgramControllerServiceAdapter(service, programId, runId, new NoOpProgramStateWriter());
     return new ProgramRuntimeService.RuntimeInfo() {

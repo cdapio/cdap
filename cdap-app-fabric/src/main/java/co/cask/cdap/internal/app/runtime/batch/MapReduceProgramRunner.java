@@ -26,10 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-<<<<<<< HEAD
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-=======
->>>>>>> 57bc5a1424... Add AbstractStateChangeProgramController
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
