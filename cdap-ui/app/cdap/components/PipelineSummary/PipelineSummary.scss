@@ -41,6 +41,10 @@ $hint_bg_color: white;
       margin: 5px 10px;
       border: 1px solid lightgray;
 
+      .graph-plot-container {
+        width: calc(100% - 30px);
+        margin: 15px;
+      }
       .title-container {
         display: flex;
         justify-content: space-between;

@@ -17,6 +17,7 @@
 import isNil from 'lodash/isNil';
 import cloneDeep from 'lodash/cloneDeep';
 import moment from 'moment';
+import numeral from 'numeral';
 
 export const ONE_MIN_SECONDS = 60;
 export const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
@@ -76,7 +77,13 @@ export function getYDomain({data = {}}) {
 export function getYAxisProps({domain = []}) {
   let props = {
     tickTotals: 10,
-    yDomain: domain
+    yDomain: domain,
+    tickFormat: function(d) {
+      if (d < 999) {
+        return d;
+      }
+      return numeral(d).format('0.0a');
+    }
   };
   if (domain[1] === 0) {
     props.tickValues = [0, 1];

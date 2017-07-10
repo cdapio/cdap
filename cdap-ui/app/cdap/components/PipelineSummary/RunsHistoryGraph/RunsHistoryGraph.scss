@@ -21,11 +21,6 @@ $legend_font_color: black;
 $container_border_color: lightgray;
 
 .runs-history-graph {
-
-  .graph-plot-container {
-    width: calc(100% - 30px);
-    margin: 15px;
-  }
   .rv-discrete-color-legend.horizontal {
     .rv-discrete-color-legend-item {
       display: inline-block;
@@ -49,7 +44,7 @@ $container_border_color: lightgray;
   }
   .y-axis-title {
     position: absolute;
-    right: -70px;
+    right: -60px;
     transform: rotate(-90deg);
     top: 40%;
   }

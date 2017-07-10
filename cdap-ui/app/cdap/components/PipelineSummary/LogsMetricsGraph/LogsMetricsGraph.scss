@@ -21,12 +21,6 @@ $legend_font_color: black;
 $container_border_color: lightgray;
 
 .logs-metrics-graph {
-
-  .graph-plot-container {
-    width: calc(100% - 30px);
-    margin: 15px;
-  }
-
   .rv-discrete-color-legend.horizontal {
     .rv-discrete-color-legend-item {
       display: inline-block;
