@@ -32,6 +32,9 @@ const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
 const LINECOLOR = '#DBDBDB';
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
+const MARK_SERIES_FILL_COLOR = 'white';
+const MARK_SERIES_STROKE_COLOR = 'gray';
+
 const getAreaColor = (recordType = 'recordsin') => {
   return recordType === 'recordsin' ? RECORDS_IN_COLOR : RECORDS_OUT_COLOR;
 };
@@ -145,8 +148,8 @@ export default class NodesRecordsGraph extends Component {
           <MarkSeries
             data={this.state.data}
             colorType={'literal'}
-            fill={"white"}
-            stroke={"gray"}
+            fill={MARK_SERIES_FILL_COLOR}
+            stroke={MARK_SERIES_STROKE_COLOR}
             onValueMouseOver={(d) => {
               this.setState({
                 currentHoveredElement: d
