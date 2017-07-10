@@ -82,7 +82,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewMode = false;
     this.previewLoading = true;
 
-    if (this.currentPreviewId) {
+    if (this.currentPreviewId && this.currentPreviewId !== 'null') {
       this.myPreviewLogsApi.getLogsStatus({
         namespace : this.$state.params.namespace,
         previewId : this.currentPreviewId

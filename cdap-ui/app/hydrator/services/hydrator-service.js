@@ -51,7 +51,7 @@ class HydratorPlusPlusHydratorService {
     // Obtaining layout of graph with Dagre
     var graph;
     if (isStudio) {
-      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 200);
     } else {
       graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
     }
@@ -106,7 +106,7 @@ class HydratorPlusPlusHydratorService {
     // Obtaining layout of graph with Dagre
     var graph;
     if (isStudio) {
-      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 100);
+      graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections, 200);
     } else {
       graph = this.DAGPlusPlusFactory.getGraphLayout(nodes, connections);
     }
