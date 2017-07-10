@@ -528,6 +528,10 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    angular.element(document).ready(function() {
+      makeNodesDraggable();
+    });
+
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings().default;
 
