@@ -78,9 +78,6 @@ export default class NodesMetricsGraph extends Component {
     }
     let activeNode = Object.keys(this.props.nodesMap).pop();
     let activeNodeRuns = this.props.nodesMap[activeNode].map((run, i) => Object.assign({}, run, {index: i + 1}));
-    if (!activeNodeRuns.length) {
-      activeNodeRuns = Array.apply(null, {length: this.props.runsLimit}).map((v, i) => Object.assign({}, {index: i + 1, numberOfRecords: 0}));
-    }
     this.setState({
       activeNode,
       activeNodeRuns
