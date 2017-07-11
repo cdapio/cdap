@@ -30,57 +30,57 @@ characters that are recognized as spaces by TRIM, LTRIM and RTRIM.
 +-----------------------+-----------------------------+
 | Character             | Description                 |
 +=======================+=============================+
-| :raw-latex:`\t`       | Character tabulation        |
+| `\t`       | Character tabulation        |
 +-----------------------+-----------------------------+
-| :raw-latex:`\n`       | Line Feed (LF)              |
+| `\n`       | Line Feed (LF)              |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u0`00B   | Line Tabulation             |
+| `\u0`00B   | Line Tabulation             |
 +-----------------------+-----------------------------+
-| :raw-latex:`\f`       | Form Feed (FF)              |
+| `\f`       | Form Feed (FF)              |
 +-----------------------+-----------------------------+
-| :raw-latex:`\r`       | Carriage Return (CR)        |
+| `\r`       | Carriage Return (CR)        |
 +-----------------------+-----------------------------+
 | " "                   | Space                       |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u0`085   | Next line (NEL)             |
+| `\u0`085   | Next line (NEL)             |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u0`0A0   | No Break Space              |
+| `\u0`0A0   | No Break Space              |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u1`680   | OGHAM Space Mark            |
+| `\u1`680   | OGHAM Space Mark            |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u1`80E   | Mongolian Vowel Separator   |
+| `\u1`80E   | Mongolian Vowel Separator   |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`000   | EN Quad                     |
+| `\u2`000   | EN Quad                     |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`001   | EM Quad                     |
+| `\u2`001   | EM Quad                     |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`002   | EN Space                    |
+| `\u2`002   | EN Space                    |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`003   | EM Space                    |
+| `\u2`003   | EM Space                    |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`004   | Three Per EM space          |
+| `\u2`004   | Three Per EM space          |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`005   | Four Per EM space           |
+| `\u2`005   | Four Per EM space           |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`006   | Six Per EM space            |
+| `\u2`006   | Six Per EM space            |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`007   | Figure Space                |
+| `\u2`007   | Figure Space                |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`008   | Puncatuation Space          |
+| `\u2`008   | Puncatuation Space          |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`009   | Thin Space                  |
+| `\u2`009   | Thin Space                  |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`00A   | Hair Space                  |
+| `\u2`00A   | Hair Space                  |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`028   | Line Separator              |
+| `\u2`028   | Line Separator              |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`029   | Paragraph Separator         |
+| `\u2`029   | Paragraph Separator         |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`02F   | Narrow No-Break Space       |
+| `\u2`02F   | Narrow No-Break Space       |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u2`05F   | Medium Mathematical Space   |
+| `\u2`05F   | Medium Mathematical Space   |
 +-----------------------+-----------------------------+
-| :raw-latex:`\u3`000   | Ideographic Space           |
+| `\u3`000   | Ideographic Space           |
 +-----------------------+-----------------------------+
 
 Example
