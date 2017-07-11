@@ -18,7 +18,7 @@ package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ProgramType;
-import co.cask.cdap.internal.schedule.ScheduleCreationBuilder;
+import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 import java.util.Map;
 import java.util.TimeZone;
@@ -118,9 +118,9 @@ public interface ScheduleBuilder {
    * Create a schedule which is triggered based upon the given cron expression.
    *
    * @param cronExpression the cron expression to specify the time to trigger the schedule
-   * @return this {@link ScheduleBuilder}
+   * @return a {@link ScheduleCreationSpec}
    */
-  ScheduleCreationBuilder triggerByTime(String cronExpression);
+  ScheduleCreationSpec triggerByTime(String cronExpression);
 
   /**
    * Create a schedule which is triggered whenever at least a certain number of new partitions
@@ -128,9 +128,9 @@ public interface ScheduleBuilder {
    *
    * @param datasetName the name of the dataset in the same namespace of the app
    * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
-   * @return this {@link ScheduleBuilder}
+   * @return a {@link ScheduleCreationSpec}
    */
-  ScheduleCreationBuilder triggerOnPartitions(String datasetName, int numPartitions);
+  ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions);
 
   /**
    * Create a schedule which is triggered whenever at least a certain number of new partitions
@@ -139,9 +139,9 @@ public interface ScheduleBuilder {
    * @param datasetNamespace the namespace where the dataset is defined
    * @param datasetName the name of the dataset in the specified namespace of the app
    * @param numPartitions the minimum number of new partitions added to the dataset to trigger the schedule
-   * @return this {@link ScheduleBuilder}
+   * @return a {@link ScheduleCreationSpec}
    */
-  ScheduleCreationBuilder triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions);
+  ScheduleCreationSpec triggerOnPartitions(String datasetNamespace, String datasetName, int numPartitions);
 
   /**
    * Create a schedule which is triggered when the given program in the given namespace, application, and
@@ -154,33 +154,36 @@ public interface ScheduleBuilder {
    * @param program the name of the program
    * @param programStatuses the set of statuses to trigger the schedule. The schedule will be triggered if the status of
    *                        the specific program transitioned to one of these statuses.
-   * @return this {@link ScheduleBuilder}
+   * @return a {@link ScheduleCreationSpec}
    */
-  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, String appVersion,
-                                                 ProgramType programType, String program,
-                                                 ProgramStatus... programStatuses);
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, String appVersion,
+                                              ProgramType programType, String program,
+                                              ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule which is triggered in the same application version.
+   * Create a schedule which is triggered when the given program in the given namespace and application
+   * transitions to any one of the given program statuses.
    *
-   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   * @see #triggerOnProgramStatus(String, String, String, ProgramType, String, ProgramStatus...)
    */
-  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
-                                                 String program, ProgramStatus... programStatuses);
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, ProgramType programType,
+                                              String program, ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule which is triggered in the same application and application version.
+   * Creates a schedule which is triggered when the given program given application in the same namespace
+   * transitions to any one of the given program statuses.
    *
-   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
    */
-  ScheduleCreationBuilder triggerOnProgramStatus(String programNamespace, ProgramType programType, String program,
-                                                 ProgramStatus... programStatuses);
+  ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType,
+                                              String program, ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule which is triggered in the same namespace, application, and application version.
+   * Creates a schedule which is triggered when the given program in the same namespace, application,
+   * and application version transitions to any one of the given program statuses.
    *
-   * @see ScheduleBuilder#triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
    */
-  ScheduleCreationBuilder triggerOnProgramStatus(ProgramType programType, String program,
-                                                 ProgramStatus... programStatuses);
+  ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
+                                              ProgramStatus... programStatuses);
 }
