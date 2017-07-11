@@ -21,7 +21,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import com.google.common.util.concurrent.Service;

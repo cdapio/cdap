@@ -29,27 +29,30 @@ public interface ProgramStateWriter {
   /**
    * Updates the program run's status to be {@link ProgramRunStatus#STARTING} at the given start time
    *
-   * @param startTimeInSeconds the start time of the program in milliseconds when it has reached
-   *                           {@link ProgramRunStatus#STARTING}
+   * @param startTime the start time of the program in milliseconds when it has reached
+   *                  {@link ProgramRunStatus#STARTING}
    */
-  void start(long startTimeInSeconds);
+  void start(long startTime);
 
   /**
    * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time in seconds
    *
+   * @param startTimeInSeconds the start time of the program in seconds when it has reached
+   *                           {@link ProgramRunStatus#RUNNING}
    */
   void running(long startTimeInSeconds);
 
   /**
    * Updates the program run's status to be terminated at the given time with the given run status
    *
-   * @param runStatus
-   * @param cause
+   * @param endTime the end time of the program when it has terminated
+   * @param runStatus the final run status of the program
+   * @param cause the reason for the program run's failure, if the program terminated with an error
    */
-  void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
+  void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
 
   /**
-   * Updates the program run's status to be suspended
+   * Updates the program state as suspending
    */
   void suspend();
 

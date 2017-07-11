@@ -117,6 +117,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     .create();
 
   private final ScheduledExecutorService scheduledExecutorService;
+  private final ProgramStatusPersistService programStatusPersistService;
   private final Store store;
   private final ProgramRuntimeService runtimeService;
   private final CConfiguration cConf;
@@ -129,6 +130,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   @Inject
   ProgramLifecycleService(Store store, NamespaceStore nsStore, ProgramRuntimeService runtimeService,
+                          ProgramStatusPersistService programStatusPersistService,
                           CConfiguration cConf, PropertiesResolver propertiesResolver,
                           PreferencesStore preferencesStore, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext, Scheduler scheduler) {
@@ -136,6 +138,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     this.nsStore = nsStore;
     this.runtimeService = runtimeService;
     this.propertiesResolver = propertiesResolver;
+    this.programStatusPersistService = programStatusPersistService;
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.cConf = cConf;
     this.preferencesStore = preferencesStore;
@@ -153,6 +156,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
       LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", interval);
       interval = 180L;
     }
+    programStatusPersistService.startAndWait();
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(this),
                                                     2L, interval, TimeUnit.SECONDS);
   }
@@ -161,6 +165,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   protected void shutDown() throws Exception {
     LOG.info("Shutting down ProgramLifecycleService");
 
+    programStatusPersistService.shutDown();
     scheduledExecutorService.shutdown();
     try {
       if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 
 import javax.annotation.Nullable;
@@ -35,7 +36,7 @@ public final class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void stop(long endTime, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+  public void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause) {
 
   }
 

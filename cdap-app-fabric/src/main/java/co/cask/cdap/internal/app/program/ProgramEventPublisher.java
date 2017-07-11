@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -112,7 +113,7 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
   }
 
   @Override
-  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable BasicThrowable cause) {
     ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
       .putAll(defaultProperties)
       .put(ProgramOptionConstants.END_TIME, String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())))

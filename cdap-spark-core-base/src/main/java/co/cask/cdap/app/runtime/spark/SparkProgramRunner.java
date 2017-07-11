@@ -32,7 +32,6 @@ import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -102,7 +101,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final RuntimeStore store;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -114,7 +112,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
-                     RuntimeStore store, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                     SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService) {
     super(cConf);
@@ -126,7 +124,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
-    this.store = store;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;

@@ -27,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramId;
@@ -94,6 +95,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
       String systemOverridesString = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
       String throwableString = notification.getProperties().get("error");
+
       ProgramRunStatus programRunStatus = null;
       if (programStatusString != null) {
         try {
@@ -146,7 +148,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
             LOG.debug("End time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
-          Throwable cause = GSON.fromJson(throwableString, Throwable.class);
+          BasicThrowable cause = GSON.fromJson(throwableString, BasicThrowable.class);
           programStateWriter.stop(endTime, ProgramRunStatus.FAILED, cause);
           break;
         default:

@@ -24,6 +24,7 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Supplier;
 import org.apache.twill.api.RunId;
@@ -53,11 +54,11 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
   }
 
   @Override
-  public void start(final long startTimeInSeconds) {
+  public void start(final long startTime) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        store.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
+        store.setInit(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(startTime), twillRunId,
                       userArguments.asMap(), systemArguments.asMap());
         return null;
       }
@@ -69,8 +70,8 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        store.setInit(programId, runId.getId(), startTimeInSeconds, twillRunId,
-                      userArguments.asMap(), systemArguments.asMap());
+        store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId,
+                       userArguments.asMap(), systemArguments.asMap());
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -81,7 +82,7 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus);
+        store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus, cause);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

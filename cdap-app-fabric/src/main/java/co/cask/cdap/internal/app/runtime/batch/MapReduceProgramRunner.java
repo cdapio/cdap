@@ -46,7 +46,6 @@ import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
-import co.cask.cdap.internal.app.store.ProgramStorePublisher;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
@@ -90,7 +89,6 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final NamespacedLocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
-  private final RuntimeStore runtimeStore;
   private final TransactionSystemClient txSystemClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final SecureStore secureStore;
