@@ -297,7 +297,7 @@ export default class RunsHistoryGraph extends Component {
                     </span>
                   </td>
                   <td> {moment(run.start * 1000).format('llll')}</td>
-                  <td> {run.duration}</td>
+                  <td> {humanReadableDuration(run.duration)}</td>
                 </tr>
               );
             })
