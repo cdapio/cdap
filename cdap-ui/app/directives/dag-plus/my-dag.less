@@ -275,7 +275,9 @@ my-dag-plus {
           }
 
           .menu-icon-node {
-            color: @hamburger-node-hover-color;
+            &:not(.disabled) {
+              color: @hamburger-node-hover-color;
+            }
           }
         }
       }

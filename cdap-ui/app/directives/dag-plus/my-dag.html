@@ -144,7 +144,12 @@
                         ng-class="{'btn-shown': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
                         ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
                   <span class="node-configure-btn-label">
-                    Configure Properties
+                    <span ng-if="!DAGPlusPlusCtrl.isDisabled">
+                      Configure Properties
+                    </span>
+                    <span ng-if="DAGPlusPlusCtrl.isDisabled">
+                      View Properties
+                    </span>
                   </span>
                 </button>
               </div>
