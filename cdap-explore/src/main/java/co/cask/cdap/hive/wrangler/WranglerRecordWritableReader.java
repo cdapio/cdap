@@ -34,14 +34,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
  */
 public class WranglerRecordWritableReader implements RecordReader<Void, StructuredRecordWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(WranglerRecordWritableReader.class);
-  private final AtomicBoolean initialized;
   private RecordReader delegateReader;
   private Pipeline pipeline;
   private Schema outputSchema;
@@ -49,10 +47,14 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
   private Configuration configuration;
 
 
-  public WranglerRecordWritableReader(Configuration configuration, RecordReader delegateReader) {
+  public WranglerRecordWritableReader(Configuration configuration, RecordReader delegateReader) throws IOException {
     this.delegateReader = delegateReader;
     this.configuration = configuration;
-    this.initialized = new AtomicBoolean(false);
+    try {
+      initialize();
+    } catch (Exception e) {
+     throw new IOException(e);
+    }
   }
 
   private void initialize() throws IOException, InterruptedException {
@@ -64,7 +66,6 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
       pipeline.configure(directives, pipelineContext);
       outputSchema = Schema.parseJson(configuration.get("wrangler.output.schema"));
       columnName = configuration.get("wrangler.column.name");
-      initialized.set(true);
     } catch (PipelineException e) {
       throw new IOException("Can not configure wrangler pipeline: ", e);
     }
@@ -78,14 +79,6 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
 
   @Override
   public boolean next(Void key, StructuredRecordWritable value) throws IOException {
-    if (!initialized.get()) {
-      try {
-        initialize();
-      } catch (InterruptedException e) {
-        throw new IOException(e);
-      }
-    }
-
     Text currentValue = new Text();
     // TODO for now we have assumed that the delegate reader will be line reader, change it to make it generic
     LOG.info("###### Before delegate reader");

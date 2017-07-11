@@ -51,6 +51,7 @@ import co.cask.cdap.proto.TableNameInfo;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import co.cask.wrangler.api.PipelineException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -149,6 +150,8 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                      "hive.lock.*",
                      "tez.credentials.path",
                      CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION));
+
+  private PipelineException dummy;
 
   private final CConfiguration cConf;
   private final Configuration hConf;
