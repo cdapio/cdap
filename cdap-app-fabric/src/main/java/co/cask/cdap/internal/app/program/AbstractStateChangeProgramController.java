@@ -135,13 +135,13 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
 
         @Override
         public void resuming() {
-          LOG.debug("Resuming Program {} {}.", programId, runId.getId());
+          LOG.debug("Resuming Program {} with run id {}.", programId, runId.getId());
           programStateWriter.resume();
         }
 
         @Override
         public void error(final Throwable cause) {
-          LOG.info("Program stopped with error {}, {}", programId, runId, cause);
+          LOG.info("Program stopped with error {}, {}: {}", programId, runId, cause);
           programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), new BasicThrowable(cause));
         }
       },

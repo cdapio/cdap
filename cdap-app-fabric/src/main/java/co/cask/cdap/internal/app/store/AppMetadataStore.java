@@ -299,8 +299,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
     recordProgramStart(programId, pid, startTs, twillRunId, runtimeArgs, systemArgs, builder);
   }
 
-  private void recordProgramInit(String pid, long startTs,
-                                 String twillRunId, Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+  private void recordProgramInit(String pid, long startTs, String twillRunId,
+                                 Map<String, String> runtimeArgs, Map<String, String> systemArgs,
                                  MDSKey.Builder keyBuilder) {
     MDSKey key = keyBuilder.add(pid).build();
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();

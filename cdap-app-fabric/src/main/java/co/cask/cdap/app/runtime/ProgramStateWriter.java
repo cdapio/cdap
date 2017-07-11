@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 public interface ProgramStateWriter {
 
   /**
-   * Marks the program's run status as starting
+   * Updates the program run's status to be {@link ProgramRunStatus#STARTING} at the given start time
    *
    * @param startTime the start time of the program in milliseconds when it has reached
    *                  {@link ProgramRunStatus#STARTING}
@@ -35,7 +35,7 @@ public interface ProgramStateWriter {
   void start(long startTime);
 
   /**
-   * Marks the program's run status as running
+   * Updates the program run's status to be {@link ProgramRunStatus#RUNNING} at the given start time in seconds
    *
    * @param startTimeInSeconds the start time of the program in seconds when it has reached
    *                           {@link ProgramRunStatus#RUNNING}
@@ -43,7 +43,7 @@ public interface ProgramStateWriter {
   void running(long startTimeInSeconds);
 
   /**
-   * Updates the program state to be terminated at the given time with the given run status
+   * Updates the program run's status to be terminated at the given time with the given run status
    *
    * @param endTime the end time of the program when it has terminated
    * @param runStatus the final run status of the program
@@ -52,12 +52,12 @@ public interface ProgramStateWriter {
   void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
 
   /**
-   * Updates the program state as suspending
+   * Updates the program run's status to be suspended
    */
   void suspend();
 
   /**
-   * Updates the program state as resuming
+   * Updates the program run's status to be resumed
    */
   void resume();
 }

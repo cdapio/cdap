@@ -22,7 +22,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import javax.annotation.Nullable;
 
 /**
- * A no-op implementation of {@link ProgramStateWriter}
+ * A no-op {@link ProgramStateWriter}
  */
 public final class NoOpProgramStateWriter implements ProgramStateWriter {
   @Override
@@ -31,7 +31,7 @@ public final class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void running(long startTime) {
+  public void running(long startTimeInSeconds) {
 
   }
 

@@ -75,7 +75,7 @@ public final class FlowProgramRunner implements ProgramRunner {
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, CConfiguration cConf,
+  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider,
                            RuntimeStore runtimeStore, StreamAdmin streamAdmin, QueueAdmin queueAdmin,
                            TransactionExecutorFactory txExecutorFactory) {
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;

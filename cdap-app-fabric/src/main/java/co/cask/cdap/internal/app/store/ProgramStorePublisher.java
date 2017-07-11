@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * An implementation of the ProgramStateWriter that immediately persists to the store
+ * An implementation of the ProgramStateWriter that persists directly to the store
  */
 public final class ProgramStorePublisher implements ProgramStateWriter {
   private final RuntimeStore runtimeStore;
@@ -79,9 +79,6 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
 
   @Override
   public void stop(final long endTime, final ProgramRunStatus runStatus, final @Nullable BasicThrowable cause) {
-    if (programId.getType() == ProgramType.MAPREDUCE) {
-      System.out.println("MR PROGRAM " + programId + " HAS STATUS " + runStatus);
-    }
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
