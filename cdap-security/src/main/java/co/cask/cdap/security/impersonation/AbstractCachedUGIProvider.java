@@ -60,11 +60,9 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
 
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
-    if (impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
-      return createUGI(impersonationRequest);
-    }
     try {
-      UGIWithPrincipal ugi = impersonationRequest.getPrincipal() == null ?
+      UGIWithPrincipal ugi = impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE) ||
+        impersonationRequest.getPrincipal() == null ?
         null : ugiCache.getIfPresent(new UGICacheKey(impersonationRequest));
       if (ugi != null) {
         return ugi;
