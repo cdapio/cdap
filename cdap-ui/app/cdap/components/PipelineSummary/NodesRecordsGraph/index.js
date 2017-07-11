@@ -28,7 +28,6 @@ import moment from 'moment';
 import ee from 'event-emitter';
 
 const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
-const LINECOLOR = '#DBDBDB';
 const RECORDS_IN_COLOR = '#58B7F6';
 const RECORDS_OUT_COLOR = '#97A0BA';
 const MARK_SERIES_FILL_COLOR = 'white';
@@ -119,16 +118,17 @@ export default class NodesRecordsGraph extends Component {
             tickFormat={tickFormat}
           />
           <HorizontalGridLines />
-          <LineSeries
-            color={LINECOLOR}
-            data={this.state.data}
-          />
           <AreaSeries
             curve="curveLinear"
             color={getAreaColor(this.props.recordType)}
             stroke={getAreaColor(this.props.recordType)}
             data={this.state.data}
             opacity={0.5}
+          />
+          <LineSeries
+            color={getAreaColor(this.props.recordType)}
+            data={this.state.data}
+            strokeWidth={4}
           />
           <MarkSeries
             data={this.state.data}
