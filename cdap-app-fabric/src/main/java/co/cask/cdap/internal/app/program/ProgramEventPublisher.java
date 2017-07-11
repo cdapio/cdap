@@ -72,7 +72,7 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
     this.messagingService = messagingService;
     this.defaultProperties = ImmutableMap.of(
       ProgramOptionConstants.PROGRAM_ID, GSON.toJson(programId),
-      ProgramOptionConstants.RUN_ID, GSON.toJson(runId)
+      ProgramOptionConstants.RUN_ID, runId.getId()
     );
   }
 

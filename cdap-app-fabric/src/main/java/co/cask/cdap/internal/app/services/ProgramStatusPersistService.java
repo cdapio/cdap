@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
@@ -113,11 +114,15 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
 
       ProgramId programId = GSON.fromJson(programIdString, ProgramId.class);
       Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
+      Arguments userArguments = (userOverrides == null) ? new BasicArguments()
+                                                        : new BasicArguments(userOverrides);
       Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
+      Arguments systemArguments = (systemOverrides == null) ? new BasicArguments()
+                                                            : new BasicArguments(systemOverrides);
 
       ProgramStateWriter programStateWriter =
         new ProgramStorePublisher(programId, RunIds.fromString(runIdString), twillRunId,
-                                  new BasicArguments(userOverrides), new BasicArguments(systemOverrides), store);
+                                  userArguments, systemArguments, store);
 
       switch(programRunStatus) {
         case STARTING:
