@@ -34,6 +34,7 @@ import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
+import isEqual from 'lodash/isEqual';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -195,6 +196,9 @@ export default class RunsHistoryGraph extends Component {
             colorType={'literal'}
             stroke={MARKSERIESSTROKECOLOR}
             onValueMouseOver={(d) => {
+              if (isEqual(this.state.currentHoveredElement, d)) {
+                return;
+              }
               this.setState({
                 currentHoveredElement: d
               });

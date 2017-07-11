@@ -28,6 +28,7 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
+import isEqual from 'lodash/isEqual';
 
 const WARNINGBARCOLOR = '#FDA639';
 const ERRORBARCOLOR = '#A40403';
@@ -191,6 +192,9 @@ export default class LogsMetricsGraph extends Component {
                 cluster="runs"
                 color={WARNINGBARCOLOR}
                 onValueMouseOver={(d) => {
+                  if (isEqual(this.state.currentHoveredElement, d)) {
+                    return;
+                  }
                   this.setState({
                     currentHoveredElement: d
                   });
@@ -210,6 +214,9 @@ export default class LogsMetricsGraph extends Component {
                 cluster="runs"
                 color={ERRORBARCOLOR}
                 onValueMouseOver={(d) => {
+                  if (isEqual(this.state.currentHoveredElement, d)) {
+                    return;
+                  }
                   this.setState({
                     currentHoveredElement: d
                   });

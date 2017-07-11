@@ -26,6 +26,7 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import moment from 'moment';
 import ee from 'event-emitter';
+import isEqual from 'lodash/isEqual';
 
 const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
 const RECORDS_IN_COLOR = '#58B7F6';
@@ -136,6 +137,9 @@ export default class NodesRecordsGraph extends Component {
             fill={MARK_SERIES_FILL_COLOR}
             stroke={MARK_SERIES_STROKE_COLOR}
             onValueMouseOver={(d) => {
+              if (isEqual(this.state.currentHoveredElement, d)) {
+                return;
+              }
               this.setState({
                 currentHoveredElement: d
               });
