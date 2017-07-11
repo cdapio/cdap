@@ -43,6 +43,9 @@ commonModule.directive('myDagPlus', function() {
         var parentWidth = margins.width;
         var parentHeight = margins.height;
 
+        var nodeWidth = 200;
+        var nodeHeight = 80;
+
         var scale = 1.0;
 
         // Find furthest nodes
@@ -58,8 +61,8 @@ commonModule.directive('myDagPlus', function() {
         });
 
 
-        var marginLeft = (parentWidth - maxLeft) / 2 - 50;
-        var marginTop = (parentHeight - maxTop) / 2 - 50;
+        var marginLeft = (parentWidth - maxLeft - nodeWidth) / 2;
+        var marginTop = (parentHeight - maxTop - nodeHeight) / 2;
 
         angular.forEach(plugins, function (plugin) {
           if (!plugin._uiPosition) { return; }
