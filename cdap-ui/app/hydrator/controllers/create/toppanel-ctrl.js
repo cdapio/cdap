@@ -69,7 +69,7 @@ class HydratorPlusPlusTopPanelCtrl {
     }
 
     this.currentDraftId = this.HydratorPlusPlusConfigStore.getDraftId();
-    if (this.currentDraftId && this.currentDraftId === this.$window.localStorage.getItem('LastDraftId')) {
+    if (this.currentDraftId && this.currentDraftId === this.$window.localStorage.getItem('LastDraftId') && this.$window.localStorage.getItem('LastPreviewId') !== 'null') {
       this.currentPreviewId = this.$window.localStorage.getItem('LastPreviewId');
       this.previewStore.dispatch(
         this.previewActions.setPreviewId(this.currentPreviewId)
@@ -82,7 +82,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewMode = false;
     this.previewLoading = true;
 
-    if (this.currentPreviewId && this.currentPreviewId !== 'null') {
+    if (this.currentPreviewId) {
       this.myPreviewLogsApi.getLogsStatus({
         namespace : this.$state.params.namespace,
         previewId : this.currentPreviewId
