@@ -70,54 +70,49 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
     this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     this.workflowToken = workflowToken;
     this.messagingService = messagingService;
-    this.defaultProperties = ImmutableMap.of(
-      ProgramOptionConstants.PROGRAM_ID, GSON.toJson(programId),
-      ProgramOptionConstants.RUN_ID, runId.getId()
+
+    ImmutableMap.Builder defaultPropertiesBuilder = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.PROGRAM_ID, GSON.toJson(programId))
+      .put(ProgramOptionConstants.RUN_ID, runId.getId());
+    if (twillRunId != null) {
+      defaultPropertiesBuilder.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
+    }
+    this.defaultProperties = defaultPropertiesBuilder.build();
+  }
+
+  @Override
+  public void start(long startTime) {
+    publish(
+      ImmutableMap.<String, String>builder()
+        .putAll(defaultProperties)
+        .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTime))
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.STARTING.getRunStatus().toString())
+        .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()))
+        .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArguments.asMap()))
+        .build()
     );
   }
 
   @Override
-  public void start(long startTimeInSeconds) {
-    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
-      .putAll(defaultProperties)
-      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.STARTING.getRunStatus().toString())
-      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()))
-      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArguments.asMap()));
-
-    if (twillRunId != null) {
-      builder.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
-    }
-    publish(builder.build());
-  }
-
-  @Override
   public void running(long startTimeInSeconds) {
-    // Get start time from RunId
-    startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-    if (startTimeInSeconds == -1) {
-      // If RunId is not time-based, use current time as start time
-      startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    }
-    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
-      .putAll(defaultProperties)
-      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
-      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.ALIVE.getRunStatus().toString())
-      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()))
-      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArguments.asMap()));
-
-    if (twillRunId != null) {
-      builder.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
-    }
-    publish(builder.build());
+    publish(
+      ImmutableMap.<String, String>builder()
+        .putAll(defaultProperties)
+        .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTimeInSeconds))
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.ALIVE.getRunStatus().toString())
+        .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userArguments.asMap()))
+        .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemArguments.asMap()))
+        .build()
+    );
   }
 
   @Override
-  public void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable BasicThrowable cause) {
+  public void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause) {
     ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
       .putAll(defaultProperties)
-      .put(ProgramOptionConstants.END_TIME, String.valueOf(TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())))
+      .put(ProgramOptionConstants.END_TIME, String.valueOf(endTime))
       .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString());
+
     if (cause != null) {
       builder.put("error", GSON.toJson(cause));
     }
@@ -129,20 +124,22 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
 
   @Override
   public void suspend() {
-    Map<String, String> properties =
-      ImmutableMap.<String, String>builder().putAll(defaultProperties)
+    publish(
+      ImmutableMap.<String, String>builder()
+        .putAll(defaultProperties)
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.toString())
-        .build();
-    publish(properties);
+        .build()
+    );
   }
 
   @Override
   public void resume() {
-    Map<String, String> properties =
-      ImmutableMap.<String, String>builder().putAll(defaultProperties)
+    publish(
+      ImmutableMap.<String, String>builder()
+        .putAll(defaultProperties)
         .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.toString())
-        .build();
-    publish(properties);
+        .build()
+    );
   }
 
   private void publish(Map<String, String> properties) {

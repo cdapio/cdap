@@ -83,26 +83,18 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
 
     @Override
     protected void processNotification(DatasetContext context, Notification notification) throws Exception {
-      String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
-      String runIdString = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
-      String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
-
-      String startTimeString = notification.getProperties().get(ProgramOptionConstants.LOGICAL_START_TIME);
-      String endTimeString = notification.getProperties().get(ProgramOptionConstants.END_TIME);
-      long startTime = (startTimeString == null) ? -1 : Long.valueOf(startTimeString);
-      long endTime = (endTimeString == null) ? -1 : Long.valueOf(endTimeString);
-
-      String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
-      String systemOverridesString = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-      String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
-      String throwableString = notification.getProperties().get("error");
+      // Required parameters
+      Map<String, String> properties = notification.getProperties();
+      String programIdString = properties.get(ProgramOptionConstants.PROGRAM_ID);
+      String runIdString = properties.get(ProgramOptionConstants.RUN_ID);
+      String programStatusString = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
 
       ProgramRunStatus programRunStatus = null;
       if (programStatusString != null) {
         try {
           programRunStatus = ProgramRunStatus.valueOf(programStatusString);
         } catch (IllegalArgumentException e) {
-          LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programIdString, e);
+          LOG.warn("Invalid program status {} passed for program {}", programStatusString, programIdString, e);
           // Fall through, let the thread return normally
         }
       }
@@ -113,17 +105,16 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
       }
 
       ProgramId programId = GSON.fromJson(programIdString, ProgramId.class);
-      Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
-      Arguments userArguments = (userOverrides == null) ? new BasicArguments()
-                                                        : new BasicArguments(userOverrides);
-      Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
-      Arguments systemArguments = (systemOverrides == null) ? new BasicArguments()
-                                                            : new BasicArguments(systemOverrides);
-
+      String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
+      Arguments userArguments = getArguments(properties, ProgramOptionConstants.USER_OVERRIDES);
+      Arguments systemArguments = getArguments(properties, ProgramOptionConstants.SYSTEM_OVERRIDES);
       ProgramStateWriter programStateWriter =
         new ProgramStorePublisher(programId, RunIds.fromString(runIdString), twillRunId,
                                   userArguments, systemArguments, store);
 
+      long startTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
+      long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
+      System.out.println("PERSIST " + programId + " with Status " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           if (startTime == -1) {
@@ -153,6 +144,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
             LOG.debug("End time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
+          String throwableString = properties.get("error");
           BasicThrowable cause = GSON.fromJson(throwableString, BasicThrowable.class);
           programStateWriter.stop(endTime, ProgramRunStatus.FAILED, cause);
           break;
@@ -160,6 +152,18 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
           throw new IllegalArgumentException(String.format("Cannot persist ProgramRunStatus %s for ProgramId %s",
                                                            programRunStatus.toString(), programId));
       }
+    }
+
+    private long getTime(Map<String, String> properties, String option) {
+      String timeString = properties.get(option);
+      return (timeString == null) ? -1 : Long.valueOf(timeString);
+    }
+
+    private Arguments getArguments(Map<String, String> properties, String option) {
+      String argumentsString = properties.get(option);
+      Map<String, String> arguments = GSON.fromJson(argumentsString, STRING_STRING_MAP);
+      return (arguments == null) ? new BasicArguments()
+                                 : new BasicArguments(arguments);
     }
   }
 }

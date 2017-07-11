@@ -87,6 +87,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.apache.hadoop.hbase.util.Threads;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.apache.tephra.TransactionAware;
@@ -165,10 +166,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // start a flow and check the status
     startProgram(wordcountFlow1);
     waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+//    waitNotification(wordcountFlow1, "running");
 
     // stop the flow and check the status
     stopProgram(wordcountFlow1);
     waitState(wordcountFlow1, STOPPED);
+//    waitNotification(wordcountFlow1, "stopped");
 
     // deploy another app in a different namespace and verify
     response = deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
@@ -187,10 +190,12 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // start map-reduce and verify status
     startProgram(dummyMR2);
     waitState(dummyMR2, ProgramRunStatus.RUNNING.toString());
+//    waitNotification(dummyMR2, "running");
 
     // stop the mapreduce program and check the status
     stopProgram(dummyMR2);
     waitState(dummyMR2, STOPPED);
+//    waitNotification(dummyMR2, "stopped");
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
@@ -211,6 +216,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(dummyMR2, runId, 200);
 
     waitState(dummyMR2, STOPPED);
+//    waitNotification(dummyMR2, "stopped");
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
@@ -222,6 +228,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop all runs of the map-reduce program
     stopProgram(dummyMR2, 200);
     waitState(dummyMR2, STOPPED);
+//    waitNotification(dummyMR2, "stopped");
 
     // get run records, all runs should be stopped
     historyRuns = getProgramRuns(dummyMR2, "running");
@@ -246,9 +253,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // start workflow and check status
     startProgram(sleepWorkflow2);
     waitState(sleepWorkflow2, ProgramRunStatus.RUNNING.toString());
+//    waitNotification(sleepWorkflow2, "running");
 
     // workflow will stop itself
     waitState(sleepWorkflow2, STOPPED);
+//    waitNotification(sleepWorkflow2, "stopped");
 
     // cleanup
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -619,6 +628,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(wordcountFlow1);
+    waitState(wordcountFlow1, RUNNING);
 
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -630,6 +640,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start the service
     startProgram(service2);
+    waitState(service2, RUNNING);
     // test status API after starting the service
     response = doPost(statusUrl2, "[{'appId': 'AppWithServices', 'programType': 'Service', 'programId': " +
       "'NoOpService'}]");
@@ -933,6 +944,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
+    waitState(wordcountFlow1, RUNNING);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                            WORDCOUNT_FLOW_NAME);
@@ -947,6 +959,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop
     stopProgram(wordcountFlow1);
+    waitState(wordcountFlow1, STOPPED);
 
     // delete queues
     Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
@@ -1706,9 +1719,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   private void verifyProgramHistory(ProgramId program) throws Exception {
     String namespace = program.getNamespace();
+
+    Id.Program pr = Id.Program.from(program.getNamespace(), program.getApplication(),
+                                    program.getType(), program.getProgram());
+    int originalRuns = getProgramRuns(pr, "running").size();
     // first run
     startProgram(program, 200);
-    waitState(program, ProgramRunStatus.RUNNING.toString());
+    waitState(program, RUNNING);
+//    waitNotification(pr, "running", originalRuns + 1);
     stopProgram(program, null, 200, null);
     waitState(program, STOPPED);
 

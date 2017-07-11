@@ -778,6 +778,16 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
+  protected void waitNotification(final Id.Program program, final String state, final int expected)
+    throws Exception {
+    Tasks.waitFor(true,  new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, state).size() == expected;
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
   /**
    * Waits for the given program to transit to the given state.
    */
