@@ -16,7 +16,7 @@ DOCS="docs"
 DOCS_LOCAL="docs-local"
 DOCS_OUTER="docs-outer"
 
-CDAP_MANUALS="developer-manual admin-manual integrations examples-manual reference-manual faqs"
+CDAP_MANUALS="user-guide developer-manual admin-manual integrations examples-manual reference-manual faqs"
 EXTENSION_MANUALS=""
 MANUALS="${CDAP_MANUALS} ${EXTENSION_MANUALS}"
 

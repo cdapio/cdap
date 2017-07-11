@@ -14,6 +14,7 @@ CDAP Documentation Table of Contents
 
     Introduction </index>
     Guides </guides>
+    User Guide </user-guide/index>
     Developer Manual </developer-manual/index>
     Administration Manual </admin-manual/index>
     Integrations </integrations/index>
