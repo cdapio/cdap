@@ -70,13 +70,20 @@ public class FileSetDefinition implements DatasetDefinition<FileSet, FileSetAdmi
     validateProperties(properties.getProperties());
     newProperties.put(FileSetDataset.FILESET_VERSION_PROPERTY, FileSetDataset.FILESET_VERSION);
 
+    boolean flag = false;
+
     for (String key : newProperties.keySet()) {
       if (key.contains("wrangler")) {
-        // TODO Add wrangler input/output format
-        newProperties.put("explore.input.format", "co.cask.cdap.hive.wrangler.WranglerExploreInputFormat");
-        newProperties.put("explore.output.format", "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
-        newProperties.put("explore.serde", "co.cask.cdap.hive.wrangler.WranglerExploreInputFormat");
+        flag = true;
+        break;
       }
+    }
+
+    if (flag) {
+      // TODO Add wrangler input/output format
+      newProperties.put("explore.input.format", "co.cask.cdap.hive.wrangler.WranglerExploreInputFormat");
+      newProperties.put("explore.output.format", "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat");
+      newProperties.put("explore.serde", "co.cask.cdap.hive.wrangler.WranglerSerDe");
     }
 
 

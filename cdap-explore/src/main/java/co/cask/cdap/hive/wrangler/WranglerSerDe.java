@@ -48,18 +48,23 @@ public class WranglerSerDe implements SerDe {
   private ObjectDeserializer deserializer;
   private ObjectSerializer serializer;
   private Schema schema;
+  private SerDeStats stats;
 
   @Override
   public void initialize(@Nullable Configuration conf, Properties properties) throws SerDeException {
     try {
-      schema = Schema.parseJson(conf.get("output.schema"));
+      schema = Schema.parseJson(properties.getProperty("wrangler.explore.output.schema"));
     } catch (IOException e) {
       throw new SerDeException(e);
     }
+
+    LOG.info("******** schema is: {}", schema.toString());
+
     this.deserializer = new ObjectDeserializer(properties, schema);
+    this.objectInspector = deserializer.getInspector();
     ArrayList<String> columnNames = Lists.newArrayList(StringUtils.split(properties.getProperty("columns"), ","));
     this.serializer = new ObjectSerializer(columnNames);
-    this.objectInspector = deserializer.getInspector();
+    this.stats = new SerDeStats();
   }
 
   @Override
@@ -80,11 +85,12 @@ public class WranglerSerDe implements SerDe {
   @Override
   public SerDeStats getSerDeStats() {
     // TODO: add real Dataset stats - CDAP-12
-    return new SerDeStats();
+    return stats;
   }
 
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
+    LOG.info("******* Deserializing the writable");
     ObjectWritable objectWritable = (ObjectWritable) writable;
     Object obj = objectWritable.get();
     try {

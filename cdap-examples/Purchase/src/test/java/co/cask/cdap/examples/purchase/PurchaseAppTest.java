@@ -55,7 +55,7 @@ public class PurchaseAppTest extends TestBase {
     // Start PurchaseFlow
     FlowManager flowManager = appManager.getFlowManager("PurchaseFlow").start();
 
-    // Send stream events to the "purchaseStream" Stream
+    // Send stream events to the "purchaseStream" Streamdmw
     StreamManager streamManager = getStreamManager("purchaseStream");
     streamManager.send("bob bought 3 apples for $30");
     streamManager.send("joe bought 1 apple for $100");

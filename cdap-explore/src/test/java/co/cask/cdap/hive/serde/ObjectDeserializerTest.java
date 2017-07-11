@@ -369,6 +369,11 @@ public class ObjectDeserializerTest {
     assertSimpleRecordEquals(expected, translated);
   }
 
+  @Test
+  public void testWranglerTest() throws Exception {
+
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testNestedRecord() throws Exception {

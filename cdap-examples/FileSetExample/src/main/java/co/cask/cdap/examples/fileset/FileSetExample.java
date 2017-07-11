@@ -19,7 +19,6 @@ package co.cask.cdap.examples.fileset;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
-import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -39,14 +38,12 @@ public class FileSetExample extends AbstractApplication {
     setDescription("Application with a MapReduce that uses a FileSet dataset");
 
     createDataset("lines", FileSet.class, FileSetProperties.builder()
-      .setBasePath("/tmp/vini/data/lines")
+      .setBasePath("/tmp/vini/data/lines/")
       .setInputFormat(WranglerInputFormat.class)
       .setOutputFormat(TextOutputFormat.class)
       .setDataExternal(true)
+      .setExploreSchema("id string, name string, street_address string, city string, state string")
       .setEnableExploreOnCreate(true)
-      .setExploreInputFormat(WranglerExploreInputFormat.class)
-      .setExploreOutputFormat(HiveIgnoreKeyTextOutputFormat.class)
-      .setSerDe(WranglerSerde.class)
       .setInputProperty("wrangler.column.name", "hivetext")
       .setInputProperty("wrangler.directives", "parse-as-csv hivetext ,\n" +
         "drop hivetext\n" +

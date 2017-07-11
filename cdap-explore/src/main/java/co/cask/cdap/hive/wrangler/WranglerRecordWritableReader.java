@@ -27,81 +27,98 @@ import co.cask.wrangler.executor.PipelineExecutor;
 import co.cask.wrangler.parser.TextDirectives;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapred.RecordReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
  */
-public class WranglerRecordWritableReader  extends RecordReader<Void, StructuredRecordWritable> {
+public class WranglerRecordWritableReader implements RecordReader<Void, StructuredRecordWritable> {
+  private static final Logger LOG = LoggerFactory.getLogger(WranglerRecordWritableReader.class);
+  private final AtomicBoolean initialized;
   private RecordReader delegateReader;
-  private Void key;
-  private StructuredRecordWritable value;
-  private Directives directives;
   private Pipeline pipeline;
-  private PipelineContext pipelineContext;
   private Schema outputSchema;
   private String columnName;
+  private Configuration configuration;
 
-  public WranglerRecordWritableReader(RecordReader delegateReader) {
+
+  public WranglerRecordWritableReader(Configuration configuration, RecordReader delegateReader) {
     this.delegateReader = delegateReader;
+    this.configuration = configuration;
+    this.initialized = new AtomicBoolean(false);
   }
 
-  @Override
-  public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-    delegateReader.initialize(split, context);
-    Configuration jobConf = context.getConfiguration();
-    directives = new TextDirectives(jobConf.get("wrangler.directives"));
+  private void initialize() throws IOException, InterruptedException {
+    Directives directives = new TextDirectives(configuration.get("wrangler.directives"));
     // TODO Think about which context to use, also change it based on how we restructure wrangler-core
-    pipelineContext = new NoopPipelineContext();
+    PipelineContext pipelineContext = new NoopPipelineContext();
     pipeline = new PipelineExecutor();
     try {
       pipeline.configure(directives, pipelineContext);
-      outputSchema = Schema.parseJson(jobConf.get("wrangler.output.schema"));
-      columnName = jobConf.get("wrangler.output.schema");
+      outputSchema = Schema.parseJson(configuration.get("wrangler.output.schema"));
+      columnName = configuration.get("wrangler.column.name");
+      initialized.set(true);
     } catch (PipelineException e) {
       throw new IOException("Can not configure wrangler pipeline: ", e);
     }
   }
 
   @Override
-  public boolean nextKeyValue() throws IOException, InterruptedException {
-    if (delegateReader.nextKeyValue()) {
-      // TODO for now we have assumed that the delegate reader will be line reader, change it to make it generic
-      Text currentValue = (Text) delegateReader.getCurrentValue();
+  public float getProgress() throws IOException {
+    // not required
+    return 0;
+  }
+
+  @Override
+  public boolean next(Void key, StructuredRecordWritable value) throws IOException {
+    if (!initialized.get()) {
+      try {
+        initialize();
+      } catch (InterruptedException e) {
+        throw new IOException(e);
+      }
+    }
+
+    Text currentValue = new Text();
+    // TODO for now we have assumed that the delegate reader will be line reader, change it to make it generic
+    LOG.info("###### Before delegate reader");
+    if (delegateReader.next(key, currentValue)) {
       try {
         Record record = new Record();
         String obj = currentValue.toString();
+        LOG.info("##### Record is: {}", obj);
         record.add(columnName, obj);
         List<StructuredRecord> transformedRecords  = pipeline.execute(Arrays.asList(record), outputSchema);
-
-        value = new StructuredRecordWritable(transformedRecords.get(0));
+        LOG.info("####### Wrangled the record");
+        value.set(transformedRecords.get(0));
       } catch (PipelineException e) {
         throw new IOException("Exception while applying directives on data: ", e);
       }
       return true;
     }
-    value = null;
+
     return false;
   }
 
   @Override
-  public Void getCurrentKey() throws IOException, InterruptedException {
-    return key;
+  public Void createKey() {
+    return null;
   }
 
   @Override
-  public StructuredRecordWritable getCurrentValue() throws IOException, InterruptedException {
-    return value;
+  public StructuredRecordWritable createValue() {
+    return new StructuredRecordWritable();
   }
 
   @Override
-  public float getProgress() throws IOException, InterruptedException {
+  public long getPos() throws IOException {
     return 0;
   }
 

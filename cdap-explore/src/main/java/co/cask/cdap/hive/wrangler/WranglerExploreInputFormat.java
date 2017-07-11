@@ -16,36 +16,34 @@
 
 package co.cask.cdap.hive.wrangler;
 
-import org.apache.hadoop.mapreduce.InputFormat;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapred.InputFormat;
+import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.RecordReader;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextInputFormat;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  *
  */
-public class WranglerExploreInputFormat extends InputFormat<Void, StructuredRecordWritable> {
+public class WranglerExploreInputFormat implements InputFormat<Void, StructuredRecordWritable> {
   private TextInputFormat delegate;
 
   public WranglerExploreInputFormat() {
     this.delegate = new TextInputFormat();
   }
 
-
   @Override
-  public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-    return delegate.getSplits(context);
+  public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
+    delegate.configure(job);
+    return delegate.getSplits(job, numSplits);
   }
 
   @Override
-  public RecordReader<Void, StructuredRecordWritable> createRecordReader(InputSplit split, TaskAttemptContext context)
-    throws IOException, InterruptedException {
-    return new WranglerRecordWritableReader(new LineRecordReader());
+  public RecordReader<Void, StructuredRecordWritable> getRecordReader(InputSplit genericSplit, JobConf job,
+                                                                      Reporter reporter) throws IOException {
+    return new WranglerRecordWritableReader(job, delegate.getRecordReader(genericSplit, job, reporter));
   }
 }
