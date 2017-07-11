@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;
@@ -780,12 +781,12 @@ public abstract class AppFabricTestBase {
 
   protected void waitNotification(final Id.Program program, final String state, final int expected)
     throws Exception {
-    Tasks.waitFor(true,  new Callable<Boolean>() {
+    Tasks.waitFor(expected,  new Callable<Integer>() {
       @Override
-      public Boolean call() throws Exception {
-        return getProgramRuns(program, state).size() == expected;
+      public Integer call() throws Exception {
+        return getProgramRuns(program, state).size();
       }
-    }, 60, TimeUnit.SECONDS);
+    }, 30, TimeUnit.SECONDS);
   }
 
   /**
@@ -1022,6 +1023,29 @@ public abstract class AppFabricTestBase {
     String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
                                 program.getType().getCategoryName(), program.getId(), status);
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
+  }
+
+  protected void verifyProgramRuns(final ProgramId program, final String status) throws Exception {
+    verifyProgramRuns(program, status, 0);
+  }
+
+  protected void verifyProgramRuns(final ProgramId program, final String status, final int expected) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() > expected;
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
+  protected List<RunRecord> getProgramRuns(ProgramId program, String status) throws Exception {
+    String path = String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(),
+                                program.getVersion(), program.getType().getCategoryName(), program.getProgram(),
+                                status);
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);

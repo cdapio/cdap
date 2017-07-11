@@ -144,8 +144,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
             LOG.debug("End time not specified in notification for program id {}, not persisting" + programId);
             return;
           }
-          String throwableString = properties.get("error");
-          BasicThrowable cause = GSON.fromJson(throwableString, BasicThrowable.class);
+          BasicThrowable cause = GSON.fromJson(properties.get("error"), BasicThrowable.class);
           programStateWriter.stop(endTime, ProgramRunStatus.FAILED, cause);
           break;
         default:
