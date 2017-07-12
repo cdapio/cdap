@@ -432,7 +432,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // get run records for later use
     List<RunRecord> runs = getProgramRuns(
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), ProgramRunStatus.RUNNING);
+      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+                      ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
     String runId = runs.get(0).getPid();
 
