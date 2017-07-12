@@ -114,8 +114,7 @@ public class MasterTwillApplication implements TwillApplication {
     prepareLogSaverResources(tempDir, containerCConf,
                              runnableLocalizeResources.get(Constants.Service.LOGSAVER), extraClassPath);
 
-    prepareHBaseDDLExecutorResources(tempDir, containerCConf,
-                                     runnableLocalizeResources.get(Constants.Service.DATASET_EXECUTOR));
+    prepareHBaseDDLExecutorResources(tempDir, containerCConf);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       prepareExploreResources(tempDir, hConf,
@@ -424,8 +423,7 @@ public class MasterTwillApplication implements TwillApplication {
   /**
    * Prepares the {@link HBaseDDLExecutor} implementation for localization.
    */
-  private void prepareHBaseDDLExecutorResources(Path tempDir, CConfiguration cConf,
-                                                Map<String, LocalizeResource> localizeResources) throws IOException {
+  private void prepareHBaseDDLExecutorResources(Path tempDir, CConfiguration cConf) throws IOException {
     String ddlExecutorExtensionDir = cConf.get(Constants.HBaseDDLExecutor.EXTENSIONS_DIR);
     if (ddlExecutorExtensionDir == null) {
       // Nothing to localize
@@ -434,7 +432,10 @@ public class MasterTwillApplication implements TwillApplication {
 
     final File target = new File(tempDir.toFile(), "hbaseddlext.jar");
     BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
-    localizeResources.put(target.getName(), new LocalizeResource(target, true));
+    for (String service : ALL_SERVICES) {
+      Map<String, LocalizeResource> localizeResourceMap = runnableLocalizeResources.get(service);
+      localizeResourceMap.put(target.getName(), new LocalizeResource(target, true));
+    }
     cConf.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, target.getName());
   }
 }
