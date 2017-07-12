@@ -49,13 +49,17 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
 
   private static final Type STRING_PARTITION_KEY_MAP_TYPE = new TypeToken<Map<String, PartitionKey>>() { }.getType();
 
-  private final String mappingString;
+  private final Map<String, PartitionKey> pathToPartitionMapping;
 
   private final boolean isCombineInputFormat;
   private final Configuration conf;
 
   private final List<Path> inputPaths;
   private List<PartitionKey> partitionKeys;
+
+  // for caching in case of CombineFileInputFormat
+  private String currentInputfileName;
+  private PartitionKey currentPartitionKey;
 
   BasicPartitionedFileSetInputContext(MultiInputTaggedSplit multiInputTaggedSplit) {
     super(multiInputTaggedSplit.getName());
@@ -75,7 +79,9 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     }
 
     this.conf = multiInputTaggedSplit.getConf();
-    this.mappingString = conf.get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
+    String mappingString = conf.get(PartitionedFileSetDataset.PATH_TO_PARTITIONING_MAPPING);
+    this.pathToPartitionMapping =
+      GSON.fromJson(Objects.requireNonNull(mappingString), STRING_PARTITION_KEY_MAP_TYPE);
   }
 
   @Override
@@ -83,8 +89,12 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
     if (isCombineInputFormat) {
       // org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader sets this in its initNextRecordReader method
       String inputFileName = conf.get(MRJobConfig.MAP_INPUT_FILE);
-      Preconditions.checkNotNull(inputFileName);
-      return getPartitionKey(URI.create(inputFileName));
+      if (!inputFileName.equals(currentInputfileName)) {
+        Preconditions.checkNotNull(inputFileName);
+        currentPartitionKey = getPartitionKey(URI.create(inputFileName));
+        currentInputfileName = inputFileName;
+      }
+      return currentPartitionKey;
     } else {
       List<PartitionKey> inputPartitionKeys = getInputPartitionKeys();
       if (inputPartitionKeys.size() != 1) {
@@ -107,8 +117,6 @@ class BasicPartitionedFileSetInputContext extends BasicInputContext implements P
   }
 
   private PartitionKey getPartitionKey(URI inputPathURI) {
-    Map<String, PartitionKey> pathToPartitionMapping =
-      GSON.fromJson(Objects.requireNonNull(mappingString), STRING_PARTITION_KEY_MAP_TYPE);
     if (pathToPartitionMapping.containsKey(inputPathURI.toString())) {
       return pathToPartitionMapping.get(inputPathURI.toString());
     }
