@@ -126,13 +126,15 @@ public abstract class SchedulerTestBase {
     StreamMetricsPublisher metricsPublisher = createMetricsPublisher(STREAM_ID);
 
     // Publish a notification on behalf of the stream with enough data to trigger the execution of the job
+
+    int timeoutSeconds = 20;
     metricsPublisher.increment(1024 * 1024);
-    waitForRuns(store, PROGRAM_ID, 1, 15);
-    waitUntilFinished(runtimeService, PROGRAM_ID, 15);
+    waitForRuns(store, PROGRAM_ID, 1, timeoutSeconds);
+    waitUntilFinished(runtimeService, PROGRAM_ID, timeoutSeconds);
 
     // Trigger both scheduled program
     metricsPublisher.increment(1024 * 1024);
-    waitForRuns(store, PROGRAM_ID, 3, 15);
+    waitForRuns(store, PROGRAM_ID, 3, timeoutSeconds);
 
     // Suspend a schedule multiple times, and make sur that it doesn't mess up anything
     scheduler.disableSchedule(SCHEDULE_ID_2);
@@ -146,7 +148,7 @@ public abstract class SchedulerTestBase {
 
     // Since schedule 2 is suspended, only the first schedule should get triggered
     metricsPublisher.increment(1024 * 1024);
-    waitForRuns(store, PROGRAM_ID, 4, 15);
+    waitForRuns(store, PROGRAM_ID, 4, timeoutSeconds);
 
     // Resume schedule 2
     scheduler.enableSchedule(SCHEDULE_ID_2);
@@ -161,13 +163,13 @@ public abstract class SchedulerTestBase {
     // Both schedules should be trigger. In particular, the schedule that has just been resumed twice should
     // only trigger once
     metricsPublisher.increment(1024 * 1024);
-    waitForRuns(store, PROGRAM_ID, 6, 15);
+    waitForRuns(store, PROGRAM_ID, 6, timeoutSeconds);
 
     // Update the schedule2's data trigger
     // Both schedules should now trigger execution after 1 MB of data received
     scheduler.updateSchedule(UPDATE_SCHEDULE_2);
     metricsPublisher.increment(1024 * 1024);
-    waitForRuns(store, PROGRAM_ID, 8, 15);
+    waitForRuns(store, PROGRAM_ID, 8, timeoutSeconds);
 
     scheduler.disableSchedule(SCHEDULE_ID_1);
     scheduler.disableSchedule(SCHEDULE_ID_2);
