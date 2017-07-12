@@ -17,10 +17,12 @@
 package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.etl.api.ErrorTransform;
+import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -49,7 +51,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE,
     Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-    Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE);
+    Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE);
 
   @Override
   public void configure() {
@@ -75,12 +77,12 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
 
     addWorkflow(new SmartWorkflow(spec, supportedPluginTypes, getConfigurer(), config.getEngine()));
 
-    Schedules.Builder scheduleBuilder = Schedules.builder(SCHEDULE_NAME)
+    ScheduleBuilder scheduleBuilder = buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, SmartWorkflow.NAME)
       .setDescription("Data pipeline schedule");
     Integer maxConcurrentRuns = config.getMaxConcurrentRuns();
     if (maxConcurrentRuns != null) {
-      scheduleBuilder.setMaxConcurrentRuns(maxConcurrentRuns);
+      scheduleBuilder.withConcurrency(maxConcurrentRuns);
     }
-    scheduleWorkflow(scheduleBuilder.createTimeSchedule(config.getSchedule()), SmartWorkflow.NAME);
+    schedule(scheduleBuilder.triggerByTime(config.getSchedule()));
   }
 }
