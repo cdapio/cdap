@@ -1113,6 +1113,7 @@ features:
             startTime: Start Time
         title: Number of Records Out
       xAxisTitle: "Pipeline run #"
+      yAxisTitle: "Number of Records"
     runsHistoryGraph:
       hint:
         duration: Duration

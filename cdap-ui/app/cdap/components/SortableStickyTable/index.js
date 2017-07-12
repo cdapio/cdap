@@ -58,3 +58,7 @@ export default class SortableStickyTable extends SortableTable {
     );
   }
 }
+
+SortableStickyTable.propTypes = {
+  ...SortableTable.propTypes
+};

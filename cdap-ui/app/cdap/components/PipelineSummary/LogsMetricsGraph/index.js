@@ -89,7 +89,7 @@ export default class LogsMetricsGraph extends Component {
       runsLimit: nextProps.runsLimit
     });
   }
-  componetnDidMount() {
+  componentDidMount() {
     this.eventEmitter.on('CLOSE_HINT_TOOLTIP', this.closeTooltip);
   }
   componentWillUnmount() {
@@ -294,11 +294,15 @@ export default class LogsMetricsGraph extends Component {
             runs.map(run => {
               let logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${run.runid}`;
               let runid = run.runid;
+              console.log(run);
               return (
                 <tr>
                   <td>
                     <span>{run.index}</span>
-                    <CopyableRunID runid={runid} idprefix="logs-metrics"/>
+                    <CopyableRunID
+                      runid={runid}
+                      idprefix="logs-metrics"
+                    />
                   </td>
                   <td>
                     <span className="text-danger">{run.errors}</span>
@@ -322,8 +326,8 @@ export default class LogsMetricsGraph extends Component {
     let entities = this.props.runs.map((run, i) => {
       return Object.assign({}, run, {
         index: i + 1,
-        warnings: objectQuery(run, 'logsMetrics', 'system.app.log.warn'),
-        errors: objectQuery(run, 'logsMetrics', 'system.app.log.error'),
+        warnings: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
+        errors: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
         start: run.start
       });
     });

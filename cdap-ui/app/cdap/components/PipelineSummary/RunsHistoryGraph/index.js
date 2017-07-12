@@ -290,7 +290,10 @@ export default class RunsHistoryGraph extends Component {
                 <tr>
                   <td>
                     <span>{run.index}</span>
-                    <CopyableRunID runid={run.runid} idprefix="runs-history"/>
+                    <CopyableRunID
+                      runid={run.runid}
+                      idprefix="runs-history"
+                    />
                   </td>
                   <td>
                     <span className={classnames({

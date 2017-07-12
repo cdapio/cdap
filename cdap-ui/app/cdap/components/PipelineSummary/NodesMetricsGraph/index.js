@@ -140,7 +140,10 @@ export default class NodesMetricsGraph extends Component {
                 <tr>
                   <td>
                     <span>{record.index}</span>
-                    <CopyableRunID runid={record.runid} idprefix="runs-history"/>
+                    <CopyableRunID
+                      runid={record.runid}
+                      idprefix="runs-history"
+                    />
                   </td>
                   <td>
                     <span>{record.numberOfRecords}</span>

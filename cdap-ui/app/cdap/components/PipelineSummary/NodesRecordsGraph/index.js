@@ -191,7 +191,7 @@ export default class NodesRecordsGraph extends Component {
             :
               null
           }
-          <div className="y-axis-title">Number of Records</div>
+          <div className="y-axis-title">{T.translate(`${PREFIX}.yAxisTitle`)}</div>
         </FPlot>
       </div>
     );
