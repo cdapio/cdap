@@ -20,8 +20,10 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -618,6 +620,8 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("SimpleMultiSourceApp-" + engine);
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
+    getMessagingAdmin(appId.getNamespace()).createTopic("sleepTopic");
+
     // there should be only two programs - one workflow and one mapreduce/spark
     Assert.assertEquals(2, appManager.getInfo().getPrograms().size());
     Schema schema = Schema.recordOf(
@@ -650,6 +654,15 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sleep.records.out");
     validateMetric(3, appId, "sink.records.in");
     Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
+
+    try (CloseableIterator<Message> messages =
+      getMessagingContext().getMessageFetcher().fetch(appId.getNamespace(), "sleepTopic", 10, null)) {
+      Assert.assertTrue(messages.hasNext());
+      Assert.assertEquals("2", messages.next().getPayloadAsString());
+      Assert.assertFalse(messages.hasNext());
+    }
+
+    getMessagingAdmin(appId.getNamespace()).deleteTopic("sleepTopic");
   }
 
   @Test

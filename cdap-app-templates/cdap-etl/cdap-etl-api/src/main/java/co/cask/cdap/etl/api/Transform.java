@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.messaging.MessagingContext;
 
 /**
  * Transform Stage.
@@ -61,7 +62,29 @@ public abstract class Transform<IN, OUT> implements StageLifecycle<TransformCont
     //no-op
   }
 
+  /**
+   * Prepare the Batch run. Used to configure the job before starting the run.
+   *
+   * @param context transform prepare context
+   * @throws Exception if there's an error during this method invocation
+   */
+  public void prepareRun(TransformPrepareContext context) throws Exception {
+    // no-op
+  }
+
+  /**
+   * Invoked after the Batch run finishes. Used to perform any end of the run logic.
+   *
+   * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
+   * @param context transform prepare context
+   */
+  public void onRunFinish(boolean succeeded, TransformPrepareContext context) {
+    // no-op
+  }
+
+  // not available in configurePipeline, prepareRun, onRunFinish.
   protected TransformContext getContext() {
     return context;
   }
+
 }
