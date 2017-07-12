@@ -26,6 +26,7 @@ import co.cask.cdap.common.utils.FileUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.explore.service.Explore;
 import co.cask.cdap.explore.service.ExploreException;
 import co.cask.cdap.explore.service.ExploreService;
@@ -67,6 +68,7 @@ import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import org.apache.commons.csv.CSVFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -151,7 +153,10 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
                      "tez.credentials.path",
                      CommonConfigurationKeysPublic.HADOOP_SECURITY_AUTHENTICATION));
 
+  // TODO Added for wrangler - remove them
   private PipelineException dummy;
+  private LookupProvider dummyLookupProvider;
+  private CSVFormat dummyCsvFormat;
 
   private final CConfiguration cConf;
   private final Configuration hConf;

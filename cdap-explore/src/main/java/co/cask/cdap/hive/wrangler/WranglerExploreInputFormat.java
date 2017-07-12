@@ -16,9 +16,11 @@
 
 package co.cask.cdap.hive.wrangler;
 
+import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.LineRecordReader;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
@@ -44,6 +46,6 @@ public class WranglerExploreInputFormat implements InputFormat<Void, StructuredR
   @Override
   public RecordReader<Void, StructuredRecordWritable> getRecordReader(InputSplit genericSplit, JobConf job,
                                                                       Reporter reporter) throws IOException {
-    return new WranglerRecordWritableReader(job, delegate.getRecordReader(genericSplit, job, reporter));
+    return new WranglerRecordWritableReader(job, new LineRecordReader(job, (FileSplit) genericSplit, null));
   }
 }

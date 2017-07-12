@@ -26,6 +26,7 @@ import co.cask.wrangler.api.Record;
 import co.cask.wrangler.executor.PipelineExecutor;
 import co.cask.wrangler.parser.TextDirectives;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.RecordReader;
 import org.slf4j.Logger;
@@ -47,7 +48,8 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
   private Configuration configuration;
 
 
-  public WranglerRecordWritableReader(Configuration configuration, RecordReader delegateReader) throws IOException {
+  public <K, V> WranglerRecordWritableReader(Configuration configuration, RecordReader<K, V> delegateReader)
+    throws IOException {
     this.delegateReader = delegateReader;
     this.configuration = configuration;
     try {
@@ -58,14 +60,26 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
   }
 
   private void initialize() throws IOException, InterruptedException {
-    Directives directives = new TextDirectives(configuration.get("wrangler.directives"));
-    // TODO Think about which context to use, also change it based on how we restructure wrangler-core
+    Directives directives = new TextDirectives("parse-as-csv hivetext ,\n" +
+                                                 "drop hivetext\n" +
+                                                 "rename hivetext_1 id\n" +
+                                                 "rename hivetext_2 name\n" +
+                                                 "rename hivetext_3 street_address\n" +
+                                                 "rename hivetext_4 city\n" +
+                                                 "rename hivetext_5 state");
+    // TODO Think about which context to use, also change izt based on how we restructure wrangler-core
     PipelineContext pipelineContext = new NoopPipelineContext();
     pipeline = new PipelineExecutor();
     try {
       pipeline.configure(directives, pipelineContext);
-      outputSchema = Schema.parseJson(configuration.get("wrangler.output.schema"));
-      columnName = configuration.get("wrangler.column.name");
+      String strSchema = "{\"type\":\"record\",\"name\":\"etlSchemaBody\"," +
+        "\"fields\":[{\"name\":\"id\",\"type\":[\"string\",\"null\"]},{\"name\":\"name\"," +
+        "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
+        "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +
+        ",\"null\"]}]}";
+
+      outputSchema = Schema.parseJson(strSchema);
+      columnName = "hivetext";
     } catch (PipelineException e) {
       throw new IOException("Can not configure wrangler pipeline: ", e);
     }
@@ -82,7 +96,7 @@ public class WranglerRecordWritableReader implements RecordReader<Void, Structur
     Text currentValue = new Text();
     // TODO for now we have assumed that the delegate reader will be line reader, change it to make it generic
     LOG.info("###### Before delegate reader");
-    if (delegateReader.next(key, currentValue)) {
+    if (delegateReader.next(new LongWritable(), currentValue)) {
       try {
         Record record = new Record();
         String obj = currentValue.toString();

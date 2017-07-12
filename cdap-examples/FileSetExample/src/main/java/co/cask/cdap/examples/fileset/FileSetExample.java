@@ -62,6 +62,13 @@ public class FileSetExample extends AbstractApplication {
         "\"type\":[\"string\",\"null\"]},{\"name\":\"street_address\",\"type\":[\"string\",\"null\"]}," +
         "{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"state\",\"type\":[\"string\",\"null\"]}]}" +
         ",\"null\"]}]}")
+      .setTableProperty("wrangler.directives", "parse-as-csv hivetext ,\n" +
+        "drop hivetext\n" +
+        "rename hivetext_1 id\n" +
+        "rename hivetext_2 name\n" +
+        "rename hivetext_3 street_address\n" +
+        "rename hivetext_4 city\n" +
+        "rename hivetext_5 state")
       .setDescription("Store input lines")
       .build());
 

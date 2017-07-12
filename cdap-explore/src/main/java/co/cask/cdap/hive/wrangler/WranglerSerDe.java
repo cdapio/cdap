@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -27,7 +27,6 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
-import org.apache.hadoop.io.ObjectWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.slf4j.Logger;
@@ -91,8 +90,8 @@ public class WranglerSerDe implements SerDe {
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
     LOG.info("******* Deserializing the writable");
-    ObjectWritable objectWritable = (ObjectWritable) writable;
-    Object obj = objectWritable.get();
+    StructuredRecordWritable structuredRecordWritable = (StructuredRecordWritable) writable;
+    Object obj = structuredRecordWritable.get();
     try {
       return deserializer.deserialize(obj);
     } catch (Throwable t) {
