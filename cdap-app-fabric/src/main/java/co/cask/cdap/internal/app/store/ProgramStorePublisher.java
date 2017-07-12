@@ -78,11 +78,11 @@ public final class ProgramStorePublisher implements ProgramStateWriter {
   }
 
   @Override
-  public void stop(final long endTime, final ProgramRunStatus runStatus, final @Nullable BasicThrowable cause) {
+  public void stop(final long endTimeInSeconds, final ProgramRunStatus runStatus, final @Nullable BasicThrowable cause) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
-        runtimeStore.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(endTime), runStatus, cause);
+        runtimeStore.setStop(programId, runId.getId(), endTimeInSeconds, runStatus, cause);
         return null;
       }
     }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));

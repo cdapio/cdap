@@ -49,7 +49,7 @@ public interface ProgramStateWriter {
    * @param runStatus the final run status of the program
    * @param cause the reason for the program run's failure, if the program terminated with an error
    */
-  void stop(long endTime, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
+  void stop(long endTimeInSeconds, ProgramRunStatus runStatus, @Nullable BasicThrowable cause);
 
   /**
    * Updates the program run's status to be suspended

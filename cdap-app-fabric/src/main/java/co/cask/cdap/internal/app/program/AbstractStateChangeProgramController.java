@@ -70,12 +70,14 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
               // Service was killed
               runStatus = ProgramController.State.KILLED.getRunStatus();
             }
-            programStateWriter.stop(System.currentTimeMillis(), runStatus, null);
+            long endTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            programStateWriter.stop(endTimeInSeconds, runStatus, null);
           }
 
           @Override
           public void failed(Service.State from, @Nullable final Throwable failure) {
-            programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(),
+            long endTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+            programStateWriter.stop(endTimeInSeconds, State.ERROR.getRunStatus(),
                                     new BasicThrowable(failure));
           }
         },
@@ -118,13 +120,15 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
         @Override
         public void completed() {
           LOG.debug("Program {} completed successfully.", programId);
-          programStateWriter.stop(System.currentTimeMillis(), State.COMPLETED.getRunStatus(), null);
+          long endTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          programStateWriter.stop(endTimeInSeconds, State.COMPLETED.getRunStatus(), null);
         }
 
         @Override
         public void killed() {
           LOG.debug("Program {} killed.", programId);
-          programStateWriter.stop(System.currentTimeMillis(), State.KILLED.getRunStatus(), null);
+          long endTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          programStateWriter.stop(endTimeInSeconds, State.KILLED.getRunStatus(), null);
         }
 
         @Override
@@ -142,7 +146,8 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
         @Override
         public void error(final Throwable cause) {
           LOG.info("Program stopped with error {}, {}: {}", programId, runId, cause);
-          programStateWriter.stop(System.currentTimeMillis(), State.ERROR.getRunStatus(), new BasicThrowable(cause));
+          long endTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+          programStateWriter.stop(endTimeInSeconds, State.ERROR.getRunStatus(), new BasicThrowable(cause));
         }
       },
       Threads.SAME_THREAD_EXECUTOR
