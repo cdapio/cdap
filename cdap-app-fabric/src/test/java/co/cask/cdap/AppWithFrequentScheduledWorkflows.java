@@ -57,7 +57,7 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     schedule(buildSchedule(TEN_SECOND_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
             .triggerByTime("*/10 * * * * ?"));
     schedule(buildSchedule(PROGRAM_STATUS_SCHEDULE, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_3)
-            .triggerOnProgramStatus(ProgramType.WORKFLOW, SOME_WORKFLOW, ProgramStatus.COMPLETED));
+            .triggerOnProgramStatus(ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1, ProgramStatus.FAILED));
   }
 
   /**

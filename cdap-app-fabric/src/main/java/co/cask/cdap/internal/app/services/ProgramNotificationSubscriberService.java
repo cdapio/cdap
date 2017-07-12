@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -25,13 +28,17 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -40,6 +47,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -57,6 +65,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final CConfiguration cConf;
   private final RuntimeStore store;
   private final ExecutorService taskExecutorService;
+  private final MessagingService messagingService;
+  private final DatasetFramework datasetFramework;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, RuntimeStore store, CConfiguration cConf,
@@ -67,6 +77,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.taskExecutorService =
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
                                                               .build());
+    this.messagingService = messagingService;
+    this.datasetFramework = datasetFramework;
   }
 
   @Override
@@ -222,6 +234,21 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           throw new UnsupportedOperationException(String.format("Cannot persist ProgramRunStatus %s for Program %s",
                                                                 programRunStatus, programRunId));
       }
+
+      if (programRunStatus != ProgramRunStatus.STARTING) {
+        ProgramStatus programStatus = ProgramStatus.valueOf(programRunStatus.toString().toUpperCase());
+        String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
+                                                                                  programStatus);
+
+        if (canTriggerOtherPrograms(context, triggerKeyForProgramStatus)) {
+          // Now send the notification to the scheduler
+          TopicId programStatusTriggerTopic =
+            NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+          messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
+                                                      .addPayloads(GSON.toJson(notification))
+                                                      .build());
+        }
+      }
     }
 
     private long getTime(Map<String, String> properties, String option) {
@@ -238,5 +265,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       return (arguments == null) ? new BasicArguments().asMap()
                                  : new BasicArguments(arguments).asMap();
     }
+  }
+
+  private boolean canTriggerOtherPrograms(DatasetContext context, String triggerKey)
+          throws IOException, DatasetManagementException {
+    return !Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey).isEmpty();
   }
 }

@@ -17,7 +17,6 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
-import co.cask.cdap.AppWithMultipleWorkflows;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
@@ -26,8 +25,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
@@ -140,7 +137,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static MessagingService messagingService;
   private static Store store;
   private static TopicId dataEventTopic;
-  private static TopicId programEventTopic;
 
   private static Scheduler scheduler;
   private static Transactional transactional;
@@ -151,6 +147,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     scheduler = getInjector().getInstance(Scheduler.class);
     cConf = getInjector().getInstance(CConfiguration.class);
     messagingService = getInjector().getInstance(MessagingService.class);
+    store = getInjector().getInstance(Store.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
@@ -204,7 +201,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                                                    ImmutableList.<Constraint>of());
 
 
-    scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2));
+    scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2, ppsched1));
     Assert.assertEquals(psched1, scheduler.getSchedule(PSCHED1_ID));
     Assert.assertEquals(tsched11, scheduler.getSchedule(TSCHED11_ID));
     Assert.assertEquals(psched2, scheduler.getSchedule(PSCHED2_ID));
@@ -354,50 +351,38 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Test
   @Category(XSlowTests.class)
   public void testProgramEvents() throws Exception {
-    programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-
     // Deploy the app
     deploy(AppWithFrequentScheduledWorkflows.class);
-
-    ProgramEventPublisher workflow1Publisher = getProgramPublisher(WORKFLOW_1);
-    ProgramEventPublisher workflow2Publisher = getProgramPublisher(WORKFLOW_2);
-
-    // Publish some notifications that should not trigger the program
-    long endTime = System.currentTimeMillis();
-    workflow2Publisher.stop(endTime, ProgramRunStatus.FAILED, new BasicThrowable(new Throwable("error")));
-    workflow1Publisher.stop(endTime, ProgramRunStatus.KILLED, null);
-
-    // Now send the program status notification that would trigger the schedule, but it is disabled (should not trigger)
-    workflow1Publisher.stop(endTime, ProgramRunStatus.COMPLETED, null);
+    // The program status trigger schedule is disabled, but the other schedules are enabled
+    // There should be no runs until the program status trigger schedule is enabled
 
     ScheduleId scheduleId = APP_ID.schedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
 
     // Update the schedule so that the scheduled workflow is triggered regardless of failure or success.
     ProgramSchedule updatedSchedule = new ProgramSchedule(schedule.getName(), schedule.getDescription(),
-            schedule.getProgramId(), schedule.getProperties(),
-            new ProgramStatusTrigger(SCHEDULED_WORKFLOW_1,
-                    ProgramStatus.COMPLETED,
-                    ProgramStatus.FAILED,
-                    ProgramStatus.KILLED),
-            schedule.getConstraints());
+                                                          schedule.getProgramId(), schedule.getProperties(),
+                                                          new ProgramStatusTrigger(SCHEDULED_WORKFLOW_1,
+                                                                                   ProgramStatus.COMPLETED,
+                                                                                   ProgramStatus.FAILED,
+                                                                                   ProgramStatus.KILLED),
+                                                          schedule.getConstraints());
+    Assert.assertEquals(0, getRuns(SCHEDULED_WORKFLOW_3));
     scheduler.updateSchedule(updatedSchedule);
 
-    endTime = System.currentTimeMillis();
+    // This schedule depends on the TEN_SECOND_SCHEDULE, this must be enabled too
     enableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
-    waitUntilProcessed(programEventTopic, endTime);
+    // Wait for 2 runs since the ProgramRunStatus.STARTING and ProgramRunStatus.RUNNING has to be there
+    waitForCompleteRuns(2, SCHEDULED_WORKFLOW_3);
 
-    waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
-
-    ProgramRunId latestRun = getLatestRun(SCHEDULED_WORKFLOW_3);
-    WorkflowId scheduledWorkflow = SCHEDULED_WORKFLOW_3.getParent().workflow(SCHEDULED_WORKFLOW_3.getProgram());
-    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
-
-    disableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
+//    ProgramRunId latestRun = getLatestRun(SCHEDULED_WORKFLOW_3);
+//    WorkflowId scheduledWorkflow = SCHEDULED_WORKFLOW_3.getParent().workflow(SCHEDULED_WORKFLOW_3.getProgram());
+//    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
+//
     disableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
-
-    Assert.assertEquals(Value.of(AppWithMultipleWorkflows.DummyTokenAction.VALUE),
-                        runToken.get(AppWithMultipleWorkflows.DummyTokenAction.KEY));
+//
+//    Assert.assertEquals(Value.of(AppWithMultipleWorkflows.DummyTokenAction.VALUE),
+//                        runToken.get(AppWithMultipleWorkflows.DummyTokenAction.KEY));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
@@ -500,11 +485,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       public Integer call() throws Exception {
         return getRuns(program);
       }
-    }, 10, TimeUnit.SECONDS);
+    }, 20, TimeUnit.SECONDS);
   }
 
   private int getRuns(ProgramId workflowId) {
-    return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
+    return getAllRuns(workflowId).size();
   }
 
   private void publishNotification(TopicId topicId, ProgramId programId, String dataset) throws Exception {
@@ -568,10 +553,5 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
         }
       }
     });
-  }
-
-  private ProgramEventPublisher getProgramPublisher(ProgramId programId) {
-    return new ProgramEventPublisher(programId, dummyRunId, null, new BasicArguments(), new BasicArguments(),
-                                     null, cConf, messagingService);
   }
 }
