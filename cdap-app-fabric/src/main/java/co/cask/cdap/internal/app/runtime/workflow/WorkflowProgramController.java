@@ -114,8 +114,4 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
     return String.format("workflow.%s.%s.%s.%s",
                          program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
   }
-
-  public WorkflowToken getWorkflowToken() {
-    return driver.getBasicWorkflowToken();
-  }
 }

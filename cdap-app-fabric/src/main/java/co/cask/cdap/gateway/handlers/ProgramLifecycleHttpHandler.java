@@ -1776,7 +1776,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         store.getRuns(programId, runStatus, start, end, limit).values(),
         CONVERT_TO_RUN_RECORD
       );
-      System.out.println("RUNS FOR PROGRAM " + programId + "STATUS " + runStatus + "  SIZE " + records.size());
 
       responder.sendJson(HttpResponseStatus.OK, records);
     } catch (IllegalArgumentException e) {
