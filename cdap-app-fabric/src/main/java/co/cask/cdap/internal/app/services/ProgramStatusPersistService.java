@@ -66,7 +66,7 @@ public class ProgramStatusPersistService extends AbstractNotificationSubscriberS
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
                                                               .build());
     taskExecutorService.submit(new ProgramStatusSubscriberThread(
-      cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC)));
+      cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)));
   }
 
   private class ProgramStatusSubscriberThread

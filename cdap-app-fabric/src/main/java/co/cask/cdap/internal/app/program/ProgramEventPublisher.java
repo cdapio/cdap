@@ -20,7 +20,6 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -39,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -52,8 +50,6 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
   private final MessagingService messagingService;
   private final TopicId topicId;
   private final ProgramId programId;
-  private final RunId runId;
-  private final String twillRunId;
   private final Arguments userArguments;
   private final Arguments systemArguments;
   private final WorkflowToken workflowToken;
@@ -63,11 +59,9 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
                                @Nullable WorkflowToken workflowToken,
                                CConfiguration cConf, MessagingService messagingService) {
     this.programId = programId;
-    this.runId = runId;
-    this.twillRunId = twillRunId;
     this.userArguments = userArguments;
     this.systemArguments = systemArguments;
-    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     this.workflowToken = workflowToken;
     this.messagingService = messagingService;
 
@@ -152,13 +146,5 @@ public final class ProgramEventPublisher implements ProgramStateWriter {
     } catch (Exception e) {
       LOG.warn("Error while publishing notification for program {}: {}", programId.getProgram(), e);
     }
-  }
-
-  public ProgramId getProgramId() {
-    return programId;
-  }
-
-  public RunId getRunId() {
-    return runId;
   }
 }

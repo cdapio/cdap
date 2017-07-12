@@ -237,6 +237,11 @@ public final class Constants {
     public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
+
+    /**
+     * Topic name for publishing program status events to the messaging system
+     */
+    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
   }
 
   /**
@@ -267,10 +272,6 @@ public final class Constants {
      * Topic name for publishing time events from stream size scheduler to the messaging system
      */
     public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
-    /**
-     * Topic name for publishing program status events from program containers to the messaging system
-     */
-    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
 
     public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
   }
