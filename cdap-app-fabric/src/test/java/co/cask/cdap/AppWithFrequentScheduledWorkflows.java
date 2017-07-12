@@ -16,6 +16,7 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
@@ -26,12 +27,14 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
   public static final String ANOTHER_WORKFLOW = "AnotherWorkflow";
   public static final String DATASET_PARTITION_SCHEDULE_1 = "DataSetPartionSchedule1";
   public static final String DATASET_PARTITION_SCHEDULE_2 = "DataSetPartionSchedule2";
+  public static final String PROGRAM_STATUS_SCHEDULE = "ProgramSchedule1";
   public static final String DATASET_NAME1 = "SomeDataset";
   public static final String DATASET_NAME2 = "AnotherDataset";
   public static final String TEN_SECOND_SCHEDULE_1 = "TenSecSchedule1";
   public static final String TEN_SECOND_SCHEDULE_2 = "TenSecSchedule2";
   public static final String SCHEDULED_WORKFLOW_1 = "ScheduledWorkflow1";
   public static final String SCHEDULED_WORKFLOW_2 = "ScheduledWorkflow2";
+  public static final String SCHEDULED_WORKFLOW_3 = "ScheduledWorkflow3";
 
 
   @Override
@@ -40,18 +43,21 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new DummyWorkflow(SOME_WORKFLOW));
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));
-    addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_1));
+    addWorkflow(new DummyTokenWorkflow(SCHEDULED_WORKFLOW_1));
     addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_2));
+    addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_3));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_1, ProgramType.WORKFLOW, SOME_WORKFLOW)
-               .triggerOnPartitions(DATASET_NAME1, 1));
+            .triggerOnPartitions(DATASET_NAME1, 1));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
-               .triggerOnPartitions(DATASET_NAME2, 2));
+            .triggerOnPartitions(DATASET_NAME2, 2));
     // Schedule the workflow to run in every ten seconds
     schedule(buildSchedule(TEN_SECOND_SCHEDULE_1, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1)
-               .triggerByTime("*/10 * * * * ?"));
+            .triggerByTime("*/10 * * * * ?"));
     // Schedule the workflow to run in every ten seconds
     schedule(buildSchedule(TEN_SECOND_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
-               .triggerByTime("*/10 * * * * ?"));
+            .triggerByTime("*/10 * * * * ?"));
+    schedule(buildSchedule(PROGRAM_STATUS_SCHEDULE, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_3)
+            .triggerOnProgramStatus(ProgramType.WORKFLOW, SOME_WORKFLOW, ProgramStatus.COMPLETED));
   }
 
   /**
@@ -69,6 +75,24 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
       setName(name);
       setDescription("SampleWorkflow description");
       addAction(new AppWithMultipleWorkflows.SomeDummyAction());
+    }
+  }
+
+  /**
+   * Some Workflow
+   */
+  public static class DummyTokenWorkflow extends AbstractWorkflow {
+    final String name;
+
+    public DummyTokenWorkflow(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public void configure() {
+      setName(name);
+      setDescription("SampleWorkflow description");
+      addAction(new AppWithMultipleWorkflows.DummyTokenAction());
     }
   }
 }

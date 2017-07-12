@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -40,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
@@ -529,6 +531,15 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     if (trigger instanceof PartitionTrigger) {
       String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDataset());
       return Collections.singletonList(triggerKey);
+    } else if (trigger instanceof ProgramStatusTrigger) {
+      ProgramStatusTrigger programTrigger = (ProgramStatusTrigger) trigger;
+      List<String> triggerKeys = new ArrayList<>();
+
+      // Generate program status trigger keys for each program status
+      for (ProgramStatus programStatus : programTrigger.getProgramStatuses()) {
+        triggerKeys.add(Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(), programStatus));
+      }
+      return triggerKeys;
     }
     return Collections.emptyList();
   }

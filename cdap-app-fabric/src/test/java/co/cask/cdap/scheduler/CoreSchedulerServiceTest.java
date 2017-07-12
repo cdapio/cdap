@@ -17,6 +17,8 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
+import co.cask.cdap.AppWithMultipleWorkflows;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
@@ -24,10 +26,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -36,6 +41,8 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.program.ProgramEventPublisher;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -43,6 +50,7 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -50,6 +58,7 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -58,6 +67,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
@@ -71,6 +81,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.tephra.RetryStrategies;
+import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -81,10 +92,11 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -98,8 +110,10 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final WorkflowId PROG1_ID = APP1_ID.workflow("wf1");
   private static final WorkflowId PROG2_ID = APP2_ID.workflow("wf2");
   private static final WorkflowId PROG11_ID = APP1_ID.workflow("wf11");
+  private static final WorkflowId PPROG1_ID = APP1_ID.workflow("wfpp");
   private static final ScheduleId PSCHED1_ID = APP1_ID.schedule("psched1");
   private static final ScheduleId PSCHED2_ID = APP2_ID.schedule("psched2");
+  private static final ScheduleId PPSCHED1_ID = APP1_ID.schedule("ppsched1");
   private static final ScheduleId TSCHED1_ID = APP1_ID.schedule("tsched1");
   private static final ScheduleId TSCHED11_ID = APP1_ID.schedule("tsched11");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
@@ -113,15 +127,20 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_1);
   private static final ProgramId SCHEDULED_WORKFLOW_2 =
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_2);
+  private static final ProgramId SCHEDULED_WORKFLOW_3 =
+    APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_3);
+  private static final RunId dummyRunId = RunIds.fromString(UUID.randomUUID().toString());
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
   private static final Gson GSON = new Gson();
   private static final Type NOTIFICATION_LIST_TYPE = new TypeToken<List<Notification>>() { }.getType();
 
+  private static CConfiguration cConf;
   private static MessagingService messagingService;
   private static Store store;
   private static TopicId dataEventTopic;
+  private static TopicId programEventTopic;
 
   private static Scheduler scheduler;
   private static Transactional transactional;
@@ -130,6 +149,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public static void beforeClass() throws Throwable {
     AppFabricTestBase.beforeClass();
     scheduler = getInjector().getInstance(Scheduler.class);
+    cConf = getInjector().getInstance(CConfiguration.class);
+    messagingService = getInjector().getInstance(MessagingService.class);
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
@@ -177,16 +198,24 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     ProgramSchedule psched2 = new ProgramSchedule("psched2", "two partition schedule", PROG2_ID,
                                                   ImmutableMap.of("propper", "popper"),
                                                   new PartitionTrigger(DS2_ID, 2), ImmutableList.<Constraint>of());
+    ProgramSchedule ppsched1 = new ProgramSchedule("ppsched1", "prog status schedule from one partition",
+                                                   PPROG1_ID, ImmutableMap.of("propper", "popper"),
+                                                   new ProgramStatusTrigger(WORKFLOW_1, ProgramStatus.COMPLETED),
+                                                   ImmutableList.<Constraint>of());
+
+
     scheduler.addSchedules(ImmutableList.of(psched1, tsched11, psched2));
     Assert.assertEquals(psched1, scheduler.getSchedule(PSCHED1_ID));
     Assert.assertEquals(tsched11, scheduler.getSchedule(TSCHED11_ID));
     Assert.assertEquals(psched2, scheduler.getSchedule(PSCHED2_ID));
+    Assert.assertEquals(ppsched1, scheduler.getSchedule(PPSCHED1_ID));
 
     // list by app and program
     Assert.assertEquals(ImmutableList.of(psched1, tsched1), scheduler.listSchedules(PROG1_ID));
     Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched1, tsched11), scheduler.listSchedules(APP1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1), scheduler.listSchedules(PPROG1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1, psched1, tsched1, tsched11), scheduler.listSchedules(APP1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
 
     // delete one schedule
@@ -195,7 +224,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
     Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1), scheduler.listSchedules(PPROG1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1, psched1, tsched11), scheduler.listSchedules(APP1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
 
     // attempt to delete it again along with another one that exists
@@ -208,7 +238,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
     Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1), scheduler.listSchedules(PPROG1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1, psched1, tsched11), scheduler.listSchedules(APP1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
 
 
@@ -222,7 +253,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ImmutableList.of(psched1), scheduler.listSchedules(PROG1_ID));
     Assert.assertEquals(ImmutableList.of(tsched11), scheduler.listSchedules(PROG11_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
-    Assert.assertEquals(ImmutableList.of(psched1, tsched11), scheduler.listSchedules(APP1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1), scheduler.listSchedules(PPROG1_ID));
+    Assert.assertEquals(ImmutableList.of(ppsched1, psched1, tsched11), scheduler.listSchedules(APP1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(APP2_ID));
 
     // add it back, delete all schedules for one app
@@ -231,8 +263,10 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     verifyNotFound(scheduler, TSCHED1_ID);
     verifyNotFound(scheduler, PSCHED1_ID);
     verifyNotFound(scheduler, TSCHED11_ID);
+    verifyNotFound(scheduler, PPSCHED1_ID);
     Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG1_ID));
     Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PROG11_ID));
+    Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(PPROG1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
     Assert.assertEquals(ImmutableList.of(), scheduler.listSchedules(APP1_ID));
     Assert.assertEquals(ImmutableList.of(psched2), scheduler.listSchedules(PROG2_ID));
@@ -250,10 +284,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Test
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
-    messagingService = getInjector().getInstance(MessagingService.class);
-    CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
-    store = getInjector().getInstance(Store.class);
 
     deploy(AppWithFrequentScheduledWorkflows.class);
 
@@ -318,6 +349,55 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     testScheduleUpdate("disable");
     testScheduleUpdate("update");
     testScheduleUpdate("delete");
+  }
+
+  @Test
+  @Category(XSlowTests.class)
+  public void testProgramEvents() throws Exception {
+    programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+
+    // Deploy the app
+    deploy(AppWithFrequentScheduledWorkflows.class);
+
+    ProgramEventPublisher workflow1Publisher = getProgramPublisher(WORKFLOW_1);
+    ProgramEventPublisher workflow2Publisher = getProgramPublisher(WORKFLOW_2);
+
+    // Publish some notifications that should not trigger the program
+    long endTime = System.currentTimeMillis();
+    workflow2Publisher.stop(endTime, ProgramRunStatus.FAILED, new BasicThrowable(new Throwable("error")));
+    workflow1Publisher.stop(endTime, ProgramRunStatus.KILLED, null);
+
+    // Now send the program status notification that would trigger the schedule, but it is disabled (should not trigger)
+    workflow1Publisher.stop(endTime, ProgramRunStatus.COMPLETED, null);
+
+    ScheduleId scheduleId = APP_ID.schedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
+    ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
+
+    // Update the schedule so that the scheduled workflow is triggered regardless of failure or success.
+    ProgramSchedule updatedSchedule = new ProgramSchedule(schedule.getName(), schedule.getDescription(),
+            schedule.getProgramId(), schedule.getProperties(),
+            new ProgramStatusTrigger(SCHEDULED_WORKFLOW_1,
+                    ProgramStatus.COMPLETED,
+                    ProgramStatus.FAILED,
+                    ProgramStatus.KILLED),
+            schedule.getConstraints());
+    scheduler.updateSchedule(updatedSchedule);
+
+    endTime = System.currentTimeMillis();
+    enableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
+    waitUntilProcessed(programEventTopic, endTime);
+
+    waitForCompleteRuns(getRuns(SCHEDULED_WORKFLOW_3) + 1, SCHEDULED_WORKFLOW_3);
+
+    ProgramRunId latestRun = getLatestRun(SCHEDULED_WORKFLOW_3);
+    WorkflowId scheduledWorkflow = SCHEDULED_WORKFLOW_3.getParent().workflow(SCHEDULED_WORKFLOW_3.getProgram());
+    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
+
+    disableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
+    disableSchedule(AppWithFrequentScheduledWorkflows.PROGRAM_STATUS_SCHEDULE);
+
+    Assert.assertEquals(Value.of(AppWithMultipleWorkflows.DummyTokenAction.VALUE),
+                        runToken.get(AppWithMultipleWorkflows.DummyTokenAction.KEY));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
@@ -450,6 +530,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     });
   }
+  
+  private ProgramRunId getLatestRun(ProgramId workflowId) {
+    int numRuns = getRuns(workflowId);
+    if (numRuns == 0) {
+      return null;
+    }
+    return (ProgramRunId) getAllRuns(workflowId).toArray()[numRuns - 1];
+  }
+
+  private Set<ProgramRunId> getAllRuns(ProgramId workflowId) {
+    return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).keySet();
+  }
 
   /**
    * Wait until the scheduler process a message published on or after the given time.
@@ -476,5 +568,10 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
         }
       }
     });
+  }
+
+  private ProgramEventPublisher getProgramPublisher(ProgramId programId) {
+    return new ProgramEventPublisher(programId, dummyRunId, null, new BasicArguments(), new BasicArguments(),
+                                     null, cConf, messagingService);
   }
 }
