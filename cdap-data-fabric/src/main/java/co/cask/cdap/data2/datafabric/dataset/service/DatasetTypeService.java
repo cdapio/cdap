@@ -469,15 +469,6 @@ public class DatasetTypeService extends AbstractIdleService {
         }
       }
     });
-    long startTime = System.currentTimeMillis();
-    LOG.trace("Revoking all privileges for {} system dataset modules. ", toRevoke.size());
-    for (DatasetModuleMeta ds : toRevoke) {
-      revokeAllPrivilegesOnModule(NamespaceId.SYSTEM.datasetModule(ds.getName()), ds);
-    }
-    long doneTime = System.currentTimeMillis();
-    float elapsedSeconds = doneTime == startTime ? 0.0F : ((float) doneTime - startTime) / 1000;
-    LOG.debug("Revoking all privileges for {} system dataset modules took {} seconds.",
-              toRevoke.size(), elapsedSeconds);
   }
 
   private void deployDefaultModules() throws Exception {
@@ -498,15 +489,6 @@ public class DatasetTypeService extends AbstractIdleService {
         throw Throwables.propagate(th);
       }
     }
-    long startTime = System.currentTimeMillis();
-    LOG.trace("Granting all privileges for {} default dataset modules. ", toGrant.size());
-    for (DatasetModuleId defaultModule : toGrant) {
-      grantAllPrivilegesOnModule(defaultModule, authenticationContext.getPrincipal());
-    }
-    long doneTime = System.currentTimeMillis();
-    float elapsedSeconds = doneTime == startTime ? 0.0F : ((float) doneTime - startTime) / 1000;
-    LOG.debug("Granting all privileges for {} default dataset modules took {} seconds.",
-              toGrant.size(), elapsedSeconds);
   }
 
   private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
@@ -535,7 +517,6 @@ public class DatasetTypeService extends AbstractIdleService {
         // NOTE: we add extension modules in the system namespace
         DatasetModuleId theModule = NamespaceId.SYSTEM.datasetModule(module.getKey());
         typeManager.addModule(theModule, module.getValue().getClass().getName(), null, false);
-        grantAllPrivilegesOnModule(theModule, authenticationContext.getPrincipal());
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add the modules only the very first time service is started
         LOG.debug("Not adding {} extension module: it already exists", module.getKey());

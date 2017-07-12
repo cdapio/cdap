@@ -19,6 +19,8 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -26,6 +28,7 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +63,12 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   }
 
   private void doEnforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    if (entity instanceof NamespacedEntityId &&
+      ((NamespacedEntityId) entity).getNamespaceId().equals(NamespaceId.SYSTEM) &&
+      principal.equals(new Principal(UserGroupInformation.getCurrentUser().getShortUserName(),
+                                     Principal.PrincipalType.USER))) {
+      return;
+    }
     LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
     try {
       authorizerInstantiator.get().enforce(entity, principal, actions);
