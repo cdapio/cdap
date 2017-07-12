@@ -29,6 +29,7 @@ public final class Constants {
   public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
   public static final String CONNECTOR_TYPE = "connector";
+  public static final String CONNECTOR_ORIGINAL_NAME = "original";
   public static final String EVENT_TYPE_TAG = "MDC:eventType";
   public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "lifecycle";
   public static final String SPARK_PROGRAM_PLUGIN_TYPE = "sparkprogram";
@@ -40,8 +41,6 @@ public final class Constants {
     Schema.Field.of(ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING))
   );
   public static final String MDC_STAGE_KEY = "pipeline.stage";
-  public static final PluginSpec CONNECTOR_SPEC =
-    new PluginSpec(CONNECTOR_TYPE, "connector", ImmutableMap.<String, String>of(), null);
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -66,6 +65,11 @@ public final class Constants {
     public static final String MAX_TIME = "process.time.max";
     public static final String STD_DEV_TIME = "process.time.stddev";
     public static final String AVG_TIME = "process.time.avg";
-    public static final String ALERT_RECORDS = "records.alert";
+    public static final String RECORDS_IN = "records.in";
+    public static final String RECORDS_OUT = "records.out";
+    public static final String RECORDS_ERROR = "records.error";
+    public static final String RECORDS_ALERT = "records.alert";
+    public static final String AGG_GROUPS = "aggregator.groups";
+    public static final String JOIN_KEYS = "joiner.keys";
   }
 }

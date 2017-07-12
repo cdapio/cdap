@@ -19,6 +19,7 @@ package co.cask.cdap.etl.spark.function;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
@@ -48,7 +49,7 @@ public class AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
                                                pluginFunctionContext.createStageMetrics(),
-                                               TrackedTransform.RECORDS_IN,
+                                               Constants.Metrics.RECORDS_IN,
                                                null, pluginFunctionContext.getDataTracer());
       emitter = new DefaultEmitter<>();
     }

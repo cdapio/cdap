@@ -26,6 +26,7 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -47,6 +48,8 @@ public class BatchPhaseSpecTest {
      * source2 --|
      */
     Map<String, String> props = new HashMap<>();
+    PluginSpec connectorSpec = new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
+                                              ImmutableMap.<String, String>of(), null);
     ArtifactId artifactId = new ArtifactId("art", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
     PipelinePhase.Builder builder =
       PipelinePhase.builder(ImmutableSet.of(BatchSource.PLUGIN_TYPE, Constants.CONNECTOR_TYPE))
@@ -55,7 +58,7 @@ public class BatchPhaseSpecTest {
         .addStage(StageSpec.builder("source2", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
                     .addInputSchema("a", Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT))))
                     .build())
-        .addStage(StageSpec.builder("sink.connector", Constants.CONNECTOR_SPEC).build())
+        .addStage(StageSpec.builder("sink.connector", connectorSpec).build())
         .addConnection("source1", "sink.connector")
         .addConnection("source2", "sink.connector");
 

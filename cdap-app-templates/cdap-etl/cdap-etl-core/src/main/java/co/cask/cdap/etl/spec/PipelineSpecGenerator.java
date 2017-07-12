@@ -143,7 +143,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
 
       ConfiguredStage configuredStage = configureStage(stage, validatedPipeline, pluginConfigurer);
-      Schema outputSchema = configuredStage.stageSpec.getOutputSchema();
 
       // for each output, set their input schema to our output schema
       for (String nextStageName : validatedPipeline.getOutputs(stageName)) {
@@ -151,12 +150,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         String nextStageType = pluginTypes.get(nextStageName);
 
         DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(nextStageName).getStageConfigurer();
-
-        // Do not allow null input schema for Joiner
-        if (BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && outputSchema == null) {
-          throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
-                                                             "outputs a null schema.", stageName));
-        }
 
         // if the output stage is an error transform, it takes the error schema of this stage as its input.
         // if the current stage is a splitter transform, it takes the output schema of the port it is connected to
@@ -180,6 +173,12 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
           }
         } else {
           nextStageInputSchema = configuredStage.stageSpec.getOutputSchema();
+        }
+
+        // Do not allow null input schema for Joiner
+        if (BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && nextStageInputSchema == null) {
+          throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
+                                                             "outputs a null schema.", stageName));
         }
 
         // Do not allow more than one input schema for stages other than Joiner and Action

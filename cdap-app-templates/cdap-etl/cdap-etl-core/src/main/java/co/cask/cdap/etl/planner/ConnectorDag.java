@@ -39,16 +39,17 @@ import java.util.UUID;
 public class ConnectorDag extends Dag {
   private final Set<String> reduceNodes;
   private final Set<String> isolationNodes;
-  private final Set<String> connectors;
+  // node name -> original node it was placed in front of
+  private final Map<String, String> connectors;
 
   private ConnectorDag(Collection<Connection> connections,
                        Set<String> reduceNodes,
                        Set<String> isolationNodes,
-                       Set<String> connectors) {
+                       Map<String, String> connectors) {
     super(connections);
     this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
     this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
-    this.connectors = new HashSet<>(connectors);
+    this.connectors = new HashMap<>(connectors);
   }
 
   /**
@@ -108,13 +109,13 @@ public class ConnectorDag extends Dag {
         with a connector in front of it.
      */
     for (String node : getTopologicalOrder()) {
-      if (!sources.contains(node) && !connectors.contains(node)) {
+      if (!sources.contains(node) && !connectors.containsKey(node)) {
         continue;
       }
 
-      Set<String> accessibleByNode = accessibleFrom(node, Sets.union(connectors, reduceNodes));
+      Set<String> accessibleByNode = accessibleFrom(node, Sets.union(connectors.keySet(), reduceNodes));
       Set<String> sinksAndReduceNodes = Sets.intersection(
-        accessibleByNode, Sets.union(connectors, Sets.union(sinks, reduceNodes)));
+        accessibleByNode, Sets.union(connectors.keySet(), Sets.union(sinks, reduceNodes)));
       // don't count this node
       sinksAndReduceNodes = Sets.difference(sinksAndReduceNodes, ImmutableSet.of(node));
 
@@ -135,7 +136,7 @@ public class ConnectorDag extends Dag {
           source ---> reduce1 ---> reduce2.connector      =>     reduce2.connector ---> reduce2 ---> sink
      */
     for (String reduceNode : reduceNodes) {
-      Set<String> accessibleByNode = accessibleFrom(reduceNode, Sets.union(connectors, reduceNodes));
+      Set<String> accessibleByNode = accessibleFrom(reduceNode, Sets.union(connectors.keySet(), reduceNodes));
       Set<String> accessibleReduceNodes = Sets.intersection(accessibleByNode, reduceNodes);
 
       // Sets.difference because we don't want to add ourselves
@@ -175,7 +176,7 @@ public class ConnectorDag extends Dag {
      */
     boolean shouldInsert = false;
     for (String input : incomingConnections.get(node)) {
-      if (connectors.contains(input)) {
+      if (connectors.containsKey(input)) {
         continue;
       }
       if (outgoingConnections.get(input).size() > 1 || !sources.contains(input)) {
@@ -206,7 +207,7 @@ public class ConnectorDag extends Dag {
      */
     Set<String> insertNodes = new HashSet<>();
     for (String output : outgoingConnections.get(node)) {
-      if (connectors.contains(output)) {
+      if (connectors.containsKey(output)) {
         continue;
       }
       if (incomingConnections.get(output).size() > 1 || !sinks.contains(output)) {
@@ -218,7 +219,10 @@ public class ConnectorDag extends Dag {
     }
   }
 
-  public Set<String> getConnectors() {
+  /**
+   * @return map of connector nodes to the nodes they were original placed in front of
+   */
+  public Map<String, String> getConnectors() {
     return connectors;
   }
 
@@ -232,8 +236,8 @@ public class ConnectorDag extends Dag {
 
     Set<String> remainingNodes = new HashSet<>();
     remainingNodes.addAll(nodes);
-    Set<String> possibleNewSources = Sets.union(sources, connectors);
-    Set<String> possibleNewSinks = Sets.union(sinks, connectors);
+    Set<String> possibleNewSources = Sets.union(sources, connectors.keySet());
+    Set<String> possibleNewSinks = Sets.union(sinks, connectors.keySet());
     for (String reduceNode : reduceNodes) {
       Dag subdag = subsetAround(reduceNode, possibleNewSources, possibleNewSinks);
       remainingNodes.removeAll(subdag.getNodes());
@@ -314,7 +318,9 @@ public class ConnectorDag extends Dag {
       connectorName += UUID.randomUUID().toString();
     }
     insertInFront(connectorName, inFrontOf);
-    connectors.add(connectorName);
+    // in case we ever have a connector placed in front of another connector
+    String original = connectors.containsKey(inFrontOf) ? connectors.get(inFrontOf) : inFrontOf;
+    connectors.put(connectorName, original);
     return connectorName;
   }
 
@@ -387,13 +393,13 @@ public class ConnectorDag extends Dag {
     private final Set<Connection> connections;
     private final Set<String> reduceNodes;
     private final Set<String> isolationNodes;
-    private final Set<String> connectors;
+    private final Map<String, String> connectors;
 
     private Builder() {
       this.connections = new HashSet<>();
       this.reduceNodes = new HashSet<>();
       this.isolationNodes = new HashSet<>();
-      this.connectors = new HashSet<>();
+      this.connectors = new HashMap<>();
     }
 
     public Builder addReduceNodes(String... nodes) {
@@ -417,12 +423,13 @@ public class ConnectorDag extends Dag {
     }
 
     public Builder addConnectors(String... nodes) {
-      Collections.addAll(connectors, nodes);
-      return this;
-    }
-
-    public Builder addConnectors(Collection<String> nodes) {
-      connectors.addAll(nodes);
+      if (nodes.length % 2 != 0) {
+        throw new IllegalArgumentException("must specify an even number of nodes, alternating between the " +
+                                             "connector name and the original node it was placed in front of.");
+      }
+      for (int i = 0; i < nodes.length; i += 2) {
+        connectors.put(nodes[i], nodes[i + 1]);
+      }
       return this;
     }
 

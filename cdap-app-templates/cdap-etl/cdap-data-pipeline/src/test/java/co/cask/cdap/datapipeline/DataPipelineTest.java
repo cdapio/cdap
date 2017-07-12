@@ -33,6 +33,7 @@ import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.datapipeline.service.ServiceApp;
 import co.cask.cdap.datapipeline.spark.LineFilterProgram;
 import co.cask.cdap.datapipeline.spark.WordCount;
+import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
@@ -54,9 +55,9 @@ import co.cask.cdap.etl.mock.transform.DropNullTransform;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
-import co.cask.cdap.etl.proto.Engine;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
@@ -2010,6 +2011,179 @@ public class DataPipelineTest extends HydratorTestBase {
 
     serviceManager.stop();
     serviceManager.waitForRun(ProgramRunStatus.KILLED, 180, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testSplitterToConnector() throws Exception {
+    testSplitterToConnector(Engine.MAPREDUCE);
+  }
+
+  private void testSplitterToConnector(Engine engine) throws Exception {
+    Schema schema = Schema.recordOf("user",
+                                    Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                    Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                    Schema.Field.of("email", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    StructuredRecord user0 = StructuredRecord.builder(schema).set("id", 0L).build();
+    StructuredRecord user1 = StructuredRecord.builder(schema).set("id", 1L).set("email", "one@example.com").build();
+    StructuredRecord user2 = StructuredRecord.builder(schema).set("id", 2L).set("name", "two").build();
+    StructuredRecord user3 = StructuredRecord.builder(schema)
+      .set("id", 3L).set("name", "three").set("email", "three@example.com").build();
+
+    String sourceName = "splitconSource" + engine.name();
+    String sink1Name = "splitconSink1" + engine.name();
+    String sink2Name = "splitconSink2" + engine.name();
+
+    /*
+     *
+     *                                                             |null --> sink1
+     *                       |null--> identity-agg --> splitter2 --|
+     * source --> splitter1--|                                     |non-null --|
+     *                       |                                                 |--> sink2
+     *                       |non-null-----------------------------------------|
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("splitter1", NullFieldSplitterTransform.getPlugin("name")))
+      .addStage(new ETLStage("splitter2", NullFieldSplitterTransform.getPlugin("email")))
+      .addStage(new ETLStage("identity", IdentityAggregator.getPlugin()))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addConnection("source", "splitter1")
+      .addConnection("splitter1", "identity", "null")
+      .addConnection("splitter1", "sink2", "non-null")
+      .addConnection("identity", "splitter2")
+      .addConnection("splitter2", "sink1", "null")
+      .addConnection("splitter2", "sink2", "non-null")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SplitConTest-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // write input data
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, ImmutableList.of(user0, user1, user2, user3));
+
+    // run pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check output
+    // sink1 should only have records where both name and email are null (user0)
+    DataSetManager<Table> sinkManager = getDataset(sink1Name);
+    Set<StructuredRecord> expected = ImmutableSet.of(user0);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    // sink2 should have anything with a non-null name or non-null email
+    sinkManager = getDataset(sink2Name);
+    expected = ImmutableSet.of(user1, user2, user3);
+    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(4, appId, "source.records.out");
+    validateMetric(4, appId, "splitter1.records.in");
+    validateMetric(2, appId, "splitter1.records.out.null");
+    validateMetric(2, appId, "splitter1.records.out.non-null");
+    validateMetric(2, appId, "identity.records.in");
+    validateMetric(2, appId, "identity.records.out");
+    validateMetric(2, appId, "splitter2.records.in");
+    validateMetric(1, appId, "splitter2.records.out.null");
+    validateMetric(1, appId, "splitter2.records.out.non-null");
+    validateMetric(1, appId, "sink1.records.in");
+    validateMetric(3, appId, "sink2.records.in");
+  }
+
+  @Test
+  public void testSplitterToJoiner() throws Exception {
+    testSplitterToJoiner(Engine.MAPREDUCE);
+  }
+
+  private void testSplitterToJoiner(Engine engine) throws Exception {
+    Schema schema = Schema.recordOf("user",
+                                    Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                    Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema infoSchema = Schema.recordOf("userInfo",
+                                        Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                        Schema.Field.of("fname", Schema.of(Schema.Type.STRING)));
+    Schema joinedSchema = Schema.recordOf("userInfo",
+                                          Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                          Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                          Schema.Field.of("fname", Schema.of(Schema.Type.STRING)));
+
+    StructuredRecord user0 = StructuredRecord.builder(schema).set("id", 0L).build();
+    StructuredRecord user1 = StructuredRecord.builder(schema).set("id", 1L).set("name", "one").build();
+    StructuredRecord user0Info = StructuredRecord.builder(infoSchema).set("id", 0L).set("fname", "zero").build();
+    StructuredRecord user0Joined = StructuredRecord.builder(joinedSchema).set("id", 0L).set("fname", "zero").build();
+
+    String signupsName = "splitjoinSignups" + engine.name();
+    String userInfoName = "splitjoinUserInfo" + engine.name();
+    String sink1Name = "splitjoinSink1" + engine.name();
+    String sink2Name = "splitjoinSink2" + engine.name();
+
+    /*
+     * userInfo --------------------------|
+     *                                    |--> joiner --> sink1
+     *                            |null --|
+     * signups --> namesplitter --|
+     *                            |non-null --> sink2
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
+      .addStage(new ETLStage("signups", MockSource.getPlugin(signupsName, schema)))
+      .addStage(new ETLStage("userInfo", MockSource.getPlugin(userInfoName, infoSchema)))
+      .addStage(new ETLStage("namesplitter", NullFieldSplitterTransform.getPlugin("name")))
+      .addStage(new ETLStage("joiner", MockJoiner.getPlugin("namesplitter.id=userInfo.id",
+                                                            "namesplitter,userInfo", "")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addConnection("signups", "namesplitter")
+      .addConnection("namesplitter", "sink2", "non-null")
+      .addConnection("namesplitter", "joiner", "null")
+      .addConnection("userInfo", "joiner")
+      .addConnection("joiner", "sink1")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SplitJoinTest-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // write signups data
+    DataSetManager<Table> signupsManager = getDataset(signupsName);
+    MockSource.writeInput(signupsManager, ImmutableList.of(user0, user1));
+
+    // write to userInfo the name for user0 to join against
+    DataSetManager<Table> userInfoManager = getDataset(userInfoName);
+    MockSource.writeInput(userInfoManager, ImmutableList.of(user0Info));
+
+    // run pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check output
+    DataSetManager<Table> sinkManager = getDataset(sink2Name);
+    Set<StructuredRecord> expected = ImmutableSet.of(user1);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    sinkManager = getDataset(sink1Name);
+    expected = ImmutableSet.of(user0Joined);
+    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
+
+    validateMetric(2, appId, "signups.records.out");
+    validateMetric(1, appId, "userInfo.records.out");
+    validateMetric(2, appId, "namesplitter.records.in");
+    validateMetric(1, appId, "namesplitter.records.out.null");
+    validateMetric(1, appId, "namesplitter.records.out.non-null");
+    validateMetric(2, appId, "joiner.records.in");
+    validateMetric(1, appId, "joiner.records.out");
+    validateMetric(1, appId, "sink1.records.in");
+    validateMetric(1, appId, "sink2.records.in");
   }
 
   private long getMetric(ApplicationId appId, String metric) {

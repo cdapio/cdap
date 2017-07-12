@@ -81,11 +81,11 @@ import java.util.Set;
  */
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
+  public static final String MAP_KEY_CLASS = "cdap.etl.map.key.class";
+  public static final String MAP_VAL_CLASS = "cdap.etl.map.val.class";
   static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
   static final String INPUT_ALIAS_KEY = "cdap.etl.source.alias.key";
   static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
-  static final String MAP_KEY_CLASS = "cdap.etl.map.key.class";
-  static final String MAP_VAL_CLASS = "cdap.etl.map.val.class";
   static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   static final Type INPUT_ALIAS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();

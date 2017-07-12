@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -44,9 +45,11 @@ import java.util.Map;
  * This is because we don't want this to show up as a plugin that users can select and use, and also because
  * it uses features not exposed in the etl api (local workflow datasets).
  *
+ * Connectors store the stage name each record came from in case they are placed in front of a joiner.
+ *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSink extends BatchSink<KeyValue<String, StructuredRecord>, NullWritable, Text> {
+public class ConnectorSink extends BatchSink<RecordInfo<StructuredRecord>, NullWritable, Text> {
   private final String datasetName;
   private final String phaseName;
 
@@ -64,15 +67,15 @@ public class ConnectorSink extends BatchSink<KeyValue<String, StructuredRecord>,
   }
 
   @Override
-  public void transform(KeyValue<String, StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
+  public void transform(RecordInfo<StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
     throws Exception {
     StructuredRecord modifiedRecord = modifyRecord(input);
     emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter.
       toJsonString(modifiedRecord))));
   }
 
-  private StructuredRecord modifyRecord(KeyValue<String, StructuredRecord> input) throws IOException {
-    String stageName = input.getKey();
+  private StructuredRecord modifyRecord(RecordInfo<StructuredRecord> input) throws IOException {
+    String stageName = input.getFromStage();
     Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
       .set("stageName", stageName)
