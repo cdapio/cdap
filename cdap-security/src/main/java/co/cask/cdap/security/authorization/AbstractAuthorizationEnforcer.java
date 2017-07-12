@@ -94,7 +94,7 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     };
   }
 
-  boolean isSecurityAuthorizationEnabled() {
+  protected boolean isSecurityAuthorizationEnabled() {
     return securityEnabled && authorizationEnabled;
   }
 }
