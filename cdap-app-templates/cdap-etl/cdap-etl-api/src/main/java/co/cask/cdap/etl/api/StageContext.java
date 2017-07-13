@@ -40,6 +40,11 @@ public interface StageContext extends ServiceDiscoverer {
   String getStageName();
 
   /**
+   * @return The current namespace
+   */
+  String getNamespace();
+
+  /**
    * Get an instance of {@link StageMetrics}, used to collect metrics for this stage. Metrics emitted from one stage
    * are independent from metrics emitted in another.
    *

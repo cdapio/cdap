@@ -19,12 +19,8 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.messaging.MessagingContext;
 
 /**
- *
+ * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
  */
 public interface TransformPrepareContext extends TransformContext, MessagingContext {
 
-  /**
-   * @return The application namespace
-   */
-  String getNamespace();
 }
