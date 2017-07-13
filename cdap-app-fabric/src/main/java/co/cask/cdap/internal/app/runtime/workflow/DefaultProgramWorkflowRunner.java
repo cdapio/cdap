@@ -156,7 +156,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     } catch (Throwable t) {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
-      programStateWriter.error(program.getId().run(runId), t);
+      programStateWriter.error(program.getId().run(runId), null, t);
       Closeables.closeQuietly(closeable);
       throw t;
     }

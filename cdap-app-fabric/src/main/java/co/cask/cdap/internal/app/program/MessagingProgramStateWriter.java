@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
@@ -83,18 +84,18 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void completed(ProgramRunId programRunId) {
-    stop(programRunId, ProgramRunStatus.COMPLETED, null);
+  public void completed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
+    stop(programRunId, ProgramRunStatus.COMPLETED, workflowToken, null);
   }
 
   @Override
-  public void killed(ProgramRunId programRunId) {
-    stop(programRunId, ProgramRunStatus.KILLED, null);
+  public void killed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
+    stop(programRunId, ProgramRunStatus.KILLED, workflowToken, null);
   }
 
   @Override
-  public void error(ProgramRunId programRunId, Throwable failureCause) {
-    stop(programRunId, ProgramRunStatus.FAILED, failureCause);
+  public void error(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken, Throwable failureCause) {
+    stop(programRunId, ProgramRunStatus.FAILED, workflowToken, failureCause);
   }
 
   @Override
@@ -115,13 +116,17 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     );
   }
 
-  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
+  private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable WorkflowToken workflowToken,
+                    Throwable cause) {
     ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
             .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
             .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString());
 
     if (cause != null) {
       builder.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
+    }
+    if (workflowToken != null) {
+      builder.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(workflowToken));
     }
     publish(programRunId, null, builder);
   }

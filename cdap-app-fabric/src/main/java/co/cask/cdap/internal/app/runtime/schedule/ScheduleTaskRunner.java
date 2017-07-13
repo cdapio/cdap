@@ -97,6 +97,10 @@ public final class ScheduleTaskRunner {
     }
     systemArgs.put(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
     systemArgs.put(ProgramOptionConstants.EVENT_NOTIFICATIONS, GSON.toJson(job.getNotifications()));
+    String workflowTokenString = notificationProperties.get(ProgramOptionConstants.WORKFLOW_TOKEN);
+    if (workflowTokenString != null) {
+      systemArgs.put(ProgramOptionConstants.WORKFLOW_TOKEN, workflowTokenString);
+    }
 
     execute(programId, systemArgs, userArgs);
     LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());

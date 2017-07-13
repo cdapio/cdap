@@ -17,8 +17,6 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,8 +31,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -46,11 +43,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
@@ -124,6 +121,12 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     }
   }
 
+  /**
+   * Private class that receives program status notifications forwarded from
+   * {@link co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService}.
+   *
+   * Processes notifications that are guaranteed to trigger a program
+   */
   private class ProgramStatusEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
     ProgramStatusEventNotificationSubscriberThread(String topic) {
       super(topic);
@@ -133,30 +136,39 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     public void processNotification(DatasetContext context, Notification notification)
       throws IOException, DatasetManagementException {
 
-      String programIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_ID);
-      String programRunId = notification.getProperties().get(ProgramOptionConstants.RUN_ID);
+      String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
 
       ProgramStatus programStatus = null;
       try {
         programStatus = ProgramStatus.valueOf(programStatusString);
       } catch (IllegalArgumentException e) {
-        LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programIdString, e);
+        LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programRunIdString, e);
         // Fall through, let the thread return normally
       }
 
       // Ignore notifications which specify an invalid ProgramId, RunId, or ProgramStatus
-      if (programIdString == null || programRunId == null || programStatus == null) {
+      if (programRunIdString == null || programStatus == null) {
         return;
       }
 
-      ProgramId programId = GSON.fromJson(programIdString, ProgramId.class);
-      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
+                                                                                programStatus);
 
       for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
         if (schedule.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED) {
           // If the triggered program is a workflow, send the notification that contains the workflow token to be used
-          getJobQueue().addNotification(schedule, notification);
+          if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW ||
+              !notification.getProperties().containsKey(ProgramOptionConstants.WORKFLOW_TOKEN)) {
+            getJobQueue().addNotification(schedule, notification);
+          } else {
+            // Otherwise send the notification without the workflow token
+            Map<String, String> properties = new HashMap<>(notification.getProperties());
+            properties.remove(ProgramOptionConstants.WORKFLOW_TOKEN);
+            Notification programWithoutWorkflow = new Notification(Notification.Type.PROGRAM_STATUS, properties);
+            getJobQueue().addNotification(schedule, programWithoutWorkflow);
+          }
         }
       }
     }

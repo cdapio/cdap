@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.store;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
@@ -30,6 +31,7 @@ import com.google.common.base.Supplier;
 import com.google.inject.Inject;
 
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * An implementation of the ProgramStateWriter that persists directly to the store
@@ -75,7 +77,7 @@ public final class DirectStoreProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void completed(final ProgramRunId programRunId) {
+  public void completed(final ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
@@ -87,7 +89,7 @@ public final class DirectStoreProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void killed(final ProgramRunId programRunId) {
+  public void killed(final ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {
@@ -99,7 +101,8 @@ public final class DirectStoreProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void error(final ProgramRunId programRunId, final Throwable failureCause) {
+  public void error(final ProgramRunId programRunId, @Nullable WorkflowToken workflowToken,
+                    final Throwable failureCause) {
     Retries.supplyWithRetries(new Supplier<Void>() {
       @Override
       public Void get() {

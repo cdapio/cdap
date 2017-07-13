@@ -20,7 +20,6 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -36,9 +35,9 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import co.cask.cdap.proto.id.TopicId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -65,8 +64,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final CConfiguration cConf;
   private final RuntimeStore store;
   private final ExecutorService taskExecutorService;
-  private final MessagingService messagingService;
   private final DatasetFramework datasetFramework;
+  private final MessagingService messagingService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, RuntimeStore store, CConfiguration cConf,
@@ -235,13 +234,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                                 programRunStatus, programRunId));
       }
 
+      // TODO hack to prevent converting ProgramRunStatus to ProgramStatus for STARTING - is there a better way?
+      // Can we add ProgramStatus#STARTING? Since ProgramRunStatus should be deprecated anyways
+      // Do we map STARTING to INITIALIZING?
       if (programRunStatus != ProgramRunStatus.STARTING) {
         ProgramStatus programStatus = ProgramStatus.valueOf(programRunStatus.toString().toUpperCase());
         String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
                                                                                   programStatus);
 
         if (canTriggerOtherPrograms(context, triggerKeyForProgramStatus)) {
-          // Now send the notification to the scheduler
+          // Now forward the notification to the scheduler
           TopicId programStatusTriggerTopic =
             NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
           messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)

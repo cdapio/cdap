@@ -16,8 +16,12 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.proto.BasicThrowable;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -35,17 +39,17 @@ public final class NoOpProgramStateWriter implements ProgramStateWriter {
   }
 
   @Override
-  public void completed(ProgramRunId programRunId) {
+  public void completed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     // no-op
   }
 
   @Override
-  public void killed(ProgramRunId programRunId) {
+  public void killed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken) {
     // no-op
   }
 
   @Override
-  public void error(ProgramRunId programRunId, Throwable failureCause) {
+  public void error(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken, Throwable failureCause) {
     // no-op
   }
 

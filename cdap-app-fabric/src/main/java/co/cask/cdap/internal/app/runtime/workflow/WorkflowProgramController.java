@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
@@ -34,7 +35,7 @@ import java.net.InetSocketAddress;
 /**
  *
  */
-final class WorkflowProgramController extends AbstractStateChangeProgramController {
+public final class WorkflowProgramController extends AbstractStateChangeProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramController.class);
 
@@ -117,5 +118,9 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
     return String.format("workflow.%s.%s.%s.%s",
                          programId.getNamespace(), programId.getApplication(), programId.getProgram(),
                          runId.getId());
+  }
+
+  public WorkflowToken getWorkflowToken() {
+    return driver.getBasicWorkflowToken();
   }
 }

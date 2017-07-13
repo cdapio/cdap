@@ -16,6 +16,8 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramRunId;
 
@@ -47,23 +49,26 @@ public interface ProgramStateWriter {
    * Updates the program run's status to be completed
    *
    * @param programRunId the id of the program run
+   * @param workflowToken the workflow token if the completed program was a workflow
    */
-  void completed(ProgramRunId programRunId);
+  void completed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken);
 
   /**
    * Updates the program run's status to be killed
    *
    * @param programRunId the id of the program run
+   * @param workflowToken the workflow token if the killed program was a workflow
    */
-  void killed(ProgramRunId programRunId);
+  void killed(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken);
 
   /**
    * Updates the program run's status to be failed with a specified failure cause
    *
    * @param programRunId the id of the program run
    * @param failureCause the cause of the failure
+   * @param workflowToken the workflow token if the failed program was a workflow
    */
-  void error(ProgramRunId programRunId, Throwable failureCause);
+  void error(ProgramRunId programRunId, @Nullable WorkflowToken workflowToken, Throwable failureCause);
 
   /**
    * Updates the program run's status to be suspended

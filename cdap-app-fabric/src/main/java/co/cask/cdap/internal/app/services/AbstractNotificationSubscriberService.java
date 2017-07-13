@@ -72,13 +72,14 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
   private final CConfiguration cConf;
   private final Transactional transactional;
+  private final DatasetFramework datasetFramework;
   private final MultiThreadMessagingContext messagingContext;
   private final MultiThreadDatasetCache multiThreadDatasetCache;
   private volatile boolean stopping = false;
 
   @Inject
   protected AbstractNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                               DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
