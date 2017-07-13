@@ -31,6 +31,68 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+
+`Release 4.1.2 <http://docs.cask.co/cdap/4.1.2/index.html>`__
+=============================================================
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-12020` - Reuse network connections for TMS client.
+
+- :cask-issue:`CDAP-11959` - Added a way to limit the frequency of retrieving the MapReduce task report, which could cause network load for very large jobs.
+
+- :cask-issue:`CDAP-11949` - Added the ability to configure the HBase client scanner cache for a dataset.
+
+- :cask-issue:`CDAP-11594` - Added startup check for CDAP master to error out if the configurations for HBaseDDLExecutor extensions are provided, however extension jar cannot be loaded.
+
+- :cask-issue:`CDAP-11444` - Upgraded IDEA IntelliJ IDE in CDAP SDK VM to 2017.1.3 release.
+
+- :cask-issue:`CDAP-11398` - Upgraded Eclipse IDE in CDAP SDK VM to Neon 3 release.
+
+- :cask-issue:`CDAP-9515` - Added the ability to denormalize data, by splitting based on de-limiter text or array flattening, to individual records in Dataprep UI as point and click directive.
+
+- :cask-issue:`CDAP-9514` - Added the ability to apply some DataPrep directives on multiple columns, starting with Join columns and Swap columns. Multiple columns can be selected by checking the checkbox next to each column's name, then selecting a directive in the directive dropdown.
+
+- :cask-issue:`CDAP-9507` - Added the ability to format data (date time, string formatting etc.,) in Dataprep UI as point and click directive.
+
+- :cask-issue:`CDAP-9523` - Added the ability to extract text using regex patterns in Dataprep UI as point and click directive.
+
+- :cask-issue:`CDAP-9096` - Added feature where macro arguments are also listed in the runtime arguments of preview mode, just like when running a new pipeline.
+
+- :cask-issue:`CDAP-9094` - Added feature where values of macro arguments are automatically populated and shown in the UI when running a pipeline, if those values exist as Preferences.
+
+- :cask-issue:`CDAP-6329` - Enable GC logging for cdap services.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-11985` - Fixed a bug that ugi provider returns the old and incorrect ugi information.
+
+- :cask-issue:`CDAP-11955` - Fixed a bug that sometimes wrong user is used in explore, which results in the failure of deleting namespace.
+
+- :cask-issue:`CDAP-11948` - Fixed a bug where committed data could be removed during HBase table flush or compaction.
+
+- :cask-issue:`CDAP-11937` - Fixed an issue where a failed MapReduce run was marked as successful.
+
+- :cask-issue:`CDAP-11880` - Fixed a bug that hydrator pipelines and other programs do not create datasets at runtime with correct impersonated user.
+
+- :cask-issue:`CDAP-11815` - Fixed impersonation when upgrading datasets in UpgradeTool
+
+- :cask-issue:`CDAP-11795` - Fixed an issue with retrieving workflow state if it contains an exception without a message.
+
+- :cask-issue:`CDAP-11783` - HBaseDDLExecutor implementation is now localized to the containers without adding it in the container classpath.
+
+- :cask-issue:`CDAP-10488` - Fixed delete button on action plugins to allow users to delete easily.
+
+- :cask-issue:`CDAP-9456` - Fixed a bug that impersonated workflow does not create local datasets with correct impersonated user.
+
+- :cask-issue:`CDAP-8963` - Fixed issue in explore preview where UI is not displaying boolean value correctly
+
+- :cask-issue:`CDAP-5067` - Fixed an issue where Workflow driver was getting restarted when it runs out of memory, causing the Workflow to be executed from start node again.
+
+
 `Release 4.1.1 <http://docs.cask.co/cdap/4.1.1/index.html>`__
 =============================================================
 
