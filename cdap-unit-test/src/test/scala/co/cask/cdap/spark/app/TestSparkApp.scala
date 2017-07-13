@@ -51,6 +51,7 @@ class TestSparkApp extends AbstractApplication[Config] {
                   ObjectMappedTableProperties.builder().setType(classOf[Person]).build())
     addSpark(new DatasetSQLSpark)
 
+    addSpark(new StreamSQLSpark)
     addSpark(new ClassicSpark)
     addSpark(new ScalaClassicSpark)
     addSpark(new TransactionSpark)

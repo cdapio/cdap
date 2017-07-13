@@ -95,9 +95,11 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     if (API_CLASSES.contains(name) || (!name.startsWith("co.cask.cdap.api.spark.")
         && !name.startsWith("co.cask.cdap.app.deploy.spark.")
         && !name.startsWith("co.cask.cdap.app.runtime.spark.")
+        && !name.startsWith("co.cask.cdap.spark.sql.")
         && !name.startsWith("org.apache.spark.") && !name.startsWith("org.spark-project.")
         && !name.startsWith("akka.") && !name.startsWith("com.typesafe.")
-        && !name.startsWith("com.esotericsoftware.kryo.") && !name.startsWith("com.twitter.chill."))
+        && !name.startsWith("com.esotericsoftware.")    // For Kryo and reflectasm
+        && !name.startsWith("com.twitter.chill."))
         && !name.startsWith("org.codehaus.janino.")
         && !name.startsWith("com.fasterxml.jackson.")
         && !name.startsWith("com.codahale.metrics.")

@@ -20,6 +20,8 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -36,6 +38,7 @@ import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ClassicSparkProgram;
@@ -52,6 +55,7 @@ import co.cask.cdap.spark.app.SparkAppUsingLocalFiles;
 import co.cask.cdap.spark.app.SparkAppUsingObjectStore;
 import co.cask.cdap.spark.app.SparkLogParser;
 import co.cask.cdap.spark.app.StreamFormatSpecSpark;
+import co.cask.cdap.spark.app.StreamSQLSpark;
 import co.cask.cdap.spark.app.TestSparkApp;
 import co.cask.cdap.spark.app.TransactionSpark;
 import co.cask.cdap.test.ApplicationManager;
@@ -124,6 +128,38 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
   private ApplicationManager deploy(NamespaceId namespaceId, Class<? extends Application> appClass) throws Exception {
     return deployWithArtifact(namespaceId, appClass, ARTIFACTS.get(appClass));
+  }
+
+  @Test
+  public void testStreamSQL() throws Exception {
+    ApplicationManager appManager = deploy(TestSparkApp.class);
+
+    // Create a stream and set the format and schema
+    StreamManager streamManager = getStreamManager("sqlStream");
+    streamManager.createStream();
+    Schema schema = Schema.recordOf("person",
+                                    Schema.Field.of("firstName", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("lastName", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of("age", Schema.of(Schema.Type.INT)));
+    streamManager.setStreamProperties(new StreamProperties(86400L, new FormatSpecification("csv", schema), 1000));
+
+    // Send some events. Send them with one milliseconds apart so that we can test the timestamp filter
+    streamManager.send("Bob,Robert,15");
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamManager.send("Eddy,Edison,35");
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamManager.send("Thomas,Edison,60");
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamManager.send("Tom,Thomson,50");
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamManager.send("Roy,Thomson,8");
+    TimeUnit.MILLISECONDS.sleep(1);
+    streamManager.send("Jane,Jenny,6");
+
+    // Run the testing spark program
+    SparkManager sparkManager = appManager.getSparkManager(StreamSQLSpark.class.getSimpleName())
+      .start(Collections.singletonMap("input.stream", "sqlStream"));
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
   }
 
   @Test

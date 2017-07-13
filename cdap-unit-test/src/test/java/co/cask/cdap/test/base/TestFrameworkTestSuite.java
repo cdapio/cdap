@@ -59,9 +59,9 @@ import org.junit.runners.Suite;
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   SparkStreamIntegrationTestRun.class,
-  SparkStreamingTestRun.class,
   SparkTestRun.class,
-  TestFrameworkTestRun.class
+  TestFrameworkTestRun.class,
+  SparkStreamingTestRun.class,
 })
 public class TestFrameworkTestSuite extends TestFrameworkTestBase {
   // Note that setting the following configuration in any of the above Test classes is ignored, since

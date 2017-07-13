@@ -58,6 +58,17 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRuntimeProvider.class);
 
+  static {
+    try {
+      // Load the shutdown manager to have the ShutdownHookManager static initialization block execute
+      // This is to avoid having the shutdown hook thread holding reference to SparkRunnerClassLoader
+      // when it is being used by Spark.
+      Class.forName("org.apache.hadoop.util.ShutdownHookManager");
+    } catch (ClassNotFoundException e) {
+      // It's ok if the shutdown hook manager from Hadoop is not there
+    }
+  }
+
   private final SparkCompat providerSparkCompat;
   private final boolean filterScalaClasses;
   private ClassLoader distributedRunnerClassLoader;
