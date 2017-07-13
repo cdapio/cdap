@@ -40,9 +40,9 @@ Improvements
 
 - :cask-issue:`CDAP-12020` - Reuse network connections for TMS client.
 
-- :cask-issue:`CDAP-11959` - Adds a way to limit the frequency of retrieving the MapReduce task report, which could cause network load for very large jobs.
+- :cask-issue:`CDAP-11959` - Added a way to limit the frequency of retrieving the MapReduce task report, which could cause network load for very large jobs.
 
-- :cask-issue:`CDAP-11949` - Adds the ability to configure the HBase client scanner cache for a dataset.
+- :cask-issue:`CDAP-11949` - Added the ability to configure the HBase client scanner cache for a dataset.
 
 - :cask-issue:`CDAP-11594` - Added startup check for CDAP master to error out if the configurations for HBaseDDLExecutor extensions are provided, however extension jar cannot be loaded.
 
