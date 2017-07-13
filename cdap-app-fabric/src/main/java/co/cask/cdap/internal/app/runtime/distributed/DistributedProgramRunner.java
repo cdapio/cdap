@@ -309,7 +309,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           // Add dependencies
           Set<Class<?>> extraDependencies = new HashSet<>(launchConfig.getExtraDependencies());
           extraDependencies.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
-          extraDependencies.add(new HBaseDDLExecutorFactory(cConf, hConf).get().getClass());
           if (SecureStoreUtils.isKMSBacked(cConf) && SecureStoreUtils.isKMSCapable()) {
             extraDependencies.add(SecureStoreUtils.getKMSSecureStore());
           }
