@@ -72,23 +72,23 @@ Bug Fixes
 
 - :cask-issue:`CDAP-11955` - Fixed a bug that sometimes wrong user is used in explore, which results in the failure of deleting namespace.
 
-- :cask-issue:`CDAP-11948` - Fix a bug where committed data could be removed during HBase table flush or compaction.
+- :cask-issue:`CDAP-11948` - Fixed a bug where committed data could be removed during HBase table flush or compaction.
 
-- :cask-issue:`CDAP-11937` - Fixes an issue where a failed MapReduce run was marked as successful.
+- :cask-issue:`CDAP-11937` - Fixed an issue where a failed MapReduce run was marked as successful.
 
 - :cask-issue:`CDAP-11880` - Fixed a bug that hydrator pipelines and other programs do not create datasets at runtime with correct impersonated user.
 
-- :cask-issue:`CDAP-11815` - Fix impersonation when upgrading datasets in UpgradeTool
+- :cask-issue:`CDAP-11815` - Fixed impersonation when upgrading datasets in UpgradeTool
 
-- :cask-issue:`CDAP-11795` - Fixes an issue with retrieving workflow state if it contains an exception without a message.
+- :cask-issue:`CDAP-11795` - Fixed an issue with retrieving workflow state if it contains an exception without a message.
 
 - :cask-issue:`CDAP-11783` - HBaseDDLExecutor implementation is now localized to the containers without adding it in the container classpath.
 
-- :cask-issue:`CDAP-10488` - Fixed the delete button on action plugins to allow users to delete easily.
+- :cask-issue:`CDAP-10488` - Fixed delete button on action plugins to allow users to delete easily.
 
 - :cask-issue:`CDAP-9456` - Fixed a bug that impersonated workflow does not create local datasets with correct impersonated user.
 
-- :cask-issue:`CDAP-8963` - Fix issue in explore preview where UI is not displaying boolean value correctly
+- :cask-issue:`CDAP-8963` - Fixed issue in explore preview where UI is not displaying boolean value correctly
 
 - :cask-issue:`CDAP-5067` - Fixed an issue where Workflow driver was getting restarted when it runs out of memory, causing the Workflow to be executed from start node again.
 
