@@ -18,12 +18,18 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
+@node-box-width: 200px;
+@node-box-height: 80px;
 @source-plugins-color: #48c038;
 @transform-plugins-color: #4586f3;
 @action-plugins-color: #988470;
 @spark-plugins-color: #34495e;
 @sink-plugins-color: #8367df;
 @error-transform: #e74c3c;
+@endpoint-circle-bg-color: #4e5568;
+@endpoint-connection-hover-stroke-color: #1379d9;
+@endpoint-caret-bg-color: #bac0d6;
+@endpoint-circle-radius: 7px;
 @configure-btn-label-color: #5c6788;
 @configure-btn-label-hover-color: #454a57;
 @configure-btn-bg-hover-color: #f5f5f5;
@@ -37,15 +43,30 @@
 @comment-box-color: lighten(#ffff99, 10%);
 @preview-outline-color: lighten(#f1c40f, 20%);
 
+.increase-border-height-width() {
+  @new-border-width: 2px;
+  border-width: @new-border-width;
+
+  /* 1 here being the current border-width */
+  margin: -(@new-border-width - 1);
+  width: @node-box-width + @new-border-width;
+  height: @node-box-height + @new-border-width;
+}
+
 .border-color-hover() {
   border: 1px solid currentColor;
 
   &:hover {
-    border-width: 2px;
-    margin: -1px;
-    width: 202px;
-    height: 82px;
+    .increase-border-height-width();
     cursor: pointer;
+  }
+
+  &.drag-hover {
+    .increase-border-height-width();
+
+    .node {
+      background-color: @configure-btn-bg-hover-color;
+    }
   }
 }
 
@@ -110,8 +131,8 @@ my-dag-plus {
       left: 100px;
       top: 150px;
       padding: 0;
-      height: 80px;
-      width: 200px;
+      height: @node-box-height;
+      width: @node-box-width;
 
       .node {
         position: relative;
@@ -124,13 +145,34 @@ my-dag-plus {
         .transition(color 50ms linear);
         background-clip: border-box;
 
-        .fa.fa-close {
-          cursor: pointer;
-          font-size: 13px;
+        .endpoint-circle {
+          width: @endpoint-circle-radius * 2;
+          height: @endpoint-circle-radius * 2;
+          background-color: @endpoint-circle-bg-color;
+          border-radius: 100%;
           position: absolute;
-          right: 28px;
-          .opacity(0);
-          .transition(opacity 0.2s ease);
+          right: -@endpoint-circle-radius;
+          top: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .endpoint-caret {
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: @endpoint-circle-radius solid @endpoint-caret-bg-color;
+            transform: translateX(2px);
+          }
+
+          &:hover {
+            background-color: @endpoint-connection-hover-stroke-color;
+
+            .endpoint-caret {
+              visibility: hidden;
+            }
+          }
         }
 
         .node-info {
@@ -262,10 +304,6 @@ my-dag-plus {
 
         &:hover,
         &:focus {
-          .fa.fa-close {
-            .opacity(1);
-          }
-
           .node-version {
             display: none;
           }
@@ -287,7 +325,6 @@ my-dag-plus {
         color: @source-plugins-color;
         left: 10vw;
         .border-color-hover();
-
       }
       &:not(.realtimesource):not(.batchsource):not(.streamingsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action):not(.sparkprogram) {
         color: @transform-plugins-color;
@@ -299,7 +336,6 @@ my-dag-plus {
           left: 30vw;
           .border-color-hover();
         }
-
       }
       &.realtimesink,
       &.batchsink,
@@ -388,8 +424,24 @@ my-dag-plus {
       position: absolute;
     }
 
+    svg.jsplumb-dragging {
+      path {
+        stroke: @endpoint-connection-hover-stroke-color;
+        stroke-width: 2;
+      }
+
+      path:last-child {
+        fill: @endpoint-connection-hover-stroke-color;
+      }
+    }
+
     .jsplumb-endpoint {
-      svg {
+      svg * {
+        fill: transparent;
+        stroke: transparent;
+      }
+
+      /*svg {
         overflow: visible;
       }
       rect {
@@ -398,7 +450,6 @@ my-dag-plus {
       }
       circle {
         fill: white;
-        r: 4px;
         stroke-width: 4px;
       }
       &-anchor-sourceAnchor {
@@ -433,7 +484,7 @@ my-dag-plus {
         &.sparkprogram-anchor {
           rect { stroke: @spark-plugins-color; }
         }
-      }
+      }*/
     }
 
     .jsplumb-connector path:last-child {

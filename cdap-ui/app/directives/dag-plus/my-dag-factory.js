@@ -33,12 +33,12 @@ angular.module(PKG.name + '.commons')
     };
 
     var commonSettings = {
-      endpoint:'Dot',
+      endpoint: 'Dot',
       maxConnections: -1, // -1 means unlimited connections
       paintStyle: {
-        strokeStyle: '#666e82',
-        fillStyle: '#666e82',
-        radius: 5,
+        strokeStyle: '#4e5568',
+        fillStyle: '#4e5568',
+        radius: 11,
         lineWidth: 3
       },
       anchors: [ 'Static']
@@ -102,6 +102,32 @@ angular.module(PKG.name + '.commons')
       settings.actionOrigin.endpointStyle = angular.copy(rectEndpoint);
       settings.actionTarget.endpoint = 'Rectangle';
       settings.actionTarget.endpointStyle = angular.copy(rectEndpoint);
+
+      return settings;
+    }
+
+    function getSettings2() {
+      var settings = {
+        Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
+        Endpoint: 'Dot',
+        EndpointStyle: { radius: 1 },
+        Connector: [ 'StateMachine', { proximityLimit: 200 } ],
+        PaintStyle: {
+          strokeStyle: '#4e5568',
+          lineWidth: 2,
+          outlineColor: 'transparent',
+          outlineWidth: 4
+        },
+        HoverPaintStyle: { strokeStyle: '#1379d9', lineWidth: 2 },
+        ConnectionOverlays: [
+          ['Arrow', {
+              location: 1,
+              id: 'arrow',
+              length: 14,
+              foldback: 0.8
+          }]
+        ]
+      };
 
       return settings;
     }
@@ -271,6 +297,7 @@ angular.module(PKG.name + '.commons')
 
     return {
       getSettings: getSettings,
+      getSettings2: getSettings2,
       getIcon: getIcon,
       getGraphLayout: getGraphLayout
     };
