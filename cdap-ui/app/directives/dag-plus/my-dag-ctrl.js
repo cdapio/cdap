@@ -15,62 +15,33 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory) {
 
     var vm = this;
 
-    var numberFilter = $filter('number');
+    var dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
+    var undoListenerId = dispatcher.register('onUndoActions', resetEndpointsAndConnections);
+    var redoListenerId = dispatcher.register('onRedoActions', resetEndpointsAndConnections);
 
-    var endpoints = [];
+    let localX, localY;
 
-    var settings = DAGPlusPlusFactory.getSettings();
+    const SHOW_METRICS_THRESHOLD = 0.8;
 
-    var sourceOrigin = settings.sourceOrigin,
-        sourceTarget = settings.sourceTarget,
-        transformOrigin = settings.transformOrigin,
-        transformTarget = settings.transformTarget,
-        sinkOrigin = settings.sinkOrigin,
-        sinkTarget = settings.sinkTarget,
-        actionOrigin = settings.actionOrigin,
-        actionTarget = settings.actionTarget;
+    const separation = $scope.separation || 200; // node separation length
 
-    let localX,localY;
-
-    var SHOW_METRICS_THRESHOLD = 0.8;
-    var METRICS_THRESHOLD = 999999999999;
-    var selected = [];
-    var labels = [];
-
-    var separation = $scope.separation || 200; // node separation length
-
-    var nodeWidth = 200;
-    var nodeHeight = 80;
-
-    var metricsLabel = [
-      [ 'Custom', {
-        create: function (label) {
-          labels.push(label);
-          return angular.element('<div><span class="metric-label-text"></span> / <span class="metric-error-label"></span></div>');
-        },
-        width: 100,
-        location: [4.3, 0],
-        id: 'metricLabel',
-        cssClass: 'metric-label'
-      }]
-    ];
-
-    if ($scope.showMetrics) {
-      sourceOrigin.overlays = metricsLabel;
-      transformOrigin.overlays = metricsLabel;
-    }
+    const nodeWidth = 200;
+    const nodeHeight = 80;
 
     var dragged = false;
-    var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
     vm.disableNodeClick = $scope.disableNodeClick;
 
     var nodePopovers = {};
+    var selectedConnections = [];
+    var endpointClicked = false;
+    var connectionDropped = false;
+    var dagMenu;
 
     vm.scale = 1.0;
 
@@ -84,14 +55,16 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.comments = [];
-    vm.showNodeMenu = {};
+    vm.nodeMenuOpen = null;
+    vm.dagMenuOpen = null;
 
-    var repaintTimeout = null,
-        commentsTimeout = null,
-        nodesTimeout = null,
-        fitToScreenTimeout = null,
-        initTimeout = null,
-        nodePopoverTimeout = null;
+    var repaintTimeout,
+        commentsTimeout,
+        nodesTimeout,
+        fitToScreenTimeout,
+        initTimeout,
+        nodePopoverTimeout,
+        resetTimeout;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
 
@@ -103,31 +76,6 @@ angular.module(PKG.name + '.commons')
       repaintTimeout = $timeout(function () { vm.instance.repaintEverything(); });
     }
 
-
-    /*
-    FIXME: This should be fixed. Right now the assumption is to update
-     the store before my-dag directive is rendered. What happens if we get the
-     data after the rendering? The init function is never called or the DAG is not
-     rendered based on the data.
-
-     Right now there is a cycle which prevents us from listening to the NodeStore
-     changes. The infinite recurrsion happens like this,
-     Assuming we have this
-     NodesStore.registerChangeListener(init);
-     1. User adds a connection in view
-     2. 'connection' event is fired by jsplumb
-     3. On connection event we call 'formatConnections' function
-     4. 'formatConnections' constructs the 'connections' array and sets it to NodesStore
-     5. Now NodesStore fires an update to changelisteners.
-     6. 'init' function gets called.
-     6. 'init' function again programmatically connects all the nodes and sets it to NodesStore
-     7. Control goes to step 5
-     7. Hence the loop.
-
-     We need to be able to separate render of graph from data and incremental user interactions.
-     - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
-     - User should be able interact with the dag and  incremental changes.
-    */
     function init() {
       $scope.nodes = DAGPlusPlusNodesStore.getNodes();
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
@@ -136,22 +84,33 @@ angular.module(PKG.name + '.commons')
       vm.comments = DAGPlusPlusNodesStore.getComments();
 
       initTimeout = $timeout(function () {
-        addEndpoints();
+        initNodes();
         addConnections();
-        vm.instance.bind('connection', formatConnections);
-        vm.instance.bind('connectionDetached', formatConnections);
+        vm.instance.bind('connection', addConnection);
+        vm.instance.bind('connectionDetached', removeConnection);
+        vm.instance.bind('connectionMoved', moveConnection);
+        vm.instance.bind('beforeStartDetach', onStartDetach);
+        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+        vm.instance.bind('beforeDrag', onBeforeDrag);
+        // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
+        // but seems like the 'click' event is triggered both when clicking on an endpoint &&
+        // clicking on a connection
+        vm.instance.bind('click', toggleConnections);
+
         Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
         Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
+        Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
 
         if (vm.isDisabled) {
           // Disable all endpoints
-          angular.forEach(endpoints, function (node) {
-            var endpointArr = vm.instance.getEndpoints(node);
+          angular.forEach($scope.nodes, function (node) {
+            var endpointArr = vm.instance.getEndpoints(node.name);
 
-            // There should only be 2 endpoints per nodes, left and right
-            angular.forEach(endpointArr, function (endpoint) {
-              endpoint.setEnabled(false);
-            });
+            if (endpointArr) {
+              angular.forEach(endpointArr, function (endpoint) {
+                endpoint.setEnabled(false);
+              });
+            }
           });
         }
 
@@ -163,8 +122,9 @@ angular.module(PKG.name + '.commons')
 
             var scope = $rootScope.$new();
             scope.data = {
-              nodeName: node.name
+              node: node
             };
+            scope.version = node.plugin.artifact.version;
 
             nodePopovers[node.name] = {
               scope: scope,
@@ -181,43 +141,6 @@ angular.module(PKG.name + '.commons')
 
           });
 
-          if (vm.scale <= SHOW_METRICS_THRESHOLD) {
-            hideMetricsLabel();
-          }
-
-          angular.forEach(labels, function (endpoint) {
-            var label = endpoint.getOverlay('metricLabel');
-
-            let childrenElem = angular.element(label.getElement()).children();
-
-            angular.forEach(childrenElem, (child) => {
-              var tooltip;
-
-              if (child.className === 'metric-label-text') {
-                tooltip = $tooltip(angular.element(child), {
-                  trigger: 'hover',
-                  title: 'Records Out',
-                  delay: 300,
-                  container: 'body'
-                });
-              } else if (child.className === 'metric-error-label') {
-                tooltip = $tooltip(angular.element(child), {
-                  trigger: 'hover',
-                  title: 'Error Records',
-                  delay: 300,
-                  container: 'body'
-                });
-              }
-
-              $scope.$on('$destroy', function () {
-                if (tooltip) {
-                  tooltip.destroy();
-                }
-              });
-            });
-
-          });
-
           $scope.$watch('metricsData', function () {
             if (Object.keys($scope.metricsData).length === 0) {
               angular.forEach(nodePopovers, function (value) {
@@ -227,38 +150,6 @@ angular.module(PKG.name + '.commons')
 
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
-            });
-
-            angular.forEach(labels, function (endpoint) {
-              var label = endpoint.getOverlay('metricLabel');
-              if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
-                angular.element(label.getElement()).children()
-                  .text(0);
-                return;
-              }
-
-              var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut || 0;
-              var recordsError = $scope.metricsData[endpoint.elementId].recordsError || 0;
-
-              // hide label if the metric is greater than METRICS_THRESHOLD.
-              // the intent is to hide the metrics when the length is greater than 12.
-              // Since records out metrics is an integer we can do a straight comparison
-              if(recordsOut > METRICS_THRESHOLD) {
-                label.hide();
-              } else if (recordsOut <= METRICS_THRESHOLD && vm.scale >= SHOW_METRICS_THRESHOLD ) {
-                label.show();
-              }
-
-              let children = angular.element(label.getElement()).children();
-
-              angular.forEach(children, (child) => {
-                if (child.className === 'metric-label-text') {
-                  angular.element(child).text(numberFilter(recordsOut, 0));
-                } else if (child.className === 'metric-error-label') {
-                  angular.element(child).text(numberFilter(recordsError, 0));
-                }
-              });
-
             });
           }, true);
         }
@@ -275,47 +166,58 @@ angular.module(PKG.name + '.commons')
       }, 500);
     }
 
+    function closeNodePopover(node) {
+      var nodeInfo = nodePopovers[node.name];
+      if (nodePopoverTimeout) {
+        $timeout.cancel(nodePopoverTimeout);
+      }
+      if (nodeInfo && nodeInfo.popover) {
+        nodeInfo.popover.hide();
+        nodeInfo.popover.destroy();
+        nodeInfo.popover = null;
+      }
+    }
+
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+
       var nodeInfo = nodePopovers[node.name];
 
-      nodeInfo.popover = $popover(nodeInfo.element, {
-        trigger: 'manual',
-        placement: 'auto right',
-        target: angular.element(nodeInfo.element[0]),
-        templateUrl: $scope.nodePopoverTemplate,
-        container: 'main',
-        scope: nodeInfo.scope
-      });
-      nodeInfo.popover.$promise
-        .then(function () {
-          if (nodePopoverTimeout) {
-            $timeout.cancel(nodePopoverTimeout);
-          }
+      if (nodePopoverTimeout) {
+        $timeout.cancel(nodePopoverTimeout);
+      }
 
-          nodePopoverTimeout = $timeout(function () {
-            nodeInfo.popover.show();
-          });
+      if (nodeInfo.element && nodeInfo.scope) {
+        nodeInfo.popover = $popover(nodeInfo.element, {
+          trigger: 'manual',
+          placement: 'auto right',
+          target: angular.element(nodeInfo.element[0]),
+          templateUrl: $scope.nodePopoverTemplate,
+          container: 'main',
+          scope: nodeInfo.scope
         });
+        nodeInfo.popover.$promise
+          .then(function () {
+
+            // Needs a timeout here to avoid showing popups instantly when just moving
+            // cursor across a node
+            nodePopoverTimeout = $timeout(function () {
+              if (nodeInfo.popover && typeof nodeInfo.popover.show === 'function') {
+                nodeInfo.popover.show();
+              }
+            }, 500);
+          });
+      }
     };
 
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
-      var nodeInfo = nodePopovers[node.name];
-      if (!nodeInfo.popover) { return; }
-
-      nodeInfo.popover.hide();
-      nodeInfo.popover.destroy();
-      nodeInfo.popover = null;
+      closeNodePopover(node);
     };
 
     vm.zoomIn = function () {
       vm.scale += 0.1;
-
-      if (vm.scale >= SHOW_METRICS_THRESHOLD) {
-        showMetricsLabel();
-      }
 
       setZoom(vm.scale, vm.instance);
     };
@@ -323,30 +225,9 @@ angular.module(PKG.name + '.commons')
     vm.zoomOut = function () {
       if (vm.scale <= 0.2) { return; }
 
-      if (vm.scale <= SHOW_METRICS_THRESHOLD) {
-        hideMetricsLabel();
-      }
-
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
-
-    function showMetricsLabel() {
-      angular.forEach(labels, function (label) {
-        if ($scope.metricsData[label.elementId] && $scope.metricsData[label.elementId].recordsOut > METRICS_THRESHOLD) {
-          return;
-        }
-
-        label.getOverlay('metricLabel').show();
-      });
-    }
-
-    function hideMetricsLabel() {
-      angular.forEach(labels, function (label) {
-        label.getOverlay('metricLabel').hide();
-      });
-    }
-
 
     /**
      * Utily function from jsPlumb
@@ -375,69 +256,47 @@ angular.module(PKG.name + '.commons')
       instance.setZoom(zoom);
     }
 
-
-    function addEndpoints() {
+    function initNodes() {
       angular.forEach($scope.nodes, function (node) {
-        if (endpoints.indexOf(node.name) !== -1) {
-          return;
-        }
-        endpoints.push(node.name);
-
-        var type = GLOBALS.pluginConvert[node.type];
-
-        switch(type) {
-          case 'source':
-            vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
-            break;
-          case 'sink':
-            vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
-            break;
-          case 'action':
-            vm.instance.addEndpoint(node.name, actionOrigin, {
-              uuid: 'Origin' + node.name,
-              cssClass: node.type + '-anchor'
-            });
-            vm.instance.addEndpoint(node.name, actionTarget, {
-              uuid: 'Target' + node.name,
-              cssClass: node.type + '-anchor'
-            });
-            break;
-          default:
-            // Need to id each end point so that it can be used later to make connections.
-            var originId = {uuid: 'Origin' + node.name};
-            var targetId = {uuid: 'Target' + node.name};
-            if (node.plugin.name === 'Wrangler') {
-              originId.cssClass = 'wrangler-anchor';
-              targetId.cssClass = 'wrangler-anchor';
+        let sourceObj = {
+          isSource: true,
+          filter: function(event) {
+            // we need this variable because when the user clicks on the endpoint circle, multiple
+            // 'mousedown' events are fired
+            if (event.target.className === 'endpoint-circle' && !endpointClicked) {
+              endpointClicked = true;
             }
 
-            if (node.type === 'errortransform') {
-              originId.cssClass = 'error-anchor';
-              targetId.cssClass = 'error-anchor';
-            }
-
-            vm.instance.addEndpoint(node.name, transformOrigin, originId);
-            vm.instance.addEndpoint(node.name, transformTarget, targetId);
-            break;
+            return event.target.className === 'endpoint-circle';
+          },
+          connectionType: 'basic'
+        };
+        if (vm.isDisabled) {
+          sourceObj.enabled = false;
         }
+        vm.instance.makeSource(node.name, sourceObj);
+
+        vm.instance.makeTarget(node.name, {
+          isTarget: true,
+          dropOptions: { hoverClass: 'drag-hover' },
+          anchor: 'ContinuousLeft',
+          allowLoopback: false
+        });
       });
     }
 
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
-        var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
-        var targetNode = $scope.nodes.filter( node => node.name === conn.to);
-        if (!sourceNode.length || !targetNode.length) {
+        var sourceNode = $scope.nodes.find( node => node.name === conn.from);
+        var targetNode = $scope.nodes.find( node => node.name === conn.to);
+
+        if (!sourceNode || !targetNode) {
           return;
         }
 
-        var sourceId = 'Origin' + conn.from;
-        var targetId = 'Target' + conn.to;
-
         var connObj = {
-          uuids: [sourceId, targetId]
+          source: conn.from,
+          target: conn.to
         };
 
         vm.instance.connect(connObj);
@@ -454,29 +313,179 @@ angular.module(PKG.name + '.commons')
       };
     }
 
-    function formatConnections() {
-      var connections = [];
-      angular.forEach(vm.instance.getConnections(), function (conn) {
-        connections.push({
-          from: conn.sourceId,
-          to: conn.targetId
-        });
+    function addConnection(newConnObj) {
+      $scope.connections.push({
+        from: newConnObj.sourceId,
+        to: newConnObj.targetId
       });
-      DAGPlusPlusNodesActionsFactory.setConnections(connections);
+      DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+    }
+
+    function removeConnection(detachedConnObj, updateStore = true) {
+      var connectionIndex = _.findIndex($scope.connections, function (conn) {
+        return conn.from === detachedConnObj.sourceId && conn.to === detachedConnObj.targetId;
+      });
+      if (connectionIndex !== -1) {
+        $scope.connections.splice(connectionIndex, 1);
+      }
+      if (updateStore) {
+        DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+      }
+    }
+
+    function moveConnection(moveInfo) {
+      let oldConnection = {
+        sourceId: moveInfo.originalSourceId,
+        targetId: moveInfo.originalTargetId
+      };
+      // don't need to call addConnection for the new connection, since that will be done
+      // automatically as part of the 'connection' event
+      removeConnection(oldConnection, false);
+    }
+
+    vm.removeSelectedConnections = function() {
+      if (selectedConnections.length === 0 || vm.isDisabled) { return; }
+
+      vm.instance.unbind('connectionDetached');
+      angular.forEach(selectedConnections, function (selectedConnectionObj) {
+        removeContextMenuEventListener(selectedConnectionObj);
+        vm.instance.detach(selectedConnectionObj);
+        removeConnection(selectedConnectionObj, false);
+      });
+      vm.instance.bind('connectionDetached', removeConnection);
+      selectedConnections = [];
+      DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+    };
+
+    function toggleConnections(seletectedObj) {
+      // is endpoint
+      if (seletectedObj.endpoint) {
+        if (seletectedObj.connections && seletectedObj.connections.length > 0) {
+          let connectionsToToggle = vm.instance.getConnections({
+            source: seletectedObj.connections[0].sourceId
+          });
+
+          let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
+
+          // This is to toggle all connections coming from an endpoint.
+          // If zero, one or more (but not all) of the connections are already selected,
+          // then just select the remaining ones. Else if they're all selected,
+          // then unselect them.
+
+          if (notYetSelectedConnections.length !== 0) {
+            notYetSelectedConnections.forEach(connection => {
+              selectedConnections.push(connection);
+              connection.getConnector().canvas.addEventListener('contextmenu', openContextMenu);
+              connection.setType('selected');
+            });
+          } else {
+            connectionsToToggle.forEach(connection => {
+              selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+              removeContextMenuEventListener(connection);
+              connection.setType('basic');
+            });
+          }
+        }
+
+      // is connection
+      } else {
+        if (vm.isDisabled) { return; }
+
+        if (selectedConnections.indexOf(seletectedObj) === -1) {
+          selectedConnections.push(seletectedObj);
+          seletectedObj.getConnector().canvas.addEventListener('contextmenu', openContextMenu);
+        } else {
+          selectedConnections.splice(selectedConnections.indexOf(seletectedObj), 1);
+          removeContextMenuEventListener(seletectedObj);
+        }
+        seletectedObj.toggleType('selected');
+
+      }
+    }
+
+    function onStartDetach() {
+      connectionDropped = false;
+    }
+
+    function checkIfConnectionExistsOrValid(connObj) {
+      // return false if connection already exists, which will prevent the connecton from being formed
+      if (connectionDropped) { return false; }
+
+      var exists = _.find($scope.connections, function (conn) {
+        return conn.from === connObj.sourceId && conn.to === connObj.targetId;
+      });
+
+      var sameNode = connObj.sourceId === connObj.targetId;
+
+      if (exists || sameNode) {
+        connectionDropped = true;
+        return false;
+      }
+
+      // else check if the connection is valid
+      var fromNode = connObj.sourceId,
+          toNode = connObj.targetId;
+
+      angular.forEach($scope.nodes, function (node) {
+        if (node.name === fromNode) {
+          fromNode = node;
+        } else if (node.name === toNode) {
+          toNode = node;
+        }
+      });
+
+      var valid = true;
+
+      NonStorePipelineErrorFactory.connectionIsValid(fromNode, toNode, function(invalidConnection) {
+        if (invalidConnection) { valid = false; }
+      });
+      connectionDropped = true;
+      return valid;
+    }
+
+    function onBeforeDrag() {
+      if (endpointClicked) {
+        endpointClicked = false;
+        connectionDropped = false;
+      }
     }
 
     function resetEndpointsAndConnections() {
-      // have to unbind and bind again, otherwise calling detachEveryConnection will call formatConnections
-      // for every connection that we detach
-      vm.instance.unbind('connection');
-      vm.instance.unbind('connectionDetached');
-      endpoints = [];
-      vm.instance.detachEveryConnection();
-      vm.instance.deleteEveryEndpoint();
-      addEndpoints();
-      addConnections();
-      vm.instance.bind('connection', formatConnections);
-      vm.instance.bind('connectionDetached', formatConnections);
+      if (resetTimeout) {
+        $timeout.cancel(resetTimeout);
+      }
+
+      resetTimeout = $timeout(function () {
+        vm.instance.reset();
+
+        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+        $scope.connections = DAGPlusPlusNodesStore.getConnections();
+        vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
+        vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
+        initNodes();
+        addConnections();
+        angular.forEach(selectedConnections, function(selectedConnObj) {
+          removeContextMenuEventListener(selectedConnObj);
+        });
+        selectedConnections = [];
+        makeNodesDraggable();
+        vm.instance.bind('connection', addConnection);
+        vm.instance.bind('connectionMoved', moveConnection);
+        vm.instance.bind('connectionDetached', removeConnection);
+        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+        vm.instance.bind('beforeStartDetach', onStartDetach);
+        vm.instance.bind('beforeDrag', onBeforeDrag);
+        vm.instance.bind('click', toggleConnections);
+
+        if (commentsTimeout) {
+          vm.comments = DAGPlusPlusNodesStore.getComments();
+          $timeout.cancel(commentsTimeout);
+        }
+
+        commentsTimeout = $timeout(function () {
+          makeCommentsDraggable();
+        });
+      });
     }
 
     function makeNodesDraggable() {
@@ -494,9 +503,6 @@ angular.module(PKG.name + '.commons')
             }
             localX = currentCoOrdinates.x;
             localY = currentCoOrdinates.y;
-            if (selected.indexOf(drag.el.id) === -1) {
-              vm.clearNodeSelection();
-            }
 
             dragged = true;
           },
@@ -508,7 +514,6 @@ angular.module(PKG.name + '.commons')
               }
             };
             DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-            repaintEverything();
           }
         });
       }
@@ -532,17 +537,72 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    angular.element(document).ready(function() {
-      makeNodesDraggable();
-    });
+    function getPosition(e) {
+      var posx = 0;
+      var posy = 0;
+
+      if (e.pageX || e.pageY) {
+        posx = e.pageX;
+        posy = e.pageY;
+      } else if (e.clientX || e.clientY) {
+        posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+        posy = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+      }
+
+      return {
+        x: posx,
+        y: posy
+      };
+    }
+
+    function positionContextMenu(e, menu) {
+      var menuPosition = getPosition(e);
+      menu.style.left = menuPosition.x + 'px';
+      menu.style.top = menuPosition.y + 'px';
+    }
+
+    vm.selectEndpoint = function(event, node) {
+      if (event.target.className === 'endpoint-circle') {
+        let sourceElem = node.name;
+        let endpoints = vm.instance.getEndpoints(sourceElem);
+        if (endpoints) {
+          for (let i = 0; i < endpoints.length; i++) {
+            let endpoint = endpoints[i];
+            if (endpoint.connections && endpoint.connections.length > 0) {
+              if (endpoint.connections[0].sourceId === node.name) {
+                toggleConnections(endpoint);
+                break;
+              }
+            }
+          }
+        }
+      }
+      endpointClicked = false;
+    };
+
+    function openContextMenu(e) {
+      if (selectedConnections.length > 0) {
+        e.preventDefault();
+        vm.openDagMenu(true);
+        positionContextMenu(e, dagMenu);
+      }
+    }
+
+    function removeContextMenuEventListener(connection) {
+      connection.getConnector().canvas.removeEventListener('contextmenu', openContextMenu);
+    }
 
     jsPlumb.ready(function() {
       var dagSettings = DAGPlusPlusFactory.getSettings().default;
+      var dagSelectedConnectionStyle = DAGPlusPlusFactory.getSettings().selectedConnectionStyle;
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
+      vm.instance.registerConnectionType('selected', dagSelectedConnectionStyle);
 
       init();
+
+      dagMenu = document.querySelector('.dag-popover-menu');
 
       // Making canvas draggable
       vm.secondInstance = jsPlumb.getInstance();
@@ -554,43 +614,28 @@ angular.module(PKG.name + '.commons')
             transformCanvas(e.pos[1], e.pos[0]);
             DAGPlusPlusNodesActionsFactory.resetPluginCount();
             DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
-          },
-          start: function () {
-            canvasDragged = true;
           }
         });
       }
 
-      // This is needed to redraw connections and endpoints on browser resize
-      angular.element($window).on('resize', vm.instance.repaintEverything);
-
-      DAGPlusPlusNodesStore.registerOnChangeListener(function () {
-        vm.instance.unbind('connection');
-        vm.instance.unbind('connectionDetached');
-        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
-        $scope.connections = DAGPlusPlusNodesStore.getConnections();
-        vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
-        vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
-        vm.comments = DAGPlusPlusNodesStore.getComments();
-        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
-
+      // doing this to listen to changes to just $scope.nodes instead of everything else
+      $scope.$watch('nodes', function() {
         if (!vm.isDisabled) {
           if (nodesTimeout) {
             $timeout.cancel(nodesTimeout);
           }
           nodesTimeout = $timeout(function () {
-            resetEndpointsAndConnections();
+            initNodes();
             makeNodesDraggable();
           });
-
-          if (commentsTimeout) {
-            $timeout.cancel(commentsTimeout);
-          }
-
-          commentsTimeout = $timeout(function () {
-            makeCommentsDraggable();
-          });
         }
+      }, true);
+
+      // This is needed to redraw connections and endpoints on browser resize
+      angular.element($window).on('resize', vm.instance.repaintEverything);
+
+      DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
 
         // can do keybindings only if no node is selected
         if (!vm.activeNodeId) {
@@ -604,56 +649,32 @@ angular.module(PKG.name + '.commons')
 
     });
 
-    vm.clearNodeSelection = function () {
-      if (canvasDragged) {
-        canvasDragged = false;
-        return;
-      }
-      selected = [];
-      vm.instance.clearDragSelection();
-      DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-      angular.forEach($scope.nodes, function (node) {
-        node.selected = false;
-      });
-      clearCommentSelection();
-    };
-
-    function checkSelection() {
-      vm.instance.clearDragSelection();
-
-      selected = [];
-      angular.forEach($scope.nodes, function (node) {
-        if (node.selected) {
-          selected.push(node.name);
-        }
-      });
-
-      vm.instance.addToDragSelection(selected);
-    }
-
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
+      closeNodePopover(node);
+      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
+      DAGPlusPlusNodesActionsFactory.selectNode(node.name);
+    };
 
-      if ((event.ctrlKey || event.metaKey)) {
-        node.selected = !node.selected;
-        DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-
-        if (node.selected) {
-          checkSelection();
-        } else {
-          vm.instance.removeFromDragSelection(node.name);
-        }
-      } else {
-        vm.clearNodeSelection();
-        node.selected = true;
-        DAGPlusPlusNodesActionsFactory.selectNode(node.name);
-      }
+    vm.onMetricsClick = function(event, node) {
+      event.stopPropagation();
+      closeNodePopover(node);
+      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true);
+      DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+      vm.instance.unbind('connectionDetached');
+      selectedConnections = selectedConnections.filter(function(selectedConnObj) {
+        if (selectedConnObj.sourceId === node.name || selectedConnObj.targetId === node.name) {
+          removeContextMenuEventListener(selectedConnObj);
+        }
+        return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
+      });
       vm.instance.remove(node.name);
+      vm.instance.bind('connectionDetached', removeConnection);
     };
 
     vm.cleanUpGraph = function () {
@@ -684,12 +705,22 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
-    vm.toggleMenu = function (nodeName) {
-      if (!vm.showNodeMenu.hasOwnProperty(nodeName)) {
-        vm.showNodeMenu[nodeName] = true;
-      } else {
-        vm.showNodeMenu[nodeName] = !vm.showNodeMenu[nodeName];
+    vm.toggleNodeMenu = function (nodeName, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
       }
+
+      if (vm.nodeMenuOpen === nodeName) {
+        vm.nodeMenuOpen = null;
+      } else {
+        vm.nodeMenuOpen = nodeName;
+      }
+    };
+
+
+    vm.openDagMenu = function(open) {
+      vm.dagMenuOpen = open;
     };
 
     // This algorithm is f* up
@@ -817,29 +848,36 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.undoActions = function () {
-      DAGPlusPlusNodesActionsFactory.undoActions();
+      if (!vm.isDisabled && vm.undoStates.length > 0) {
+        DAGPlusPlusNodesActionsFactory.undoActions();
+      }
     };
 
     vm.redoActions = function () {
-      DAGPlusPlusNodesActionsFactory.redoActions();
+      if (!vm.isDisabled && vm.redoStates.length > 0) {
+        DAGPlusPlusNodesActionsFactory.redoActions();
+      }
     };
 
     $scope.$on('$destroy', function () {
-      labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
 
       angular.element($window).off('resize', vm.instance.repaintEverything);
 
-      // Cancelling all timeouts
+      // Cancelling all timeouts, key bindings and event listeners
       $timeout.cancel(repaintTimeout);
       $timeout.cancel(commentsTimeout);
       $timeout.cancel(nodesTimeout);
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
-      Mousetrap.unbind(['command+z', 'ctrl+z']);
-      Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
+      angular.forEach(selectedConnections, function(selectedConnObj) {
+        removeContextMenuEventListener(selectedConnObj);
+      });
+      Mousetrap.reset();
+      dispatcher.unregister('onUndoActions', undoListenerId);
+      dispatcher.unregister('onRedoActions', redoListenerId);
+      vm.instance.reset();
     });
-
   });
