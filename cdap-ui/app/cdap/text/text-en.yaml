@@ -527,7 +527,7 @@ features:
         ignoreCase: Ignore Case
         KEEP: Keep rows
         Placeholders:
-          CUSTOMCONDITION: e.g. < 30
+          CUSTOMCONDITION: "E.g. < 30 || gender == \"Male\""
           TEXTCONTAINS: Enter contained value
           TEXTENDSWITH: Enter suffix
           TEXTEXACTLY: Enter value
@@ -559,6 +559,38 @@ features:
        title:
           plural: Keep Selected Columns
           singular: Keep Column
+      MarkAsError:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          ISNUMBER: Is Number
+          ISNOTNUMBER: Is Not Number
+          ISINTEGER: Is Integer
+          ISNOTINTEGER: Is Not Integer
+          ISDOUBLE: Is Double
+          ISNOTDOUBLE: Is Not Double
+          ISBOOLEAN: Is Boolean
+          ISNOTBOOLEAN: Is Not Boolean
+          ISDATE: Is Date
+          ISNOTDATE: Is Not Date
+          ISTIME: Is Time
+          ISNOTTIME: Is Not Time
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        ignoreCase: Ignore Case
+        if: If
+        Placeholders:
+          CUSTOMCONDITION: "E.g. {column} < 30 || gender == \"Male\""
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        title: Send to Error
+        tooltip: When used in a pipeline, these errors can be collected by an error collector
       MaskData:
         menuLabel: Mask Data
         option1: Show last 4 characters only
