@@ -110,6 +110,9 @@
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
+            <div class="endpoint-circle">
+              <div class="endpoint-caret"></div>
+            </div>
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"

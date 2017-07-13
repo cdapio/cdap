@@ -26,13 +26,7 @@ angular.module(PKG.name + '.commons')
     var settings = DAGPlusPlusFactory.getSettings();
 
     var sourceOrigin = settings.sourceOrigin,
-        sourceTarget = settings.sourceTarget,
-        transformOrigin = settings.transformOrigin,
-        transformTarget = settings.transformTarget,
-        sinkOrigin = settings.sinkOrigin,
-        sinkTarget = settings.sinkTarget,
-        actionOrigin = settings.actionOrigin,
-        actionTarget = settings.actionTarget;
+        transformOrigin = settings.transformOrigin;
 
     let localX,localY;
 
@@ -136,7 +130,8 @@ angular.module(PKG.name + '.commons')
       vm.comments = DAGPlusPlusNodesStore.getComments();
 
       initTimeout = $timeout(function () {
-        addEndpoints();
+        // addEndpoints();
+        initNodes();
         addConnections();
         vm.instance.bind('connection', formatConnections);
         vm.instance.bind('connectionDetached', formatConnections);
@@ -374,55 +369,74 @@ angular.module(PKG.name + '.commons')
       instance.setZoom(zoom);
     }
 
-
-    function addEndpoints() {
+    function initNodes() {
       angular.forEach($scope.nodes, function (node) {
-        if (endpoints.indexOf(node.name) !== -1) {
-          return;
-        }
-        endpoints.push(node.name);
+        vm.instance.makeSource(node.name, {
+          isSource: true,
+          filter: '.endpoint-circle',
 
-        var type = GLOBALS.pluginConvert[node.type];
+          connectionType: 'basic'
+        });
 
-        switch(type) {
-          case 'source':
-            vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
-            break;
-          case 'sink':
-            vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
-            vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
-            break;
-          case 'action':
-            vm.instance.addEndpoint(node.name, actionOrigin, {
-              uuid: 'Origin' + node.name,
-              cssClass: node.type + '-anchor'
-            });
-            vm.instance.addEndpoint(node.name, actionTarget, {
-              uuid: 'Target' + node.name,
-              cssClass: node.type + '-anchor'
-            });
-            break;
-          default:
-            // Need to id each end point so that it can be used later to make connections.
-            var originId = {uuid: 'Origin' + node.name};
-            var targetId = {uuid: 'Target' + node.name};
-            if (node.plugin.name === 'Wrangler') {
-              originId.cssClass = 'wrangler-anchor';
-              targetId.cssClass = 'wrangler-anchor';
-            }
-
-            if (node.type === 'errortransform') {
-              originId.cssClass = 'error-anchor';
-              targetId.cssClass = 'error-anchor';
-            }
-
-            vm.instance.addEndpoint(node.name, transformOrigin, originId);
-            vm.instance.addEndpoint(node.name, transformTarget, targetId);
-            break;
-        }
+        vm.instance.makeTarget(node.name, {
+          isTarget: true,
+          dropOptions: { hoverClass: 'drag-hover' },
+          // Five available anchor positions on the left edge
+          anchor: [ [0, 0.9, -1, 0], [0, 0.7, -1, 0], [0, 0.5, -1, 0], [0, 0.3, -1, 0], [0, 0.1, -1, 0]],
+          paintStyle: { radius: 10 },
+          allowLoopback: true
+        });
       });
     }
+
+    // function addEndpoints() {
+    //   angular.forEach($scope.nodes, function (node) {
+    //     if (endpoints.indexOf(node.name) !== -1) {
+    //       return;
+    //     }
+    //     endpoints.push(node.name);
+
+    //     var type = GLOBALS.pluginConvert[node.type];
+
+    //     switch(type) {
+    //       case 'source':
+    //         vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
+    //         vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
+    //         break;
+    //       case 'sink':
+    //         vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
+    //         vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
+    //         break;
+    //       case 'action':
+    //         vm.instance.addEndpoint(node.name, actionOrigin, {
+    //           uuid: 'Origin' + node.name,
+    //           cssClass: node.type + '-anchor'
+    //         });
+    //         vm.instance.addEndpoint(node.name, actionTarget, {
+    //           uuid: 'Target' + node.name,
+    //           cssClass: node.type + '-anchor'
+    //         });
+    //         break;
+    //       default:
+    //         // Need to id each end point so that it can be used later to make connections.
+    //         var originId = {uuid: 'Origin' + node.name};
+    //         var targetId = {uuid: 'Target' + node.name};
+    //         if (node.plugin.name === 'Wrangler') {
+    //           originId.cssClass = 'wrangler-anchor';
+    //           targetId.cssClass = 'wrangler-anchor';
+    //         }
+
+    //         if (node.type === 'errortransform') {
+    //           originId.cssClass = 'error-anchor';
+    //           targetId.cssClass = 'error-anchor';
+    //         }
+
+    //         vm.instance.addEndpoint(node.name, transformOrigin, originId);
+    //         vm.instance.addEndpoint(node.name, transformTarget, targetId);
+    //         break;
+    //     }
+    //   });
+    // }
 
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
@@ -432,11 +446,13 @@ angular.module(PKG.name + '.commons')
           return;
         }
 
-        var sourceId = 'Origin' + conn.from;
-        var targetId = 'Target' + conn.to;
+        // var sourceId = 'Origin' + conn.from;
+        // var targetId = 'Target' + conn.to;
 
         var connObj = {
-          uuids: [sourceId, targetId]
+          source: conn.from,
+          target: conn.to
+          // uuids: [sourceId, targetId]
         };
 
         vm.instance.connect(connObj);
@@ -469,10 +485,11 @@ angular.module(PKG.name + '.commons')
       // for every connection that we detach
       vm.instance.unbind('connection');
       vm.instance.unbind('connectionDetached');
-      endpoints = [];
+      // endpoints = [];
       vm.instance.detachEveryConnection();
       vm.instance.deleteEveryEndpoint();
-      addEndpoints();
+      // addEndpoints();
+      initNodes();
       addConnections();
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
@@ -536,10 +553,12 @@ angular.module(PKG.name + '.commons')
     });
 
     jsPlumb.ready(function() {
-      var dagSettings = DAGPlusPlusFactory.getSettings().default;
+      // var dagSettings = DAGPlusPlusFactory.getSettings().default;
+      var dagSettings2 = DAGPlusPlusFactory.getSettings2();
 
       jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance(dagSettings);
+      vm.instance = jsPlumb.getInstance(dagSettings2);
+      // vm.instance.registerConnectionType('basic', { anchor:'Continuous', connector:'StateMachine' });
 
       init();
 
