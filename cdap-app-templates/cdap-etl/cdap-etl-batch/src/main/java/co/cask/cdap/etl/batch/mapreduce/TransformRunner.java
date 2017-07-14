@@ -27,7 +27,6 @@ import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
-import co.cask.cdap.etl.batch.TransformExecutorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -110,7 +109,7 @@ public class TransformRunner<KEY, VALUE> {
       }
     }
 
-    TransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
+    MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics, runtimeArgs, sourceStage,
                                               phaseSpec.getNumOfRecordsPreview());
     this.transformExecutor = transformExecutorFactory.create(phase, outputWriter, transformErrorSinkMap);
