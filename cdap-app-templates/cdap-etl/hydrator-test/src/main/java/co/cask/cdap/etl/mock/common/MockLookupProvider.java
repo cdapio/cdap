@@ -34,7 +34,7 @@ public class MockLookupProvider implements LookupProvider {
   }
 
   @Override
-  public <T> Lookup<T> provide(String table, @Nullable Map<String, String> arguments) {
+  public <T, R> Lookup<T, R> provide(String table, @Nullable Map<String, String> arguments) {
     //noinspection unchecked
     return lookup;
   }

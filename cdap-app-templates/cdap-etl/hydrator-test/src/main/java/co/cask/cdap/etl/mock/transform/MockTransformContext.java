@@ -140,7 +140,7 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
-  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+  public <T, R> Lookup<T, R> provide(String table, Map<String, String> arguments) {
     return lookup.provide(table, arguments);
   }
 

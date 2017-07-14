@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -32,6 +33,7 @@ import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +67,29 @@ public class LookupTransform<T, V> extends Transform<StructuredRecord, Structure
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
+    V lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
+    if (lookedUpValue instanceof Result) {
+      assert lookedUpValueBytes instanceof Result;
+      assert Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow());
+      Schema check = lookup.getSchema();
+      Schema inSchema = Schema.recordOf(
+        "person",
+        Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
+      );
+      assert check.equals(inSchema);
+    }
+    if (lookedUpValue instanceof String) {
+      assert Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes);
+      Schema check = lookup.getSchema();
+      Schema inSchema = Schema.recordOf(
+        "person",
+        Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("age", Schema.of(Schema.Type.STRING))
+      );
+      assert check.equals(inSchema);
+    }
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
     for (Schema.Field field : input.getSchema().getFields()) {

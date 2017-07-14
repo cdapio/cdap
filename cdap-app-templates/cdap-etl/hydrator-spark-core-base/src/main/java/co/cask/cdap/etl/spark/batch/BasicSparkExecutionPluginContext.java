@@ -169,7 +169,7 @@ public class BasicSparkExecutionPluginContext extends AbstractTransformContext i
   }
 
   @Override
-  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+  public <T, R> Lookup<T, R> provide(String table, Map<String, String> arguments) {
     throw new UnsupportedOperationException("Lookup not supported in Spark");
   }
 }

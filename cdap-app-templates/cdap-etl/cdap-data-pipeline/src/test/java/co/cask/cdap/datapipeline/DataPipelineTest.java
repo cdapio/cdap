@@ -20,9 +20,11 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -1839,7 +1841,13 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testKVTableLookup() throws Exception {
-    addDatasetInstance(KeyValueTable.class.getName(), "ageTable");
+    Schema inSchema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.STRING))
+    );
+    DatasetProperties datasetProperties = TableProperties.builder().setSchema(inSchema).build();
+    addDatasetInstance(KeyValueTable.class.getName(), "ageTable", datasetProperties);
     DataSetManager<KeyValueTable> lookupTable = getDataset("ageTable");
     lookupTable.get().write("samuel".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
     lookupTable.get().write("bob".getBytes(Charsets.UTF_8), "36".getBytes(Charsets.UTF_8));
@@ -1938,7 +1946,14 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testTableLookup() throws Exception {
-    addDatasetInstance(Table.class.getName(), "personTable");
+    Schema inSchema = Schema.recordOf(
+      "person",
+      Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
+    );
+    DatasetProperties datasetProperties = TableProperties.builder().setSchema(inSchema).build();
+    addDatasetInstance(Table.class.getName(), "personTable", datasetProperties);
     DataSetManager<Table> lookupTableManager = getDataset("personTable");
     Table lookupTable = lookupTableManager.get();
     lookupTable.put("samuel".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
