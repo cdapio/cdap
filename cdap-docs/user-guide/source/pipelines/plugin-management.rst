@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cdap-pipelines-plugin-management:
+.. _user-guide-cdap-pipelines-plugin-management:
 
 =================
 Plugin Management
@@ -49,22 +49,22 @@ Deploying Plugins
 =================
 
 .. include:: plugins.rst
-   :start-after: .. _plugins-deployment-artifact:
-   :end-before:  .. _plugins-deployment-packaging:
+   :start-after: .. _user-guide-plugins-deployment-artifact:
+   :end-before:  .. _user-guide-plugins-deployment-packaging:
 
 .. _cdap-pipelines-plugin-management-deployment-deploying-as-a-system-artifact:
 
 .. include:: plugins.rst
-   :start-after: .. _plugins-deployment-system:
-   :end-before:  .. _plugins-deployment-user:
+   :start-after: .. _user-guide-plugins-deployment-system:
+   :end-before:  .. _user-guide-plugins-deployment-user:
 
 .. include:: plugins.rst
-   :start-after: .. _plugins-deployment-user:
-   :end-before:  .. _plugins-deployment-verification:
+   :start-after: .. _user-guide-plugins-deployment-user:
+   :end-before:  .. _user-guide-plugins-deployment-verification:
 
 .. include:: plugins.rst
-   :start-after: .. _plugins-deployment-verification:
-   :end-before:  .. _plugins-use-case:
+   :start-after: .. _user-guide-plugins-deployment-verification:
+   :end-before:  .. _user-guide-plugins-use-case:
 
 
 .. _cdap-pipelines-plugin-management-third-party-plugins:

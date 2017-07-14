@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cdap-pipelines-getting-started:
+.. _user-guide-cdap-pipelines-getting-started:
 
 ===============
 Getting Started

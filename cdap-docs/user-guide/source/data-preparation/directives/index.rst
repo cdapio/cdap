@@ -36,7 +36,6 @@ CDAP Tutorials
 	hash <hash>
 	increment-variable <increment-variable>
 	index-split <index-split>
-	index <index>
 	invoke-http <invoke-http>
 	json-path <json-path>
 	keep <keep>
