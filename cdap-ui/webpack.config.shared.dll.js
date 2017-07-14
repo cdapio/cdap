@@ -43,7 +43,8 @@ var webpackConfig = {
       'i18n-react',
       'react-cookie',
       'whatwg-fetch',
-      'react-vis'
+      'react-vis',
+      'clipboard'
     ]
   },
   output: {

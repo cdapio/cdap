@@ -15,22 +15,11 @@
 */
 
 @import '../StickyTableHeader.scss';
-@import '../HintStyles.scss';
-@import '../EmptyRunsContainer.scss';
 
 $legend_font_color: black;
 $container_border_color: lightgray;
 
 .runs-history-graph {
-  padding: 20px;
-  margin: 10px;
-  height: auto;
-  border: 1px solid $container_border_color;
-
-  .graph-plot-container {
-    width: calc(100% - 30px);
-    margin: 15px;
-  }
   .rv-discrete-color-legend.horizontal {
     .rv-discrete-color-legend-item {
       display: inline-block;
@@ -47,9 +36,6 @@ $container_border_color: lightgray;
       }
     }
   }
-  .run-history-fp-plot {
-    @include chart_hints;
-  }
   .x-axis-title {
     position: absolute;
     bottom: -20px;
@@ -57,37 +43,9 @@ $container_border_color: lightgray;
   }
   .y-axis-title {
     position: absolute;
-    right: -70px;
+    right: -60px;
     transform: rotate(-90deg);
     top: 40%;
-  }
-
-  .empty-runs-container {
-    @include empty_runs_container;
-  }
-
-  .title-container {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px;
-
-    .title {
-      font-size: 18px;
-      font-weight: 600;
-    }
-    .viz-switcher {
-      span {
-        cursor: pointer;
-        &:first-child {
-          border-right: 1px solid;
-          margin-right: 5px;
-          padding-right: 8px;
-        }
-        &.active {
-          font-weight: bold;
-        }
-      }
-    }
   }
 
   @include stickyheader;

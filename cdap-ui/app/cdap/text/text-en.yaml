@@ -1060,6 +1060,9 @@ features:
   Pagination:
     dropdown-label: Page
   PipelineSummary:
+    CopyableRunID:
+      label: RunID
+      copiedLabel: Copied
     filterContainer:
       view: View
     graphs:
@@ -1086,8 +1089,33 @@ features:
           startTime: Start Time
           warnings: Warnings
       title: Log Errors and Warnings
-      xAxisTitle: Pipeline Run #
+      xAxisTitle: "Pipeline Run #"
       yAxisTitle: Number of Errors and Warnings
+    nodesMetricsGraph:
+      hint:
+        errors: Errors
+        runNumber: Run Number
+        startTime: Start Time
+      recordsin:
+        hint:
+          title: "Number of Records In: {count}"
+        table:
+          headers:
+            inputrecords: Input Records
+            runCount: "Run #"
+            startTime: Start Time
+        title: Number of Records In
+      recordsout:
+        hint:
+          title: "Number of Records Out: {count}"
+        table:
+          headers:
+            inputrecords: Output Records
+            runCount: "Run #"
+            startTime: Start Time
+        title: Number of Records Out
+      xAxisTitle: "Pipeline run #"
+      yAxisTitle: "Number of Records"
     runsHistoryGraph:
       hint:
         duration: Duration
@@ -1104,7 +1132,7 @@ features:
           status: Status
           startTime: Start Time
       title: Run History
-      xAxisTitle: Pipeline Run #
+      xAxisTitle: "Pipeline Run #"
       yAxisTitle: Run Duration ({resolution})
     runsFilter:
       last10Runs: Last 10 runs

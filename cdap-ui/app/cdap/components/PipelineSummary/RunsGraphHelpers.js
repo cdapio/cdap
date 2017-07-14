@@ -15,7 +15,9 @@
 */
 
 import isNil from 'lodash/isNil';
+import cloneDeep from 'lodash/cloneDeep';
 import moment from 'moment';
+import numeral from 'numeral';
 
 export const ONE_MIN_SECONDS = 60;
 export const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
@@ -53,12 +55,48 @@ export function getXDomain({xDomainType, runsLimit, totalRunsCount, start, end})
   return [startDomain, endDomain];
 }
 
+export function getYDomain(data = {}) {
+  let maxYDomain = {y: 1}, minYDomain = {y: 0};
+  if (data.length > 1) {
+    maxYDomain = cloneDeep(data.reduce((prev, curr) => {
+      return (prev.y > curr.y) ? prev : curr;
+    }));
+    minYDomain = cloneDeep(data.reduce((prev, curr) => {
+      return (prev.y < curr.y) ? prev : curr;
+    }));
+    if (maxYDomain.y === minYDomain.y) {
+      minYDomain.y = 0;
+    }
+  }
+  if (data.length == 1) {
+    maxYDomain = data[0];
+  }
+  return [minYDomain.y, maxYDomain.y];
+}
+
+export function getYAxisProps(data) {
+  let props = {
+    tickTotals: 10,
+    yDomain: getYDomain(data),
+    tickFormat: function(d) {
+      if (d <= 999) {
+        return d;
+      }
+      return numeral(d).format('0.0a');
+    }
+  };
+  if (props.yDomain[1] === 0) {
+    props.yDomain[1] = 10;
+  }
+  return props;
+}
+
 export function xTickFormat({xDomainType, start, end}) {
   let lastDisplayedDate;
   return (v) => {
     if (xDomainType === 'time') {
       let timeWindow = end - start;
-      let date = moment(v).format('ddd M/D/YY');
+      let date = moment(v * 1000).format('M/D/YY');
       if (timeWindow < ONE_DAY_SECONDS) {
         date = v % 2 === 0 ? moment(v * 1000).format('HH:mm a') : null;
       }

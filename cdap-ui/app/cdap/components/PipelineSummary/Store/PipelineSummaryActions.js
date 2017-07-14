@@ -15,7 +15,7 @@
 */
 
 import {MyProgramApi} from 'api/program';
-import PipelineSummaryStore, {PIPELINESSUMMARYACTIONS} from 'components/PipelineSummary/PipelineSummaryStore';
+import PipelineSummaryStore, {PIPELINESSUMMARYACTIONS} from 'components/PipelineSummary/Store/PipelineSummaryStore';
 import {MyMetricApi} from 'api/metric';
 import {convertProgramToMetricParams} from 'services/program-api-converter';
 import {objectQuery} from 'services/helpers';
@@ -82,6 +82,80 @@ function updateMetrics(metrics, mapKey = 'metrics') {
   });
 }
 
+function updateNodeMetrics(pipelineConfig) {
+  let {runs} = PipelineSummaryStore.getState().pipelinerunssummary;
+  const sourcePluginTypes = ['batchsource', 'realtimesource', 'streamingsource'];
+  const sinkPluginTypes = ['batchsink', 'realtimesink', 'sparksink'];
+
+  let nodesMap = {
+    sources: {},
+    sinks: {}
+  };
+  pipelineConfig.config.stages.forEach(stage => {
+    if (sourcePluginTypes.indexOf(stage.plugin.type) !== -1) {
+      nodesMap.sources[stage.name] = [];
+    }
+    if (sinkPluginTypes.indexOf(stage.plugin.type) !== -1) {
+      nodesMap.sinks[stage.name] = [];
+    }
+  });
+  /*
+    Sample node metrics:
+      {
+        "user.TPFSAvro.records.out": 40,
+        "user.TPFSAvro.records.in": 40,
+        "user.File.records.in": 40,
+        "user.File.records.out": 40,
+      }
+    Sample nodesMap:
+      {
+        sources: {
+          TPFSAvro: {}
+        },
+        sinks: {
+          File: {}
+        }
+      }
+  */
+  const getRecords = (run, nodesMap, type = '.records.in') => {
+    let cleanUpRegex = /\user.|\.records\.out|\.records\.in/gi;
+    let getNodeLabel = (node) => node.replace(cleanUpRegex, () => '');
+    let nodesCount = Object.keys(nodesMap);
+    let metricsCount = Object.keys(run.nodesMetrics);
+    let defaultMetrics = {};
+    Object.keys(nodesMap).map(n => defaultMetrics[`user.${n}${type}`] = 0);
+    let nodesWithMetrics = run.nodeMetrics;
+    if (!nodesCount.length || nodesCount.length!== metricsCount.length) {
+      nodesWithMetrics = Object.assign({}, defaultMetrics, run.nodesMetrics);
+    }
+    return Object
+      .keys(nodesWithMetrics)
+      .filter(node => node.indexOf(type) !== -1 && !isNil(nodesMap[getNodeLabel(node)]))
+      .map(node => ({
+        [getNodeLabel(node)]: run.nodesMetrics[node] || 0
+      }));
+  };
+  const addRunRecordTo = (map, node, run) => {
+    let nodeLabel = Object.keys(node).pop();
+    let runRecord = Object.assign({}, run, {
+      numberOfRecords: node[nodeLabel]
+    });
+    map[nodeLabel].push(runRecord);
+  };
+  runs.forEach(run => {
+    getRecords(run, nodesMap.sources)
+      .forEach(node => addRunRecordTo(nodesMap.sources, node, run));
+    getRecords(run, nodesMap.sinks, '.records.out')
+      .forEach(node => addRunRecordTo(nodesMap.sinks, node, run));
+  });
+  PipelineSummaryStore.dispatch({
+    type: PIPELINESSUMMARYACTIONS.SETNODESMETRICSMAP,
+    payload: {
+      nodesMap
+    }
+  });
+}
+
 function fetchSummary({namespaceId, appId, programType, programId, pipelineConfig, limit = -1, start = -1, end = -1}) {
   let params = {
     namespace: namespaceId,
@@ -117,10 +191,19 @@ function fetchSummary({namespaceId, appId, programType, programId, pipelineConfi
       pipelineConfig.config.stages.forEach(node => {
         nodeMetrics = nodeMetrics.concat([`user.${node.name}.records.in`, `user.${node.name}.records.out`]);
       });
+      PipelineSummaryStore.dispatch({
+        type: PIPELINESSUMMARYACTIONS.SETNODEMETRICSLOADING,
+        payload: {
+          nodemetricsloading: true
+        }
+      });
       fetchMetrics(params, logMetrics)
         .subscribe(logsMetrics => updateMetrics(logsMetrics, 'logsMetrics'));
       fetchMetrics(params, nodeMetrics)
-        .subscribe(nodesMetrics => updateMetrics(nodesMetrics, 'nodesMetrics'));
+        .subscribe(nodesMetrics => {
+          updateMetrics(nodesMetrics, 'nodesMetrics');
+          updateNodeMetrics(pipelineConfig);
+        });
     });
 }
 

@@ -17,7 +17,7 @@
 $container_border_color: #e1e1e1;
 $font_size: 40px;
 
-@mixin empty_runs_container {
+.empty-runs-container {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -31,7 +31,7 @@ $font_size: 40px;
     font-size: $font_size;
     opacity: 0.5;
   }
-  .icon-spinner.fa-spin {
+  > .icon-svg.icon-spinner.fa-spin {
     font-size: $font_size;
   }
 }

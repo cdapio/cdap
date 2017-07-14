@@ -18,12 +18,17 @@ import React, {Component, PropTypes} from 'react';
 import {objectQuery} from 'services/helpers';
 import {XYPlot, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
 import moment from 'moment';
-import isEqual from 'lodash/isEqual';
 import {convertProgramToApi} from 'services/program-api-converter';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
 import {getTicksTotal, xTickFormat, getXDomain, getGraphHeight} from 'components/PipelineSummary/RunsGraphHelpers';
+import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import SortableStickyTable from 'components/SortableStickyTable';
+import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
+import ee from 'event-emitter';
+import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
+import isEqual from 'lodash/isEqual';
 
 const WARNINGBARCOLOR = '#FDA639';
 const ERRORBARCOLOR = '#A40403';
@@ -39,6 +44,28 @@ const COLOR_LEGEND = [
     color: ERRORBARCOLOR
   }
 ];
+const tableHeaders = [
+  {
+    label: T.translate(`${PREFIX}.table.header.runCount`),
+    property: 'index'
+  },
+  {
+    label: T.translate(`${PREFIX}.table.header.errors`),
+    property: 'errors'
+  },
+  {
+    label: T.translate(`${PREFIX}.table.header.warnings`),
+    property: 'warnings'
+  },
+  {
+    label: '',
+    property: ''
+  },
+  {
+    label: T.translate(`${PREFIX}.table.header.startTime`),
+    property: 'start'
+  }
+];
 require('./LogsMetricsGraph.scss');
 /*
    - Better name
@@ -52,11 +79,25 @@ export default class LogsMetricsGraph extends Component {
       viewState: 'chart',
       runsLimit: props.runsLimit
     };
+    this.eventEmitter = ee(ee);
+    this.renderTableBody = this.renderTableBody.bind(this);
+    this.closeTooltip = this.closeTooltip.bind(this);
   }
   componentWillReceiveProps(nextProps) {
     this.setState({
       currentHoveredElement: null,
       runsLimit: nextProps.runsLimit
+    });
+  }
+  componentDidMount() {
+    this.eventEmitter.on('CLOSE_HINT_TOOLTIP', this.closeTooltip);
+  }
+  componentWillUnmount() {
+    this.eventEmitter.off('CLOSE_HINT_TOOLTIP', this.closeTooltip);
+  }
+  closeTooltip() {
+    this.setState({
+      currentHoveredElement: null
     });
   }
   getDataClusters() {
@@ -90,26 +131,21 @@ export default class LogsMetricsGraph extends Component {
       let maxXValue = errors.length === 1 ? errors[0].x : warnings[0].x;
       errors.push({
         x: maxXValue + 1,
-        y: ''
+        y: 0
       });
       warnings.push({
         x: maxXValue + 1,
-        y: ''
+        y: 0
       });
     }
     return {errors, warnings};
   }
   renderEmptyMessage() {
-    return (
-      <div className="empty-runs-container">
-        <h1>
-          {
-            T.translate(`${GRAPHPREFIX}.emptyMessage`, {
-              filter: this.props.xDomainType === 'time' ? `in ${this.props.activeFilterLabel}` : ''
-            })
-          }
-        </h1>
-      </div>
+   return (
+      <EmptyMessageContainer
+        xDomainType={this.props.xDomainType}
+        label={this.props.activeFilterLabel}
+      />
     );
   }
   renderChart() {
@@ -120,24 +156,12 @@ export default class LogsMetricsGraph extends Component {
     if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
     }
+    let {tickTotals, yDomain, tickFormat} = getYAxisProps(errors.concat(warnings));
     let popOverData, logUrl;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);
       let {namespaceId, appId, programType, programId} = this.props.runContext;
       logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${popOverData.runid}`;
-    }
-    if (this.props.isLoading) {
-      return (
-        <div className="empty-runs-container">
-          <IconSVG
-            name="icon-spinner"
-            className="fa-spin"
-          />
-        </div>
-      );
-    }
-    if (!this.props.runs.length) {
-      return this.renderEmptyMessage();
     }
     return (
       <div className="graph-plot-container">
@@ -145,6 +169,7 @@ export default class LogsMetricsGraph extends Component {
           className="logs-metrics-fp-plot"
           xType="linear"
           xDomain={xDomain}
+          yDomain={yDomain}
           stackBy="y"
           height={height}>
           <DiscreteColorLegend
@@ -157,20 +182,26 @@ export default class LogsMetricsGraph extends Component {
             tickTotal={getTicksTotal(this.props)}
             tickFormat={xTickFormat(this.props)}
           />
-          <YAxis tickFormat={(v) => {
-            if (v < 0) {
-              return '';
-            }
-            return Math.floor(v) !== v ? '' : v;
-          }} />
+          <YAxis
+            tickTotal={tickTotals}
+            tickFormat={tickFormat}
+          />
           {
             warnings.length > 0 ?
               <BarSeries
                 cluster="runs"
                 color={WARNINGBARCOLOR}
-                onValueClick={(d) => {
+                onValueMouseOver={(d) => {
+                  if (isEqual(this.state.currentHoveredElement, d)) {
+                    return;
+                  }
                   this.setState({
-                    currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+                    currentHoveredElement: d
+                  });
+                }}
+                onValueMouseOut={() => {
+                  this.setState({
+                    currentHoveredElement: null
                   });
                 }}
                 data={warnings}/>
@@ -182,9 +213,17 @@ export default class LogsMetricsGraph extends Component {
               <BarSeries
                 cluster="runs"
                 color={ERRORBARCOLOR}
-                onValueClick={(d) => {
+                onValueMouseOver={(d) => {
+                  if (isEqual(this.state.currentHoveredElement, d)) {
+                    return;
+                  }
                   this.setState({
-                    currentHoveredElement: isEqual(this.state.currentHoveredElement || {}, d) ? null : d
+                    currentHoveredElement: d
+                  });
+                }}
+                onValueMouseOut={() => {
+                  this.setState({
+                    currentHoveredElement: null
                   });
                 }}
                 data={errors}/>
@@ -195,7 +234,17 @@ export default class LogsMetricsGraph extends Component {
             this.state.currentHoveredElement && popOverData ?
               (
                 <Hint value={this.state.currentHoveredElement}>
-                  <h4>{T.translate(`${PREFIX}.hint.title`)} </h4>
+                  <div className="title">
+                    <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
+                    <IconSVG
+                      name="icon-close"
+                      onClick={() => {
+                        this.setState({
+                          currentHoveredElement: null
+                        });
+                      }}
+                    />
+                  </div>
                   <div className="log-stats">
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.errors`)}</span>
@@ -236,52 +285,75 @@ export default class LogsMetricsGraph extends Component {
       </div>
     );
   }
+  renderTableBody(runs) {
+    let {namespaceId, appId, programType, programId} = this.props.runContext;
+    return (
+      <table className="table">
+        <tbody>
+          {
+            runs.map(run => {
+              let logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${run.runid}`;
+              let runid = run.runid;
+              return (
+                <tr>
+                  <td>
+                    <span>{run.index}</span>
+                    <CopyableRunID
+                      runid={runid}
+                      idprefix="logs-metrics"
+                    />
+                  </td>
+                  <td>
+                    <span className="text-danger">{run.errors}</span>
+                  </td>
+                  <td>
+                    <span className="text-warning">{run.warnings}</span>
+                  </td>
+                  <td>
+                    <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
+                  </td>
+                  <td> {moment(run.start * 1000).format('llll')}</td>
+                </tr>
+              );
+            })
+          }
+        </tbody>
+      </table>
+    );
+  }
   renderTable() {
+    let entities = this.props.runs.map((run, i) => {
+      return Object.assign({}, run, {
+        index: i + 1,
+        warnings: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
+        errors: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
+        start: run.start
+      });
+    });
+    return (
+      <SortableStickyTable
+        entities={entities}
+        tableHeaders={tableHeaders}
+        renderTableBody={this.renderTableBody}
+      />
+    );
+  }
+  renderLoading() {
+    return (<EmptyMessageContainer loading={true} />);
+  }
+  renderContent() {
+    if (this.props.isLoading) {
+      return this.renderLoading();
+    }
     if (!this.props.runs.length) {
       return this.renderEmptyMessage();
     }
-    let {namespaceId, appId, programType, programId} = this.props.runContext;
-    return (
-      <div className="table-container">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>{T.translate(`${PREFIX}.table.header.runCount`)}</th>
-              <th>{T.translate(`${PREFIX}.table.header.errors`)}</th>
-              <th>{T.translate(`${PREFIX}.table.header.warnings`)}</th>
-              <th></th>
-              <th>{T.translate(`${PREFIX}.table.header.startTime`)}</th>
-            </tr>
-          </thead>
-        </table>
-        <div className="table-scroll">
-          <table className="table">
-            <tbody>
-              {
-                this.props.runs.map((run, i) => {
-                  let logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(programType)}&programId=${programId}&runId=${run.runid}`;
-                  return (
-                    <tr>
-                      <td>{i+1} </td>
-                      <td>
-                        <span className="text-danger">{objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0}</span>
-                      </td>
-                      <td>
-                        <span className="text-warning">{objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0}</span>
-                      </td>
-                      <td>
-                        <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.table.body.viewLog`)} </a>
-                      </td>
-                      <td> {moment(run.start * 1000).format('llll')}</td>
-                    </tr>
-                  );
-                })
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
+    if (this.state.viewState === 'chart') {
+      return this.renderChart();
+    }
+    if (this.state.viewState === 'table') {
+      return this.renderTable();
+    }
   }
   render() {
     return (
@@ -293,7 +365,7 @@ export default class LogsMetricsGraph extends Component {
           <div className="title">{T.translate(`${PREFIX}.title`)} </div>
           <div className="viz-switcher">
             <span
-              className={classnames({"active": this.state.viewState === 'chart'})}
+              className={classnames("chart", {"active": this.state.viewState === 'chart'})}
               onClick={() => this.setState({viewState: 'chart'})}
             >
               {T.translate(`${GRAPHPREFIX}.vizSwitcher.chart`)}
@@ -307,10 +379,7 @@ export default class LogsMetricsGraph extends Component {
           </div>
         </div>
         {
-          this.state.viewState === 'chart' ?
-            this.renderChart()
-          :
-            this.renderTable()
+          this.renderContent()
         }
       </div>
     );
