@@ -291,9 +291,10 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
         DefaultScheduleBuilder.ScheduleCreationBuilder builder =
           (DefaultScheduleBuilder.ScheduleCreationBuilder) entry.getValue();
         builtScheduleSpecs.put(entry.getKey(), builder.build(namespace, appName, appVersion));
+      } else {
+        builtScheduleSpecs.put(entry.getKey(), entry.getValue());
       }
     }
-    builtScheduleSpecs.putAll(scheduleSpecs);
 
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId, getStreams(),
