@@ -45,6 +45,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -126,6 +127,8 @@ public class DefaultSecureStoreServiceTest {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
+    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);

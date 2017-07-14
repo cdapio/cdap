@@ -46,6 +46,7 @@ import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -74,6 +75,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
@@ -108,6 +110,8 @@ public class AuthorizationBootstrapperTest {
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL,
+              UserGroupInformation.getLoginUser().getShortUserName());
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());
@@ -135,14 +139,21 @@ public class AuthorizationBootstrapperTest {
   @Test
   public void test() throws Exception {
     final Principal systemUser = new Principal(
-      UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER
+      UserGroupInformation.getLoginUser().getShortUserName(), Principal.PrincipalType.USER
     );
     // initial state: no privileges for system or admin users
     Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
     Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
     Assert.assertFalse(systemUserFilter.apply(instanceId));
-    Assert.assertFalse(systemUserFilter.apply(NamespaceId.SYSTEM));
     Assert.assertFalse(adminUserFilter.apply(NamespaceId.DEFAULT));
+
+    // bypass the check for system namespace
+    Assert.assertTrue(systemUserFilter.apply(NamespaceId.SYSTEM));
+    try {
+      authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
+    } catch (Exception e) {
+      Assert.fail();
+    }
 
     // privileges should be granted after running bootstrap
     authorizationBootstrapper.run();

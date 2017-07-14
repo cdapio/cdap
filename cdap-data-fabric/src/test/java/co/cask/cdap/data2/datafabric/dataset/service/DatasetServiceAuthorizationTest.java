@@ -44,6 +44,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.After;
@@ -81,6 +82,8 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, authorizerJar.toURI().getPath());
+    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
+    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
     return cConf;
   }
 
