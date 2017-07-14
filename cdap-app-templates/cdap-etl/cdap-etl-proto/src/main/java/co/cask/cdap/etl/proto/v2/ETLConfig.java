@@ -253,6 +253,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       return (T) this;
     }
 
+    public T addConnection(String from, String to, String port) {
+      this.connections.add(new Connection(from, to, port));
+      return (T) this;
+    }
+
     public T addConnection(Connection connection) {
       this.connections.add(connection);
       return (T) this;

@@ -19,12 +19,11 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.security.store.SecureStoreData;
-import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
 import java.util.Map;
@@ -36,9 +35,9 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
 
   private final CustomActionContext context;
 
-  public BasicActionContext(CustomActionContext context, Metrics metrics, String stageName,
+  public BasicActionContext(CustomActionContext context, Metrics metrics, StageSpec stageSpec,
                             BasicArguments arguments) {
-    super(context, context, metrics, StageInfo.builder(stageName, Action.PLUGIN_TYPE).build(), arguments);
+    super(context, context, metrics, stageSpec, arguments);
     this.context = context;
   }
 

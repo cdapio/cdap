@@ -50,7 +50,7 @@ import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
@@ -130,7 +130,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       throw new IllegalArgumentException(String.format(
         "Pipeline phase '%s' must contain at least one sink but does not have any.", phaseSpec.getPhaseName()));
     }
-    Set<StageInfo> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+    Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
                                                                    BatchJoiner.PLUGIN_TYPE);
     if (reducers.size() > 1) {
       throw new IllegalArgumentException(String.format(
@@ -139,7 +139,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     } else if (!reducers.isEmpty()) {
       String reducerName = reducers.iterator().next().getName();
       PipelinePhase mapperPipeline = phaseSpec.getPhase().subsetTo(ImmutableSet.of(reducerName));
-      for (StageInfo stageInfo : mapperPipeline) {
+      for (StageSpec stageInfo : mapperPipeline) {
         // error datasets are not supported in the map phase of a mapreduce, because we can only
         // write out the group/join key and not error dataset data.
         // we need to re-think how error datasets are done. perhaps they are just sinks instead of a special thing.
@@ -190,7 +190,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     for (String sourceName : phaseSpec.getPhase().getSources()) {
       try {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
-        StageInfo stageInfo = phaseSpec.getPhase().getStage(sourceName);
+        StageSpec stageInfo = phaseSpec.getPhase().getStage(sourceName);
         MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageInfo);
         batchSource.prepareRun(sourceContext);
         runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
@@ -209,7 +209,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
 
     Map<String, SinkOutput> sinkOutputs = new HashMap<>();
-    for (StageInfo stageInfo : Sets.union(phase.getStagesOfType(Constants.CONNECTOR_TYPE),
+    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Constants.CONNECTOR_TYPE),
                                           phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
       String sinkName = stageInfo.getName();
       // todo: add a better way to get info for all sinks
@@ -235,7 +235,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
 
     // setup time partition for each error dataset
-    for (StageInfo stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
+    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
                                           phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
       if (stageInfo.getErrorDatasetName() != null) {
         Map<String, String> args = new HashMap<>();
@@ -247,12 +247,12 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
     job.setMapperClass(ETLMapper.class);
 
-    Set<StageInfo> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+    Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
                                                                    BatchJoiner.PLUGIN_TYPE);
     if (!reducers.isEmpty()) {
       job.setReducerClass(ETLReducer.class);
       String reducerName = reducers.iterator().next().getName();
-      StageInfo stageInfo = phase.getStage(reducerName);
+      StageSpec stageInfo = phase.getStage(reducerName);
       Class<?> outputKeyClass;
       Class<?> outputValClass;
       try {

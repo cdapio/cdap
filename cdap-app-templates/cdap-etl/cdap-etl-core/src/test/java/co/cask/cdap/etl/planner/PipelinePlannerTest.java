@@ -40,8 +40,12 @@ import java.util.Set;
 /**
  */
 public class PipelinePlannerTest {
-  private static final String NODE = "node";
-  private static final String AGGREGATOR = "aggregator";
+  private static final PluginSpec NODE =
+    new PluginSpec("node", "name", ImmutableMap.<String, String>of(),
+                   new ArtifactId("dummy", new ArtifactVersion("1.0.0"), ArtifactScope.USER));
+  private static final PluginSpec REDUCE =
+    new PluginSpec("reduce", "name", ImmutableMap.<String, String>of(),
+                   new ArtifactId("dummy", new ArtifactVersion("1.0.0"), ArtifactScope.USER));
 
   @Test
   public void testGeneratePlan() {
@@ -53,71 +57,48 @@ public class PipelinePlannerTest {
              |--- n4(r) ----------|
      */
     // create the spec for this pipeline
-    ArtifactId artifactId = new ArtifactId("dummy", new ArtifactVersion("1.0.0"), ArtifactScope.SYSTEM);
-    Map<String, String> empty = ImmutableMap.of();
-    PluginSpec nodePlugin = new PluginSpec(NODE, "mock", empty, artifactId);
-    PluginSpec reducePlugin = new PluginSpec(AGGREGATOR, "mock", empty, artifactId);
     Schema schema = Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     Set<StageSpec> stageSpecs = ImmutableSet.of(
-      StageSpec.builder("n1", nodePlugin)
-        .setOutputSchema(schema)
-        .addOutputs("n2", "n3", "n4")
+      StageSpec.builder("n1", NODE)
+        .addOutputSchema(schema, "n2", "n3", "n4")
         .build(),
-      StageSpec.builder("n2", reducePlugin)
+      StageSpec.builder("n2", REDUCE)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
-      StageSpec.builder("n3", reducePlugin)
+      StageSpec.builder("n3", REDUCE)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n5")
+        .addOutputSchema(schema, "n5")
         .build(),
-      StageSpec.builder("n4", reducePlugin)
+      StageSpec.builder("n4", REDUCE)
         .addInputSchema("n1", schema)
-        .setOutputSchema(schema)
-        .addInputs("n1")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
-      StageSpec.builder("n5", nodePlugin)
+      StageSpec.builder("n5", NODE)
         .addInputSchema("n3", schema)
-        .setOutputSchema(schema)
-        .addInputs("n3")
-        .addOutputs("n6")
+        .addOutputSchema(schema, "n6")
         .build(),
-      StageSpec.builder("n6", nodePlugin)
+      StageSpec.builder("n6", NODE)
         .addInputSchemas(ImmutableMap.of("n2", schema, "n5", schema, "n4", schema))
-        .setOutputSchema(schema)
-        .addInputs("n2", "n5", "n4")
-        .addOutputs("n7")
+        .addOutputSchema(schema, "n7")
         .build(),
-      StageSpec.builder("n7", reducePlugin)
+      StageSpec.builder("n7", REDUCE)
         .addInputSchema("n6", schema)
-        .setOutputSchema(schema)
-        .addInputs("n6")
-        .addOutputs("n8")
+        .addOutputSchema(schema, "n8")
         .build(),
-      StageSpec.builder("n8", nodePlugin)
+      StageSpec.builder("n8", NODE)
         .addInputSchema("n7", schema)
-        .setOutputSchema(schema)
-        .addInputs("n7")
-        .addOutputs("n9")
+        .addOutputSchema(schema, "n9")
         .build(),
-      StageSpec.builder("n9", reducePlugin)
+      StageSpec.builder("n9", REDUCE)
         .addInputSchema("n8", schema)
-        .setOutputSchema(schema)
-        .addInputs("n8")
-        .addOutputs("n10", "n11")
+        .addOutputSchema(schema, "n10", "n11")
         .build(),
-      StageSpec.builder("n10", nodePlugin)
+      StageSpec.builder("n10", NODE)
         .addInputSchema("n9", schema)
-        .addInputs("n9")
         .build(),
-      StageSpec.builder("n11", nodePlugin)
+      StageSpec.builder("n11", NODE)
         .addInputSchema("n9", schema)
-        .addInputs("n9")
         .build()
     );
     Set<Connection> connections = ImmutableSet.of(
@@ -134,8 +115,8 @@ public class PipelinePlannerTest {
       new Connection("n9", "n10"),
       new Connection("n9", "n11")
     );
-    Set<String> pluginTypes = ImmutableSet.of(NODE, AGGREGATOR, Constants.CONNECTOR_TYPE);
-    Set<String> reduceTypes = ImmutableSet.of(AGGREGATOR);
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.CONNECTOR_TYPE);
+    Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
     Set<String> emptySet = ImmutableSet.of();
     PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, emptySet, emptySet);
     PipelineSpec pipelineSpec = PipelineSpec.builder().addStages(stageSpecs).addConnections(connections).build();
@@ -149,10 +130,10 @@ public class PipelinePlannerTest {
              |--- n4.connector
      */
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n1", NODE).addOutputs("n2", "n3", "n4").setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n2.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n3.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n4.connector", Constants.CONNECTOR_TYPE).build())
+      .addStage(StageSpec.builder("n1", NODE).addOutputSchema(schema, "n2", "n3", "n4").build())
+      .addStage(StageSpec.builder("n2.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n3.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n4.connector", Constants.CONNECTOR_SPEC).build())
       .addConnections("n1", ImmutableSet.of("n2.connector", "n3.connector", "n4.connector"))
       .build();
     String phase1Name = getPhaseName("n1", "n2.connector", "n3.connector", "n4.connector");
@@ -163,21 +144,18 @@ public class PipelinePlannerTest {
         n2.connector --- n2(r) --- n6 --- n7.connector
      */
     PipelinePhase phase2 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n2", AGGREGATOR)
-                  .addInputs("n1")
+      .addStage(StageSpec.builder("n2", REDUCE)
                   .addInputSchema("n1", schema)
-                  .addOutputs("n6")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n6", NODE)
-                  .addInputs("n2", "n4", "n5")
+                  .addOutputSchema(schema, "n6")
+                  .build())
+      .addStage(StageSpec.builder("n6", NODE)
                   .addInputSchema("n2", schema)
                   .addInputSchema("n4", schema)
                   .addInputSchema("n5", schema)
-                  .addOutputs("n7")
-                  .setOutputSchema(schema)
+                  .addOutputSchema(schema, "n7")
                   .build())
-      .addStage(StageInfo.builder("n2.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n7.connector", Constants.CONNECTOR_TYPE).build())
+      .addStage(StageSpec.builder("n2.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
       .addConnection("n2.connector", "n2")
       .addConnection("n2", "n6")
       .addConnection("n6", "n7.connector")
@@ -190,25 +168,22 @@ public class PipelinePlannerTest {
         n3.connector --- n3(r) --- n5 --- n6 --- n7.connector
      */
     PipelinePhase phase3 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n5", NODE)
-                  .addInputs("n3")
+      .addStage(StageSpec.builder("n5", NODE)
                   .addInputSchema("n3", schema)
-                  .addOutputs("n6")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n6", NODE)
-                  .addInputs("n2", "n4", "n5")
+                  .addOutputSchema(schema, "n6")
+                  .build())
+      .addStage(StageSpec.builder("n6", NODE)
                   .addInputSchema("n2", schema)
                   .addInputSchema("n4", schema)
                   .addInputSchema("n5", schema)
-                  .addOutputs("n7")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n3", AGGREGATOR)
-                  .addInputs("n1")
+                  .addOutputSchema(schema, "n7")
+                  .build())
+      .addStage(StageSpec.builder("n3", REDUCE)
                   .addInputSchema("n1", schema)
-                  .addOutputs("n5")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n3.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n7.connector", Constants.CONNECTOR_TYPE).build())
+                  .addOutputSchema(schema, "n5")
+                  .build())
+      .addStage(StageSpec.builder("n3.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n5")
       .addConnection("n5", "n6")
@@ -222,20 +197,18 @@ public class PipelinePlannerTest {
         n4.connector --- n4(r) --- n6 --- n7.connector
      */
     PipelinePhase phase4 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n4", AGGREGATOR)
-                  .addInputs("n1")
+      .addStage(StageSpec.builder("n4", REDUCE)
                   .addInputSchema("n1", schema)
-                  .addOutputs("n6")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n6", NODE)
-                  .addInputs("n2", "n4", "n5")
+                  .addOutputSchema(schema, "n6")
+                  .build())
+      .addStage(StageSpec.builder("n6", NODE)
                   .addInputSchema("n2", schema)
                   .addInputSchema("n4", schema)
                   .addInputSchema("n5", schema)
-                  .addOutputs("n7")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n4.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n7.connector", Constants.CONNECTOR_TYPE).build())
+                  .addOutputSchema(schema, "n7")
+                  .build())
+      .addStage(StageSpec.builder("n4.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
       .addConnection("n4.connector", "n4")
       .addConnection("n4", "n6")
       .addConnection("n6", "n7.connector")
@@ -248,18 +221,16 @@ public class PipelinePlannerTest {
         n7.connector --- n7(r) --- n8 --- n9.connector
      */
     PipelinePhase phase5 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n8", NODE)
-                  .addInputs("n7")
+      .addStage(StageSpec.builder("n8", NODE)
                   .addInputSchema("n7", schema)
-                  .addOutputs("n9")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n7", AGGREGATOR)
-                  .addInputs("n6")
+                  .addOutputSchema(schema, "n9")
+                  .build())
+      .addStage(StageSpec.builder("n7", REDUCE)
                   .addInputSchema("n6", schema)
-                  .addOutputs("n8")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n7.connector", Constants.CONNECTOR_TYPE).build())
-      .addStage(StageInfo.builder("n9.connector", Constants.CONNECTOR_TYPE).build())
+                  .addOutputSchema(schema, "n8")
+                  .build())
+      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n9.connector", Constants.CONNECTOR_SPEC).build())
       .addConnection("n7.connector", "n7")
       .addConnection("n7", "n8")
       .addConnection("n8", "n9.connector")
@@ -274,18 +245,13 @@ public class PipelinePlannerTest {
                                  |-- n11
      */
     PipelinePhase phase6 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageInfo.builder("n10", NODE)
-                  .addInputs("n9")
-                  .addInputSchema("n9", schema).build())
-      .addStage(StageInfo.builder("n11", NODE)
-                  .addInputs("n9")
-                  .addInputSchema("n9", schema).build())
-      .addStage(StageInfo.builder("n9", AGGREGATOR)
-                  .addInputs("n8")
+      .addStage(StageSpec.builder("n10", NODE).addInputSchema("n9", schema).build())
+      .addStage(StageSpec.builder("n11", NODE).addInputSchema("n9", schema).build())
+      .addStage(StageSpec.builder("n9", REDUCE)
                   .addInputSchema("n8", schema)
-                  .addOutputs("n10", "n11")
-                  .setOutputSchema(schema).build())
-      .addStage(StageInfo.builder("n9.connector", Constants.CONNECTOR_TYPE).build())
+                  .addOutputSchema(schema, "n10", "n11")
+                  .build())
+      .addStage(StageSpec.builder("n9.connector", Constants.CONNECTOR_SPEC).build())
       .addConnection("n9.connector", "n9")
       .addConnection("n9", "n10")
       .addConnection("n9", "n11")

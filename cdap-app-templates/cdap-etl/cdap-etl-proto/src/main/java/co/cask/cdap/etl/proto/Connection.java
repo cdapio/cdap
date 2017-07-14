@@ -19,6 +19,7 @@ package co.cask.cdap.etl.proto;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents a connection between two {@link ETLStage}
@@ -26,10 +27,16 @@ import java.util.Objects;
 public class Connection {
   private final String from;
   private final String to;
+  private final String port;
 
   public Connection(String from, String to) {
+    this(from, to, null);
+  }
+
+  public Connection(String from, String to, @Nullable String port) {
     this.from = from;
     this.to = to;
+    this.port = port;
   }
 
   public String getFrom() {
@@ -38,6 +45,11 @@ public class Connection {
 
   public String getTo() {
     return to;
+  }
+
+  @Nullable
+  public String getPort() {
+    return port;
   }
 
   @Override
@@ -51,12 +63,12 @@ public class Connection {
 
     Connection that = (Connection) o;
 
-    return Objects.equals(from, that.from) && Objects.equals(to, that.to);
+    return Objects.equals(from, that.from) && Objects.equals(to, that.to) && Objects.equals(port, that.port);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(from, to);
+    return Objects.hash(from, to, port);
   }
 
   @Override
@@ -64,6 +76,7 @@ public class Connection {
     return "Connection{" +
       "from='" + from + '\'' +
       ", to='" + to + '\'' +
+      ", port='" + port + '\'' +
       '}';
   }
 }

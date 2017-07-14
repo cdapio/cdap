@@ -35,9 +35,7 @@ import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.StreamingCompat;
-import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
@@ -71,20 +69,10 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
                                                                DataStreamsPipelineSpec.class);
 
-    PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(SUPPORTED_PLUGIN_TYPES)
-      .addConnections(pipelineSpec.getConnections());
-    for (StageSpec stageSpec : pipelineSpec.getStages()) {
-      phaseBuilder.addStage(StageInfo.builder(stageSpec.getName(), stageSpec.getPlugin().getType())
-                              .addInputs(stageSpec.getInputs())
-                              .addOutputs(stageSpec.getOutputs())
-                              .addInputSchemas(stageSpec.getInputSchemas())
-                              .setOutputSchema(stageSpec.getOutputSchema())
-                              .setErrorSchema(stageSpec.getErrorSchema())
-                              .setStageLoggingEnabled(pipelineSpec.isStageLoggingEnabled())
-                              .setProcessTimingEnabled(pipelineSpec.isProcessTimingEnabled())
-                              .build());
-    }
-    final PipelinePhase pipelinePhase = phaseBuilder.build();
+    final PipelinePhase pipelinePhase = PipelinePhase.builder(SUPPORTED_PLUGIN_TYPES)
+      .addConnections(pipelineSpec.getConnections())
+      .addStages(pipelineSpec.getStages())
+      .build();
 
     boolean checkpointsDisabled = pipelineSpec.isCheckpointsDisabled();
 

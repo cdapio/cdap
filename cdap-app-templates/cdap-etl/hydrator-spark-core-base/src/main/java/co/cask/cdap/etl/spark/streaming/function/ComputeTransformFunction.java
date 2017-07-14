@@ -19,9 +19,9 @@ package co.cask.cdap.etl.spark.streaming.function;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.streaming.SparkStreamingExecutionContext;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
@@ -35,13 +35,13 @@ import org.apache.spark.streaming.Time;
  */
 public class ComputeTransformFunction<T, U> implements Function2<JavaRDD<T>, Time, JavaRDD<U>> {
   private final JavaSparkExecutionContext sec;
-  private final StageInfo stageInfo;
+  private final StageSpec stageSpec;
   private final SparkCompute<T, U> compute;
 
-  public ComputeTransformFunction(JavaSparkExecutionContext sec, StageInfo stageInfo,
+  public ComputeTransformFunction(JavaSparkExecutionContext sec, StageSpec stageSpec,
                                   SparkCompute<T, U> compute) {
     this.sec = sec;
-    this.stageInfo = stageInfo;
+    this.stageSpec = stageSpec;
     this.compute = compute;
   }
 
@@ -49,8 +49,8 @@ public class ComputeTransformFunction<T, U> implements Function2<JavaRDD<T>, Tim
   public JavaRDD<U> call(JavaRDD<T> data, Time batchTime) throws Exception {
     SparkExecutionPluginContext sparkPluginContext =
       new SparkStreamingExecutionContext(sec, JavaSparkContext.fromSparkContext(data.context()),
-                                         batchTime.milliseconds(), stageInfo);
-    String stageName = stageInfo.getName();
+                                         batchTime.milliseconds(), stageSpec);
+    String stageName = stageSpec.getName();
     data = data.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null));
     return compute.transform(sparkPluginContext, data)
       .map(new CountingFunction<U>(stageName, sec.getMetrics(), "records.out", sec.getDataTracer(stageName)));

@@ -23,10 +23,10 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.planner.StageInfo;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkFactory;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -44,13 +44,13 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
   private static final Logger LOG = LoggerFactory.getLogger(StreamingBatchSinkFunction.class);
   private final PairFlatMapFunction<T, Object, Object> sinkFunction;
   private final JavaSparkExecutionContext sec;
-  private final StageInfo stageInfo;
+  private final StageSpec stageSpec;
 
   public StreamingBatchSinkFunction(PairFlatMapFunction<T, Object, Object> sinkFunction,
-                                    JavaSparkExecutionContext sec, StageInfo stageInfo) {
+                                    JavaSparkExecutionContext sec, StageSpec stageSpec) {
     this.sinkFunction = sinkFunction;
     this.sec = sec;
-    this.stageInfo = stageInfo;
+    this.stageSpec = stageSpec;
   }
 
   @Override
@@ -62,10 +62,10 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
     PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                 stageInfo.isStageLoggingEnabled(),
-                                                                 stageInfo.isProcessTimingEnabled());
+                                                                 stageSpec.isStageLoggingEnabled(),
+                                                                 stageSpec.isProcessTimingEnabled());
     final SparkBatchSinkFactory sinkFactory = new SparkBatchSinkFactory();
-    final String stageName = stageInfo.getName();
+    final String stageName = stageSpec.getName();
     final BatchSink<Object, Object, Object> batchSink = pluginContext.newPluginInstance(stageName, evaluator);
     boolean isPrepared = false;
     boolean isDone = false;
@@ -75,7 +75,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageSpec);
           batchSink.prepareRun(sinkContext);
         }
       });
@@ -87,7 +87,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
           SparkBatchSinkContext sinkContext =
-            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+            new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageSpec);
           batchSink.onRunFinish(true, sinkContext);
         }
       });
@@ -99,7 +99,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
           @Override
           public void run(DatasetContext datasetContext) throws Exception {
             SparkBatchSinkContext sinkContext =
-              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageInfo);
+              new SparkBatchSinkContext(sinkFactory, sec, datasetContext, logicalStartTime, stageSpec);
             batchSink.onRunFinish(false, sinkContext);
           }
         });

@@ -80,7 +80,6 @@ public class PipelinePlanner {
     Set<String> actionNodes = new HashSet<>();
     Map<String, StageSpec> specs = new HashMap<>();
 
-
     for (StageSpec stage : spec.getStages()) {
       String pluginType = stage.getPlugin().getType();
       if (reduceTypes.contains(pluginType)) {
@@ -128,7 +127,7 @@ public class PipelinePlanner {
       // Pipeline only contains Actions
       Set<Connection> phaseConnections = new HashSet<>();
       Map<String, PipelinePhase> phases = new HashMap<>();
-      populateActionPhases(spec, specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
+      populateActionPhases(specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
                            incomingActionConnections, new HashMap<String, Dag>());
       return new PipelinePlan(phases, phaseConnections);
     }
@@ -173,10 +172,10 @@ public class PipelinePlanner {
     // convert to objects the programs expect.
     Map<String, PipelinePhase> phases = new HashMap<>();
     for (Map.Entry<String, Dag> dagEntry : subdags.entrySet()) {
-      phases.put(dagEntry.getKey(), dagToPipeline(spec, dagEntry.getValue(), connectorNodes, specs));
+      phases.put(dagEntry.getKey(), dagToPipeline(dagEntry.getValue(), connectorNodes, specs));
     }
 
-    populateActionPhases(spec, specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
+    populateActionPhases(specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
                          incomingActionConnections, subdags);
 
     return new PipelinePlan(phases, phaseConnections);
@@ -186,7 +185,6 @@ public class PipelinePlanner {
    * This method is responsible for populating phases and phaseConnections with the Action phases.
    * Action phase is a single stage {@link PipelinePhase} which does not have any dag.
    *
-   * @param pipelineSpec the overall spec for the pipeline
    * @param specs the Map of stage specs
    * @param actionNodes the Set of action nodes in the pipeline
    * @param phases the Map of phases created so far
@@ -197,8 +195,7 @@ public class PipelinePlanner {
    *                                  there is a incoming connection to an Action stage
    * @param subdags subdags created so far from the pipeline stages
    */
-  private void populateActionPhases(PipelineSpec pipelineSpec,
-                                    Map<String, StageSpec> specs, Set<String> actionNodes,
+  private void populateActionPhases(Map<String, StageSpec> specs, Set<String> actionNodes,
                                     Map<String, PipelinePhase> phases, Set<Connection> phaseConnections,
                                     SetMultimap<String, String> outgoingActionConnections,
                                     SetMultimap<String, String> incomingActionConnections, Map<String, Dag> subdags) {
@@ -206,18 +203,7 @@ public class PipelinePlanner {
     // Create single stage phases for the Action nodes
     for (String node : actionNodes) {
       StageSpec actionStageSpec = specs.get(node);
-      String type = specs.get(node).getPlugin().getType();
-      StageInfo actionStageInfo = StageInfo.builder(node, type)
-        .addInputs(actionStageSpec.getInputs())
-        .addInputSchemas(actionStageSpec.getInputSchemas())
-        .addOutputs(actionStageSpec.getOutputs())
-        .setOutputSchema(actionStageSpec.getOutputSchema())
-        .setErrorSchema(actionStageSpec.getErrorSchema())
-        .setErrorDatasetName(actionStageSpec.getErrorDatasetName())
-        .setStageLoggingEnabled(pipelineSpec.isStageLoggingEnabled())
-        .setProcessTimingEnabled(pipelineSpec.isProcessTimingEnabled())
-        .build();
-      phases.put(node, PipelinePhase.builder(supportedPluginTypes).addStage(actionStageInfo).build());
+      phases.put(node, PipelinePhase.builder(supportedPluginTypes).addStage(actionStageSpec).build());
     }
 
     // Build phaseConnections for the Action nodes
@@ -257,14 +243,12 @@ public class PipelinePlanner {
    * Converts a Dag into a PipelinePhase, using what we know about the plugin type of each node in the dag.
    * The PipelinePhase is what programs will take as input, and keeps track of sources, transforms, sinks, etc.
    *
-   * @param pipelineSpec the overall pipeline spec
    * @param dag the dag to convert
    * @param connectors connector nodes across all dags
    * @param specs specifications for every stage
    * @return the converted dag
    */
-  private PipelinePhase dagToPipeline(PipelineSpec pipelineSpec, Dag dag, Set<String> connectors,
-                                      Map<String, StageSpec> specs) {
+  private PipelinePhase dagToPipeline(Dag dag, Set<String> connectors, Map<String, StageSpec> specs) {
     PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
 
     for (String stageName : dag.getTopologicalOrder()) {
@@ -275,23 +259,13 @@ public class PipelinePlanner {
 
       // add connectors
       if (connectors.contains(stageName)) {
-        phaseBuilder.addStage(StageInfo.builder(stageName, Constants.CONNECTOR_TYPE).build());
+        phaseBuilder.addStage(StageSpec.builder(stageName, Constants.CONNECTOR_SPEC).build());
         continue;
       }
 
       // add other plugin types
       StageSpec spec = specs.get(stageName);
-      String pluginType = spec.getPlugin().getType();
-      phaseBuilder.addStage(StageInfo.builder(stageName, pluginType)
-                              .addInputs(spec.getInputs())
-                              .addInputSchemas(spec.getInputSchemas())
-                              .addOutputs(spec.getOutputs())
-                              .setOutputSchema(spec.getOutputSchema())
-                              .setErrorSchema(spec.getErrorSchema())
-                              .setErrorDatasetName(spec.getErrorDatasetName())
-                              .setStageLoggingEnabled(pipelineSpec.isStageLoggingEnabled())
-                              .setProcessTimingEnabled(pipelineSpec.isProcessTimingEnabled())
-                              .build());
+      phaseBuilder.addStage(spec);
     }
 
     return phaseBuilder.build();

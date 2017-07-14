@@ -23,7 +23,7 @@ import co.cask.cdap.etl.batch.connector.ConnectorSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,7 +46,7 @@ public class PipelinePluginInstantiator {
     this.phaseSpec = phaseSpec;
     this.connectorSources = new HashSet<>();
     this.connectorSinks = new HashSet<>();
-    for (StageInfo connectorStage : phaseSpec.getPhase().getStagesOfType(Constants.CONNECTOR_TYPE)) {
+    for (StageSpec connectorStage : phaseSpec.getPhase().getStagesOfType(Constants.CONNECTOR_TYPE)) {
       String connectorName = connectorStage.getName();
       if (phaseSpec.getPhase().getSources().contains(connectorName)) {
         connectorSources.add(connectorName);

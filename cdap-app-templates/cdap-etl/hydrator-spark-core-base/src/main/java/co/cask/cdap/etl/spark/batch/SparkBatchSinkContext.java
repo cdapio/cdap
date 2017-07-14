@@ -25,7 +25,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
-import co.cask.cdap.etl.planner.StageInfo;
+import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Collections;
 import java.util.Map;
@@ -39,17 +39,17 @@ public class SparkBatchSinkContext extends AbstractSparkBatchContext implements 
   private final boolean isPreviewEnabled;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, StageInfo stageInfo) {
-    super(sparkContext, lookupProvider, stageInfo);
+                               LookupProvider lookupProvider, StageSpec stageSpec) {
+    super(sparkContext, lookupProvider, stageSpec);
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = sparkContext.getDataTracer(stageInfo.getName()).isEnabled();
+    this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, long logicalStartTime, StageInfo stageInfo) {
-    super(sec, datasetContext, logicalStartTime, stageInfo);
+                               DatasetContext datasetContext, long logicalStartTime, StageSpec stageSpec) {
+    super(sec, datasetContext, logicalStartTime, stageSpec);
     this.sinkFactory = sinkFactory;
-    this.isPreviewEnabled = sec.getDataTracer(stageInfo.getName()).isEnabled();
+    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
   }
 
   @Override

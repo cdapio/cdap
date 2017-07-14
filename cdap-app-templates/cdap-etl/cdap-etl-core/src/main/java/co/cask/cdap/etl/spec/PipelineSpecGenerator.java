@@ -23,8 +23,10 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
+import co.cask.cdap.etl.api.MultiOutputPipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -46,7 +48,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -111,13 +112,14 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    */
   protected void configureStages(ETLConfig config, PipelineSpec.Builder specBuilder) {
     // validate the config and determine the order we should configure the stages in.
-    List<StageConnections> traversalOrder = validateConfig(config);
+    ValidatedPipeline validatedPipeline = validateConfig(config);
+    List<ETLStage> traversalOrder = validatedPipeline.getTraversalOrder();
 
     Map<String, DefaultPipelineConfigurer> pluginConfigurers = new HashMap<>(traversalOrder.size());
     Map<String, String> pluginTypes = new HashMap<>(traversalOrder.size());
-    for (StageConnections stageConnections : traversalOrder) {
-      String stageName = stageConnections.getStage().getName();
-      pluginTypes.put(stageName, stageConnections.getStage().getPlugin().getType());
+    for (ETLStage stage : traversalOrder) {
+      String stageName = stage.getName();
+      pluginTypes.put(stageName, stage.getPlugin().getType());
       pluginConfigurers.put(stageName, new DefaultPipelineConfigurer(configurer, stageName, engine));
     }
 
@@ -136,41 +138,54 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     // this is used so that we can error with a nice message about which stages are setting conflicting properties
     Table<String, String, String> propertiesFromStages = HashBasedTable.create();
     // configure the stages in order and build up the stage specs
-    for (StageConnections stageConnections : traversalOrder) {
-      ETLStage stage = stageConnections.getStage();
+    for (ETLStage stage : traversalOrder) {
       String stageName = stage.getName();
       DefaultPipelineConfigurer pluginConfigurer = pluginConfigurers.get(stageName);
 
-      ConfiguredStage configuredStage = configureStage(stageConnections, pluginConfigurer);
+      ConfiguredStage configuredStage = configureStage(stage, validatedPipeline, pluginConfigurer);
       Schema outputSchema = configuredStage.stageSpec.getOutputSchema();
-      Schema outputErrorSchema = configuredStage.stageSpec.getErrorSchema();
 
       // for each output, set their input schema to our output schema
-      for (String outputStageName : stageConnections.getOutputs()) {
+      for (String nextStageName : validatedPipeline.getOutputs(stageName)) {
 
-        String outputStageType = pluginTypes.get(outputStageName);
-        // no need to set any input schemas for an Action plug
-        if (Action.PLUGIN_TYPE.equals(outputStageType)) {
-          continue;
-        }
+        String nextStageType = pluginTypes.get(nextStageName);
 
-        DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(outputStageName).getStageConfigurer();
+        DefaultStageConfigurer outputStageConfigurer = pluginConfigurers.get(nextStageName).getStageConfigurer();
 
         // Do not allow null input schema for Joiner
-        if (BatchJoiner.PLUGIN_TYPE.equals(outputStageType) && outputSchema == null) {
+        if (BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && outputSchema == null) {
           throw new IllegalArgumentException(String.format("Joiner cannot have any null input schemas, but stage %s " +
                                                              "outputs a null schema.", stageName));
         }
 
         // if the output stage is an error transform, it takes the error schema of this stage as its input.
+        // if the current stage is a splitter transform, it takes the output schema of the port it is connected to
         // all other plugin types that the output schema of this stage as its input.
-        Schema nextStageInputSchema = ErrorTransform.PLUGIN_TYPE.equals(outputStageType) ?
-          outputErrorSchema : outputSchema;
+        Schema nextStageInputSchema;
+        if (ErrorTransform.PLUGIN_TYPE.equals(nextStageType)) {
+          nextStageInputSchema = configuredStage.stageSpec.getErrorSchema();
+        } else if (SplitterTransform.PLUGIN_TYPE.equals(configuredStage.stageSpec.getPlugin().getType())) {
+          StageSpec.Port portSpec = configuredStage.stageSpec.getOutputPorts().get(nextStageName);
+          // port can be null if no output ports were specified at configure time
+          // this can happen if the ports are dependent on the data received by the plugin
+          if (portSpec == null) {
+            nextStageInputSchema = null;
+          } else if (portSpec.getPort() == null) {
+            // null if a splitter was connected to another stage without a port specified.
+            // Should not happen since it should have been validated earlier, but check here just in case
+            throw new IllegalArgumentException(
+              String.format("Must specify a port when connecting Splitter '%s' to '%s'", stageName, nextStageName));
+          } else {
+            nextStageInputSchema = portSpec.getSchema();
+          }
+        } else {
+          nextStageInputSchema = configuredStage.stageSpec.getOutputSchema();
+        }
 
-        // Do not allow more than one input schema for stages other than Joiner
-        if (!BatchJoiner.PLUGIN_TYPE.equals(outputStageType) &&
+        // Do not allow more than one input schema for stages other than Joiner and Action
+        if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && !Action.PLUGIN_TYPE.equals(nextStageType) &&
           !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
-          throw new IllegalArgumentException("Two different input schema were set for the stage " + outputStageName);
+          throw new IllegalArgumentException("Two different input schema were set for the stage " + nextStageName);
         }
 
         outputStageConfigurer.addInputSchema(stageName, nextStageInputSchema);
@@ -222,13 +237,13 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
   /**
    * Configures a stage and returns the spec for it.
    *
-   * @param stageConnections the user provided configuration for the stage along with its connections
+   * @param stage the user provided configuration for the stage
+   * @param validatedPipeline the validated pipeline config
    * @param pluginConfigurer configurer used to configure the stage
    * @return the spec for the stage
    */
-  private ConfiguredStage configureStage(StageConnections stageConnections,
+  private ConfiguredStage configureStage(ETLStage stage, ValidatedPipeline validatedPipeline,
                                          DefaultPipelineConfigurer pluginConfigurer) {
-    ETLStage stage = stageConnections.getStage();
     String stageName = stage.getName();
     ETLPlugin stagePlugin = stage.getPlugin();
 
@@ -237,15 +252,34 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     }
 
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
-    Schema outputSchema = pluginConfigurer.getStageConfigurer().getOutputSchema();
-    Map<String, Schema> inputSchemas = pluginConfigurer.getStageConfigurer().getInputSchemas();
+    DefaultStageConfigurer stageConfigurer = pluginConfigurer.getStageConfigurer();
+    Map<String, StageSpec.Port> outputSchemas = new HashMap<>();
+    if (pluginSpec.getType().equals(SplitterTransform.PLUGIN_TYPE)) {
+      Map<String, Schema> outputPortSchemas = stageConfigurer.getOutputPortSchemas();
+      for (Map.Entry<String, String> outputEntry : validatedPipeline.getOutputPorts(stageName).entrySet()) {
+        String outputStage = outputEntry.getKey();
+        String outputPort = outputEntry.getValue();
+        if (outputPort == null) {
+          throw new IllegalArgumentException(String.format("Connection from Splitter '%s' to '%s' must specify a port.",
+                                                           stageName, outputStage));
+        }
+        outputSchemas.put(outputStage, new StageSpec.Port(outputPort, outputPortSchemas.get(outputPort)));
+      }
+    } else {
+      Schema outputSchema = stageConfigurer.getOutputSchema();
+      for (String outputStage : validatedPipeline.getOutputs(stageName)) {
+        outputSchemas.put(outputStage, new StageSpec.Port(null, outputSchema));
+      }
+    }
+
+    Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     StageSpec stageSpec = StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
       .addInputSchemas(inputSchemas)
-      .setOutputSchema(outputSchema)
-      .setErrorSchema(pluginConfigurer.getStageConfigurer().getErrorSchema())
-      .addInputs(stageConnections.getInputs())
-      .addOutputs(stageConnections.getOutputs())
+      .addOutputPortSchemas(outputSchemas)
+      .setErrorSchema(stageConfigurer.getErrorSchema())
+      .setProcessTimingEnabled(validatedPipeline.isProcessTimingEnabled())
+      .setStageLoggingEnabled(validatedPipeline.isStageLoggingEnabled())
       .build();
     return new ConfiguredStage(stageSpec, pluginConfigurer.getPipelineProperties());
   }
@@ -280,6 +314,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
         multiPlugin.configurePipeline(pipelineConfigurer);
+      } else if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
+        MultiOutputPipelineConfigurable multiOutputPlugin = (MultiOutputPipelineConfigurable) plugin;
+        multiOutputPlugin.configurePipeline(pipelineConfigurer);
       } else if (!type.equals(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
         PipelineConfigurable singlePlugin = (PipelineConfigurable) plugin;
         singlePlugin.configurePipeline(pipelineConfigurer);
@@ -313,7 +350,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * @return the order to configure the stages in
    * @throws IllegalArgumentException if the pipeline is invalid
    */
-  private List<StageConnections> validateConfig(ETLConfig config) {
+  private ValidatedPipeline validateConfig(ETLConfig config) {
     config.validate();
     if (config.getStages().isEmpty()) {
       throw new IllegalArgumentException("A pipeline must contain at least one stage.");
@@ -348,15 +385,13 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       }
     }
 
-    List<StageConnections> traversalOrder = new ArrayList<>(stageNames.size());
+    List<ETLStage> traversalOrder = new ArrayList<>(stageNames.size());
 
     // can only have empty connections if the pipeline consists of a single action.
     if (config.getConnections().isEmpty()) {
       if (actionStages.size() == 1 && stageNames.size() == 1) {
-        traversalOrder.add(new StageConnections(config.getStages().iterator().next(),
-                                                Collections.<String>emptyList(),
-                                                Collections.<String>emptyList()));
-        return traversalOrder;
+        traversalOrder.add(config.getStages().iterator().next());
+        return new ValidatedPipeline(traversalOrder, config);
       } else {
         throw new IllegalArgumentException(
           "Invalid pipeline. There are no connections between stages. " +
@@ -366,7 +401,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     Dag dag = new Dag(config.getConnections());
 
-    Map<String, StageConnections> stages = new HashMap<>();
+    Map<String, ETLStage> stages = new HashMap<>();
     for (ETLStage stage : config.getStages()) {
       String stageName = stage.getName();
       Set<String> stageInputs = dag.getNodeInputs(stageName);
@@ -413,14 +448,14 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         }
       }
 
-      stages.put(stageName, new StageConnections(stage, stageInputs, stageOutputs));
+      stages.put(stageName, stage);
     }
 
     for (String stageName : dag.getTopologicalOrder()) {
       traversalOrder.add(stages.get(stageName));
     }
 
-    return traversalOrder;
+    return new ValidatedPipeline(traversalOrder, config);
   }
 
   // will soon have another action type
@@ -448,4 +483,5 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       this.pipelineProperties = pipelineProperties;
     }
   }
+
 }
