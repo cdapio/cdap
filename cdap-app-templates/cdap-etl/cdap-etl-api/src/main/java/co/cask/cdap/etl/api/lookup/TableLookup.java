@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api.lookup;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.Lookup;
@@ -32,9 +33,16 @@ import java.util.Set;
 public class TableLookup implements Lookup<Row> {
 
   private final Table table;
+  private final Schema schema;
 
-  public TableLookup(Table table) {
+  public TableLookup(Table table, Schema schema) {
     this.table = table;
+    this.schema = schema;
+  }
+
+  @Override
+  public Schema getSchema() {
+    return schema;
   }
 
   @Override

@@ -16,8 +16,11 @@
 
 package co.cask.cdap.etl.api;
 
+import co.cask.cdap.api.data.schema.Schema;
+
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Exposes read-only lookup operations on datasets.
@@ -25,6 +28,13 @@ import java.util.Set;
  * @param <T> the type of object that will be returned for a lookup
  */
 public interface Lookup<T> {
+
+  /**
+   * @return Schema of the dataset, or null if no schema is stored in the dataset's properties
+   */
+  @Nullable
+  Schema getSchema();
+
   /**
    * Performs a single lookup.
    *

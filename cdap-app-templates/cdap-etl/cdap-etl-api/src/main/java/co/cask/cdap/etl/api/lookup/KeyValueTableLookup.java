@@ -16,6 +16,7 @@
 package co.cask.cdap.etl.api.lookup;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.etl.api.Lookup;
 import com.google.common.collect.ImmutableSet;
@@ -30,9 +31,16 @@ import java.util.Set;
 public class KeyValueTableLookup implements Lookup<String> {
 
   private final KeyValueTable table;
+  private final Schema schema;
 
-  public KeyValueTableLookup(KeyValueTable table) {
+  public KeyValueTableLookup(KeyValueTable table, Schema schema) {
     this.table = table;
+    this.schema = schema;
+  }
+
+  @Override
+  public Schema getSchema() {
+    return schema;
   }
 
   @Override

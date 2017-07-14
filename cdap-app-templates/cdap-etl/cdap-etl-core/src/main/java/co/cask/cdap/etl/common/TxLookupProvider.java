@@ -15,10 +15,12 @@
  */
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.Lookup;
 import com.google.common.base.Function;
 
@@ -35,15 +37,28 @@ import javax.annotation.Nullable;
 public class TxLookupProvider extends AbstractLookupProvider {
 
   private final Transactional tx;
+  private final Admin admin;
 
-  public TxLookupProvider(Transactional tx) {
+  public TxLookupProvider(Transactional tx, Admin admin) {
     this.tx = tx;
+    this.admin = admin;
   }
 
   @Override
   public <T> Lookup<T> provide(final String table, final Map<String, String> arguments) {
     //noinspection unchecked
     return new Lookup<T>() {
+
+      @Override
+      public Schema getSchema() {
+        return executeLookup(table, arguments, new Function<Lookup<T>, Schema>() {
+          @Nullable
+          @Override
+          public Schema apply(Lookup<T> input) {
+            return input.getSchema();
+          }
+        });
+      }
 
       @Override
       public T lookup(final String key) {
@@ -87,7 +102,7 @@ public class TxLookupProvider extends AbstractLookupProvider {
     Transactionals.execute(tx, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        Lookup<T> lookup = getLookup(table, context.getDataset(table, arguments));
+        Lookup<T> lookup = getLookup(table, context.getDataset(table, arguments), admin);
         result.set(func.apply(lookup));
       }
     });
