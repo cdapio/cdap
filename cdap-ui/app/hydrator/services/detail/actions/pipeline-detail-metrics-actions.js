@@ -55,7 +55,9 @@ angular.module(PKG.name + '.feature.hydrator')
 
           if (res.length > 0) {
             angular.forEach(stagesArray, function (node) {
-              metricQuery = metricQuery.concat(filter(res, node));
+              // Prefixing it with user. as we to filter out only user metrics and not system metrics
+              // This was a problem if a node name is a substring of a system metric. Ref: CDAP-12121
+              metricQuery = metricQuery.concat(filter(res, 'user.' + node));
             });
 
             if (metricQuery.length === 0) {
