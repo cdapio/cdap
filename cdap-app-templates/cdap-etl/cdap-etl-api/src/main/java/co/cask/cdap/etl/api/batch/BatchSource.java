@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.StageLifecycle;
+import co.cask.cdap.etl.api.SubmitterLifecycle;
 import co.cask.cdap.etl.api.Transformation;
 
 /**
@@ -37,7 +38,8 @@ import co.cask.cdap.etl.api.Transformation;
  */
 @Beta
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
-  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchRuntimeContext> {
+  implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchRuntimeContext> { // ,
+//  SubmitterLifecycle<BatchSourceContext> {
   public static final String PLUGIN_TYPE = "batchsource";
 
   /**

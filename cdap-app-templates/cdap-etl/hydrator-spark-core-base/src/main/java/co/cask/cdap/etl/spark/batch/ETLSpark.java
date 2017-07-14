@@ -24,8 +24,8 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.TransformPrepareContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -140,7 +140,7 @@ public class ETLSpark extends AbstractSpark {
         finishers.add(batchSource, sourceContext);
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
         Transform transform = pluginContext.newPluginInstance(stageName, evaluator);
-        TransformPrepareContext transformContext = new SparkBatchSourceContext(sourceFactory, context, stageInfo);
+        StageSubmitter transformContext = new SparkBatchSourceContext(sourceFactory, context, stageSpec);
         transform.prepareRun(transformContext);
         finishers.add(transform, transformContext);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {

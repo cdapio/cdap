@@ -40,9 +40,4 @@ public interface ActionContext extends StageContext, Transactional, SecureStore,
    */
   SettableArguments getArguments();
 
-  /**
-   * @return The application namespace
-   */
-  String getNamespace();
-
 }

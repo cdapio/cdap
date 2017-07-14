@@ -18,9 +18,9 @@ package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.api.TransformPrepareContext;
 
 import java.util.concurrent.Callable;
 
@@ -52,7 +52,7 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   }
 
   @Override
-  public void prepareRun(final TransformPrepareContext context) throws Exception {
+  public void prepareRun(final StageSubmitter context) throws Exception {
     caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -63,7 +63,7 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final TransformPrepareContext context) {
+  public void onRunFinish(final boolean succeeded, final StageSubmitter context) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {

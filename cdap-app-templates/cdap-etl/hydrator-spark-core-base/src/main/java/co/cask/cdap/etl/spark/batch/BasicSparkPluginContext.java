@@ -35,14 +35,15 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
 
   public BasicSparkPluginContext(SparkClientContext sparkContext, StageSpec stageSpec) {
     super(sparkContext, sparkContext.getMetrics(), new DatasetContextLookupProvider(sparkContext),
-          sparkContext.getLogicalStartTime(), sparkContext.getAdmin(), stageSpec, new BasicArguments(sparkContext));
+          sparkContext.getLogicalStartTime(), sparkContext.getAdmin(), stageSpec, new BasicArguments(sparkContext),
+          sparkContext.getNamespace());
     this.sparkContext = sparkContext;
   }
 
   public BasicSparkPluginContext(JavaSparkExecutionContext sec, DatasetContext datasetContext, StageSpec stageSpec) {
     super(sec.getPluginContext(), sec.getServiceDiscoverer(), datasetContext, sec.getMetrics(),
           new DatasetContextLookupProvider(datasetContext), sec.getLogicalStartTime(), sec.getAdmin(), stageSpec,
-          new BasicArguments(sec));
+          new BasicArguments(sec), sec.getNamespace());
     this.sparkContext = null;
   }
 

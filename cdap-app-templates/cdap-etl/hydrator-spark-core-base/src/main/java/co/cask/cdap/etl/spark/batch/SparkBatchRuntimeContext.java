@@ -39,8 +39,9 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   private final long logicalStartTime;
 
   public SparkBatchRuntimeContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                                  long logicalStartTime, StageSpec stageSpec, BasicArguments arguments) {
-    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageSpec, arguments);
+                                  long logicalStartTime, StageSpec stageSpec, BasicArguments arguments,
+                                  String namespace) {
+    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageSpec, arguments, namespace);
     this.logicalStartTime = logicalStartTime;
   }
 
@@ -90,4 +91,5 @@ public class SparkBatchRuntimeContext extends AbstractTransformContext
   public void discardDataset(Dataset dataset) {
     throw new UnsupportedOperationException("Not supported");
   }
+
 }

@@ -27,8 +27,9 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.TransformPrepareContext;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -195,9 +196,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageInfo);
         batchSource.prepareRun(sourceContext);
         runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
-        for (String inputAlias : sourceContext.getInputNames()) {
-          inputAliasToStage.put(inputAlias, sourceName);
-        }
+//        for (String inputAlias : sourceContext.getInputNames()) {
+//          inputAliasToStage.put(inputAlias, sourceName);
+//        }
         finishers.add(batchSource, sourceContext);
       } catch (Exception e) {
         // Catch the Exception to generate a User Error Log for the Pipeline
@@ -211,7 +212,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     for (StageSpec transformInfo : phase.getStagesOfType(Transform.PLUGIN_TYPE)) {
       Transform transform = pluginInstantiator.newPluginInstance(transformInfo.getName(), evaluator);
-      TransformPrepareContext transformContext = new MapReduceBatchContext(context, mrMetrics, transformInfo);
+      StageSubmitter<TransformContext> transformContext =
+        new MapReduceBatchContext<>(context, mrMetrics, transformInfo);
       transform.prepareRun(transformContext);
       finishers.add(transform, transformContext);
     }

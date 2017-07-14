@@ -23,7 +23,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.TransformPrepareContext;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -45,9 +45,11 @@ import java.util.concurrent.Callable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
+ *
+ * @param <T> execution context
  */
-public class MapReduceBatchContext extends AbstractBatchContext
-  implements BatchSinkContext, BatchSourceContext, TransformPrepareContext {
+public class MapReduceBatchContext<T> extends AbstractBatchContext
+  implements BatchSinkContext, BatchSourceContext, StageSubmitter<T> {
   protected final MapReduceContext mrContext;
   private final boolean isPreviewEnabled;
   private final Set<String> outputNames;
@@ -56,7 +58,7 @@ public class MapReduceBatchContext extends AbstractBatchContext
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
     super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context), context.getNamespace());
     this.mrContext = context;
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
     this.outputNames = new HashSet<>();
@@ -196,7 +198,7 @@ public class MapReduceBatchContext extends AbstractBatchContext
   }
 
   @Override
-  public String getNamespace() {
-    return mrContext.getNamespace();
+  public T getContext() {
+    return (T) this;
   }
 }

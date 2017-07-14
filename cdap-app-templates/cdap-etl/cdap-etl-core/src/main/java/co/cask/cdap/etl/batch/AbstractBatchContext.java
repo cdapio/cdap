@@ -53,8 +53,9 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
                                  long logicalStartTime,
                                  Admin admin,
                                  StageSpec stageSpec,
-                                 BasicArguments arguments) {
-    super(pluginContext, serviceDiscoverer, metrics, lookup, stageSpec, arguments);
+                                 BasicArguments arguments,
+                                 String namespace) {
+    super(pluginContext, serviceDiscoverer, metrics, lookup, stageSpec, arguments, namespace);
     this.datasetContext = datasetContext;
     this.logicalStartTime = logicalStartTime;
     this.admin = admin;
@@ -63,8 +64,8 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   protected <T extends PluginContext & DatasetContext & ServiceDiscoverer> AbstractBatchContext(
     T context, Metrics metrics, LookupProvider lookup, long logicalStartTime,
-    Admin admin, StageSpec stageSpec, BasicArguments arguments) {
-    this(context, context, context, metrics, lookup, logicalStartTime, admin, stageSpec, arguments);
+    Admin admin, StageSpec stageSpec, BasicArguments arguments, String namespace) {
+    this(context, context, context, metrics, lookup, logicalStartTime, admin, stageSpec, arguments, namespace);
   }
 
   public void createDataset(String datasetName, String typeName, DatasetProperties properties)

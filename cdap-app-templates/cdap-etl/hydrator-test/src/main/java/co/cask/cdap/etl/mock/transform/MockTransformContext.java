@@ -88,6 +88,11 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public String getNamespace() {
+    return null;
+  }
+
+  @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return null;
   }

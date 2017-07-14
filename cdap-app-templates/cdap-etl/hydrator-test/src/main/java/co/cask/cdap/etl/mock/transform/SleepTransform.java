@@ -25,8 +25,9 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.TransformPrepareContext;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -57,8 +58,9 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
   }
 
   @Override
-  public void prepareRun(TransformPrepareContext context) throws Exception {
-    context.getMessagePublisher().publish(context.getNamespace(), "sleepTopic", Long.toString(config.millis));
+  public void prepareRun(StageSubmitter<TransformContext> context) throws Exception {
+    context.getMessagePublisher()
+      .publish(context.getContext().getNamespace(), "sleepTopic", Long.toString(config.millis));
   }
 
   @Override

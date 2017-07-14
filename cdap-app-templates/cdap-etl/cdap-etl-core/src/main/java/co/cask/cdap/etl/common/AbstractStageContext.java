@@ -50,20 +50,22 @@ public abstract class AbstractStageContext implements StageContext {
   private final Schema inputSchema;
   private final Schema outputSchema;
   private final Caller caller;
+  private final String namespace;
   protected final BasicArguments arguments;
 
   protected AbstractStageContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                                 StageSpec stageInfo, BasicArguments arguments) {
+                                 StageSpec stageSpec, BasicArguments arguments, String namespace) {
     this.pluginContext = pluginContext;
     this.serviceDiscoverer = serviceDiscoverer;
-    this.stageName = stageInfo.getName();
+    this.stageName = stageSpec.getName();
     this.metrics = new DefaultStageMetrics(metrics, stageName);
-    this.outputSchema = stageInfo.getOutputSchema();
-    this.inputSchemas = Collections.unmodifiableMap(stageInfo.getInputSchemas());
+    this.outputSchema = stageSpec.getOutputSchema();
+    this.inputSchemas = Collections.unmodifiableMap(stageSpec.getInputSchemas());
     // all plugins except joiners have just a single input schema
     this.inputSchema = inputSchemas.isEmpty() ? null : inputSchemas.values().iterator().next();
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
     this.arguments = arguments;
+    this.namespace = namespace;
   }
 
   @Override
@@ -157,5 +159,10 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public URL getServiceURL(String serviceId) {
     return serviceDiscoverer.getServiceURL(serviceId);
+  }
+
+  @Override
+  public String getNamespace() {
+    return namespace;
   }
 }

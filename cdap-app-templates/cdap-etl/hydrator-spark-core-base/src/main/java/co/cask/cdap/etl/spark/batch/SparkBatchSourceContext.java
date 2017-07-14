@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.TransformPrepareContext;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
@@ -30,15 +30,17 @@ import java.util.UUID;
 
 /**
  * Default implementation of {@link BatchSourceContext} for spark contexts.
+ *
+ * @param <T> execution context
  */
-public class SparkBatchSourceContext extends AbstractSparkBatchContext
-  implements BatchSourceContext, TransformPrepareContext {
+public class SparkBatchSourceContext<T> extends AbstractSparkBatchContext
+  implements BatchSourceContext, StageSubmitter<T> {
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
   private final SparkClientContext sparkContext;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 StageInfo stageInfo) {
+                                 StageSpec stageSpec) {
     super(sparkContext, new DatasetContextLookupProvider(sparkContext), stageSpec);
     this.sparkContext = sparkContext;
     this.sourceFactory = sourceFactory;
@@ -62,11 +64,6 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext
   }
 
   @Override
-  public String getNamespace() {
-    return sparkContext.getNamespace();
-  }
-
-  @Override
   public MessagePublisher getMessagePublisher() {
     return sparkContext.getMessagePublisher();
   }
@@ -79,5 +76,10 @@ public class SparkBatchSourceContext extends AbstractSparkBatchContext
   @Override
   public MessageFetcher getMessageFetcher() {
     return sparkContext.getMessageFetcher();
+  }
+
+  @Override
+  public T getContext() {
+    return (T) this;
   }
 }

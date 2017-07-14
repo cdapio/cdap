@@ -48,6 +48,6 @@ public abstract class BatchConfigurable<T extends BatchContext> implements Pipel
    * @param context batch execution context
    */
   public void onRunFinish(boolean succeeded, T context) {
-    // no-op
+// // // // // // // //    no-op
   }
 }

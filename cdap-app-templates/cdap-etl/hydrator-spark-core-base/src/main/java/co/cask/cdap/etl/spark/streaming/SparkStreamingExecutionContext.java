@@ -49,7 +49,7 @@ public class SparkStreamingExecutionContext extends AbstractTransformContext imp
   public SparkStreamingExecutionContext(JavaSparkExecutionContext sec, JavaSparkContext jsc,
                                         long batchTime, StageSpec stageSpec) {
     super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), null,
-          stageSpec, new BasicArguments(sec));
+          stageSpec, new BasicArguments(sec), sec.getNamespace());
     this.sec = sec;
     this.jsc = jsc;
     this.batchTime = batchTime;

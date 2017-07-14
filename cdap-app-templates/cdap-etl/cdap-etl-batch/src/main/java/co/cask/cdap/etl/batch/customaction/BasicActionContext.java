@@ -37,7 +37,7 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
 
   public BasicActionContext(CustomActionContext context, Metrics metrics, StageSpec stageSpec,
                             BasicArguments arguments) {
-    super(context, context, metrics, stageSpec, arguments);
+    super(context, context, metrics, stageSpec, arguments, context.getNamespace());
     this.context = context;
   }
 
@@ -81,10 +81,4 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   public void deleteSecureData(String namespace, String name) throws Exception {
     context.getAdmin().deleteSecureData(namespace, name);
   }
-
-  @Override
-  public String getNamespace() {
-    return context.getNamespace();
-  }
-
 }

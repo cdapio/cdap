@@ -94,7 +94,7 @@ public class PluginFunctionContext implements Serializable {
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
     return new SparkBatchRuntimeContext(getPluginContext(), serviceDiscoverer, metrics, logicalStartTime, stageSpec,
-                                        new BasicArguments(arguments));
+                                        new BasicArguments(arguments), namespace);
   }
 
   public DataTracer getDataTracer() {

@@ -47,7 +47,8 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
                                  LookupProvider lookup, Map<String, String> runtimeArgs, StageSpec stageSpec) {
-    super(context, context, metrics, lookup, stageSpec, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
+    super(context, context, metrics, lookup, stageSpec, new BasicArguments(context.getWorkflowToken(), runtimeArgs),
+          context.getNamespace());
     this.context = context;
     this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
     this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);

@@ -45,7 +45,8 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final Admin admin;
 
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
-    super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), stageSpec, new BasicArguments(sec));
+    super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), stageSpec, new BasicArguments(sec),
+          sec.getNamespace());
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();

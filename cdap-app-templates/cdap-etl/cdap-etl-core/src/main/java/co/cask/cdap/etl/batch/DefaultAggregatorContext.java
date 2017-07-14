@@ -36,13 +36,13 @@ public class DefaultAggregatorContext extends AbstractBatchContext implements Ba
 
   public DefaultAggregatorContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
     super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context), context.getNamespace());
     this.job = context.getHadoopJob();
   }
 
   public DefaultAggregatorContext(SparkClientContext context, StageSpec stageSpec) {
     super(context, context.getMetrics(), new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
+          context.getAdmin(), stageSpec, new BasicArguments(context), context.getNamespace());
     this.job = null;
   }
 

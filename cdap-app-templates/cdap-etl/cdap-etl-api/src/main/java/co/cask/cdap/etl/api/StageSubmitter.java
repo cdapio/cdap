@@ -20,7 +20,13 @@ import co.cask.cdap.api.messaging.MessagingContext;
 
 /**
  * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
+ *
+ * @param <T> execution context
  */
-public interface TransformPrepareContext extends TransformContext, MessagingContext {
+public interface StageSubmitter<T> extends MessagingContext {
+
+//  SettableArguments getArguments();
+
+  T getContext();
 
 }
