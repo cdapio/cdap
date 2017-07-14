@@ -37,6 +37,7 @@ import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndRepla
 import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import Format from 'components/DataPrep/Directives/Format';
+import Calculate from 'components/DataPrep/Directives/Calculate';
 import Explode from 'components/DataPrep/Directives/Explode';
 import MaskData from 'components/DataPrep/Directives/MaskData';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
@@ -90,6 +91,11 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: shortid.generate(),
         tag: Format,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: Calculate,
         requiredColCount: 1
       },
       {

@@ -21,6 +21,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import WarningContainer from 'components/WarningContainer';
+import {columnNameAlreadyExists} from 'components/DataPrep/helper';
 const PREFIX = 'features.DataPrep.Directives.Copy';
 
 export default class CopyColumnDirective extends Component {
@@ -56,11 +57,6 @@ export default class CopyColumnDirective extends Component {
     if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) { return; }
 
     this.applyDirective();
-  }
-
-  columnAlreadyExists(colName) {
-    let headers = DataPrepStore.getState().dataprep.headers;
-    return headers.indexOf(colName) !== -1;
   }
 
   applyDirective() {
@@ -109,7 +105,7 @@ export default class CopyColumnDirective extends Component {
         </div>
 
         {
-          this.columnAlreadyExists(this.state.input) ? (
+          columnNameAlreadyExists(this.state.input) ? (
             <WarningContainer
               message={T.translate(`${PREFIX}.duplicate`)}
             />
