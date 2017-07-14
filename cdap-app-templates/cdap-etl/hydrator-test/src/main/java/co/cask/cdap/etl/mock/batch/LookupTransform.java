@@ -47,10 +47,10 @@ import java.util.Map;
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Lookup")
-public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRecord> {
+public class LookupTransform<T, V> extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
-  private Lookup<T> lookup;
+  private Lookup<T, V> lookup;
 
   public LookupTransform(Config config) {
     this.config = config;

@@ -18,19 +18,22 @@ package co.cask.cdap.etl.api.lookup;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.Lookup;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * {@link Lookup} implementation for {@link Table}.
  */
-public class TableLookup implements Lookup<Row> {
+public class TableLookup implements Lookup<Row, Row> {
 
   private final Table table;
   private final Schema schema;
@@ -43,6 +46,26 @@ public class TableLookup implements Lookup<Row> {
   @Override
   public Schema getSchema() {
     return schema;
+  }
+
+  @Override
+  public Row lookup(byte[] key) {
+    return table.get(key);
+  }
+
+  @Override
+  public Map<byte[], Row> lookup(byte[]... keys) {
+    List<Get> gets = new ArrayList<>();
+    for (byte[] key : keys) {
+      gets.add(new Get(key));
+    }
+    List<Row> rows = table.get(gets);
+
+    Map<byte[], Row> result = new HashMap<>(keys.length);
+    for (int i = 0; i < keys.length; i++) {
+      result.put(keys[i], rows.get(i));
+    }
+    return result;
   }
 
   @Override

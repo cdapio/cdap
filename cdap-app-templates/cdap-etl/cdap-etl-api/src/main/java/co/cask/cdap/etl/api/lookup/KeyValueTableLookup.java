@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * {@link Lookup} implementation for {@link KeyValueTable}.
  */
-public class KeyValueTableLookup implements Lookup<String> {
+public class KeyValueTableLookup implements Lookup<String, byte[]> {
 
   private final KeyValueTable table;
   private final Schema schema;
@@ -41,6 +41,16 @@ public class KeyValueTableLookup implements Lookup<String> {
   @Override
   public Schema getSchema() {
     return schema;
+  }
+
+  @Override
+  public byte[] lookup(byte[] key) {
+    return table.read(key);
+  }
+
+  @Override
+  public Map<byte[], byte[]> lookup(byte[]... keys) {
+    return table.readAll(keys);
   }
 
   @Override

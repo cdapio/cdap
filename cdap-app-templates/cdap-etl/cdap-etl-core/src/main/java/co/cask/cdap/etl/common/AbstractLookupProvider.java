@@ -38,16 +38,16 @@ import javax.annotation.Nullable;
 public abstract class AbstractLookupProvider implements LookupProvider {
 
   @SuppressWarnings("unchecked")
-  protected <T> Lookup<T> getLookup(String table, @Nullable Dataset dataset, Admin admin) {
+  protected <T,R> Lookup<T,R> getLookup(String table, @Nullable Dataset dataset, Admin admin) {
     if (dataset == null) {
       throw new RuntimeException(String.format("Dataset %s does not exist", table));
     }
 
     Schema schema = getSchema(admin, table);
     if (dataset instanceof KeyValueTable) {
-      return (Lookup<T>) new KeyValueTableLookup((KeyValueTable) dataset, schema);
+      return (Lookup<T,R>) new KeyValueTableLookup((KeyValueTable) dataset, schema);
     } else if (dataset instanceof Table) {
-      return (Lookup<T>) new TableLookup((Table) dataset, schema);
+      return (Lookup<T,R>) new TableLookup((Table) dataset, schema);
     } else {
       throw new RuntimeException(String.format("Dataset %s does not support lookup", table));
     }
