@@ -331,7 +331,7 @@ class HydratorPlusPlusHydratorService {
   }
 
   isVersionInRange({supportedVersion, versionRange} = {}) {
-    let flattendVersion = versionRange;
+    let flattenedVersion = versionRange;
     let isNil = (value) => _.isUndefined(value) && _.isNull(value);
     if (isNil(supportedVersion) || isNil(versionRange)) {
       return false;
@@ -345,7 +345,12 @@ class HydratorPlusPlusHydratorService {
         return false;
       }
     }
-    return flattendVersion;
+
+    if (supportedVersion !== versionRange) {
+      return false;
+    }
+
+    return flattenedVersion;
   }
 
   convertMapToKeyValuePairs(obj) {

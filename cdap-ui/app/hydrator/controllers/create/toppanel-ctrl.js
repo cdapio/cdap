@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts,  $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid, HydratorUpgradeService) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -57,6 +57,8 @@ class HydratorPlusPlusTopPanelCtrl {
     this.runtimeArguments = {};
     this.validToStartPreview = true;
     this.$stateParams = $stateParams;
+    this.HydratorUpgradeService = HydratorUpgradeService;
+
     this.setState();
     this.setActiveNodes();
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
@@ -684,29 +686,6 @@ class HydratorPlusPlusTopPanelCtrl {
       });
       return;
     }
-    let generateLinearConnections = (config) => {
-      let nodes = config.stages;
-      let connections = [];
-      let i;
-
-      for (i=0; i<nodes.length - 1; i++) {
-        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
-      }
-      return connections;
-    };
-
-    let isValidArtifact = (importArtifact) => {
-      let isVersionExists = [];
-      let isScopeExists = [];
-      let isNameExists = this.artifacts.filter( artifact => artifact.name === importArtifact.name );
-      isVersionExists = isNameExists.filter( artifact => artifact.version === importArtifact.version );
-      isScopeExists = isNameExists.filter( artifact => artifact.scope.toUpperCase() === importArtifact.scope.toUpperCase() );
-      return {
-        name: isNameExists.length > 0,
-        version: isVersionExists.length > 0,
-        scope: isScopeExists.length > 0
-      };
-    };
 
     var reader = new FileReader();
     reader.readAsText(files[0], 'UTF-8');
@@ -734,51 +713,7 @@ class HydratorPlusPlusTopPanelCtrl {
         return;
       }
 
-      if (!jsonData.config.connections) {
-        jsonData.config.connections = generateLinearConnections(jsonData.config);
-      }
-      let invalidFields = [];
-      let isVersionInRange = this.HydratorPlusPlusHydratorService
-        .isVersionInRange({
-          supportedVersion: this.$rootScope.cdapVersion,
-          versionRange: jsonData.artifact.version
-        });
-      if (isVersionInRange) {
-        jsonData.artifact.version = this.$rootScope.cdapVersion;
-      } else {
-        invalidFields.push(
-          `The available version of CDAP Data Pipeline (${this.$rootScope.cdapVersion}) does not support the range of versions specified in the imported pipeline - ${jsonData.artifact.version}. Please update the version ranges in the JSON, and try importing again.`
-        );
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: `${invalidFields}.`
-        });
-        return;
-      }
-      let validArtifact = isValidArtifact(jsonData.artifact);
-      if (!validArtifact.name || !validArtifact.version || !validArtifact.scope) {
-        if (!validArtifact.name) {
-          invalidFields.push('Artifact name: ' + jsonData.artifact.name);
-        } else {
-          if (!validArtifact.version) {
-            invalidFields.push('Artifact version: ' + jsonData.artifact.version);
-          }
-          if (!validArtifact.scope) {
-            invalidFields.push('Artifact scope: ' + jsonData.artifact.scope);
-          }
-        }
-        invalidFields = invalidFields.length === 1 ? invalidFields[0] : invalidFields.join(', ');
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: `Imported pipeline has invalid artifact information: ${invalidFields}.`
-        });
-      } else {
-        if (!jsonData.config.connections) {
-          jsonData.config.connections = generateLinearConnections(jsonData.config);
-        }
-        this.HydratorPlusPlusConfigStore.setState(this.HydratorPlusPlusConfigStore.getDefaults());
-        this.$state.go('hydrator.create', { data: jsonData });
-      }
+      this.HydratorUpgradeService.validateAndUpgradeConfig(jsonData);
     };
   }
 
@@ -872,6 +807,5 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 }
 
-HydratorPlusPlusTopPanelCtrl.$inject = ['$stateParams', 'HydratorPlusPlusConfigStore', 'HydratorPlusPlusConfigActions', '$uibModal', 'HydratorPlusPlusConsoleActions', 'DAGPlusPlusNodesActionsFactory', 'GLOBALS', 'myHelpers', 'HydratorPlusPlusConsoleStore', 'myPipelineExportModalService', '$timeout', '$scope', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', '$interval', 'myPipelineApi', '$state', 'MyCDAPDataSource', 'myAlertOnValium', 'MY_CONFIG', 'PREVIEWSTORE_ACTIONS', '$q', 'NonStorePipelineErrorFactory', 'rArtifacts', '$window', 'LogViewerStore', 'LOGVIEWERSTORE_ACTIONS', 'myPreviewLogsApi', 'DAGPlusPlusNodesStore', 'myPreferenceApi', 'HydratorPlusPlusHydratorService', '$rootScope', 'uuid'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorPlusPlusTopPanelCtrl', HydratorPlusPlusTopPanelCtrl);
