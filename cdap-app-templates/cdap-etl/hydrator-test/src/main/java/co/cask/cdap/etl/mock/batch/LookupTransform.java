@@ -46,13 +46,14 @@ import java.util.Map;
  * be used to determine where in the output StructuredRecord to place the value.
  *
  * @param <T> The type of object that will be returned for the lookup.
+ * @param <R> The type of raw object that will be returned for the lookup.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Lookup")
-public class LookupTransform<T, V> extends Transform<StructuredRecord, StructuredRecord> {
+public class LookupTransform<T, R> extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
-  private Lookup<T, V> lookup;
+  private Lookup<T, R> lookup;
 
   public LookupTransform(Config config) {
     this.config = config;
@@ -67,7 +68,7 @@ public class LookupTransform<T, V> extends Transform<StructuredRecord, Structure
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
-    V lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
+    R lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
     if (lookedUpValue instanceof Result) {
       assert lookedUpValueBytes instanceof Result;
       assert Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow());

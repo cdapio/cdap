@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
  * @param <T> the type of object that will be returned for a lookup with String as the key
  * @param <R> the raw type of object that will be returned for lookups with byte[] as the key
  */
-public interface Lookup<T,R> {
+public interface Lookup<T, R> {
 
   /**
    * @return Schema of the dataset, or null if no schema is stored in the dataset's properties

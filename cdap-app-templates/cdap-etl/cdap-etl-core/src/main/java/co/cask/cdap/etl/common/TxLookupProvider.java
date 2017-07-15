@@ -45,16 +45,16 @@ public class TxLookupProvider extends AbstractLookupProvider {
   }
 
   @Override
-  public <T,R> Lookup<T,R> provide(final String table, final Map<String, String> arguments) {
+  public <T, R> Lookup<T, R> provide(final String table, final Map<String, String> arguments) {
     //noinspection unchecked
-    return new Lookup<T,R>() {
+    return new Lookup<T, R>() {
 
       @Override
       public Schema getSchema() {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, Schema>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, Schema>() {
           @Nullable
           @Override
-          public Schema apply(Lookup<T,R> input) {
+          public Schema apply(Lookup<T, R> input) {
             return input.getSchema();
           }
         });
@@ -62,10 +62,10 @@ public class TxLookupProvider extends AbstractLookupProvider {
 
       @Override
       public R lookup(final byte[] key) {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, R>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, R>() {
           @Nullable
           @Override
-          public R apply(Lookup<T,R> input) {
+          public R apply(Lookup<T, R> input) {
             return input.lookup(key);
           }
         });
@@ -73,10 +73,10 @@ public class TxLookupProvider extends AbstractLookupProvider {
 
       @Override
       public Map<byte[], R> lookup(final byte[]... keys) {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, Map<byte[], R>>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, Map<byte[], R>>() {
           @Nullable
           @Override
-          public Map<byte[], R> apply(Lookup<T,R> input) {
+          public Map<byte[], R> apply(Lookup<T, R> input) {
             return input.lookup(keys);
           }
         });
@@ -84,10 +84,10 @@ public class TxLookupProvider extends AbstractLookupProvider {
 
       @Override
       public T lookup(final String key) {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, T>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, T>() {
           @Nullable
           @Override
-          public T apply(Lookup<T,R> input) {
+          public T apply(Lookup<T, R> input) {
             return input.lookup(key);
           }
         });
@@ -95,10 +95,10 @@ public class TxLookupProvider extends AbstractLookupProvider {
 
       @Override
       public Map<String, T> lookup(final String... keys) {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, Map<String, T>>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, Map<String, T>>() {
           @Nullable
           @Override
-          public Map<String, T> apply(Lookup<T,R> input) {
+          public Map<String, T> apply(Lookup<T, R> input) {
             return input.lookup(keys);
           }
         });
@@ -106,10 +106,10 @@ public class TxLookupProvider extends AbstractLookupProvider {
 
       @Override
       public Map<String, T> lookup(final Set<String> keys) {
-        return executeLookup(table, arguments, new Function<Lookup<T,R>, Map<String, T>>() {
+        return executeLookup(table, arguments, new Function<Lookup<T, R>, Map<String, T>>() {
           @Nullable
           @Override
-          public Map<String, T> apply(Lookup<T,R> input) {
+          public Map<String, T> apply(Lookup<T, R> input) {
             return input.lookup(keys);
           }
         });
