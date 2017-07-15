@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * Exposes read-only lookup operations on datasets.
  *
  * @param <T> the type of object that will be returned for a lookup with String as the key
- * @param <T> the raw type of object that will be returned for lookups with byte[] as the key
+ * @param <R> the raw type of object that will be returned for lookups with byte[] as the key
  */
 public interface Lookup<T,R> {
 
