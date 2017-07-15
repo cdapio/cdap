@@ -143,9 +143,9 @@ function updateNodeMetrics(pipelineConfig) {
     map[nodeLabel].push(runRecord);
   };
   runs.forEach(run => {
-    getRecords(run, nodesMap.sources)
+    getRecords(run, nodesMap.sources, '.records.out')
       .forEach(node => addRunRecordTo(nodesMap.sources, node, run));
-    getRecords(run, nodesMap.sinks, '.records.out')
+    getRecords(run, nodesMap.sinks, '.records.in')
       .forEach(node => addRunRecordTo(nodesMap.sinks, node, run));
   });
   PipelineSummaryStore.dispatch({
