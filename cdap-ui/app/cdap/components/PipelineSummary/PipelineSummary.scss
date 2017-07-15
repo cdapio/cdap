@@ -22,6 +22,7 @@ $run_menu_bg_color: gray;
 $graph_containers_border_color: lightgray;
 $hint_body_font_color: black;
 $hint_bg_color: white;
+$min_height_of_graph: 340px;
 
 .pipeline-summary {
   .graphs-container {
@@ -36,7 +37,7 @@ $hint_bg_color: white;
       width: calc(50% - 20px);
       border-radius: 4px;
       height: calc(50% - 20px);
-      min-height: 340px;
+      min-height: $min_height_of_graph;
       padding: 10px;
       margin: 5px 10px;
       border: 1px solid lightgray;
@@ -74,6 +75,9 @@ $hint_bg_color: white;
           rect {
             cursor: pointer;
           }
+        }
+        .rv-xy-plot__axis__tick__text {
+          font-size: 8.5px;
         }
       }
       .rv-hint {
