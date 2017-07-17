@@ -41,6 +41,9 @@ angular.module(PKG.name + '.feature.hydrator')
           dispatcher.dispatch('onRunsChange', runs);
         });
     };
+    this.setCurrentRun = function(runid) {
+      dispatcher.dispatch('onCurrentRunID', runid);
+    };
     this.getNextRunTime = function(api, params) {
       api.nextRunTime(params)
         .$promise

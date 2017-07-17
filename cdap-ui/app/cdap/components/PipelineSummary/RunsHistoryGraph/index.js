@@ -91,9 +91,6 @@ export default class RunsHistoryGraph extends Component {
     this.renderTableBody = this.renderTableBody.bind(this);
   }
   componentDidMount() {
-    this.setState({
-      data: this.constructData()
-    });
     this.eventEmitter.on('CLOSE_HINT_TOOLTIP', this.closeTooltip);
   }
   closeTooltip() {
@@ -102,6 +99,13 @@ export default class RunsHistoryGraph extends Component {
     });
   }
   componentWillReceiveProps(nextProps) {
+    if (
+      isEqual(nextProps.runs, this.props.runs) &&
+      nextProps.totalRunsCount === this.props.totalRunsCount &&
+      nextProps.runsLimit === this.props.runsLimit
+    ) {
+      return;
+    }
     this.setState({
       data: this.constructData(nextProps),
       totalRunsCount: nextProps.totalRunsCount,
@@ -139,6 +143,19 @@ export default class RunsHistoryGraph extends Component {
         label={this.props.activeFilterLabel}
       />
     );
+  }
+  navigateToPipeline(runid) {
+    let anchor = document.getElementById('placeholder-anchor-runs-history');
+    let {namespaceId: namespace, appId: pipelineId} = this.props.runContext;
+    let url = window.getHydratorUrl({
+      stateName: 'hydrator.detail',
+      stateParams: {
+        namespace,
+        pipelineId
+      }
+    });
+    anchor.href = `${url}?runid=${runid}`;
+    anchor.click();
   }
   renderChart() {
     let FPlot = makeWidthFlexible(XYPlot);
@@ -207,6 +224,9 @@ export default class RunsHistoryGraph extends Component {
               this.setState({
                 currentHoveredElement: null
               });
+            }}
+            onValueClick={(d) => {
+              this.navigateToPipeline(d.runid);
             }}
           />
 
@@ -365,6 +385,7 @@ export default class RunsHistoryGraph extends Component {
         {
           this.renderContent()
         }
+        <a id="placeholder-anchor-runs-history"></a>
       </div>
     );
   }

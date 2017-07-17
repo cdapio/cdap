@@ -32,6 +32,7 @@
  var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
  var PipelineSummary = require('../cdap/components/PipelineSummary').default;
  var Mousetrap = require('mousetrap');
+ var CDAPHelpers = require('../cdap/services/helpers');
 
  export {
   Store,
@@ -49,5 +50,6 @@
   KeyValueStore,
   KeyValueStoreActions,
   Mousetrap,
-  PipelineSummary
+  PipelineSummary,
+  CDAPHelpers
 };

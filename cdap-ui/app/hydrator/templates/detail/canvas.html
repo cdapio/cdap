@@ -14,13 +14,44 @@
   the License.
 -->
 
+<div
+  class="run-level-information"
+  ng-if="CanvasCtrl.currentRunIndex && CanvasCtrl.totalRuns"
+>
+  <h3 class="run-number-container">
+    Run {{CanvasCtrl.currentRunIndex}} of {{CanvasCtrl.totalRuns}}
+  </h3>
+  <span>
+    <span
+      class="status-bubble"
+      ng-class="CanvasCtrl.currentRun.statusCssClass"
+    ></span>
+    <strong>{{CanvasCtrl.currentRun.status}}</strong>
+  </span>
+  <span>
+    <strong> Duration </strong>
+    <span>{{CanvasCtrl.currentRun.duration}}</span>
+  </span>
+  <span>
+    <strong> Start Time </strong>
+    <span>{{CanvasCtrl.currentRun.startTime}}</span>
+  </span>
+</div>
+
+<div
+  class="run-level-information"
+  ng-if="!CanvasCtrl.totalRuns"
+>
+  <h3> Deployed </h3>
+</div>
+
 <my-dag-plus data-is-disabled="true"
-        ng-class="{'canvas-scroll': CanvasCtrl.setScroll}"
-        context="CanvasCtrl"
-        template-popover="/assets/features/hydrator/templates/partial/schema-popover.html"
-        connection-popover-data="CanvasCtrl.generateSchemaOnEdge"
-        show-metrics="true"
-        metrics-data="CanvasCtrl.metrics"
-        node-popover-template="/assets/features/hydrator/templates/partial/metrics-popover.html"
-        >
+  ng-class="{'canvas-scroll': CanvasCtrl.setScroll}"
+  context="CanvasCtrl"
+  template-popover="/assets/features/hydrator/templates/partial/schema-popover.html"
+  connection-popover-data="CanvasCtrl.generateSchemaOnEdge"
+  show-metrics="true"
+  metrics-data="CanvasCtrl.metrics"
+  node-popover-template="/assets/features/hydrator/templates/partial/metrics-popover.html"
+>
 </my-dag-plus>

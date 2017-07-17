@@ -117,13 +117,17 @@ export default class PipelineSummary extends Component {
     this.eventEmitter = ee(ee);
   }
   componentWillReceiveProps(nextProps) {
-    if (nextProps.totalRunsCount !== this.state.totalRunsCount) {
-      this.setState({
-        totalRunsCount: nextProps.totalRunsCount
-      });
+    if (nextProps.totalRunsCount === this.props.totalRunsCount) {
+      return;
     }
+    this.setState({
+      totalRunsCount: nextProps.totalRunsCount
+    });
   }
   componentWillUnmount() {
+    if (this.storeSubscription) {
+      this.storeSubscription();
+    }
     Mousetrap.unbind('esc');
   }
   componentDidMount() {

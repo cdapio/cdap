@@ -83,12 +83,6 @@ body.theme-cdap {
           }
         }
 
-        &.no-border-left {
-          .btn-container {
-            border-left: 0;
-          }
-        }
-
         &.margin-left {
           margin-left: 2px;
         }
@@ -512,6 +506,7 @@ body.theme-cdap {
           max-width: ~"calc(100% - 412px)";
           max-width: ~"-moz-calc(100% - 412px)";
           max-width: ~"-webkit-calc(100% - 412px)";
+          min-width: 200px;
 
           div.pipeline-type {
             line-height: 1;
@@ -549,66 +544,8 @@ body.theme-cdap {
             margin: 0;
           }
         }
-        .next-run,
-        .last-run,
-        .all-runs {
-          flex-grow: 0.1;
-          display: flex;
-          align-items: center;
-          padding: 0 6px;
-          .last-run-container,
-          .all-runs-container,
-          .next-runs-container {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-          }
-          .last-run-container {
-            .metric {
-              h5 { margin: 0; }
-              span.metric-value { font-size: 12px; }
-              &:first-child { margin-right: 10px; }
-            }
-          }
-        }
-        .app-status,
-        .last-run { background-color: #ebebeb; }
 
-        .app-status {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 3px 0 3px 3px;
-          padding-left: 5px;
-          border-right: 0;
-          &.status-green span { color: @brand-success; }
-          &.status-red span { color: @brand-danger; }
-          span { line-height: inherit; }
-          .metric-value { margin-right: 5px; }
-
-          span.status-bubble {
-            display: inline-block;
-            width: 13px;
-            height: 13px;
-            margin-right: 5px;
-            border-radius: 50%;
-            &.status-green { background-color: @brand-success; }
-            &.status-red { background-color: @brand-danger; }
-            &.status-grey { background-color: @cdap-gray; }
-
-            &.status-light-grey { background-color: @cdap-light-grey; }
-            &.status-light-green { background-color: @cdap-light-green; }
-            &.status-blue { background-color: @cdap-blue; }
-            &.status-outline-grey {
-              background-color: @cdap-white;
-              border: 3px solid @cdap-light-grey;
-              &.status-thin {
-                border: 2px solid @cdap-light-grey;
-              }
-            }
-            &.status-light-red { background-color: @cdap-light-red; }
-          }
-        }
+        
         .app-status-container {
           display: flex;
           min-width: 425px; // To accomadate the long datetime we show for pipeline run start time.
@@ -618,7 +555,6 @@ body.theme-cdap {
             width: 70px; // to accomadate Unscheduled. 0-0
           }
         }
-        .last-run { margin: 3px 3px 3px 0; }
       }
       div.btn {
         align-items: center;

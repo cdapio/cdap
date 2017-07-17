@@ -47,15 +47,13 @@ angular.module(PKG.name + '.feature.hydrator')
       return angular.copy(this.state.runs.list);
     };
     this.getLatestRun = function() {
-      return this.state.runs.list[0];
+      return this.state.runs.latest;
     };
     this.getLatestMetricRunId = function() {
-      var metricRunId;
       if (!this.state.runs.count) {
         return false;
       }
-      metricRunId = this.state.runs.list[0].runid;
-      return metricRunId;
+      return this.state.runs.latest.runid;
     };
     this.getAppType = function() {
       return this.state.type;
@@ -127,15 +125,25 @@ angular.module(PKG.name + '.feature.hydrator')
       });
     };
 
+    this.setCurrentRunID = function(runid) {
+      this.state.currentRunId = runid;
+    };
+
     this.setRunsState = function(runs) {
       if (!runs.length) {
         return;
       }
+      let currentRun = this.state.currentRunId;
+      if (currentRun) {
+        currentRun = runs.find(run => run.runid === currentRun);
+      }
+      if (!currentRun) {
+        currentRun = runs[0];
+      }
       this.state.runs = {
         list: runs,
         count: runs.length,
-        latest: runs[0],
-        runsCount: runs.length,
+        latest: currentRun,
         nextRunTime: this.state.runs.nextRunTime || null
       };
       this.state.logsParams.runId = this.state.runs.latest.runid;
@@ -182,7 +190,7 @@ angular.module(PKG.name + '.feature.hydrator')
         namespace: $state.params.namespace,
         appId: app.name
       };
-      switch(app.artifact.name) {
+      switch (app.artifact.name) {
         case GLOBALS.etlBatch:
         case GLOBALS.etlDataPipeline:
           angular.forEach(app.programs, function (program) {
@@ -232,6 +240,7 @@ angular.module(PKG.name + '.feature.hydrator')
     };
 
     dispatcher.register('onRunsChange', this.setRunsState.bind(this));
+    dispatcher.register('onCurrentRunID', this.setCurrentRunID.bind(this));
     dispatcher.register('onStatisticsFetch', this.setStatistics.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this, {}));
     dispatcher.register('onNextRunTime', this.setNextRunTime.bind(this));

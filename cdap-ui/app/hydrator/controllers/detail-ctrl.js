@@ -15,11 +15,15 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions) {
+  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions, $stateParams) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
     HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
 
+    let runid = $stateParams.runid;
+    if (runid) {
+      HydratorPlusPlusDetailActions.setCurrentRun(runid);
+    }
     var params = HydratorPlusPlusDetailRunsStore.getParams();
     params.scope = $scope;
     var currentRunId;
