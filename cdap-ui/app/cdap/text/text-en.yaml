@@ -487,6 +487,10 @@ features:
         inputLabel: Name New Column
         placeholder: Destination Column
         title: Copy Column
+      CustomTransform:
+        description: 'Type the custom expression to transform "{column}"'
+        placeholder: "E.g. math:sin({column}), empty(arg), {column}+<column>, etc."
+        title: Custom Transform
       CutDirective:
         cancelBtnLabel: Exit 'Extract' mode
         extractDescription: Extract characters *_{range}_* from this column to a new column

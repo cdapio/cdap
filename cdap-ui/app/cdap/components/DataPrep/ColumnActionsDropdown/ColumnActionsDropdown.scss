@@ -128,6 +128,10 @@ $action-item-disabled-color: lighten($action-item-font-color, 50%);
     .third-level-popover {
       @extend .second-level-popover;
     }
+
+    .icon-caret-right {
+      width: 5px;
+    }
   }
 }
 
