@@ -42,6 +42,7 @@ import MaskData from 'components/DataPrep/Directives/MaskData';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
 import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
+import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
 
 import ee from 'event-emitter';
 
@@ -96,6 +97,10 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: FilterDirective,
         requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: MarkAsError
       },
       {
         id: shortid.generate(),

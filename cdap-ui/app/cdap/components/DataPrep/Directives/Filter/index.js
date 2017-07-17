@@ -20,6 +20,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import MouseTrap from 'mousetrap';
 
 require('./FilterDirective.scss');
 
@@ -78,11 +79,24 @@ export default class FilterDirective extends Component {
 
 
   componentDidUpdate() {
+    if (this.props.isOpen) {
+      // This is not in componentDidMount as Mousetrap can bind to 'enter' only once.
+      // So the last .bind will get the callback always when all the directives are rendered in ColumnActionDropdown
+      // So we bind to enter key only when the directive is opened.
+      MouseTrap.bind('enter', this.applyDirective);
+    }
     if (this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0 && this.textFilterRef) {
       this.textFilterRef.focus();
     } else if (this.state.selectedCondition.substr(0, 6) === 'CUSTOM' && this.state.customFilter.length === 0 && this.customFilterRef) {
       this.customFilterRef.focus();
     }
+  }
+
+  componentWillUnmount() {
+    // We can safely unbind here as we just need to unbind the last bind
+    // The ugh.. part is we don't know what was last bound but we can unbind multiple
+    // times and it shouldn't affect anything.
+    MouseTrap.unbind('enter');
   }
 
   preventPropagation(e) {
@@ -323,7 +337,10 @@ export default class FilterDirective extends Component {
   }
 
   renderDetail() {
-    if (!this.props.isOpen) { return null; }
+    if (!this.props.isOpen) {
+      MouseTrap.unbind('enter');
+      return null;
+    }
 
     let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
 
