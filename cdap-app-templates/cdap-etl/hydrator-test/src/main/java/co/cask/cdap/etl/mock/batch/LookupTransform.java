@@ -72,24 +72,9 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
     if (lookedUpValue instanceof Result) {
       assert lookedUpValueBytes instanceof Result;
       assert Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow());
-      Schema check = lookup.getSchema();
-      Schema inSchema = Schema.recordOf(
-        "person",
-        Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
-      );
-      assert check.equals(inSchema);
     }
     if (lookedUpValue instanceof String) {
       assert Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes);
-      Schema check = lookup.getSchema();
-      Schema inSchema = Schema.recordOf(
-        "person",
-        Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
-        Schema.Field.of("age", Schema.of(Schema.Type.STRING))
-      );
-      assert check.equals(inSchema);
     }
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
@@ -107,7 +92,9 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
       throw new IllegalArgumentException("Unexpected value type: " + lookedUpValue.getClass());
     }
     Schema outSchema = Schema.recordOf(input.getSchema().getRecordName(), outFields);
-
+    if (lookup.getSchema() != null) {
+      assert lookup.getSchema().equals(outSchema);
+    }
     // copy all the values
     StructuredRecord.Builder outputBuilder = StructuredRecord.builder(outSchema);
     for (Schema.Field inField : input.getSchema().getFields()) {

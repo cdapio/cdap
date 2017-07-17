@@ -1841,12 +1841,12 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testKVTableLookup() throws Exception {
-    Schema inSchema = Schema.recordOf(
+    Schema outSchema = Schema.recordOf(
       "person",
       Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("age", Schema.of(Schema.Type.STRING))
     );
-    DatasetProperties datasetProperties = TableProperties.builder().setSchema(inSchema).build();
+    DatasetProperties datasetProperties = TableProperties.builder().setSchema(outSchema).build();
     addDatasetInstance(KeyValueTable.class.getName(), "ageTable", datasetProperties);
     DataSetManager<KeyValueTable> lookupTable = getDataset("ageTable");
     lookupTable.get().write("samuel".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
@@ -1946,13 +1946,13 @@ public class DataPipelineTest extends HydratorTestBase {
 
   @Test
   public void testTableLookup() throws Exception {
-    Schema inSchema = Schema.recordOf(
+    Schema outSchema = Schema.recordOf(
       "person",
       Schema.Field.of("person", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
     );
-    DatasetProperties datasetProperties = TableProperties.builder().setSchema(inSchema).build();
+    DatasetProperties datasetProperties = TableProperties.builder().setSchema(outSchema).build();
     addDatasetInstance(Table.class.getName(), "personTable", datasetProperties);
     DataSetManager<Table> lookupTableManager = getDataset("personTable");
     Table lookupTable = lookupTableManager.get();
