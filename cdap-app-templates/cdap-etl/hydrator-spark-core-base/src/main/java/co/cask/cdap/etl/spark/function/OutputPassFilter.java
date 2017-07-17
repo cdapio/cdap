@@ -16,20 +16,31 @@
 
 package co.cask.cdap.etl.spark.function;
 
-import scala.Tuple2;
+import co.cask.cdap.etl.common.RecordInfo;
 
 import java.util.Collections;
+import java.util.Objects;
 
 /**
- * Filters a SparkCollection containing both output and errors to one that just contains output.
+ * Filters a SparkCollection containing both output and errors to one that just contains output from a specific port.
  *
  * @param <T> type of output record
  */
-public class ErrorFilter<T> implements FlatMapFunc<Tuple2<Boolean, Object>, T> {
+public class OutputPassFilter<T> implements FlatMapFunc<RecordInfo<Object>, T> {
+  private final String port;
+
+  public OutputPassFilter() {
+    this(null);
+  }
+
+  public OutputPassFilter(String port) {
+    this.port = port;
+  }
 
   @Override
-  public Iterable<T> call(Tuple2<Boolean, Object> input) throws Exception {
+  public Iterable<T> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
-    return input._1() ? Collections.<T>emptyList() : Collections.singletonList((T) input._2());
+    return !input.isError() && Objects.equals(port, input.getFromPort()) ?
+      Collections.singletonList((T) input.getValue()) : Collections.<T>emptyList();
   }
 }

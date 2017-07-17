@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,33 +16,35 @@
 
 package co.cask.cdap.etl.spark.function;
 
+import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.TrackedMultiOutputTransform;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.spark.CombinedEmitter;
 
 /**
- * Function that uses a Transform to perform a flatmap.
+ * Function that uses a MultiOutputTransform to perform a flatmap.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  *
  * @param <T> type of input object
  */
-public class TransformFunction<T> implements FlatMapFunc<T, RecordInfo<Object>> {
+public class MultiOutputTransformFunction<T> implements FlatMapFunc<T, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<T, Object> transform;
+  private transient TrackedMultiOutputTransform<T, Object> transform;
   private transient CombinedEmitter<Object> emitter;
 
-  public TransformFunction(PluginFunctionContext pluginFunctionContext) {
+  public MultiOutputTransformFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(T input) throws Exception {
     if (transform == null) {
-      Transform<T, Object> plugin = pluginFunctionContext.createPlugin();
+      SplitterTransform<T, Object> plugin = pluginFunctionContext.createPlugin();
       plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
-      transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+      transform = new TrackedMultiOutputTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
+                                                    pluginFunctionContext.getDataTracer());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();

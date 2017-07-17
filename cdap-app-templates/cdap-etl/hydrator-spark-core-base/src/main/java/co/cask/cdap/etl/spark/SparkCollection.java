@@ -19,6 +19,7 @@ package co.cask.cdap.etl.spark;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -44,11 +45,13 @@ public interface SparkCollection<T> {
 
   SparkCollection<T> union(SparkCollection<T> other);
 
-  SparkCollection<Tuple2<Boolean, Object>> transform(StageSpec stageSpec);
+  SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec);
+
+  SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec);
 
   <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function);
 
-  SparkCollection<Tuple2<Boolean, Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions);
+  SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions);
 
   <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function);
 

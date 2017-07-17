@@ -2016,6 +2016,7 @@ public class DataPipelineTest extends HydratorTestBase {
   @Test
   public void testSplitterToConnector() throws Exception {
     testSplitterToConnector(Engine.MAPREDUCE);
+    testSplitterToConnector(Engine.SPARK);
   }
 
   private void testSplitterToConnector(Engine engine) throws Exception {

@@ -19,6 +19,7 @@ package co.cask.cdap.etl.spark.function;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.preview.LimitingTransform;
 import co.cask.cdap.etl.spark.CombinedEmitter;
@@ -28,7 +29,7 @@ import scala.Tuple2;
  * Function that uses a BatchSource to transform a pair of objects into a single object.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
-public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, Tuple2<Boolean, Object>> {
+public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private final int numOfRecordsPreview;
   private transient Transformation<KeyValue<Object, Object>, Object> transform;
@@ -40,7 +41,7 @@ public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, 
   }
 
   @Override
-  public Iterable<Tuple2<Boolean, Object>> call(Tuple2<Object, Object> input) throws Exception {
+  public Iterable<RecordInfo<Object>> call(Tuple2<Object, Object> input) throws Exception {
     if (transform == null) {
       BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createPlugin();
       batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());

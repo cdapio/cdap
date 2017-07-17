@@ -16,18 +16,23 @@
 
 package co.cask.cdap.etl.spark.streaming.function;
 
+import co.cask.cdap.etl.common.RecordInfo;
 import org.apache.spark.api.java.function.Function;
-import scala.Tuple2;
 
 /**
- * Simply wraps all elements into a Tuple2 whose first element is false, indicating everything is output and nothing
- * is an error.
+ * Simply wraps all elements into a non-error, non-port RecordInfo.
  *
  * @param <T> the type of output object
  */
-public class WrapOutputTransformFunction<T> implements Function<T, Tuple2<Boolean, T>> {
+public class WrapOutputTransformFunction<T> implements Function<T, RecordInfo<T>> {
+  private final String stageName;
+
+  public WrapOutputTransformFunction(String stageName) {
+    this.stageName = stageName;
+  }
+
   @Override
-  public Tuple2<Boolean, T> call(T inputRecord) throws Exception {
-    return new Tuple2<>(false, inputRecord);
+  public RecordInfo<T> call(T inputRecord) throws Exception {
+    return RecordInfo.builder(inputRecord, stageName).build();
   }
 }

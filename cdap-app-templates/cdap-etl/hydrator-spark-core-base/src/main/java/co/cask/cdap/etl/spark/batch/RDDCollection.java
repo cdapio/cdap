@@ -22,6 +22,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -29,6 +30,7 @@ import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
 import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.CountingFunction;
 import co.cask.cdap.etl.spark.function.FlatMapFunc;
+import co.cask.cdap.etl.spark.function.MultiOutputTransformFunction;
 import co.cask.cdap.etl.spark.function.PairFlatMapFunc;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
@@ -82,10 +84,15 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> transform(StageSpec stageSpec) {
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
-    return wrap(rdd.flatMap(Compat.convert(
-      new TransformFunction<T, Tuple2<Boolean, Object>>(pluginFunctionContext))));
+    return wrap(rdd.flatMap(Compat.convert(new TransformFunction<T>(pluginFunctionContext))));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+    return wrap(rdd.flatMap(Compat.convert(new MultiOutputTransformFunction<T>(pluginFunctionContext))));
   }
 
   @Override
@@ -94,7 +101,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(pluginFunctionContext);
     PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
@@ -104,9 +111,9 @@ public class RDDCollection<T> implements SparkCollection<T> {
     JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null ?
       keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
 
-    FlatMapFunc<Tuple2<Object, Iterable<T>>, Tuple2<Boolean, Object>> aggregateFunction =
+    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
       new AggregatorAggregateFunction<>(pluginFunctionContext);
-    FlatMapFunction<Tuple2<Object, Iterable<T>>, Tuple2<Boolean, Object>> sparkAggregateFunction =
+    FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
       Compat.convert(aggregateFunction);
 
     return wrap(groupedCollection.flatMap(sparkAggregateFunction));

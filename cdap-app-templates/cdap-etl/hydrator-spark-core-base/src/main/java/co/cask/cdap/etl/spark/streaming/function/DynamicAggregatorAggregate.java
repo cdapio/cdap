@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.streaming.function;
 
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -35,16 +36,16 @@ import scala.Tuple2;
  * @param <OUT> type of output object
  */
 public class DynamicAggregatorAggregate<GROUP_KEY, GROUP_VAL, OUT>
-  implements Function2<JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>>, Time, JavaRDD<Tuple2<Boolean, Object>>> {
+  implements Function2<JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>>, Time, JavaRDD<RecordInfo<Object>>> {
   private final DynamicDriverContext dynamicDriverContext;
-  private transient FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, Tuple2<Boolean, Object>> function;
+  private transient FlatMapFunction<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, RecordInfo<Object>> function;
 
   public DynamicAggregatorAggregate(DynamicDriverContext dynamicDriverContext) {
     this.dynamicDriverContext = dynamicDriverContext;
   }
 
   @Override
-  public JavaRDD<Tuple2<Boolean, Object>> call(JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>> input,
+  public JavaRDD<RecordInfo<Object>> call(JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>> input,
                                                Time batchTime) throws Exception {
     if (function == null) {
       function = Compat.convert(

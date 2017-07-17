@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spark.Compat;
@@ -74,7 +75,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageSpec stageSpec) {
+  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
