@@ -373,7 +373,12 @@ features:
       noDirectives: No Directives
       noColumns: No Columns
     DataPrepTable:
-      columnEditWarningMessage: 'A column with the same name already exists. Pick a new name, or click "Apply" to overwrite'
+      copyToNewColumn:
+        inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputLabel: Name New Column
+        inputPlaceholder: Destination Column
+        inputSuffix: _copy
+        label: Copy to a new column
       dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
       emptyWorkspace: No data
       refreshBtnLinkLabel: Refresh
@@ -417,16 +422,9 @@ features:
       Calculate:
         columnTypeLabel:
           numeric: Numeric
-          string: String
-        copyToNewColumn: Copy to a new column
         destinationColumnInputLabel: Name Destination Column
-        destinationColumnInputPlaceholder: Destination column name
-        disabledTooltip: "Calculate directives can only be executed on columns of type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        disabledTooltip: "Calculate directives can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
-        newColumnInputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
-        newColumnInputLabel: Name New Column
-        newColumnInputPlaceholder: New column name
-        newColumnInputSuffix: _copy
         Options:
           POWEROF:
             description: "Raise the column value to the power of:"
@@ -482,11 +480,11 @@ features:
           replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
           withLabel: With
       Copy:
-        copySuffix: _copy
-        duplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
-        inputLabel: Name New Column
-        placeholder: Destination Column
         title: Copy Column
+      CustomTransform:
+        description: 'Type the custom expression to transform "{column}"'
+        placeholder: "E.g. math:sin({column}), empty(arg), {column}+<column>, etc."
+        title: Custom Transform
       CutDirective:
         cancelBtnLabel: Exit 'Extract' mode
         extractDescription: Extract characters *_{range}_* from this column to a new column
@@ -587,15 +585,30 @@ features:
         replaceWith: Replace with
         title: Find and Replace
       Format:
+        disabledTooltip: "Format directives can only be executed on columns of type 'string' or 'date'"
         Formats:
-          TO_DATE_TIME:
+          CONCATENATE:
+            addDescription: of the content of each row
+            addLabel: Add
+            addOptions:
+              BEGINNING: at the beginning
+              END: at the end
+            inputPlaceholder: Enter String
+            label: Concatenate
+          DATE_TIME:
             label: Date and Time
-          TO_UPPERCASE:
-            label: To UPPERCASE
-          TO_LOWERCASE:
-            label: To lowercase
-          TO_TITLECASE:
-            label: To TitleCase
+          LOWERCASE:
+            label: lowercase
+          TITLECASE:
+            label: TitleCase
+          TRIM_LEADING_WHITESPACE:
+            label: Trim Leading Whitespace
+          TRIM_TRAILING_WHITESPACE:
+            label: Trim Trailing Whitespace
+          TRIM_WHITESPACE:
+            label: Trim Whitespace
+          UPPERCASE:
+            label: UPPERCASE
         title: Format
       Keep:
        title:
@@ -782,7 +795,7 @@ features:
             placeholder: Enter depth
         title: Parse
       SetCharEncoding:
-        disabledTooltip: Character encoding can only be set on columns of type byte array
+        disabledTooltip: Character encoding can only be set on columns of data type 'bytes'
         iso88591: ISO-8859-1
         title: Set Character Encoding
         usascii: US-ASCII

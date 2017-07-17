@@ -44,6 +44,7 @@ import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
 import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
 import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
+import CustomTransform from 'components/DataPrep/Directives/CustomTransform';
 
 import ee from 'event-emitter';
 
@@ -98,6 +99,13 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Calculate,
         requiredColCount: 1
+      },
+      {
+        tag: CustomTransform,
+        requiredColCount: 1
+      },
+      {
+        tag: 'divider'
       },
       {
         id: shortid.generate(),

@@ -60,7 +60,7 @@ $col_type_font_color: gray;
             &:first-child {
               background: $header-bg-color;
             }
-            white-space: nowrap;
+            white-space: pre;
           }
         }
       }
