@@ -69,6 +69,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,31 +158,30 @@ abstract class ExploreHttpClient implements Explore {
 
   protected QueryHandle doAddPartition(DatasetId datasetInstance, DatasetSpecification spec,
                                        PartitionKey key, String path) throws ExploreException {
-    Map<String, String> args = new HashMap<>();
-    PartitionedFileSetArguments.setOutputPartitionKey(args, key);
-    args.put("path", path);
-    String tableName = ExploreProperties.getExploreTableName(spec.getProperties());
-    String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
-    if (tableName != null) {
-      args.put(ExploreProperties.PROPERTY_EXPLORE_TABLE_NAME, tableName);
-    }
-    if (databaseName != null) {
-      args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
-    }
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/partitions",
-                                                 datasetInstance.getNamespace(), datasetInstance.getDataset()),
-                                   GSON.toJson(args), null);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
-      return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
-    }
-    throw new ExploreException(String.format("Cannot add partition with key %s to dataset %s. Reason: %s",
-                                             key, datasetInstance.toString(), response));
+    return doPartitionOperation(datasetInstance, spec, key, "partitions", "add",
+                                Collections.singletonMap("path", path));
   }
 
   protected QueryHandle doDropPartition(DatasetId datasetInstance, DatasetSpecification spec, PartitionKey key)
     throws ExploreException {
+    return doPartitionOperation(datasetInstance, spec, key, "deletePartition", "drop");
+  }
 
-    Map<String, String> args = new HashMap<>();
+  protected QueryHandle doConcatenatePartition(DatasetId datasetInstance, DatasetSpecification spec, PartitionKey key)
+    throws ExploreException {
+    return doPartitionOperation(datasetInstance, spec, key, "concatenatePartition", "concatenate");
+  }
+
+  private QueryHandle doPartitionOperation(DatasetId datasetId, DatasetSpecification spec, PartitionKey key,
+                                           String endpoint, String operationName) throws ExploreException {
+    return doPartitionOperation(datasetId, spec, key, endpoint, operationName, Collections.<String, String>emptyMap());
+  }
+
+  private QueryHandle doPartitionOperation(DatasetId datasetId, DatasetSpecification spec, PartitionKey key,
+                                           String endpoint, String operationName,
+                                           Map<String, String> additionalArguments) throws ExploreException {
+
+    Map<String, String> args = new HashMap<>(additionalArguments);
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     String tableName = ExploreProperties.getExploreTableName(spec.getProperties());
     String databaseName = ExploreProperties.getExploreDatabaseName(spec.getProperties());
@@ -191,14 +191,14 @@ abstract class ExploreHttpClient implements Explore {
     if (databaseName != null) {
       args.put(ExploreProperties.PROPERTY_EXPLORE_DATABASE_NAME, databaseName);
     }
-    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
-                                                 datasetInstance.getNamespace(), datasetInstance.getEntityName()),
+    HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/%s",
+                                                 datasetId.getNamespace(), datasetId.getEntityName(), endpoint),
                                    GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
-    throw new ExploreException(String.format("Cannot drop partition with key %s from dataset %s. Reason: %s",
-                                             key, datasetInstance.toString(), response));
+    throw new ExploreException(String.format("Cannot %s partition with key %s in dataset %s. Reason: %s",
+                                             operationName, key, datasetId.toString(), response));
   }
 
   protected QueryHandle doUpdateExploreDataset(DatasetId datasetInstance,

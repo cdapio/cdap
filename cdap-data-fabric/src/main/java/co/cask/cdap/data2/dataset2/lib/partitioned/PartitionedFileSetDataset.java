@@ -64,6 +64,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provider;
@@ -85,6 +87,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -126,6 +129,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   protected final IndexedTable partitionsTable;
   protected final DatasetSpecification spec;
   protected final boolean isExternal;
+  private final boolean exploreEnabled;
   protected final Map<String, String> runtimeArguments;
   protected final Provider<ExploreFacade> exploreFacadeProvider;
   protected final Partitioning partitioning;
@@ -153,6 +157,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     this.partitionsTable = partitionTable;
     this.spec = spec;
     this.isExternal = FileSetProperties.isDataExternal(spec.getProperties());
+    this.exploreEnabled = FileSetProperties.isExploreEnabled(spec.getProperties());
     this.runtimeArguments = arguments;
     this.partitioning = partitioning;
     this.exploreFacadeProvider = exploreFacadeProvider;
@@ -511,7 +516,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @VisibleForTesting
   public void addPartitionToExplore(PartitionKey key, String path) {
-    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+    if (exploreEnabled) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
@@ -559,8 +564,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
   }
 
-  protected void dropPartitionFromExplore(PartitionKey key) {
-    if (FileSetProperties.isExploreEnabled(spec.getProperties())) {
+  private void dropPartitionFromExplore(PartitionKey key) {
+    if (exploreEnabled) {
       ExploreFacade exploreFacade = exploreFacadeProvider.get();
       if (exploreFacade != null) {
         try {
@@ -570,6 +575,25 @@ public class PartitionedFileSetDataset extends AbstractDataset
             "Unable to drop partition for key %s from explore table.", key.toString()), e);
         }
       }
+    }
+  }
+
+  @ReadWrite
+  @Override
+  public Future<Void> concatenatePartition(PartitionKey key) {
+    PartitionDetail partition = getPartition(key);
+    if (partition == null) {
+      throw new PartitionNotFoundException(key, getName());
+    }
+    try {
+      if (exploreEnabled) {
+        return exploreFacadeProvider.get().concatenatePartition(datasetInstanceId, spec, key);
+      } else {
+        return Futures.immediateFuture(null);
+      }
+    } catch (Exception e) {
+      throw new DataSetException(String.format(
+        "Unable to concatenate partition for key %s from explore table.", key.toString()), e);
     }
   }
 
