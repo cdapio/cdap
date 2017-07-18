@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -165,6 +166,11 @@ public class ConfiguratorTest {
       Assert.assertTrue(specification.getStreams().containsKey(ConfigTestApp.DEFAULT_STREAM));
       Assert.assertTrue(specification.getDatasets().size() == 1);
       Assert.assertTrue(specification.getDatasets().containsKey(ConfigTestApp.DEFAULT_TABLE));
+      Assert.assertNotNull(specification.getProgramSchedules().get(ConfigTestApp.SCHEDULE_NAME));
+
+      ProgramStatusTrigger trigger = (ProgramStatusTrigger) specification.getProgramSchedules()
+                                                                         .get(ConfigTestApp.SCHEDULE_NAME).getTrigger();
+      Assert.assertEquals(trigger.getProgramId().getProgram(), ConfigTestApp.WORKFLOW_NAME);
     }
   }
 }

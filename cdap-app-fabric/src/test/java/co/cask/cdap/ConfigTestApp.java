@@ -17,9 +17,11 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -31,6 +33,7 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.worker.AbstractWorker;
+import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
@@ -48,7 +51,9 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
   private static final Logger LOG = LoggerFactory.getLogger(ConfigTestApp.class);
 
   public static final String NAME = ConfigTestApp.class.getSimpleName();
+  public static final String SCHEDULE_NAME = "scheduleName";
   public static final String FLOW_NAME = "simpleFlow";
+  public static final String WORKFLOW_NAME = "defaultWorkflow";
   public static final String FLOWLET_NAME = "simpleFlowlet";
   public static final String SERVICE_NAME = "simpleService";
   public static final String DEFAULT_RESPONSE = "defaultResponse";
@@ -99,6 +104,9 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     addWorker(new DefaultWorker(configObj.streamName));
     addFlow(new SimpleFlow(configObj.streamName, configObj.tableName));
     addService(SERVICE_NAME, new SimpleHandler(configObj.getServiceResponse()));
+    addWorkflow(new DefaultWorkflow());
+    schedule(buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, WORKFLOW_NAME)
+              .triggerOnProgramStatus(ProgramType.WORKFLOW, WORKFLOW_NAME, ProgramStatus.FAILED));
   }
 
   public static class SimpleHandler extends AbstractHttpServiceHandler {
@@ -197,6 +205,13 @@ public class ConfigTestApp extends AbstractApplication<ConfigTestApp.ConfigClass
     @Override
     public void stop() {
       stopped = true;
+    }
+  }
+
+  private static class DefaultWorkflow extends AbstractWorkflow {
+    @Override
+    protected void configure() {
+      setName(WORKFLOW_NAME);
     }
   }
 }
