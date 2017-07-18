@@ -17,6 +17,16 @@
 .parse-directive.action-item {
   .parse-detail.second-level-popover { padding: 0; }
 
+  .third-level-popover {
+    .create-new-column-line {
+      cursor: pointer;
+
+      .create-new-column-label {
+        font-size: 1rem;
+      }
+    }
+  }
+
   .parse-options {
     .option {
       padding: 5px 10px;

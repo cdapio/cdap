@@ -29,16 +29,9 @@ require('./CustomTransform.scss');
 const PREFIX = 'features.DataPrep.Directives.CustomTransform';
 
 export default class CustomTransform extends Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      input: ''
-    };
-
-    this.handleInputChange = this.handleInputChange.bind(this);
-    this.applyDirective = this.applyDirective.bind(this);
-  }
+  state = {
+    input: ''
+  };
 
   componentDidMount() {
     Mousetrap.bind('enter', this.applyDirective);
@@ -48,11 +41,11 @@ export default class CustomTransform extends Component {
     Mousetrap.unbind('enter');
   }
 
-  handleInputChange(e) {
+  handleInputChange = (e) => {
     this.setState({input: e.target.value});
   }
 
-  applyDirective() {
+  applyDirective = () => {
     if (this.state.input.length === 0) { return; }
 
     let directive = `set-column ${this.props.column} ${this.state.input}`;

@@ -258,7 +258,7 @@ export default class DataPrepTable extends Component {
                             {
                               head.showWarning ?
                                 <WarningContainer
-                                  message={T.translate('features.DataPrep.DataPrepTable.columnEditWarningMessage')}
+                                  message={T.translate('features.DataPrep.DataPrepTable.copyToNewColumn.inputDuplicate')}
                                 >
                                   <div className="warning-btns-container">
                                     <div

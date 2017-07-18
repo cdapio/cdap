@@ -22,7 +22,9 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import WarningContainer from 'components/WarningContainer';
 import {columnNameAlreadyExists} from 'components/DataPrep/helper';
+
 const PREFIX = 'features.DataPrep.Directives.Copy';
+const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn';
 
 export default class CopyColumnDirective extends Component {
   constructor(props) {
@@ -90,7 +92,7 @@ export default class CopyColumnDirective extends Component {
         className="copy-column-detail second-level-popover"
         onClick={this.preventPropagation}
       >
-        <h5>{T.translate(`${PREFIX}.inputLabel`)}</h5>
+        <h5>{T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputLabel`)}</h5>
 
         <div className="input">
           <input
@@ -99,7 +101,7 @@ export default class CopyColumnDirective extends Component {
             value={this.state.input}
             onChange={this.handleInputChange}
             onKeyPress={this.handleKeyPress}
-            placeholder={T.translate(`${PREFIX}.placeholder`)}
+            placeholder={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputPlaceholder`)}
             ref={ref => this.inputBox = ref}
           />
         </div>
@@ -107,7 +109,7 @@ export default class CopyColumnDirective extends Component {
         {
           columnNameAlreadyExists(this.state.input) ? (
             <WarningContainer
-              message={T.translate(`${PREFIX}.duplicate`)}
+              message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)}
             />
           ) : null
         }
