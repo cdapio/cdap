@@ -40,13 +40,3 @@ These plugins work with:
     
     *streamingsource*
 
-These plugins work with:
-
-  - *Realtime Pipeline* (``cdap-etl-realtime`` artifact, deprecated as of CDAP 3.5.0)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    *realtime*
-
