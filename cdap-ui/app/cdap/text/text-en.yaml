@@ -374,11 +374,11 @@ features:
       noColumns: No Columns
     DataPrepTable:
       copyToNewColumn:
-        label: Copy to a new column
+        inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
         inputLabel: Name New Column
         inputPlaceholder: Destination Column
-        inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
         inputSuffix: _copy
+        label: Copy to a new column
       dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
       emptyWorkspace: No data
       refreshBtnLinkLabel: Refresh
@@ -588,11 +588,11 @@ features:
         disabledTooltip: "Format directives can only be executed on columns of type 'string' or 'date'"
         Formats:
           CONCATENATE:
+            addDescription: of the content of each row
             addLabel: Add
             addOptions:
               BEGINNING: at the beginning
               END: at the end
-            addDescription: of the content of each row
             inputPlaceholder: Enter String
             label: Concatenate
           DATE_TIME:
