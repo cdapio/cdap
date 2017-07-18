@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015-2017 Cask Data, Inc.
 
-.. _plugins:
+.. _user-guide-plugins:
 
 =======
 Plugins
@@ -13,7 +13,7 @@ Plugins
 A *Plugin* is a Java class that extends an application class by implementing an interface expected by the
 application class. *Plugins* can be packaged in a separate artifact from the application class that uses it.
 
-.. _plugins-usage:
+.. _user-guide-plugins-usage:
 
 Plugin Usage
 ============
@@ -61,7 +61,7 @@ Once registered, the plugin can be instantiated and used at runtime using the pl
     }
   }
 
-.. _plugins-config:
+.. _user-guide-plugins-config:
 
 Plugin Config
 =============
@@ -114,7 +114,7 @@ specified when the *Plugin* was registered. In this example, if we want the mess
 - The ``@Macro`` annotation makes the field ``message`` *macro-enabled*; this allows the value of
   the field ``message`` to be a "macro key" whose value will be set at runtime.
 
-.. _plugins-third-party:
+.. _user-guide-plugins-third-party:
 
 .. highlight:: console
 
@@ -161,12 +161,12 @@ where ``config.json`` contains:
     }
 
 
-.. _plugins-deployment:
+.. _user-guide-plugins-deployment:
 
 Plugin Deployment
 =================
 
-.. _plugins-deployment-artifact:
+.. _user-guide-plugins-deployment-artifact:
 
 To make plugins available to another artifact (and thus available to any application
 created from one of the artifacts), the plugins must first be packaged in a JAR file.
@@ -179,7 +179,7 @@ artifact just requires access to the :ref:`Artifact HTTP RESTful API <http-restf
 while deploying as a system artifact requires access to the filesystem of the CDAP Master.
 This then requires administrator access and permission.
 
-.. _plugins-deployment-packaging:
+.. _user-guide-plugins-deployment-packaging:
 
 Plugin Packaging
 ----------------
@@ -211,7 +211,7 @@ packages, you would edit the bundler plugin in your pom.xml:
   </plugin>
 
 
-.. _plugins-deployment-system:
+.. _user-guide-plugins-deployment-system:
 
 Deploying as a System Artifact
 ------------------------------
@@ -283,7 +283,7 @@ snapshot artifacts can be re-deployed without requiring that they first be delet
 Alternatively, the CDAP Sandbox should be restarted for this change to take effect in local sandbox
 mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
-.. _plugins-deployment-user:
+.. _user-guide-plugins-deployment-user:
 
 Deploying as a User Artifact
 ----------------------------
@@ -369,7 +369,7 @@ where ``config.json`` contains:
       ]
     }
 
-.. _plugins-deployment-verification:
+.. _user-guide-plugins-deployment-verification:
 
 Deployment Verification
 -----------------------
@@ -412,7 +412,7 @@ the scope here refers to the scope of the parent artifact. In this example it is
 scope because ``cdap-data-pipeline`` is a system artifact. This is true even if you deployed
 ``custom-transforms`` as a user artifact because the parent is still a system artifact.
 
-.. _plugins-use-case:
+.. _user-guide-plugins-use-case:
 
 Example Use Case
 ================

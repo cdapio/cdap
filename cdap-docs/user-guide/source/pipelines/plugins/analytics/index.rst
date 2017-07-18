@@ -19,4 +19,4 @@ These plugins work with:
     :maxdepth: 1
     :glob:
 
-    **
+    *

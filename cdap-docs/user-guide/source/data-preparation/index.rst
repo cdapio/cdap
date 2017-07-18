@@ -17,8 +17,8 @@ Data Preparation Documentation
 	Directives <directives/index>
 	Functions <functions/index>
 	Service <service/index>
-    Performance <peformance>
-    Exclusion and Aliasing <exclusion-and-aliasing>
+  Performance <performance>
+  Exclusion and Aliasing <exclusion-and-aliasing>
 
 Data Preparation is an application that allows you to view, explore, and transform a small subset of your data (100 rows) before running your logic on the entire dataset (using a MapReduce or Spark job in Pipelines). This means you can quickly apply transformations to gain an understanding of how they will affect the entire dataset.
 

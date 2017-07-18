@@ -28,6 +28,6 @@ This table lists the methods available in ``CoreValidator`` that can be called f
 
 .. Imports functions found in the file Validator-transform.md
 
-.. include:: /../target/_includes/plugins/_includes/validator-extract.txt
+.. include:: ../_includes/validator-extract.txt
 
 CDAP Pipelines Version |cdap-pipelines-version|

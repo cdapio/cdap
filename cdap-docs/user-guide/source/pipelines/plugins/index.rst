@@ -21,6 +21,10 @@ Plugin Reference
     Shared Plugins <shared-plugins/index>
     Post-run Plugins <post-run-plugins/index>
 
+.. toctree::
+    :hidden:
+    
+    plugins
 
 These plugins (from CDAP Pipelines Version |cdap-pipelines-version|) are shipped with CDAP, both in the
 CDAP Sandbox and Distributed CDAP:

@@ -76,25 +76,25 @@ of the functions listed here:
 List of JSON Functions
 ----------------------
 
-+-------------+-------------------------------------------+--------------------+
-| Function    | Description                               | Example            |
-+=============+===========================================+====================+
-| ``array_joi | Joins all the elements in an array with a | ``set-column alias |
-| n(aliases,  | string separator. Returns the array       | _list json:array_j |
-| separator)` | unmodified if an object. Handles nulls.   | oin(aliases, ",")` |
-| `           |                                           | `                  |
-+-------------+-------------------------------------------+--------------------+
-| ``array_sum | Computes sum of the elements. Skips       | ``set-column sum j |
-| (numbers)`` | ``null`` values. Returns ``0`` if any     | son:array_sum(numb |
-|             | elements that are not summable are found. | ers)``             |
-+-------------+-------------------------------------------+--------------------+
-| ``array_max | Finds the maximum of the elements. Skips  | ``set-column max j |
-| (numbers)`` | ``null`` values. Returns                  | son:array_max(numb |
-|             | ``0x0.0000000000001P-1022`` if any issues | ers)``             |
-|             | with an element.                          |                    |
-+-------------+-------------------------------------------+--------------------+
-| ``array_min | Finds the minimum of the elements. Skips  | ``set-column min j |
-| (numbers)`` | ``null`` values. Returns                  | son:array_min(numb |
-|             | ``0x1.fffffffffffffP+1023`` if any issues | ers)``             |
-|             | with an element.                          |                    |
-+-------------+-------------------------------------------+--------------------+
++--------------+-------------------------------------------+---------------------+
+| Function     | Description                               | Example             |
++==============+===========================================+=====================+
+| ``array_join | Joins all the elements in an array with a | ``set-column alias  |
+| (aliases,    | string separator. Returns the array       | _list json:array_j  |
+| separator)`` | unmodified if an object. Handles nulls.   | oin(aliases, ",")`` |
+|              |                                           |                     |
++--------------+-------------------------------------------+---------------------+
+| ``array_sum  | Computes sum of the elements. Skips       | ``set-column sum j  |
+| (numbers)``  | ``null`` values. Returns ``0`` if any     | son:array_sum(numb  |
+|              | elements that are not summable are found. | ers)``              |
++--------------+-------------------------------------------+---------------------+
+| ``array_max  | Finds the maximum of the elements. Skips  | ``set-column max j  |
+| (numbers)``  | ``null`` values. Returns                  | son:array_max(numb  |
+|              | ``0x0.0000000000001P-1022`` if any issues | ers)``              |
+|              | with an element.                          |                     |
++--------------+-------------------------------------------+---------------------+
+| ``array_min  | Finds the minimum of the elements. Skips  | ``set-column min j  |
+| (numbers)``  | ``null`` values. Returns                  | son:array_min(numb  |
+|              | ``0x1.fffffffffffffP+1023`` if any issues | ers)``              |
+|              | with an element.                          |                     |
++--------------+-------------------------------------------+---------------------+

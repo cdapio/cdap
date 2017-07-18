@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _cdap-studio:
+.. _user-guide-cdap-studio:
 
 ===========
 CDAP Studio

@@ -155,7 +155,7 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 # Mapping keys must be alpha-numeric only
 intersphinx_mapping_cdap_manuals = {
   'user':         ('../../user-guide/',          os.path.abspath(_intersphinx_mapping % 'user-guide')),
-  'developers':   ('../../developers-manual/',   os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'developer':    ('../../developer-manual/',    os.path.abspath(_intersphinx_mapping % 'developer-manual')),
   'admin':        ('../../admin-manual/',        os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',        os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',      os.path.abspath(_intersphinx_mapping % 'examples-manual')),

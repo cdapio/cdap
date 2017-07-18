@@ -12,7 +12,7 @@ CDAP provides two visual interfaces for working with data:
 
 - **Data Preparation** is an interactive UI that enables you to explore, cleanse, prepare, and transform your data using simple, point-and-click transformation directives. Learn more about :ref:`Data Preparation <data-prep-user-guide-index>`.
 
-- **Data Pipelines** allow to interactively build data pipelines by linking together data sources, transformations, and sinks. It also provides insights into logs, metrics and other management capabilities for pipelines that help to operationalize data processing in production-ready, revenue-critical environments. Learn more about :ref:`Data Pipelines <pipelines-user-guide-index>`.
+- **Data Pipelines** allow to interactively build data pipelines by linking together data sources, transformations, and sinks. It also provides insights into logs, metrics and other management capabilities for pipelines that help to operationalize data processing in production-ready, revenue-critical environments. Learn more about :ref:`Data Pipelines <user-guide-pipelines-user-guide-index>`.
 
 More about CDAP
 ---------------

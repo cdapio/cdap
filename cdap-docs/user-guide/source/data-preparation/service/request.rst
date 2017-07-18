@@ -65,8 +65,8 @@ computed.
 | Field  | Mandat | Description                                                |
 |        | ory    |                                                            |
 +========+========+============================================================+
-| ``name | Yes    | Name of the workspace that Data Prep should operate on     |
-| ``     |        |                                                            |
+|``name``| Yes    | Name of the workspace that Data Prep should operate on     |
+|        |        |                                                            |
 +--------+--------+------------------------------------------------------------+
 | ``resu | Yes    | Number of records that should be returned in response to   |
 | lts``  |        | execution of the directives                                |
@@ -86,11 +86,11 @@ the directives as a recipe with a name.
 | ``direc | Yes   | List of directives to be applied on the data               |
 | tives`` |       |                                                            |
 +---------+-------+------------------------------------------------------------+
-| ``save` | No    | If ``true``, specifies that the directives should be       |
-| `       |       | saved. If so, then ``name`` should also be specified.      |
+| ``save``| No    | If ``true``, specifies that the directives should be       |
+|         |       | saved. If so, then ``name`` should also be specified.      |
 +---------+-------+------------------------------------------------------------+
-| ``name` | No    | Name of the recipe. This option is valid only when         |
-| `       |       | ``save`` is set to ``true``.                               |
+| ``name``| No    | Name of the recipe. This option is valid only when         |
+|         |       | ``save`` is set to ``true``.                               |
 +---------+-------+------------------------------------------------------------+
 
 Sampling

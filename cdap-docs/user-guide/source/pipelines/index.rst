@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016-2017 Cask Data, Inc.
 
-.. _pipelines-user-guide-index:
+.. _user-guide-pipelines-user-guide-index:
 
 :hide-toc: true
 
@@ -20,6 +20,11 @@ CDAP Pipelines
     Running Pipelines <running-pipelines>
     Plugin Management <plugin-management>
     Plugin Reference <plugins/index>
+
+.. toctree::
+    :hidden:
+    
+    plugins
 
 Data Pipelines allow you to ingest, transform, and load data, taking advantage of CDAP's ability to translate transformations and programmatic logic into parallelized computations using Spark and MapReduce. Data Pipelines help users to create complex data processing workflows (both batch and realtime) using an intuitive UI. By providing easy access to logs and metrics, pipelines also offer easy ways for administrators to operationalize their data processing workflows without the need for a lot of custom tooling.
 
