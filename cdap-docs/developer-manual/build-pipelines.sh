@@ -226,12 +226,8 @@ function pipelines_download_includes() {
 
   download_md_file cassandra-plugins Cassandra-batchsink.md
   download_md_file cassandra-plugins Cassandra-batchsource.md
-  download_md_file cassandra-plugins Cassandra-realtimesink.md
-  download_md_file core-plugins AmazonSQS-realtimesource.md
 #   download_md_file core-plugins AzureBlobStore-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
   download_md_file core-plugins Cube-batchsink.md
-  download_md_file core-plugins Cube-realtimesink.md
-  download_md_file core-plugins DataGenerator-realtimesource.md
   download_md_file core-plugins Deduplicate-batchaggregator.md '' "analytic"
   download_md_file core-plugins Distinct-batchaggregator.md '' "analytic"
   download_md_file core-plugins Email-postaction.md
@@ -242,7 +238,6 @@ function pipelines_download_includes() {
   download_md_file core-plugins HDFSDelete-action.md
   download_md_file core-plugins HDFSMove-action.md
   download_md_file core-plugins JavaScript-transform.md
-  download_md_file core-plugins JMS-realtimesource.md
   download_md_file core-plugins Joiner-batchjoiner.md '' "analytic"
   download_md_file core-plugins KVTable-batchsink.md
   download_md_file core-plugins KVTable-batchsource.md
@@ -259,17 +254,14 @@ function pipelines_download_includes() {
   download_md_file core-plugins SnapshotParquet-batchsource.md
   download_md_file core-plugins SSH-action.md
   download_md_file core-plugins Stream-batchsource.md
-  download_md_file core-plugins Stream-realtimesink.md
   download_md_file core-plugins StructuredRecordToGenericRecord-transform.md
   download_md_file core-plugins Table-batchsink.md
   download_md_file core-plugins Table-batchsource.md
-  download_md_file core-plugins Table-realtimesink.md
   download_md_file core-plugins TPFSAvro-batchsink.md
   download_md_file core-plugins TPFSAvro-batchsource.md
   download_md_file core-plugins TPFSOrc-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsink.md
   download_md_file core-plugins TPFSParquet-batchsource.md
-  download_md_file core-plugins Twitter-realtimesource.md
   download_md_file core-plugins Validator-transform.md
   download_md_file core-plugins Window-windower.md
   download_md_file core-plugins WindowsShareCopy-action.md
@@ -280,21 +272,15 @@ function pipelines_download_includes() {
   download_md_file database-plugins DatabaseQuery-postaction.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_file elasticsearch-plugins Elasticsearch-batchsource.md
-  download_md_file elasticsearch-plugins Elasticsearch-realtimesink.md
   download_md_file hbase-plugins HBase-batchsink.md
   download_md_file hbase-plugins HBase-batchsource.md
   download_md_file hdfs-plugins HDFS-batchsink.md
   download_md_file hive-plugins Hive-batchsink.md
   download_md_file hive-plugins Hive-batchsource.md
   download_md_file http-plugins HTTPCallback-postaction.md
-  download_md_file http-plugins HTTPPoller-realtimesource.md
-  download_md_file kafka-plugins Kafka-realtimesource.md
-  download_md_file kafka-plugins KafkaProducer-realtimesink.md
   download_md_file mongodb-plugins MongoDB-batchsink.md
   download_md_file mongodb-plugins MongoDB-batchsource.md
-  download_md_file mongodb-plugins MongoDB-realtimesink.md
   download_md_file solrsearch-plugins SolrSearch-batchsink.md
-  download_md_file solrsearch-plugins SolrSearch-realtimesink.md
   download_md_file spark-plugins Twitter-streamingsource.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md

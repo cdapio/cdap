@@ -24,29 +24,3 @@ These plugins work with:
     :glob:
 
     *batch*
-
-
-.. _cdap-pipelines-plugins-real-time-sources:
-
-**Real-time Plugins**
-
-These plugins work with:
-
-  - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    
-    *streamingsource*
-
-These plugins work with:
-
-  - *Realtime Pipeline* (``cdap-etl-realtime`` artifact, deprecated as of CDAP 3.5.0)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    *realtime*
-
