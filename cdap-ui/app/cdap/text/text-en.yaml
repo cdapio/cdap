@@ -378,6 +378,7 @@ features:
         inputLabel: Name New Column
         inputPlaceholder: Destination Column
         inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputSuffix: _copy
       dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
       emptyWorkspace: No data
       refreshBtnLinkLabel: Refresh
@@ -421,16 +422,9 @@ features:
       Calculate:
         columnTypeLabel:
           numeric: Numeric
-          string: String
-        copyToNewColumn: Copy to a new column
         destinationColumnInputLabel: Name Destination Column
-        destinationColumnInputPlaceholder: Destination column name
         disabledTooltip: "Calculate directives can only be executed on columns of type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
-        newColumnInputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
-        newColumnInputLabel: Name New Column
-        newColumnInputPlaceholder: New column name
-        newColumnInputSuffix: _copy
         Options:
           POWEROF:
             description: "Raise the column value to the power of:"
@@ -486,7 +480,6 @@ features:
           replaceWithPlaceholder: Leave empty to remove pattern, else add a replacement pattern
           withLabel: With
       Copy:
-        copySuffix: _copy
         title: Copy Column
       CustomTransform:
         description: 'Type the custom expression to transform "{column}"'

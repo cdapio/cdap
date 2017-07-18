@@ -31,7 +31,7 @@ export default class CopyColumnDirective extends Component {
     super(props);
 
     this.state = {
-      input: this.props.column + T.translate(`${PREFIX}.copySuffix`)
+      input: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`)
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);

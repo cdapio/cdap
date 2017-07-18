@@ -12,10 +12,9 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
 
 $option-hover-active-bg-color: #dddddd;
-$column-type-label-color: #b6babc;
 
 #calculate-directive {
   .second-level-popover { padding: 0; }
@@ -40,30 +39,12 @@ $column-type-label-color: #b6babc;
       }
     }
 
-    .create-new-column-line {
-      cursor: pointer;
-    }
-
     .bigger-new-column-label {
       font-size: 1rem;
     }
   }
 
   .calculate-options {
-    .calculate-options-label {
-      height: 11px;
-      width: 100%;
-      color: $column-type-label-color;
-      border-bottom: 1px solid currentColor;
-      clear: both;
-      padding-left: 20px;
-      margin-bottom: 10px;
-
-      > span {
-        background-color: white;
-        padding: 0 7px;
-      }
-    }
     .option {
       padding: 5px 10px;
       cursor: pointer;

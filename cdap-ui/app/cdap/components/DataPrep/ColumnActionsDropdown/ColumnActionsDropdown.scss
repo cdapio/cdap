@@ -143,6 +143,10 @@ $column-type-label-color: #b6babc;
 
     .third-level-popover {
       @extend .second-level-popover;
+
+      .create-new-column-line {
+        cursor: pointer;
+      }
     }
 
     .icon-caret-right {

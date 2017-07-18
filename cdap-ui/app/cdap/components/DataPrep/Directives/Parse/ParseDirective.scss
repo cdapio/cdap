@@ -12,18 +12,16 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
+*/
+
+$option-hover-active-bg-color: #dddddd;
 
 .parse-directive.action-item {
   .parse-detail.second-level-popover { padding: 0; }
 
   .third-level-popover {
-    .create-new-column-line {
-      cursor: pointer;
-
-      .create-new-column-label {
-        font-size: 1rem;
-      }
+    .concatenate-option-select {
+      margin-top: 10px;
     }
   }
 
@@ -34,8 +32,9 @@
       line-height: 1.5;
       font-size: 13px;
 
+      &.active,
       &:hover {
-        background-color: #dddddd;
+        background-color: $option-hover-active-bg-color;
       }
     }
   }

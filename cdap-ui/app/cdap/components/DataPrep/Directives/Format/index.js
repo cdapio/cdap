@@ -26,7 +26,7 @@ import {setPopoverOffset} from 'components/DataPrep/helper';
 import IconSVG from 'components/IconSVG';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 import WarningContainer from 'components/WarningContainer';
-import {preventPropagation, objectQuery} from 'services/helpers';
+import {preventPropagation} from 'services/helpers';
 import {columnNameAlreadyExists} from 'components/DataPrep/helper';
 import capitalize from 'lodash/capitalize';
 import Mousetrap from 'mousetrap';
@@ -36,17 +36,20 @@ const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn'
 const VALID_TYPES = ['string', 'date'];
 
 export default class Format extends Component {
-  columnType = objectQuery(DataPrepStore.getState(), 'dataprep', 'types', this.props.column);
+  columnType = DataPrepStore.getState().dataprep.types[this.props.column];
 
-  state = {
-    activeModal: null,
+  defaultFormatPopoverState = {
     formatPopoverOpen: null,
     formatInput: '',
-    isDisabled: VALID_TYPES.indexOf(this.columnType) === -1,
     createNewColumn: false,
-    newColumnInput: '',
+    newColumnInput: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`),
     defaultConcatenateOption: 'BEGINNING'
-  };
+  }
+
+  state = Object.assign({}, this.defaultFormatPopoverState, {
+    activeModal: null,
+    isDisabled: VALID_TYPES.indexOf(this.columnType) === -1
+  })
 
   applyDirective = (directive) => {
     if (this.isApplyDisabled()) {
@@ -72,17 +75,6 @@ export default class Format extends Component {
 
     this.setState({ formatPopoverOpen });
   };
-
-  CONCATENATE_OPTIONS = [
-    {
-      name: 'BEGINNING',
-      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.BEGINNING`)
-    },
-    {
-      name: 'END',
-      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.END`)
-    }
-  ];
 
   FORMAT_OPTIONS = [
     {
@@ -127,6 +119,17 @@ export default class Format extends Component {
     }
   ];
 
+  CONCATENATE_OPTIONS = [
+    {
+      name: 'BEGINNING',
+      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.BEGINNING`)
+    },
+    {
+      name: 'END',
+      label: T.translate(`${PREFIX}.Formats.CONCATENATE.addOptions.END`)
+    }
+  ];
+
   componentWillReceiveProps(nextProps) {
     if (!nextProps.isOpen) {
       this.setDefaultFormatPopoverState();
@@ -168,6 +171,12 @@ export default class Format extends Component {
     });
   }
 
+  setNewColumnInput = (e) => {
+    this.setState({
+      newColumnInput: e.target.value
+    });
+  }
+
   applyDateFormat = (name, format) => {
     let directive = `format-date ${this.props.column} ${format}`;
     this.applyDirective(directive);
@@ -186,13 +195,7 @@ export default class Format extends Component {
   };
 
   setDefaultFormatPopoverState = () => {
-    this.setState({
-      formatPopoverOpen: null,
-      formatInput: '',
-      createNewColumn: false,
-      newColumnInput: '',
-      defaultConcatenateOption: 'BEGINNING'
-    });
+    this.setState(this.defaultFormatPopoverState);
   };
 
   getConcatExpressionAndApply = () => {
@@ -202,9 +205,9 @@ export default class Format extends Component {
     }
     let expression;
     if (this.state.defaultConcatenateOption === 'BEGINNING') {
-      expression = `${this.state.formatInput} + ${this.props.column}`;
+      expression = `'${this.state.formatInput}' + ${this.props.column}`;
     } else {
-      expression = `${this.props.column} + ${this.state.formatInput}`;
+      expression = `${this.props.column} + '${this.state.formatInput}'`;
     }
     let directive = `set-column ${destinationColumn} ${expression}`;
 
@@ -212,8 +215,8 @@ export default class Format extends Component {
   };
 
   isApplyDisabled() {
-    return (this.formatPopoverOpen === 'CONCATENATE' && this.formatInput.length === 0) ||
-    (this.createNewColumn && this.newColumnInput.length === 0);
+    return (this.state.formatPopoverOpen === 'CONCATENATE' && this.state.formatInput.length === 0) ||
+    (this.state.createNewColumn && this.state.newColumnInput.length === 0);
   }
 
   renderActionButtons() {
@@ -242,9 +245,6 @@ export default class Format extends Component {
 
     return (
       <div>
-        <div className={classnames({"bigger-new-column-label": this.state.operationPopoverOpen === 'CHARCOUNT'})}>
-          {T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputLabel`)}
-        </div>
         <Input
           type="text"
           className="form-control mousetrap"
@@ -284,13 +284,14 @@ export default class Format extends Component {
         />
         <Input
           type="select"
+          className="concatenate-option-select"
           onChange={this.handleFormatChange}
-          value={this.state.format}
+          value={this.state.defaultConcatenateOption}
         >
           {
             this.CONCATENATE_OPTIONS.map(option => {
               return (
-                <option value={this.state.defaultConcatenateOption}>
+                <option value={option.name}>
                   {option.label}
                 </option>
               );
@@ -311,7 +312,7 @@ export default class Format extends Component {
             />
           </span>
 
-          <span className="create-new-column-label">
+          <span>
             {T.translate(`${COPY_NEW_COLUMN_PREFIX}.label`)}
           </span>
         </div>
@@ -328,6 +329,39 @@ export default class Format extends Component {
   renderModal() {
     return this.state.activeModal;
   }
+  renderOptions() {
+    return (
+      this.FORMAT_OPTIONS
+      .filter(option => option.validColTypes.indexOf(this.columnType) !== -1)
+      .map((option) => {
+        return (
+          <div
+            key={option.name}
+            className={classnames('option', {
+              'active': this.state.formatPopoverOpen === option.name
+            })}
+            onClick={option.onClick}
+          >
+            {T.translate(`${PREFIX}.Formats.${option.name}.label`)}
+            {
+              option.name === 'CONCATENATE' ?
+                (
+                  <span className="float-xs-right">
+                    <IconSVG name="icon-caret-right" />
+                  </span>
+                )
+              : null
+            }
+            {
+              this.state.formatPopoverOpen === option.name ?
+                this.renderFormatPopover()
+              : null
+            }
+          </div>
+        );
+      })
+    );
+  }
   renderDetail() {
     if (!this.props.isOpen || this.state.isDisabled) { return null; }
 
@@ -342,33 +376,7 @@ export default class Format extends Component {
           </span>
         </div>
         <div className="parse-options">
-          {
-            this.FORMAT_OPTIONS
-            .filter(option => option.validColTypes.indexOf(this.columnType) !== -1)
-            .map((option) => {
-              return (
-                <div
-                  key={option.name}
-                  className={classnames('option', {
-                    'active': this.state.formatPopoverOpen === option.name
-                  })}
-                  onClick={option.onClick}
-                >
-                  {T.translate(`${PREFIX}.Formats.${option.name}.label`)}
-                  {
-                    option.name === 'CONCATENATE' ?
-                      (
-                        <span className="float-xs-right">
-                          <IconSVG name="icon-caret-right" />
-                        </span>
-                      )
-                    : null
-                  }
-                  {this.renderFormatPopover()}
-                </div>
-              );
-            })
-          }
+          {this.renderOptions()}
         </div>
       </div>
     );
