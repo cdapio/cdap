@@ -20,6 +20,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import {isCustomOption} from 'components/DataPrep/helper';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {columnNameAlreadyExists} from 'components/DataPrep/helper';
 import WarningContainer from 'components/WarningContainer';
 import T from 'i18n-react';
 require('./MergeColumns.scss');
@@ -88,11 +89,6 @@ export default class MergeColumnsDirective extends Component {
       this.applyDirective();
       this.preventPropagation(e);
     }
-  }
-
-  columnAlreadyExists(colName) {
-    let headers = DataPrepStore.getState().dataprep.headers;
-    return headers.indexOf(colName) !== -1;
   }
 
   switchColumnOrder() {
@@ -238,7 +234,7 @@ export default class MergeColumnsDirective extends Component {
         </div>
 
         {
-          this.columnAlreadyExists(this.state.newColumnInput) ? (
+          columnNameAlreadyExists(this.state.newColumnInput) ? (
             <WarningContainer
               message={T.translate(`${PREFIX}.duplicate`)}
             />

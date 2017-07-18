@@ -414,6 +414,48 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
+      Calculate:
+        columnTypeLabel:
+          numeric: Numeric
+          string: String
+        copyToNewColumn: Copy to a new column
+        destinationColumnInputLabel: Name Destination Column
+        destinationColumnInputPlaceholder: Destination column name
+        disabledTooltip: "Calculate directives can only be executed on columns of type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        newColumnInputCountSuffix: _count
+        newColumnInputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        newColumnInputLabel: Name New Column
+        newColumnInputPlaceholder: New column name
+        newColumnInputSuffix: _copy
+        Options:
+          POWEROF:
+            description: "Raise the column value to the power of:"
+        OptionsLabels:
+          ABSVALUE: Absolute Value
+          ADD: Add
+          ARCCOS: Arccos
+          ARCSIN: Arcsin
+          ARCTAN: Arctan
+          CEIL: Ceil
+          CHARCOUNT: Character Count
+          COS: Cos
+          CUBE: Cube
+          CUBEROOT: Cube root
+          DIVIDE: Divide
+          FLOOR: Floor
+          LOG: Log
+          MODULO: Modulo
+          MULTIPLY: Multiply
+          NATURALLOG: Natural log
+          POWEROF: Power of
+          RANDOM: Random
+          ROUND: Round
+          SIN: Sin
+          SQUARE: Square
+          SQUAREROOT: Square root
+          SUBTRACT: Subtract
+          TAN: Tan
+        title: Calculate
       ColumnActions:
         label: Column Actions
         actions:
