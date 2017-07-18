@@ -21,6 +21,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import Mousetrap from 'mousetrap';
 
 require('./DefineVariable.scss');
 
@@ -39,6 +40,8 @@ export default class DefineVariableDirective extends Component {
     };
 
     this.applyDirective = this.applyDirective.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.isApplyDisabled = this.isApplyDisabled.bind(this);
 
     this.conditionsOptions = [
       'TEXTEXACTLY',
@@ -55,12 +58,17 @@ export default class DefineVariableDirective extends Component {
 
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('set-variable-directive'));
+    Mousetrap.bind('enter', this.applyDirective);
   }
 
   componentDidUpdate() {
     if (this.props.isOpen && this.calculateOffset) {
       this.calculateOffset();
     }
+  }
+
+  componentWillUnmount() {
+    Mousetrap.unbind('enter', this.applyDirective);
   }
 
   preventPropagation(e) {
@@ -76,7 +84,7 @@ export default class DefineVariableDirective extends Component {
   }
 
   handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.textFilter.length === 0) { return; }
+    if (e.nativeEvent.keyCode !== 13 || this.isApplyDisabled()) { return; }
 
     this.applyDirective();
   }
@@ -114,6 +122,7 @@ export default class DefineVariableDirective extends Component {
   }
 
   execute(addDirective) {
+    Mousetrap.unbind('enter', this.applyDirective);
     execute(addDirective)
       .subscribe(() => {
         this.props.close();
@@ -128,6 +137,12 @@ export default class DefineVariableDirective extends Component {
           }
         });
       });
+  }
+
+  isApplyDisabled() {
+    let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
+    disabled = disabled || this.state.variableName.length === 0;
+    return disabled;
   }
 
   renderCustomFilter() {
@@ -274,6 +289,7 @@ export default class DefineVariableDirective extends Component {
               value={this.state.variableName}
               onChange={this.handleStateValueChange.bind(this, 'variableName')}
               placeholder={T.translate(`${PREFIX}.variableNamePlaceholder`)}
+              onKeyPress={this.handleKeyPress}
             />
           </div>
         </div>
@@ -301,8 +317,6 @@ export default class DefineVariableDirective extends Component {
   renderDetail() {
     if (!this.props.isOpen) { return null; }
 
-    let disabled = this.state.selectedCondition.substr(0, 4) === 'TEXT' && this.state.textFilter.length === 0;
-
     return (
       <div
         className="set-variable-detail second-level-popover"
@@ -320,7 +334,7 @@ export default class DefineVariableDirective extends Component {
           <button
             className="btn btn-primary float-xs-left"
             onClick={this.applyDirective}
-            disabled={disabled}
+            disabled={this.isApplyDisabled()}
           >
             {T.translate('features.DataPrep.Directives.apply')}
           </button>
