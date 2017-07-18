@@ -26,7 +26,7 @@ export default class ScrollableList extends Component {
     super(props);
     this.state = {
       children: this.props.children,
-      numberOfElemsInList: null,
+      numberOfElemsToDisplay: null,
       startingIndex: 0
     };
     this.computeHeight = this.computeHeight.bind(this);
@@ -36,6 +36,8 @@ export default class ScrollableList extends Component {
     this.onMouseOut = this.onMouseOut.bind(this);
     this.shouldScrollDown = this.shouldScrollDown.bind(this);
     this.shouldScrollUp = this.shouldScrollUp.bind(this);
+
+    this.HEIGHT_OF_ELEM = 29;
   }
   componentDidMount() {
     this.computeHeight();
@@ -47,22 +49,35 @@ export default class ScrollableList extends Component {
     });
   }
   computeHeight() {
-    let targetDimensions = document.getElementById(this.props.target).getBoundingClientRect();
-    let bodyBottom = document.body.getBoundingClientRect().bottom;
-    let targetBottom = targetDimensions.bottom;
-    let heightOfList = bodyBottom - targetBottom;
-    let numberOfElemsInList = Math.floor(heightOfList / 39);
+    let heightOfList = document.body.getBoundingClientRect().height;
+    let FOOTER_HEIGHT = 54;
+
+    if (this.props.target) {
+      let targetTop = document.getElementById(this.props.target).getBoundingClientRect().top;
+      let bodyBottom = document.body.getBoundingClientRect().bottom - FOOTER_HEIGHT;
+      let scrollDownHeight = 20;
+      heightOfList = bodyBottom - targetTop - scrollDownHeight;
+    }
+
+    let numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM);
+
+    if (document.getElementsByClassName('column-action-label').length > 0) {
+      let labelHeight = document.getElementsByClassName('column-action-label')[0].getBoundingClientRect().height;
+      heightOfList = heightOfList - labelHeight;
+      numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM);
+    }
+
 
     let numberOfActualElements = this.props.children.filter(child => child.props.className.indexOf('column-action-divider') === -1);
 
-    let nonDividerChildren = numberOfActualElements.slice(0, numberOfElemsInList);
+    let nonDividerChildren = numberOfActualElements.slice(0, numberOfElemsToDisplay);
     let actualLastIndex = findIndex(this.props.children, nonDividerChildren[nonDividerChildren.length - 1]);
 
     let children = this.props.children.slice(0, actualLastIndex + 1);
 
     this.setState({
       children,
-      numberOfElemsInList,
+      numberOfElemsToDisplay,
       startingIndex: 0
     });
   }
@@ -71,7 +86,7 @@ export default class ScrollableList extends Component {
   getItemsInWindow(startIndex, children = this.props.children) {
     let nonDividerChildren = children
       .filter(child => child.props.className.indexOf('column-action-divider') === -1);
-    nonDividerChildren = nonDividerChildren.slice(startIndex, startIndex + this.state.numberOfElemsInList);
+    nonDividerChildren = nonDividerChildren.slice(startIndex, startIndex + this.state.numberOfElemsToDisplay);
 
     let actualStartIndex = findIndex(children, nonDividerChildren[0]);
     let actualLastIndex = findIndex(children, nonDividerChildren[nonDividerChildren.length - 1]);

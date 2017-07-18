@@ -14,25 +14,23 @@
  * the License.
 */
 
-$menu-hover-bg: #dddddd;
-
-#explode-fields-directive {
-  &.clearfix.action-item {
-    .explode-fields {
-      &.second-level-popover {
-        padding: 0;
-      }
-      .explode-field-options {
-        .option {
-          padding: 5px 10px;
-          cursor: pointer;
-          line-height: 1.5;
-          font-size: 13px;
-          &:hover {
-            background-color: $menu-hover-bg;
-          }
-        }
-      }
+#mark-as-error-directive {
+  .condition-select {
+    > div {
+      display: inline-block;
+      margin-left: 10px;
+    }
+  }
+  .second-level-popover {
+    .icon-svg {
+      margin-right: 5px;
+    }
+    .mark-as-error-tooltip {
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+    .custom-condition-input {
+      max-height: 150px;
     }
   }
 }

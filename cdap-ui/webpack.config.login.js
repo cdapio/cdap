@@ -59,10 +59,7 @@ var loaders = [
   {
     test: /\.js$/,
     loader: 'babel',
-    exclude: /node_modules/,
-    query: {
-      presets: ['react', 'es2015']
-    }
+    exclude: /node_modules/
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,

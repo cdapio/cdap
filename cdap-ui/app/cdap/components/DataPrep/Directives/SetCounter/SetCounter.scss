@@ -12,27 +12,10 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
-$menu-hover-bg: #dddddd;
-
-#explode-fields-directive {
-  &.clearfix.action-item {
-    .explode-fields {
-      &.second-level-popover {
-        padding: 0;
-      }
-      .explode-field-options {
-        .option {
-          padding: 5px 10px;
-          cursor: pointer;
-          line-height: 1.5;
-          font-size: 13px;
-          &:hover {
-            background-color: $menu-hover-bg;
-          }
-        }
-      }
-    }
-  }
+.set-counter-directive {
+  .control-label { margin-bottom: 0; }
+  .condition-container { margin-bottom: 10px; }
+  textarea { margin-top: 5px; }
 }

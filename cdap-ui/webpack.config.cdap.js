@@ -81,12 +81,7 @@ var loaders = [
     ],
     include: [
       path.join(__dirname, 'app')
-    ],
-    query: {
-      cacheDirectory: true,
-      plugins: ['lodash'],
-      presets: ['react', 'es2015']
-    }
+    ]
   },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,

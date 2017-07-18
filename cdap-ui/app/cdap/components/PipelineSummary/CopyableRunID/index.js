@@ -16,7 +16,7 @@
 
 import React, {PropTypes, Component} from 'react';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import Clipboard from 'Clipboard';
+import Clipboard from 'clipboard';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 

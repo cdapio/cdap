@@ -45,26 +45,32 @@ export function isCustomOption(selectedOption) {
   return selectedOption.substr(0, 6) === 'CUSTOM';
 }
 
-export function setPopoverOffset(element, footer_height = 54) {
+export function setPopoverOffset(element, footerHeight = 54) {
   let elem = element;
   let elemBounding = elem.getBoundingClientRect();
-  const FOOTER_HEIGHT = footer_height;
+  const FOOTER_HEIGHT = footerHeight;
 
   let popover = document.getElementsByClassName('second-level-popover');
   let popoverHeight = popover[0].getBoundingClientRect().height;
   let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
   let popoverMenuItemTop = elemBounding.top;
   let bodyBottom = document.body.getBoundingClientRect().bottom - FOOTER_HEIGHT;
+  let bodyTop = document.body.getBoundingClientRect().top;
 
   let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll;
 
-  if (diff < 0) {
-    popover[0].style.top = `${diff}px`;
+  if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
     // This is to align the bottom of second level popover menu with that of the main menu
-    if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
-      popover[0].style.bottom = `-1px`;
-      popover[0].style.top = 'inherit';
+    // 1 offset is for the border bottom
+    diff = diff + (elemBounding.bottom - popover[0].getBoundingClientRect().bottom) + 1;
+  }
+
+  if (diff < 0) {
+    // this is to make sure the top doesn't go off screen
+    if (diff < -popoverMenuItemTop + bodyTop) {
+      diff = -popoverMenuItemTop + bodyTop + 10; // pad 10px at the top so that popover isn't stuck at very top
     }
+    popover[0].style.top = `${diff}px`;
   } else {
     popover[0].style.top = 0;
   }
@@ -95,4 +101,9 @@ export function checkDataPrepHigherVersion() {
         });
       }
     });
+}
+
+export function columnNameAlreadyExists(colName) {
+  let headers = DataPrepStore.getState().dataprep.headers;
+  return headers.indexOf(colName) !== -1;
 }

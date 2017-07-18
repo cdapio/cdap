@@ -37,11 +37,15 @@ import FindAndReplaceDirective from 'components/DataPrep/Directives/FindAndRepla
 import CopyColumnDirective from 'components/DataPrep/Directives/CopyColumn';
 import ExtractFields from 'components/DataPrep/Directives/ExtractFields';
 import Format from 'components/DataPrep/Directives/Format';
+import Calculate from 'components/DataPrep/Directives/Calculate';
 import Explode from 'components/DataPrep/Directives/Explode';
 import MaskData from 'components/DataPrep/Directives/MaskData';
 import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
 import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
+import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
+import DefineVariableDirective from 'components/DataPrep/Directives/DefineVariable';
+import SetCounterDirective from 'components/DataPrep/Directives/SetCounter';
 
 import ee from 'event-emitter';
 
@@ -94,8 +98,17 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         id: shortid.generate(),
+        tag: Calculate,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
         tag: FilterDirective,
         requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: MarkAsError
       },
       {
         id: shortid.generate(),
@@ -147,6 +160,16 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Explode,
         requiredColCount: 0
+      },
+      {
+        id: shortid.generate(),
+        tag: DefineVariableDirective,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: SetCounterDirective,
+        requiredColCount: 1
       },
       {
         tag: 'divider'

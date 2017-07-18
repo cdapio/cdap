@@ -54,14 +54,14 @@ $action-item-disabled-color: lighten($action-item-font-color, 50%);
 
     .column-action-divider {
       hr {
-        margin: 0;
+        margin: 2px 0;
         border-color: $border-shadow-color;
       }
     }
   }
 
   .action-item {
-    padding: 10px 15px;
+    padding: 5px 10px;
     cursor: pointer;
     position: relative;
     font-family: $action-item-font-family;
@@ -123,6 +123,10 @@ $action-item-disabled-color: lighten($action-item-font-color, 50%);
       .btn-link {
         color: $action-item-action-font-color;
       }
+    }
+
+    .third-level-popover {
+      @extend .second-level-popover;
     }
   }
 }

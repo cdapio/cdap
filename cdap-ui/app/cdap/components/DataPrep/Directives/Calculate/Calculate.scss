@@ -1,0 +1,88 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+$option-hover-active-bg-color: #dddddd;
+$column-type-label-color: #b6babc;
+
+#calculate-directive {
+  .second-level-popover { padding: 0; }
+
+  .third-level-popover {
+    .operation-description {
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .operation-sign-input {
+      margin-bottom: 5px;
+
+      .operation-sign {
+        font-size: 1rem;
+      }
+
+      .operation-input {
+        display: inline-block;
+        width: 40%;
+        margin-left: 10px;
+      }
+    }
+
+    .create-new-column-line {
+      cursor: pointer;
+    }
+
+    .bigger-new-column-label {
+      font-size: 1rem;
+    }
+  }
+
+  .calculate-options {
+    .calculate-options-label {
+      height: 11px;
+      width: 100%;
+      color: $column-type-label-color;
+      border-bottom: 1px solid currentColor;
+      clear: both;
+      padding-left: 20px;
+      margin-bottom: 10px;
+
+      > span {
+        background-color: white;
+        padding: 0 7px;
+      }
+    }
+    .option {
+      padding: 5px 10px;
+      cursor: pointer;
+      line-height: 1.5;
+      font-size: 13px;
+      position: relative;
+
+      &.active,
+      &:hover {
+        background-color: $option-hover-active-bg-color;
+      }
+    }
+
+    .column-action-divider {
+      &.calculate-options-divider {
+        hr {
+          margin: 0;
+        }
+      }
+    }
+  }
+}

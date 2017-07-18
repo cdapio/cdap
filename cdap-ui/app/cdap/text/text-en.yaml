@@ -414,6 +414,48 @@ features:
     Directives:
       apply: Apply
       cancel: Cancel
+      Calculate:
+        columnTypeLabel:
+          numeric: Numeric
+          string: String
+        copyToNewColumn: Copy to a new column
+        destinationColumnInputLabel: Name Destination Column
+        destinationColumnInputPlaceholder: Destination column name
+        disabledTooltip: "Calculate directives can only be executed on columns of type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        newColumnInputCountSuffix: _count
+        newColumnInputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        newColumnInputLabel: Name New Column
+        newColumnInputPlaceholder: New column name
+        newColumnInputSuffix: _copy
+        Options:
+          POWEROF:
+            description: "Raise the column value to the power of:"
+        OptionsLabels:
+          ABSVALUE: Absolute Value
+          ADD: Add
+          ARCCOS: Arccos
+          ARCSIN: Arcsin
+          ARCTAN: Arctan
+          CEIL: Ceil
+          CHARCOUNT: Character Count
+          COS: Cos
+          CUBE: Cube
+          CUBEROOT: Cube root
+          DIVIDE: Divide
+          FLOOR: Floor
+          LOG: Log
+          MODULO: Modulo
+          MULTIPLY: Multiply
+          NATURALLOG: Natural log
+          POWEROF: Power of
+          RANDOM: Random
+          ROUND: Round
+          SIN: Sin
+          SQUARE: Square
+          SQUAREROOT: Square root
+          SUBTRACT: Subtract
+          TAN: Tan
+        title: Calculate
       ColumnActions:
         label: Column Actions
         actions:
@@ -458,6 +500,30 @@ features:
         hex: Hex
         title: Decode
         urldecode: URL
+      DefineVariable:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        if: If the row
+        Placeholders:
+          CUSTOMCONDITION: Enter custom condition
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        step1: "Step 1. Select the row"
+        step2: "Step 2. Select the column"
+        step3: "Step 3. Name the variable"
+        summaryLabel: "Summary:"
+        summaryText: "you defined the variable \"{variableName}\" for the cell in the row which {condition} in column \"{columnName}\""
+        title: Define Variable
+        valueLabel: Column name
+        variableNamePlaceholder: Enter variable_name
       Drop:
         title:
           plural: Delete Selected Columns
@@ -527,7 +593,7 @@ features:
         ignoreCase: Ignore Case
         KEEP: Keep rows
         Placeholders:
-          CUSTOMCONDITION: e.g. < 30
+          CUSTOMCONDITION: "E.g. < 30 || gender == \"Male\""
           TEXTCONTAINS: Enter contained value
           TEXTENDSWITH: Enter suffix
           TEXTEXACTLY: Enter value
@@ -559,6 +625,38 @@ features:
        title:
           plural: Keep Selected Columns
           singular: Keep Column
+      MarkAsError:
+        Conditions:
+          CUSTOMCONDITION: Custom condition
+          EMPTY: value is empty
+          ISNUMBER: Is Number
+          ISNOTNUMBER: Is Not Number
+          ISINTEGER: Is Integer
+          ISNOTINTEGER: Is Not Integer
+          ISDOUBLE: Is Double
+          ISNOTDOUBLE: Is Not Double
+          ISBOOLEAN: Is Boolean
+          ISNOTBOOLEAN: Is Not Boolean
+          ISDATE: Is Date
+          ISNOTDATE: Is Not Date
+          ISTIME: Is Time
+          ISNOTTIME: Is Not Time
+          TEXTCONTAINS: value contains
+          TEXTENDSWITH: value ends with
+          TEXTEXACTLY: value is
+          TEXTREGEX: value matches regex
+          TEXTSTARTSWITH: value starts with
+        ignoreCase: Ignore Case
+        if: If
+        Placeholders:
+          CUSTOMCONDITION: "E.g. {column} < 30 || gender == \"Male\""
+          TEXTCONTAINS: Enter contained value
+          TEXTENDSWITH: Enter suffix
+          TEXTEXACTLY: Enter value
+          TEXTREGEX: Enter regex
+          TEXTSTARTSWITH: Enter prefix
+        title: Send to Error
+        tooltip: When used in a pipeline, these errors can be collected by an error collector
       MaskData:
         menuLabel: Mask Data
         option1: Show last 4 characters only
@@ -676,6 +774,15 @@ features:
         utf16be: UTF-16BE
         utf16le: UTF-16LE
         utf8: UTF-8
+      SetCounter:
+        Conditions:
+          ALWAYS: Always
+          IFCONDITION: If condition is true
+        ifConditionPlaceholder: Enter JEXL condition
+        incrementCounterLabel: increment the count by
+        title: Set Counter
+        variableNameLabel: Name this counter
+        variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap Two Column Names
     pageTitle: CDAP | Data Preparation

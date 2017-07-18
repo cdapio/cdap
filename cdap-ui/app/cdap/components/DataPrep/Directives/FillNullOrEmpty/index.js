@@ -83,7 +83,7 @@ export default class FillNullOrEmptyDirective extends Component {
 
     return (
       <div
-        className="fill-null-or-empty-detail second-level-popover"
+        className="second-level-popover"
         onClick={this.preventPropagation}
       >
         <h5>Fill Null or Empty Cells</h5>
@@ -126,7 +126,7 @@ export default class FillNullOrEmptyDirective extends Component {
   render() {
     return (
       <div
-        className={classnames('fill-null-or-empty-directive clearfix action-item', {
+        className={classnames('clearfix action-item', {
           'active': this.props.isOpen
         })}
       >

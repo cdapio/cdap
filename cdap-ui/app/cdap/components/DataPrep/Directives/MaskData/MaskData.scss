@@ -22,7 +22,7 @@ $divider-bg-color: #cccccc;
     padding: 0;
     .mask-field-options {
       .option {
-        padding: 10px;
+        padding: 5px 10px;
         cursor: pointer;
         line-height: 1.5;
         font-size: 13px;
@@ -34,7 +34,7 @@ $divider-bg-color: #cccccc;
     }
     .column-action-divider {
       hr {
-        margin: 0;
+        margin: 2px 0;
         border-color: $divider-bg-color;
       }
     }
