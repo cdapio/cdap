@@ -221,6 +221,7 @@ public class AuthorizationTest extends TestBase {
   public void testFlowStreamAuth() throws Exception {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(StreamAuthApp.APP), ALICE, EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
     authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
@@ -274,6 +275,7 @@ public class AuthorizationTest extends TestBase {
   public void testWorkerStreamAuth() throws Exception {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(StreamAuthApp.APP), ALICE, EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
     authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
@@ -306,6 +308,7 @@ public class AuthorizationTest extends TestBase {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
     StreamId streamId = AUTH_NAMESPACE.stream(StreamAuthApp.STREAM);
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(StreamAuthApp.APP), ALICE, EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
     authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
@@ -355,6 +358,7 @@ public class AuthorizationTest extends TestBase {
   public void testMRStreamAuth() throws Exception {
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(StreamAuthApp.APP), ALICE, EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, StreamAuthApp.class);
     // After deploy, change Alice from ALL to ADMIN on the namespace
     authorizer.revoke(AUTH_NAMESPACE, ALICE, EnumSet.allOf(Action.class));
@@ -442,6 +446,9 @@ public class AuthorizationTest extends TestBase {
 
     // verify that alice still have all access
     assertAllAccess(ALICE, streamId);
+
+    // set user id back to ALICE so we can delete the namespace and the stream in the namespace
+    SecurityRequestContext.setUserId(ALICE.getName());
   }
 
   @Test
@@ -455,7 +462,8 @@ public class AuthorizationTest extends TestBase {
     }
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
-    // deployment should succeed in the authorized namespace because alice has all privileges on it
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE,
+                          EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
     // alice should get all privileges on the app after deployment succeeds
     ApplicationId dummyAppId = AUTH_NAMESPACE.app(DummyApp.class.getSimpleName());
@@ -511,9 +519,13 @@ public class AuthorizationTest extends TestBase {
     // switch back to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
     // Deploy a couple of apps in the namespace
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE,
+                          EnumSet.of(Action.ADMIN));
     appManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
     artifact = appManager.getInfo().getArtifact();
     ArtifactId updatedDummyArtifact = AUTH_NAMESPACE.artifact(artifact.getName(), artifact.getVersion());
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(AllProgramsApp.NAME), ALICE,
+                          EnumSet.of(Action.ADMIN));
     appManager = deployApplication(AUTH_NAMESPACE, AllProgramsApp.class);
     artifact = appManager.getInfo().getArtifact();
     ArtifactId workflowArtifact = AUTH_NAMESPACE.artifact(artifact.getName(), artifact.getVersion());
@@ -658,6 +670,7 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testPrograms() throws Exception {
     createAuthNamespace();
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(DummyApp.class.getSimpleName()), ALICE, EnumSet.of(Action.ADMIN));
     final ApplicationManager dummyAppManager = deployApplication(AUTH_NAMESPACE, DummyApp.class);
     ArtifactSummary dummyArtifactSummary = dummyAppManager.getInfo().getArtifact();
     ArtifactId dummyArtifact = AUTH_NAMESPACE.artifact(dummyArtifactSummary.getName(),
@@ -748,10 +761,20 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testCrossNSFlowlet() throws Exception {
     createAuthNamespace();
+    ApplicationId appId = AUTH_NAMESPACE.app(CrossNsDatasetAccessApp.APP_NAME);
+    grantAndAssertSuccess(appId, ALICE,
+                          EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, CrossNsDatasetAccessApp.class);
 
     // give BOB ALL permissions on the auth namespace so he can execute programs and also read the stream.
     grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(appId, BOB, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(appId.program(ProgramType.FLOW, CrossNsDatasetAccessApp.FLOW_NAME), BOB,
+                          EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(AUTH_NAMESPACE.stream(CrossNsDatasetAccessApp.STREAM_NAME), BOB,
+                          EnumSet.of(Action.WRITE, Action.READ));
+    grantAndAssertSuccess(AUTH_NAMESPACE.artifact(CrossNsDatasetAccessApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+                          BOB, EnumSet.of(Action.EXECUTE));
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -869,10 +892,17 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testCrossNSMapReduce() throws Exception {
     createAuthNamespace();
+    ApplicationId appId = AUTH_NAMESPACE.app(DatasetCrossNSAccessWithMAPApp.class.getSimpleName());
+    grantAndAssertSuccess(appId, ALICE,
+                          EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, DatasetCrossNSAccessWithMAPApp.class);
 
-    // give BOB ALL permission in the
+    // give BOB ALL permission in the namespace
     grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(appId.program(ProgramType.MAPREDUCE, DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM), BOB,
+                          EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(AUTH_NAMESPACE.artifact(DatasetCrossNSAccessWithMAPApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+                          BOB, EnumSet.of(Action.EXECUTE));
 
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetCrossNSAccessWithMAPApp.MAPREDUCE_PROGRAM);
 
@@ -985,13 +1015,21 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testCrossNSSpark() throws Exception {
     createAuthNamespace();
+    ApplicationId appId = AUTH_NAMESPACE.app(TestSparkCrossNSDatasetApp.APP_NAME);
 
     // give BOB ALL permission on the auth namespace
     grantAndAssertSuccess(AUTH_NAMESPACE, BOB, ALL_ACTIONS);
 
+    grantAndAssertSuccess(appId, ALICE,
+                          EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, TestSparkCrossNSDatasetApp.class);
     SparkManager sparkManager = appManager.getSparkManager(TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram
                                                              .class.getSimpleName());
+    grantAndAssertSuccess(appId.program(ProgramType.SPARK,
+                                        TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.class.getSimpleName()),
+                          BOB, EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(AUTH_NAMESPACE.artifact(TestSparkCrossNSDatasetApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+                          BOB, EnumSet.of(Action.EXECUTE));
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
@@ -1000,6 +1038,8 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testScheduleAuth() throws Exception {
     createAuthNamespace();
+    grantAndAssertSuccess(AUTH_NAMESPACE.app(AppWithSchedule.class.getSimpleName()), ALICE,
+                          EnumSet.of(Action.ADMIN));
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, AppWithSchedule.class);
     ProgramId workflowID = new ProgramId(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
                                          ProgramType.WORKFLOW, AppWithSchedule.SampleWorkflow.class.getSimpleName());
@@ -1055,6 +1095,14 @@ public class AuthorizationTest extends TestBase {
     scheduleManager.resume();
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
+    // todo: remove grant after https://issues.cask.co/browse/CDAP-12147 is fixed
+    grantAndAssertSuccess(workflowID, new Principal(UserGroupInformation.getLoginUser().getShortUserName(),
+                                                    Principal.PrincipalType.USER),
+                          EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(AUTH_NAMESPACE.artifact(AppWithSchedule.class.getSimpleName(), "1.0-SNAPSHOT"),
+                          new Principal(UserGroupInformation.getLoginUser().getShortUserName(),
+                                        Principal.PrincipalType.USER),
+                          EnumSet.of(Action.EXECUTE));
     // wait for workflow to start
     workflowManager.waitForStatus(true);
 
@@ -1187,6 +1235,8 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testAddDropPartitions() throws Exception {
     createAuthNamespace();
+    ApplicationId appId = AUTH_NAMESPACE.app(PartitionTestApp.class.getSimpleName());
+    grantAndAssertSuccess(appId, ALICE, EnumSet.of(Action.ADMIN));
     ApplicationManager appMgr = deployApplication(AUTH_NAMESPACE, PartitionTestApp.class);
     grantAndAssertSuccess(AUTH_NAMESPACE, BOB, EnumSet.of(Action.READ, Action.EXECUTE));
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1194,6 +1244,10 @@ public class AuthorizationTest extends TestBase {
     String subPartition = "1";
     String text = "some random text for pfs";
     ServiceManager pfsService = appMgr.getServiceManager(PartitionTestApp.PFS_SERVICE_NAME);
+    grantAndAssertSuccess(appId.program(ProgramType.SERVICE, PartitionTestApp.PFS_SERVICE_NAME), BOB,
+                          EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(AUTH_NAMESPACE.artifact(PartitionTestApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+                          BOB, EnumSet.of(Action.EXECUTE));
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
     URL pfsURL = pfsService.getServiceURL();
@@ -1210,8 +1264,9 @@ public class AuthorizationTest extends TestBase {
       pfsService.stop();
       pfsService.waitForRun(ProgramRunStatus.KILLED, 1, TimeUnit.MINUTES);
     }
-    // grant write on dataset and restart
-    grantAndAssertSuccess(AUTH_NAMESPACE.dataset(PartitionTestApp.PFS_NAME), BOB, EnumSet.of(Action.WRITE));
+    // grant read and write on dataset and restart
+    grantAndAssertSuccess(AUTH_NAMESPACE.dataset(PartitionTestApp.PFS_NAME), BOB, EnumSet.of(Action.WRITE,
+                                                                                             Action.READ));
     pfsService.start();
     pfsService.waitForRun(ProgramRunStatus.RUNNING, 1, TimeUnit.MINUTES);
     pfsURL = pfsService.getServiceURL();

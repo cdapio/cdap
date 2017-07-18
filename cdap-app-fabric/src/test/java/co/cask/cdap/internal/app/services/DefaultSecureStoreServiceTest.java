@@ -163,9 +163,9 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(KEY1));
     revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
 
-    // Should still be able to list the keys since ALICE has namespace access privilege
+    // Should not be able to list the keys since ALICE does not have privilege on the secure key
     secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
-    Assert.assertEquals(1, secureKeyListEntries.size());
+    Assert.assertTrue(secureKeyListEntries.isEmpty());
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());

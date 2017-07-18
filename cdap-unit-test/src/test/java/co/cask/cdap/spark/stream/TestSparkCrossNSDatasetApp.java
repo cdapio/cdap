@@ -32,6 +32,8 @@ import java.util.Map;
  * different namespace if they have been provided through runtime arguments else it defaults to its own namespace.
  */
 public class TestSparkCrossNSDatasetApp extends AbstractApplication {
+  public static final String APP_NAME = "TestSparkCrossNSDatasetApp";
+
   @Override
   public void configure() {
     setName("TestSparkCrossNSDatasetApp");

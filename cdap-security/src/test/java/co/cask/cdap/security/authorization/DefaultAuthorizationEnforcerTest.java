@@ -80,7 +80,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testPropagationDisabled() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, false);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
                                                                                     AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcer authorizationEnforcer =
@@ -93,21 +92,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       } catch (UnauthorizedException ignored) {
         // expected
       }
-    }
-  }
-
-  @Test
-  public void testPropagationEnabled() throws Exception {
-    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, true);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
-                                                                                    AUTH_CONTEXT_FACTORY)) {
-      DefaultAuthorizationEnforcer authorizationEnforcer =
-        new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
-      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
-      authorizationEnforcer.enforce(NS, ALICE, Action.ADMIN);
-      // Since propagation is enabled, Alice should have privileges on APP too.
-      authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     }
   }
 
@@ -129,8 +113,8 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(Action.class));
       // since Alice has READ/WRITE on the NS, everything under that should have READ/WRITE as well.
-      authEnforcementService.enforce(ds, ALICE, Action.READ);
-      authEnforcementService.enforce(ds, ALICE, Action.WRITE);
+      assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.READ);
+      assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.WRITE);
 
       // Alice doesn't have Admin right on NS, hence should fail.
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
@@ -166,6 +150,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       DatasetId ds22 = ns2.dataset("ds2");
       DatasetId ds23 = ns2.dataset("ds3");
       Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
+      // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
       authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
       authorizer.grant(ns2, ALICE, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds11, ALICE, Collections.singleton(Action.READ));
@@ -189,11 +174,12 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       for (DatasetId datasetId : ImmutableSet.of(ds11, ds21, ds23)) {
         Assert.assertTrue(aliceFilter.apply(datasetId));
       }
-      for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
-        Assert.assertTrue(aliceFilter.apply(datasetId));
-      }
       for (DatasetId datasetId : ImmutableSet.of(ds11, ds12, ds22)) {
         Assert.assertTrue(bobFilter.apply(datasetId));
+      }
+      for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
+        // Alice does not have access to these datasets even though she has access on the namespace
+        Assert.assertFalse(aliceFilter.apply(datasetId));
       }
       for (DatasetId datasetId : ImmutableSet.of(ds21, ds23)) {
         Assert.assertFalse(bobFilter.apply(datasetId));
@@ -206,8 +192,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     Principal systemUser =
       new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
- AUTH_CONTEXT_FACTORY)) {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcer authorizationEnforcer =
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
