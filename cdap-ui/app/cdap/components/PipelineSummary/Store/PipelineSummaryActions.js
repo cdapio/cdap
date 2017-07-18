@@ -20,6 +20,7 @@ import {MyMetricApi} from 'api/metric';
 import {convertProgramToMetricParams} from 'services/program-api-converter';
 import {objectQuery} from 'services/helpers';
 import isNil from 'lodash/isNil';
+import cloneDeep from 'lodash/cloneDeep';
 
 function setRuns(runs) {
   PipelineSummaryStore.dispatch({
@@ -84,20 +85,23 @@ function updateMetrics(metrics, mapKey = 'metrics') {
 
 function updateNodeMetrics(pipelineConfig) {
   let {runs} = PipelineSummaryStore.getState().pipelinerunssummary;
+  let nodesMap = {
+    recordsin: {},
+    recordsout: {}
+  };
   const sourcePluginTypes = ['batchsource', 'realtimesource', 'streamingsource'];
   const sinkPluginTypes = ['batchsink', 'realtimesink', 'sparksink'];
-
-  let nodesMap = {
-    sources: {},
-    sinks: {}
-  };
+  const sourcePlugins = [];
+  const sinkPlugins = [];
   pipelineConfig.config.stages.forEach(stage => {
-    if (sourcePluginTypes.indexOf(stage.plugin.type) !== -1) {
-      nodesMap.sources[stage.name] = [];
-    }
-    if (sinkPluginTypes.indexOf(stage.plugin.type) !== -1) {
-      nodesMap.sinks[stage.name] = [];
-    }
+      nodesMap.recordsin[stage.name] = [];
+      nodesMap.recordsout[stage.name] = [];
+      if (sourcePluginTypes.indexOf(stage.plugin.type) !== -1) {
+        sourcePlugins.push(stage.name);
+      }
+      if (sinkPluginTypes.indexOf(stage.plugin.type) !== -1) {
+        sinkPlugins.push(stage.name);
+      }
   });
   /*
     Sample node metrics:
@@ -109,15 +113,17 @@ function updateNodeMetrics(pipelineConfig) {
       }
     Sample nodesMap:
       {
-        sources: {
-          TPFSAvro: {}
+        recordsin: {
+          TPFSAvro: [run records],
+          File: [run records]
         },
-        sinks: {
-          File: {}
+        recordsout: {
+          TPFSAvro: [run records],
+          File: [run records]
         }
       }
   */
-  const getRecords = (run, nodesMap, type = '.records.in') => {
+  const getNodesMetricsMapRecords = (run, nodesMap, type = '.records.in') => {
     let cleanUpRegex = /\user.|\.records\.out|\.records\.in/gi;
     let getNodeLabel = (node) => node.replace(cleanUpRegex, () => '');
     let nodesCount = Object.keys(nodesMap);
@@ -143,11 +149,28 @@ function updateNodeMetrics(pipelineConfig) {
     map[nodeLabel].push(runRecord);
   };
   runs.forEach(run => {
-    getRecords(run, nodesMap.sources, '.records.out')
-      .forEach(node => addRunRecordTo(nodesMap.sources, node, run));
-    getRecords(run, nodesMap.sinks, '.records.in')
-      .forEach(node => addRunRecordTo(nodesMap.sinks, node, run));
+    getNodesMetricsMapRecords(run, nodesMap.recordsin, '.records.in')
+      .forEach(nodeMetricMap => addRunRecordTo(nodesMap.recordsin, nodeMetricMap, cloneDeep(run)));
+    getNodesMetricsMapRecords(run, nodesMap.recordsout, '.records.out')
+      .forEach(nodeMetricMap => addRunRecordTo(nodesMap.recordsout, nodeMetricMap, cloneDeep(run)));
   });
+  let recordsInNonSourcePluginsMap = {};
+  let recordsOutNoneSinkPluginsMap = {};
+  Object.keys(nodesMap.recordsin)
+    .filter(node => sourcePlugins.indexOf(node) === -1)
+    .forEach(node => {
+      recordsInNonSourcePluginsMap[node] = nodesMap.recordsin[node];
+    });
+  Object.keys(nodesMap.recordsout)
+    .filter(node => sinkPlugins.indexOf(node) === -1)
+    .forEach(node => {
+      recordsOutNoneSinkPluginsMap[node] = nodesMap.recordsin[node];
+    });
+  nodesMap = {
+    recordsin: recordsInNonSourcePluginsMap,
+    recordsout: recordsOutNoneSinkPluginsMap
+  };
+
   PipelineSummaryStore.dispatch({
     type: PIPELINESSUMMARYACTIONS.SETNODESMETRICSMAP,
     payload: {

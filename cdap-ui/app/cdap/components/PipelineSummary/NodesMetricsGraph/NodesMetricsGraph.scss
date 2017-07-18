@@ -17,6 +17,7 @@
 $dropdown_border_color: lightgray;
 $option-hover-bg-color: #eeeeee;
 $menu_bg_color: gray;
+@import '../PipelineSummary.scss';
 
 @import '../StickyTableHeader.scss';
 
@@ -51,6 +52,9 @@ $menu_bg_color: gray;
     }
     .dropdown-menu {
       padding: 0;
+      max-height: calc(#{$min_height_of_graph} - 65px);
+      overflow-y: auto;
+
       .dropdown-item {
         padding: 10px;
         cursor: pointer;
