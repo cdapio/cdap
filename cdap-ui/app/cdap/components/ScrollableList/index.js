@@ -64,7 +64,7 @@ export default class ScrollableList extends Component {
     if (document.getElementsByClassName('column-action-label').length > 0) {
       let labelHeight = document.getElementsByClassName('column-action-label')[0].getBoundingClientRect().height;
       heightOfList = heightOfList - labelHeight;
-      numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM) + 1;
+      numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM);
     }
 
 
