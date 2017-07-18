@@ -54,9 +54,11 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
    */
   protected abstract UGIWithPrincipal createUGI(ImpersonationRequest impersonationRequest) throws IOException;
 
-  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
-    // by default it will do nothing
-  }
+  /**
+   * Checks the {@link ImpersonationRequest} is an explore request and determine whether to cache the result or not
+   */
+  protected abstract boolean checkExploreAndDetermineCache(
+    ImpersonationRequest impersonationRequest) throws IOException;
 
   @Override
   public final UGIWithPrincipal getConfiguredUGI(ImpersonationRequest impersonationRequest) throws IOException {
@@ -67,11 +69,12 @@ public abstract class AbstractCachedUGIProvider implements UGIProvider {
       if (ugi != null) {
         return ugi;
       }
-      checkImpersonationRequest(impersonationRequest);
+      boolean isCache = checkExploreAndDetermineCache(impersonationRequest);
       ImpersonationInfo info = getPrincipalForEntity(impersonationRequest);
-      return ugiCache.get(new UGICacheKey(new ImpersonationRequest(impersonationRequest.getEntityId(),
-                                                                   impersonationRequest.getImpersonatedOpType(),
-                                                                   info.getPrincipal(), info.getKeytabURI())));
+      ImpersonationRequest newRequest = new ImpersonationRequest(impersonationRequest.getEntityId(),
+                                                                 impersonationRequest.getImpersonatedOpType(),
+                                                                 info.getPrincipal(), info.getKeytabURI());
+      return isCache ? ugiCache.get(new UGICacheKey(newRequest)) : createUGI(newRequest);
     } catch (ExecutionException e) {
       // Get the root cause of the failure
       Throwable cause = Throwables.getRootCause(e);

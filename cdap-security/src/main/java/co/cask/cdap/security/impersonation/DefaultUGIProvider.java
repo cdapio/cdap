@@ -61,8 +61,11 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
+  /**
+   * On master side, we can cache the explore request
+   */
   @Override
-  protected void checkImpersonationRequest(ImpersonationRequest impersonationRequest) throws IOException {
+  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws IOException {
     if (impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
       impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE)) {
       // CDAP-8355 If the operation being impersonated is an explore query then check if the namespace configuration
@@ -89,6 +92,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
         throw new IOException(e);
       }
     }
+    return true;
   }
 
   /**
