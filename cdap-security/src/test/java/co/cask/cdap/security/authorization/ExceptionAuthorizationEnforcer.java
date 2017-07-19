@@ -42,6 +42,11 @@ public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
   }
 
   @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    throw new UnsupportedOperationException("This method needs to be implemented!");
+  }
+
+  @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     return null;
   }

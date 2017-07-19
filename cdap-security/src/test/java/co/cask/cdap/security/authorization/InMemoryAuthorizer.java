@@ -85,6 +85,12 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    // TODO: needs to be implemented
+    throw new UnsupportedOperationException("This method needs to be implemented!");
+  }
+
+  @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     // super users do not have any enforcement
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
