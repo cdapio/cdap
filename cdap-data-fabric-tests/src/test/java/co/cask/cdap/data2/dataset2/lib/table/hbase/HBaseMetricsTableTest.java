@@ -150,8 +150,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
-    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true).build();
+    DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true)
+      .add(Constants.Metrics.METICS_HBASE_TABLE_SPLITS, 16).build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null);
   }
+
 }

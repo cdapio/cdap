@@ -100,7 +100,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
         try {
           return (DatasetModule) Class.forName(moduleName.trim()).newInstance();
         } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-          // Guice frowns on throwing exceptions from Providers, but if necesary use RuntimeException
+          // Guice frowns on throwing exceptions from Providers, but if necessary use RuntimeException
           throw new RuntimeException("Unable to obtain distributed table module extension class", ex);
         }
       } else {

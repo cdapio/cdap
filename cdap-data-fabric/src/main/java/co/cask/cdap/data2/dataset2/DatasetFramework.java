@@ -70,7 +70,7 @@ public interface DatasetFramework {
 
   /**
    * Adds dataset types by adding dataset module to the system. Calling this method to add {@link DatasetModule} may
-   * result in tracing class dependencies if the {@link DatasetModule} is not a system dataset, which can takes
+   * result in tracing class dependencies if the {@link DatasetModule} is not a system dataset, which can take
    * couple seconds for the tracing. If the jar {@link Location} containing the {@link DatasetModule} is known, it's
    * better to call {@link #addModule(DatasetModuleId, DatasetModule, Location)} instead.
    *
