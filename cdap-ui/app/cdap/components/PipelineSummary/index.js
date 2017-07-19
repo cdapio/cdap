@@ -323,8 +323,8 @@ export default class PipelineSummary extends Component {
             xDomainType={this.state.filterType}
             runContext={this.props}
             isLoading={this.state.nodeMetricsLoading}
-            recordType="recordsin"
-            nodesMap={this.state.nodesMap['sources']}
+            recordType="recordsout"
+            nodesMap={this.state.nodesMap.recordsout}
           />
           <NodesMetricsGraph
             activeFilterLabel={this.state.activeRunsFilter}
@@ -336,8 +336,8 @@ export default class PipelineSummary extends Component {
             xDomainType={this.state.filterType}
             runContext={this.props}
             isLoading={this.state.nodeMetricsLoading}
-            recordType="recordsout"
-            nodesMap={this.state.nodesMap['sinks']}
+            recordType="recordsin"
+            nodesMap={this.state.nodesMap.recordsin}
           />
         </div>
       </div>
