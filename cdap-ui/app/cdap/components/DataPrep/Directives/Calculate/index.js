@@ -193,7 +193,7 @@ export default class Calculate extends Component {
       },
       {
         name: 'RANDOM',
-        onClick: this.applyDirective.bind(this, `math:random(${this.props.column})`),
+        onClick: this.applyDirective.bind(this, `math:random()`),
         validColTypes: this.NUMBER_TYPES
       },
       {

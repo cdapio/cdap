@@ -423,7 +423,7 @@ features:
         columnTypeLabel:
           numeric: Numeric
         destinationColumnInputLabel: Name Destination Column
-        disabledTooltip: "Calculate directives can only be executed on columns of type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        disabledTooltip: "Calculate directives can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
         newColumnInputCountSuffix: _count
         Options:
           POWEROF:
@@ -755,7 +755,7 @@ features:
             placeholder: Enter depth
         title: Parse
       SetCharEncoding:
-        disabledTooltip: Character encoding can only be set on columns of type byte array
+        disabledTooltip: Character encoding can only be set on columns of data type 'bytes'
         iso88591: ISO-8859-1
         title: Set Character Encoding
         usascii: US-ASCII

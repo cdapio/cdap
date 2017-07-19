@@ -43,7 +43,7 @@ export default class Format extends Component {
     formatInput: '',
     createNewColumn: false,
     newColumnInput: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`),
-    defaultConcatenateOption: 'BEGINNING'
+    concatOption: 'BEGINNING'
   }
 
   state = Object.assign({}, this.defaultFormatPopoverState, {
@@ -165,6 +165,12 @@ export default class Format extends Component {
     });
   }
 
+  setConcatOption = (e) => {
+    this.setState({
+      concatOption: e.target.value
+    });
+  }
+
   setFormatInput = (e) => {
     this.setState({
       formatInput: e.target.value
@@ -204,7 +210,7 @@ export default class Format extends Component {
       destinationColumn = this.state.newColumnInput;
     }
     let expression;
-    if (this.state.defaultConcatenateOption === 'BEGINNING') {
+    if (this.state.concatOption === 'BEGINNING') {
       expression = `'${this.state.formatInput}' + ${this.props.column}`;
     } else {
       expression = `${this.props.column} + '${this.state.formatInput}'`;
@@ -285,8 +291,8 @@ export default class Format extends Component {
         <Input
           type="select"
           className="concatenate-option-select"
-          onChange={this.handleFormatChange}
-          value={this.state.defaultConcatenateOption}
+          onChange={this.setConcatOption}
+          value={this.state.concatOption}
         >
           {
             this.CONCATENATE_OPTIONS.map(option => {
