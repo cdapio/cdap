@@ -24,15 +24,18 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.dataset2.lib.table.hbase.CombinedHBaseMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -73,8 +76,10 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
   public FactTable getOrCreateFactTable(int resolution) {
-    String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                 Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                       Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
+    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                         Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
     int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     TableProperties.Builder props = TableProperties.builder();
@@ -88,7 +93,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
 
-    MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
+    MetricsTable table = getOrCreateResolutionMetricsTable(v2TableName, v3TableName, props);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
@@ -112,9 +117,44 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return table;
   }
 
+  @VisibleForTesting
+  public MetricsTable getOrCreateResolutionMetricsTable(String v2TableName, String v3TableName,
+                                                         TableProperties.Builder props) {
+    try {
+      // metrics tables are in the system namespace
+      DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
+      MetricsTable v2Table = dsFramework.getDataset(v2TableId, null, null);
+
+      props.add(HBaseTableAdmin.PROPERTY_SPLITS,
+                GSON.toJson(getV3MetricsTableSplits(Constants.Metrics.METRICS_HBASE_SPLITS)));
+      props.add(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS,
+                cConf.get(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS));
+
+      DatasetId v3TableId = NamespaceId.SYSTEM.dataset(v3TableName);
+      MetricsTable v3Table = DatasetsUtil.getOrCreateDataset(dsFramework, v3TableId, MetricsTable.class.getName(),
+                                                             props.build(), null);
+
+      if (v2Table != null) {
+        // the cluster is upgraded, so use Combined Metrics Table
+        return new CombinedHBaseMetricsTable(v2Table, v3Table);
+      }
+
+      return v3Table;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  private static byte[][] getV3MetricsTableSplits(int splits) {
+    RowKeyDistributorByHashPrefix rowKeyDistributor = new RowKeyDistributorByHashPrefix(
+      new RowKeyDistributorByHashPrefix.OneByteSimpleHash(splits));
+    return rowKeyDistributor.getSplitKeys(splits, splits);
+  }
+
+
   /**
    * Creates the metrics tables and kafka-meta table using the factory {@link DefaultMetricDatasetFactory}
-   * <p/>
+   * <p>
    * It is primarily used by upgrade and data-migration tool.
    *
    * @param factory : metrics dataset factory
@@ -133,10 +173,11 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
   /**
    * Migrates metrics data from version 2.7 and older to 2.8
-   * @param conf CConfiguration
-   * @param hConf Configuration
+   *
+   * @param conf             CConfiguration
+   * @param hConf            Configuration
    * @param datasetFramework framework to add types and datasets to
-   * @param keepOldData - boolean flag to specify if we have to keep old metrics data
+   * @param keepOldData      - boolean flag to specify if we have to keep old metrics data
    * @throws DataMigrationException
    */
   public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
