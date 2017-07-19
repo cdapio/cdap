@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,20 +16,18 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
-
 /**
- * Used to emit one or more key, value pairs to the next stage.
+ * Emits errors.
  *
- * @param <T> Type of the object to emit
+ * @param <T> type of error object
  */
-@Beta
-public interface Emitter<T> extends AlertEmitter, ErrorEmitter<T> {
+public interface ErrorEmitter<T> {
 
   /**
-   * Emit an object. Note that if any further stages has an exception thrown, it will be propagated to this stage.
-   * @param value the object to emit
+   * Emit an Error object. If an {@link ErrorTransform} is placed after this stage, it will be able to consume
+   * the errors. Otherwise the errors are simply dropped.
+   *
+   * @param invalidEntry {@link InvalidEntry InvalidEntry&lt;T&gt;} representing the error.
    */
-  void emit(T value);
-
+  void emitError(InvalidEntry<T> invalidEntry);
 }

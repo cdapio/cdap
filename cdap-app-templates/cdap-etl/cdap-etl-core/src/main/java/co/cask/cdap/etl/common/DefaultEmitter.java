@@ -18,10 +18,13 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
-import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation of {@link Emitter}. Has methods to get the values and errors emitted.
@@ -31,10 +34,12 @@ import java.util.List;
 public class DefaultEmitter<T> implements Emitter<T> {
   private final List<T> entryList;
   private final List<InvalidEntry<T>> errorList;
+  private final List<Map<String, String>> alerts;
 
   public DefaultEmitter() {
-    this.entryList = Lists.newArrayList();
-    this.errorList = Lists.newArrayList();
+    this.entryList = new ArrayList<>();
+    this.errorList = new ArrayList<>();
+    this.alerts = new ArrayList<>();
   }
 
   @Override
@@ -47,6 +52,11 @@ public class DefaultEmitter<T> implements Emitter<T> {
     errorList.add(value);
   }
 
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    alerts.add(new HashMap<>(payload));
+  }
+
   public Collection<T> getEntries() {
     return entryList;
   }
@@ -55,8 +65,13 @@ public class DefaultEmitter<T> implements Emitter<T> {
     return errorList;
   }
 
+  public Collection<Map<String, String>> getAlerts() {
+    return alerts;
+  }
+
   public void reset() {
     entryList.clear();
     errorList.clear();
+    alerts.clear();
   }
 }

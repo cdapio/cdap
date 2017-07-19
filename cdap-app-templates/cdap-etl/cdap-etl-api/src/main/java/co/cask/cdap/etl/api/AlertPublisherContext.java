@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,20 +16,10 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.messaging.MessagingContext;
 
 /**
- * Used to emit one or more key, value pairs to the next stage.
- *
- * @param <T> Type of the object to emit
+ * Context for an {@link AlertPublisher}, exposing methods to publish messages to TMS.
  */
-@Beta
-public interface Emitter<T> extends AlertEmitter, ErrorEmitter<T> {
-
-  /**
-   * Emit an object. Note that if any further stages has an exception thrown, it will be propagated to this stage.
-   * @param value the object to emit
-   */
-  void emit(T value);
-
+public interface AlertPublisherContext extends StageContext, MessagingContext {
 }

@@ -406,7 +406,7 @@ public class MapReduceTransformExecutorFactory<T> {
                                    String groupValClassName) {
       this.aggregator = aggregator;
       this.groupKeyEmitter =
-        new NoErrorEmitter<>("Error records cannot be emitted from the groupBy method of an aggregator");
+        new NoErrorEmitter<>("Errors and Alerts cannot be emitted from the groupBy method of an aggregator");
       WritableConversion<GROUP_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(groupKeyClassName);
       WritableConversion<GROUP_VAL, OUT_VAL> valConversion = WritableConversions.getConversion(groupValClassName);
       // if the conversion is null, it means the user is using a Writable already

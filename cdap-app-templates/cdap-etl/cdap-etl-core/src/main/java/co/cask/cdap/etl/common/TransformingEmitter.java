@@ -21,6 +21,7 @@ import co.cask.cdap.etl.api.InvalidEntry;
 import com.google.common.base.Function;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Wrapper around another emitter that will transform objects before emitting them.
@@ -53,6 +54,11 @@ public class TransformingEmitter<EMIT, FETCH> implements Emitter<EMIT> {
   public void emitError(InvalidEntry<EMIT> value) {
     emitter.emitError(new InvalidEntry<>(value.getErrorCode(), value.getErrorMsg(),
                                          function.apply(value.getInvalidRecord())));
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    emitter.emitAlert(payload);
   }
 
   public Collection<FETCH> getEntries() {

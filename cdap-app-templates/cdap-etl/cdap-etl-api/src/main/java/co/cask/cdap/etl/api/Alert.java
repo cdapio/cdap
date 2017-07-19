@@ -16,23 +16,32 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.annotation.Beta;
+import java.util.Collections;
+import java.util.Map;
 
 /**
- * Used to emit one or more key-value pairs to output ports. Values emitted to a port will only be received by
- * stages connected to that specific port.
- *
- * @param <T> Type of error record
+ * An alert emitted by a stage in the pipeline.
  */
-@Beta
-public interface MultiOutputEmitter<T> extends AlertEmitter, ErrorEmitter<T> {
+public class Alert {
+  private final String stageName;
+  private final Map<String, String> payload;
+
+  public Alert(String stageName, Map<String, String> payload) {
+    this.stageName = stageName;
+    this.payload = Collections.unmodifiableMap(payload);
+  }
 
   /**
-   * Emit an output record to the specified port. Only stages connected to that port will receive the record.
-   *
-   * @param port the port to emit the output record to
-   * @param value the output record
+   * @return the stage the alert was emitted from
    */
-  void emit(String port, Object value);
+  public String getStageName() {
+    return stageName;
+  }
 
+  /**
+   * @return the unmodifiable alert payload.
+   */
+  public Map<String, String> getPayload() {
+    return payload;
+  }
 }

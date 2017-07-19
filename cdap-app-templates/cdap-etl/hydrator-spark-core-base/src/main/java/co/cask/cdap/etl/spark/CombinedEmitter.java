@@ -24,6 +24,7 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An emitter used in Spark to collect all output and errors emitted.
@@ -59,5 +60,10 @@ public class CombinedEmitter<T> implements Emitter<T> {
 
   public void reset() {
     emitted.clear();
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    // todo: implement after multioutput refactoring is done
   }
 }
