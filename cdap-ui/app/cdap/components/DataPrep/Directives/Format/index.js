@@ -76,6 +76,18 @@ export default class Format extends Component {
     this.setState({ formatPopoverOpen });
   };
 
+  formatToDateTime = () => {
+    this.setState({
+      activeModal: (
+        <SimpleDateModal
+          source="format"
+          toggle={this.toggleModal}
+          onApply={this.applyDateFormat}
+        />
+      )
+    });
+  };
+
   FORMAT_OPTIONS = [
     {
       name: 'DATE_TIME',
@@ -163,41 +175,29 @@ export default class Format extends Component {
     this.setState({
       createNewColumn: !this.state.createNewColumn
     });
-  }
+  };
 
   setConcatOption = (e) => {
     this.setState({
       concatOption: e.target.value
     });
-  }
+  };
 
   setFormatInput = (e) => {
     this.setState({
       formatInput: e.target.value
     });
-  }
+  };
 
   setNewColumnInput = (e) => {
     this.setState({
       newColumnInput: e.target.value
     });
-  }
+  };
 
   applyDateFormat = (name, format) => {
     let directive = `format-date ${this.props.column} ${format}`;
     this.applyDirective(directive);
-  };
-
-  formatToDateTime = () => {
-    this.setState({
-      activeModal: (
-        <SimpleDateModal
-          source="format"
-          toggle={this.toggleModal}
-          onApply={this.applyDateFormat}
-        />
-      )
-    });
   };
 
   setDefaultFormatPopoverState = () => {

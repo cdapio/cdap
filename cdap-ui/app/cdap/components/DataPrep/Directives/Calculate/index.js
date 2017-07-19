@@ -67,27 +67,22 @@ export default class Calculate extends Component {
       },
       {
         name: 'ADD',
-        onClick: this.popoverOptionClick.bind(this, 'ADD'),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'SUBTRACT',
-        onClick: this.popoverOptionClick.bind(this, 'SUBTRACT'),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'MULTIPLY',
-        onClick: this.popoverOptionClick.bind(this, 'MULTIPLY'),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'DIVIDE',
-        onClick: this.popoverOptionClick.bind(this, 'DIVIDE'),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'MODULO',
-        onClick: this.popoverOptionClick.bind(this, 'MODULO'),
         validColTypes: this.NUMBER_TYPES
       },
       {
@@ -96,37 +91,30 @@ export default class Calculate extends Component {
       },
       {
         name: 'POWEROF',
-        onClick: this.popoverOptionClick.bind(this, 'POWEROF'),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'SQUARE',
-        onClick: this.applyDirective.bind(this, `math:pow(${this.props.column}, 2)`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'SQUAREROOT',
-        onClick: this.applyDirective.bind(this, `math:sqrt(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'CUBE',
-        onClick: this.applyDirective.bind(this, `math:pow(${this.props.column}, 3)`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'CUBEROOT',
-        onClick: this.applyDirective.bind(this, `math:cbrt(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'LOG',
-        onClick: this.applyDirective.bind(this, `math:log10(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'NATURALLOG',
-        onClick: this.applyDirective.bind(this, `math:log(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
@@ -135,17 +123,14 @@ export default class Calculate extends Component {
       },
       {
         name: 'ABSVALUE',
-        onClick: this.applyDirective.bind(this, `math:abs(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'CEIL',
-        onClick: this.applyDirective.bind(this, `math:ceil(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'FLOOR',
-        onClick: this.applyDirective.bind(this, `math:floor(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
@@ -154,32 +139,26 @@ export default class Calculate extends Component {
       },
       {
         name: 'SIN',
-        onClick: this.applyDirective.bind(this, `math:sin(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'COS',
-        onClick: this.applyDirective.bind(this, `math:cos(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'TAN',
-        onClick: this.applyDirective.bind(this, `math:tan(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'ARCCOS',
-        onClick: this.applyDirective.bind(this, `math:acos(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'ARCSIN',
-        onClick: this.applyDirective.bind(this, `math:asin(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'ARCTAN',
-        onClick: this.applyDirective.bind(this, `math:atan(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
@@ -188,22 +167,19 @@ export default class Calculate extends Component {
       },
       {
         name: 'ROUND',
-        onClick: this.applyDirective.bind(this, `math:round(${this.props.column})`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'RANDOM',
-        onClick: this.applyDirective.bind(this, `math:random()`),
         validColTypes: this.NUMBER_TYPES
       },
       {
         name: 'CHARCOUNT',
-        onClick: this.popoverOptionClick.bind(this, 'CHARCOUNT'),
         validColTypes: ['string']
       }
     ];
 
-    this.OPTIONS_WITH_POPOVER = ['ADD', 'SUBTRACT', 'MULTIPLY', 'DIVIDE', 'MODULO', 'POWEROF', 'CHARCOUNT'];
+    this.SIMPLE_POPOVER_OPTIONS = ['SQUARE', 'SQUAREROOT', 'CUBE', 'CUBEROOT', 'LOG', 'NATURALLOG', 'ABSVALUE', 'CEIL', 'FLOOR', 'SIN', 'COS', 'TAN', 'ARCCOS', 'ARCSIN', 'ARCTAN', 'ROUND', 'RANDOM'];
   }
 
   componentDidMount() {
@@ -295,6 +271,57 @@ export default class Calculate extends Component {
       case 'POWEROF':
         expression = `math:pow(${this.props.column}, ${this.state.operationInput})`;
         break;
+      case 'SQUARE':
+        expression = `math:pow(${this.props.column}, 2)`;
+        break;
+      case 'SQUAREROOT':
+        expression = `math:sqrt(${this.props.column})`;
+        break;
+      case 'CUBE':
+        expression = `math:pow(${this.props.column}, 3)`;
+        break;
+      case 'CUBEROOT':
+        expression = `math:cbrt(${this.props.column})`;
+        break;
+      case 'LOG':
+        expression = `math:log10(${this.props.column})`;
+        break;
+      case 'NATURALLOG':
+        expression = `math:log(${this.props.column})`;
+        break;
+      case 'ABSVALUE':
+        expression = `math:abs(${this.props.column})`;
+        break;
+      case 'CEIL':
+        expression = `math:ceil(${this.props.column})`;
+        break;
+      case 'FLOOR':
+        expression = `math:floor(${this.props.column})`;
+        break;
+      case 'SIN':
+        expression = `math:sin(${this.props.column})`;
+        break;
+      case 'COS':
+        expression = `math:cos(${this.props.column})`;
+        break;
+      case 'TAN':
+        expression = `math:tan(${this.props.column})`;
+        break;
+      case 'ARCCOS':
+        expression = `math:acos(${this.props.column})`;
+        break;
+      case 'ARCSIN':
+        expression = `math:asin(${this.props.column})`;
+        break;
+      case 'ARCTAN':
+        expression = `math:atan(${this.props.column})`;
+        break;
+      case 'ROUND':
+        expression = `math:round(${this.props.column})`;
+        break;
+      case 'RANDOM':
+        expression = `math:random()`;
+        break;
       case 'CHARCOUNT':
         expression = `string:length(${this.props.column})`;
         break;
@@ -366,20 +393,14 @@ export default class Calculate extends Component {
             className={classnames('option', {
               'active': this.state.operationPopoverOpen === option.name
             })}
-            onClick={option.onClick}
+            onClick={this.popoverOptionClick.bind(this, option.name)}
           >
             <span>
               {T.translate(`${PREFIX}.OptionsLabels.${option.name}`)}
             </span>
-            {
-              this.OPTIONS_WITH_POPOVER.indexOf(option.name) !== -1 ?
-                (
-                  <span className="float-xs-right">
-                    <span className="fa fa-caret-right" />
-                  </span>
-                )
-              : null
-            }
+            <span className="float-xs-right">
+              <span className="fa fa-caret-right" />
+            </span>
             {
               this.state.operationPopoverOpen === option.name ?
                 this.renderOperationPopover()
@@ -418,6 +439,28 @@ export default class Calculate extends Component {
               this.renderOptions()
           }
         </div>
+      </div>
+    );
+  }
+
+  renderNewColumnNameInputWithCheckbox() {
+    return (
+      <div>
+        <div
+          className="create-new-column-line"
+          onClick={this.toggleCreateNewColumn}
+        >
+          <span className="fa fa-fw">
+            <IconSVG
+              name={this.state.createNewColumn ? 'icon-check-square' : 'icon-square-o'}
+            />
+          </span>
+
+          <span>
+            {T.translate(`${COPY_NEW_COLUMN_PREFIX}.label`)}
+          </span>
+        </div>
+        {this.renderNewColumnNameInput()}
       </div>
     );
   }
@@ -487,9 +530,20 @@ export default class Calculate extends Component {
           onClick={preventPropagation}
         >
           {this.renderNewColumnNameInput()}
-
           <hr />
+          {this.renderActionButtons()}
+        </div>
+      );
+    }
 
+    if (this.SIMPLE_POPOVER_OPTIONS.indexOf(this.state.operationPopoverOpen) !== -1) {
+      return (
+        <div
+          className="third-level-popover"
+          onClick={preventPropagation}
+        >
+          {this.renderNewColumnNameInputWithCheckbox()}
+          <hr />
           {this.renderActionButtons()}
         </div>
       );
@@ -547,22 +601,7 @@ export default class Calculate extends Component {
             autoFocus
           />
         </div>
-        <div
-          className="create-new-column-line"
-          onClick={this.toggleCreateNewColumn}
-        >
-          <span className="fa fa-fw">
-            <IconSVG
-              name={this.state.createNewColumn ? 'icon-check-square' : 'icon-square-o'}
-            />
-          </span>
-
-          <span>
-            {T.translate(`${COPY_NEW_COLUMN_PREFIX}.label`)}
-          </span>
-        </div>
-
-        {this.renderNewColumnNameInput()}
+        {this.renderNewColumnNameInputWithCheckbox()}
 
         <hr />
 
