@@ -89,15 +89,10 @@ public class WorkflowClientTestRun extends ClientTestBase {
       NamespaceId.DEFAULT.app(AppWithWorkflow.NAME).workflow(AppWithWorkflow.SampleWorkflow.NAME);
 
     programClient.start(workflowId, false, runtimeArgs);
+    assertProgramRunning(programClient, workflowId);
+    assertProgramRuns(programClient, workflowId, ProgramRunStatus.RUNNING, 1);
     programClient.waitForStatus(workflowId, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
-
-    Tasks.waitFor(1, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return programClient.getProgramRuns(workflowId,
-                                            ProgramRunStatus.COMPLETED.name(), 0, Long.MAX_VALUE, 10).size();
-      }
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    assertProgramRuns(programClient, workflowId, ProgramRunStatus.COMPLETED, 1);
 
     List<RunRecord> workflowRuns = programClient.getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name(), 0,
                                                                 Long.MAX_VALUE, 10);

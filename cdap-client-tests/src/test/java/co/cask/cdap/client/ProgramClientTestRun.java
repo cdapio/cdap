@@ -28,6 +28,7 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -73,7 +74,7 @@ public class ProgramClientTestRun extends ClientTestBase {
   @Test
   public void testBatchProgramCalls() throws Exception {
     NamespaceId namespace = NamespaceId.DEFAULT;
-    ApplicationId appId = namespace.app(FakeApp.NAME);
+    final ApplicationId appId = namespace.app(FakeApp.NAME);
     BatchProgram flow = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     BatchProgram service = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, "not" + FakeFlow.NAME);
@@ -129,9 +130,18 @@ public class ProgramClientTestRun extends ClientTestBase {
       // check programs are in stopped state
       programs = ImmutableList.of(flow, service);
       statusList = programClient.getStatus(namespace, programs);
-      for (BatchProgramStatus status : statusList) {
+      for (final BatchProgramStatus status : statusList) {
         Assert.assertEquals(200, status.getStatusCode());
         Assert.assertEquals("Program = " + status.getProgramId(), "STOPPED", status.getStatus());
+
+        Tasks.waitFor(true, new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return programClient.getProgramRuns(appId.program(status.getProgramType(), status.getProgramId()),
+                                                ProgramRunStatus.RUNNING.name(), 0L, Long.MAX_VALUE,
+                                                Integer.MAX_VALUE).isEmpty();
+          }
+        }, 5, TimeUnit.SECONDS);
       }
     } finally {
       try {
@@ -158,6 +168,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       LOG.info("Starting flow");
       programClient.start(flow);
       assertProgramRunning(programClient, flow);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.RUNNING, 1);
 
       LOG.info("Getting flow history");
       programClient.getAllProgramRuns(flow, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -183,14 +194,17 @@ public class ProgramClientTestRun extends ClientTestBase {
       LOG.info("Stopping flow");
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
 
       testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
 
       LOG.info("Starting flow with debug");
       programClient.start(flow, true);
       assertProgramRunning(programClient, flow);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.RUNNING, 1);
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 2);
     } finally {
       try {
         appClient.delete(app);
@@ -235,6 +249,7 @@ public class ProgramClientTestRun extends ClientTestBase {
     Assert.assertTrue(doneFile.createNewFile());
 
     assertProgramStopped(programClient, workflow);
+    assertProgramRuns(programClient, workflow, ProgramRunStatus.COMPLETED, 1);
     LOG.info("Workflow stopped");
   }
 }

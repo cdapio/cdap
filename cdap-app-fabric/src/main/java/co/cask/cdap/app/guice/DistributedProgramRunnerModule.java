@@ -32,7 +32,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.

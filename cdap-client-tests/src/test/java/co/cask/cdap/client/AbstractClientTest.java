@@ -24,7 +24,9 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ProgramRecord;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.FlowletId;
@@ -50,6 +52,8 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.jar.Manifest;
@@ -148,7 +152,6 @@ public abstract class AbstractClientTest {
   protected void assertProgramStatus(ProgramClient programClient, ProgramId program, ProgramStatus programStatus)
     throws IOException, ProgramNotFoundException, UnauthenticatedException,
     InterruptedException, UnauthorizedException {
-
     try {
       programClient.waitForStatus(program, programStatus, 60, TimeUnit.SECONDS);
     } catch (TimeoutException e) {
@@ -156,6 +159,18 @@ public abstract class AbstractClientTest {
     }
 
     Assert.assertEquals(programStatus.name(), programClient.getStatus(program));
+  }
+
+  protected void assertProgramRuns(final ProgramClient programClient, final ProgramId program,
+                                  final ProgramRunStatus programRunStatus, final int expected)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(expected, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return programClient.getProgramRuns(program, programRunStatus.name(),
+                                            0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {

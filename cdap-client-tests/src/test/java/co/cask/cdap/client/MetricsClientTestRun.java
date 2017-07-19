@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.MetricQueryResult;
 import co.cask.cdap.proto.MetricTagValue;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -98,6 +99,7 @@ public class MetricsClientTestRun extends ClientTestBase {
       Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
     } finally {
       programClient.stop(flow);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
       appClient.delete(app);
     }
   }
