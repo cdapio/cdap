@@ -14,14 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.spark.sql.datasources.stream
+package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.data.format.{FormatSpecification, StructuredRecord}
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.spark.sql.DataFrames
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.app.runtime.spark.SparkClassLoader
+import co.cask.cdap.app.runtime.spark.{SparkClassLoader, SparkRuntimeContext}
 import co.cask.cdap.format.RecordFormats
 import co.cask.cdap.proto.id.StreamId
 import com.google.common.annotations.VisibleForTesting
@@ -49,7 +49,8 @@ import scala.util.Try
   * `timestamp.column.name` and `headers.column.name`.
   */
 private[stream] class StreamRelation(override val sqlContext: SQLContext, streamId: StreamId,
-                                     userSchema: Option[StructType], parameters: Map[String, String])
+                                     userSchema: Option[StructType], parameters: Map[String, String],
+                                     runtimeContext: SparkRuntimeContext)
   extends BaseRelation with Serializable with PrunedFilteredScan {
 
   import StreamRelation._
@@ -68,11 +69,7 @@ private[stream] class StreamRelation(override val sqlContext: SQLContext, stream
       .getOrElse(StructType(Seq(StructField("body", DataTypes.BinaryType, false))))
 
   // The actual schema is the body schema with optionally timestamp and headers columns added
-  private lazy val streamSchema = addTimestampAndHeaders(streamBodySchema)
-
-  override def schema: StructType = {
-    streamSchema
-  }
+  override lazy val schema = addTimestampAndHeaders(streamBodySchema)
 
   override def buildScan(requiredColumns: Array[String], filters: Array[Filter]): RDD[Row] = {
     // If there is no filter or if there is no timestamp column, we can't filter by timestamp, hence
@@ -155,7 +152,6 @@ private[stream] class StreamRelation(override val sqlContext: SQLContext, stream
     // Either return the format spec created above based on the user provided format + schema
     // Otherwise, return the one set on the stream, optionally overridding the schema with the user provided one
     Some(providedFormatSpec.getOrElse({
-      val runtimeContext = SparkClassLoader.findFromContext().getRuntimeContext
       val defaultFormatspec = runtimeContext.getStreamAdmin.getConfig(streamId).getFormat
       new FormatSpecification(
         defaultFormatspec.getName,

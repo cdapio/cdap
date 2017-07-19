@@ -21,10 +21,10 @@ import co.cask.cdap.api.dataset.Dataset
 import scala.reflect.ClassTag
 
 /**
-  * A trait for [[co.cask.cdap.app.runtime.spark.DatasetRDD]] to acquire [[co.cask.cdap.api.dataset.Dataset]] instance
-  * and performs computation on it.
+  * A trait for [[co.cask.cdap.app.runtime.spark.data.DatasetRDD]]
+  * to acquire [[co.cask.cdap.api.dataset.Dataset]] instance and performs computation on it.
   */
-private[spark] trait DatasetCompute {
+trait DatasetCompute {
 
   /**
     * Performs computation on a [[co.cask.cdap.api.dataset.Dataset]] instance.

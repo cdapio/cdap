@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
  * Client class to interact with {@link SparkTransactionHandler} through HTTP. It is used by tasks executed inside
  * executor processes.
  */
-final class SparkTransactionClient {
+public final class SparkTransactionClient {
 
   private static final TransactionCodec TX_CODEC = new TransactionCodec();
   private static final long DEFAULT_TX_POLL_INTERVAL_MS = 50;
@@ -43,11 +43,11 @@ final class SparkTransactionClient {
   private final URI txServiceBaseURI;
   private final long txPollIntervalMillis;
 
-  SparkTransactionClient(URI txServiceBaseURI) {
+  public SparkTransactionClient(URI txServiceBaseURI) {
     this(txServiceBaseURI, DEFAULT_TX_POLL_INTERVAL_MS);
   }
 
-  SparkTransactionClient(URI txServiceBaseURI, long txPollIntervalMillis) {
+  public SparkTransactionClient(URI txServiceBaseURI, long txPollIntervalMillis) {
     this.txServiceBaseURI = txServiceBaseURI;
     this.txPollIntervalMillis = txPollIntervalMillis;
   }
@@ -65,8 +65,8 @@ final class SparkTransactionClient {
    * @throws TransactionFailureException if failed to get transaction for the given stage. Calling this method again
    *                                     with the same stage id will result in the same exception
    */
-  Transaction getTransaction(int stageId, long timeout,
-                             TimeUnit timeUnit) throws TimeoutException, InterruptedException,
+  public Transaction getTransaction(int stageId, long timeout,
+                                    TimeUnit timeUnit) throws TimeoutException, InterruptedException,
                                                        TransactionFailureException {
     long timeoutMillis = Math.max(0L, timeUnit.toMillis(timeout) - txPollIntervalMillis);
     Stopwatch stopwatch = new Stopwatch().start();

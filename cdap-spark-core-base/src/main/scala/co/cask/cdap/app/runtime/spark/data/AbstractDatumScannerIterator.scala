@@ -14,23 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.app.runtime.spark.data
 
+import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
-import co.cask.cdap.api.data.batch.SplitReader
+import co.cask.cdap.app.runtime.spark.data
 import org.apache.spark.{TaskContext, TaskKilledException}
-import org.apache.spark.executor.InputMetrics
-
 
 /**
-  * An [[scala.Iterator]] that is backed by a [[co.cask.cdap.api.data.batch.SplitReader]].
+  * An adapter class to branch a [[data.DatumScanner]] into an [[scala.Iterator]].
   */
-abstract class AbstractSplitReaderIterator[K, V](context: TaskContext,
-                                                 splitReader: SplitReader[K, V],
-                                                 closeable: () => Unit) extends Iterator[(K, V)] {
+abstract class AbstractDatumScannerIterator[T](context: TaskContext,
+                                               scanner: DatumScanner[T]) extends Iterator[T] with Closeable {
+
   val done = new AtomicBoolean
-  var nextKeyValue: Option[(K, V)] = None
+  var nextKeyValue: Option[T] = None
 
   override def hasNext: Boolean = {
     if (done.get()) {
@@ -41,15 +40,17 @@ abstract class AbstractSplitReaderIterator[K, V](context: TaskContext,
     }
 
     // Find the next key value if necessary
-    if (nextKeyValue.isEmpty && splitReader.nextKeyValue()) {
-      nextKeyValue = Some((splitReader.getCurrentKey, splitReader.getCurrentValue))
+    if (nextKeyValue.isEmpty && scanner.next()) {
+      nextKeyValue = Some(scanner.getCurrent())
     }
     return nextKeyValue.isDefined
   }
 
-  override def next: (K, V) = {
+  override def next: T = {
     // Precondition check. It shouldn't fail.
-    require(nextKeyValue.isDefined || hasNext, "No more entries")
+    if (!nextKeyValue.isDefined && !hasNext) {
+      throw new NoSuchElementException("No more entries")
+    }
 
     incrementMetrics()
     val result = nextKeyValue.get
@@ -57,11 +58,16 @@ abstract class AbstractSplitReaderIterator[K, V](context: TaskContext,
     result
   }
 
-  def close: Unit = {
+  override def close: Unit = {
     if (done.compareAndSet(false, true)) {
-      closeable()
+      scanner.close()
     }
   }
 
-  def incrementMetrics(): Unit
+  /**
+    * Increments the metrics for reading a record. By default is a no-op.
+    */
+  def incrementMetrics(): Unit = {
+
+  }
 }

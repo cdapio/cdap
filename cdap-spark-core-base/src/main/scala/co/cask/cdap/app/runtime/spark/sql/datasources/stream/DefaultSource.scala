@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.spark.sql.datasources.stream
+package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 
-import co.cask.cdap.app.runtime.spark.SparkClassLoader
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
 import co.cask.cdap.proto.id.NamespaceId
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.sources.{BaseRelation, DataSourceRegister, RelationProvider, SchemaRelationProvider}
@@ -41,7 +41,8 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Da
     val namespace = parameters.get("namespace")
     val path = parameters.get("path")
 
-    val programRunId = SparkClassLoader.findFromContext().getRuntimeContext.getProgramRunId
+    val runtimeContext = SparkRuntimeContextProvider.get()
+    val programRunId = runtimeContext.getProgramRunId
 
     val streamId = path match {
       case Some(streamName) => {
@@ -53,6 +54,6 @@ class DefaultSource extends RelationProvider with SchemaRelationProvider with Da
       case _ => throw new IllegalArgumentException("Missing stream name, which is derived from the 'path' parameter")
     }
 
-    new StreamRelation(sqlContext, streamId, Option(schema), parameters)
+    new StreamRelation(sqlContext, streamId, Option(schema), parameters, runtimeContext)
   }
 }
