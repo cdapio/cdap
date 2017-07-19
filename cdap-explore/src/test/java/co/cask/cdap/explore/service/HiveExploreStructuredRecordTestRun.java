@@ -16,13 +16,20 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.ExploreProperties;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.EmailTableDefinition;
 import co.cask.cdap.explore.service.datasets.TableWrapperDefinition;
@@ -33,7 +40,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.Lists;
-import org.apache.tephra.Transaction;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -54,6 +60,8 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
+  private static Transactional transactional;
+
   @BeforeClass
   public static void start() throws Exception {
     initialize(tmpFolder);
@@ -62,22 +70,20 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     datasetFramework.addModule(moduleId, new EmailTableDefinition.EmailTableModule());
     datasetFramework.addInstance("email", MY_TABLE, DatasetProperties.EMPTY);
 
-    // Accessing dataset instance to perform data operations
-    EmailTableDefinition.EmailTable table = datasetFramework.getDataset(MY_TABLE, DatasetDefinition.NO_ARGUMENTS, null);
-    Assert.assertNotNull(table);
+    transactional = Transactions.createTransactional(
+      new MultiThreadDatasetCache(new SystemDatasetInstantiator(datasetFramework),
+                                  transactionSystemClient, NAMESPACE_ID,
+                                  Collections.<String, String>emptyMap(), null, null));
 
-    Transaction tx1 = transactionManager.startShort(100);
-    table.startTx(tx1);
-
-    table.writeEmail("email1", "this is the subject", "this is the body", "sljackson@boss.com");
-
-    Assert.assertTrue(table.commitTx());
-
-    transactionManager.canCommit(tx1, table.getTxChanges());
-    transactionManager.commit(tx1);
-
-    table.postTxCommit();
-
+    transactional.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        // Accessing dataset instance to perform data operations
+        EmailTableDefinition.EmailTable table = context.getDataset(MY_TABLE.getDataset());
+        Assert.assertNotNull(table);
+        table.writeEmail("email1", "this is the subject", "this is the body", "sljackson@boss.com");
+      }
+    });
 
     datasetFramework.addModule(NAMESPACE_ID.datasetModule("TableWrapper"),
                                new TableWrapperDefinition.Module());
@@ -250,5 +256,40 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
     } finally {
       datasetFramework.deleteInstance(copyTable);
     }
+  }
+
+  @Test
+  public void testObjectMappedTable() throws Exception {
+    // Add a ObjectMappedTable instance
+    final DatasetId datasetId = NAMESPACE_ID.dataset("person");
+    datasetFramework.addInstance(ObjectMappedTable.class.getName(), datasetId,
+                                 ObjectMappedTableProperties.builder()
+                                   .setType(Person.class)
+                                   .setRowKeyExploreName("id")
+                                   .setRowKeyExploreType(Schema.Type.STRING)
+                                   .build());
+
+    // Insert data using sql
+    String command = String.format("INSERT into %s (id, firstname, lastname, age) VALUES (\"%s\", \"%s\", \"%s\", %d)",
+                                   getDatasetHiveName(datasetId), "bobby", "Bobby", "Bob", 15);
+    ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+    Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
+
+    transactional.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        // Read the data back via dataset directly
+        ObjectMappedTable<Person> objTable = context.getDataset(datasetId.getDataset());
+
+        Person person = objTable.read("bobby");
+        Assert.assertNotNull(person);
+        Assert.assertEquals("Bobby", person.getFirstName());
+        Assert.assertEquals("Bob", person.getLastName());
+        Assert.assertEquals(15, person.getAge());
+      }
+    });
+
+    // Delete the dataset, hence also drop the table.
+    datasetFramework.deleteInstance(datasetId);
   }
 }

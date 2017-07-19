@@ -197,6 +197,11 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
     return new ObjectSplitReader(table.createSplitReader(split));
   }
 
+  @Override
+  public void write(StructuredRecord structuredRecord) throws IOException {
+    table.write(structuredRecord);
+  }
+
   private class ObjectIterator extends AbstractCloseableIterator<KeyValue<byte[], T>> {
     private final Scanner scanner;
     private boolean closed = false;
