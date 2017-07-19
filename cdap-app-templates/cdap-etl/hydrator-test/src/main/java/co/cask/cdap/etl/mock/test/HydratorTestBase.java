@@ -22,7 +22,6 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
-import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.batch.FilterTransform;
@@ -37,9 +36,6 @@ import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
-import co.cask.cdap.etl.mock.realtime.LookupSource;
-import co.cask.cdap.etl.mock.realtime.MockSink;
-import co.cask.cdap.etl.mock.realtime.MockSource;
 import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import co.cask.cdap.etl.mock.transform.AllErrorTransform;
@@ -67,12 +63,6 @@ public class HydratorTestBase extends TestBase {
   // .class files in the jar and never in the dependencies, which is normally a reasonable assumption.
   // So since the plugins are in lib/hydrator-test.jar, CDAP won't find any plugins in the jar.
   // To work around, we'll just explicitly specify each plugin.
-  private static final Set<PluginClass> REALTIME_MOCK_PLUGINS = ImmutableSet.of(
-    LookupSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS, MockSource.PLUGIN_CLASS,
-    DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
-    IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
-    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
-  );
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
     MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
@@ -99,19 +89,6 @@ public class HydratorTestBase extends TestBase {
   );
 
   public HydratorTestBase() {
-  }
-
-  protected static void setupRealtimeArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
-    addAppArtifact(artifactId, appClass,
-                   RealtimeSource.class.getPackage().getName(),
-                   PipelineConfigurable.class.getPackage().getName());
-
-    addPluginArtifact(new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0"),
-                      artifactId,
-                      REALTIME_MOCK_PLUGINS,
-                      MockSink.class, MockSource.class, LookupSource.class,
-                      DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
-                      IntValueFilterTransform.class, StringValueFilterTransform.class);
   }
 
   protected static void setupBatchArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {

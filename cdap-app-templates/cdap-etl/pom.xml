@@ -40,7 +40,6 @@
     <module>cdap-etl-batch</module>
     <module>cdap-etl-core</module>
     <module>cdap-etl-proto</module>
-    <module>cdap-etl-realtime</module>
     <module>cdap-etl-tools</module>
     <module>hydrator-spark-core</module>
     <module>hydrator-spark-core2_2.11</module>

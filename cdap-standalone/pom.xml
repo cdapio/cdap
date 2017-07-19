@@ -627,14 +627,6 @@
                         <include>cdap-etl-batch-${project.version}.jar</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-realtime-${project.version}.jar</include>
-                      </includes>
-                    </resource>
                   </resources>
                 </configuration>
               </execution>

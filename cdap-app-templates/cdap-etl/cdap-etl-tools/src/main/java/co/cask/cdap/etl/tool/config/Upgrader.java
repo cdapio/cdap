@@ -25,7 +25,6 @@ import co.cask.cdap.etl.proto.UpgradeableConfig;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLConfig;
-import co.cask.cdap.etl.proto.v2.ETLRealtimeConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -40,17 +39,15 @@ import java.util.Set;
  */
 public class Upgrader {
   public static final String BATCH_NAME = "cdap-etl-batch";
-  public static final String REALTIME_NAME = "cdap-etl-realtime";
   public static final String DATA_PIPELINE_NAME = "cdap-data-pipeline";
   public static final String DATA_STREAMS_NAME = "cdap-data-streams";
   public static final Set<String> ARTIFACT_NAMES =
-    ImmutableSet.of(BATCH_NAME, REALTIME_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
+    ImmutableSet.of(BATCH_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
   private static final Gson GSON = new Gson();
   private static final ArtifactVersion CURRENT_VERSION = new ArtifactVersion(ETLVersion.getVersion());
   private static final ArtifactVersion LOWEST_VERSION = new ArtifactVersion("3.2.0");
 
   private final UpgradeContext etlBatchContext;
-  private final UpgradeContext etlRealtimeContext;
   private final UpgradeContext dataPipelineContext;
   private final UpgradeContext dataStreamsContext;
 
@@ -58,8 +55,6 @@ public class Upgrader {
     String newVersion = ETLVersion.getVersion();
     this.etlBatchContext =
       new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(BATCH_NAME, newVersion));
-    this.etlRealtimeContext =
-      new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(REALTIME_NAME, newVersion));
     this.dataPipelineContext =
       new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(DATA_PIPELINE_NAME, newVersion));
     this.dataStreamsContext =
@@ -103,9 +98,6 @@ public class Upgrader {
       case BATCH_NAME:
         appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
                                                                       oldConfigStr, etlBatchContext));
-        break;
-      case REALTIME_NAME:
-        appRequest = new AppRequest<>(newArtifact, convertRealtimeConfig(majorVersion, minorVersion, oldConfigStr));
         break;
       case DATA_PIPELINE_NAME:
         appRequest = new AppRequest<>(newArtifact, convertBatchConfig(majorVersion, minorVersion,
@@ -177,32 +169,5 @@ public class Upgrader {
       config = config.upgrade(upgradeContext);
     }
     return (ETLBatchConfig) config;
-  }
-
-  private ETLRealtimeConfig convertRealtimeConfig(int majorVersion, int minorVersion, String configStr) {
-    UpgradeableConfig config;
-
-    if (majorVersion == 3 && minorVersion == 2) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v0.ETLRealtimeConfig.class);
-    } else if (majorVersion == 3 && minorVersion == 3) {
-      config = GSON.fromJson(configStr, co.cask.cdap.etl.proto.v1.ETLRealtimeConfig.class);
-    } else {
-      // 3.4.x and up all have the same config format, but the plugin artifacts may need to be upgraded
-      ETLRealtimeConfig realtimeConfig = GSON.fromJson(configStr, ETLRealtimeConfig.class);
-      ETLRealtimeConfig.Builder builder = ETLRealtimeConfig.builder()
-        .addConnections(realtimeConfig.getConnections())
-        .setInstances(realtimeConfig.getInstances())
-        .setResources(realtimeConfig.getResources());
-      // upgrade any of the plugin artifact versions if needed
-      for (ETLStage stage : realtimeConfig.getStages()) {
-        builder.addStage(stage.upgradeStage(etlRealtimeContext));
-      }
-      return builder.build();
-    }
-
-    while (config.canUpgrade()) {
-      config = config.upgrade(etlRealtimeContext);
-    }
-    return (ETLRealtimeConfig) config;
   }
 }

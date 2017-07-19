@@ -31,8 +31,6 @@
 
   <modules>
     <module>cdap-data-pipeline-plugins-archetype</module>
-    <module>cdap-etl-realtime-source-archetype</module>
-    <module>cdap-etl-realtime-sink-archetype</module>
   </modules>
 
   <build>
