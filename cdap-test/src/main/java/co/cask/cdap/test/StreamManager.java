@@ -18,6 +18,7 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
+import co.cask.cdap.proto.StreamProperties;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +38,14 @@ public interface StreamManager {
    * @throws java.io.IOException If there is an error creating the stream.
    */
   void createStream() throws IOException;
+
+  /**
+   * Sets the stream properties.
+   *
+   * @param properties the properties to set
+   * @throws IOException if there is an error when setting the stream properties.
+   */
+  void setStreamProperties(StreamProperties properties) throws IOException;
 
   /**
    * Sends a UTF-8 encoded string to the stream.

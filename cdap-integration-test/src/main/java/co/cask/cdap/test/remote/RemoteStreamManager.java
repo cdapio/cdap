@@ -22,6 +22,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.StreamManager;
 import com.google.common.base.Charsets;
@@ -50,6 +51,17 @@ public class RemoteStreamManager implements StreamManager {
   public void createStream() throws IOException {
     try {
       streamClient.create(streamId);
+    } catch (IOException e) {
+      throw e;
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void setStreamProperties(StreamProperties properties) throws IOException {
+    try {
+      streamClient.setStreamProperties(streamId, properties);
     } catch (IOException e) {
       throw e;
     } catch (Exception e) {

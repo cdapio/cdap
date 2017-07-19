@@ -25,6 +25,7 @@ import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.internal.MockResponder;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.test.StreamManager;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
@@ -52,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -79,7 +81,7 @@ public class DefaultStreamManager implements StreamManager {
   @Override
   public void createStream() throws IOException {
     String path = String.format("/v3/namespaces/%s/streams/%s", streamId.getNamespaceId(), streamId.getId());
-    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, path);
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
 
     MockResponder responder = new MockResponder();
     try {
@@ -90,6 +92,24 @@ public class DefaultStreamManager implements StreamManager {
     }
     if (responder.getStatus() != HttpResponseStatus.OK) {
       throw new IOException("Failed to create stream. Status = " + responder.getStatus());
+    }
+  }
+
+  @Override
+  public void setStreamProperties(StreamProperties properties) throws IOException {
+    String path = String.format("/v3/namespaces/%s/streams/%s/properties", streamId.getNamespaceId(), streamId.getId());
+    HttpRequest httpRequest = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, path);
+    httpRequest.setContent(ChannelBuffers.wrappedBuffer(StandardCharsets.UTF_8.encode(GSON.toJson(properties))));
+
+    MockResponder responder = new MockResponder();
+    try {
+      streamHandler.setConfig(httpRequest, responder, streamId.getNamespaceId(), streamId.getId());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
+    if (responder.getStatus() != HttpResponseStatus.OK) {
+      throw new IOException("Failed to set stream properties. Status = " + responder.getStatus());
     }
   }
 
