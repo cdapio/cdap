@@ -40,7 +40,7 @@ import java.util.Iterator;
 public final class StructuredRecordStringConverter {
 
   private static final JsonStructuredRecordDatumWriter JSON_DATUM_WRITER = new JsonStructuredRecordDatumWriter();
-  private static final JsonStructuredRecordDatumReader JSON_DATUM_READER = new JsonStructuredRecordDatumReader();
+  private static final JsonStructuredRecordDatumReader JSON_DATUM_READER = new JsonStructuredRecordDatumReader(true);
 
   /**
    * Converts a {@link StructuredRecord} to a json string.

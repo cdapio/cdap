@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
 public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRecord> {
   // these are used since we know the type or the row key in the constructor,
   // and we don't want to have a big switch statement each time we read a row.
-  private static final Map<Schema.Type, RowKeyFunction> rowKeyFunctions =
+  private static final Map<Schema.Type, RowKeyFunction> ROW_KEY_FUNCTIONS =
     ImmutableMap.<Schema.Type, RowKeyFunction>builder()
       .put(Schema.Type.BOOLEAN, new RowKeyFunction<Boolean>() {
         @Override
@@ -97,9 +97,9 @@ public class ReflectionRowRecordReader extends ReflectionRowReader<StructuredRec
       Preconditions.checkArgument(rowField.getSchema().isSimpleOrNullableSimple(),
         "Row field must be a simple (boolean, bytes, int, long, float, double, or string) or nullable simple type.");
       if (rowField.getSchema().isNullableSimple()) {
-        this.rowKeyFunction = rowKeyFunctions.get(rowField.getSchema().getNonNullable().getType());
+        this.rowKeyFunction = ROW_KEY_FUNCTIONS.get(rowField.getSchema().getNonNullable().getType());
       } else {
-        this.rowKeyFunction = rowKeyFunctions.get(rowType);
+        this.rowKeyFunction = ROW_KEY_FUNCTIONS.get(rowType);
       }
     } else {
       this.rowKeyFunction = null;

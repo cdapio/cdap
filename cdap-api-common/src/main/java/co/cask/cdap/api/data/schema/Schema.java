@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * This class represents schema of data types.
@@ -383,6 +384,9 @@ public final class Schema implements Serializable {
   private transient String schemaString;
   private SchemaHash schemaHash;
 
+  // This is a on demand cache for case insensitive field lookup. No need to serialize.
+  private transient Map<String, Field> ignoreCaseFieldMap;
+
   private Schema(Type type, Set<String> enumValues, Schema componentSchema, Schema keySchema, Schema valueSchema,
                  String recordName, Map<String, Field> fieldMap, List<Schema> unionSchemas) {
     this.type = type;
@@ -478,11 +482,39 @@ public final class Schema implements Serializable {
    * @return A {@link Field} or {@code null} if there is no such field in this record
    *         or this is not a {@link Type#RECORD RECORD} schema.
    */
+  @Nullable
   public Field getField(String name) {
+    return getField(name, false);
+  }
+
+  /**
+   * Returns the record {@link Field} of the given name.
+   *
+   * @param name Name of the field
+   * @param ignoreCase if {@code true}, the field name is matched without case.
+   * @return A {@link Field} or {@code null} if there is no such field in this record
+   *         or this is not a {@link Type#RECORD RECORD} schema.
+   */
+  @Nullable
+  public Field getField(String name, boolean ignoreCase) {
     if (fieldMap == null) {
       return null;
     }
-    return fieldMap.get(name);
+    Field field = fieldMap.get(name);
+    if (!ignoreCase || field != null) {
+      return field;
+    }
+
+    // If allow ignoring case, build the ignore case map on demand.
+    if (ignoreCaseFieldMap == null) {
+      // Initialize the ignore case field map
+      Map<String, Field> map = new HashMap<>();
+      for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+        map.put(entry.getKey().toLowerCase(), entry.getValue());
+      }
+      ignoreCaseFieldMap = map;
+    }
+    return ignoreCaseFieldMap.get(name.toLowerCase());
   }
 
   /**

@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.Dataset;
@@ -45,7 +46,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface ObjectMappedTable<T> extends Dataset, BatchReadable<byte[], T>,
-  BatchWritable<byte[], T>, RecordScannable<StructuredRecord> {
+  BatchWritable<byte[], T>, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
   /**
    * Write an object with a given key.

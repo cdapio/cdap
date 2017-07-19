@@ -52,6 +52,24 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
       .build()
   );
 
+  private final boolean fieldNameIgnoreCase;
+
+  /**
+   * Constructor that treats field names case sensitive.
+   */
+  public JsonStructuredRecordDatumReader() {
+    this(false);
+  }
+
+  /**
+   * Constructor.
+   *
+   * @param fieldNameIgnoreCase {@code true} to have case sensitive field names.
+   */
+  public JsonStructuredRecordDatumReader(boolean fieldNameIgnoreCase) {
+    this.fieldNameIgnoreCase = fieldNameIgnoreCase;
+  }
+
   @Override
   public StructuredRecord read(Decoder decoder, Schema sourceSchema) throws IOException {
     if (!(decoder instanceof JsonDecoder)) {
@@ -108,7 +126,7 @@ public class JsonStructuredRecordDatumReader extends StructuredRecordDatumReader
 
     jsonReader.beginObject();
     while (jsonReader.peek() != JsonToken.END_OBJECT) {
-      Schema.Field field = schema.getField(jsonReader.nextName());
+      Schema.Field field = schema.getField(jsonReader.nextName(), fieldNameIgnoreCase);
       if (field == null) {
         // Ignore unrecognized fields
         jsonReader.skipValue();

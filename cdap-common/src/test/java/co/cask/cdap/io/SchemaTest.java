@@ -229,6 +229,14 @@ public class SchemaTest {
   }
 
   @Test
+  public void testFieldIgnoreCase() {
+    Schema schema = Schema.recordOf("record", Schema.Field.of("firstName", Schema.of(Schema.Type.STRING)));
+    Assert.assertEquals(Schema.Type.STRING, schema.getField("firstName").getSchema().getType());
+    Assert.assertNull(schema.getField("firstname"));
+    Assert.assertEquals(Schema.Type.STRING, schema.getField("firstname", true).getSchema().getType());
+  }
+
+  @Test
   public void testParseFlatSQL() throws IOException {
     // simple, non-nested types
     String schemaStr = "bool_field boolean, " +
