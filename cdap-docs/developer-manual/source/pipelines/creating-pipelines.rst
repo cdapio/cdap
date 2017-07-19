@@ -31,9 +31,6 @@ CDAP currently provides two artifacts (referred to as *system artifacts*):
 
 which are used to create the different kinds of data pipeline applications.
 
-**Note:** *Two system artifacts,* ``cdap-etl-batch`` *and* ``cdap-etl-realtime``, *have
-been deprecated and replaced by the above artifacts, as of CDAP 3.5.0.*
-
 Pipelines can be created using CDAP's included visual editor (the *CDAP Studio*), using
 command-line tools such the CDAP CLI and ``curl``, or programmatically with scripts or
 Java programs.

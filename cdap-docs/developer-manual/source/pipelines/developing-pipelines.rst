@@ -320,7 +320,7 @@ the CDAP CLI.
 
   .. tabbed-parsed-literal::
 
-    $ cdap cli create app streamETLApp cdap-etl-batch |release| system <path-to-config.json>
+    $ cdap cli create app streamETLApp cdap-data-pipeline |release| system <path-to-config.json>
     
     Successfully created application
 

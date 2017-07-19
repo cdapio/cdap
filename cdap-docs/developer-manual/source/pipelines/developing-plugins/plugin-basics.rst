@@ -24,8 +24,6 @@ In CDAP pipelines, these plugin types are presently used:
 - Spark Sink (*sparksink*, restricted to batch pipelines) 
 - Windower (*windower*, restricted to real-time pipelines)
 - Post-run Action (*postaction*, restricted to batch pipelines)
-- Real-time Source (*realtimesource*, deprecated)
-- Real-time Sink (*realtimesink*, deprecated)
 
 In the CDAP Pipelines UI, all Batch Aggregator, Batch Joiner, Spark Compute, and Spark Sink
 plugins are grouped under the Analytics section. All Transformation and Windower plugins
@@ -35,10 +33,9 @@ are grouped under the Transforms section.
 
 Maven Archetypes
 ================
-To get started on creating a custom plugin, you can use one of these Maven archetypes to create your project:
+To get started on creating a custom plugin, you can use the Maven archetype to create your project:
 
 - ``cdap-data-pipeline-plugins-archetype`` (contains batch, Spark plugin, and other types)
-- ``cdap-etl-transform-archetype`` (contains a transform)
 
 This command will create a project from an archetype:
 
@@ -48,29 +45,21 @@ This command will create a project from an archetype:
 
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
-          -DarchetypeArtifactId=<archetype> \\
+          -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype \\
           -DarchetypeVersion=\ |release| \\
           -DgroupId=org.example.plugin
           
-where ``<archetype>`` is one of the archetypes listed above.
-
 **Note:** Replace the *groupId* parameter (``org.example.plugin``) with your own
 organization, but it must not be replaced with ``co.cask.cdap``.
 
 Complete examples for each archetype:
 
-.. tabbed-parsed-literal::
-  :tabs: cdap-data-pipeline-plugins,cdap-etl-transform
-  :dependent: cdap-pipeline-archetype
+.. container:: highlight
 
-  .. cdap-data-pipeline-plugins
+  .. parsed-literal::
 
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
+    $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-data-pipeline-plugins-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
   
-  .. cdap-etl-transform
-  
-  $ mvn archetype:generate -DarchetypeGroupId=co.cask.cdap -DarchetypeArtifactId=cdap-etl-transform-archetype -DarchetypeVersion=\ |release| -DgroupId=org.example.plugin
-
 Maven supplies a guide to the naming convention used above at
 https://maven.apache.org/guides/mini/guide-naming-conventions.html.
 

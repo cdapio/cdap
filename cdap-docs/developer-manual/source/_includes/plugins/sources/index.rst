@@ -17,7 +17,6 @@ CDAP Pipelines Version |cdap-pipelines-version|
 These plugins work with:
 
   - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
-  - *Batch Pipeline* (``cdap-etl-batch`` artifact, deprecated as of CDAP 3.5.0)
 
 .. toctree::
     :maxdepth: 1

@@ -18,7 +18,6 @@ These plugins work with:
 
   - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
   - *Data Pipeline - Realtime* (``cdap-data-streams`` artifact)
-  - *Batch Pipeline* (``cdap-etl-batch`` artifact, deprecated as of CDAP 3.5.0)
 
 .. toctree::
     :maxdepth: 1

@@ -3,8 +3,6 @@ aopalliance.aopalliance-1.0.jar
 cdap-data-pipeline-4.2.0.jar
 cdap-data-quality-4.2.0.jar
 cdap-data-streams-4.2.0.jar
-cdap-etl-batch-4.2.0.jar
-cdap-etl-realtime-4.2.0.jar
 cdap-etl-tools-4.2.0.jar
 cdap-hbase-compat-0.96-4.2.0-fat.jar
 cdap-hbase-compat-0.98-4.2.0-fat.jar
