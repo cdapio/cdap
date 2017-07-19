@@ -55,11 +55,25 @@ public interface AuthorizationEnforcer {
   void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
+   * Checks whether the set of {@link EntityId}s are visible to the specified {@link Principal}.
+   * An entity is visible to a principal if the principal has any privileges on the entity, or any of its descendants.
+   *
+   * @param entityIds the entities on which the visibility check is to be performed
+   * @param principal the principal to check the visibility for
+   * @return a set of entities that are visible to the principal
+   * @throws Exception if any errors occured while performing the check
+   */
+  Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception;
+
+  /**
    * Returns a {@link Predicate} that can be used to filter a set of entities to only return the entities that the
    * specified {@link Principal} has access (READ/WRITE/ADMIN/ALL) to.
+   *
+   * @deprecated this method has been deprecated since 4.3, please use {@link #isVisible(Set, Principal)} instead.
    *
    * @param principal the {@link Principal} for which to filter
    * @return a set of {@link EntityId entities} that the specified user has access to
    */
+  @Deprecated
   Predicate<EntityId> createFilter(Principal principal) throws Exception;
 }

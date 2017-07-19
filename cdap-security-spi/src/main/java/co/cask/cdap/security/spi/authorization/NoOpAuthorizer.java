@@ -37,6 +37,11 @@ public class NoOpAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    return entityIds;
+  }
+
+  @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     return ALLOW_ALL;
   }
