@@ -1107,7 +1107,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     }
 
     // Verify that there are two runs of the Workflow currently running.
-    verifyProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
+    List<RunRecord> historyRuns = getProgramRuns(programId, ProgramRunStatus.RUNNING);
+    Assert.assertEquals(2, historyRuns.size());
 
     List<RunRecord> historyRuns = getProgramRuns(programId, ProgramRunStatus.ALL);
     // Stop both Workflow runs.
