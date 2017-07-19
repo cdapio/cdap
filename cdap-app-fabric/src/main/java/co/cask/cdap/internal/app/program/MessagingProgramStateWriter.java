@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -61,24 +62,28 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       // If RunId is not time-based, use current time as start time
       startTime = System.currentTimeMillis();
     }
-    publish(
-      programRunId, twillRunId,
-      ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTime))
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.STARTING.getRunStatus().toString())
-        .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
-        .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()))
-    );
+    ImmutableMap.Builder properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTime))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
+      .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
+      .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
+    if (twillRunId != null) {
+      properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
+    }
+
+    publish(programRunId, properties);
   }
 
   @Override
   public void running(ProgramRunId programRunId, @Nullable String twillRunId) {
-    publish(
-      programRunId, twillRunId,
-      ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(System.currentTimeMillis()))
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramController.State.ALIVE.getRunStatus().toString())
-    );
+    ImmutableMap.Builder properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(System.currentTimeMillis()))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.name());
+    if (twillRunId != null) {
+      properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
+    }
+
+    publish(programRunId, properties);
   }
 
   @Override
@@ -99,37 +104,34 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   @Override
   public void suspend(ProgramRunId programRunId) {
     publish(
-      programRunId, null,
+      programRunId,
       ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.toString())
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.SUSPENDED.name())
     );
   }
 
   @Override
   public void resume(ProgramRunId programRunId) {
     publish(
-      programRunId, null,
+      programRunId,
       ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.toString())
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.name())
     );
   }
 
   private void stop(ProgramRunId programRunId, ProgramRunStatus runStatus, @Nullable Throwable cause) {
-    ImmutableMap.Builder builder = ImmutableMap.<String, String>builder()
-            .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
-            .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.toString());
-
+    ImmutableMap.Builder properties = ImmutableMap.<String, String>builder()
+      .put(ProgramOptionConstants.END_TIME, String.valueOf(System.currentTimeMillis()))
+      .put(ProgramOptionConstants.PROGRAM_STATUS, runStatus.name());
     if (cause != null) {
-      builder.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(cause));
+      properties.put(ProgramOptionConstants.PROGRAM_ERROR, GSON.toJson(new BasicThrowable(cause)));
     }
-    publish(programRunId, null, builder);
+    publish(programRunId, properties);
   }
 
-  private void publish(ProgramRunId programRunId, String twillRunId, ImmutableMap.Builder<String, String> properties) {
+  private void publish(ProgramRunId programRunId, ImmutableMap.Builder<String, String> properties) {
+    // ProgramRunId is always required in a notification
     properties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
-    if (twillRunId != null) {
-      properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
-    }
     Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties.build());
     try {
       messagingService.publish(StoreRequestBuilder.of(topicId)

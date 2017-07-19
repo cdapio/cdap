@@ -91,7 +91,6 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -291,6 +290,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     history = countService.getHistory(ProgramRunStatus.ALL);
     Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+
+    countService.stop();
+    countService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   @Test
@@ -819,7 +821,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test
-  @Ignore
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
     final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
@@ -847,7 +848,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(3); // Sleep to make sure scheduled workflows are pending to run
+    TimeUnit.SECONDS.sleep(5); // Sleep to make sure scheduled workflows are pending to run
     // All runs should be completed
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -876,6 +877,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     //Check that after resume it goes to "SCHEDULED" state
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SCHEDULED);
 
+    wfmanager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
     // Make sure new runs happens after resume
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -903,8 +906,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(2, workflowToken.getTokenData().size());
 
-    // Wait until workflow finishes execution
-    waitForWorkflowStatus(wfmanager, ProgramRunStatus.COMPLETED);
+    // Wait for all workflow runs to finish execution
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (RunRecord meta : wfmanager.getHistory()) {
+          if (meta.getStatus() != ProgramRunStatus.COMPLETED) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS);
 
     // Verify workflow token after workflow completion
     WorkflowTokenNodeDetail workflowTokenAtNode =
@@ -1127,12 +1140,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
 
     lifecycleWorkerManager.stop();
-    lifecycleWorkerManager.waitForStatus(false);
+    lifecycleWorkerManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
 
+    ProgramRunStatus expected = (workerManager.isRunning()) ? ProgramRunStatus.KILLED : ProgramRunStatus.COMPLETED;
     if (workerManager.isRunning()) {
       workerManager.stop();
     }
-    workerManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
+    workerManager.waitForRun(expected, 10, TimeUnit.SECONDS);
 
     // Should be same instances after being stopped.
     workerInstancesCheck(lifecycleWorkerManager, 5);

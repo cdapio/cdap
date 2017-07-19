@@ -758,6 +758,11 @@ public class AuthorizationTest extends TestBase {
 
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
+
+    if (flowManager.isRunning()) {
+      flowManager.stop();
+    }
+    waitForNoRunningPrograms(flowManager);
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -812,7 +817,6 @@ public class AuthorizationTest extends TestBase {
       CrossNsDatasetAccessApp.OUTPUT_DATASET_NAME, "store"
     );
 
-    int prevFlowRuns = flowManager.getHistory(ProgramRunStatus.KILLED).size();
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in another namespace in which
     // is not accessible to BOB.
     flowManager.start(args);
@@ -828,7 +832,7 @@ public class AuthorizationTest extends TestBase {
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
-    flowManager.waitForRuns(ProgramRunStatus.KILLED, prevFlowRuns + 1, 10, TimeUnit.SECONDS);
+    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -841,6 +845,7 @@ public class AuthorizationTest extends TestBase {
 
     // running the flow now should pass and write data in another namespace successfully
     flowManager.start(args);
+    flowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
 
     // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
@@ -855,7 +860,8 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
+    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
+
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
@@ -988,6 +994,11 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
+
+    if (sparkManager.isRunning()) {
+      sparkManager.stop();
+    }
+    waitForNoRunningPrograms(sparkManager);
   }
 
   @Test
@@ -1049,19 +1060,14 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
     // wait for workflow to start
-    workflowManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    workflowManager.waitForStatus(true);
 
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
 
-    // wait for scheduled runs of workflow to run to end
-    workflowManager.waitForStatus(false, 2 , 3);
-
-    // since the schedule in AppWithSchedule is to run every second its possible that it will trigger more than one
-    // run before the schedule was suspended so check for greater than 0 rather than equal to 1
-    Assert.assertTrue(0 < workflowManager.getHistory().size());
-    // assert that all run completed
-    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, workflowManager.getHistory().size(), 15, TimeUnit.SECONDS);
+    // stop all the runs of the workflow so that the current namespace can be deleted after the test
+    workflowManager.stop();
+    waitForNoRunningPrograms(workflowManager);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1346,5 +1352,21 @@ public class AuthorizationTest extends TestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset(namespaceId.dataset(datasetName));
     KeyValueTable outputTable = outTableManager.get();
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
+  }
+
+  private void waitForNoRunningPrograms(final ProgramManager programManager) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        List<RunRecord> runs = programManager.getHistory();
+        for (RunRecord meta : runs) {
+          if (meta.getStatus() == ProgramRunStatus.STARTING ||
+              meta.getStatus() == ProgramRunStatus.RUNNING) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }

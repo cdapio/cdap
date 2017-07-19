@@ -88,6 +88,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
     System.setProperty(ServiceHttpServer.THREAD_KEEP_ALIVE_SECONDS, "1");
     System.setProperty(ServiceHttpServer.HANDLER_CLEANUP_PERIOD_MILLIS, "100");
+
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
 
@@ -294,6 +295,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   public void testContentProducerLifecycle() throws Exception {
     // Set to have one thread only for testing context capture and release
     System.setProperty(ServiceHttpServer.THREAD_POOL_SIZE, "1");
+
     try {
       ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
       ServiceManager serviceManager = appManager.getServiceManager("test").start();
@@ -437,6 +439,7 @@ public class ServiceLifeCycleTestRun extends TestFrameworkTestBase {
   public void testInvalidContentProducer() throws Exception {
     ApplicationManager appManager = deployWithArtifact(ServiceLifecycleApp.class, artifactJar);
     final ServiceManager serviceManager = appManager.getServiceManager("test").start();
+
     URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
     URL url = serviceURL.toURI().resolve("invalid?methods=getContentLength").toURL();
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();

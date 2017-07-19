@@ -32,7 +32,6 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
-import com.google.inject.name.Names;
 
 /**
  * Guice module for distributed AppFabric. Used by the app-fabric server, not for distributed containers.
@@ -42,8 +41,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   @Override
   protected void configure() {
     // Bind ProgramStateWriter
-    // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the DistributedProgramRunner, so the
-    // program runners will no longer need this binding
     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
 
     // Bind ProgramRunner

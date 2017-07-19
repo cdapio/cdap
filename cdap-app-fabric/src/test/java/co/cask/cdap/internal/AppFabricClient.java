@@ -377,12 +377,12 @@ public class AppFabricClient {
   }
 
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) throws Exception {
-    String namespaceId = programId.getNamespaceId();
-    String appId = programId.getApplicationId();
+    String namespace = programId.getNamespaceId();
+    String application = programId.getApplicationId();
     String programName = programId.getId();
     String categoryName = programId.getType().getCategoryName();
 
-    return doGetHistory(namespaceId, appId, ApplicationId.DEFAULT_VERSION, programName, categoryName, status);
+    return doGetHistory(namespace, application, ApplicationId.DEFAULT_VERSION, programName, categoryName, status);
   }
 
   public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) throws Exception {
@@ -401,10 +401,10 @@ public class AppFabricClient {
 
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/versions/%s/%s/runs?status=" + status.name(),
-      getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
+                               getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
-      categoryName, programName, status.name(), null, null, 100);
+                                               categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
     return responder.decodeResponseContent(RUN_RECORDS_TYPE);
