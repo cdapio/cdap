@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.filesystem.LocationFactory;
@@ -49,7 +50,7 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
     super(name);
   }
 
-  // for unit-test purposes only
+  @VisibleForTesting
   HBaseMetricsTableDefinition(String name, Configuration hConf, HBaseTableUtil hBaseTableUtil,
                               LocationFactory locationFactory, CConfiguration cConf) {
     super(name);

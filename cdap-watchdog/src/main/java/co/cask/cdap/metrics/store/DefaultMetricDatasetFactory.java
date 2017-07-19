@@ -74,7 +74,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   @Override
   public FactTable getOrCreateFactTable(int resolution) {
     String tableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                 Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+                                 Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
     int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     TableProperties.Builder props = TableProperties.builder();
@@ -87,6 +87,11 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     // configuring pre-splits
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
+    // Property to specify whether to do salting while accessing metrics table
+    props.add(Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX, "true");
+    props.add(Constants.Metrics.DEFAULT_METRIC_HBASE_TABLE_SPLITS, DefaultMetricStore.AGGREGATIONS.size());
+    props.add(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS,
+              cConf.get(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS));
 
     MetricsTable table = getOrCreateMetricsTable(tableName, props.build());
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
