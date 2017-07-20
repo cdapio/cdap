@@ -97,7 +97,7 @@ angular.module(`${PKG.name}.commons`)
         .then(function (res) {
           vm.pluginVersions = res;
           let latestArtifact, baseVersion = new window.CaskCommon.Version('0.0.0');
-          let availableArtifacts = _.pluck(res, 'artifact');
+          let availableArtifacts = _.map(res, 'artifact');
 
           angular.forEach(availableArtifacts, function (artifactObj) {
             let availableversion = new window.CaskCommon.Version(artifactObj.version);
