@@ -154,11 +154,16 @@
                 </button>
               </div>
             </div>
-            <div
-              ng-if="!DAGPlusPlusCtrl.showNodeMenu[node.name]"
-              ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
-              class="menu-icon menu-icon-node fa fa-bars"
-              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
+            <div class="node-actions">
+              <span class="node-actions-error-alert float-xs-left">
+                <span class="node-actions-error">Error</span>
+                <span>Alert</span>
+              </span>
+              <span ng-if="!DAGPlusPlusCtrl.showNodeMenu[node.name]"
+                    ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
+                    class="menu-icon menu-icon-node fa fa-bars float-xs-right"
+                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
+              </span>
             </div>
             <div ng-if="DAGPlusPlusCtrl.showNodeMenu[node.name]"
                   class="node-popover-menu">
@@ -167,6 +172,16 @@
                 ng-click="DAGPlusPlusCtrl.toggleMenu(node.name)">
               </div>
               <div class="menu-content">
+                <div class="menu-content-action disabled">
+                  Copy
+                </div>
+                <div class="menu-content-action disabled">
+                  Duplicate
+                </div>
+                <div class="menu-content-action disabled">
+                  Create Template
+                </div>
+                <hr />
                 <div class="menu-content-action menu-content-delete"
                   ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
                   Delete

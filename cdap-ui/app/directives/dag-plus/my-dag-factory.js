@@ -17,12 +17,11 @@
 angular.module(PKG.name + '.commons')
   .factory('DAGPlusPlusFactory', function() {
     var defaultSettings = {
-      Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true} ],
+      Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true, midpoint: 0, cornerRadius: 20} ],
       ConnectionsDetachable: true
     };
     var connectorStyle = {
       strokeStyle: '#666e82',
-      fillStyle: '#666e82',
       radius: 5,
       lineWidth: 2
     };

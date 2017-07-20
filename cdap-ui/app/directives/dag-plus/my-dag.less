@@ -38,10 +38,10 @@
 @preview-outline-color: lighten(#f1c40f, 20%);
 
 .border-color-hover() {
-  border: 1px solid currentColor;
+  border: 2px solid currentColor;
 
   &:hover {
-    border-width: 2px;
+    border-width: 3px;
     margin: -1px;
     width: 202px;
     height: 82px;
@@ -123,6 +123,7 @@ my-dag-plus {
         .transition(background-color 50ms linear);
         .transition(color 50ms linear);
         background-clip: border-box;
+        z-index: 1;
 
         .fa.fa-close {
           cursor: pointer;
@@ -163,39 +164,55 @@ my-dag-plus {
           }
         }
 
-        .menu-icon {
-          font-size: 16px;
-          color: @hamburger-menu-color;
-        }
-
-        .menu-icon-node {
+        .node-actions {
+          display: flex;
           position: absolute;
+          width: 100%;
           bottom: 0;
-          right: 0;
-          padding-bottom: inherit;
-          padding-right: inherit;
-          transform: translateY(3px);
+          padding-bottom: 10px;
+          padding-right: 12px;
+          align-items: center;
 
-          &.fa.fa-bars {
-            &.disabled {
-              cursor: not-allowed;
+          .node-actions-error-alert {
+            cursor: not-allowed;
+            color: @hamburger-menu-color;
+            font-size: 12px;
+
+            .node-actions-error {
+              margin-right: 5px;
             }
+          }
 
-            &:not(.disabled) {
-              &:hover {
-                color: @hamburger-hover-color;
+          .menu-icon-node {
+            padding-right: 12px;
+            margin-left: auto;
+
+            &.fa.fa-bars {
+              &.disabled {
+                cursor: not-allowed;
+              }
+
+              &:not(.disabled) {
+                &:hover {
+                  color: @hamburger-hover-color;
+                }
               }
             }
           }
         }
 
+        .menu-icon {
+          font-size: 16px;
+          color: @hamburger-menu-color;
+        }
+
         .node-popover-menu {
-          width: 85px;
+          width: 150px;
           border: 1px solid black;
           position: absolute;
           background-color: white;
-          right: -53px;
-          top: 47px;
+          right: -118px;
+          top: 43px;
           z-index: 1000;
 
           .menu-icon {
@@ -204,16 +221,26 @@ my-dag-plus {
           }
 
           .menu-content {
-            padding: 10px;
+            padding: 5px 10px;
+            color: @configure-btn-label-color;
 
             .menu-content-action {
               &:hover {
                 background-color: @node-menu-action-bg-color;
               }
+
+              &.disabled {
+                cursor: not-allowed;
+                opacity: 0.5;
+              }
+
+              &.menu-content-delete {
+                color: @node-menu-delete-color;
+              }
             }
 
-            .menu-content-delete {
-              color: @node-menu-delete-color;
+            hr {
+              margin: 5px 0;
             }
           }
         }
@@ -232,7 +259,7 @@ my-dag-plus {
         }
 
         .node-configure-btn {
-          font-size: 11px;
+          font-size: 10px;
           border: 1px solid currentColor;
           padding: 3px;
           background-color: white;
