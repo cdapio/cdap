@@ -81,7 +81,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
                                                DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.datasetFramework = datasetFramework;
     this.multiThreadDatasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework), txClient,
       NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, messagingContext);
@@ -89,6 +88,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.datasetFramework = datasetFramework;
   }
 
   protected abstract void startUp();
@@ -108,7 +108,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     private int failureCount;
     private String messageId;
 
-    protected NotificationSubscriberThread(String topic) {
+    NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       retryStrategy =
@@ -130,6 +130,13 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
         }
       }
     }
+
+    /**
+     * Loads the message id from storage
+     *
+     * @return the message id, or null if no message id is stored
+     */
+    public abstract String loadMessageId();
 
     /**
      * Fetches new notifications and configures time for next fetch
@@ -181,7 +188,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
       String lastFetchedMessageId = null;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-          topic, 100, messageId)) {
+                                                               topic, 100, messageId)) {
         LOG.trace("Fetch with messageId = {}", messageId);
         while (iterator.hasNext() && !stopping) {
           Message message = iterator.next();
@@ -202,13 +209,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     }
 
     /**
-     * Loads the message id from storage
-     *
-     * @return the message id, or null if no message id is stored
-     */
-    public abstract String loadMessageId();
-
-    /**
      * Processes the fetched notification
      *
      * @param context the dataset context
@@ -219,7 +219,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   }
 
   /**
-   * Thread that subscribes to TMS notifications and adds the notification containing the schedule to the job queue
+   * Thread that subscribes to TMS notifications and adds the notification containing the schedule id to the job queue
    */
   protected class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
     private JobQueueDataset jobQueue;
@@ -250,7 +250,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
       // Get the last fetched messageId
       String lastFetchedMessageId = super.fetchAndProcessNotifications(context, fetcher);
-      // Persist the the last message id for the topic to the queue
+      // Persist the the last message id for the topic to the job queue
       if (lastFetchedMessageId != null) {
         jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
       }
@@ -259,13 +259,13 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     @Override
     public void processNotification(DatasetContext context, Notification notification)
-            throws IOException, DatasetManagementException, NotFoundException {
+      throws IOException, DatasetManagementException, NotFoundException {
 
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
       if (scheduleIdString == null) {
         LOG.warn("Cannot find schedule id in the notification with properties {}. Skipping current notification.",
-                properties);
+                 properties);
         return;
       }
       ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
@@ -274,7 +274,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
         record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
       } catch (NotFoundException e) {
         LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
-                scheduleId, properties, e);
+                 scheduleId, properties, e);
         return;
       }
       jobQueue.addNotification(record, notification);

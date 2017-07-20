@@ -1013,7 +1013,7 @@ public abstract class AppFabricTestBase {
 
   protected List<RunRecord> getProgramRuns(Id.Program program, ProgramRunStatus status) throws Exception {
     String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
-                                program.getType().getCategoryName(), program.getId(), status.toString());
+                                program.getType().getCategoryName(), program.getId(), status.name());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());

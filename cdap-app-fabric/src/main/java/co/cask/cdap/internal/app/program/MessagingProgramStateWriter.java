@@ -111,7 +111,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     publish(
       programRunId, null,
       ImmutableMap.<String, String>builder()
-        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RUNNING.toString())
+        .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.RESUMING.toString())
     );
   }
 

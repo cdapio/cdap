@@ -136,7 +136,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
       final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
       final ProgramRunStatus programRunStatus = runStatus;
-
+      System.out.println("PERSIST PROGRAM " + programRunId + " STATUS " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           if (stateChangeTime == -1) {
@@ -167,8 +167,25 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
           break;
-        case COMPLETED:
         case SUSPENDED:
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setSuspend(programRunId.getParent(), programRunId.getRun());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          break;
+        case RESUMING:
+          Retries.supplyWithRetries(new Supplier<Void>() {
+            @Override
+            public Void get() {
+              store.setResume(programRunId.getParent(), programRunId.getRun());
+              return null;
+            }
+          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          break;
+        case COMPLETED:
         case KILLED:
           if (endTime == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +

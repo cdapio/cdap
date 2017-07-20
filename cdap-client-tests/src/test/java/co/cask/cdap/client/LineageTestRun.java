@@ -240,10 +240,10 @@ public class LineageTestRun extends MetadataTestBase {
 
       // Wait for programs to finish
       waitForStop(flow, true, ProgramRunStatus.KILLED);
-      waitForStop(mapreduce, false, ProgramRunStatus.FAILED);
+      waitForStop(mapreduce, false, ProgramRunStatus.COMPLETED);
       waitForStop(mapreduce2, false, ProgramRunStatus.COMPLETED);
       waitForStop(spark, false, ProgramRunStatus.COMPLETED);
-      waitForStop(workflow, false, ProgramRunStatus.FAILED);
+      waitForStop(workflow, false, ProgramRunStatus.COMPLETED);
       waitForStop(worker, false, ProgramRunStatus.COMPLETED);
       waitForStop(service, true, ProgramRunStatus.KILLED);
 
@@ -348,7 +348,7 @@ public class LineageTestRun extends MetadataTestBase {
   private RunId runAndWait(final ProgramId program) throws Exception {
     LOG.info("Starting program {}", program);
     programClient.start(program);
-    waitForProgramRun(program, ProgramRunStatus.RUNNING);
+    assertProgramRunning(programClient, program);
     return getRunId(program);
   }
 
