@@ -50,10 +50,11 @@ export default class ScrollableList extends Component {
   }
   computeHeight() {
     let heightOfList = document.body.getBoundingClientRect().height;
+    let FOOTER_HEIGHT = 54;
 
     if (this.props.target) {
       let targetTop = document.getElementById(this.props.target).getBoundingClientRect().top;
-      let bodyBottom = document.body.getBoundingClientRect().bottom;
+      let bodyBottom = document.body.getBoundingClientRect().bottom - FOOTER_HEIGHT;
       let scrollDownHeight = 20;
       heightOfList = bodyBottom - targetTop - scrollDownHeight;
     }
@@ -63,8 +64,9 @@ export default class ScrollableList extends Component {
     if (document.getElementsByClassName('column-action-label').length > 0) {
       let labelHeight = document.getElementsByClassName('column-action-label')[0].getBoundingClientRect().height;
       heightOfList = heightOfList - labelHeight;
-      numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM) + 1;
+      numberOfElemsToDisplay = Math.floor(heightOfList / this.HEIGHT_OF_ELEM);
     }
+
 
     let numberOfActualElements = this.props.children.filter(child => child.props.className.indexOf('column-action-divider') === -1);
 

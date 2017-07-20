@@ -59,17 +59,18 @@ export function setPopoverOffset(element, footerHeight = 54) {
 
   let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll;
 
+  if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
+    // This is to align the bottom of second level popover menu with that of the main menu
+    // 1 offset is for the border bottom
+    diff = diff + (elemBounding.bottom - popover[0].getBoundingClientRect().bottom) + 1;
+  }
+
   if (diff < 0) {
     // this is to make sure the top doesn't go off screen
     if (diff < -popoverMenuItemTop + bodyTop) {
       diff = -popoverMenuItemTop + bodyTop + 10; // pad 10px at the top so that popover isn't stuck at very top
     }
     popover[0].style.top = `${diff}px`;
-    // This is to align the bottom of second level popover menu with that of the main menu
-    if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
-      popover[0].style.bottom = `-1px`;
-      popover[0].style.top = 'inherit';
-    }
   } else {
     popover[0].style.top = 0;
   }

@@ -44,6 +44,8 @@ import EncodeDecode from 'components/DataPrep/Directives/EncodeDecode';
 import Decode from 'components/DataPrep/Directives/Decode';
 import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEncoding';
 import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
+import DefineVariableDirective from 'components/DataPrep/Directives/DefineVariable';
+import SetCounterDirective from 'components/DataPrep/Directives/SetCounter';
 
 import ee from 'event-emitter';
 
@@ -158,6 +160,16 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Explode,
         requiredColCount: 0
+      },
+      {
+        id: shortid.generate(),
+        tag: DefineVariableDirective,
+        requiredColCount: 1
+      },
+      {
+        id: shortid.generate(),
+        tag: SetCounterDirective,
+        requiredColCount: 1
       },
       {
         tag: 'divider'
