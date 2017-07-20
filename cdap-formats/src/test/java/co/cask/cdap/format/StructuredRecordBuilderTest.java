@@ -31,6 +31,23 @@ import java.util.TimeZone;
 public class StructuredRecordBuilderTest {
 
   @Test
+  public void testNullCheck() {
+    Schema schema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.NULL)));
+    Assert.assertNull(StructuredRecord.builder(schema).set("x", null).build().get("x"));
+  }
+
+  @Test
+  public void testUnionNullCheck() {
+    Schema schema = Schema.recordOf("x", Schema.Field.of("x", Schema.unionOf(
+      Schema.of(Schema.Type.NULL),
+      Schema.of(Schema.Type.INT),
+      Schema.of(Schema.Type.LONG))));
+    Assert.assertNull(StructuredRecord.builder(schema).set("x", null).build().get("x"));
+    Assert.assertEquals(5, StructuredRecord.builder(schema).set("x", 5).build().get("x"));
+    Assert.assertEquals(5L, StructuredRecord.builder(schema).set("x", 5L).build().get("x"));
+  }
+
+  @Test
   public void testDateConversion() {
     long ts = 0L;
     Date date = new Date(ts);
