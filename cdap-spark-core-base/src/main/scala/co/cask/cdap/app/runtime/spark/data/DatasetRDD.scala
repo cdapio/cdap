@@ -31,6 +31,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.{Partition, SparkContext, TaskContext}
 
 import scala.annotation.meta.param
+import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 /**
@@ -45,43 +46,43 @@ class DatasetRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkContext,
                                            @(transient @param) splits: Option[Iterable[_ <: Split]],
                                            txServiceBaseURI: Broadcast[URI]) extends RDD[(K, V)](sc, Nil) {
 
-  var delegateRDD: Option[RDD[(K, V)]] = None
+  lazy val delegateRDD = createDelegateRDD()
 
   @DeveloperApi
   override def compute(split: Partition, context: TaskContext): Iterator[(K, V)] =
-    delegateRDD.get.compute(split, context)
+    delegateRDD.compute(split, context)
 
   override protected def getPartitions: Array[Partition] = {
-    if (delegateRDD.isEmpty) {
-      delegateRDD = Some(datasetCompute(namespace, datasetName, arguments, (dataset: Dataset) => {
-        // Depends on whether it is a BatchReadable or an InputFormatProvider, constructs a corresponding
-        // RDD that this RDD delegates to
-        dataset match {
-          case batchReadable: BatchReadable[K, V] => {
-            new BatchReadableRDD[K, V](sc, batchReadable, namespace, datasetName, arguments, splits,
-              txServiceBaseURI)
-          }
+    delegateRDD.partitions
+  }
 
-          case inputFormatProvider: InputFormatProvider => {
-            // Use the Spark newAPIHadoopRDD
-            val inputFormatClassName = Option(inputFormatProvider.getInputFormatClassName).getOrElse(
-              throw new DatasetInstantiationException("No input format class from dataset '" + datasetName + "'"))
-            val conf = ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration,
-                                                new Configuration(hConf))
-            val inputFormatClass = SparkClassLoader.findFromContext()
-                                                   .loadClass(inputFormatClassName)
-                                                   .asInstanceOf[Class[InputFormat[K, V]]]
-
-            val keyClass: Class[K] = implicitly[ClassManifest[K]].runtimeClass.asInstanceOf[Class[K]]
-            val valueClass: Class[V] = implicitly[ClassManifest[V]].runtimeClass.asInstanceOf[Class[V]]
-            sc.newAPIHadoopRDD(conf, inputFormatClass, keyClass, valueClass)
-          }
-
-          case _ => throw new IllegalArgumentException("Unsupport dataset type " + dataset.getClass)
+  private def createDelegateRDD(): RDD[(K, V)] = {
+    datasetCompute(namespace, datasetName, arguments, (dataset: Dataset) => {
+      // Depends on whether it is a BatchReadable or an InputFormatProvider, constructs a corresponding
+      // RDD that this RDD delegates to
+      dataset match {
+        case batchReadable: BatchReadable[K, V] => {
+          new BatchReadableRDD[K, V](sc, batchReadable, namespace, datasetName, arguments,
+                                     splits.getOrElse(batchReadable.getSplits.toIterable), txServiceBaseURI)
         }
-      }))
-    }
 
-    delegateRDD.get.partitions
+        case inputFormatProvider: InputFormatProvider => {
+          // Use the Spark newAPIHadoopRDD
+          val inputFormatClassName = Option(inputFormatProvider.getInputFormatClassName).getOrElse(
+            throw new DatasetInstantiationException("No input format class from dataset '" + datasetName + "'"))
+          val conf = ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration,
+                                              new Configuration(hConf))
+          val inputFormatClass = SparkClassLoader.findFromContext()
+            .loadClass(inputFormatClassName)
+            .asInstanceOf[Class[InputFormat[K, V]]]
+
+          val keyClass: Class[K] = implicitly[ClassManifest[K]].runtimeClass.asInstanceOf[Class[K]]
+          val valueClass: Class[V] = implicitly[ClassManifest[V]].runtimeClass.asInstanceOf[Class[V]]
+          sc.newAPIHadoopRDD(conf, inputFormatClass, keyClass, valueClass)
+        }
+
+        case _ => throw new IllegalArgumentException("Unsupport dataset type " + dataset.getClass)
+      }
+    })
   }
 }

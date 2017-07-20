@@ -17,10 +17,9 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.batch.Splits;
 import co.cask.cdap.api.dataset.Dataset;
 import com.google.common.base.Throwables;
-import com.google.gson.Gson;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 
@@ -60,9 +59,7 @@ public class DataSetInputSplit extends InputSplit implements Writable {
 
   @Override
   public void write(final DataOutput out) throws IOException {
-    Text.writeString(out, split.getClass().getName());
-    String ser = new Gson().toJson(split);
-    Text.writeString(out, ser);
+    Splits.serialize(split, out);
   }
 
   @SuppressWarnings("unchecked")
@@ -73,8 +70,7 @@ public class DataSetInputSplit extends InputSplit implements Writable {
       if (classLoader == null) {
         classLoader = getClass().getClassLoader();
       }
-      Class<? extends Split> splitClass = (Class<Split>) classLoader.loadClass(Text.readString(in));
-      split = new Gson().fromJson(Text.readString(in), splitClass);
+      split = Splits.deserialize(in, classLoader);
     } catch (ClassNotFoundException e) {
       throw Throwables.propagate(e);
     }

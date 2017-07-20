@@ -19,13 +19,12 @@ package co.cask.cdap.hive.datasets;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordScanner;
 import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.batch.Splits;
 import com.google.common.base.Throwables;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.ObjectWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.FileSplit;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
@@ -46,8 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Map reduce input format to read from datasets that implement RecordScannable.
  */
 public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
-  private static final Gson GSON = new Gson();
-
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int numSplits) throws IOException {
     try (DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf)) {
@@ -120,9 +117,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
     @Override
     public void write(DataOutput out) throws IOException {
       super.write(out);
-      Text.writeString(out, dataSetSplit.getClass().getName());
-      String ser = GSON.toJson(dataSetSplit);
-      Text.writeString(out, ser);
+      Splits.serialize(dataSetSplit, out);
     }
 
     @Override
@@ -133,13 +128,7 @@ public class DatasetInputFormat implements InputFormat<Void, ObjectWritable> {
         if (classLoader == null) {
           classLoader = getClass().getClassLoader();
         }
-        Class<?> splitClass = classLoader.loadClass(Text.readString(in));
-        if (!Split.class.isAssignableFrom(splitClass)) {
-          throw new IllegalStateException("Cannot de-serialize Split class type! Got type " +
-                                            splitClass.getCanonicalName());
-        }
-        //noinspection unchecked
-        dataSetSplit = GSON.fromJson(Text.readString(in), (Class<? extends Split>) splitClass);
+        dataSetSplit = Splits.deserialize(in, classLoader);
       } catch (ClassNotFoundException e) {
         throw Throwables.propagate(e);
       }

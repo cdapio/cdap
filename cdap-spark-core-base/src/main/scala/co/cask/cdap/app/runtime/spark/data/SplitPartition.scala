@@ -18,17 +18,16 @@ package co.cask.cdap.app.runtime.spark.data
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
-import co.cask.cdap.api.data.batch.Split
-import com.google.gson.Gson
+import co.cask.cdap.api.data.batch.{Split, Splits}
 import org.apache.spark.Partition
 
 /**
-  * Represents one [[org.apache.spark.Partition]] in the [[co.cask.cdap.app.runtime.spark.data.BatchReadableRDD]], which
+  * Represents one [[org.apache.spark.Partition]] in [[org.apache.spark.rdd.RDD]], which
   * corresponds to one [[co.cask.cdap.api.data.batch.Split]].
   */
-class BatchReadablePartition(private var _rddId: Int,
-                             private var _index: Int,
-                             private var _split: Split) extends Partition with Externalizable {
+class SplitPartition(private var _rddId: Int,
+                     private var _index: Int,
+                     private var _split: Split) extends Partition with Externalizable {
 
   /**
     * Default constructor. It is only for the deserialization
@@ -43,27 +42,25 @@ class BatchReadablePartition(private var _rddId: Int,
   override def index = _index
 
   override def writeExternal(out: ObjectOutput): Unit = {
-    // Write the index, split class name and gson serialize the split
+    // Write the index, split class name and serialize the split
     out.writeInt(_rddId)
     out.writeInt(_index);
-    out.writeUTF(_split.getClass.getName)
-    out.writeUTF(new Gson().toJson(_split))
+    Splits.serialize(_split, out)
   }
 
   override def readExternal(in: ObjectInput): Unit = {
-    // Read the index, split class name and gson deserialize the split
+    // Read the index, split class name and deserialize the split
     _rddId = in.readInt()
     _index = in.readInt()
     var classLoader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    val splitClass = classLoader.loadClass(in.readUTF()).asInstanceOf[Class[Split]]
-    _split = new Gson().fromJson(in.readUTF(), splitClass)
+    _split = Splits.deserialize(in, classLoader)
   }
 
-  def canEqual(other: Any): Boolean = other.isInstanceOf[BatchReadablePartition]
+  def canEqual(other: Any): Boolean = other.isInstanceOf[SplitPartition]
 
   override def equals(other: Any): Boolean = {
     other match {
-      case that: BatchReadablePartition =>
+      case that: SplitPartition =>
         (that canEqual this) &&
           _rddId == that._rddId &&
           _index == that._index &&

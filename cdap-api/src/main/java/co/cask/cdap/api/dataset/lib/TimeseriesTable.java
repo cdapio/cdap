@@ -27,10 +27,15 @@ import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Defines a Dataset implementation for managing time series data. This class offers simple ways to process read
@@ -217,17 +222,92 @@ public class TimeseriesTable extends TimeseriesDataset
   /**
    * A method for using a Dataset as input for a MapReduce job.
    */
-  private static final class InputSplit extends Split {
+  public static final class InputSplit extends Split {
     private byte[] key;
     private long startTime;
     private long endTime;
     private byte[][] tags;
+
+    /**
+     * Constructor for serialization only. Don't call directly.
+     */
+    public InputSplit() {
+      // no-op
+    }
 
     private InputSplit(byte[] key, long startTime, long endTime, byte[][] tags) {
       this.key = key;
       this.startTime = startTime;
       this.endTime = endTime;
       this.tags = tags;
+    }
+
+    @Override
+    public void writeExternal(DataOutput out) throws IOException {
+      if (key == null) {
+        out.writeInt(-1);
+      } else {
+        out.writeInt(key.length);
+        out.write(key);
+      }
+
+      out.writeLong(startTime);
+      out.writeLong(endTime);
+
+      out.writeInt(tags.length);
+      for (byte[] tag : tags) {
+        if (tag == null) {
+          out.writeInt(-1);
+        } else {
+          out.writeInt(tag.length);
+          out.write(tag);
+        }
+      }
+    }
+
+    @Override
+    public void readExternal(DataInput in) throws IOException {
+      int len = in.readInt();
+      if (len < 0) {
+        key = null;
+      } else {
+        key = new byte[len];
+        in.readFully(key);
+      }
+
+      startTime = in.readLong();
+      endTime = in.readLong();
+
+      tags = new byte[in.readInt()][];
+      for (int i = 0; i < tags.length; i++) {
+        len = in.readInt();
+        if (len < 0) {
+          tags[i] = null;
+        } else {
+          tags[i] = new byte[len];
+          in.readFully(tags[i]);
+        }
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      InputSplit that = (InputSplit) o;
+      return startTime == that.startTime &&
+        endTime == that.endTime &&
+        Arrays.equals(key, that.key) &&
+        Arrays.equals(tags, that.tags);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(key, startTime, endTime, tags);
     }
   }
 

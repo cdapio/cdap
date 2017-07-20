@@ -17,16 +17,11 @@
 package co.cask.cdap.app.runtime.spark.data
 
 import java.net.URI
-import java.util.concurrent.TimeUnit
 
 import co.cask.cdap.api.data.batch.{BatchReadable, Split}
 import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.app.runtime.spark.{SparkRuntimeContextProvider, SparkTransactionClient}
-import co.cask.cdap.data2.metadata.lineage.AccessType
-import org.apache.spark._
+import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.rdd.RDD
-import org.apache.tephra.TransactionAware
 
 import scala.annotation.meta.param
 import scala.collection.JavaConversions._
@@ -40,49 +35,13 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkCo
                                                  namespace: String,
                                                  datasetName: String,
                                                  arguments: Map[String, String],
-                                                 @(transient @param) splits: Option[Iterable[_ <: Split]],
-                                                 txServiceBaseURI: Broadcast[URI]) extends RDD[(K, V)](sc, Nil) {
+                                                 @(transient @param) splits: Iterable[_ <: Split],
+                                                 txServiceBaseURI: Broadcast[URI])
+  extends DatumScannerBasedRDD[(K, V)](sc, namespace, datasetName, arguments, splits, txServiceBaseURI) {
 
-  override protected def getPartitions: Array[Partition] = {
-    val inputSplits: Iterable[_ <: Split] = splits.getOrElse(batchReadable.getSplits.toIterable)
-    inputSplits.zipWithIndex.map(t => new BatchReadablePartition(id, t._2, t._1)).toArray
-  }
-
-  override def compute(partition: Partition, context: TaskContext): Iterator[(K, V)] = {
-    val split = partition.asInstanceOf[BatchReadablePartition].split
-    val sparkTxClient = new SparkTransactionClient(txServiceBaseURI.value)
-
-    val datasetCache = SparkRuntimeContextProvider.get().getDatasetCache
-
-    val dataset: Dataset = datasetCache.getDataset(namespace, datasetName, arguments, true, AccessType.READ)
-
-    try {
-      // Get the Transaction of the dataset if it is TransactionAware
-      dataset match {
-        case txAware: TransactionAware => {
-          // Try to get the transaction for this stage. Hardcoded the timeout to 10 seconds for now
-          txAware.startTx(sparkTxClient.getTransaction(context.stageId(), 10, TimeUnit.SECONDS))
-        }
-        case _ => // Nothing happen
-      }
-
-      // Creates the split reader and use it to construct the Iterator to result
-      val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
-      splitReader.initialize(split)
-
-      val iterator = new SplitReaderIterator[K, V](context, splitReader)
-      context.addTaskCompletionListener(context => {
-        try {
-          iterator.close
-        } finally {
-          dataset.close
-        }
-      })
-      iterator
-    } catch {
-      case t: Throwable =>
-        dataset.close()
-        throw t
-    }
+  override protected def createDatumScanner(dataset: Dataset, split: Split): DatumScanner[(K, V)] = {
+    val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
+    splitReader.initialize(split)
+    splitReader
   }
 }

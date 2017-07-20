@@ -16,6 +16,9 @@
 
 package co.cask.cdap.api.data.batch;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,7 +26,8 @@ import java.util.Map;
  * Handy implementation of the {@link Split}. Acts as a map of attributes.
  */
 public final class SimpleSplit extends Split {
-  private Map<String, String> attributes = new HashMap<>();
+
+  private final Map<String, String> attributes = new HashMap<>();
 
   /**
    * Sets an attribute.
@@ -52,5 +56,22 @@ public final class SimpleSplit extends Split {
   public String get(String name, String defaultValue) {
     String value = attributes.get(name);
     return value == null ? defaultValue : value;
+  }
+
+  @Override
+  public void writeExternal(DataOutput out) throws IOException {
+    out.writeInt(attributes.size());
+    for (Map.Entry<String, String> entry : attributes.entrySet()) {
+      out.writeUTF(entry.getKey());
+      out.writeUTF(entry.getValue());
+    }
+  }
+
+  @Override
+  public void readExternal(DataInput in) throws IOException {
+    int len = in.readInt();
+    for (int i = 0; i < len; i++) {
+      attributes.put(in.readUTF(), in.readUTF());
+    }
   }
 }
