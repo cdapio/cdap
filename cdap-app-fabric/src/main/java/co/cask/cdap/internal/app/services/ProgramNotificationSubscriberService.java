@@ -42,10 +42,12 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Service that receives program statuses and persists to the store
+ * Service that receives program status notifications and persists to the store
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
@@ -54,27 +56,46 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private final CConfiguration cConf;
   private final RuntimeStore store;
+  private final ExecutorService taskExecutorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, RuntimeStore store, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient, new ThreadFactoryBuilder()
-            .setNameFormat("program-status-subscriber-task-%d")
-            .build());
+    super(messagingService, cConf, datasetFramework, txClient);
     this.cConf = cConf;
     this.store = store;
+    this.taskExecutorService =
+      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
+                                                              .build());
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting ProgramNotificationSubscriberService");
 
-    getTaskExecutorService().submit(new ProgramStatusNotificationSubscriberThread(
+    taskExecutorService.submit(new ProgramStatusNotificationSubscriberThread(
       cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)));
   }
 
-  class ProgramStatusNotificationSubscriberThread extends
-      AbstractNotificationSubscriberService.NotificationSubscriberThread {
+  @Override
+  protected void shutDown() {
+    super.shutDown();
+    try {
+      taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    } finally {
+      if (!taskExecutorService.isTerminated()) {
+        taskExecutorService.shutdownNow();
+      }
+    }
+    LOG.info("Stopped ProgramNotificationSubscriberService.");
+  }
+
+  /**
+   * Thread that receives TMS notifications and persists the program status notification to the store
+   */
+  private class ProgramStatusNotificationSubscriberThread extends NotificationSubscriberThread {
 
     ProgramStatusNotificationSubscriberThread(String topic) {
       super(topic);
