@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.app.runtime.spark.data
 
 import java.net.URI
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
-import co.cask.cdap.api.data.batch.{BatchReadable, Split, SplitReader}
+import co.cask.cdap.api.data.batch.{BatchReadable, Split}
 import co.cask.cdap.api.dataset.Dataset
+import co.cask.cdap.app.runtime.spark.{SparkRuntimeContextProvider, SparkTransactionClient}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import org.apache.spark._
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.executor.InputMetrics
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionAware
 
@@ -70,15 +69,15 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkCo
       // Creates the split reader and use it to construct the Iterator to result
       val splitReader = dataset.asInstanceOf[BatchReadable[K, V]].createSplitReader(split)
       splitReader.initialize(split)
-      val iterator = new SplitReaderIterator[K, V](context, splitReader, () => {
+
+      val iterator = new SplitReaderIterator[K, V](context, splitReader)
+      context.addTaskCompletionListener(context => {
         try {
-          splitReader.close()
+          iterator.close
         } finally {
-          dataset.close()
+          dataset.close
         }
       })
-
-      context.addTaskCompletionListener(context => iterator.close)
       iterator
     } catch {
       case t: Throwable =>
@@ -86,5 +85,4 @@ class BatchReadableRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkCo
         throw t
     }
   }
-
 }

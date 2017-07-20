@@ -14,4 +14,4 @@
 # the License.
 #
 
-co.cask.cdap.spark.sql.datasources.stream.DefaultSource
+co.cask.cdap.app.runtime.spark.sql.datasources.stream.DefaultSource

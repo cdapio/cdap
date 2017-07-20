@@ -14,13 +14,14 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.app.runtime.spark.data
 
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
 import co.cask.cdap.api.data.batch.BatchWritable
 import co.cask.cdap.api.dataset.Dataset
+import co.cask.cdap.app.runtime.spark.{SparkRuntimeContextProvider, SparkTransactionClient}
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast

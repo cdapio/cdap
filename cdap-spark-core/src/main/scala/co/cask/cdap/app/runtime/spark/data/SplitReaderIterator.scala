@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.app.runtime.spark.data
 
 import co.cask.cdap.api.data.batch.SplitReader
 import org.apache.spark.TaskContext
@@ -23,8 +23,8 @@ import org.apache.spark.executor.InputMetrics
 /**
   * Spark1 SplitReaderIterator, which has access to Spark's metrics.
   */
-class SplitReaderIterator[K, V](context: TaskContext, splitReader: SplitReader[K, V], closeable: () => Unit)
-  extends AbstractSplitReaderIterator(context, splitReader, closeable) {
+class SplitReaderIterator[K, V](context: TaskContext, splitReader: SplitReader[K, V])
+  extends AbstractDatumScannerIterator[(K, V)](context, splitReader) {
 
   val inputMetrics: Option[InputMetrics] = context.taskMetrics.inputMetrics
 

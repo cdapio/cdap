@@ -14,13 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.spark.sql.datasources.stream
+package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 
 import org.apache.spark.sql.sources._
 import org.junit.{Assert, Test}
 
 /**
-  * Unit-test for [[co.cask.cdap.spark.sql.datasources.stream.StreamRelation]] functions without launch Spark SQL.
+  * Unit-test for [[StreamRelation]] functions without launch Spark SQL.
   */
 class StreamRelationTest {
 

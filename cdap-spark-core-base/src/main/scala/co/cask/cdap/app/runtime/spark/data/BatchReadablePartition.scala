@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark
+package co.cask.cdap.app.runtime.spark.data
 
 import java.io.{Externalizable, ObjectInput, ObjectOutput}
 
@@ -23,7 +23,7 @@ import com.google.gson.Gson
 import org.apache.spark.Partition
 
 /**
-  * Represents one [[org.apache.spark.Partition]] in the [[co.cask.cdap.app.runtime.spark.BatchReadableRDD]], which
+  * Represents one [[org.apache.spark.Partition]] in the [[co.cask.cdap.app.runtime.spark.data.BatchReadableRDD]], which
   * corresponds to one [[co.cask.cdap.api.data.batch.Split]].
   */
 class BatchReadablePartition(private var _rddId: Int,
