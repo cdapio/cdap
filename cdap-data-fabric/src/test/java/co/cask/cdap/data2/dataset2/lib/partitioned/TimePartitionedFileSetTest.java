@@ -28,6 +28,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -105,17 +106,23 @@ public class TimePartitionedFileSetTest {
         tpfs.addMetadata(time, "key3", "value4");
         allMetadata.put("key3", "value4");
 
-        try {
-          // attempting to update an existing key throws a DatasetException
-          tpfs.addMetadata(time, "key3", "value5");
-          Assert.fail("Expected not to be able to update an existing metadata entry");
-        } catch (DataSetException expected) {
-        }
+        // adding an entry, for a key that already exists will overwrite the previous value
+        tpfs.addMetadata(time, "key3", "value5");
+        allMetadata.put("key3", "value5");
 
         Map<String, String> newMetadata = ImmutableMap.of("key4", "value4",
                                                           "key5", "value5");
         tpfs.addMetadata(time, newMetadata);
         allMetadata.putAll(newMetadata);
+
+        partitionByTime = tpfs.getPartitionByTime(time);
+        Assert.assertNotNull(partitionByTime);
+        Assert.assertEquals(allMetadata, partitionByTime.getMetadata().asMap());
+
+        // remove metadata entries; specifying metadata key that does not exist ('key6') does not cause an error
+        tpfs.removeMetadata(time, ImmutableSet.of("key4", "key5", "key6"));
+        allMetadata.remove("key4");
+        allMetadata.remove("key5");
 
         partitionByTime = tpfs.getPartitionByTime(time);
         Assert.assertNotNull(partitionByTime);

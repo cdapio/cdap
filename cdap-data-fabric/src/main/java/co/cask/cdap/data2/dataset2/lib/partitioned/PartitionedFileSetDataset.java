@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
+import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -65,7 +66,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Provider;
@@ -119,30 +119,29 @@ public class PartitionedFileSetDataset extends AbstractDataset
   public static final String PATH_TO_PARTITIONING_MAPPING = "path.to.partition.mapping";
 
   // column keys
-  protected static final byte[] RELATIVE_PATH = { 'p' };
-  protected static final byte[] FIELD_PREFIX = { 'f', '.' };
-  protected static final byte[] METADATA_PREFIX = { 'm', '.' };
-  protected static final byte[] CREATION_TIME_COL = { 'c' };
   protected static final byte[] WRITE_PTR_COL = { 'w' };
+  protected static final byte[] CREATION_TIME_COL = { 'c' };
+  private static final byte[] LAST_MODIFICATION_TIME_COL = { 'm' };
+  private static final byte[] RELATIVE_PATH = { 'p' };
+  private static final byte[] METADATA_PREFIX = { 'm', '.' };
 
   protected final FileSet files;
-  protected final IndexedTable partitionsTable;
   protected final DatasetSpecification spec;
   protected final boolean isExternal;
   private final boolean exploreEnabled;
   protected final Map<String, String> runtimeArguments;
-  protected final Provider<ExploreFacade> exploreFacadeProvider;
   protected final Partitioning partitioning;
-  protected boolean ignoreInvalidRowsSilently = false;
+  private final IndexedTable partitionsTable;
+  private final Provider<ExploreFacade> exploreFacadeProvider;
 
   private final DatasetId datasetInstanceId;
-  private RuntimeProgramContext runtimeProgramContext;
 
   // Keep track of all partitions' being added/dropped in this transaction, so we can rollback their paths,
   // if necessary.
   private final List<PartitionOperation> operationsInThisTx = new ArrayList<>();
 
   private Transaction tx;
+  private RuntimeProgramContext runtimeProgramContext;
 
   // this will store the result of getInputKeys() after it is called (the result is needed by
   // both getInputFormat() and getInputFormatConfiguration(), and we don't want to compute it twice).
@@ -317,27 +316,39 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @WriteOnly
   @Override
   public void addPartition(PartitionKey key, String path, Map<String, String> metadata) {
-    addPartition(key, path, metadata, false);
+    // how do we know that filesCreated=false?
+    addPartition(key, path, metadata, false, false);
   }
 
-  private void addPartition(PartitionKey key, String path, Map<String, String> metadata, boolean filesCreated) {
+  public void addPartition(PartitionKey key, String path, Map<String, String> metadata, boolean filesCreated,
+                           boolean allowAppend) {
     AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
     operationsInThisTx.add(operation);
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
-    if (!row.isEmpty()) {
+    boolean appending = !row.isEmpty();
+    if (appending && !allowAppend) {
       throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
                                                getName(), key.toString()));
     }
-    LOG.debug("Adding partition with key {} and path {} to dataset {}", key, path, getName());
-    Put put = new Put(rowKey);
-    put.add(RELATIVE_PATH, Bytes.toBytes(path));
-    byte[] nowInMillis = Bytes.toBytes(System.currentTimeMillis());
-    put.add(CREATION_TIME_COL, nowInMillis);
-    for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
-      put.add(Bytes.add(FIELD_PREFIX, Bytes.toBytes(entry.getKey())), // "f.<field name>"
-              Bytes.toBytes(entry.getValue().toString()));            // "<string rep. of value>"
+    if (appending) {
+      // this can happen if user originally created the partition with a custom relative path
+      String existingPath = Bytes.toString(row.get(RELATIVE_PATH));
+      if (!path.equals(existingPath)) {
+        throw new DataSetException(String.format("Attempting to append to Dataset '%s', to partition '%s' with a " +
+                                                   "different path. Original path: '%s'. New path: '%s'",
+                                                 getName(), key.toString(), existingPath, path));
+      }
     }
+    LOG.debug("{} partition with key {} and path {} to dataset {}", appending ? "Appending to" : "Creating",
+              key, path, getName());
+    Put put = new Put(rowKey);
+    byte[] nowInMillis = Bytes.toBytes(System.currentTimeMillis());
+    if (!appending) {
+      put.add(RELATIVE_PATH, Bytes.toBytes(path));
+      put.add(CREATION_TIME_COL, nowInMillis);
+    }
+    put.add(LAST_MODIFICATION_TIME_COL, nowInMillis);
 
     addMetadataToPut(metadata, put);
     // index each row by its transaction's write pointer
@@ -345,8 +356,10 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
     partitionsTable.put(put);
 
-    addPartitionToExplore(key, path);
-    operation.setExplorePartitionCreated();
+    if (!appending) {
+      addPartitionToExplore(key, path);
+      operation.setExplorePartitionCreated();
+    }
   }
 
   @ReadWrite
@@ -493,15 +506,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
       throw new PartitionNotFoundException(key, getName());
     }
 
-    // ensure that none of the entries already exist in the metadata
-    for (Map.Entry<String, String> metadataEntry : metadata.entrySet()) {
-      String metadataKey = metadataEntry.getKey();
-      byte[] columnKey = columnKeyFromMetadataKey(metadataKey);
-      if (row.get(columnKey) != null) {
-        throw new DataSetException(String.format("Entry already exists for metadata key: %s", metadataKey));
-      }
-    }
-
     Put put = new Put(rowKey);
     addMetadataToPut(metadata, put);
     partitionsTable.put(put);
@@ -512,6 +516,27 @@ public class PartitionedFileSetDataset extends AbstractDataset
       byte[] columnKey = columnKeyFromMetadataKey(entry.getKey());
       put.add(columnKey, Bytes.toBytes(entry.getValue()));
     }
+  }
+
+  @Override
+  public void removeMetadata(PartitionKey key, String metadataKey) {
+    removeMetadata(key, Collections.singleton(metadataKey));
+  }
+
+  @Override
+  public void removeMetadata(PartitionKey key, Set<String> metadataKeys) {
+    final byte[] rowKey = generateRowKey(key, partitioning);
+    Row row = partitionsTable.get(rowKey);
+    if (row.isEmpty()) {
+      throw new PartitionNotFoundException(key, getName());
+    }
+
+    int i = 0;
+    byte[][] deleteColumns = new byte[metadataKeys.size()][];
+    for (String metadataKey : metadataKeys) {
+      deleteColumns[i++] = columnKeyFromMetadataKey(metadataKey);
+    }
+    partitionsTable.delete(rowKey, deleteColumns);
   }
 
   @VisibleForTesting
@@ -600,14 +625,10 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @ReadOnly
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
-    if (isExternal) {
-      throw new UnsupportedOperationException(
-        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
-    }
+    checkNotExternal();
     return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
-  @ReadOnly
   @Override
   public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -631,12 +652,10 @@ public class PartitionedFileSetDataset extends AbstractDataset
     getPartitions(filter, new PartitionConsumer() {
       @Override
       public void consume(PartitionKey key, String path, @Nullable PartitionMetadata metadata) {
-        if (metadata == null) {
-          metadata = new PartitionMetadata(Collections.<String, String>emptyMap(), 0L);
-        }
+        // metadata won't be null, because we pass 'true' as the 'decodeMetadata' parameter of 'getPartitions'
         partitionDetails.add(new BasicPartitionDetail(PartitionedFileSetDataset.this, path, key, metadata));
       }
-    });
+    }, true);
     return partitionDetails;
   }
 
@@ -678,10 +697,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
         try {
           key = parseRowKey(row.getRow(), partitioning);
         } catch (IllegalArgumentException e) {
-          if (!ignoreInvalidRowsSilently) {
-            LOG.debug(String.format("Failed to parse row key for partitioned file set '%s': %s",
-                                    getName(), Bytes.toStringBinary(row.getRow())));
-          }
+          LOG.debug(String.format("Failed to parse row key for partitioned file set '%s': %s",
+                                  getName(), Bytes.toStringBinary(row.getRow())));
           continue;
         }
         if (filter != null && !filter.match(key)) {
@@ -709,7 +726,13 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
 
     byte[] creationTimeBytes = row.get(CREATION_TIME_COL);
-    return new PartitionMetadata(metadata, Bytes.toLong(creationTimeBytes));
+    byte[] lastModificationTimeBytes = row.get(LAST_MODIFICATION_TIME_COL);
+    // For backwards compatibility. In pre-4.3 CDAP, we did not write a LAST_MODIFICATION_TIME_COL. We know that such
+    // partitions have not been appended to.
+    if (lastModificationTimeBytes == null) {
+      lastModificationTimeBytes = creationTimeBytes;
+    }
+    return new PartitionMetadata(metadata, Bytes.toLong(creationTimeBytes), Bytes.toLong(lastModificationTimeBytes));
   }
 
   private String metadataKeyFromColumnKey(byte[] columnKey) {
@@ -821,10 +844,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @Override
   public String getOutputFormatClassName() {
-    if (isExternal) {
-      throw new UnsupportedOperationException(
-        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
-    }
+    checkNotExternal();
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey == null) {
       return "co.cask.cdap.internal.app.runtime.batch.dataset.partitioned.DynamicPartitioningOutputFormat";
@@ -834,11 +854,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @Override
   public Map<String, String> getOutputFormatConfiguration() {
-    if (isExternal) {
-      throw new UnsupportedOperationException(
-        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
-    }
-
+    checkNotExternal();
     // copy the output properties of the embedded file set to the output arguments
     Map<String, String> outputArgs = new HashMap<>(files.getOutputFormatConfiguration());
 
@@ -852,19 +868,35 @@ public class PartitionedFileSetDataset extends AbstractDataset
           "Either a Partition key or a DynamicPartitioner class must be given as a runtime argument.");
       }
 
-      // propagate output metadata into OutputFormatConfiguration so DynamicPartitionerOutputCommitter can assign
-      // the metadata when it creates the partitions
-      Map<String, String> outputMetadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
-      PartitionedFileSetArguments.setOutputPartitionMetadata(outputArgs, outputMetadata);
+      copyDynamicPartitionerArguments(runtimeArguments, outputArgs);
 
-      PartitionedFileSetArguments.setDynamicPartitioner(outputArgs, dynamicPartitionerClassName);
-      PartitionedFileSetArguments.setDynamicPartitionerConcurrency(
-        outputArgs, PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(runtimeArguments));
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
     }
     return ImmutableMap.copyOf(outputArgs);
+  }
+
+  private void copyDynamicPartitionerArguments(Map<String, String> fromMap, Map<String, String> toMap) {
+    String dynamicPartitionerClassName = PartitionedFileSetArguments.getDynamicPartitioner(fromMap);
+    DynamicPartitioner.PartitionWriteOption partitionWriteOption =
+      PartitionedFileSetArguments.getDynamicPartitionerWriteOption(fromMap);
+    PartitionedFileSetArguments.setDynamicPartitioner(toMap, dynamicPartitionerClassName, partitionWriteOption);
+
+    PartitionedFileSetArguments.setDynamicPartitionerConcurrency(
+      toMap, PartitionedFileSetArguments.isDynamicPartitionerConcurrencyAllowed(fromMap));
+
+    // propagate output metadata into OutputFormatConfiguration so DynamicPartitionerOutputCommitter can assign
+    // the metadata when it creates the partitions
+    Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(fromMap);
+    PartitionedFileSetArguments.setOutputPartitionMetadata(toMap, metadata);
+  }
+
+  private void checkNotExternal() {
+    if (isExternal) {
+      throw new UnsupportedOperationException(
+        "Output is not supported for external partitioned file set '" + spec.getName() + "'");
+    }
   }
 
   @Override
@@ -880,7 +912,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
     PartitionKey outputKey = PartitionedFileSetArguments.getOutputPartitionKey(runtimeArguments, getPartitioning());
     if (outputKey != null) {
       Map<String, String> metadata = PartitionedFileSetArguments.getOutputPartitionMetadata(runtimeArguments);
-      addPartition(outputKey, outputPath, metadata, true);
+      addPartition(outputKey, outputPath, metadata, true, false);
     }
 
     // currently, FileSetDataset#onSuccess is a no-op, but call it, in case it does something in the future
@@ -1248,7 +1280,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
     @Override
     public void addPartition() {
-      partitionedFileSetDataset.addPartition(key, getRelativePath(), metadata, true);
+      partitionedFileSetDataset.addPartition(key, getRelativePath(), metadata, true, false);
     }
 
     @Override

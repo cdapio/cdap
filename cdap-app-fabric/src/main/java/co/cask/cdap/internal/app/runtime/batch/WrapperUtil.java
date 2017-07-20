@@ -40,7 +40,7 @@ public final class WrapperUtil {
   static <T> T createDelegate(Configuration conf, String attrClass) {
     String delegateClassName = conf.get(attrClass);
     Class<?> delegateClass = conf.getClassByNameOrNull(delegateClassName);
-    Preconditions.checkNotNull(delegateClass, "Class could not be found: ", delegateClassName);
+    Preconditions.checkNotNull(delegateClass, "Class could not be found: %s", delegateClassName);
     T delegate = (T) ReflectionUtils.newInstance(delegateClass, conf);
 
     if (!(delegate instanceof ProgramLifecycle)) {

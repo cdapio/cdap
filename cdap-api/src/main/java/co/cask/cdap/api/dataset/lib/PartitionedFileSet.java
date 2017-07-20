@@ -68,9 +68,8 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * Note that existing entries cannot be updated.
-   * 
-   * @throws DataSetException when an attempt is made to update an existing entry
+   * If the metadata key already exists, it will be overwritten.
+   *
    * @throws PartitionNotFoundException when a partition for the given key is not found
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
@@ -78,13 +77,30 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a set of new metadata entries for a particular partition.
-   * Note that existing entries cannot be updated.
+   * If the metadata key already exists, it will be overwritten.
    *
-   * @throws DataSetException when an attempt is made to update existing entries
    * @throws PartitionNotFoundException when a partition for the given key is not found
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
+
+  /**
+   * Removes a metadata entry for a particular partition.
+   * If the metadata key does not exist, no error is thrown.
+   *
+   * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   */
+  void removeMetadata(PartitionKey key, String metadataKey);
+
+  /**
+   * Removes a set of metadata entries for a particular partition.
+   * If any metadata key does not exist, no error is thrown.
+   *
+   * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   */
+  void removeMetadata(PartitionKey key, Set<String> metadataKeys);
 
   /**
    * Remove a partition for a given partition key, silently ignoring if the key is not found.
