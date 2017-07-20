@@ -18,6 +18,7 @@ package co.cask.cdap.etl.api;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * An alert emitted by a stage in the pipeline.
@@ -43,5 +44,32 @@ public class Alert {
    */
   public Map<String, String> getPayload() {
     return payload;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Alert that = (Alert) o;
+
+    return Objects.equals(stageName, that.stageName) && Objects.equals(payload, that.payload);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(stageName, payload);
+  }
+
+  @Override
+  public String toString() {
+    return "Alert{" +
+      "stageName='" + stageName + '\'' +
+      ", payload=" + payload +
+      '}';
   }
 }

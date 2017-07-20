@@ -22,6 +22,9 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Aggregator;
+import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.api.AlertPublisher;
+import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.JoinElement;
@@ -49,6 +52,7 @@ import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.NoErrorEmitter;
@@ -179,6 +183,11 @@ public class MapReduceTransformExecutorFactory<T> {
                                           runtimeContext.getInputSchemas().size()), stageMetrics,
           taskContext.getDataTracer(stageName));
       }
+    } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
+      // alert publishers are only instantiated on the mapreduce client, in the destroy method.
+      // the actual mapreduce job is only responsible for writing alerts to a file that will
+      // be read by the mapreduce client and sent to the AlertPublisher.
+
     }
 
     Transformation transformation = getInitializedTransformation(stageSpec);
@@ -187,7 +196,6 @@ public class MapReduceTransformExecutorFactory<T> {
     return new TrackedTransform<>(
       isLimitingSource ? new LimitingTransform(transformation, numberOfRecordsPreview) : transformation,
       stageMetrics, taskContext.getDataTracer(stageName));
-
   }
 
   /**
@@ -249,7 +257,7 @@ public class MapReduceTransformExecutorFactory<T> {
         Transformation<RecordInfo<Object>, Object> sink = getTransformation(stageSpec);
         return new DirectOutputPipeStage<>(stageName, sink, new SinkEmitter<>(stageName, outputWriter));
       } else {
-        // others (batchsink, aggregators), only required the value within the RecordInfo
+        // others (batchsink, aggregators, alertpublisher), only required the value within the RecordInfo
         return new UnwrapPipeStage<>(stageName, getTransformation(stageSpec),
                                      new SinkEmitter<>(stageName, outputWriter));
       }
@@ -272,6 +280,8 @@ public class MapReduceTransformExecutorFactory<T> {
 
       if (ErrorTransform.PLUGIN_TYPE.equals(outputStageType)) {
         emitterBuilder.addErrorConsumer(outputPipeStage);
+      } else if (AlertPublisher.PLUGIN_TYPE.equals(outputStageType)) {
+        emitterBuilder.addAlertConsumer(outputPipeStage);
       } else if (Constants.CONNECTOR_TYPE.equals(pluginType)) {
         // connectors only have a single output
         emitterBuilder.addOutputConsumer(outputPipeStage);
@@ -333,7 +343,6 @@ public class MapReduceTransformExecutorFactory<T> {
                                                                          DataTracer dataTracer) {
     return new TrackedTransform<>(transform, stageMetrics, null, Constants.Metrics.RECORDS_OUT, dataTracer);
   }
-
 
   /**
    * A Transformation that uses join's joinOn method. Converts join value to tagged output with stage name for

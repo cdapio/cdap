@@ -19,6 +19,8 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.etl.api.AlertPublisher;
+import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSink;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.common.Constants;
@@ -64,6 +66,10 @@ public class PipelinePluginInstantiator {
     } else if (connectorSinks.contains(stageName)) {
       String datasetName = phaseSpec.getConnectorDatasets().get(stageName);
       return (T) new ConnectorSink(datasetName, phaseSpec.getPhaseName());
+    }
+    StageSpec stageSpec = phaseSpec.getPhase().getStage(stageName);
+    if (stageSpec.getPluginType().equals(AlertPublisher.PLUGIN_TYPE)) {
+      return (T) new AlertPublisherSink(stageName, phaseSpec.getPhaseName());
     }
 
     return pluginContext.newPluginInstance(stageName, macroEvaluator);

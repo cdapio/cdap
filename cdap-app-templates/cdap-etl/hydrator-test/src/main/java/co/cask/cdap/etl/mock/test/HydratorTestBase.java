@@ -24,6 +24,8 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.alert.NullAlertTransform;
+import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
 import co.cask.cdap.etl.mock.batch.FilterTransform;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
@@ -75,7 +77,7 @@ public class HydratorTestBase extends TestBase {
     StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
-    NullFieldSplitterTransform.PLUGIN_CLASS
+    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
@@ -88,7 +90,7 @@ public class HydratorTestBase extends TestBase {
     GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
-    NullFieldSplitterTransform.PLUGIN_CLASS
+    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS
   );
 
   public HydratorTestBase() {
@@ -112,8 +114,8 @@ public class HydratorTestBase extends TestBase {
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
                       FieldCountAggregator.class, IdentityAggregator.class, FieldsPrefixTransform.class,
-                      StringValueFilterCompute.class,
-                      NodeStatesAction.class, LookupTransform.class);
+                      StringValueFilterCompute.class, NodeStatesAction.class, LookupTransform.class,
+                      NullFieldSplitterTransform.class, NullAlertTransform.class);
   }
 
   protected static void setupStreamingArtifacts(ArtifactId artifactId, Class<?> appClass) throws Exception {
@@ -134,7 +136,8 @@ public class HydratorTestBase extends TestBase {
                       co.cask.cdap.etl.mock.spark.streaming.MockSink.class,
                       DoubleTransform.class, AllErrorTransform.class, IdentityTransform.class,
                       IntValueFilterTransform.class, StringValueFilterTransform.class,
-                      StringValueFilterCompute.class, Window.class);
+                      StringValueFilterCompute.class, Window.class,
+                      NullFieldSplitterTransform.class, NullAlertTransform.class);
   }
 
 }

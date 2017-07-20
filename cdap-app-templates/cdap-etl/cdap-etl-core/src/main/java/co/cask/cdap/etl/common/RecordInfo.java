@@ -30,13 +30,13 @@ public class RecordInfo<T> implements Serializable {
   private final T value;
   private final String fromStage;
   private final String fromPort;
-  private final boolean isError;
+  private final RecordType type;
 
-  private RecordInfo(T value, String fromStage, String fromPort, boolean isError) {
+  private RecordInfo(T value, String fromStage, String fromPort, RecordType type) {
     this.fromStage = fromStage;
     this.value = value;
     this.fromPort = fromPort;
-    this.isError = isError;
+    this.type = type;
   }
 
   public T getValue() {
@@ -55,15 +55,15 @@ public class RecordInfo<T> implements Serializable {
     return fromPort;
   }
 
-  public boolean isError() {
-    return isError;
+  public RecordType getType() {
+    return type;
   }
 
   /**
    * @return builder for an RecordInfo
    */
-  public static <T> Builder<T> builder(T value, String fromStage) {
-    return new Builder<>(value, fromStage);
+  public static <T> Builder<T> builder(T value, String fromStage, RecordType type) {
+    return new Builder<>(value, fromStage, type);
   }
 
   /**
@@ -74,13 +74,13 @@ public class RecordInfo<T> implements Serializable {
   public static class Builder<T> {
     private final T value;
     private final String fromStage;
+    private final RecordType type;
     private String fromPort;
-    private boolean isError;
 
-    private Builder(T value, String fromStage) {
+    private Builder(T value, String fromStage, RecordType type) {
       this.value = value;
       this.fromStage = fromStage;
-      this.isError = false;
+      this.type = type;
     }
 
     public Builder<T> fromPort(String port) {
@@ -88,13 +88,8 @@ public class RecordInfo<T> implements Serializable {
       return this;
     }
 
-    public Builder<T> isError() {
-      this.isError = true;
-      return this;
-    }
-
     public RecordInfo<T> build() {
-      return new RecordInfo<>(value, fromStage, fromPort, isError);
+      return new RecordInfo<>(value, fromStage, fromPort, type);
     }
   }
 }

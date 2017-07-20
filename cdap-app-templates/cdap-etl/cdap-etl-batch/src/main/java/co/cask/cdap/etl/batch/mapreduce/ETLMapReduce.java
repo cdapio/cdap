@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -222,8 +223,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
 
     Map<String, SinkOutput> sinkOutputs = new HashMap<>();
-    for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Constants.CONNECTOR_TYPE),
-                                          phase.getStagesOfType(BatchSink.PLUGIN_TYPE))) {
+    for (StageSpec stageInfo :
+      phase.getStagesOfType(Constants.CONNECTOR_TYPE, BatchSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE)) {
       String sinkName = stageInfo.getName();
       // todo: add a better way to get info for all sinks
       if (!phase.getSinks().contains(sinkName)) {

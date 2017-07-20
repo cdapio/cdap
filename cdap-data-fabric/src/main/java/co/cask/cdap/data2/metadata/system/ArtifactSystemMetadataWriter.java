@@ -53,7 +53,11 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
     if (!existing) {
       properties.put(CREATION_TIME_KEY, String.valueOf(System.currentTimeMillis()));
     }
-    return properties.build();
+    try {
+      return properties.build();
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   @Override

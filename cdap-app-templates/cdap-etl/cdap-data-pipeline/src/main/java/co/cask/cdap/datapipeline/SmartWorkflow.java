@@ -19,6 +19,9 @@ package co.cask.cdap.datapipeline;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.PartitionFilter;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -26,6 +29,9 @@ import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
+import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.api.AlertPublisher;
+import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
@@ -39,11 +45,14 @@ import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
+import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
+import co.cask.cdap.etl.batch.connector.AlertReader;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -90,6 +99,7 @@ public class SmartWorkflow extends AbstractWorkflow {
   private ControlDag dag;
   private int phaseNum;
   private Map<String, PostAction> postActions;
+  private Map<String, AlertPublisher> alertPublishers;
   private Map<String, StageSpec> stageSpecs;
 
   // injected by cdap
@@ -186,6 +196,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                        UserGroupInformation.getCurrentUser().getShortUserName(),
                        arguments);
 
+    alertPublishers = new HashMap<>();
     postActions = new LinkedHashMap<>();
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
@@ -203,6 +214,17 @@ public class SmartWorkflow extends AbstractWorkflow {
         .setStageLoggingEnabled(spec.isStageLoggingEnabled())
         .setProcessTimingEnabled(spec.isProcessTimingEnabled())
         .build());
+    }
+
+    for (StageSpec stageSpec : spec.getStages()) {
+      String stageName = stageSpec.getName();
+      stageSpecs.put(stageName, stageSpec);
+      if (AlertPublisher.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
+        AlertPublisher alertPublisher = context.newPluginInstance(stageName, macroEvaluator);
+        AlertPublisherContext alertContext = new DefaultAlertPublisherContext(context, workflowMetrics, stageSpec);
+        alertPublisher.initialize(alertContext);
+        alertPublishers.put(stageName, alertPublisher);
+      }
     }
 
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
@@ -226,6 +248,20 @@ public class SmartWorkflow extends AbstractWorkflow {
         } catch (Throwable t) {
           LOG.error("Error while running post action {}.", name, t);
         }
+      }
+
+    }
+
+    // publish all alerts
+    for (Map.Entry<String, AlertPublisher> alertPublisherEntry : alertPublishers.entrySet()) {
+      String name = alertPublisherEntry.getKey();
+      AlertPublisher alertPublisher = alertPublisherEntry.getValue();
+      PartitionedFileSet alertConnector = workflowContext.getDataset(name);
+      try (CloseableIterator<Alert> alerts =
+             new AlertReader(alertConnector.getPartitions(PartitionFilter.ALWAYS_MATCH))) {
+        alertPublisher.publish(alerts);
+      } catch (Exception e) {
+        LOG.warn("Stage {} had errors publishing alerts. Alerts may not have been published.", name, e);
       }
     }
 
@@ -303,6 +339,13 @@ public class SmartWorkflow extends AbstractWorkflow {
         ConnectorSource connectorSource = new ConnectorSource(datasetName, null);
         connectorSource.configure(getConfigurer());
       }
+    }
+    // create a local dataset to store alerts. At the end of the phase, the dataset will be scanned and alerts
+    // published.
+    for (StageSpec alertPublisherInfo : phase.getStagesOfType(AlertPublisher.PLUGIN_TYPE)) {
+      String stageName = alertPublisherInfo.getName();
+      AlertPublisherSink alertPublisherSink = new AlertPublisherSink(stageName, null);
+      alertPublisherSink.configure(getConfigurer());
     }
 
     Map<String, String> phaseConnectorDatasets = new HashMap<>();

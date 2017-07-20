@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.batch.mapreduce.ErrorOutputWriter;
 import co.cask.cdap.etl.common.RecordInfo;
@@ -35,8 +36,9 @@ public class ConnectorSourceEmitter extends PipeEmitter {
                                  Set<PipeStage<RecordInfo>> outputConsumers,
                                  Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
                                  Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
+                                 Set<PipeStage<RecordInfo<Alert>>> alertConsumers,
                                  @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
-    super(stageName, outputConsumers, outputPortConsumers, errorConsumers, errorOutputWriter);
+    super(stageName, outputConsumers, outputPortConsumers, errorConsumers, alertConsumers, errorOutputWriter);
   }
 
   // we expect the value to already be a RecordInfo. This is because ConnectorSource emits RecordInfo,
@@ -68,7 +70,7 @@ public class ConnectorSourceEmitter extends PipeEmitter {
     @Override
     public PipeEmitter build() {
       return new ConnectorSourceEmitter(stageName, outputConsumers, outputPortConsumers,
-                                        errorConsumers, errorOutputWriter);
+                                        errorConsumers, alertConsumers, errorOutputWriter);
     }
   }
 }
