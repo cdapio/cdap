@@ -167,14 +167,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                "program run id {}" + programRunId);
           }
           String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
-          final Throwable cause = (errorString == null)
+          final BasicThrowable cause = (errorString == null)
             ? null
-            : GSON.fromJson(errorString, Throwable.class);
+            : GSON.fromJson(errorString, BasicThrowable.class);
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
               store.setStop(programRunId.getParent(), programRunId.getRun(), TimeUnit.MILLISECONDS.toSeconds(endTime),
-                            programRunStatus, new BasicThrowable(cause));
+                            programRunStatus, cause);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
