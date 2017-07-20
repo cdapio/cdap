@@ -88,7 +88,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
       RetryStrategies.retryOnConflict(20, 100)
     );
-    this.taskExecutorService = Executors.newCachedThreadPool(threadFactory);
   }
 
   protected abstract void startUp();
