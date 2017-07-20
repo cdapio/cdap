@@ -18,7 +18,8 @@ angular.module(PKG.name + '.commons')
   .factory('DAGPlusPlusFactory', function() {
     var defaultSettings = {
       Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true, midpoint: 0, cornerRadius: 20} ],
-      ConnectionsDetachable: true
+      ConnectionsDetachable: true,
+      HoverPaintStyle: { strokeStyle: '#58b7f6', lineWidth: 4 },
     };
     var connectorStyle = {
       strokeStyle: '#666e82',
