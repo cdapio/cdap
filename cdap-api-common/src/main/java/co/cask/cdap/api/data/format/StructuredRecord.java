@@ -243,7 +243,19 @@ public class StructuredRecord implements Serializable {
       if (field == null) {
         throw new UnexpectedFormatException("field " + fieldName + " is not in the schema.");
       }
-      if (!field.getSchema().isNullable() && val == null) {
+      Schema fieldSchema = field.getSchema();
+      if (val == null) {
+        if (fieldSchema.getType() == Schema.Type.NULL) {
+          return field;
+        }
+        if (fieldSchema.getType() != Schema.Type.UNION) {
+          throw new UnexpectedFormatException("field " + fieldName + " cannot be set to a null value.");
+        }
+        for (Schema unionSchema : fieldSchema.getUnionSchemas()) {
+          if (unionSchema.getType() == Schema.Type.NULL) {
+            return field;
+          }
+        }
         throw new UnexpectedFormatException("field " + fieldName + " cannot be set to a null value.");
       }
       return field;
