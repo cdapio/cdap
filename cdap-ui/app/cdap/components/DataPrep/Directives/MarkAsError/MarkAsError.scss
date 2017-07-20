@@ -16,8 +16,11 @@
 
 #mark-as-error-directive {
   .condition-select {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+
     > div {
-      display: inline-block;
       margin-left: 10px;
     }
   }
