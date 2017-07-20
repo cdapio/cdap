@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -61,6 +62,22 @@ public abstract class AbstractAuthorizer implements Authorizer {
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
     enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    Set<EntityId> visibleEntities = new HashSet<>();
+    for (EntityId entityId : entityIds) {
+      try {
+        enforce(entityId, principal, EnumSet.allOf(Action.class));
+        visibleEntities.add(entityId);
+      } catch (UnauthorizedException e) {
+        // continue to next entity
+      } catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+    return visibleEntities;
   }
 
   @Override
