@@ -85,6 +85,16 @@ public class UsageHandlerTestRun extends ClientTestBase {
     new ProgramClient(getClientConfig()).start(programId);
   }
 
+  private void waitState(final ProgramId programId, ProgramStatus status) throws Exception {
+    final ProgramClient programclient = new ProgramClient(getClientConfig());
+    Tasks.waitFor(status, new Callable<ProgramStatus>() {
+      @Override
+      public ProgramStatus call() throws Exception {
+        return ProgramStatus.valueOf(programclient.getStatus(programId));
+      }
+    }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  }
+
   private void waitForProgramRun(final ProgramId program, final ProgramRunStatus status, final int expected)
     throws Exception {
     final ProgramClient programClient = new ProgramClient(getClientConfig());

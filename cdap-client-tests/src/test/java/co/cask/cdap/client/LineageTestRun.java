@@ -64,7 +64,7 @@ import static co.cask.cdap.proto.ProgramStatus.STOPPED;
  * Tests lineage recording and query.
  */
 @Category(SlowTests.class)
-public class LineageTestRun extends MetadataTestBase {
+public class  LineageTestRun extends MetadataTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LineageTestRun.class);
 
   @Test
