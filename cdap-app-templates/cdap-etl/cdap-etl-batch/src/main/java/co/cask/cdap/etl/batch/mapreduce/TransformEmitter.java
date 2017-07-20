@@ -86,4 +86,9 @@ public class TransformEmitter implements PipeEmitter<PipeTransformDetail> {
       outputConsumers.put(stageName, pipeTransformDetail);
     }
   }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    // todo: implement once multioutput refactoring is done
+  }
 }

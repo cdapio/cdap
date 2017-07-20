@@ -21,6 +21,8 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.StageMetrics;
 
+import java.util.Map;
+
 /**
  * Wrapper around another emitter that tracks how many records were emitted.
  *
@@ -56,5 +58,14 @@ public class TrackedEmitter<T> implements Emitter<T> {
       dataTracer.info(RECORDS_ERROR, value);
     }
     delegate.emitError(value);
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    stageMetrics.count(Constants.Metrics.ALERT_RECORDS, 1);
+    if (dataTracer.isEnabled()) {
+      dataTracer.info(Constants.Metrics.ALERT_RECORDS, payload);
+    }
+    delegate.emitAlert(payload);
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * Encapsulates {@link Transformation} list of next stages, current stage name, and {@link DefaultEmitter}.
@@ -77,4 +78,8 @@ public class TransformDetail implements Emitter<Object> {
     return nextStages;
   }
 
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    // todo: implement once multioutput refactoring is done
+  }
 }

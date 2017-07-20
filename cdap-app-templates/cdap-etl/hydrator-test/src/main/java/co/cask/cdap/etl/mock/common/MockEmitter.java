@@ -20,7 +20,9 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock implementation of {@link Emitter} for unit tests.
@@ -30,6 +32,7 @@ import java.util.List;
 public class MockEmitter<T> implements Emitter<T> {
   private final List<T> emitted = new ArrayList<>();
   private final List<InvalidEntry<T>> errors = new ArrayList<>();
+  private final List<Map<String, String>> alerts = new ArrayList<>();
 
   @Override
   public void emit(T value) {
@@ -41,6 +44,11 @@ public class MockEmitter<T> implements Emitter<T> {
     errors.add(value);
   }
 
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    alerts.add(new HashMap<>(payload));
+  }
+
   public List<T> getEmitted() {
     return emitted;
   }
@@ -49,8 +57,13 @@ public class MockEmitter<T> implements Emitter<T> {
     return errors;
   }
 
+  public List<Map<String, String>> getAlerts() {
+    return alerts;
+  }
+
   public void clear() {
     emitted.clear();
     errors.clear();
+    alerts.clear();
   }
 }

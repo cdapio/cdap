@@ -66,5 +66,6 @@ public final class Constants {
     public static final String MAX_TIME = "process.time.max";
     public static final String STD_DEV_TIME = "process.time.stddev";
     public static final String AVG_TIME = "process.time.avg";
+    public static final String ALERT_RECORDS = "records.alert";
   }
 }

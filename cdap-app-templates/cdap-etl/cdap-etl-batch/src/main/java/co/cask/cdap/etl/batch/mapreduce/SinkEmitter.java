@@ -22,6 +22,8 @@ import co.cask.cdap.etl.batch.PipeTransformDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 /**
  * Sink emitter which writes to sink
  * @param <KEY_OUT> type of output key
@@ -56,5 +58,10 @@ public class SinkEmitter<KEY_OUT, VAL_OUT> implements PipeEmitter<PipeTransformD
   public void addTransformDetail(String stageName, PipeTransformDetail pipeTransformDetail) {
     throw new IllegalStateException(String.format("Sink {} should not have any output, but it has output {}",
                                                   this.stageName, stageName));
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    // todo: implement once multioutput refactoring is done
   }
 }

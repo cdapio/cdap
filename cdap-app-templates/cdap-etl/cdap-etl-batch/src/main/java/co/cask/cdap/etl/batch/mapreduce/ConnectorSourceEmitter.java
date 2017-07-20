@@ -57,4 +57,9 @@ public class ConnectorSourceEmitter implements PipeEmitter<PipeTransformDetail> 
     // Not supported - This should never happen
     LOG.error("Emitting errors from stage {} is not supported", stageName);
   }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    // todo: implement once multioutput refactoring is done
+  }
 }

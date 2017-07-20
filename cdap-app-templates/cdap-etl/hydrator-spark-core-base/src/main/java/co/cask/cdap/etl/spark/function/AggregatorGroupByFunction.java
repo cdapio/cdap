@@ -65,7 +65,7 @@ public class AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>
     GroupByTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
       this.aggregator = aggregator;
       this.keyEmitter =
-        new NoErrorEmitter<>("Error records cannot be emitted from the groupBy method of an aggregator");
+        new NoErrorEmitter<>("Errors and Alerts cannot be emitted from the groupBy method of an aggregator");
     }
 
     @Override

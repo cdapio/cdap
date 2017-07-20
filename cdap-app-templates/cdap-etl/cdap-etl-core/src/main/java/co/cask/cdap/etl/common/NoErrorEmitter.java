@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation of {@link Emitter}. Has methods to get the values and errors emitted.
@@ -44,6 +45,11 @@ public class NoErrorEmitter<T> implements Emitter<T> {
 
   @Override
   public void emitError(InvalidEntry<T> value) {
+    throw new UnsupportedOperationException(errorMessage);
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
     throw new UnsupportedOperationException(errorMessage);
   }
 

@@ -33,6 +33,7 @@ import java.util.Map;
 public class MockMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
   private final Map<String, List<Object>> emitted = new HashMap<>();
   private final List<InvalidEntry<E>> errors = new ArrayList<>();
+  private final List<Map<String, String>> alerts = new ArrayList<>();
 
   @Override
   public void emit(String port, Object value) {
@@ -49,6 +50,11 @@ public class MockMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
     errors.add(invalidEntry);
   }
 
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    alerts.add(new HashMap<>(payload));
+  }
+
   public Map<String, List<Object>> getEmitted() {
     return Collections.unmodifiableMap(emitted);
   }
@@ -57,9 +63,13 @@ public class MockMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
     return Collections.unmodifiableList(errors);
   }
 
+  public List<Map<String, String>> getAlerts() {
+    return Collections.unmodifiableList(alerts);
+  }
+
   public void clear() {
     emitted.clear();
     errors.clear();
+    alerts.clear();
   }
-
 }
