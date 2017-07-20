@@ -97,7 +97,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         try {
           runStatus = ProgramRunStatus.valueOf(programStatusString);
         } catch (IllegalArgumentException e) {
-          LOG.warn("Invalid program status {} passed in notification for program {}",
+          LOG.warn("Invalid program run status {} passed in notification for program {}",
                    programStatusString, programRunIdString);
         }
       }
@@ -107,7 +107,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
-      final ProgramRunStatus programRunStatus = runStatus;
       final ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       final String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       final Map<String, String> userArguments = getArguments(properties, ProgramOptionConstants.USER_OVERRIDES);
@@ -115,11 +114,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
       final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
       final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
+      final ProgramRunStatus programRunStatus = runStatus;
+
       switch(programRunStatus) {
         case STARTING:
           if (stateChangeTime == -1) {
             throw new IllegalArgumentException("Start time was not specified in program starting notification for " +
-                                               "program run id {}" + programRunId);
+                                               "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -134,7 +135,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         case RUNNING:
           if (stateChangeTime == -1) {
             throw new IllegalArgumentException("Run time was not specified in program running notification for " +
-                                               "program run id {}" + programRunId);
+                                               "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -150,7 +151,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         case KILLED:
           if (endTime == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run id {}" + programRunId);
+                                               "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
@@ -164,7 +165,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         case FAILED:
           if (endTime == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run id {}" + programRunId);
+                                               "program run {}" + programRunId);
           }
           String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
           final BasicThrowable cause = (errorString == null)
