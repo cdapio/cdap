@@ -46,6 +46,7 @@ import SetCharacterEncoding from 'components/DataPrep/Directives/SetCharacterEnc
 import MarkAsError from 'components/DataPrep/Directives/MarkAsError';
 import DefineVariableDirective from 'components/DataPrep/Directives/DefineVariable';
 import SetCounterDirective from 'components/DataPrep/Directives/SetCounter';
+import CustomTransform from 'components/DataPrep/Directives/CustomTransform';
 
 import ee from 'event-emitter';
 
@@ -100,6 +101,13 @@ export default class ColumnActionsDropdown extends Component {
         id: shortid.generate(),
         tag: Calculate,
         requiredColCount: 1
+      },
+      {
+        tag: CustomTransform,
+        requiredColCount: 1
+      },
+      {
+        tag: 'divider'
       },
       {
         id: shortid.generate(),

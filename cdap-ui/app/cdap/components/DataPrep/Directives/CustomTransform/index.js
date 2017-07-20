@@ -17,56 +17,38 @@
 import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import IconSVG from 'components/IconSVG';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import WarningContainer from 'components/WarningContainer';
-import {columnNameAlreadyExists} from 'components/DataPrep/helper';
+import {preventPropagation} from 'services/helpers';
+import Mousetrap from 'mousetrap';
 
-const PREFIX = 'features.DataPrep.Directives.Copy';
-const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn';
+require('./CustomTransform.scss');
 
-export default class CopyColumnDirective extends Component {
-  constructor(props) {
-    super(props);
+const PREFIX = 'features.DataPrep.Directives.CustomTransform';
 
-    this.state = {
-      input: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`)
-    };
+export default class CustomTransform extends Component {
+  state = {
+    input: ''
+  };
 
-    this.handleInputChange = this.handleInputChange.bind(this);
-    this.applyDirective = this.applyDirective.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
+  componentDidMount() {
+    Mousetrap.bind('enter', this.applyDirective);
   }
 
-  componentDidUpdate() {
-    if (this.props.isOpen) {
-      this.inputBox.focus();
-    }
+  componentWillUnmount() {
+    Mousetrap.unbind('enter');
   }
 
-  preventPropagation(e) {
-    e.stopPropagation();
-    e.nativeEvent.stopImmediatePropagation();
-    e.preventDefault();
-  }
-
-  handleInputChange(e) {
+  handleInputChange = (e) => {
     this.setState({input: e.target.value});
   }
 
-  handleKeyPress(e) {
-    if (e.nativeEvent.keyCode !== 13 || this.state.input.length === 0) { return; }
-
-    this.applyDirective();
-  }
-
-  applyDirective() {
+  applyDirective = () => {
     if (this.state.input.length === 0) { return; }
-    let source = this.props.column;
-    let destination = this.state.input;
 
-    let directive = `copy ${source} ${destination} true`;
+    let directive = `set-column ${this.props.column} ${this.state.input}`;
 
     execute([directive])
       .subscribe(() => {
@@ -89,30 +71,19 @@ export default class CopyColumnDirective extends Component {
 
     return (
       <div
-        className="copy-column-detail second-level-popover"
-        onClick={this.preventPropagation}
+        className="second-level-popover custom-transform-popover"
+        onClick={preventPropagation}
       >
-        <h5>{T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputLabel`)}</h5>
+       <h5>{T.translate(`${PREFIX}.description`, {column: this.props.column})}</h5>
 
-        <div className="input">
-          <input
-            type="text"
-            className="form-control mousetrap"
-            value={this.state.input}
-            onChange={this.handleInputChange}
-            onKeyPress={this.handleKeyPress}
-            placeholder={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputPlaceholder`)}
-            ref={ref => this.inputBox = ref}
-          />
-        </div>
-
-        {
-          columnNameAlreadyExists(this.state.input) ? (
-            <WarningContainer
-              message={T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputDuplicate`)}
-            />
-          ) : null
-        }
+        <textarea
+          rows="6"
+          className="form-control mousetrap"
+          value={this.state.input}
+          onChange={this.handleInputChange}
+          placeholder={T.translate(`${PREFIX}.placeholder`, {column: this.props.column})}
+          autoFocus
+        />
 
         <hr />
 
@@ -132,7 +103,6 @@ export default class CopyColumnDirective extends Component {
             {T.translate('features.DataPrep.Directives.cancel')}
           </button>
         </div>
-
       </div>
     );
   }
@@ -140,7 +110,8 @@ export default class CopyColumnDirective extends Component {
   render() {
     return (
       <div
-        className={classnames('copy-directive clearfix action-item', {
+        id="custom-transform-directive"
+        className={classnames('clearfix action-item', {
           'active': this.props.isOpen
         })}
       >
@@ -149,7 +120,7 @@ export default class CopyColumnDirective extends Component {
         </span>
 
         <span className="float-xs-right">
-          <span className="fa fa-caret-right" />
+          <IconSVG name="icon-caret-right" />
         </span>
 
         {this.renderDetail()}
@@ -158,7 +129,7 @@ export default class CopyColumnDirective extends Component {
   }
 }
 
-CopyColumnDirective.propTypes = {
+CustomTransform.propTypes = {
   column: PropTypes.string,
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
