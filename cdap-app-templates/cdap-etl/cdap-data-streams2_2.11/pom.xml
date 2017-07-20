@@ -225,4 +225,75 @@
     </plugins>
   </build>
 
+
+  <profiles>
+    <profile>
+      <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
+      <id>spark2-dev</id>
+      <properties>
+        <cdap.data.streams.base.dir>${project.basedir}/../cdap-data-streams</cdap.data.streams.base.dir>
+      </properties>
+      <build>
+        <plugins>
+          <!-- Disable the copying of files from cdap-data-streams -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>2.6</version>
+            <executions>
+              <execution>
+                <id>copy-base</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>copy-base-test</id>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- Symlink the source from base -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.7</version>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+            <executions>
+              <execution>
+                <id>symlink-sources</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <skip>false</skip>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-data-streams/src"/>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-data-streams/src/main" resource="${cdap.data.streams.base.dir}/src/main" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+              <execution>
+                <id>symlink-test-sources</id>
+                <phase>generate-sources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <skip>false</skip>
+                  <target>
+                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-data-streams/src"/>
+                    <symlink link="${project.build.directory}/generated-test-sources/cdap-data-streams/src/test" resource="${cdap.data.streams.base.dir}/src/test" overwrite="true" />
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
 </project>
