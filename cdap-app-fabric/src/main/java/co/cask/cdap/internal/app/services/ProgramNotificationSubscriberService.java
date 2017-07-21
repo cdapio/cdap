@@ -136,7 +136,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
       final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
       final ProgramRunStatus programRunStatus = runStatus;
-      System.out.println("PERSIST PROGRAM " + programRunId + " STATUS " + programRunStatus);
+//      System.out.println("PERSIST PROGRAM " + programRunId + " STATUS " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           if (stateChangeTime == -1) {

@@ -107,7 +107,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     private int failureCount;
     private String messageId;
 
-    protected NotificationSubscriberThread(String topic) {
+    NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       retryStrategy =
