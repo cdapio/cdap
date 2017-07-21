@@ -154,4 +154,5 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null);
   }
+
 }

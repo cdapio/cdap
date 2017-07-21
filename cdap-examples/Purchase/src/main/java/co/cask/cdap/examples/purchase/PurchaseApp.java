@@ -50,6 +50,7 @@ public class PurchaseApp extends AbstractApplication {
     createDataset("userProfiles", KeyValueTable.class,
                   DatasetProperties.builder().setDescription("Store user profiles").build());
 
+
     // Process events in realtime using a Flow
     addFlow(new PurchaseFlow());
 
