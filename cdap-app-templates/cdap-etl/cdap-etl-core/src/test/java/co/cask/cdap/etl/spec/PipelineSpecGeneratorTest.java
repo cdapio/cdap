@@ -35,6 +35,8 @@ import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.condition.Condition;
+import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.MockPluginConfigurer;
@@ -67,6 +69,7 @@ public class PipelineSpecGeneratorTest {
   private static final ETLPlugin MOCK_JOINER = new ETLPlugin("mockjoiner", BatchJoiner.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_ERROR = new ETLPlugin("mockerror", ErrorTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_ACTION = new ETLPlugin("mockaction", Action.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_CONDITION = new ETLPlugin("mockcondition", Condition.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
@@ -86,11 +89,13 @@ public class PipelineSpecGeneratorTest {
                                    MockPlugin.builder().setOutputSchema(SCHEMA_B).build(), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "mockaction", MockPlugin.builder().build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Condition.PLUGIN_TYPE, "mockcondition", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockjoiner", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(ErrorTransform.PLUGIN_TYPE, "mockerror", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(SplitterTransform.PLUGIN_TYPE, "mocksplit",
                                    new MockSplitter(ImmutableMap.of("portA", SCHEMA_A, "portB", SCHEMA_B)),
                                    artifactIds);
+
 
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
@@ -550,6 +555,223 @@ public class PipelineSpecGeneratorTest {
       .setClientResources(new Resources(1024))
       .build();
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSimpleConditionConnectionWithNoBranchInfo() {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "condition")
+      .addConnection("condition", "t1")
+      .addConnection("t1", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSimpleConditionConnectionWithMultipleTrueBranches() {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addConnection("source", "condition")
+      .addConnection("condition", "t1", true)
+      .addConnection("condition", "t2", true)
+      .addConnection("t1", "sink1")
+      .addConnection("t2", "sink2")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNestedConditionConnectionWithNoBranchInfo() {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "condition1")
+      .addConnection("condition1", "t1", true)
+      .addConnection("t1", "condition2")
+      .addConnection("condition2", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNestedConditionConnectionWithMultipleTrueBranches() {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t11", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t12", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addConnection("source", "condition1")
+      .addConnection("condition1", "t1", true)
+      .addConnection("t1", "condition2")
+      .addConnection("condition2", "t11", false)
+      .addConnection("condition2", "t12", false)
+      .addConnection("condition1", "t2", false)
+      .addConnection("t11", "sink1")
+      .addConnection("t12", "sink1")
+      .addConnection("t2", "sink2")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSimpleConditionWithCrossConnection() {
+
+    //  source1--condition-----t1-----sink
+    //                                  |
+    //                    source2-------
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MOCK_SOURCE))
+      .addStage(new ETLStage("source2", MOCK_SOURCE))
+      .addStage(new ETLStage("condition", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source1", "condition")
+      .addConnection("condition", "t1", true)
+      .addConnection("t1", "sink")
+      .addConnection("source2", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNestedConditionWithCrossConnection() {
+    //
+    //                                anothersource-------------
+    //                                                          |
+    //  source--condition1-----t1-----condition2------t11------sink1
+    //             |                      |                     |
+    //             |                      |-----------t12--------
+    //             t2---------sink2
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("anothersource", MOCK_SOURCE))
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t11", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t12", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addConnection("source", "condition1")
+      .addConnection("condition1", "t1", true)
+      .addConnection("t1", "condition2")
+      .addConnection("condition2", "t11", false)
+      .addConnection("condition2", "t12", true)
+      .addConnection("condition1", "t2", false)
+      .addConnection("t11", "sink1")
+      .addConnection("t12", "sink1")
+      .addConnection("anothersource", "sink1")
+      .addConnection("t2", "sink2")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test
+  public void testSimpleValidCondition() {
+
+    //  source--condition-----t1-----sink
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "condition")
+      .addConnection("condition", "t1", true)
+      .addConnection("t1", "sink")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test
+  public void testNestedValidCondition() {
+
+    //  source--condition1-----t1-----condition2------t11------sink1
+    //             |                      |                     |
+    //             |                      |-----------t12--------
+    //             t2---------sink2
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t11", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t12", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addConnection("source", "condition1")
+      .addConnection("condition1", "t1", true)
+      .addConnection("t1", "condition2")
+      .addConnection("condition2", "t11", false)
+      .addConnection("condition2", "t12", true)
+      .addConnection("condition1", "t2", false)
+      .addConnection("t11", "sink1")
+      .addConnection("t12", "sink1")
+      .addConnection("t2", "sink2")
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testTwoConditionsGoingToSameStage() {
+
+    //  source--condition1-----t1-----condition2------t11------sink1
+    //             |                      |                     |
+    //             |                      |-----------t12--------
+    //             t2---------sink2                   |
+    //                                                |
+    //                                                |
+    //  anotherSource--------->condition3----------------------sink3
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("anotherSource", MOCK_SOURCE))
+      .addStage(new ETLStage("condition1", MOCK_CONDITION))
+      .addStage(new ETLStage("condition2", MOCK_CONDITION))
+      .addStage(new ETLStage("condition3", MOCK_CONDITION))
+      .addStage(new ETLStage("t1", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t11", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t12", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("t2", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addStage(new ETLStage("sink3", MOCK_SINK))
+      .addConnection("source", "condition1")
+      .addConnection("condition1", "t1", true)
+      .addConnection("t1", "condition2")
+      .addConnection("condition2", "t11", false)
+      .addConnection("condition2", "t12", true)
+      .addConnection("condition1", "t2", false)
+      .addConnection("t11", "sink1")
+      .addConnection("t12", "sink1")
+      .addConnection("t2", "sink2")
+      .addConnection("anotherSource", "condition3")
+      .addConnection("condition3", "sink3", false)
+      .addConnection("condition3", "t12", true)
+      .build();
+    specGenerator.generateSpec(etlConfig);
   }
 
   private static class MockSplitter implements MultiOutputPipelineConfigurable {
