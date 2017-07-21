@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
       _.debounce(function() {
         if (isLoggedIn) {
           $http.get(
-            '/namespacestatus',
+            '/backendstatus',
             {ignoreLoadingBar: true}
           )
                .success(success.bind(this))

@@ -307,7 +307,7 @@ function makeApp (authAddress, cdapConfig) {
     }
   ]);
 
-  app.get('/namespacestatus', [
+  app.get('/backendstatus', [
     function (req, res) {
       var protocol,
           port;
