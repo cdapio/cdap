@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -209,12 +210,15 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
     }
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
-
-    for (StageSpec transformInfo : phase.getStagesOfType(Transform.PLUGIN_TYPE)) {
+    Set<StageSpec> transformStages = phase.getStagesOfType(Transform.PLUGIN_TYPE);
+    Map<String, FieldLevelLineage> transformFieldLevelLineages = new HashMap<>(transformStages.size());
+    for (StageSpec transformInfo : transformStages) {
       Transform transform = pluginInstantiator.newPluginInstance(transformInfo.getName(), evaluator);
       StageSubmitter<TransformContext> transformContext =
         new MapReduceBatchContext<>(context, mrMetrics, transformInfo);
       transform.prepareRun(transformContext);
+      transformFieldLevelLineages.put(transformInfo.getName(),
+                                      transformContext.getFieldLevelLineage());
       finishers.add(transform, transformContext);
     }
 

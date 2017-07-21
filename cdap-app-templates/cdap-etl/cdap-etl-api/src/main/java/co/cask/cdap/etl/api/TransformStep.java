@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,21 +16,21 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.messaging.MessagingContext;
+import javax.annotation.Nullable;
 
 /**
- * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
- *
- * @param <T> execution context
+ * <p>A TransformStep represents a modification done by a transform stage.</p>
  */
-public interface StageSubmitter<T> extends MessagingContext {
+public interface TransformStep {
 
-//  SettableArguments getArguments();
+  /**
+   * @return the name of this modification
+   */
+  String getName();
 
-  T getContext();
-
-  void recordLineage(FieldLevelLineage f);
-
-  FieldLevelLineage getFieldLevelLineage();
-
+  /**
+   * @return additional information about this modification
+   */
+  @Nullable
+  String getInformation();
 }

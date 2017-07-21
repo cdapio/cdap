@@ -24,6 +24,7 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -129,6 +130,7 @@ public class ETLSpark extends AbstractSpark {
                                                                  phaseSpec.isStageLoggingEnabled(),
                                                                  phaseSpec.isProcessTimingEnabled());
 
+    Map<String, FieldLevelLineage> transformFieldLevelLineages = new HashMap<>();
     for (StageSpec stageSpec : phaseSpec.getPhase()) {
       String stageName = stageSpec.getName();
       String pluginType = stageSpec.getPluginType();
@@ -142,6 +144,7 @@ public class ETLSpark extends AbstractSpark {
         Transform transform = pluginContext.newPluginInstance(stageName, evaluator);
         StageSubmitter transformContext = new SparkBatchSourceContext(sourceFactory, context, stageSpec);
         transform.prepareRun(transformContext);
+        transformFieldLevelLineages.put(stageName, transformContext.getFieldLevelLineage());
         finishers.add(transform, transformContext);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(stageName, evaluator);
