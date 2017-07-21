@@ -34,6 +34,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -51,6 +52,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data.RuntimeProgramContext;
 import co.cask.cdap.data.RuntimeProgramContextAware;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
@@ -85,6 +88,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -96,6 +100,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   implements PartitionedFileSet, DatasetOutputCommitter, RuntimeProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
+  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(1)));
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
   private static final String QUARANTINE_DIR = ".quarantine";
@@ -316,14 +321,9 @@ public class PartitionedFileSetDataset extends AbstractDataset
   }
 
   private void addPartition(PartitionKey key, String path, Map<String, String> metadata, boolean filesCreated) {
+    byte[] rowKey = assertNotExists(key);
     AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
     operationsInThisTx.add(operation);
-    byte[] rowKey = generateRowKey(key, partitioning);
-    Row row = partitionsTable.get(rowKey);
-    if (!row.isEmpty()) {
-      throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
-                                               getName(), key.toString()));
-    }
     LOG.debug("Adding partition with key {} and path {} to dataset {}", key, path, getName());
     Put put = new Put(rowKey);
     put.add(RELATIVE_PATH, Bytes.toBytes(path));
@@ -580,7 +580,52 @@ public class PartitionedFileSetDataset extends AbstractDataset
       throw new UnsupportedOperationException(
         "Output is not supported for external partitioned file set '" + spec.getName() + "'");
     }
+    assertNotExists(key, true);
     return new BasicPartitionOutput(this, getOutputPath(key), key);
+  }
+
+
+  private byte[] assertNotExists(PartitionKey key) {
+    return assertNotExists(key, false);
+  }
+
+  // Throws PartitionAlreadyExistsException if the partition key already exists.
+  // Otherwise, returns the rowkey corresponding to the PartitionKey.
+  @ReadOnly
+  byte[] assertNotExists(PartitionKey key, boolean supportNonTransactional) {
+    byte[] rowKey = generateRowKey(key, partitioning);
+    if (tx == null && supportNonTransactional) {
+      if (LOG.isWarnEnabled()) {
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+          sb.append("\n\tat ").append(stackTraceElement.toString());
+        }
+        SAMPLING_LOG.warn("Operation should be performed within a transaction. " +
+                            "This operation may require a transaction in the future. {}", sb);
+      }
+      // to handle backwards compatibility (user might have called PartitionedFileSet#getPartitionOutput outside
+      // of a transaction), we can't check partition existence via the partitionsTable. As an fallback approach,
+      // check the filesystem.
+      Location partitionLocation = files.getLocation(getOutputPath(key));
+      if (exists(partitionLocation)) {
+        throw new DataSetException(String.format("Location %s for partition key %s already exists: ",
+                                                 partitionLocation, key));
+      }
+    } else {
+      Row row = partitionsTable.get(rowKey);
+      if (!row.isEmpty()) {
+        throw new PartitionAlreadyExistsException(getName(), key);
+      }
+    }
+    return rowKey;
+  }
+
+  private boolean exists(Location location) {
+    try {
+      return location.exists();
+    } catch (IOException e) {
+      throw new DataSetException(e);
+    }
   }
 
   @ReadOnly
@@ -839,6 +884,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
+    } else {
+      assertNotExists(outputKey, true);
     }
     return ImmutableMap.copyOf(outputArgs);
   }
