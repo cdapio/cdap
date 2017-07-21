@@ -68,4 +68,13 @@ public final class Constants {
     public static final String AVG_TIME = "process.time.avg";
     public static final String ALERT_RECORDS = "records.alert";
   }
+
+  /**
+   * Constants related to the stage statistics.
+   */
+  public static final class StageStatistics {
+    public static final String INPUT_RECORDS = "input.records";
+    public static final String OUTPUT_RECORDS = "output.records";
+    public static final String ERROR_RECORDS = "error.records";
+  }
 }
