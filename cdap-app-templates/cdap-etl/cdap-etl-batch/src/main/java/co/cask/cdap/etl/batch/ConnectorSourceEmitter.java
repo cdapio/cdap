@@ -29,6 +29,8 @@ import javax.annotation.Nullable;
  */
 public class ConnectorSourceEmitter extends PipeEmitter {
 
+  // stageName passed into the constructor will be the name of the connector, something like 'myagg.connector'.
+  // however, it is not used anywhere by this emitter, and is only here because the superclass requires it.
   private ConnectorSourceEmitter(String stageName,
                                  Set<PipeStage<RecordInfo>> outputConsumers,
                                  Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
@@ -37,6 +39,9 @@ public class ConnectorSourceEmitter extends PipeEmitter {
     super(stageName, outputConsumers, outputPortConsumers, errorConsumers, errorOutputWriter);
   }
 
+  // we expect the value to already be a RecordInfo. This is because ConnectorSource emits RecordInfo,
+  // which it has to be responsible for because the stage name associated with the record is stored in the connector
+  // local dataset.
   protected RecordInfo getPipeRecord(Object value) {
     return (RecordInfo) value;
   }

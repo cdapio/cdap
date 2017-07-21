@@ -46,10 +46,11 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
   private static final Logger LOG = LoggerFactory.getLogger(PipeEmitter.class);
   protected final String stageName;
   private final Set<PipeStage<RecordInfo>> outputConsumers;
+  // port -> set of stages connected to that port
   private final Multimap<String, PipeStage<RecordInfo>> outputPortConsumers;
   private final Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers;
   private final ErrorOutputWriter<Object, Object> errorOutputWriter;
-  private boolean shouldLogErrorWarning;
+  private boolean logWarning;
 
   public PipeEmitter(String stageName,
                      Set<PipeStage<RecordInfo>> outputConsumers,
@@ -61,7 +62,7 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
     this.outputPortConsumers = ImmutableMultimap.copyOf(outputPortConsumers);
     this.errorConsumers = ImmutableSet.copyOf(errorConsumers);
     this.errorOutputWriter = errorOutputWriter;
-    this.shouldLogErrorWarning = true;
+    this.logWarning = true;
   }
 
   @Override
@@ -85,8 +86,8 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
 
   @Override
   public void emitError(InvalidEntry<Object> invalidEntry) {
-    if (shouldLogErrorWarning && errorConsumers.isEmpty() && errorOutputWriter == null) {
-      shouldLogErrorWarning = false;
+    if (logWarning && errorConsumers.isEmpty() && errorOutputWriter == null) {
+      logWarning = false;
       LOG.warn("Stage {} emits error records, but has no error consumer. Error records will be dropped.", stageName);
       return;
     }

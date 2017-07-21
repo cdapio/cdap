@@ -51,5 +51,4 @@ public class DirectOutputPipeStage<T> extends PipeStage<RecordInfo<T>> {
       Destroyables.destroyQuietly((Destroyable) transform);
     }
   }
-
 }
