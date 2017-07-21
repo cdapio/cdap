@@ -822,7 +822,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test
-  @Ignore
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
     final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");

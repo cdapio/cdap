@@ -88,6 +88,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
       RetryStrategies.retryOnConflict(20, 100)
     );
+    this.datasetFramework = datasetFramework;
   }
 
   protected abstract void startUp();
@@ -187,7 +188,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
       String lastFetchedMessageId = null;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-          topic, 100, messageId)) {
+                                                               topic, 100, messageId)) {
         LOG.trace("Fetch with messageId = {}", messageId);
         while (iterator.hasNext() && !stopping) {
           Message message = iterator.next();
