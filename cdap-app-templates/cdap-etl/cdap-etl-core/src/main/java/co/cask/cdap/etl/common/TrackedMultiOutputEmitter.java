@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,41 +17,40 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.preview.DataTracer;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.api.StageMetrics;
 
 import java.util.Map;
 
 /**
- * Wrapper around another emitter that tracks how many records were emitted.
+ * Wrapper around another MultiOutputEmitter that tracks how many records were emitted to each port.
  *
- * @param <T> the type of object to emit
+ * @param <E> the type of error object to emit
  */
-public class TrackedEmitter<T> implements Emitter<T> {
-  private final Emitter<T> delegate;
+public class TrackedMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
+  private final MultiOutputEmitter<E> delegate;
   private final StageMetrics stageMetrics;
-  private final String emitMetricName;
   private final DataTracer dataTracer;
 
-  public TrackedEmitter(Emitter<T> delegate, StageMetrics stageMetrics, String emitMetricName, DataTracer dataTracer) {
+  public TrackedMultiOutputEmitter(MultiOutputEmitter<E> delegate, StageMetrics stageMetrics, DataTracer dataTracer) {
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
-    this.emitMetricName = emitMetricName;
     this.dataTracer = dataTracer;
   }
 
   @Override
-  public void emit(T value) {
-    stageMetrics.count(emitMetricName, 1);
+  public void emit(String port, Object value) {
+    String metricName = Constants.Metrics.RECORDS_OUT + "." + port;
+    stageMetrics.count(metricName, 1);
     if (dataTracer.isEnabled()) {
-      dataTracer.info(emitMetricName, value);
+      dataTracer.info(metricName, value);
     }
-    delegate.emit(value);
+    delegate.emit(port, value);
   }
 
   @Override
-  public void emitError(InvalidEntry<T> value) {
+  public void emitError(InvalidEntry<E> value) {
     stageMetrics.count(Constants.Metrics.RECORDS_ERROR, 1);
     if (dataTracer.isEnabled()) {
       dataTracer.info(Constants.Metrics.RECORDS_ERROR, value);

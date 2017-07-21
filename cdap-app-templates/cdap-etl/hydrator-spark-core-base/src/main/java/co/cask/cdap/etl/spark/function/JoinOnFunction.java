@@ -20,6 +20,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import scala.Tuple2;
@@ -51,9 +52,9 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
       BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
-                                               pluginFunctionContext.createStageMetrics(),
-                                               TrackedTransform.RECORDS_IN,
-                                               null, pluginFunctionContext.getDataTracer());
+                                            pluginFunctionContext.createStageMetrics(),
+                                            Constants.Metrics.RECORDS_IN,
+                                            null, pluginFunctionContext.getDataTracer());
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

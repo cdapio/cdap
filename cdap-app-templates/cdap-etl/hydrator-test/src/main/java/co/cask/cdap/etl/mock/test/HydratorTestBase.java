@@ -46,6 +46,7 @@ import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.IntValueFilterTransform;
+import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.test.TestBase;
@@ -73,7 +74,8 @@ public class HydratorTestBase extends TestBase {
     FieldsPrefixTransform.PLUGIN_CLASS, IntValueFilterTransform.PLUGIN_CLASS,
     StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
-    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
+    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
+    NullFieldSplitterTransform.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
@@ -85,7 +87,8 @@ public class HydratorTestBase extends TestBase {
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
     GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
-    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS
+    FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
+    NullFieldSplitterTransform.PLUGIN_CLASS
   );
 
   public HydratorTestBase() {

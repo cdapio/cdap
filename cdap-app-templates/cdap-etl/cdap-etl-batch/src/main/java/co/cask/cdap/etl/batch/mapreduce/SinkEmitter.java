@@ -17,8 +17,8 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.dataset.lib.KeyValue;
+import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.batch.PipeTransformDetail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,10 +26,11 @@ import java.util.Map;
 
 /**
  * Sink emitter which writes to sink
+ *
  * @param <KEY_OUT> type of output key
  * @param <VAL_OUT> type of output value
  */
-public class SinkEmitter<KEY_OUT, VAL_OUT> implements PipeEmitter<PipeTransformDetail> {
+public class SinkEmitter<KEY_OUT, VAL_OUT> implements Emitter<Object> {
   private static final Logger LOG = LoggerFactory.getLogger(SinkEmitter.class);
   private final OutputWriter outputWriter;
   private final String stageName;
@@ -52,12 +53,6 @@ public class SinkEmitter<KEY_OUT, VAL_OUT> implements PipeEmitter<PipeTransformD
   public void emitError(InvalidEntry invalidEntry) {
     // Not supported - This should never happen
     LOG.error("Emitting errors from sink {} is not supported", stageName);
-  }
-
-  @Override
-  public void addTransformDetail(String stageName, PipeTransformDetail pipeTransformDetail) {
-    throw new IllegalStateException(String.format("Sink {} should not have any output, but it has output {}",
-                                                  this.stageName, stageName));
   }
 
   @Override

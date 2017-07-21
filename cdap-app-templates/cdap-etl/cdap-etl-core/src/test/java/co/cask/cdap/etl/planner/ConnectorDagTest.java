@@ -136,7 +136,7 @@ public class ConnectorDagTest {
       .addConnection("n3", "n4")
       .addConnection("n3.connector", "n3")
       .addReduceNodes("n3")
-      .addConnectors("n3.connector")
+      .addConnectors("n3.connector", "n3")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -175,7 +175,7 @@ public class ConnectorDagTest {
       .addConnection("n4", "n5")
       .addConnection("n3.connector", "n3")
       .addReduceNodes("n2", "n3", "n4")
-      .addConnectors("n3.connector", "n4.connector")
+      .addConnectors("n3.connector", "n3", "n4.connector", "n4")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -206,7 +206,7 @@ public class ConnectorDagTest {
       .addConnection("n3.connector", "n3")
       .addConnection("n6.connector", "n6")
       .addReduceNodes("n2", "n3", "n6")
-      .addConnectors("n3.connector", "n6.connector")
+      .addConnectors("n3.connector", "n3", "n6.connector", "n6")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -256,7 +256,8 @@ public class ConnectorDagTest {
       .addConnection("n4.connector", "n4")
       .addConnection("n9.connector", "n9")
       .addReduceNodes("n2", "n3", "n4", "n7", "n9")
-      .addConnectors("n2.connector", "n3.connector", "n4.connector", "n7.connector", "n9.connector")
+      .addConnectors("n2.connector", "n2", "n3.connector", "n3", "n4.connector", "n4", "n7.connector", "n7",
+                     "n9.connector", "n9")
       .build();
     Assert.assertEquals(expected, cdag);
   }
@@ -548,7 +549,7 @@ public class ConnectorDagTest {
       .addConnection("n3", "n4.connector")
       .addConnection("n4.connector", "n4")
       .addIsolationNodes("n2", "n3")
-      .addConnectors("n2.connector", "n3.connector", "n4.connector")
+      .addConnectors("n2.connector", "n2", "n3.connector", "n3", "n4.connector", "n4")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -579,7 +580,7 @@ public class ConnectorDagTest {
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n4")
       .addIsolationNodes("n2")
-      .addConnectors("n2.connector", "n3.connector")
+      .addConnectors("n2.connector", "n2", "n3.connector", "n3")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -602,7 +603,7 @@ public class ConnectorDagTest {
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n4")
       .addIsolationNodes("n2", "n3")
-      .addConnectors("n3.connector")
+      .addConnectors("n3.connector", "n3")
       .build();
     Assert.assertEquals(expected, cdag);
 
@@ -643,7 +644,8 @@ public class ConnectorDagTest {
       .addConnection("n6", "n7")
       .addReduceNodes("n2", "n5", "n6")
       .addIsolationNodes("n3", "n4")
-      .addConnectors("n2.connector", "n3.connector", "n4.connector", "n5.connector", "n6.connector")
+      .addConnectors("n2.connector", "n2", "n3.connector", "n3", "n4.connector", "n4",
+                     "n5.connector", "n5", "n6.connector", "n6")
       .build();
     Assert.assertEquals(expected, cdag);
   }

@@ -23,7 +23,7 @@ package co.cask.cdap.etl.api;
  * @param <E> type of error records emitted. Usually the same as the input record type
  */
 public abstract class SplitterTransform<T, E>
-  implements MultiOutputPipelineConfigurable, StageLifecycle<TransformContext> {
+  implements MultiOutputTransformation<T, E>, MultiOutputPipelineConfigurable, StageLifecycle<TransformContext> {
 
   public static final String PLUGIN_TYPE = "splittertransform";
 
@@ -41,13 +41,4 @@ public abstract class SplitterTransform<T, E>
   public void destroy() {
     // no-op
   }
-
-  /**
-   * Transform the input and emit output using {@link MultiOutputEmitter}.
-   *
-   * @param input input data to be transformed
-   * @param emitter {@link MultiOutputEmitter} to emit data to the next stage
-   * @throws Exception if there's an error during this method invocation
-   */
-  public abstract void transform(T input, MultiOutputEmitter<E> emitter) throws Exception;
 }

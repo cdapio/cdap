@@ -21,6 +21,7 @@ import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.TrackedTransform;
 import scala.Tuple2;
@@ -53,8 +54,8 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
       joiner.initialize(context);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),
-                                            "joiner.keys",
-                                            TrackedTransform.RECORDS_OUT, pluginFunctionContext.getDataTracer());
+                                            Constants.Metrics.JOIN_KEYS,
+                                            Constants.Metrics.RECORDS_OUT, pluginFunctionContext.getDataTracer());
       emitter = new DefaultEmitter<>();
     }
     emitter.reset();

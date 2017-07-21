@@ -30,6 +30,7 @@ import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -54,7 +55,7 @@ import javax.annotation.Nullable;
  *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
  */
-public class ConnectorSource extends BatchSource<LongWritable, Text, KeyValue<String, StructuredRecord>> {
+public class ConnectorSource extends BatchSource<LongWritable, Text, RecordInfo<StructuredRecord>> {
   static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
     "record",
     Schema.Field.of("stageName", Schema.of(Schema.Type.STRING)),
@@ -95,7 +96,7 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, KeyValue<St
 
   @Override
   public void transform(KeyValue<LongWritable, Text> input,
-                        Emitter<KeyValue<String, StructuredRecord>> emitter) throws Exception {
+                        Emitter<RecordInfo<StructuredRecord>> emitter) throws Exception {
     StructuredRecord output;
     String inputStr = input.getValue().toString();
     StructuredRecord recordWithSchema =
@@ -107,7 +108,7 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, KeyValue<St
     } else {
       output = StructuredRecordStringConverter.fromJsonString(inputStr, schema);
     }
-    emitter.emit(new KeyValue<>(stageName, output));
+    emitter.emit(RecordInfo.builder(output, stageName).build());
   }
 
 }

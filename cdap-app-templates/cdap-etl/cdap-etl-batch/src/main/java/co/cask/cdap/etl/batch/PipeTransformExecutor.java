@@ -16,8 +16,8 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Destroyable;
+import co.cask.cdap.etl.common.RecordInfo;
 
 import java.util.Map;
 import java.util.Set;
@@ -29,24 +29,24 @@ import java.util.Set;
  */
 public class PipeTransformExecutor<IN> implements Destroyable {
   private final Set<String> startingPoints;
-  private final Map<String, PipeTransformDetail> transformDetailMap;
+  private final Map<String, PipeStage> pipeStages;
 
-  public PipeTransformExecutor(Map<String, PipeTransformDetail> transformDetailMap, Set<String> startingPoints) {
-    this.transformDetailMap = transformDetailMap;
+  public PipeTransformExecutor(Map<String, PipeStage> pipeStages, Set<String> startingPoints) {
+    this.pipeStages = pipeStages;
     this.startingPoints = startingPoints;
   }
 
   public void runOneIteration(IN input) {
     for (String stageName : startingPoints) {
-      PipeTransformDetail transformDetail = transformDetailMap.get(stageName);
-      transformDetail.process(new KeyValue<String, Object>(stageName, input));
+      PipeStage<RecordInfo> pipeStage = pipeStages.get(stageName);
+      pipeStage.consume(RecordInfo.builder(input, stageName).build());
     }
   }
 
   @Override
   public void destroy() {
-    for (Map.Entry<String, PipeTransformDetail> entry : transformDetailMap.entrySet()) {
-      entry.getValue().destroy();
+    for (PipeStage stage : pipeStages.values()) {
+      stage.destroy();
     }
   }
 }

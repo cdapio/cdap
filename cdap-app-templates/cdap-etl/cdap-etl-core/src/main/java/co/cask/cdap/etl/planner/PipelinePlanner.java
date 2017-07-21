@@ -20,10 +20,12 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.spec.PipelineSpec;
+import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -139,7 +141,7 @@ public class PipelinePlanner {
       .addIsolationNodes(isolationNodes)
       .build();
     cdag.insertConnectors();
-    Set<String> connectorNodes = cdag.getConnectors();
+    Map<String, String> connectorNodes = cdag.getConnectors();
 
     // now split the logical pipeline into pipeline phases, using the connectors as split points
     Map<String, Dag> subdags = new HashMap<>();
@@ -248,7 +250,7 @@ public class PipelinePlanner {
    * @param specs specifications for every stage
    * @return the converted dag
    */
-  private PipelinePhase dagToPipeline(Dag dag, Set<String> connectors, Map<String, StageSpec> specs) {
+  private PipelinePhase dagToPipeline(Dag dag, Map<String, String> connectors, Map<String, StageSpec> specs) {
     PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
 
     for (String stageName : dag.getTopologicalOrder()) {
@@ -258,8 +260,12 @@ public class PipelinePlanner {
       }
 
       // add connectors
-      if (connectors.contains(stageName)) {
-        phaseBuilder.addStage(StageSpec.builder(stageName, Constants.CONNECTOR_SPEC).build());
+      String originalName = connectors.get(stageName);
+      if (originalName != null) {
+        PluginSpec connectorSpec =
+          new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
+                         ImmutableMap.of(Constants.CONNECTOR_ORIGINAL_NAME, originalName), null);
+        phaseBuilder.addStage(StageSpec.builder(stageName, connectorSpec).build());
         continue;
       }
 

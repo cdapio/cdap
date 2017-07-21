@@ -99,6 +99,10 @@ public class PipelinePhase implements Iterable<StageSpec> {
     return dag == null ? new HashSet<String>() : dag.getSinks();
   }
 
+  public int size() {
+    return stagesByName.size();
+  }
+
   @Nullable
   public Dag getDag() {
     return dag;

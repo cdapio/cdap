@@ -131,9 +131,9 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n1", NODE).addOutputSchema(schema, "n2", "n3", "n4").build())
-      .addStage(StageSpec.builder("n2.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n3.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n4.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2")).build())
+      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3")).build())
+      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4")).build())
       .addConnections("n1", ImmutableSet.of("n2.connector", "n3.connector", "n4.connector"))
       .build();
     String phase1Name = getPhaseName("n1", "n2.connector", "n3.connector", "n4.connector");
@@ -154,8 +154,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n5", schema)
                   .addOutputSchema(schema, "n7")
                   .build())
-      .addStage(StageSpec.builder("n2.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2")).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
       .addConnection("n2.connector", "n2")
       .addConnection("n2", "n6")
       .addConnection("n6", "n7.connector")
@@ -182,8 +182,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n1", schema)
                   .addOutputSchema(schema, "n5")
                   .build())
-      .addStage(StageSpec.builder("n3.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3")).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n5")
       .addConnection("n5", "n6")
@@ -207,8 +207,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n5", schema)
                   .addOutputSchema(schema, "n7")
                   .build())
-      .addStage(StageSpec.builder("n4.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4")).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
       .addConnection("n4.connector", "n4")
       .addConnection("n4", "n6")
       .addConnection("n6", "n7.connector")
@@ -229,8 +229,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n6", schema)
                   .addOutputSchema(schema, "n8")
                   .build())
-      .addStage(StageSpec.builder("n7.connector", Constants.CONNECTOR_SPEC).build())
-      .addStage(StageSpec.builder("n9.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
+      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9")).build())
       .addConnection("n7.connector", "n7")
       .addConnection("n7", "n8")
       .addConnection("n8", "n9.connector")
@@ -251,7 +251,7 @@ public class PipelinePlannerTest {
                   .addInputSchema("n8", schema)
                   .addOutputSchema(schema, "n10", "n11")
                   .build())
-      .addStage(StageSpec.builder("n9.connector", Constants.CONNECTOR_SPEC).build())
+      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9")).build())
       .addConnection("n9.connector", "n9")
       .addConnection("n9", "n10")
       .addConnection("n9", "n11")
@@ -278,5 +278,10 @@ public class PipelinePlannerTest {
     Set<String> sinkNames = new HashSet<>();
     Collections.addAll(sinkNames, sinks);
     return PipelinePlanner.getPhaseName(sources, sinkNames);
+  }
+
+  private static PluginSpec connectorSpec(String originalName) {
+    return new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
+                          ImmutableMap.of(Constants.CONNECTOR_ORIGINAL_NAME, originalName), null);
   }
 }
