@@ -48,7 +48,7 @@ public class HelloWorldTest extends TestBase {
 
     // Start WhoFlow
     FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
-    Assert.assertTrue(flowManager.isRunning());
+    flowManager.waitForStatus(true);
 
     // Send stream events to the "who" Stream
     StreamManager streamManager = getStreamManager("who");

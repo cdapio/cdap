@@ -17,7 +17,6 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
@@ -29,8 +28,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
-import co.cask.cdap.internal.app.runtime.flow.FlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.flow.FlowletProgramRunner;
+import co.cask.cdap.internal.app.runtime.flow.InMemoryFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import co.cask.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
 import co.cask.cdap.internal.app.runtime.service.ServiceProgramRunner;
@@ -50,7 +49,6 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -93,25 +91,20 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // Bind ProgramStateWriter
     bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
-    // For programs with multiple instances, disable the program state writer on the instances so that the higher
-    // controller can record the program state based on all of the instances
-    // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the InMemoryProgramRunner, so there
-    // will be no special case
-    bind(ProgramStateWriter.class)
-      .annotatedWith(Names.named("programStateWriter"))
-      .to(NoOpProgramStateWriter.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
-    runnerFactoryBinder.addBinding(ProgramType.FLOW).to(FlowProgramRunner.class);
+    // Programs with multiple instances have an InMemoryProgramRunner that starts threads to manage all of their
+    // instances.
+    runnerFactoryBinder.addBinding(ProgramType.FLOW).to(InMemoryFlowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.MAPREDUCE).to(MapReduceProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKFLOW).to(WorkflowProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WEBAPP).to(WebappProgramRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.WORKER).to(InMemoryWorkerRunner.class);
     runnerFactoryBinder.addBinding(ProgramType.SERVICE).to(InMemoryServiceProgramRunner.class);
 
-    // Bind these three program runner in private scope
+    // Bind program runners in private scope
     // They should only be used by the ProgramRunners in the runnerFactoryBinder
     bind(FlowletProgramRunner.class);
     bind(ServiceProgramRunner.class);

@@ -21,6 +21,8 @@ package co.cask.cdap.internal.app.runtime;
  */
 public final class ProgramOptionConstants {
 
+  public static final String PROGRAM_ID = "programId";
+
   public static final String RUN_ID = "runId";
 
   public static final String TWILL_RUN_ID = "twillRunId";

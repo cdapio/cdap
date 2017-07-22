@@ -80,11 +80,12 @@ final class ArtifactClassLoaderFactory {
       LOG.trace("Spark is not supported. Not using ProgramClassLoader from Spark", e);
     }
 
-    ProgramClassLoader programClassLoader;
+    ProgramClassLoader programClassLoader = null;
     if (programRunner instanceof ProgramClassLoaderProvider) {
       programClassLoader = new ProgramClassLoader(
         cConf, unpackDir, ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent());
-    } else {
+    }
+    if (programClassLoader == null) {
       programClassLoader = new ProgramClassLoader(cConf, unpackDir,
                                                   FilterClassLoader.create(getClass().getClassLoader()));
     }

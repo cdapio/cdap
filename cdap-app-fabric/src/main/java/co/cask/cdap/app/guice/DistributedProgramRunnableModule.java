@@ -17,7 +17,6 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
-import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
@@ -176,11 +175,6 @@ public class DistributedProgramRunnableModule {
           install(new DataFabricFacadeModule());
 
           bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
-          // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the DistributedProgramRunner, so there
-          // will be no special case
-          bind(ProgramStateWriter.class)
-            .annotatedWith(Names.named("programStateWriter"))
-            .to(ProgramStateWriter.class);
 
           bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
 

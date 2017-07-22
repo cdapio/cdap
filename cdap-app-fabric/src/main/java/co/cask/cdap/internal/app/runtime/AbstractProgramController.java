@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Objects;
@@ -63,15 +64,15 @@ public abstract class AbstractProgramController implements ProgramController {
 
   private Throwable failureCause;
 
-  protected AbstractProgramController(final ProgramId programId, RunId runId) {
-    this(programId, runId, null);
+  protected AbstractProgramController(ProgramRunId programRunId) {
+    this(programRunId, null);
   }
 
-  protected AbstractProgramController(ProgramId programId, RunId runId, @Nullable String componentName) {
+  protected AbstractProgramController(ProgramRunId programRunId, @Nullable String componentName) {
     this.state = new AtomicReference<>(State.STARTING);
-    this.programId = programId;
-    this.programRunId = programId.run(runId);
-    this.runId = runId;
+    this.programRunId = programRunId;
+    this.programId = programRunId.getParent();
+    this.runId = RunIds.fromString(programRunId.getRun());
     this.componentName = componentName;
     this.listeners = new HashMap<>();
     this.caller = new MultiListenerCaller();

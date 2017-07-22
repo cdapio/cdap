@@ -35,7 +35,6 @@ import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
@@ -43,7 +42,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.io.Closeables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
@@ -115,7 +113,6 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     final RunId runId = ProgramRunners.getRunId(options);
-    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
@@ -138,19 +135,13 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       // Controller needs to be created before starting the driver so that the state change of the driver
       // service can be fully captured by the controller.
-      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), twillRunId,
-                                                                   programStateWriter, driver, serviceAnnouncer);
+      ProgramController controller = new WorkflowProgramController(program.getId().run(runId), driver,
+                                                                   serviceAnnouncer);
       driver.start();
       return controller;
     } catch (Exception e) {
       closeAllQuietly(closeables);
       throw Throwables.propagate(e);
-    }
-  }
-
-  private void closeAllQuietly(Iterable<Closeable> closeables) {
-    for (Closeable c : closeables) {
-      Closeables.closeQuietly(c);
     }
   }
 }

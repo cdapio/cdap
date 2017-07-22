@@ -25,15 +25,18 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
+import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -47,7 +50,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.tephra.TransactionExecutorFactory;
-import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,25 +63,29 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  *
  */
-public final class FlowProgramRunner implements ProgramRunner {
+public final class InMemoryFlowProgramRunner extends AbstractInMemoryProgramRunner {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FlowProgramRunner.class);
+  private static final Logger LOG = LoggerFactory.getLogger(InMemoryFlowProgramRunner.class);
 
   private final Provider<FlowletProgramRunner> flowletProgramRunnerProvider;
   private final StreamAdmin streamAdmin;
   private final QueueAdmin queueAdmin;
   private final TransactionExecutorFactory txExecutorFactory;
-  private final ProgramStateWriter programStateWriter;
 
   @Inject
-  public FlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider,
-                           ProgramStateWriter programStateWriter, StreamAdmin streamAdmin, QueueAdmin queueAdmin,
-                           TransactionExecutorFactory txExecutorFactory) {
+  public InMemoryFlowProgramRunner(Provider<FlowletProgramRunner> flowletProgramRunnerProvider, StreamAdmin streamAdmin,
+                                   QueueAdmin queueAdmin, TransactionExecutorFactory txExecutorFactory,
+                                   CConfiguration cConf) {
+    super(cConf);
     this.flowletProgramRunnerProvider = flowletProgramRunnerProvider;
     this.streamAdmin = streamAdmin;
     this.queueAdmin = queueAdmin;
     this.txExecutorFactory = txExecutorFactory;
-    this.programStateWriter = programStateWriter;
+  }
+
+  @Override
+  public ProgramRunner createProgramRunner() {
+    return flowletProgramRunnerProvider.get();
   }
 
   @Override
@@ -97,13 +103,10 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     try {
       // Launch flowlet program runners
-      RunId runId = ProgramRunners.getRunId(options);
-      String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
       Multimap<String, QueueName> consumerQueues = FlowUtils.configureQueue(program, flowSpec,
                                                                             streamAdmin, queueAdmin, txExecutorFactory);
       final Table<String, Integer, ProgramController> flowlets = createFlowlets(program, options, flowSpec);
-      return new FlowProgramController(flowlets, program, runId, twillRunId, options, programStateWriter,
-                                       flowSpec, consumerQueues);
+      return new FlowProgramController(flowlets, program, options, flowSpec, consumerQueues);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -127,7 +130,7 @@ public final class FlowProgramRunner implements ProgramRunner {
         for (int instanceId = 0; instanceId < instanceCount; instanceId++) {
           flowlets.put(entry.getKey(), instanceId,
                        startFlowlet(program,
-                                    createFlowletOptions(entry.getKey(), instanceId, instanceCount, flowletOptions)));
+                                    createFlowletOptions(instanceId, instanceCount, flowletOptions)));
         }
       }
     } catch (Throwable t) {
@@ -149,17 +152,17 @@ public final class FlowProgramRunner implements ProgramRunner {
   }
 
   ProgramOptions resolveFlowletOptions(ProgramOptions options, String flowlet) {
-    return new SimpleProgramOptions(options.getName(),
+    return new SimpleProgramOptions(options.getProgramId().getParent().flow(flowlet),
                                     options.getArguments(),
                                     new BasicArguments(RuntimeArguments.extractScope(
                                       FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap())));
   }
 
   private ProgramController startFlowlet(Program program, ProgramOptions options) {
-    return flowletProgramRunnerProvider.get().run(program, options);
+    return createProgramRunner().run(program, options);
   }
 
-  private ProgramOptions createFlowletOptions(String name, int instanceId, int instances,
+  private ProgramOptions createFlowletOptions(int instanceId, int instances,
                                               ProgramOptions options) {
 
     Map<String, String> systemArgs = new HashMap<>();
@@ -167,10 +170,10 @@ public final class FlowProgramRunner implements ProgramRunner {
     systemArgs.put(ProgramOptionConstants.INSTANCE_ID, Integer.toString(instanceId));
     systemArgs.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
 
-    return new SimpleProgramOptions(name, new BasicArguments(systemArgs), options.getUserArguments());
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemArgs), options.getUserArguments());
   }
 
-  private final class FlowProgramController extends AbstractStateChangeProgramController {
+  private final class FlowProgramController extends AbstractProgramController {
 
     private final Table<String, Integer, ProgramController> flowlets;
     private final Program program;
@@ -179,11 +182,9 @@ public final class FlowProgramRunner implements ProgramRunner {
     private final Lock lock = new ReentrantLock();
     private final Multimap<String, QueueName> consumerQueues;
 
-    FlowProgramController(Table<String, Integer, ProgramController> flowlets,
-                          Program program, RunId runId, String twillRunId, ProgramOptions options,
-                          ProgramStateWriter programStateWriter, FlowSpecification flowSpec,
-                          Multimap<String, QueueName> consumerQueues) {
-      super(program.getId().run(runId), twillRunId, programStateWriter, null);
+    FlowProgramController(Table<String, Integer, ProgramController> flowlets, Program program, ProgramOptions options,
+                          FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
+      super(program.getId().run(ProgramRunners.getRunId(options)));
       this.flowlets = flowlets;
       this.program = program;
       this.options = options;
@@ -334,7 +335,7 @@ public final class FlowProgramRunner implements ProgramRunner {
       for (int instanceId = liveCount; instanceId < newInstanceCount; instanceId++) {
         flowlets.put(flowletName, instanceId,
                      startFlowlet(program,
-                                  createFlowletOptions(flowletName, instanceId, newInstanceCount, flowletOptions)));
+                                  createFlowletOptions(instanceId, newInstanceCount, flowletOptions)));
       }
     }
 

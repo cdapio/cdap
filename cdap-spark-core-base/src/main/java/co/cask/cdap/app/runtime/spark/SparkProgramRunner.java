@@ -28,7 +28,6 @@ import co.cask.cdap.app.runtime.ProgramClassLoaderProvider;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
@@ -65,7 +64,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,7 +96,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final MessagingService messagingService;
-  private final ProgramStateWriter programStateWriter;
 
   @Inject
   SparkProgramRunner(CConfiguration cConf, Configuration hConf, LocationFactory locationFactory,
@@ -107,7 +104,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
                      SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                     MessagingService messagingService, ProgramStateWriter programStateWriter) {
+                     MessagingService messagingService) {
     super(cConf);
     this.cConf = cConf;
     this.hConf = hConf;
@@ -122,7 +119,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.messagingService = messagingService;
-    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -130,7 +126,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     // Get the RunId first. It is used for the creation of the ClassLoader closing thread.
     Arguments arguments = options.getArguments();
     RunId runId = ProgramRunners.getRunId(options);
-    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     Deque<Closeable> closeables = new LinkedList<>();
 
@@ -192,8 +187,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                             runtimeContext, submitter);
 
       sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
-      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext,
-                                                                twillRunId, programStateWriter);
+      ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
       if (SparkRuntimeContextConfig.isLocal(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -203,7 +197,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
       return controller;
     } catch (Throwable t) {
-      closeAll(closeables);
+      closeAllQuietly(closeables);
       throw Throwables.propagate(t);
     }
   }
@@ -237,34 +231,11 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     t.start();
   }
 
-  private void closeAll(Iterable<Closeable> closeables) {
-    for (Closeable closeable : closeables) {
-      Closeables.closeQuietly(closeable);
-    }
-  }
-
   @Nullable
   private File getPluginArchive(ProgramOptions options) {
     if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       return null;
     }
     return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
-  }
-
-  /**
-   * Creates a service listener to cleanup closeables on {@link SparkRuntimeService}.
-   */
-  private Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
-    return new ServiceListenerAdapter() {
-      @Override
-      public void terminated(Service.State from) {
-        closeAll(closeables);
-      }
-
-      @Override
-      public void failed(Service.State from, @Nullable final Throwable failure) {
-        closeAll(closeables);
-      }
-    };
   }
 }
