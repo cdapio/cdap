@@ -42,11 +42,10 @@ body.theme-cdap {
 
     my-dag-plus {
       width: 100%;
-      // Dag-Height 60% on smaller screen
-      height: ~"-moz-calc(100vh - 142px)";
-      height: ~"-webkit-calc(100vh - 142px)";
-      height: ~"calc(100vh - 142px)";
-
+      height: ~"-moz-calc(100vh - 149px)"; // Header (50) + toppanel in detailed view (46) + footer (53)
+      height: ~"-webkit-calc(100vh - 149px)";
+      height: ~"calc(100vh - 149px)";
+      display: block;
     }
 
     .my-js-dag {
@@ -135,11 +134,69 @@ body.theme-cdap {
   &.state-hydrator-detail {
     .detail-canvas-container {
       position: relative;
+      .run-level-information {
+        padding: 20px 20px 0px 20px;
+        position: absolute;
+        width: 100%;
+        z-index: 998;
+        display: inline-flex;
+
+        > span {
+          margin: 0;
+          display: inline-flex;
+          justify-content: center;
+          align-items: center;
+          padding: 0 5px;
+          > span {
+            line-height: 1;
+          }
+          > strong {
+            padding-right: 5px;
+            line-height: 1;
+          }
+        }
+
+        span.status-bubble {
+          display: inline-block;
+          width: 13px;
+          height: 13px;
+          margin-right: 5px;
+          border-radius: 50%;
+          &.status-green { background-color: @brand-success; }
+          &.status-red { background-color: @brand-danger; }
+          &.status-grey { background-color: @cdap-gray; }
+
+          &.status-light-grey { background-color: @cdap-light-grey; }
+          &.status-light-green { background-color: @cdap-light-green; }
+          &.status-blue { background-color: @cdap-blue; }
+          &.status-outline-grey {
+            background-color: @cdap-white;
+            border: 3px solid @cdap-light-grey;
+            &.status-thin {
+              border: 2px solid @cdap-light-grey;
+            }
+          }
+          &.status-light-red { background-color: @cdap-light-red; }
+          ~ span {
+            padding-left: 5px;
+          }
+        }
+
+        h3 {
+          margin: 0 10px;
+          margin-right: 20px;
+          font-weight: 500;
+          color: black;
+        }
+      }
     }
     my-program-history {
       ul.pagination {
         margin-right: 15px;
       }
+    }
+    main.container {
+      margin-top: 96px; // header 50px + top panel in detailed view 46px
     }
   }
 

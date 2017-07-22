@@ -255,7 +255,7 @@ angular.module(PKG.name + '.feature.hydrator')
         })
 
         .state('hydrator.detail', {
-          url: '/view/:pipelineId',
+          url: '/view/:pipelineId?runid',
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'

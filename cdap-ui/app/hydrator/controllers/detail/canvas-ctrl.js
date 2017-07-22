@@ -15,17 +15,20 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal) {
+  .controller('HydratorPlusPlusDetailCanvasCtrl', function(rPipelineDetail, DAGPlusPlusNodesActionsFactory, HydratorPlusPlusHydratorService, DAGPlusPlusNodesStore, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsStore, $uibModal, HydratorPlusPlusDetailRunsStore, MyPipelineStatusMapper, moment, $interval) {
     this.$uibModal = $uibModal;
     this.DAGPlusPlusNodesStore = DAGPlusPlusNodesStore;
     this.HydratorPlusPlusDetailNonRunsStore = HydratorPlusPlusDetailNonRunsStore;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
-
-    try{
+    this.MyPipelineStatusMapper = MyPipelineStatusMapper;
+    this.$interval = $interval;
+    this.moment = moment;
+    this.currentRunTimeCounter = null;
+    try {
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
-    } catch(e) {
+    } catch (e) {
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
@@ -41,6 +44,7 @@ angular.module(PKG.name + '.feature.hydrator')
         this.setActiveNode();
       }
     };
+
 
     this.setActiveNode = function() {
       var nodeId = this.DAGPlusPlusNodesStore.getActiveNodeId();
@@ -118,6 +122,30 @@ angular.module(PKG.name + '.feature.hydrator')
       this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
     }.bind(this));
 
+    HydratorPlusPlusDetailRunsStore.registerOnChangeListener(() => {
+      let runs = HydratorPlusPlusDetailRunsStore.getRuns().reverse();
+      this.currentRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
+      let status = this.MyPipelineStatusMapper.lookupDisplayStatus(this.currentRun.status);
+      this.$interval.cancel(this.currentRunTimeCounter);
+      if (status === 'Running') {
+        this.currentRunTimeCounter = this.$interval(() => {
+          let duration = window.CaskCommon.CDAPHelpers.humanReadableDuration(Math.floor(Date.now() / 1000) - this.currentRun.start);
+          this.currentRun = Object.assign({}, this.currentRun, {
+            duration
+          });
+        }, 1000);
+      }
+      let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
+      this.currentRun = Object.assign({}, this.currentRun, {
+        duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
+        startTime: this.moment(this.currentRun.start * 1000).format('hh:mm:ss a'),
+        statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
+        status
+      });
+      let runNumber = _.findIndex(runs, {runid: this.currentRun.runid});
+      this.currentRunIndex = runNumber + 1;
+      this.totalRuns = runs.length;
+    });
 
     DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNode.bind(this));
   });

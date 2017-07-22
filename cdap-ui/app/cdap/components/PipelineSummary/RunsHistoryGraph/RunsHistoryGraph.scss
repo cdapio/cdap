@@ -36,6 +36,15 @@ $container_border_color: lightgray;
       }
     }
   }
+  .rv-xy-plot {
+    .rv-xy-plot__inner {
+      .rv-xy-plot__series.rv-xy-plot__series--mark {
+        circle {
+          cursor: pointer;
+        }
+      }
+    }
+  }
   .x-axis-title {
     position: absolute;
     bottom: -20px;

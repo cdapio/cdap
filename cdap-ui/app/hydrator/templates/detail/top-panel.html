@@ -167,28 +167,7 @@
         </div>
       </div>
 
-      <div class="app-status text-center">
-        <span class="status-bubble"
-                ng-class="TopPanelCtrl.MyPipelineStatusMapper.getStatusIndicatorClass(TopPanelCtrl.appStatus)"></span>
-        <span class="metric-label" ng-bind="TopPanelCtrl.appStatus"></span>
-      </div>
-      <div class="last-run text-left">
-        <div class="last-run-container">
-          <div class="metric">
-            <span class="metric-value" ng-if="TopPanelCtrl.lastFinished" ng-bind="TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'h:mm:ss A'">
-              <small ng-bind="TopPanelCtrl.lastFinished.start * 1000 | amDateFormat: 'MM/DD/YYYY'"></small>
-            </span>
-            <span class="metric-value" ng-if="!TopPanelCtrl.lastFinished"> &mdash; </span>
-            <h5><small>Start</small></h5>
-          </div>
-          <div class="metric">
-            <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime === 'N/A'"> &mdash; </span>
-            <span class="metric-value" ng-if="TopPanelCtrl.lastRunTime !== 'N/A'" ng-bind="TopPanelCtrl.lastRunTime"></span>
-            <h5><small>Duration</small></h5>
-          </div>
-        </div>
-      </div>
-      <div class="btn no-border-left"
+      <div class="btn"
            ng-class="{'btn-select': TopPanelCtrl.viewLogs}"
            ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs">
         <div class="btn-container">

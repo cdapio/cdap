@@ -76,7 +76,7 @@ class HydratorDetailTopPanelController {
     this.viewScheduler = false;
     this.viewConfig = false;
     this.pipelineType = HydratorPlusPlusDetailNonRunsStore.getPipelineType();
-    this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
+    this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '';
     this.setState();
     this.setAppStatus();
     this.pipelineDurationTimer = null;
@@ -121,9 +121,11 @@ class HydratorDetailTopPanelController {
   fetchMacros() {
     const parseMacros = macrosSpec => {
       let macrosObj = {};
-      for(let i = 0; i < macrosSpec.length; i++){
-        if(this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties') &&
-          this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties').length > 0){
+      for (let i = 0; i < macrosSpec.length; i++) {
+        if (
+          this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties') &&
+          this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties').length > 0
+        ) {
             let macrosKeys = this.myHelpers.objectQuery(macrosSpec[i], 'spec', 'properties', 'macros', 'lookupProperties');
 
             macrosKeys.forEach((key) => {
@@ -249,40 +251,6 @@ class HydratorDetailTopPanelController {
   }
 
   setState() {
-    var latestRun = this.HydratorPlusPlusDetailRunsStore.getLatestRun();
-    var lastRunDuration;
-
-    if (latestRun) {
-      this.lastFinished = latestRun;
-    }
-
-    if (this.lastFinished) {
-
-      if (this.lastFinished.status === 'RUNNING') {
-
-        if (!this.pipelineDurationTimer) {
-          this.pipelineDurationTimer = this.$interval(() => {
-
-            if (this.lastFinished.end) {
-              let endDuration = this.lastFinished.end - this.lastFinished.start;
-              this.lastRunTime = typeof this.lastFinished.end === 'number' ? this.moment.utc(endDuration * 1000).format('HH:mm:ss') : 'N/A';
-            } else {
-              let runningDuration = new Date().getTime() - (this.lastFinished.start * 1000);
-              this.lastRunTime = this.moment.utc(runningDuration).format('HH:mm:ss');
-            }
-          }, 1000);
-        }
-      }
-
-      lastRunDuration = this.lastFinished.end - this.lastFinished.start;
-
-      let setInitialTimer = new Date().getTime() - (this.lastFinished.start * 1000);
-      this.lastRunTime = typeof this.lastFinished.end === 'number' ?
-                          this.moment.utc(lastRunDuration * 1000).format('HH:mm:ss') :
-                          this.moment.utc(setInitialTimer).format('HH:mm:ss');
-    } else {
-      this.lastRunTime = 'N/A';
-    }
     this.config = this.HydratorPlusPlusDetailNonRunsStore.getCloneConfig();
     this.macrosMap = this.HydratorPlusPlusDetailRunsStore.getMacros();
     this.userRuntimeArgumentsMap = this.HydratorPlusPlusDetailRunsStore.getUserRuntimeArguments();
@@ -316,7 +284,7 @@ class HydratorDetailTopPanelController {
     this.myPipelineExportModalService.show(exportConfig, exportConfig);
   }
   do(action) {
-    switch(action) {
+    switch (action) {
       case 'Run':
         this.getRuntimeArguments()
           .then(() => {
@@ -396,7 +364,6 @@ class HydratorDetailTopPanelController {
     }
   }
   startPipeline() {
-    this.lastRunTime = 'N/A';
     this.lastFinished = null;
     this.viewConfig = false;
     this.appStatus = this.MyPipelineStatusMapper.lookupDisplayStatus('STARTING');
