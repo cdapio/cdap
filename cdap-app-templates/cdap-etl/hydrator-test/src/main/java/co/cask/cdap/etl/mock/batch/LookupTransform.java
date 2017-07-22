@@ -31,6 +31,8 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import com.sun.xml.internal.rngom.parse.IllegalSchemaException;
+import org.apache.commons.lang.IllegalClassException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,11 +72,17 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
     R lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
     if (lookedUpValue instanceof Result) {
-      assert lookedUpValueBytes instanceof Result;
-      assert Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow());
+      if (!(lookedUpValueBytes instanceof Result)) {
+        throw new IllegalClassException(lookedUpValue.getClass(), lookedUpValueBytes);
+      }
+      if (!Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow())) {
+        throw new IllegalStateException("Row values are incorrect");
+      }
     }
     if (lookedUpValue instanceof String) {
-      assert Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes);
+      if (!Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes)) {
+        throw new IllegalStateException("Values do not match between string and byte[]");
+      }
     }
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
@@ -93,7 +101,9 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
     }
     Schema outSchema = Schema.recordOf(input.getSchema().getRecordName(), outFields);
     if (lookup.getSchema() != null) {
-      assert lookup.getSchema().equals(outSchema);
+      if (!lookup.getSchema().equals(outSchema)) {
+        throw new IllegalStateException("Output schema is incorrect");
+      }
     }
     // copy all the values
     StructuredRecord.Builder outputBuilder = StructuredRecord.builder(outSchema);
