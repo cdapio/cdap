@@ -16,13 +16,13 @@
 
 import React, {Component, PropTypes} from 'react';
 import {objectQuery} from 'services/helpers';
-import {XYPlot, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
+import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, Hint, DiscreteColorLegend, VerticalBarSeries as BarSeries} from 'react-vis';
 import moment from 'moment';
 import {convertProgramToApi} from 'services/program-api-converter';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
-import {getTicksTotal, xTickFormat, getXDomain, getGraphHeight} from 'components/PipelineSummary/RunsGraphHelpers';
+import {getTicksTotal, xTickFormat, getXDomain} from 'components/PipelineSummary/RunsGraphHelpers';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
@@ -149,9 +149,8 @@ export default class LogsMetricsGraph extends Component {
     );
   }
   renderChart() {
-    let FPlot = makeWidthFlexible(XYPlot);
+    let FPlot = makeVisFlexible(XYPlot);
     let {errors, warnings} = this.getDataClusters();
-    let height = getGraphHeight(this.containerRef);
     let xDomain = [];
     if (errors.length > 0 || warnings.length > 0) {
       xDomain = getXDomain(this.props);
@@ -171,7 +170,7 @@ export default class LogsMetricsGraph extends Component {
           xDomain={xDomain}
           yDomain={yDomain}
           stackBy="y"
-          height={height}>
+        >
           <DiscreteColorLegend
             style={{position: 'absolute', left: '40px', top: '0px'}}
             orientation="horizontal"

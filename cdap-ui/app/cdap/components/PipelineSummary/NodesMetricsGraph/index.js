@@ -23,7 +23,6 @@ import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import {objectQuery} from 'services/helpers';
 import T from 'i18n-react';
 import classnames from 'classnames';
-import {getGraphHeight} from 'components/PipelineSummary/RunsGraphHelpers';
 import SortableStickyTable from 'components/SortableStickyTable';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 import moment from 'moment';
@@ -174,11 +173,9 @@ export default class NodesMetricsGraph extends Component {
       return this.renderEmptyMessage();
     }
     if (this.state.viewState === 'chart') {
-      let height = getGraphHeight(this.containerRef);
       return (
         <NodesRecordsGraph
           records={this.state.activeNodeRuns}
-          graphHeight={height}
           activeNode={this.state.activeNode}
           {...this.props}
         />

@@ -261,8 +261,4 @@ class MyBatchPipelineConfigCtrl {
 
 MyBatchPipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'myPipelineApi', '$state', 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
-  .directive('keyValuePairs', function(reactDirective) {
-    return reactDirective(window.CaskCommon.KeyValuePairs);
-  })
-
   .controller('MyBatchPipelineConfigCtrl', MyBatchPipelineConfigCtrl);

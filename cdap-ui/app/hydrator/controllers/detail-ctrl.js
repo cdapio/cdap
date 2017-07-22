@@ -31,6 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
     HydratorPlusPlusDetailRunsStore.registerOnChangeListener(function () {
 
       var latestRunId = HydratorPlusPlusDetailRunsStore.getLatestMetricRunId();
+      var latestRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
 
       if (currentRunId === latestRunId) {
         return;
@@ -50,8 +51,11 @@ angular.module(PKG.name + '.feature.hydrator')
         };
         var programType = HydratorPlusPlusDetailRunsStore.getMetricProgramType();
         metricParams[programType] = logsParams.programId;
-
-        HydratorPlusPlusDetailMetricsActions.pollForMetrics(metricParams);
+        if (latestRun.status !== 'RUNNING') {
+          HydratorPlusPlusDetailMetricsActions.requestForMetrics(metricParams);
+        } else {
+          HydratorPlusPlusDetailMetricsActions.pollForMetrics(metricParams);
+        }
       }
 
     });

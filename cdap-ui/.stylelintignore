@@ -8,3 +8,4 @@ app/wrangler/styles/mixins.scss
 app/wrangler/components/Wrangler/Charts/c3.scss
 app/login/styles/fonts.scss
 app/login/styles/variables.scss
+app/features/**/*.*

@@ -74,6 +74,12 @@
               ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[2].label}}
           </li>
+          <li role="presentation"
+              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 4"
+              ng-if="HydratorPlusPlusNodeConfigCtrl.$scope.isDisabled"
+              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 4}">
+            {{::HydratorPlusPlusNodeConfigCtrl.tabs[3].label}}
+          </li>
         </ul>
         <div class="bottompanel-body"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
@@ -87,6 +93,11 @@
              ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 3"
              ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[2].templateUrl">
+        </div>
+        <div class="bottompanel-body"
+             ng-init="node=HydratorPlusPlusNodeConfigCtrl.state.node"
+             ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 4 && HydratorPlusPlusNodeConfigCtrl.$scope.isDisabled"
+             ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[3].templateUrl">
         </div>
       </div>
     </div>

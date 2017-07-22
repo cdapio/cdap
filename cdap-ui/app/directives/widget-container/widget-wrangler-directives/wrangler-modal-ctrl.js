@@ -52,7 +52,4 @@ class WranglerModalController {
 
 
 angular.module(PKG.name + '.commons')
-  .directive('dataprep', (reactDirective) => {
-    return reactDirective(window.CaskCommon.DataPrepHome);
-  })
   .controller('WranglerModalController', WranglerModalController);

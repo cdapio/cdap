@@ -63,7 +63,7 @@ var loaders = [
 var webpackConfig = {
   context: __dirname + '/app/common',
   entry: {
-    'common': ['./cask-header.js'],
+    'common': ['./cask-shared-components.js'],
     'common-lib': [
       'babel-polyfill',
       'classnames',

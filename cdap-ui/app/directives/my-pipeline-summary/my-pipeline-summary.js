@@ -15,9 +15,6 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('pipelineSummary', function(reactDirective) {
-    return reactDirective(window.CaskCommon.PipelineSummary);
-  })
   .directive('myPipelineSummary', function() {
     return {
       restrict: 'A',

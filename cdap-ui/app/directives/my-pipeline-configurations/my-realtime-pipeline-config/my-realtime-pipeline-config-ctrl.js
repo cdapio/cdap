@@ -318,7 +318,4 @@ class MyRealtimePipelineConfigCtrl {
 MyRealtimePipelineConfigCtrl.$inject = ['uuid', 'HydratorPlusPlusHydratorService', 'HYDRATOR_DEFAULT_VALUES', 'HydratorPlusPlusPreviewStore', 'HydratorPlusPlusPreviewActions', 'myPipelineApi', '$state',
 'myAlertOnValium'];
 angular.module(PKG.name + '.commons')
-  .directive('keyValuePairs', function(reactDirective) {
-    return reactDirective(window.CaskCommon.KeyValuePairs);
-  })
   .controller('MyRealtimePipelineConfigCtrl', MyRealtimePipelineConfigCtrl);

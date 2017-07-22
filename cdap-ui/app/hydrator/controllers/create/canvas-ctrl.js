@@ -80,6 +80,9 @@ class HydratorPlusPlusCreateCanvasCtrl {
             rIsStudioMode: function () {
               return true;
             },
+            rNodeMetricsContext: function () {
+              return false;
+            },
             rDisabled: function() {
               return false;
             },
