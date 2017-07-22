@@ -256,7 +256,7 @@ public class AppFabricTestHelper {
       ProgramOptionConstants.HOST, InetAddress.getLoopbackAddress().getCanonicalHostName()
     ));
 
-    return runner.run(program, new SimpleProgramOptions(program.getName(), systemArgs, userArgs));
+    return runner.run(program, new SimpleProgramOptions(program.getId(), systemArgs, userArgs));
   }
 
   /**

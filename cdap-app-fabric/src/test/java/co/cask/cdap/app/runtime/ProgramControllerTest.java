@@ -19,7 +19,6 @@ package co.cask.cdap.app.runtime;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
-import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -59,8 +58,7 @@ public class ProgramControllerTest {
       // Creates a controller for a guava service do nothing in start/stop.
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
-      ProgramController controller = new ProgramControllerServiceAdapter(service, programId.run(RunIds.generate()),
-                                                                         null, new NoOpProgramStateWriter());
+      ProgramController controller = new ProgramControllerServiceAdapter(service, programId.run(RunIds.generate()));
       ListenableFuture<Service.State> startCompletion = service.start();
 
       controller.addListener(new AbstractListener() {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,10 +23,9 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.AbstractInMemoryProgramRunner;
-import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -41,9 +40,8 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
   private final Provider<ServiceProgramRunner> serviceProgramRunnerProvider;
 
   @Inject
-  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider,
-                               ProgramStateWriter programStateWriter) {
-    super(cConf, programStateWriter);
+  InMemoryServiceProgramRunner(CConfiguration cConf, Provider<ServiceProgramRunner> serviceProgramRunnerProvider) {
+    super(cConf);
     this.serviceProgramRunnerProvider = serviceProgramRunnerProvider;
   }
 
@@ -60,9 +58,7 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
-    // RunId for the service
-    RunId runId = ProgramRunners.getRunId(options);
-    return startAll(program, options, runId, serviceSpec.getInstances());
+    return startAll(program, options, serviceSpec.getInstances());
   }
 
   @Override

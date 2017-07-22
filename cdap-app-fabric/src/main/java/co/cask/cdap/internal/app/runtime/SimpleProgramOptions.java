@@ -25,29 +25,29 @@ import co.cask.cdap.proto.id.ProgramId;
  */
 public final class SimpleProgramOptions implements ProgramOptions {
 
-  private final String name;
+  private final ProgramId programId;
   private final Arguments arguments;
   private final Arguments userArguments;
   private final boolean debug;
 
   public SimpleProgramOptions(ProgramId programId) {
-    this(programId.getProgram(), new BasicArguments(), new BasicArguments());
+    this(programId, new BasicArguments(), new BasicArguments());
   }
 
-  public SimpleProgramOptions(String name, Arguments arguments, Arguments userArguments) {
-    this(name, arguments, userArguments, false);
+  public SimpleProgramOptions(ProgramId programId, Arguments arguments, Arguments userArguments) {
+    this(programId, arguments, userArguments, false);
   }
 
-  public SimpleProgramOptions(String name, Arguments arguments, Arguments userArguments, boolean debug) {
-    this.name = name;
+  public SimpleProgramOptions(ProgramId programId, Arguments arguments, Arguments userArguments, boolean debug) {
+    this.programId = programId;
     this.arguments = arguments;
     this.userArguments = userArguments;
     this.debug = debug;
   }
 
   @Override
-  public String getName() {
-    return name;
+  public ProgramId getProgramId() {
+    return programId;
   }
 
   @Override

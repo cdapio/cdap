@@ -44,7 +44,7 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
   private volatile boolean stopRequested;
 
   protected AbstractTwillProgramController(ProgramId programId, TwillController twillController, RunId runId) {
-    super(programId, runId);
+    super(programId.run(runId));
     this.twillController = twillController;
   }
 

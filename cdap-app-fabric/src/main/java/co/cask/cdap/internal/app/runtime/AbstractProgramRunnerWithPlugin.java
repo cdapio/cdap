@@ -20,7 +20,11 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Service;
+import org.apache.twill.internal.ServiceListenerAdapter;
 
+import java.io.Closeable;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -50,5 +54,28 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
     }
     return new PluginInstantiator(
       cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
+  }
+
+  /**
+   * Creates a service listener to cleanup closeables.
+   */
+  protected Service.Listener createRuntimeServiceListener(final Iterable<Closeable> closeables) {
+    return new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        closeAllQuietly(closeables);
+      }
+
+      @Override
+      public void failed(Service.State from, @Nullable final Throwable failure) {
+        closeAllQuietly(closeables);
+      }
+    };
+  }
+
+  protected void closeAllQuietly(Iterable<Closeable> closeables) {
+    for (Closeable c : closeables) {
+      Closeables.closeQuietly(c);
+    }
   }
 }

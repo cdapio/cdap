@@ -421,7 +421,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          workflowRunId.getRun(), node.getNodeId(),
                                                          (BasicWorkflowToken) token);
       ProgramOptions actionOptions =
-         new SimpleProgramOptions(programOptions.getName(),
+         new SimpleProgramOptions(programOptions.getProgramId(),
                                   programOptions.getArguments(),
                                   new BasicArguments(RuntimeArguments.extractScope(
                                     ACTION_SCOPE, node.getNodeId(), programOptions.getUserArguments().asMap())));

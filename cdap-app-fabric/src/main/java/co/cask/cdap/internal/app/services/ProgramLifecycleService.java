@@ -297,7 +297,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
     ProgramRuntimeService.RuntimeInfo runtimeInfo = runtimeService.run(programDescriptor, new SimpleProgramOptions(
-      programId.getProgram(), systemArguments, userArguments, debug));
+      programId, systemArguments, userArguments, debug));
 
     return runtimeInfo;
   }

@@ -144,8 +144,7 @@ public class AbstractProgramRuntimeServiceTest {
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null, extraInfo,
-                                                                             new NoOpProgramStateWriter());
+                                                                             runnerFactory, null, extraInfo);
     runtimeService.startAndWait();
 
     // The lookup will get deadlock for CDAP-3716
@@ -207,7 +206,7 @@ public class AbstractProgramRuntimeServiceTest {
 
         for (String scope : scopes) {
           ProgramOptions programOptions = new SimpleProgramOptions(
-            program.getName(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
+            program.getId(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
             new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
 
           final ProgramController controller = runtimeService.run(descriptor, programOptions).getController();
@@ -255,8 +254,7 @@ public class AbstractProgramRuntimeServiceTest {
 
             Service service = new FastService();
             ProgramController controller = new ProgramControllerServiceAdapter(service,
-                                                                               programId.run(RunIds.generate()), null,
-                                                                               new NoOpProgramStateWriter());
+                                                                               programId.run(RunIds.generate()));
             service.start();
             return controller;
           }
@@ -327,8 +325,7 @@ public class AbstractProgramRuntimeServiceTest {
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
                                                               final ProgramRunId programRunId) {
     final ProgramControllerServiceAdapter controller =
-      new ProgramControllerServiceAdapter(service, programRunId, null,
-                                          new NoOpProgramStateWriter());
+      new ProgramControllerServiceAdapter(service, programRunId);
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {
@@ -388,12 +385,10 @@ public class AbstractProgramRuntimeServiceTest {
 
     private final RuntimeInfo extraInfo;
 
-    protected TestProgramRuntimeService(CConfiguration cConf,
-                                        ProgramRunnerFactory programRunnerFactory,
+    protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository,
-                                        @Nullable RuntimeInfo extraInfo,
-                                        ProgramStateWriter programStateWriter) {
-      super(cConf, programRunnerFactory, artifactRepository, programStateWriter);
+                                        @Nullable RuntimeInfo extraInfo) {
+      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter());
       this.extraInfo = extraInfo;
     }
 

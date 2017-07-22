@@ -16,8 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.webapp;
 
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -27,15 +26,14 @@ import org.slf4j.LoggerFactory;
 /**
  * Controller for webapp.
  */
-public class WebappProgramController extends AbstractStateChangeProgramController {
+public class WebappProgramController extends AbstractProgramController {
   private static final Logger LOG = LoggerFactory.getLogger(WebappProgramController.class);
 
   private final NettyHttpService httpService;
   private final Cancellable cancellable;
 
-  public WebappProgramController(ProgramRunId programRunId, String twillRunId, ProgramStateWriter programStateWriter,
-                                 NettyHttpService httpService, Cancellable cancellable) {
-    super(programRunId, twillRunId, programStateWriter, null);
+  public WebappProgramController(ProgramRunId programRunId, NettyHttpService httpService, Cancellable cancellable) {
+    super(programRunId);
     this.httpService = httpService;
     this.cancellable = cancellable;
     started();

@@ -20,13 +20,13 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
+import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -57,12 +57,10 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
   private final String host;
-  private final ProgramStateWriter programStateWriter;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
-    this.programStateWriter = programStateWriter;
   }
 
   /**
@@ -74,20 +72,19 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
    * Starts all instances of a Program component.
    * @param program The program to run
    * @param options options for the program
-   * @param runId The runId
    * @param numInstances number of component instances to start
    */
-  protected final ProgramController startAll(Program program, ProgramOptions options, RunId runId, int numInstances) {
+  protected final ProgramController startAll(Program program, ProgramOptions options, int numInstances) {
+    RunId runId = ProgramRunners.getRunId(options);
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
     try {
       for (int instanceId = 0; instanceId < numInstances; instanceId++) {
-        ProgramOptions componentOptions = createComponentOptions(program.getName(), instanceId,
-                                                                 numInstances, runId, options);
+        ProgramOptions componentOptions = createComponentOptions(instanceId, numInstances, runId, options);
         ProgramController controller = createProgramRunner().run(program, componentOptions);
         components.put(program.getName(), instanceId, controller);
       }
 
-      return new InMemoryProgramController(components, program, runId, options, programStateWriter);
+      return new InMemoryProgramController(components, program, options);
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
@@ -108,7 +105,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     }
   }
 
-  private ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
+  private ProgramOptions createComponentOptions(int instanceId, int instances, RunId runId,
                                                 ProgramOptions options) {
     Map<String, String> systemOptions = Maps.newHashMap();
     systemOptions.putAll(options.getArguments().asMap());
@@ -116,13 +113,15 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
     systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
     systemOptions.put(ProgramOptionConstants.HOST, host);
-    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
+
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemOptions),
+                                    options.getUserArguments());
   }
 
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
    */
-  private final class InMemoryProgramController extends AbstractStateChangeProgramController {
+  private final class InMemoryProgramController extends AbstractProgramController {
     private final Table<String, Integer, ProgramController> components;
     private final Program program;
     private final ProgramOptions options;
@@ -131,9 +130,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, RunId runId, ProgramOptions options,
-                              ProgramStateWriter programStateWriter) {
-      super(program.getId().run(runId), null, programStateWriter, null);
+                              Program program, ProgramOptions options) {
+      super(program.getId().run(ProgramRunners.getRunId(options)));
       this.program = program;
       this.components = components;
       this.options = options;
@@ -252,7 +250,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
-        ProgramOptions programOptions = createComponentOptions(runnableName, instanceId, newCount, getRunId(), options);
+        ProgramOptions programOptions = createComponentOptions(instanceId, newCount, getRunId(), options);
         ProgramController controller = createProgramRunner().run(program, programOptions);
         components.put(runnableName, instanceId, controller);
       }

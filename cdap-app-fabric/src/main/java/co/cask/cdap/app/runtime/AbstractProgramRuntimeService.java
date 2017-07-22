@@ -250,7 +250,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     }
     LOG.debug("Plugin artifacts of {} copied to {}", programId, tempDir.getAbsolutePath());
     builder.put(ProgramOptionConstants.PLUGIN_DIR, tempDir.getAbsolutePath());
-    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(builder.build()),
                                     options.getUserArguments(), options.isDebug());
   }
 
@@ -304,7 +304,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     userArguments = RuntimeArguments.extractScope(programId.getType().getScope(), programId.getProgram(),
                                                   userArguments);
 
-    return new SimpleProgramOptions(options.getName(), new BasicArguments(builder.build()),
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(builder.build()),
                                     new BasicArguments(userArguments), options.isDebug());
   }
 

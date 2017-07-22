@@ -33,7 +33,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
@@ -138,9 +138,9 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
   }
 
   @Override
-  protected EventHandler createEventHandler(CConfiguration cConf) {
-    return new AbortOnTimeoutEventHandler(
-      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
+  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
+    return new TwillAppLifecycleEventHandler(
+      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true, options);
   }
 
   @Override

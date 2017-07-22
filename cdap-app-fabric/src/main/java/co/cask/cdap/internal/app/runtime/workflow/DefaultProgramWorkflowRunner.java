@@ -124,7 +124,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
-      program.getName(),
+      program.getId(),
       new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
       new BasicArguments(RuntimeArguments.extractScope(program.getType().getScope(), name,
                                                        workflowProgramOptions.getUserArguments().asMap()))
