@@ -37,7 +37,7 @@ public abstract class AbstractStateChangeProgramController extends AbstractProgr
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractStateChangeProgramController.class);
 
-  public AbstractStateChangeProgramController(final ProgramRunId programRunId, @Nullable final String twillRunId,
+  public AbstractStateChangeProgramController(final ProgramRunId programRunId, final String twillRunId,
                                               final ProgramStateWriter programStateWriter,
                                               @Nullable String componentName) {
     super(programRunId.getParent(), RunIds.fromString(programRunId.getRun()), componentName);

@@ -43,7 +43,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     // Bind ProgramStateWriter
     // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the DistributedProgramRunner, so the
     // program runners will no longer need this binding
-    bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+    bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
