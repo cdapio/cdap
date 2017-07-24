@@ -22,7 +22,6 @@ import numeral from 'numeral';
 export const ONE_MIN_SECONDS = 60;
 export const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
 export const ONE_DAY_SECONDS = ONE_HOUR_SECONDS * 24;
-const DEFAULT_GRAPH_HEIGHT = 300;
 const DEFAULT_TICKS_TOTAL = 10;
 const WEEKS_TICKS_TOTAL = 7;
 const SECONDS_RESOLUTION = 'sec';
@@ -119,14 +118,6 @@ export function xTickFormat({xDomainType, start, end}) {
   };
 }
 
-export function getGraphHeight(containerRef) {
-  if (containerRef) {
-    let clientRect = containerRef.getBoundingClientRect();
-    return clientRect.height - 100;
-  }
-  return DEFAULT_GRAPH_HEIGHT;
-}
-
 export function getTimeResolution(maxYDomain) {
   let yAxisResolution = SECONDS_RESOLUTION;
   if (maxYDomain > ONE_MIN_SECONDS) {
@@ -164,4 +155,22 @@ export function getDuration(time) {
     return `${time} seconds`;
   }
   return moment.duration(time, 'seconds').humanize();
+}
+
+export function getGapFilledAccumulatedData(data) {
+  let {x:minx, y:miny} = data[0];
+  let maxx = data[data.length - 1].x;
+  let numberOfEntries = maxx - minx;
+  let lasty = miny;
+  let finalData = Array.apply(null, {length: numberOfEntries + 1}).map((i, index) => {
+    let matchInActualData = data.find(d => d.x === minx + index);
+    if (!isNil(matchInActualData)) {
+      lasty = matchInActualData.y;
+    }
+    return {
+      x: minx + index,
+      y: lasty
+    };
+  });
+  return finalData;
 }

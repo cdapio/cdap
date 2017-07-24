@@ -15,7 +15,7 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import {XYPlot, AreaSeries, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, Hint} from 'react-vis';
+import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, Hint} from 'react-vis';
 import {
   getXDomain,
   getTicksTotal,
@@ -91,7 +91,7 @@ export default class NodesRecordsGraph extends Component {
     return data;
   }
   renderChart() {
-    let FPlot = makeWidthFlexible(XYPlot);
+    let FPlot = makeVisFlexible(XYPlot);
     let {yDomain, tickFormat} = getYAxisProps(this.state.data);
     let popOverData;
     if (this.state.currentHoveredElement) {
@@ -108,7 +108,6 @@ export default class NodesRecordsGraph extends Component {
           yType="linear"
           xDomain={xDomain}
           yDomain={yDomain}
-          height={this.props.graphHeight}
           className="run-history-fp-plot"
         >
           <XAxis
@@ -210,7 +209,6 @@ NodesRecordsGraph.propTypes = {
   start: PropTypes.number,
   end: PropTypes.number,
   activeFilterLabel: PropTypes.string,
-  graphHeight: PropTypes.number,
   activeNode: PropTypes.string,
   recordType: PropTypes.oneOf(['recordsin', 'recordsout'])
 };

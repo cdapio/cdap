@@ -15,9 +15,6 @@
  */
 
 angular.module(PKG.name + '.feature.tracker')
-  .directive('caskResourceCenterButton', function(reactDirective) {
-    return reactDirective(window.CaskCommon.ResourceCenterButton);
-  })
   .controller('TrackerHomeController', function ($state, $stateParams, rNsList, mySessionStorage, myLoadingService) {
 
     if (!rNsList.length) {
@@ -27,7 +24,7 @@ angular.module(PKG.name + '.feature.tracker')
     // Needed to inject StatusFactory here for angular to instantiate the service and start polling.
     // check that $state.params.namespace is valid
 
-    //Access local storage for currently set namespace; if none is currently set resort to default ns
+    // Access local storage for currently set namespace; if none is currently set resort to default ns
 
     let ns = $state.params.namespace;
     let defaultNS = localStorage.getItem('DefaultNamespace');
@@ -43,7 +40,7 @@ angular.module(PKG.name + '.feature.tracker')
 
     var PREFKEY = 'feature.home.ns.latest';
 
-    if(!n.length) {
+    if (!n.length) {
       mySessionStorage.get(PREFKEY)
         .then(function (latest) {
 
@@ -51,8 +48,8 @@ angular.module(PKG.name + '.feature.tracker')
             $state.go('tracker-enable', {namespace: latest}, {reload: true});
             return;
           }
-          //check for default
-          if (checkNamespace('default')){
+          // check for default
+          if (checkNamespace('default')) {
             $state.go('tracker-enable', {namespace: 'default'}, {reload: true});
             return;
           } else {

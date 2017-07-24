@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -51,9 +51,19 @@ class HydratorPlusPlusNodeConfigCtrl {
       {
         label: 'Reference',
         templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/reference-tab.html'
+      },
+      {
+        label: 'Metrics',
+        templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/metrics-tab.html'
       }
     ];
 
+    this.metricsContext = rNodeMetricsContext;
+    if (this.metricsContext) {
+      this.nodeMetrics = [`user.${this.state.node.name}.records.in`, `user.${this.state.node.name}.records.out`];
+    } else {
+      this.nodeMetrics = [];
+    }
     this.showContents();
 
     this.isStudioMode = rIsStudioMode;

@@ -15,9 +15,6 @@
  */
 
 angular.module(PKG.name+'.commons')
-  .directive('caskHeader', function(reactDirective) {
-    return reactDirective(window.CaskCommon.Header);
-  })
   .directive('myGlobalNavbar', () => {
     return {
       restrict: 'E',

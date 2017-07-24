@@ -15,7 +15,7 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import {XYPlot, makeWidthFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, DiscreteColorLegend, Hint} from 'react-vis';
+import {XYPlot, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, MarkSeries, DiscreteColorLegend, Hint} from 'react-vis';
 import moment from 'moment';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
@@ -25,7 +25,6 @@ import {
   xTickFormat,
   getXDomain,
   ONE_MIN_SECONDS,
-  getGraphHeight,
   getTimeResolution,
   getYAxisProps
 } from 'components/PipelineSummary/RunsGraphHelpers';
@@ -158,8 +157,7 @@ export default class RunsHistoryGraph extends Component {
     anchor.click();
   }
   renderChart() {
-    let FPlot = makeWidthFlexible(XYPlot);
-    let height = getGraphHeight(this.containerRef);
+    let FPlot = makeVisFlexible(XYPlot);
     let {tickTotals, yDomain, tickFormat} = getYAxisProps(this.state.data);
     let yAxisResolution = getTimeResolution(yDomain.y);
     let xDomain = [];
@@ -187,7 +185,6 @@ export default class RunsHistoryGraph extends Component {
           yType="linear"
           xDomain={xDomain}
           yDomain={yDomain}
-          height={height}
           className="run-history-fp-plot"
         >
           <DiscreteColorLegend

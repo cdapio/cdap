@@ -15,6 +15,7 @@
 */
 
 $container_border_color: #e1e1e1;
+$header_font_color: #5f6674;
 $font_size: 40px;
 
 .empty-runs-container {
@@ -28,8 +29,10 @@ $font_size: 40px;
   h1 {
     margin: 0;
     line-height: 1;
-    font-size: $font_size;
+    font-size: 30px;
     opacity: 0.5;
+    font-weight: 400;
+    color: $header_font_color;
   }
   > .icon-svg.icon-spinner.fa-spin {
     font-size: $font_size;

@@ -1243,6 +1243,14 @@ features:
         title: Number of Records Out
       xAxisTitle: "Pipeline run #"
       yAxisTitle: "Number of Records"
+    pipelineNodesMetricsGraph:
+      hours: Hours
+      minutes: Minutes
+      nodata: No Data
+      numberOfRecords: Number of Records
+      recordsInTitle: "Records In - Run # "
+      recordsOutTitle: "Records out - Run # ${runNumber}"
+      seconds: Seconds
     runsHistoryGraph:
       hint:
         duration: Duration

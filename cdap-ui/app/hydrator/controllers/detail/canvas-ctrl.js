@@ -68,6 +68,20 @@ angular.module(PKG.name + '.feature.hydrator')
               rDisabled: function() {
                 return true;
               },
+              rNodeMetricsContext: function() {
+                var appParams = HydratorPlusPlusDetailRunsStore.getParams();
+                var latestRun = HydratorPlusPlusDetailRunsStore.getLatestRun();
+                var logsParams = HydratorPlusPlusDetailRunsStore.getLogsParams();
+                let runs = HydratorPlusPlusDetailRunsStore.getRuns();
+                return {
+                  runRecord: latestRun,
+                  runs,
+                  namespace: appParams.namespace,
+                  app: appParams.app,
+                  programType: HydratorPlusPlusDetailRunsStore.getMetricProgramType(),
+                  programId: logsParams.programId
+                };
+              },
               rPlugin: ['HydratorPlusPlusNodeService', 'HydratorPlusPlusDetailNonRunsStore', 'GLOBALS', function(HydratorPlusPlusNodeService, HydratorPlusPlusDetailNonRunsStore, GLOBALS) {
                 let pluginId = pluginNode.name;
                 let appType = HydratorPlusPlusDetailNonRunsStore.getAppType();
