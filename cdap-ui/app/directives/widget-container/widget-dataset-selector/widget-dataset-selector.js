@@ -149,7 +149,7 @@ angular.module(PKG.name + '.commons')
               } else if ($scope.datasetType === 'dataset') {
                   schema = res.spec.properties.schema;
 
-                  if (initialized && !isCurrentlyExistingDataset) {
+                  if (initialized && !isCurrentlyExistingDataset && newDataset !== oldDataset) {
                     if (!modalOpen) {
                       debouncedPopup(schema, oldDataset);
                     }
