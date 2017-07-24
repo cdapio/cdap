@@ -16,7 +16,6 @@
 
 package co.cask.cdap.security.store;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -24,7 +23,6 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
@@ -39,6 +37,7 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,11 +76,11 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
   @Override
   public final Map<String, String> listSecureData(String namespace) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     Map<String, String> metadatas = secureStore.listSecureData(namespace);
     Map<String, String> result = new HashMap<>(metadatas.size());
     for (String name : metadatas.keySet()) {
-      if (filter.apply(new SecureKeyId(namespace, name))) {
+      if (!authorizationEnforcer.isVisible(Collections.singleton(new SecureKeyId(namespace, name)),
+                                           principal).isEmpty()) {
         result.put(name, metadatas.get(name));
       }
     }
@@ -100,12 +99,9 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
   @Override
   public final SecureStoreData getSecureData(String namespace, String name) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     SecureKeyId secureKeyId = new SecureKeyId(namespace, name);
-    if (filter.apply(secureKeyId)) {
-      return secureStore.getSecureData(namespace, name);
-    }
-    throw new UnauthorizedException(principal, Action.READ, secureKeyId);
+    authorizationEnforcer.enforce(secureKeyId, principal, Action.READ);
+    return secureStore.getSecureData(namespace, name);
   }
 
   /**
@@ -122,14 +118,15 @@ public class DefaultSecureStoreService implements SecureStore, SecureStoreManage
                                                Map<String, String> properties) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     NamespaceId namespaceId = new NamespaceId(namespace);
-    authorizationEnforcer.enforce(namespaceId, principal, Action.WRITE);
+    SecureKeyId secureKeyId = namespaceId.secureKey(name);
+    authorizationEnforcer.enforce(secureKeyId, principal, Action.ADMIN);
 
     if (Strings.isNullOrEmpty(value)) {
       throw new BadRequestException("The data field should not be empty. This is the data that will be stored " +
                                       "securely.");
     }
 
-    privilegesManager.grant(new SecureKeyId(namespace, name), principal, EnumSet.allOf(Action.class));
+    privilegesManager.grant(secureKeyId, principal, EnumSet.allOf(Action.class));
     secureStoreManager.putSecureData(namespace, name, value, description, properties);
   }
 

@@ -27,6 +27,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -84,15 +86,24 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-    LOG.debug("Checking visibility of {} for principal {}.", entityIds, principal);
-    return authorizerInstantiator.get().isVisible(entityIds, principal);
+    Set<EntityId> results = new HashSet<>();
+    // filter out entity id which is in system namespace and principal is the master user
+    for (EntityId entityId : entityIds) {
+      if (bypassCheck(entityId, principal)) {
+        results.add(entityId);
+      }
+    }
+
+    Set<? extends EntityId> difference = Sets.difference(entityIds, results);
+    LOG.debug("Checking visibility of {} for principal {}.", difference, principal);
+    Set<? extends EntityId> visibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
+    results.addAll(visibleEntities);
+    return results;
   }
 
   private void doEnforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (entity instanceof NamespacedEntityId &&
-      ((NamespacedEntityId) entity).getNamespaceId().equals(NamespaceId.SYSTEM) &&
-      principal.equals(masterUser)) {
+    if (bypassCheck(entity, principal)) {
       return;
     }
     LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
@@ -107,5 +118,10 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
         throw e;
       }
     }
+  }
+
+  private boolean bypassCheck(EntityId entityId, Principal principal) {
+    return entityId instanceof NamespacedEntityId &&
+      ((NamespacedEntityId) entityId).getNamespaceId().equals(NamespaceId.SYSTEM) && principal.equals(masterUser);
   }
 }

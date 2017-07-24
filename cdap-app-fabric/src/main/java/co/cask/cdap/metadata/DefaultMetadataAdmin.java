@@ -40,7 +40,10 @@ import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,6 +51,8 @@ import java.util.Set;
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
  */
 public class DefaultMetadataAdmin implements MetadataAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataAdmin.class);
+
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
@@ -183,15 +188,21 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
    */
   private MetadataSearchResponse filterAuthorizedSearchResult(MetadataSearchResponse results)
     throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    final Principal principal = authenticationContext.getPrincipal();
     return new MetadataSearchResponse(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       ImmutableSet.copyOf(
         Iterables.filter(results.getResults(), new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
           @Override
           public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
-            return filter.apply(metadataSearchResultRecord.getEntityId());
+            try {
+              return !authorizationEnforcer.isVisible(Collections.singleton(metadataSearchResultRecord.getEntityId()),
+                                                      principal).isEmpty();
+            } catch (Exception e) {
+              LOG.warn("Error checking visibility which getting metadata for entity: {}",
+                       metadataSearchResultRecord.getEntityId());
+              return false;
+            }
           }
         })
       ),

@@ -490,8 +490,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
@@ -523,8 +522,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-name") String appName,
                                     @PathParam("app-version") String appVersion,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
@@ -547,8 +545,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
 
-  private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+  private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder) throws Exception {
     ProgramType programType = programId.getType();
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +

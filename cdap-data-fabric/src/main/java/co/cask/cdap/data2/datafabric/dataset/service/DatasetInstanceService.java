@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -64,6 +63,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
@@ -133,14 +133,19 @@ public class DatasetInstanceService {
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
    */
   Collection<DatasetSpecification> list(final NamespaceId namespace) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
+    final Principal principal = authenticationContext.getPrincipal();
     ensureNamespaceExists(namespace);
     Collection<DatasetSpecification> datasets = instanceManager.getAll(namespace);
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
     return Lists.newArrayList(Iterables.filter(datasets, new com.google.common.base.Predicate<DatasetSpecification>() {
       @Override
       public boolean apply(DatasetSpecification spec) {
-        return filter.apply(namespace.dataset(spec.getName()));
+        try {
+          return !authorizationEnforcer.isVisible(Collections.singleton(namespace.dataset(spec.getName())),
+                                                  principal).isEmpty();
+        } catch (Exception e) {
+          LOG.warn("Error checking visibility for dataset: {}", spec.getName());
+          return false;
+        }
       }
     }));
   }
@@ -235,12 +240,22 @@ public class DatasetInstanceService {
    */
   void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     NamespaceId namespace = ConversionHelpers.toNamespaceId(namespaceId);
+    DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(namespace, principal, Action.WRITE);
+    String ownerPrincipal = props.getOwnerPrincipal();
+    KerberosPrincipalId principalId = ownerPrincipal == null ? null : new KerberosPrincipalId(ownerPrincipal);
+    if (!namespace.equals(NamespaceId.SYSTEM) && principalId == null) {
+      // if dataset owner is not present, get the namespace impersonation principal
+      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(namespace);
+      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
+    }
+    if (principalId != null) {
+      authorizationEnforcer.enforce(principalId, principal, Action.ADMIN);
+    }
+    authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
 
     ensureNamespaceExists(namespace);
 
-    DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(datasetId);
     if (existing != null) {
       throw new DatasetAlreadyExistsException(datasetId);
@@ -266,7 +281,6 @@ public class DatasetInstanceService {
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     try {
-      String ownerPrincipal = props.getOwnerPrincipal();
       // Store the owner principal first if one was provided since it will be used to impersonate while creating
       // dataset's files/tables in the underlying storage
       // it has already been established that the dataset doesn't exists so no need to check if an owner principal
@@ -557,8 +571,7 @@ public class DatasetInstanceService {
    */
   private void ensureAccess(DatasetId datasetId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(datasetId)) {
+    if (authorizationEnforcer.isVisible(Collections.singleton(datasetId), principal).isEmpty()) {
       throw new UnauthorizedException(principal, datasetId);
     }
   }
