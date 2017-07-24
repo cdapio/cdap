@@ -29,6 +29,7 @@ import MouseTrap from 'mousetrap';
 require('./MarkAsError.scss');
 
 const PREFIX = 'features.DataPrep.Directives.MarkAsError';
+const addPrefix = (directive) => [`IS${directive}`, `ISNOT${directive}`];
 const conditionsOptions = [
   'EMPTY',
   'TEXTEXACTLY',
@@ -37,22 +38,72 @@ const conditionsOptions = [
   'TEXTENDSWITH',
   'TEXTREGEX',
   'divider',
-  'ISNUMBER',
-  'ISNOTNUMBER',
-  'ISDOUBLE',
-  'ISNOTDOUBLE',
-  'ISINTEGER',
-  'ISNOTINTEGER',
-  'ISBOOLEAN',
-  'ISNOTBOOLEAN',
+  ...addPrefix('NUMBER'),
+  ...addPrefix('DOUBLE'),
+  ...addPrefix('INTEGER'),
+  ...addPrefix('BOOLEAN'),
   'divider',
-  'ISDATE',
-  'ISNOTDATE',
-  'ISTIME',
-  'ISNOTTIME',
+  ...addPrefix('DATE'),
+  ...addPrefix('DATEFORMAT'),
+  ...addPrefix('TIME'),
+  'divider',
+  ...addPrefix('IP'),
+  ...addPrefix('IPV4'),
+  ...addPrefix('IPV6'),
+  ...addPrefix('EMAIL'),
+  ...addPrefix('URL'),
+  ...addPrefix('DOMAINNAME'),
+  ...addPrefix('DOMAINTLD'),
+  ...addPrefix('GENERICTLD'),
+  ...addPrefix('COUNTRYTLD'),
+  'divider',
+  ...addPrefix('ISBN'),
+  ...addPrefix('ISBN10'),
+  ...addPrefix('ISBN13'),
+  ...addPrefix('ISBN13'),
+  'divider',
+  ...addPrefix('CREDITCARD'),
+  ...addPrefix('AMEXCARD'),
+  ...addPrefix('VISACARD'),
+  ...addPrefix('MASTERCARD'),
+  ...addPrefix('DINERCARD'),
+  ...addPrefix('VPAYCARD'),
   'divider',
   'CUSTOMCONDITION'
 ];
+const conditionToFnMap = {
+  'ISNUMBER' : 'isNumber',
+  'ISINTEGER' : 'isInteger',
+  'ISDOUBLE' : 'isDouble',
+  'ISBOOLEAN' : 'isBoolean',
+  'ISDATE' : 'isDate',
+  'ISTIME' : 'isTime',
+  'ISDATEFORMAT': 'isDate',
+  'ISIP': 'isIP',
+  'ISIPV4': 'isIPv4',
+  'ISIPV6': 'isIPv6',
+  'ISEMAIL': 'isEmail',
+  'ISURL': 'isUrl',
+  'ISDOMAINNAME': 'isDomainName',
+  'ISDOMAINTLD': 'isDomainTld',
+  'ISGENERICTLD': 'isGenericTld',
+  'ISCOUNTRYTLD': 'isCountryTld',
+  'ISISBN': 'isISBN',
+  'ISISBN10': 'isISBN10',
+  'ISISBN13': 'isISBN13',
+  'ISCREDITCARD': 'isCreditCard',
+  'ISAMEXCARD': 'isAmex',
+  'ISVISACARD': 'isVisa',
+  'ISMASTERCARD': 'isMaster',
+  'ISDINERCARD': 'isDiner',
+  'ISVPAYCARD': 'isVPay'
+};
+const dqFunctions = Object
+  .keys(conditionToFnMap)
+  .reduce((prev, curr) => {
+    let condition = curr.replace(/IS|ISNOT/, '');
+    return [...prev, `IS${condition}`, `ISNOT${condition}`];
+  }, []);
 export default class MarkAsError extends Component {
   state = {
     selectedCondition: conditionsOptions[0],
@@ -119,14 +170,6 @@ export default class MarkAsError extends Component {
   };
 
   getDQFunction(condition) {
-    let conditionToFnMap = {
-      'ISNUMBER' : 'isNumber',
-      'ISINTEGER' : 'isInteger',
-      'ISDOUBLE' : 'isDouble',
-      'ISBOOLEAN' : 'isBoolean',
-      'ISDATE' : 'isDate',
-      'ISTIME' : 'isTime'
-    };
     let c = condition.replace('NOT', '');
     return conditionToFnMap[c];
   }
@@ -180,33 +223,36 @@ export default class MarkAsError extends Component {
       case 'CUSTOMCONDITION':
         finalExpression = `${directive} ${this.state.customCondition}`;
         break;
-      case 'ISNUMBER':
-      case 'ISNOTNUMBER':
-      case 'ISINTEGER':
-      case 'ISNOTINTEGER':
-      case 'ISDOUBLE':
-      case 'ISNOTDOUBLE':
-      case 'ISBOOLEAN':
-      case 'ISNOTBOOLEAN':
-      case 'ISDATE':
-      case 'ISNOTDATE':
-      case 'ISTIME':
-      case 'ISNOTTIME':
-        condition = `dq:${this.getDQFunction(this.state.selectedCondition)}(${column})`;
+      case 'ISDATEFORMAT':
+      case 'ISNOTDATEFORMAT':
+        condition = `dq:${this.getDQFunction(this.state.selectedCondition)}(${column}, "${this.state.conditionValue}")`;
         if (this.state.selectedCondition.indexOf('NOT') !== -1) {
           condition = `!${condition}`;
         }
         finalExpression = `${directive} ${condition}`;
+        break;
+      default:
+        if (dqFunctions.indexOf(this.state.selectedCondition) !== -1) {
+          condition = `dq:${this.getDQFunction(this.state.selectedCondition)}(${column})`;
+          if (this.state.selectedCondition.indexOf('NOT') !== -1) {
+            condition = `!${condition}`;
+          }
+          finalExpression = `${directive} ${condition}`;
+        }
         break;
     }
     return finalExpression;
   }
 
   renderTextCondition = () => {
-    if (this.state.selectedCondition.substr(0, 4) !== 'TEXT') { return null; }
+    let dateFormatConditions = ['ISDATEFORMAT', 'ISNOTDATEFORMAT'];
+    if (
+      this.state.selectedCondition.substr(0, 4) !== 'TEXT' &&
+      dateFormatConditions.indexOf(this.state.selectedCondition) === -1
+    ) { return null; }
 
     let ignoreCase;
-    if (this.state.selectedCondition !== 'TEXTREGEX') {
+    if (['TEXTREGEX', ...dateFormatConditions].indexOf(this.state.selectedCondition) === -1) {
       ignoreCase = (
         <div>
           <span
@@ -317,7 +363,9 @@ export default class MarkAsError extends Component {
   };
 
   isApplyDisabled = () => {
-    if (this.state.selectedCondition.substr(0, 4) === 'TEXT') {
+    let isDateFormatCondition = ['ISDATEFORMAT', 'ISNOTDATEFORMAT'].indexOf(this.state.selectedCondition) !== -1;
+    let isTextFormatCondition = this.state.selectedCondition.substr(0, 4) === 'TEXT';
+    if (isTextFormatCondition || isDateFormatCondition) {
       return this.state.conditionValue.length === 0;
     }
 

@@ -605,18 +605,56 @@ features:
         Conditions:
           CUSTOMCONDITION: Custom condition
           EMPTY: value is empty
-          ISNUMBER: Is Number
-          ISNOTNUMBER: Is Not Number
-          ISINTEGER: Is Integer
-          ISNOTINTEGER: Is Not Integer
-          ISDOUBLE: Is Double
-          ISNOTDOUBLE: Is Not Double
+          ISAMEXCARD: Is American Express Card
           ISBOOLEAN: Is Boolean
-          ISNOTBOOLEAN: Is Not Boolean
+          ISCOUNTRYTLD: Is Country TLD
+          ISCREDITCARD: Is Credit Card
           ISDATE: Is Date
+          ISDATEFORMAT: Is Date Format
+          ISDINERCARD: Is Diner Card
+          ISDOMAINNAME: Is Domain Name
+          ISDOMAINTLD: Is Domain TLD
+          ISDOUBLE: Is Double
+          ISEMAIL: Is Email
+          ISGENERICTLD: Is Generic TLD
+          ISINTEGER: Is Integer
+          ISIP: Is IP
+          ISIPV4: Is IPV4
+          ISIPV6: Is IPV6
+          ISISBN: Is ISBN
+          ISISBN10: Is ISBN10
+          ISISBN13: Is ISBN13
+          ISMASTERCARD: Is Master Card
+          ISNOTAMEXCARD: Is Not American Express Card
+          ISNOTBOOLEAN: Is Not Boolean
+          ISNOTCOUNTRYTLD: Is Not Country TLD
+          ISNOTCREDITCARD: Is Not Credit Card
           ISNOTDATE: Is Not Date
-          ISTIME: Is Time
+          ISNOTDATEFORMAT: Is Not Date Format
+          ISNOTDINERCARD: Is Not Diner Card
+          ISNOTDOMAINNAME: Is Not Domain Name
+          ISNOTDOMAINTLD: Is Not Domain TLD
+          ISNOTDOUBLE: Is Not Double
+          ISNOTEMAIL: Is Not Email
+          ISNOTGENERICTLD: Is Not Generic TLD
+          ISNOTINTEGER: Is Not Integer
+          ISNOTIP: Is Not IP
+          ISNOTIPV4: Is Not IPV4
+          ISNOTIPV6: Is Not IPV6
+          ISNOTISBN: Is Not ISBN
+          ISNOTISBN10: Is Not ISBN10
+          ISNOTISBN13: Is Not ISBN13
+          ISNOTMASTERCARD: Is Not Master Card
+          ISNOTNUMBER: Is Not Number
           ISNOTTIME: Is Not Time
+          ISNOTURL: Is Not URL
+          ISNOTVISACARD: Is Not Visa Card
+          ISNOTVPAYCARD: Is Not VPay Card
+          ISNUMBER: Is Number
+          ISTIME: Is Time
+          ISURL: Is URL
+          ISVISACARD: Is Visa Card
+          ISVPAYCARD: Is VPay Card
           TEXTCONTAINS: value contains
           TEXTENDSWITH: value ends with
           TEXTEXACTLY: value is
@@ -631,6 +669,8 @@ features:
           TEXTEXACTLY: Enter value
           TEXTREGEX: Enter regex
           TEXTSTARTSWITH: Enter prefix
+          ISDATEFORMAT: "Eg: MM/DD/YYYY"
+          ISNOTDATEFORMAT: "Eg: MM/DD/YYYY"
         title: Send to Error
         tooltip: When used in a pipeline, these errors can be collected by an error collector
       MaskData:
