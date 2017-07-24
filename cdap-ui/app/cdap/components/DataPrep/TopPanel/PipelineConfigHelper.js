@@ -87,6 +87,9 @@ function constructFileSource(artifactsList, properties) {
   let batchArtifact = find(artifactsList, { 'name': 'core-plugins' });
   let realtimeArtifact = find(artifactsList, { 'name': 'spark-plugins' });
 
+  batchArtifact.version = '[1.7.0, 3.0.0)';
+  realtimeArtifact.version = '[1.7.0, 3.0.0)';
+
   let batchPluginInfo = {
     name: plugin.name,
     label: plugin.name,
@@ -125,6 +128,8 @@ function constructDatabaseSource(artifactsList, dbInfo) {
   if (!dbInfo) { return null; }
 
   let batchArtifact = find(artifactsList, { 'name': 'database-plugins' });
+
+  batchArtifact.version = '[1.7.0, 3.0.0)';
   let pluginName = 'Database';
 
   try {
@@ -214,7 +219,7 @@ function constructKafkaSource(artifactsList, kafkaInfo) {
 }
 
 function constructProperties(workspaceInfo, pluginVersion) {
-  let  observable = new Rx.Subject();
+  let observable = new Rx.Subject();
   let namespace = NamespaceStore.getState().selectedNamespace;
   let state = DataPrepStore.getState().dataprep;
   let workspaceId = state.workspaceId;
@@ -262,8 +267,28 @@ function constructProperties(workspaceInfo, pluginVersion) {
     MyArtifactApi.list({ namespace })
     .combineLatest(rxArray)
     .subscribe((res) => {
-      let batchArtifact = find(res[0], { 'name': 'cdap-data-pipeline' });
-      let realtimeArtifact = find(res[0], { 'name': 'cdap-data-streams' });
+      let batchArtifactsList = res[0].filter((artifact) => {
+        return artifact.name === 'cdap-data-pipeline';
+      });
+      let realtimeArtifactsList = res[0].filter((artifact) => {
+        return artifact.name === 'cdap-data-streams';
+      });
+
+      let highestBatchArtifactVersion = findHighestVersion(batchArtifactsList.map((artifact) => artifact.version), true);
+      let highestRealtimeArtifactVersion = findHighestVersion(realtimeArtifactsList.map((artifact) => artifact.version), true);
+
+      let batchArtifact = {
+        name: 'cdap-data-pipeline',
+        version: highestBatchArtifactVersion,
+        scope: 'SYSTEM'
+      };
+
+      let realtimeArtifact = {
+        name: 'cdap-data-streams',
+        version: highestRealtimeArtifactVersion,
+        scope: 'SYSTEM'
+      };
+
       let wranglerArtifact;
       try {
         wranglerArtifact = findWranglerArtifacts(res[0], pluginVersion);
