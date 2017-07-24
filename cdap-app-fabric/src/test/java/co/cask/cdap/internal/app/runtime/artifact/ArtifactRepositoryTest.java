@@ -137,7 +137,7 @@ public class ArtifactRepositoryTest {
   @Before
   public void setupData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
-    artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
+    artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
   }
 
@@ -163,7 +163,7 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testMultipleParentVersions() throws InvalidArtifactException {
     Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
-    ArtifactRepository.validateParentSet(child, ImmutableSet.of(
+    DefaultArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(NamespaceId.SYSTEM.getNamespace(), "r1", new ArtifactVersion("1.0.0"),
                         new ArtifactVersion("2.0.0")),
       new ArtifactRange(NamespaceId.SYSTEM.getNamespace(), "r1",
@@ -173,14 +173,14 @@ public class ArtifactRepositoryTest {
   @Test(expected = InvalidArtifactException.class)
   public void testSelfExtendingArtifact() throws InvalidArtifactException {
     Id.Artifact child = Id.Artifact.from(Id.Namespace.SYSTEM, "abc", "1.0.0");
-    ArtifactRepository.validateParentSet(child, ImmutableSet.of(
+    DefaultArtifactRepository.validateParentSet(child, ImmutableSet.of(
       new ArtifactRange(NamespaceId.SYSTEM.getNamespace(), "abc",
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))));
   }
 
   @Test(expected = InvalidArtifactException.class)
   public void testMultiplePluginClasses() throws InvalidArtifactException {
-    ArtifactRepository.validatePluginSet(ImmutableSet.of(
+    DefaultArtifactRepository.validatePluginSet(ImmutableSet.of(
       new PluginClass("t1", "n1", "", "co.cask.test1", "cfg", ImmutableMap.<String, PluginPropertyField>of()),
       new PluginClass("t1", "n1", "", "co.cask.test2", "cfg", ImmutableMap.<String, PluginPropertyField>of())));
   }
@@ -490,7 +490,7 @@ public class ArtifactRepositoryTest {
     Set<ArtifactRange> parents = ImmutableSet.of(
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(artifact1Id, jarFile, parents);
+    artifactRepository.addArtifact(artifact1Id, jarFile, parents, null);
 
     // Should get the only version.
     Map.Entry<ArtifactDescriptor, PluginClass> plugin =
@@ -505,7 +505,7 @@ public class ArtifactRepositoryTest {
     // Create another plugin jar with later version and update the repository
     Id.Artifact artifact2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "2.0");
     jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-2.0.jar"), manifest);
-    artifactRepository.addArtifact(artifact2Id, jarFile, parents);
+    artifactRepository.addArtifact(artifact2Id, jarFile, parents, null);
 
     // Should select the latest version
     plugin = artifactRepository.findPlugin(NamespaceId.DEFAULT, appArtifactRange,
@@ -562,7 +562,7 @@ public class ArtifactRepositoryTest {
     Set<ArtifactRange> parents = ImmutableSet.of(new ArtifactRange(
       APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(childId, jarFile, parents);
+    artifactRepository.addArtifact(childId, jarFile, parents, null);
 
     // try and create grandchild, should throw exception
     Id.Artifact grandchildId = Id.Artifact.from(Id.Namespace.DEFAULT, "grandchild", "1.0.0");
@@ -571,7 +571,7 @@ public class ArtifactRepositoryTest {
     parents = ImmutableSet.of(new ArtifactRange(
       childId.getNamespace().getId(), childId.getName(),
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    artifactRepository.addArtifact(grandchildId, jarFile, parents);
+    artifactRepository.addArtifact(grandchildId, jarFile, parents, null);
   }
 
   @Test
@@ -638,10 +638,10 @@ public class ArtifactRepositoryTest {
       // There should be two plugins there (TestPlugin and TestPlugin2).
       Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
       File jarFile = createPluginJar(TestPlugin.class, new File(tmpDir, "myPlugin-1.0.jar"), manifest);
-      artifactRepository.addArtifact(pluginArtifactId1, jarFile, parents);
+      artifactRepository.addArtifact(pluginArtifactId1, jarFile, parents, null);
 
       // create plugin artifact in namespace2 that extends the system artifact
-      artifactRepository.addArtifact(pluginArtifactId2, jarFile, parents);
+      artifactRepository.addArtifact(pluginArtifactId2, jarFile, parents, null);
 
       // check that only plugins from the artifact in the namespace are returned, and not plugins from both
       SortedMap<ArtifactDescriptor, Set<PluginClass>> extensions =
@@ -670,12 +670,11 @@ public class ArtifactRepositoryTest {
       new ArtifactRange(APP_ARTIFACT_ID.getNamespace().getId(), APP_ARTIFACT_ID.getName(),
                         new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "myPlugin", "1.0");
-    artifactRepository.addArtifact(artifactId, jarFile, parents);
+    artifactRepository.addArtifact(artifactId, jarFile, parents, null);
     return pluginDir;
   }
 
-  private static SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins() throws IOException,
-    ArtifactNotFoundException {
+  private static SortedMap<ArtifactDescriptor, Set<PluginClass>> getPlugins() throws Exception {
     // check the parent can see the plugins
     SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
       artifactRepository.getPlugins(NamespaceId.DEFAULT, APP_ARTIFACT_ID);

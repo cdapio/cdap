@@ -94,9 +94,9 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
     initialize(CConfiguration.create(), tmpFolder, true, true);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     SecurityRequestContext.setUserId(USER.getName());
-    grantAndAssertSuccess(NAMESPACE_ID, USER, EnumSet.allOf(Action.class));
 
     StreamId streamId = NAMESPACE_ID.stream(streamName);
+    grantAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
     createStream(streamId);
     sendStreamEvent(streamId, headers, Bytes.toBytes(body1));
     sendStreamEvent(streamId, headers, Bytes.toBytes(body2));
@@ -216,6 +216,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   @Test
   public void testStreamNameWithHyphen() throws Exception {
     StreamId streamId = NAMESPACE_ID.stream("stream-test");
+    grantAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
     createStream(streamId);
     try {
       sendStreamEvent(streamId, Collections.<String, String>emptyMap(), Bytes.toBytes("Dummy"));
@@ -236,6 +237,8 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   public void testJoinOnStreams() throws Exception {
     StreamId streamId1 = NAMESPACE_ID.stream("jointest1");
     StreamId streamId2 = NAMESPACE_ID.stream("jointest2");
+    grantAndAssertSuccess(streamId1, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(streamId2, USER, EnumSet.allOf(Action.class));
     createStream(streamId1);
     try {
       createStream(streamId2);
@@ -271,6 +274,7 @@ public class HiveExploreServiceStreamTest extends BaseHiveExploreServiceTest {
   @Test
   public void testAvroFormattedStream() throws Exception {
     StreamId streamId = NAMESPACE_ID.stream("avroStream");
+    grantAndAssertSuccess(streamId, USER, EnumSet.allOf(Action.class));
     createStream(streamId);
     try {
       Schema schema = Schema.recordOf(

@@ -29,7 +29,6 @@ import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.ArtifactId;
-import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -73,7 +72,6 @@ public class SystemArtifactsAuthorizationTest {
 
   private static ArtifactRepository artifactRepository;
   private static Authorizer authorizer;
-  private static InstanceId instance;
   private static NamespaceAdmin namespaceAdmin;
 
   @BeforeClass
@@ -98,29 +96,26 @@ public class SystemArtifactsAuthorizationTest {
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     AuthorizerInstantiator instantiatorService = injector.getInstance(AuthorizerInstantiator.class);
     authorizer = instantiatorService.get();
-    instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
   }
 
   @Test
   public void testAuthorizationForSystemArtifacts() throws Exception {
     artifactRepository.addSystemArtifacts();
-    // alice should not be able to refresh system artifacts because she does not have write privileges on the
-    // CDAP instance
+    // alice should not be able to refresh system artifacts because she does not have admin privileges on namespace
+    // system
     SecurityRequestContext.setUserId(ALICE.getName());
     try {
       artifactRepository.addSystemArtifacts();
-      Assert.fail("Adding system artifacts should have failed because alice does not have write privileges on " +
-                    "the CDAP instance.");
+      Assert.fail("Adding system artifacts should have failed because alice does not have admin privileges on " +
+                    "the namespace system.");
     } catch (UnauthorizedException expected) {
       // expected
     }
-    // grant alice write privileges on the CDAP instance
-    authorizer.grant(NamespaceId.SYSTEM, ALICE, Collections.singleton(Action.WRITE));
+    // grant alice admin privileges on the CDAP system namespace
+    authorizer.grant(NamespaceId.SYSTEM, ALICE, Collections.singleton(Action.ADMIN));
     Assert.assertEquals(
-      Collections.singleton(new Privilege(NamespaceId.SYSTEM, Action.WRITE)),
-      authorizer.listPrivileges(ALICE)
-    );
+      Collections.singleton(new Privilege(NamespaceId.SYSTEM, Action.ADMIN)), authorizer.listPrivileges(ALICE));
     // refreshing system artifacts should succeed now
     artifactRepository.addSystemArtifacts();
     SecurityRequestContext.setUserId("bob");
@@ -128,17 +123,16 @@ public class SystemArtifactsAuthorizationTest {
     try {
       artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
       Assert.fail("Deleting a system artifact should have failed because alice does not have admin privileges on " +
-                    "the CDAP instance.");
+                    "the artifact.");
     } catch (UnauthorizedException expected) {
       // expected
     }
 
-    // grant alice admin privileges on the CDAP instance, so she can create a namespace
+    // grant alice admin privileges on test namespace
     SecurityRequestContext.setUserId(ALICE.getName());
-    authorizer.grant(instance, ALICE, Collections.singleton(Action.ADMIN));
     NamespaceId namespaceId = new NamespaceId("test");
+    authorizer.grant(namespaceId, ALICE, Collections.singleton(Action.ADMIN));
     namespaceAdmin.create(new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build());
-    authorizer.revoke(instance);
 
     // test that system artifacts are available to everyone
     List<ArtifactSummary> artifacts = artifactRepository.getArtifactSummaries(namespaceId, true);
@@ -156,17 +150,31 @@ public class SystemArtifactsAuthorizationTest {
     Assert.assertEquals(SYSTEM_ARTIFACT.getNamespace(), artifactId.getScope().name().toLowerCase());
 
     namespaceAdmin.delete(namespaceId);
-    authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));
-    authorizer.enforce(NamespaceId.SYSTEM, ALICE, Action.WRITE);
+    // enforce on the system artifact should fail in unit test, since we do not have auto-grant now
+    try {
+      authorizer.enforce(SYSTEM_ARTIFACT, ALICE, EnumSet.allOf(Action.class));
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
-    // deleting system artifact should succeed as alice, because alice added the artifacts, so she should have all
-    // privileges on it
+    try {
+      artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+    // deleting system artifact should succeed if alice has ADMIN on the artifact
+    authorizer.grant(SYSTEM_ARTIFACT, ALICE, EnumSet.of(Action.ADMIN));
     artifactRepository.deleteArtifact(SYSTEM_ARTIFACT.toId());
+
+    // clean up privilege
+    authorizer.revoke(SYSTEM_ARTIFACT);
+    authorizer.revoke(namespaceId);
   }
 
   @AfterClass
   public static void cleanup() throws Exception {
-    authorizer.revoke(instance);
     authorizer.revoke(NamespaceId.SYSTEM);
     Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
     SecurityRequestContext.setUserId(OLD_USER_ID);

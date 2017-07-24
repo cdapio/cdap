@@ -71,7 +71,6 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerStore;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
@@ -231,14 +230,16 @@ public abstract class DatasetServiceTestBase {
     DatasetOpExecutor opExecutor = new InMemoryDatasetOpExecutor(dsFramework);
     DatasetInstanceManager instanceManager =
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
-    PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
 
-    DatasetTypeService typeService = new DatasetTypeService(
-      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
-      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
+    DatasetTypeService noAuthTypeService = new DefaultDatasetTypeService(
+      typeManager, namespaceAdmin, namespacedLocationFactory,
+      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
+    DatasetTypeService typeService = new AuthorizationDatasetTypeService(noAuthTypeService, authEnforcer,
+                                                                         authenticationContext);
 
-    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
-                                                 namespaceQueryAdmin, ownerAdmin, authEnforcer, privilegesManager,
+    instanceService = new DatasetInstanceService(typeService, noAuthTypeService,
+                                                 instanceManager, opExecutor, exploreFacade,
+                                                 namespaceQueryAdmin, ownerAdmin, authEnforcer,
                                                  authenticationContext);
 
     service = new DatasetService(cConf, discoveryService, discoveryServiceClient, metricsCollectionService,

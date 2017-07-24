@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -36,18 +35,20 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -55,7 +56,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -66,7 +66,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.EnumSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,12 +91,9 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final Provider<NamespaceResourceDeleter> resourceDeleter;
   private final Provider<ProgramRuntimeService> runtimeService;
   private final Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin;
-  private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final InstanceId instanceId;
   private final Impersonator impersonator;
-  private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
   private final String masterShortUserName;
 
@@ -106,7 +103,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
                         Provider<NamespaceResourceDeleter> resourceDeleter,
                         Provider<ProgramRuntimeService> runtimeService,
                         Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
-                        PrivilegesManager privilegesManager,
                         CConfiguration cConf,
                         Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
                         AuthenticationContext authenticationContext) {
@@ -114,13 +110,10 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.nsStore = nsStore;
     this.dsFramework = dsFramework;
     this.runtimeService = runtimeService;
-    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
-    this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
-    this.cConf = cConf;
     this.namespaceMetaCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, NamespaceMeta>() {
       @Override
       public NamespaceMeta load(NamespaceId namespaceId) throws Exception {
@@ -146,7 +139,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   @Override
-  @AuthEnforce(entities = "instanceId", enforceOn = InstanceId.class, actions = Action.ADMIN)
   public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
@@ -154,6 +146,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (exists(namespace)) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
+
+    // need to enforce on the principal id if impersonation is involved
+    String ownerPrincipal = metadata.getConfig().getPrincipal();
+    if (ownerPrincipal != null) {
+      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), authenticationContext.getPrincipal(),
+                                    Action.ADMIN);
+    }
+    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
@@ -183,25 +183,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     }
 
-    // Namespace can be created. Grant all the permissions to the user.
-    Principal principal = authenticationContext.getPrincipal();
-    privilegesManager.grant(namespace, principal, EnumSet.allOf(Action.class));
-
-    // Also grant the user who will execute programs in this namespace all privileges on the namespace
-    String executionUserName;
-    if (SecurityUtil.isKerberosEnabled(cConf) && !NamespaceId.SYSTEM.equals(namespace)) {
-      String namespacePrincipal = metadata.getConfig().getPrincipal();
-      if (Strings.isNullOrEmpty(namespacePrincipal)) {
-        executionUserName = new KerberosName(SecurityUtil.getMasterPrincipal(cConf)).getShortName();
-      } else {
-        executionUserName = new KerberosName(namespacePrincipal).getShortName();
-      }
-    } else {
-      executionUserName = UserGroupInformation.getCurrentUser().getShortUserName();
-    }
-    Principal executionUser = new Principal(executionUserName, Principal.PrincipalType.USER);
-    privilegesManager.grant(namespace, executionUser, EnumSet.allOf(Action.class));
-
     // store the meta first in the namespace store because namespacedLocationFactory needs to look up location
     // mapping from namespace config
     nsStore.create(metadata);
@@ -222,7 +203,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     } catch (Throwable t) {
       // failed to create namespace in underlying storage so delete the namespace meta stored in the store earlier
       deleteNamespaceMeta(metadata.getNamespaceId());
-      privilegesManager.revoke(namespace);
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
     LOG.info("Namespace {} created with meta {}", metadata.getNamespaceId(), metadata);
@@ -321,11 +301,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
         // Finally delete namespace from MDS and remove from cache
         deleteNamespaceMeta(namespaceId);
 
-        // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion,
-        // and deletion fails, we may have a valid (or invalid) namespace in the system, that no one has privileges on,
-        // so no one can clean up. This may result in orphaned privileges, which will be cleaned up by the create API
-        // if the same namespace is successfully re-created.
-        privilegesManager.revoke(namespaceId);
         LOG.info("Namespace '{}' deleted", namespaceId);
       } else {
         LOG.info("Keeping the '{}' namespace after removing all data.", NamespaceId.DEFAULT);
@@ -337,7 +312,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
   public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
@@ -405,16 +379,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public List<NamespaceMeta> list() throws Exception {
     List<NamespaceMeta> namespaces = nsStore.list();
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return Lists.newArrayList(
-      Iterables.filter(namespaces, new com.google.common.base.Predicate<NamespaceMeta>() {
-        @Override
-        public boolean apply(NamespaceMeta namespaceMeta) {
-          return filter.apply(namespaceMeta.getNamespaceId());
-        }
-      })
-    );
+
+    return AuthorizationUtil.isVisible(namespaces, authorizationEnforcer, authenticationContext.getPrincipal(),
+                                       new Function<NamespaceMeta, EntityId>() {
+                                         @Override
+                                         public EntityId apply(NamespaceMeta input) {
+                                           return input.getNamespaceId();
+                                         }
+                                       }, null);
   }
 
   /**
@@ -427,6 +399,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    */
   @Override
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
+    // See: CDAP-7387
+    if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
+      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
+    }
+
     NamespaceMeta namespaceMeta;
     try {
       namespaceMeta = namespaceMetaCache.get(namespaceId);
@@ -438,17 +417,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       }
       throw e;
     }
-    Principal principal = authenticationContext.getPrincipal();
-    // if the principal is same as cdap master principal skip the authorization check and just return the namespace
-    // meta. See: CDAP-7387
-    if (masterShortUserName != null && masterShortUserName.equals(principal.getName())) {
-      return namespaceMeta;
-    }
 
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(namespaceId)) {
-      throw new UnauthorizedException(principal, namespaceId);
-    }
     return namespaceMeta;
   }
 
@@ -461,6 +430,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
+      AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
       // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
       // exists
       namespaceMetaCache.get(namespaceId);
@@ -514,5 +484,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
+  }
+
+  private void ensureAccess(NamespaceId namespaceId) throws Exception {
+    if (authorizationEnforcer.isVisible(Collections.singleton(namespaceId),
+                                        authenticationContext.getPrincipal()).isEmpty()) {
+      throw new UnauthorizedException(authenticationContext.getPrincipal(), namespaceId);
+    }
   }
 }

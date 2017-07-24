@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -35,7 +34,6 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
@@ -56,7 +54,6 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -65,6 +62,7 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -168,6 +166,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec, ProgramId programId)
     throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
 
     if (runtimeInfo == null) {
@@ -178,7 +177,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
           // program doesn't exist
           throw new NotFoundException(programId);
         }
-        ensureAccess(programId);
 
         if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
           !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
@@ -201,6 +199,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.ADMIN), authorizationEnforcer,
+                                         authenticationContext.getPrincipal());
     ApplicationSpecification appSpec;
     appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
@@ -217,7 +217,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec, ProgramId programId)
     throws Exception {
-    ensureAccess(programId);
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     ProgramSpecification programSpec;
@@ -436,9 +435,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * the specified program. To get runtime arguments for a program, a user requires
    * {@link Action#READ} privileges on the program.
    */
-  @AuthEnforce(entities = "programId", enforceOn = ProgramId.class, actions = Action.READ)
-  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId)
-    throws NotFoundException, UnauthorizedException {
+  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
+    // user can have READ, ADMIN or EXECUTE to retrieve the runtime arguments
+    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.EXECUTE, Action.ADMIN),
+                                         authorizationEnforcer, authenticationContext.getPrincipal());
+
     if (!store.programExists(programId)) {
       throw new NotFoundException(programId);
     }
@@ -492,6 +493,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                                   programId.getType().getPrettyName()));
     }
     resetLogLevels(programId, loggerNames, component, runId);
+  }
+
+  public boolean programExists(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return store.programExists(programId);
   }
 
   private boolean isRunning(ProgramId programId) throws Exception {
@@ -606,7 +612,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
       throw new NotFoundException(applicationId);
     }
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    ensureAccess(schedule.getProgramId());
+    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
+                                   authenticationContext.getPrincipal());
     return scheduler.getScheduleStatus(scheduleId);
   }
 
@@ -685,8 +692,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private boolean hasAccess(ProgramId programId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return filter.apply(programId);
+    return !authorizationEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
 
   private void setWorkerInstances(ProgramId programId, int instances)
@@ -841,18 +847,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
 
     return targetProgramId;
-  }
-
-  /**
-   * Ensures that the logged-in user has a {@link Action privilege} on the specified program instance.
-   *
-   * @param programId the {@link ProgramId} to check for privileges
-   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
-   */
-  private void ensureAccess(ProgramId programId) throws Exception {
-    if (!hasAccess(programId)) {
-      throw new UnauthorizedException(authenticationContext.getPrincipal(), Action.READ, programId);
-    }
   }
 
   /**

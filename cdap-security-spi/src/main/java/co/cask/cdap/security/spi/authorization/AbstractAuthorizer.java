@@ -65,35 +65,7 @@ public abstract class AbstractAuthorizer implements Authorizer {
   }
 
   @Override
-  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-    Set<EntityId> visibleEntities = new HashSet<>();
-    for (EntityId entityId : entityIds) {
-      try {
-        enforce(entityId, principal, EnumSet.allOf(Action.class));
-        visibleEntities.add(entityId);
-      } catch (UnauthorizedException e) {
-        // continue to next entity
-      } catch (Exception ex) {
-        throw new RuntimeException(ex);
-      }
-    }
-    return visibleEntities;
-  }
-
-  @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, EnumSet.allOf(Action.class));
-          return true;
-        } catch (UnauthorizedException e) {
-          return false;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    };
+    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
   }
 }

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.HttpErrorStatusProvider;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -27,6 +26,7 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -46,23 +46,24 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -78,7 +79,8 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final DatasetTypeService typeService;
+  private final DatasetTypeService authorizationDatasetTypeService;
+  private final DatasetTypeService noAuthDatasetTypeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
@@ -86,20 +88,23 @@ public class DatasetInstanceService {
   private final OwnerAdmin ownerAdmin;
   private final LoadingCache<DatasetId, DatasetMeta> metaCache;
   private final AuthorizationEnforcer authorizationEnforcer;
-  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
 
   private AuditPublisher auditPublisher;
 
   @VisibleForTesting
   @Inject
-  public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
+  public DatasetInstanceService(DatasetTypeService authorizationDatasetTypeService,
+                                @Named(DataSetServiceModules.NOAUTH_DATASET_TYPE_SERVICE)
+                                  DatasetTypeService noAuthDatasetTypeService,
+                                DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
-                                AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
+                                AuthorizationEnforcer authorizationEnforcer,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
-    this.typeService = typeService;
+    this.authorizationDatasetTypeService = authorizationDatasetTypeService;
+    this.noAuthDatasetTypeService = noAuthDatasetTypeService;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -113,7 +118,6 @@ public class DatasetInstanceService {
       }
     );
     this.authorizationEnforcer = authorizationEnforcer;
-    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
   }
 
@@ -133,16 +137,16 @@ public class DatasetInstanceService {
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
    */
   Collection<DatasetSpecification> list(final NamespaceId namespace) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
     ensureNamespaceExists(namespace);
-    Collection<DatasetSpecification> datasets = instanceManager.getAll(namespace);
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return Lists.newArrayList(Iterables.filter(datasets, new com.google.common.base.Predicate<DatasetSpecification>() {
-      @Override
-      public boolean apply(DatasetSpecification spec) {
-        return filter.apply(namespace.dataset(spec.getName()));
-      }
-    }));
+    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace));
+
+    return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
+                                       new Function<DatasetSpecification, EntityId>() {
+                                         @Override
+                                         public EntityId apply(DatasetSpecification input) {
+                                           return namespace.dataset(input.getName());
+                                         }
+                                       }, null);
   }
 
   /**
@@ -157,6 +161,9 @@ public class DatasetInstanceService {
    *  have any privileges on the #instance
    */
   DatasetMeta get(final DatasetId instance, List<? extends EntityId> owners) throws Exception {
+    // ensure user has correct privileges before getting the meta
+    AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.of(Action.ADMIN, Action.READ, Action.WRITE),
+                                         authorizationEnforcer, authenticationContext.getPrincipal());
     // Application Deployment first makes a call to the dataset service to check if the instance already exists with
     // a different type. To make sure that that call responds with the right exceptions if necessary, first fetch the
     // meta from the cache and throw appropriate exceptions if necessary.
@@ -170,13 +177,14 @@ public class DatasetInstanceService {
       }
       throw e;
     }
-    // Only return the above datasetMeta if authorization succeeds
-    ensureAccess(instance);
     return datasetMeta;
   }
 
   /**
    * Read the dataset meta data (instance and type) from MDS.
+   *
+   * Note this method cannot be called to create dataset instance, since it does not have enforcement on the dataset
+   * type.
    */
   private DatasetMeta getFromMds(DatasetId instance) throws Exception {
     // TODO: CDAP-3901 add back namespace existence check
@@ -187,7 +195,8 @@ public class DatasetInstanceService {
     spec = DatasetsUtil.fixOriginalProperties(spec);
 
     DatasetTypeId datasetTypeId = instance.getParent().datasetType(spec.getType());
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType());
+    // by pass the auth check for dataset type when the operation is not creation
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
     if (typeMeta == null) {
       // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
       throw new NotFoundException(datasetTypeId);
@@ -212,12 +221,13 @@ public class DatasetInstanceService {
    *   have any privileges on the #instance
    */
   Map<String, String> getOriginalProperties(DatasetId instance) throws Exception {
+    // Only return the properties if authorization succeeds
+    AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, authenticationContext.getPrincipal());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
     }
-    // Only return the properties if authorization succeeds
-    ensureAccess(instance);
+
     return DatasetsUtil.fixOriginalProperties(spec).getOriginalProperties();
   }
 
@@ -235,66 +245,63 @@ public class DatasetInstanceService {
    */
   void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     NamespaceId namespace = ConversionHelpers.toNamespaceId(namespaceId);
+    DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(namespace, principal, Action.WRITE);
+    String ownerPrincipal = props.getOwnerPrincipal();
+
+    // need to enforce on the principal id if impersonation is involved
+    KerberosPrincipalId principalId = ownerPrincipal == null ? null : new KerberosPrincipalId(ownerPrincipal);
+    if (!namespace.equals(NamespaceId.SYSTEM) && principalId == null) {
+      // if dataset owner is not present, get the namespace impersonation principal
+      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(namespace);
+      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
+    }
+    if (principalId != null) {
+      authorizationEnforcer.enforce(principalId, principal, Action.ADMIN);
+    }
+    authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
 
     ensureNamespaceExists(namespace);
 
-    DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(datasetId);
     if (existing != null) {
       throw new DatasetAlreadyExistsException(datasetId);
     }
 
-    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
+    // for creation, we need enforcement for dataset type
+    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(), false);
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
     }
 
-    // It is now determined that a new dataset will be created. First grant privileges, then create the dataset.
-    // If creation fails, revoke the granted privileges. This ensures that just like delete, there may be orphaned
-    // privileges in rare scenarios, but there can never be orphaned datasets.
-    // If the dataset previously existed and was deleted, but revoking privileges somehow failed, there may be orphaned
-    // privileges for the dataset. Revoke them first, so no users unintentionally get privileges on the dataset.
-    privilegesManager.revoke(datasetId);
-    // grant all privileges on the dataset to be created
-    privilegesManager.grant(datasetId, principal, EnumSet.allOf(Action.class));
-
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
              namespaceId, name, props.getTypeName(), props.getProperties());
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
+    // Store the owner principal first if one was provided since it will be used to impersonate while creating
+    // dataset's files/tables in the underlying storage
+    // it has already been established that the dataset doesn't exists so no need to check if an owner principal
+    // exists or not
+    if (ownerPrincipal != null) {
+      KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
+      ownerAdmin.add(datasetId, owner);
+    }
     try {
-      String ownerPrincipal = props.getOwnerPrincipal();
-      // Store the owner principal first if one was provided since it will be used to impersonate while creating
-      // dataset's files/tables in the underlying storage
-      // it has already been established that the dataset doesn't exists so no need to check if an owner principal
-      // exists or not
-      if (ownerPrincipal != null) {
-        KerberosPrincipalId owner = new KerberosPrincipalId(ownerPrincipal);
-        ownerAdmin.add(datasetId, owner);
-      }
-      try {
-        DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta,
-                                                            DatasetProperties.builder()
-                                                              .addAll(props.getProperties())
-                                                              .setDescription(props.getDescription())
-                                                              .build());
-        instanceManager.add(namespace, spec);
-        metaCache.invalidate(datasetId);
-        publishAudit(datasetId, AuditType.CREATE);
+      DatasetSpecification spec = opExecutorClient.create(datasetId, typeMeta,
+                                                          DatasetProperties.builder()
+                                                            .addAll(props.getProperties())
+                                                            .setDescription(props.getDescription())
+                                                            .build());
+      instanceManager.add(namespace, spec);
+      metaCache.invalidate(datasetId);
+      publishAudit(datasetId, AuditType.CREATE);
 
-        // Enable explore
-        enableExplore(datasetId, spec, props);
-      } catch (Exception e) {
-        // there was a problem in creating the dataset instance so delete the owner if it got added earlier
-        ownerAdmin.delete(datasetId); // safe to call for entities which does not have an owner too
-        throw e;
-      }
+      // Enable explore
+      enableExplore(datasetId, spec, props);
     } catch (Exception e) {
-      // there was a problem in creating the dataset instance so revoke the privileges
-      privilegesManager.revoke(datasetId);
+      // there was a problem in creating the dataset instance so delete the owner if it got added earlier
+      ownerAdmin.delete(datasetId); // safe to call for entities which does not have an owner too
       throw e;
     }
   }
@@ -313,15 +320,16 @@ public class DatasetInstanceService {
    */
   void update(DatasetId instance, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(instance.getParent());
+    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
     DatasetSpecification existing = instanceManager.get(instance);
     if (existing == null) {
       throw new DatasetNotFoundException(instance);
     }
 
     LOG.info("Update dataset {}, properties: {}", instance.getEntityName(), ConversionHelpers.toJson(properties));
-    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
 
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), existing.getType());
+    // by pass the auth check for dataset type when the operation is not creation
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), existing.getType(), true);
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(
@@ -349,13 +357,13 @@ public class DatasetInstanceService {
    *  have {@link Action#ADMIN} privileges on the #instance
    */
   void drop(DatasetId instance) throws Exception {
+    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
     ensureNamespaceExists(instance.getParent());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new DatasetNotFoundException(instance);
     }
 
-    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
     dropDataset(instance, spec);
   }
 
@@ -411,22 +419,23 @@ public class DatasetInstanceService {
     Principal principal = authenticationContext.getPrincipal();
     switch (method) {
       case "exists":
-        ensureAccess(instance);
+        // ensure the user has some privilege on the dataset instance
+        AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, principal);
         result = opExecutorClient.exists(instance);
         break;
       case "truncate":
+        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         if (instanceManager.get(instance) == null) {
           throw new DatasetNotFoundException(instance);
         }
-        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         opExecutorClient.truncate(instance);
         publishAudit(instance, AuditType.TRUNCATE);
         break;
       case "upgrade":
+        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         if (instanceManager.get(instance) == null) {
           throw new DatasetNotFoundException(instance);
         }
-        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
         opExecutorClient.upgrade(instance);
         publishAudit(instance, AuditType.UPDATE);
         break;
@@ -443,20 +452,22 @@ public class DatasetInstanceService {
    *
    * @param namespaceId {@link NamespaceId} for the specified namespace
    * @param typeName the name of the dataset type to search
+   * @param byPassCheck a flag which determines whether to check privilege for the dataset type
    * @return {@link DatasetTypeMeta} for the type if found in either the specified namespace or in the system namespace,
    * null otherwise.
    * TODO: This may need to move to a util class eventually
    */
   @Nullable
-  private DatasetTypeMeta getTypeInfo(NamespaceId namespaceId, String typeName) throws Exception {
+  private DatasetTypeMeta getTypeInfo(NamespaceId namespaceId, String typeName, boolean byPassCheck) throws Exception {
     DatasetTypeId datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
     try {
-      return typeService.getType(datasetTypeId);
+      return byPassCheck ? noAuthDatasetTypeService.getType(datasetTypeId) :
+        authorizationDatasetTypeService.getType(datasetTypeId);
     } catch (DatasetTypeNotFoundException e) {
       try {
         // Type not found in the instance's namespace. Now try finding it in the system namespace
         DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
-        return typeService.getType(systemDatasetTypeId);
+        return noAuthDatasetTypeService.getType(systemDatasetTypeId);
       } catch (DatasetTypeNotFoundException exnWithSystemNS) {
         // if it's not found in system namespace, throw the original exception with the correct namespace
         throw e;
@@ -480,18 +491,14 @@ public class DatasetInstanceService {
     }
     metaCache.invalidate(instance);
 
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType());
+    // by pass the auth check for dataset type when the operation is not creation
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
     if (typeMeta == null) {
       throw new DatasetNotFoundException(instance);
     }
     opExecutorClient.drop(instance, typeMeta, spec);
 
     publishAudit(instance, AuditType.DELETE);
-    // revoke privileges as the final step. This is done in the end, because if it is done before actual deletion, and
-    // deletion fails, we may have a valid (or invalid) dataset in the system, that no one has privileges on, so no one
-    // can clean up. This may result in orphaned privileges, which will be cleaned up by the create API if the same
-    // dataset is successfully re-created.
-    privilegesManager.revoke(instance);
     // deletes the owner principal for the entity if one was stored during creation
     ownerAdmin.delete(instance);
   }
@@ -547,20 +554,6 @@ public class DatasetInstanceService {
   private void publishAudit(DatasetId datasetInstance, AuditType auditType) {
     // TODO: Add properties to Audit Payload (CDAP-5220)
     AuditPublishers.publishAudit(auditPublisher, datasetInstance, auditType, AuditPayload.EMPTY_PAYLOAD);
-  }
-
-  /**
-   * Ensures that the logged-in user has a {@link Action privilege} on the specified dataset instance.
-   *
-   * @param datasetId the {@link DatasetId} to check for privileges
-   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
-   */
-  private void ensureAccess(DatasetId datasetId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(datasetId)) {
-      throw new UnauthorizedException(principal, datasetId);
-    }
   }
 }
 

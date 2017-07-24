@@ -259,10 +259,8 @@ public class RESTClientTest {
     private int integer = 0;
 
     private final String message = new UnauthorizedException(
-      new Principal("test", Principal.PrincipalType.USER),
-      ImmutableSet.of(Action.READ, Action.WRITE),
-      NamespaceId.DEFAULT
-    ).getMessage();
+      new Principal("test", Principal.PrincipalType.USER), ImmutableSet.of(Action.READ, Action.WRITE),
+      NamespaceId.DEFAULT, true).getMessage();
 
     @POST
     @Path("/testCount")

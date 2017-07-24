@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -37,14 +36,16 @@ import java.util.concurrent.TimeUnit;
 public class AppWithSchedule extends AbstractApplication {
 
   public static final String SCHEDULE_NAME = "SampleSchedule";
+  public static final String INPUT_NAME = "input";
+  public static final String OUTPUT_NAME = "output";
 
   @Override
   public void configure() {
     try {
       setName("AppWithSchedule");
       setDescription("Sample application");
-      ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
-      ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
+      ObjectStores.createObjectStore(getConfigurer(), INPUT_NAME, String.class);
+      ObjectStores.createObjectStore(getConfigurer(), OUTPUT_NAME, String.class);
       addWorkflow(new SampleWorkflow());
       schedule(buildSchedule(SCHEDULE_NAME, ProgramType.WORKFLOW, SampleWorkflow.class.getSimpleName())
                  .triggerByTime("0/1 * * * * ?"));

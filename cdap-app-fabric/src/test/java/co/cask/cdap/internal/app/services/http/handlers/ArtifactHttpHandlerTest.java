@@ -292,7 +292,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // so bypass it and use the repository directly
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
 
-    artifactRepository.addArtifact(systemId.toId(), systemArtifact, new HashSet<ArtifactRange>());
+    artifactRepository.addArtifact(systemId.toId(), systemArtifact, new HashSet<ArtifactRange>(), null);
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -354,7 +354,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // so bypass it and use the repository directly
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
 
-    artifactRepository.addArtifact(systemId.toId(), systemArtifact, new HashSet<ArtifactRange>());
+    artifactRepository.addArtifact(systemId.toId(), systemArtifact, new HashSet<ArtifactRange>(), null);
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -408,7 +408,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // so bypass it and use the repository directly
     ArtifactId systemId = NamespaceId.SYSTEM.artifact("wordcount", "1.0.0");
     File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
-    artifactRepository.addArtifact(systemId.toId(), systemArtifact, Sets.<ArtifactRange>newHashSet());
+    artifactRepository.addArtifact(systemId.toId(), systemArtifact, Sets.<ArtifactRange>newHashSet(), null);
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
       systemId.getNamespace(), systemId.getArtifact(),

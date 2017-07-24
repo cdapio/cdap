@@ -89,7 +89,7 @@ public class RouteConfigHttpHandler extends AbstractAppFabricHttpHandler {
     List<ProgramId> nonExistingServices = new ArrayList<>();
     for (String version : routes.keySet()) {
       ProgramId routeProgram = namespace.app(appId, version).service(serviceId);
-      if (lifecycleService.getProgramSpecification(routeProgram) == null) {
+      if (!lifecycleService.programExists(routeProgram)) {
         nonExistingServices.add(routeProgram);
       }
     }

@@ -284,7 +284,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
-  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName, String flowletName) {
+  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName,
+                                       String flowletName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances",
                                getNamespacePath(namespaceId), applicationId, flowName, flowletName);

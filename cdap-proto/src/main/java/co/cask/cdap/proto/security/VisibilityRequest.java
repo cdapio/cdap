@@ -20,7 +20,6 @@ import co.cask.cdap.proto.id.EntityId;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Request for the visibility check
@@ -30,12 +29,12 @@ public class VisibilityRequest {
   private final Principal principal;
   private final Set<EntityId> entityIds;
 
-  public VisibilityRequest(Principal principal, @Nullable Set<? extends EntityId> entityIds) {
+  public VisibilityRequest(Principal principal, Set<? extends EntityId> entityIds) {
     if (principal == null) {
       throw new IllegalArgumentException("principal is required");
     }
     this.principal = principal;
-    this.entityIds = entityIds == null ? Collections.<EntityId>emptySet() : Collections.unmodifiableSet(entityIds);
+    this.entityIds = Collections.unmodifiableSet(entityIds);
   }
 
   public Principal getPrincipal() {

@@ -934,8 +934,8 @@ public final class Constants {
       /** Maximum number of entries the authorization cache will hold */
       public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";
       public static final String ADMIN_USERS = "security.authorization.admin.users";
-      /** Enable hierarchical privilege propagation, i.e. privilege on a parent will propagate to all descendants */
-      public static final String PROPAGATE_PRIVILEGES = "security.authorization.propagate.privileges";
+      /** Batch size for query for the visibility of entities */
+      public static final int VISIBLE_BATCH_SIZE = 500;
     }
 
     /**

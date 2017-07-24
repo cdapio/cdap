@@ -31,16 +31,16 @@ import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.Stage;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.impersonation.Impersonator;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.filesystem.Location;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * LocalArtifactLoaderStage gets a {@link Location} and emits a {@link ApplicationDeployable}.
@@ -58,18 +58,23 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final ApplicationSpecificationAdapter adapter;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
-                                  Impersonator impersonator) {
+                                  Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
+                                  AuthenticationContext authenticationContext) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
     this.adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -79,8 +84,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
    *                       and the application config to use.
    */
   @Override
-  public void process(AppDeploymentInfo deploymentInfo)
-    throws InterruptedException, ExecutionException, TimeoutException, IOException {
+  public void process(AppDeploymentInfo deploymentInfo) throws Exception {
 
     ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
@@ -113,6 +117,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     } else {
       applicationId = deploymentInfo.getNamespaceId().app(specification.getName(), appVersion);
     }
+    authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),

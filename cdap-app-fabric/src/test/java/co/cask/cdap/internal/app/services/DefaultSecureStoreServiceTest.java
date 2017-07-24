@@ -151,8 +151,8 @@ public class DefaultSecureStoreServiceTest {
       // expected
     }
 
-    // Grant ALICE write access to the namespace
-    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
+    // Grant ALICE admin access to the secure key
+    grantAndAssertSuccess(secureKeyId1, ALICE, EnumSet.of(Action.ADMIN));
     // Write should succeed
     secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
                                      Collections.<String, String>emptyMap());
@@ -163,9 +163,12 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(KEY1));
     revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
 
-    // Should still be able to list the keys since ALICE has namespace access privilege
-    secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
-    Assert.assertEquals(1, secureKeyListEntries.size());
+    // Should not be able to list the keys since ALICE does not have privilege on the secure key
+    try {
+      secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
@@ -194,8 +197,6 @@ public class DefaultSecureStoreServiceTest {
         return input.getEntity().equals(secureKeyId1);
       }
     };
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), secureKeyIdFilter).isEmpty());
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
   }
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {

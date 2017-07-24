@@ -17,7 +17,12 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ParentedId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -34,6 +39,7 @@ import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +50,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class InMemoryAuthorizer extends AbstractAuthorizer {
 
-  private final ConcurrentMap<EntityId, ConcurrentMap<Principal, Set<Action>>> privileges = new ConcurrentHashMap<>();
+  private final ConcurrentMap<AuthorizableEntityId, ConcurrentMap<Principal, Set<Action>>> privileges =
+    new ConcurrentHashMap<>();
   private final ConcurrentMap<Role, Set<Principal>> roleToPrincipals = new ConcurrentHashMap<>();
   private final Set<Principal> superUsers = new HashSet<>();
   // Bypass enforcement for tests that want to simulate every user as a super user
@@ -80,7 +87,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
       }
     }
     if (!allowedForRoles.containsAll(actions)) {
-      throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity);
+      throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity, true);
     }
   }
 
@@ -89,16 +96,24 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
       return entityIds;
     }
-    return super.isVisible(entityIds, principal);
+    Set<EntityId> results =  new HashSet<>();
+    for (EntityId entityId : entityIds) {
+      for (AuthorizableEntityId existingEntity : privileges.keySet()) {
+        if (isParent(entityId, existingEntity.getEntityId())) {
+          Set<Action> allowedActions = privileges.get(existingEntity).get(principal);
+          if (allowedActions != null && !allowedActions.isEmpty()) {
+            results.add(entityId);
+            break;
+          }
+        }
+      }
+    }
+    return results;
   }
 
   @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    // super users do not have any enforcement
-    if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
-      return ALLOW_ALL;
-    }
-    return super.createFilter(principal);
+    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
   }
 
   @Override
@@ -113,7 +128,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   @Override
   public void revoke(EntityId entity) {
-    privileges.remove(entity);
+    privileges.remove(new AuthorizableEntityId(entity));
   }
 
   @Override
@@ -181,21 +196,23 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   private Set<Privilege> getPrivileges(Principal principal) {
     Set<Privilege> result = new HashSet<>();
-    for (Map.Entry<EntityId, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
-      EntityId entityId = entry.getKey();
-      Set<Action> actions = getActions(entityId, principal);
+    for (Map.Entry<AuthorizableEntityId, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
+      AuthorizableEntityId entityId = entry.getKey();
+      Set<Action> actions = getActions(entityId.getEntityId(), principal);
       for (Action action : actions) {
-        result.add(new Privilege(entityId, action));
+        result.add(new Privilege(entityId.getEntityId(), action));
       }
     }
     return Collections.unmodifiableSet(result);
   }
 
   private Set<Action> getActions(EntityId entity, Principal principal) {
-    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(entity);
+    AuthorizableEntityId authorizableEntityId = new AuthorizableEntityId(entity);
+    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(authorizableEntityId);
     if (allActions == null) {
       allActions = new ConcurrentHashMap<>();
-      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(entity, allActions);
+      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(authorizableEntityId,
+                                                                                        allActions);
       allActions = (existingAllActions == null) ? allActions : existingAllActions;
     }
     Set<Action> actions = allActions.get(principal);
@@ -216,5 +233,80 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
       }
     }
     return roles;
+  }
+
+  private boolean isParent(EntityId guessingParent, EntityId guessingChild) {
+    return guessingParent.equals(guessingChild) ||
+      (guessingChild instanceof ParentedId && isParent(guessingParent, ((ParentedId) guessingChild).getParent()));
+  }
+
+  public final class AuthorizableEntityId {
+    private final EntityId entityId;
+
+    AuthorizableEntityId(EntityId entityId) {
+      this.entityId = entityId;
+    }
+
+    public EntityId getEntityId() {
+      return entityId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      AuthorizableEntityId that = (AuthorizableEntityId) o;
+      if (!that.getEntityId().getEntityType().equals(entityId.getEntityType())) {
+        return false;
+      }
+
+      EntityId thatEntityId = that.getEntityId();
+      if (entityId.getEntityType().equals(EntityType.ARTIFACT)) {
+        ArtifactId artifactId = (ArtifactId) entityId;
+        ArtifactId thatArtifactId = (ArtifactId) thatEntityId;
+        return Objects.equals(artifactId.getNamespace(), thatArtifactId.getNamespace()) &&
+          Objects.equals(artifactId.getArtifact(), thatArtifactId.getArtifact());
+      }
+      if (entityId.getEntityType().equals(EntityType.APPLICATION)) {
+        ApplicationId applicationId = (ApplicationId) entityId;
+        ApplicationId thatApplicationId = (ApplicationId) thatEntityId;
+        return Objects.equals(applicationId.getNamespace(), thatApplicationId.getNamespace()) &&
+          Objects.equals(applicationId.getApplication(), thatApplicationId.getApplication());
+      }
+      if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+        ProgramId programId = (ProgramId) entityId;
+        ProgramId thatProgramId = (ProgramId) thatEntityId;
+        return Objects.equals(programId.getNamespace(), thatProgramId.getNamespace()) &&
+          Objects.equals(programId.getApplication(), thatProgramId.getApplication()) &&
+          Objects.equals(programId.getType(), thatProgramId.getType()) &&
+          Objects.equals(programId.getProgram(), thatProgramId.getProgram());
+      }
+      return Objects.equals(entityId, that.entityId);
+    }
+
+    @Override
+    public int hashCode() {
+      if (entityId.getEntityType().equals(EntityType.ARTIFACT)) {
+        ArtifactId artifactId = (ArtifactId) entityId;
+        return Objects.hash(artifactId.getEntityType(), artifactId.getNamespace(), artifactId.getArtifact());
+      }
+      if (entityId.getEntityType().equals(EntityType.APPLICATION)) {
+        ApplicationId applicationId = (ApplicationId) entityId;
+        return Objects.hash(applicationId.getEntityType(), applicationId.getNamespace(),
+                            applicationId.getApplication());
+      }
+      if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+        ProgramId programId = (ProgramId) entityId;
+        return Objects.hash(programId.getEntityType(), programId.getNamespace(), programId.getApplication(),
+                            programId.getType(), programId.getProgram());
+      }
+      return Objects.hash(entityId);
+    }
   }
 }

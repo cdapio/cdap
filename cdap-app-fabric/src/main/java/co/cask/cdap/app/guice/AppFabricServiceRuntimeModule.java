@@ -69,7 +69,10 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import co.cask.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
@@ -148,6 +151,7 @@ import java.util.List;
  * AppFabric Service Runtime Module.
  */
 public final class AppFabricServiceRuntimeModule extends RuntimeModule {
+  public static final String NOAUTH_ARTIFACT_REPO = "noAuthArtifactRepo";
 
   @Override
   public Module getInMemoryModules() {
@@ -370,6 +374,12 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(co.cask.cdap.scheduler.Scheduler.class).to(CoreSchedulerService.class);
+      bind(ArtifactRepository.class)
+        .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
+        .to(DefaultArtifactRepository.class)
+        .in(Scopes.SINGLETON);
+      bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));
 

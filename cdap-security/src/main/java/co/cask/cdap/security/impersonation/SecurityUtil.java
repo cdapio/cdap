@@ -262,8 +262,8 @@ public final class SecurityUtil {
    * impersonation principal
    */
   public static void verifyOwnerPrincipal(NamespacedEntityId existingEntity,
-                                    @Nullable String specifiedOwnerPrincipal,
-                                    OwnerAdmin ownerAdmin)
+                                          @Nullable String specifiedOwnerPrincipal,
+                                          OwnerAdmin ownerAdmin)
     throws IOException, UnauthorizedException {
     // if an owner principal was not specified then ensure that a direct owner doesn't exist. Although, if an owner
     // principal was specified then it must be equal to the effective impersonating principal of this entity
