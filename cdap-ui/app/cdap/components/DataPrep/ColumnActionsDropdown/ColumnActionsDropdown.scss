@@ -23,6 +23,7 @@ $action-item-font-color: #373a3c;
 $action-item-action-font-color: #333333;
 $action-item-font-family: Helvetica, Arial, sans-serif;
 $action-item-disabled-color: lighten($action-item-font-color, 50%);
+$column-type-label-color: #b6babc;
 
 .column-actions-dropdown-container {
   > .fa.fa-caret-down {
@@ -93,6 +94,21 @@ $action-item-disabled-color: lighten($action-item-font-color, 50%);
       cursor: initial;
       box-shadow: 1px 1px 5px $border-shadow-color;
 
+      .column-type-label {
+        height: 11px;
+        width: 100%;
+        color: $column-type-label-color;
+        border-bottom: 1px solid currentColor;
+        clear: both;
+        padding-left: 20px;
+        margin-bottom: 10px;
+
+        > span {
+          background-color: white;
+          padding: 0 7px;
+        }
+      }
+
       .warning-container {
         margin-bottom: -5px;
 
@@ -127,6 +143,14 @@ $action-item-disabled-color: lighten($action-item-font-color, 50%);
 
     .third-level-popover {
       @extend .second-level-popover;
+
+      .create-new-column-line {
+        cursor: pointer;
+      }
+    }
+
+    .icon-caret-right {
+      width: 5px;
     }
   }
 }
