@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.namespace;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -34,8 +33,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -66,6 +65,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +94,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final InstanceId instanceId;
   private final Impersonator impersonator;
   private final CConfiguration cConf;
   private final LoadingCache<NamespaceId, NamespaceMeta> namespaceMetaCache;
@@ -117,7 +116,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
-    this.instanceId = createInstanceId(cConf);
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
     this.impersonator = impersonator;
     this.cConf = cConf;
@@ -146,7 +144,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
    * @throws NamespaceAlreadyExistsException if the specified namespace already exists
    */
   @Override
-  @AuthEnforce(entities = "instanceId", enforceOn = InstanceId.class, actions = Action.ADMIN)
   public synchronized void create(final NamespaceMeta metadata) throws Exception {
     // TODO: CDAP-1427 - This should be transactional, but we don't support transactions on files yet
     Preconditions.checkArgument(metadata != null, "Namespace metadata should not be null.");
@@ -154,6 +151,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     if (exists(namespace)) {
       throw new NamespaceAlreadyExistsException(namespace);
     }
+    String ownerPrincipal = metadata.getConfig().getPrincipal();
+    if (ownerPrincipal != null) {
+      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), authenticationContext.getPrincipal(),
+                                    Action.ADMIN);
+    }
+    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {
@@ -337,7 +340,6 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   @Override
-  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
   public synchronized void deleteDatasets(@Name("namespaceId") NamespaceId namespaceId) throws Exception {
     // TODO: CDAP-870, CDAP-1427: Delete should be in a single transaction.
     if (!exists(namespaceId)) {
@@ -405,13 +407,18 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public List<NamespaceMeta> list() throws Exception {
     List<NamespaceMeta> namespaces = nsStore.list();
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    final Principal principal = authenticationContext.getPrincipal();
     return Lists.newArrayList(
       Iterables.filter(namespaces, new com.google.common.base.Predicate<NamespaceMeta>() {
         @Override
         public boolean apply(NamespaceMeta namespaceMeta) {
-          return filter.apply(namespaceMeta.getNamespaceId());
+          try {
+            return !authorizationEnforcer.isVisible(Collections.singleton(namespaceMeta.getNamespaceId()),
+                                                    principal).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for namespace: {}", namespaceMeta.getNamespaceId());
+            return false;
+          }
         }
       })
     );
@@ -445,10 +452,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       return namespaceMeta;
     }
 
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(namespaceId)) {
-      throw new UnauthorizedException(principal, namespaceId);
-    }
+    ensureAccess(namespaceId);
     return namespaceMeta;
   }
 
@@ -461,6 +465,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   @Override
   public boolean exists(NamespaceId namespaceId) throws Exception {
     try {
+      ensureAccess(namespaceId);
       // here we are not calling get(Id.Namespace namespaceId) method as we don't want authorization enforcement for
       // exists
       namespaceMetaCache.get(namespaceId);
@@ -514,5 +519,12 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
+  }
+
+  private void ensureAccess(NamespaceId namespaceId) throws Exception {
+    if (authorizationEnforcer.isVisible(Collections.singleton(namespaceId),
+                                        authenticationContext.getPrincipal()).isEmpty()) {
+      throw new UnauthorizedException(authenticationContext.getPrincipal(), namespaceId);
+    }
   }
 }

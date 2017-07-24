@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -36,7 +35,6 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.security.AuthEnforce;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
@@ -57,7 +55,6 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -563,9 +560,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * the specified program. To get runtime arguments for a program, a user requires
    * {@link Action#READ} privileges on the program.
    */
-  @AuthEnforce(entities = "programId", enforceOn = ProgramId.class, actions = Action.READ)
-  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId)
-    throws NotFoundException, UnauthorizedException {
+  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    // user can have READ, ADMIN or EXECUTE to retrieve the runtime arguments
+    boolean isAuthorized = false;
+    for (Action action : EnumSet.of(Action.READ, Action.EXECUTE, Action.ADMIN)) {
+      try {
+        authorizationEnforcer.enforce(programId, principal, action);
+        isAuthorized = true;
+        break;
+      } catch (UnauthorizedException e) {
+        // continue to next action
+      }
+    }
+    if (!isAuthorized) {
+      throw new UnauthorizedException(principal, programId);
+    }
+
     if (!store.programExists(programId)) {
       throw new NotFoundException(programId);
     }
@@ -812,8 +823,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private boolean hasAccess(ProgramId programId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return filter.apply(programId);
+    return !authorizationEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
 
   private void setWorkerInstances(ProgramId programId, int instances)

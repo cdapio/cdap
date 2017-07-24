@@ -68,13 +68,16 @@ public abstract class AbstractAuthorizer implements Authorizer {
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
     Set<EntityId> visibleEntities = new HashSet<>();
     for (EntityId entityId : entityIds) {
-      try {
-        enforce(entityId, principal, EnumSet.allOf(Action.class));
-        visibleEntities.add(entityId);
-      } catch (UnauthorizedException e) {
-        // continue to next entity
-      } catch (Exception ex) {
-        throw new RuntimeException(ex);
+      for (Action action : EnumSet.allOf(Action.class)) {
+        try {
+          enforce(entityId, principal, action);
+          visibleEntities.add(entityId);
+          break;
+        } catch (UnauthorizedException e) {
+          // continue to next check
+        } catch (Exception ex) {
+          throw new RuntimeException(ex);
+        }
       }
     }
     return visibleEntities;
@@ -85,14 +88,17 @@ public abstract class AbstractAuthorizer implements Authorizer {
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, EnumSet.allOf(Action.class));
-          return true;
-        } catch (UnauthorizedException e) {
-          return false;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
+        for (Action action : EnumSet.allOf(Action.class)) {
+          try {
+            enforce(entityId, principal, action);
+            return true;
+          } catch (UnauthorizedException e) {
+            // continue to next check
+          } catch (Exception ex) {
+            throw new RuntimeException(ex);
+          }
         }
+        return false;
       }
     };
   }

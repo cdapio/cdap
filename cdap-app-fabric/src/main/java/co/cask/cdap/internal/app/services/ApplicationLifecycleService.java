@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ApplicationClass;
@@ -31,9 +30,7 @@ import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.plugin.Plugin;
-import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -88,7 +85,6 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -101,6 +97,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -217,8 +214,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
       appIds.add(namespace.app(appSpec.getName(), appSpec.getAppVersion()));
     }
+    Set<? extends EntityId> visibleAppIds = authorizationEnforcer.isVisible(appIds,
+                                                                            authenticationContext.getPrincipal());
 
-    for (ApplicationId appId : appIds) {
+    for (EntityId entityId : visibleAppIds) {
+      ApplicationId appId = (ApplicationId) entityId;
       ApplicationSpecification appSpec = store.getApplication(appId);
       if (appSpec == null) {
         continue;
@@ -234,15 +234,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         appRecords.add(record);
       }
     }
-
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return Lists.newArrayList(Iterables.filter(appRecords, new com.google.common.base.Predicate<ApplicationRecord>() {
-      @Override
-      public boolean apply(ApplicationRecord appRecord) {
-        return filter.apply(namespace.app(appRecord.getName()));
-      }
-    }));
+    return appRecords;
   }
 
   /**
@@ -279,12 +271,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if ensureAccess throws exception
    */
   public boolean updateAppAllowed(ApplicationId appId) throws Exception {
-    ensureAccess(appId);
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       // App does not exist. Allow to create a new one
       return true;
     }
+    ensureAccess(appId);
     String version = appId.getVersion();
     return version.endsWith(ApplicationId.DEFAULT_VERSION);
   }
@@ -307,6 +299,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public ApplicationWithPrograms updateApp(ApplicationId appId, AppRequest appRequest,
                                            ProgramTerminator programTerminator) throws Exception {
 
+    ensureAccess(appId);
     // check that app exists
     ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
@@ -663,8 +656,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ArtifactDetail artifactDetail,
                                             @Nullable KerberosPrincipalId ownerPrincipal,
                                             boolean updateSchedules) throws Exception {
-    // Enforce that the current principal has write access to the namespace the app is being deployed to
-    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.WRITE);
+    KerberosPrincipalId principalId = ownerPrincipal == null ? null : ownerPrincipal;
+    if (!namespaceId.equals(NamespaceId.SYSTEM) && ownerPrincipal == null) {
+      // if dataset owner is not present, get the namespace impersonation principal
+      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(namespaceId);
+      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
+    }
+    // enforce that the current principal has the admin privilege on the impersonated principal
+    if (principalId != null) {
+      authorizationEnforcer.enforce(principalId, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
+    // Enforce that the current principal has admin privilege on the app
+    authorizationEnforcer.enforce(namespaceId.app(appName), authenticationContext.getPrincipal(), Action.ADMIN);
 
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
@@ -860,8 +863,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void ensureAccess(ApplicationId appId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(appId)) {
+    if (authorizationEnforcer.isVisible(Collections.singleton(appId), principal).isEmpty()) {
       throw new UnauthorizedException(principal, appId);
     }
   }
