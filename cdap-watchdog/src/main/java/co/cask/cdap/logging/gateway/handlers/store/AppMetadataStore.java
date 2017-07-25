@@ -34,7 +34,8 @@ import java.util.concurrent.TimeUnit;
  * JIRA https://issues.cask.co/browse/CDAP-2172
  */
 public class AppMetadataStore extends MetadataStoreDataset {
-  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarted";
+  public static final String TYPE_RUN_RECORD_STARTED = "runRecordStarting";
+  public static final String TYPE_RUN_RECORD_RUNNING = "runRecordStarted";
   public static final String TYPE_RUN_RECORD_COMPLETED = "runRecordCompleted";
   public static final String TYPE_RUN_RECORD_SUSPENDED = "runRecordSuspended";
 
@@ -47,8 +48,14 @@ public class AppMetadataStore extends MetadataStoreDataset {
   // JIRA https://issues.cask.co/browse/CDAP-2172
   public RunRecordMeta getRun(ProgramId program, final String runid) {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
+    RunRecordMeta running = getUnfinishedRun(program, TYPE_RUN_RECORD_RUNNING, runid);
     // If program is running, this will be non-null
+    if (running != null) {
+      return running;
+    }
+
+    // Then query for started run record
+    running = getUnfinishedRun(program, TYPE_RUN_RECORD_STARTED, runid);
     if (running != null) {
       return running;
     }

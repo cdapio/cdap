@@ -150,7 +150,8 @@ public class DynamicPartitioningTestRun extends TestFrameworkTestBase {
         }
         // Get the last run record
         RunRecord runRecord = Iterables.getFirst(runRecords, null);
-        if (runRecord != null && runRecord.getStatus() != ProgramRunStatus.RUNNING) {
+        if (runRecord != null && runRecord.getStatus() != ProgramRunStatus.STARTING &&
+            runRecord.getStatus() != ProgramRunStatus.RUNNING) {
           lastRunRecord.set(runRecord);
         }
         return lastRunRecord.get() != null;

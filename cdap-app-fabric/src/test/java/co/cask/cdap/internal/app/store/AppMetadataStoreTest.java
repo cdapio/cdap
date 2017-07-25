@@ -87,8 +87,10 @@ public class AppMetadataStoreTest {
     txnl.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        metadataStoreDataset.recordProgramStartOldFormat(program, runId.getId(),
-                                                         RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null);
+        metadataStoreDataset.recordProgramStart(program, runId.getId(),
+                                                RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null);
+        metadataStoreDataset.recordProgramRunningOldFormat(program, runId.getId(),
+                                                           RunIds.getTime(runId, TimeUnit.SECONDS), null);
       }
     });
 
@@ -144,7 +146,10 @@ public class AppMetadataStoreTest {
         @Override
         public void apply() throws Exception {
           metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                                  null, null, null);
+                                                  null, ImmutableMap.<String, String>of(),
+                                                  ImmutableMap.<String, String>of());
+          metadataStoreDataset.recordProgramRunning(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS) + 1,
+                                                  null);
           metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                                  ProgramRunStatus.values()[j % ProgramRunStatus.values().length], null);
         }
@@ -258,6 +263,8 @@ public class AppMetadataStoreTest {
           // Start the program and stop it
           metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                                   null, null, null);
+          metadataStoreDataset.recordProgramRunning(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
+                                                    null);
           metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                                  ProgramRunStatus.values()[index % ProgramRunStatus.values().length],
                                                  null);

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
@@ -33,8 +35,9 @@ final class MapReduceProgramController extends ProgramControllerServiceAdapter i
 
   private final BasicMapReduceContext context;
 
-  MapReduceProgramController(Service mapReduceRuntimeService, BasicMapReduceContext context) {
-    super(mapReduceRuntimeService, context.getProgram().getId(), context.getRunId());
+  MapReduceProgramController(Service mapReduceRuntimeService, BasicMapReduceContext context,
+                             String twillRunId, ProgramStateWriter programStateWriter) {
+    super(mapReduceRuntimeService, context.getProgramRunId(), twillRunId, programStateWriter);
     this.context = context;
   }
 

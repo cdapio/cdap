@@ -19,6 +19,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedFlowProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
@@ -26,6 +27,7 @@ import co.cask.cdap.internal.app.runtime.distributed.DistributedServiceProgramRu
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
@@ -38,6 +40,9 @@ final class DistributedProgramRunnerModule extends PrivateModule {
 
   @Override
   protected void configure() {
+    // Bind ProgramStateWriter
+    bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =
       MapBinder.newMapBinder(binder(), ProgramType.class, ProgramRunner.class);
