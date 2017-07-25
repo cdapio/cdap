@@ -24,17 +24,17 @@
 @endpoint-circle-radius: 7px;
 
 .increase-border-height-width() {
-  @new-border-width: 2px;
+  @current-border-width: 2px;
+  @new-border-width: 3px;
   border-width: @new-border-width;
 
-  /* 1 here being the current border-width */
-  margin: -(@new-border-width - 1);
-  width: @node-box-width + @new-border-width;
-  height: @node-box-height + @new-border-width;
+  margin: -(@new-border-width - @current-border-width);
+  width: @node-box-width + (@new-border-width - @current-border-width) * 2;
+  height: @node-box-height + (@new-border-width - @current-border-width) * 2;
 }
 
 .border-color-hover() {
-  border: 1px solid currentColor;
+  border: 2px solid currentColor;
 
   &:hover {
     .increase-border-height-width();
@@ -113,6 +113,7 @@ my-dag-plus {
       padding: 0;
       height: @node-box-height;
       width: @node-box-width;
+      z-index: 2;
 
       .node {
         position: relative;
@@ -124,6 +125,7 @@ my-dag-plus {
         .transition(background-color 50ms linear);
         .transition(color 50ms linear);
         background-clip: border-box;
+        z-index: 1;
 
         .endpoint-circle {
           width: @endpoint-circle-radius * 2;
@@ -137,6 +139,26 @@ my-dag-plus {
           align-items: center;
           justify-content: center;
 
+          &:before {
+            content: '';
+            position: absolute;
+            left: 100%;
+            width: 5px;
+            border-bottom: 2px solid @endpoint-connection-hover-stroke-color;
+            display: none;
+          }
+
+          &:after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top: @endpoint-circle-radius solid transparent;
+            border-bottom: @endpoint-circle-radius solid transparent;
+            border-left: @endpoint-circle-radius solid @endpoint-connection-hover-stroke-color;
+            transform: translateX(12px);
+            display: none;
+          }
+
           .endpoint-caret {
             width: 0;
             height: 0;
@@ -147,10 +169,17 @@ my-dag-plus {
           }
 
           &:hover {
-            background-color: @endpoint-connection-hover-stroke-color;
+            &:not(.disabled) {
+              background-color: @endpoint-connection-hover-stroke-color;
 
-            .endpoint-caret {
-              visibility: hidden;
+              &:before,
+              &:after {
+                display: block;
+              }
+
+              .endpoint-caret {
+                visibility: hidden;
+              }
             }
           }
         }
@@ -185,59 +214,46 @@ my-dag-plus {
           }
         }
 
+        .node-actions {
+          display: flex;
+          position: absolute;
+          width: 100%;
+          bottom: 0;
+          padding-bottom: 10px;
+          padding-right: 12px;
+          align-items: center;
+
+          .node-actions-error-alert {
+            cursor: not-allowed;
+            color: @hamburger-menu-color;
+            font-size: 12px;
+
+            .node-actions-error {
+              margin-right: 5px;
+            }
+          }
+
+          .menu-icon-node {
+            padding-right: 12px;
+            margin-left: auto;
+
+            &.fa.fa-bars {
+              &.disabled {
+                cursor: not-allowed;
+              }
+
+              &:not(.disabled) {
+                &:hover {
+                  color: @hamburger-hover-color;
+                }
+              }
+            }
+          }
+        }
+
         .menu-icon {
           font-size: 16px;
           color: @hamburger-menu-color;
-        }
-
-        .menu-icon-node {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-          padding-bottom: inherit;
-          padding-right: inherit;
-          transform: translateY(3px);
-
-          &.fa.fa-bars {
-            &.disabled {
-              cursor: not-allowed;
-            }
-
-            &:not(.disabled) {
-              &:hover {
-                color: @hamburger-hover-color;
-              }
-            }
-          }
-        }
-
-        .node-popover-menu {
-          width: 85px;
-          border: 1px solid black;
-          position: absolute;
-          background-color: white;
-          right: -53px;
-          top: 47px;
-          z-index: 1000;
-
-          .menu-icon {
-            color: @hamburger-hover-color;
-            padding: 5px;
-          }
-
-          .menu-content {
-            padding: 10px;
-
-            .menu-content-action {
-              &:hover {
-                background-color: @node-menu-action-bg-color;
-              }
-            }
-
-            .menu-content-delete {
-              color: @node-menu-delete-color;
-            }
-          }
         }
 
         .error-node-notification {
@@ -254,7 +270,7 @@ my-dag-plus {
         }
 
         .node-configure-btn {
-          font-size: 11px;
+          font-size: 10px;
           border: 1px solid currentColor;
           padding: 3px;
           background-color: white;
@@ -296,6 +312,45 @@ my-dag-plus {
             &:not(.disabled) {
               color: @hamburger-node-hover-color;
             }
+          }
+        }
+      }
+
+      .node-popover-menu {
+        width: 150px;
+        border: 1px solid black;
+        position: absolute;
+        background-color: white;
+        right: -118px;
+        top: 43px;
+        z-index: 1000;
+
+        .menu-icon {
+          color: @hamburger-hover-color;
+          padding: 5px;
+        }
+
+        .menu-content {
+          padding: 5px 10px;
+          color: @configure-btn-label-color;
+
+          .menu-content-action {
+            &:hover {
+              background-color: @node-menu-action-bg-color;
+            }
+
+            &.disabled {
+              cursor: not-allowed;
+              opacity: 0.5;
+            }
+
+            &.menu-content-delete {
+              color: @node-menu-delete-color;
+            }
+          }
+
+          hr {
+            margin: 5px 0;
           }
         }
       }
@@ -416,6 +471,8 @@ my-dag-plus {
     }
 
     .jsplumb-endpoint {
+      z-index: 1;
+
       svg * {
         fill: transparent;
         stroke: transparent;
