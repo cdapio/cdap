@@ -39,8 +39,8 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
   private final WorkflowContext context;
 
   public BasicConditionContext(WorkflowContext context, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                               StageSpec stageInfo, BasicArguments arguments) {
-    super(context, serviceDiscoverer, metrics, stageInfo, arguments);
+                               StageSpec stageInfo, BasicArguments arguments, String namespace) {
+    super(context, serviceDiscoverer, metrics, stageInfo, arguments, namespace);
     this.context = context;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>FieldLevelLineage is a DataType for computing lineage for each field in a dataset.
+ * <p>FieldLevelLineage is a data type for computing lineage for each field in a dataset.
  * An instance of this type can be sent to be sent to platform through API for transform stages.</p>
  */
 public interface FieldLevelLineage {
