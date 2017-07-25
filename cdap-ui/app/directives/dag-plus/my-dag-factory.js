@@ -111,14 +111,14 @@ angular.module(PKG.name + '.commons')
         Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
         Endpoint: 'Dot',
         EndpointStyle: { radius: 1 },
-        Connector: [ 'StateMachine', { proximityLimit: 200 } ],
+        Connector: [ 'Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0 } ],
         PaintStyle: {
           strokeStyle: '#4e5568',
           lineWidth: 2,
           outlineColor: 'transparent',
           outlineWidth: 4
         },
-        HoverPaintStyle: { strokeStyle: '#1379d9', lineWidth: 2 },
+        HoverPaintStyle: { strokeStyle: '#58B7F6', lineWidth: 4 },
         ConnectionOverlays: [
           ['Arrow', {
               location: 1,

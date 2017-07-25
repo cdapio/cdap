@@ -15,20 +15,19 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip, DAGPlusPlusNodesDispatcher) {
 
     var vm = this;
 
+    var dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
+    dispatcher.register('onUndoActions', resetEndpointsAndConnections);
+    dispatcher.register('onRedoActions', resetEndpointsAndConnections);
+
     var numberFilter = $filter('number');
 
-    var endpoints = [];
+    // var endpoints = [];
 
-    var settings = DAGPlusPlusFactory.getSettings();
-
-    var sourceOrigin = settings.sourceOrigin,
-        transformOrigin = settings.transformOrigin;
-
-    let localX,localY;
+    let localX, localY;
 
     var SHOW_METRICS_THRESHOLD = 0.8;
     var METRICS_THRESHOLD = 999999999999;
@@ -53,11 +52,6 @@ angular.module(PKG.name + '.commons')
       }]
     ];
 
-    if ($scope.showMetrics) {
-      sourceOrigin.overlays = metricsLabel;
-      transformOrigin.overlays = metricsLabel;
-    }
-
     var dragged = false;
     var canvasDragged = false;
 
@@ -78,14 +72,15 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.comments = [];
-    vm.showNodeMenu = {};
+    vm.nodeMenuOpen = null;
 
     var repaintTimeout = null,
         commentsTimeout = null,
         nodesTimeout = null,
         fitToScreenTimeout = null,
         initTimeout = null,
-        nodePopoverTimeout = null;
+        nodePopoverTimeout = null,
+        resetTimeout = null;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
 
@@ -133,20 +128,22 @@ angular.module(PKG.name + '.commons')
         // addEndpoints();
         initNodes();
         addConnections();
-        vm.instance.bind('connection', formatConnections);
-        vm.instance.bind('connectionDetached', formatConnections);
+        vm.instance.bind('connection', setConnection);
+        vm.instance.bind('connectionDetached', detachConnection);
+        vm.instance.bind('beforeDrop', checkIfConnectionExists);
         Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
         Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
 
         if (vm.isDisabled) {
           // Disable all endpoints
-          angular.forEach(endpoints, function (node) {
-            var endpointArr = vm.instance.getEndpoints(node);
+          angular.forEach($scope.nodes, function (node) {
+            var endpointArr = vm.instance.getEndpoints(node.name);
 
-            // There should only be 2 endpoints per nodes, left and right
-            angular.forEach(endpointArr, function (endpoint) {
-              endpoint.setEnabled(false);
-            });
+            if (endpointArr) {
+              angular.forEach(endpointArr, function (endpoint) {
+                endpoint.setEnabled(false);
+              });
+            }
           });
         }
 
@@ -271,6 +268,7 @@ angular.module(PKG.name + '.commons')
 
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+
       var nodeInfo = nodePopovers[node.name];
 
       nodeInfo.popover = $popover(nodeInfo.element, {
@@ -371,20 +369,27 @@ angular.module(PKG.name + '.commons')
 
     function initNodes() {
       angular.forEach($scope.nodes, function (node) {
-        vm.instance.makeSource(node.name, {
+        let sourceObj = {
           isSource: true,
           filter: '.endpoint-circle',
-
           connectionType: 'basic'
-        });
+        };
+        if (vm.isDisabled) {
+          sourceObj.enabled = false;
+        }
+        if ($scope.showMetrics) {
+          sourceObj.endpoint = {
+            connectorOverlays: metricsLabel
+          };
+        }
+        vm.instance.makeSource(node.name, sourceObj);
 
         vm.instance.makeTarget(node.name, {
           isTarget: true,
           dropOptions: { hoverClass: 'drag-hover' },
-          // Five available anchor positions on the left edge
-          anchor: [ [0, 0.9, -1, 0], [0, 0.7, -1, 0], [0, 0.5, -1, 0], [0, 0.3, -1, 0], [0, 0.1, -1, 0]],
+          anchor: 'ContinuousLeft',
           paintStyle: { radius: 10 },
-          allowLoopback: true
+          allowLoopback: false
         });
       });
     }
@@ -446,13 +451,9 @@ angular.module(PKG.name + '.commons')
           return;
         }
 
-        // var sourceId = 'Origin' + conn.from;
-        // var targetId = 'Target' + conn.to;
-
         var connObj = {
           source: conn.from,
           target: conn.to
-          // uuids: [sourceId, targetId]
         };
 
         vm.instance.connect(connObj);
@@ -469,30 +470,67 @@ angular.module(PKG.name + '.commons')
       };
     }
 
-    function formatConnections() {
-      var connections = [];
-      angular.forEach(vm.instance.getConnections(), function (conn) {
-        connections.push({
-          from: conn.sourceId,
-          to: conn.targetId
-        });
+    function setConnection(newConnObj) {
+      $scope.connections.push({
+        from: newConnObj.sourceId,
+        to: newConnObj.targetId
       });
-      DAGPlusPlusNodesActionsFactory.setConnections(connections);
+      DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+    }
+
+    function detachConnection(detachedConnObj) {
+      angular.forEach($scope.connections, function (conn) {
+        if (conn.from === detachedConnObj.sourceId && conn.to === detachedConnObj.targetId) {
+          $scope.connections.splice($scope.connections.indexOf(conn), 1);
+          return;
+        }
+      });
+      DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+    }
+
+    // return false if connection already exists, which will prevent the connecton from being formed
+    function checkIfConnectionExists(connObj) {
+      let exists = false;
+      angular.forEach($scope.connections, function (conn) {
+        if (conn.from === connObj.sourceId && conn.to === connObj.targetId) {
+          exists = true;
+        }
+      });
+      return !exists;
     }
 
     function resetEndpointsAndConnections() {
-      // have to unbind and bind again, otherwise calling detachEveryConnection will call formatConnections
+      // have to unbind and bind again, otherwise calling detachEveryConnection will call detachConnection()
       // for every connection that we detach
       vm.instance.unbind('connection');
       vm.instance.unbind('connectionDetached');
-      // endpoints = [];
+      vm.instance.unbind('beforeDrop');
       vm.instance.detachEveryConnection();
       vm.instance.deleteEveryEndpoint();
-      // addEndpoints();
-      initNodes();
-      addConnections();
-      vm.instance.bind('connection', formatConnections);
-      vm.instance.bind('connectionDetached', formatConnections);
+
+      if (resetTimeout) {
+        $timeout.cancel(resetTimeout);
+      }
+      resetTimeout = $timeout(function () {
+        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
+        $scope.connections = DAGPlusPlusNodesStore.getConnections();
+        vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
+        vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
+        initNodes();
+        addConnections();
+        vm.instance.bind('connection', setConnection);
+        vm.instance.bind('connectionDetached', detachConnection);
+        vm.instance.bind('beforeDrop', checkIfConnectionExists);
+      });
+
+      if (commentsTimeout) {
+        vm.comments = DAGPlusPlusNodesStore.getComments();
+        $timeout.cancel(commentsTimeout);
+      }
+
+      commentsTimeout = $timeout(function () {
+        makeCommentsDraggable();
+      });
     }
 
     function makeNodesDraggable() {
@@ -553,12 +591,10 @@ angular.module(PKG.name + '.commons')
     });
 
     jsPlumb.ready(function() {
-      // var dagSettings = DAGPlusPlusFactory.getSettings().default;
       var dagSettings2 = DAGPlusPlusFactory.getSettings2();
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings2);
-      // vm.instance.registerConnectionType('basic', { anchor:'Continuous', connector:'StateMachine' });
 
       init();
 
@@ -579,36 +615,42 @@ angular.module(PKG.name + '.commons')
         });
       }
 
-      // This is needed to redraw connections and endpoints on browser resize
-      angular.element($window).on('resize', vm.instance.repaintEverything);
-
-      DAGPlusPlusNodesStore.registerOnChangeListener(function () {
-        vm.instance.unbind('connection');
-        vm.instance.unbind('connectionDetached');
-        $scope.nodes = DAGPlusPlusNodesStore.getNodes();
-        $scope.connections = DAGPlusPlusNodesStore.getConnections();
-        vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
-        vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
-        vm.comments = DAGPlusPlusNodesStore.getComments();
-        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
-
+      // doing this to listen to changes to jsut $scope.nodes instead of everything else
+      $scope.$watch('nodes', function() {
         if (!vm.isDisabled) {
           if (nodesTimeout) {
             $timeout.cancel(nodesTimeout);
           }
           nodesTimeout = $timeout(function () {
-            resetEndpointsAndConnections();
+            initNodes();
             makeNodesDraggable();
           });
-
-          if (commentsTimeout) {
-            $timeout.cancel(commentsTimeout);
-          }
-
-          commentsTimeout = $timeout(function () {
-            makeCommentsDraggable();
-          });
         }
+      }, true);
+
+      // This is needed to redraw connections and endpoints on browser resize
+      angular.element($window).on('resize', vm.instance.repaintEverything);
+
+      DAGPlusPlusNodesStore.registerOnChangeListener(function () {
+        vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
+
+        // if (!vm.isDisabled) {
+        //   if (nodesTimeout) {
+        //     $timeout.cancel(nodesTimeout);
+        //   }
+        //   nodesTimeout = $timeout(function () {
+        //     // resetEndpointsAndConnections();
+        //     makeNodesDraggable();
+        //   });
+
+        //   if (commentsTimeout) {
+        //     $timeout.cancel(commentsTimeout);
+        //   }
+
+        //   commentsTimeout = $timeout(function () {
+        //     makeCommentsDraggable();
+        //   });
+        // }
 
         // can do keybindings only if no node is selected
         if (!vm.activeNodeId) {
@@ -671,7 +713,9 @@ angular.module(PKG.name + '.commons')
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+      vm.instance.unbind('connectionDetached');
       vm.instance.remove(node.name);
+      vm.instance.bind('connectionDetached', detachConnection);
     };
 
     vm.cleanUpGraph = function () {
@@ -702,11 +746,16 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
-    vm.toggleMenu = function (nodeName) {
-      if (!vm.showNodeMenu.hasOwnProperty(nodeName)) {
-        vm.showNodeMenu[nodeName] = true;
+    vm.toggleMenu = function (nodeName, event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      if (vm.nodeMenuOpen === nodeName) {
+        vm.nodeMenuOpen = null;
       } else {
-        vm.showNodeMenu[nodeName] = !vm.showNodeMenu[nodeName];
+        vm.nodeMenuOpen = nodeName;
       }
     };
 
