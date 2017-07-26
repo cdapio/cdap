@@ -22,6 +22,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -43,7 +44,7 @@ public class ExceptionAuthorizationEnforcer implements AuthorizationEnforcer {
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-    throw new UnsupportedOperationException("This method needs to be implemented!");
+    return Collections.emptySet();
   }
 
   @Override

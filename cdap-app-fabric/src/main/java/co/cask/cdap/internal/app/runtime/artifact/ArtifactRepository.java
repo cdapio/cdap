@@ -242,15 +242,21 @@ public class ArtifactRepository {
     if (NamespaceId.SYSTEM.getNamespace().equals(range.getNamespace())) {
       return artifacts;
     }
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+    final Principal principal = authenticationContext.getPrincipal();
     return Lists.newArrayList(
       Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactDetail>() {
         @Override
         public boolean apply(ArtifactDetail artifactDetail) {
           ArtifactId artifactId = artifactDetail.getDescriptor().getArtifactId();
-          return filter.apply(new NamespaceId(range.getNamespace()).artifact(artifactId.getName(),
-                                                            artifactId.getVersion().getVersion()));
+          co.cask.cdap.proto.id.ArtifactId newArtifact =
+            new NamespaceId(range.getNamespace()).artifact(artifactId.getName(),
+                                                           artifactId.getVersion().getVersion());
+          try {
+            return !authorizationEnforcer.isVisible(Collections.singleton(newArtifact), principal).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for artifact: {}", artifactId);
+            return false;
+          }
         }
       })
     );
@@ -469,8 +475,7 @@ public class ArtifactRepository {
     // To add an artifact, a user must have write privileges on the namespace in which the artifact is being added
     // This method is used to add user app artifacts, so enforce authorization on the specified, non-system namespace
     Principal principal = authenticationContext.getPrincipal();
-    NamespaceId namespace = artifactId.getNamespace().toEntityId();
-    authorizationEnforcer.enforce(namespace, principal, Action.WRITE);
+    authorizationEnforcer.enforce(artifactId.toEntityId(), principal, Action.ADMIN);
 
     ArtifactDetail artifactDetail = addArtifact(artifactId, artifactFile, parentArtifacts, additionalPlugins,
                                                 Collections.<String, String>emptyMap());
@@ -822,14 +827,21 @@ public class ArtifactRepository {
    */
   private List<ArtifactSummary> filterAuthorizedArtifacts(List<ArtifactSummary> artifacts, final NamespaceId namespace)
     throws Exception {
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
     return Lists.newArrayList(
       Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactSummary>() {
         @Override
         public boolean apply(ArtifactSummary artifactSummary) {
+          co.cask.cdap.proto.id.ArtifactId artifactId =
+            namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion());
           // no authorization on system artifacts
-          return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
-            filter.apply(namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion()));
+          try {
+            return ArtifactScope.SYSTEM.equals(artifactSummary.getScope()) ||
+              !authorizationEnforcer.isVisible(Collections.singleton(artifactId),
+                                               authenticationContext.getPrincipal()).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for artifact: {}", artifactId);
+            return false;
+          }
         }
       })
     );
@@ -844,14 +856,21 @@ public class ArtifactRepository {
    */
   private List<ArtifactInfo> filterAuthorizedArtifactInfos(List<ArtifactInfo> artifacts,
                                                            final NamespaceId namespace) throws Exception {
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
     return Lists.newArrayList(
       Iterables.filter(artifacts, new com.google.common.base.Predicate<ArtifactInfo>() {
         @Override
         public boolean apply(ArtifactInfo artifactInfo) {
+          co.cask.cdap.proto.id.ArtifactId artifactId =
+            namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion());
           // no authorization on system artifacts
-          return ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ||
-            filter.apply(namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion()));
+          try {
+            return ArtifactScope.SYSTEM.equals(artifactInfo.getScope()) ||
+              !authorizationEnforcer.isVisible(Collections.singleton(artifactId),
+                                               authenticationContext.getPrincipal()).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for artifact: {}", artifactId);
+            return false;
+          }
         }
       })
     );
@@ -869,8 +888,7 @@ public class ArtifactRepository {
       return;
     }
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(artifactId)) {
+    if (authorizationEnforcer.isVisible(Collections.singleton(artifactId), principal).isEmpty()) {
       throw new UnauthorizedException(principal, artifactId);
     }
   }

@@ -101,6 +101,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -502,7 +503,7 @@ public class AuthorizationTest extends TestBase {
     appManager.delete();
 
     // All privileges on the app should have been revoked
-    Assert.assertFalse(getAuthorizer().createFilter(BOB).apply(dummyAppId));
+    Assert.assertTrue(getAuthorizer().isVisible(Collections.singleton(dummyAppId), BOB).isEmpty());
     assertAllAccess(ALICE, AUTH_NAMESPACE, dummyArtifact, dsId, streamId);
 
     authorizer.revoke(AUTH_NAMESPACE, BOB, ImmutableSet.of(Action.READ));
@@ -1236,7 +1237,7 @@ public class AuthorizationTest extends TestBase {
     grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.allOf(Action.class));
     // clean up. remove the namespace. all privileges on the namespace should be revoked
     getNamespaceAdmin().delete(AUTH_NAMESPACE);
-    Assert.assertEquals(ImmutableSet.of(new Privilege(instance, Action.ADMIN)), authorizer.listPrivileges(ALICE));
+    Assert.assertEquals(Collections.emptySet(), authorizer.listPrivileges(ALICE));
     // revoke privileges on the instance
     revokeAndAssertSuccess(instance);
   }
@@ -1251,10 +1252,10 @@ public class AuthorizationTest extends TestBase {
 
   private void createAuthNamespace() throws Exception {
     Authorizer authorizer = getAuthorizer();
-    grantAndAssertSuccess(instance, ALICE, ImmutableSet.of(Action.ADMIN));
+    grantAndAssertSuccess(AUTH_NAMESPACE, ALICE, ImmutableSet.of(Action.ADMIN));
     getNamespaceAdmin().create(AUTH_NAMESPACE_META);
     Assert.assertEquals(
-      ImmutableSet.of(new Privilege(instance, Action.ADMIN), new Privilege(AUTH_NAMESPACE, Action.ADMIN),
+      ImmutableSet.of(new Privilege(AUTH_NAMESPACE, Action.ADMIN),
                       new Privilege(AUTH_NAMESPACE, Action.READ), new Privilege(AUTH_NAMESPACE, Action.WRITE),
                       new Privilege(AUTH_NAMESPACE, Action.EXECUTE)),
       authorizer.listPrivileges(ALICE)

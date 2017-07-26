@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -52,7 +51,6 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
@@ -80,7 +78,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -180,13 +177,18 @@ public class DatasetTypeService extends AbstractIdleService {
       }
     });
 
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
+    final Principal principal = authenticationContext.getPrincipal();
     Iterable<DatasetModuleMeta> authorizedDatasetModules =
       Iterables.filter(allModules, new com.google.common.base.Predicate<DatasetModuleMeta>() {
         @Override
         public boolean apply(DatasetModuleMeta datasetModuleMeta) {
-          return authFilter.apply(namespaceId.datasetModule(datasetModuleMeta.getName()));
+          DatasetModuleId datasetModuleId = namespaceId.datasetModule(datasetModuleMeta.getName());
+          try {
+            return !authorizationEnforcer.isVisible(Collections.singleton(datasetModuleId), principal).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for dataset module: {}", datasetModuleId);
+            return false;
+          }
         }
       });
     return Lists.newArrayList(authorizedDatasetModules);
@@ -198,13 +200,14 @@ public class DatasetTypeService extends AbstractIdleService {
   DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     ensureNamespaceExists(datasetModuleId.getParent());
     DatasetModuleMeta moduleMeta = typeManager.getModule(datasetModuleId);
+
+    Principal principal = authenticationContext.getPrincipal();
+    if (authorizationEnforcer.isVisible(Collections.singleton(datasetModuleId), principal).isEmpty()) {
+      throw new UnauthorizedException(principal, datasetModuleId);
+    }
+
     if (moduleMeta == null) {
       throw new DatasetModuleNotFoundException(datasetModuleId);
-    }
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(datasetModuleId)) {
-      throw new UnauthorizedException(principal, datasetModuleId);
     }
     return moduleMeta;
   }
@@ -226,8 +229,8 @@ public class DatasetTypeService extends AbstractIdleService {
                          final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
     final Principal principal = authenticationContext.getPrincipal();
-    // enforce that the principal has WRITE access on the namespace
-    authorizationEnforcer.enforce(namespaceId, principal, Action.WRITE);
+    // enforce that the principal has ADMIN access on the dataset module
+    authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
       throw new UnauthorizedException(String.format("Cannot add module '%s' to '%s' namespace.",
                                                     datasetModuleId.getModule(), datasetModuleId.getNamespace()));
@@ -283,7 +286,6 @@ public class DatasetTypeService extends AbstractIdleService {
    */
   void deleteAll(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    authorizationEnforcer.enforce(namespaceId, principal, Action.ADMIN);
 
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
       throw new UnauthorizedException(String.format("Cannot delete modules from '%s' namespace.", namespaceId));
@@ -292,7 +294,9 @@ public class DatasetTypeService extends AbstractIdleService {
 
     // revoke all privileges on all modules
     for (DatasetModuleMeta meta : typeManager.getModules(namespaceId)) {
-      privilegesManager.revoke(namespaceId.datasetModule(meta.getName()));
+      DatasetModuleId datasetModuleId = namespaceId.datasetModule(meta.getName());
+      authorizationEnforcer.enforce(datasetModuleId, principal, Action.ADMIN);
+      privilegesManager.revoke(datasetModuleId);
     }
     try {
       typeManager.deleteModules(namespaceId);
@@ -315,14 +319,18 @@ public class DatasetTypeService extends AbstractIdleService {
       }
     });
 
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
+    final Principal principal = authenticationContext.getPrincipal();
     Iterable<DatasetTypeMeta> authorizedDatasetTypes =
       Iterables.filter(allTypes, new com.google.common.base.Predicate<DatasetTypeMeta>() {
         @Override
         public boolean apply(DatasetTypeMeta datasetTypeMeta) {
           DatasetTypeId datasetTypeId = namespaceId.datasetType(datasetTypeMeta.getName());
-          return authFilter.apply(datasetTypeId);
+          try {
+            return !authorizationEnforcer.isVisible(Collections.singleton(datasetTypeId), principal).isEmpty();
+          } catch (Exception e) {
+            LOG.warn("Error checking visibility for dataset type: {}", datasetTypeId);
+            return false;
+          }
         }
       });
     return Lists.newArrayList(authorizedDatasetTypes);
@@ -334,21 +342,18 @@ public class DatasetTypeService extends AbstractIdleService {
   DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     ensureNamespaceExists(datasetTypeId.getParent());
     DatasetTypeMeta typeMeta = typeManager.getTypeInfo(datasetTypeId);
-    if (typeMeta == null) {
-      throw new DatasetTypeNotFoundException(datasetTypeId);
-    }
 
     // All principals can access system dataset types
     // TODO: Test if this can be removed
-    if (NamespaceId.SYSTEM.equals(datasetTypeId.getParent())) {
-      return typeMeta;
-    }
-
     // only return the type if the user has some privileges on it
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> authFilter = authorizationEnforcer.createFilter(principal);
-    if (!authFilter.apply(datasetTypeId)) {
+    if (!NamespaceId.SYSTEM.equals(datasetTypeId.getParent()) &&
+      authorizationEnforcer.isVisible(Collections.singleton(datasetTypeId), principal).isEmpty()) {
       throw new UnauthorizedException(principal, datasetTypeId);
+    }
+
+    if (typeMeta == null) {
+      throw new DatasetTypeNotFoundException(datasetTypeId);
     }
     return typeMeta;
   }

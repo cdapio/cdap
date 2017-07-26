@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -64,18 +65,40 @@ public abstract class AbstractAuthorizer implements Authorizer {
   }
 
   @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    Set<EntityId> visibleEntities = new HashSet<>();
+    for (EntityId entityId : entityIds) {
+      for (Action action : EnumSet.allOf(Action.class)) {
+        try {
+          enforce(entityId, principal, action);
+          visibleEntities.add(entityId);
+          break;
+        } catch (UnauthorizedException e) {
+          // continue to next check
+        } catch (Exception ex) {
+          throw new RuntimeException(ex);
+        }
+      }
+    }
+    return visibleEntities;
+  }
+
+  @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
     return new Predicate<EntityId>() {
       @Override
       public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, EnumSet.allOf(Action.class));
-          return true;
-        } catch (UnauthorizedException e) {
-          return false;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
+        for (Action action : EnumSet.allOf(Action.class)) {
+          try {
+            enforce(entityId, principal, action);
+            return true;
+          } catch (UnauthorizedException e) {
+            // continue to next check
+          } catch (Exception ex) {
+            throw new RuntimeException(ex);
+          }
         }
+        return false;
       }
     };
   }

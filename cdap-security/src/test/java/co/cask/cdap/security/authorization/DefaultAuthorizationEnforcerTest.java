@@ -178,26 +178,17 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
       DefaultAuthorizationEnforcer authEnforcementService =
         new DefaultAuthorizationEnforcer(CCONF, authorizerInstantiator);
-      Predicate<EntityId> aliceFilter = authEnforcementService.createFilter(ALICE);
-      for (NamespaceId namespace : namespaces) {
-        Assert.assertTrue(aliceFilter.apply(namespace));
-      }
-      Predicate<EntityId> bobFilter = authEnforcementService.createFilter(BOB);
-      for (NamespaceId namespace : namespaces) {
-        Assert.assertFalse(bobFilter.apply(namespace));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds11, ds21, ds23)) {
-        Assert.assertTrue(aliceFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
-        Assert.assertTrue(aliceFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds11, ds12, ds22)) {
-        Assert.assertTrue(bobFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds21, ds23)) {
-        Assert.assertFalse(bobFilter.apply(datasetId));
-      }
+      Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, ALICE).size());
+      Assert.assertTrue(authEnforcementService.isVisible(namespaces, BOB).isEmpty());
+      Set<DatasetId> testDatasetIds = ImmutableSet.of(ds11, ds21, ds23);
+      Assert.assertEquals(testDatasetIds.size(), authEnforcementService.isVisible(testDatasetIds, ALICE).size());
+      testDatasetIds = ImmutableSet.of(ds12, ds22);
+      // this will be empty since now isVisible will not check the hierarchy privilege for the parent of the entity
+      Assert.assertTrue(authEnforcementService.isVisible(testDatasetIds, ALICE).isEmpty());
+      testDatasetIds = ImmutableSet.of(ds11, ds12, ds22);
+      Assert.assertEquals(testDatasetIds.size(), authEnforcementService.isVisible(testDatasetIds, BOB).size());
+      testDatasetIds = ImmutableSet.of(ds21, ds23);
+      Assert.assertTrue(authEnforcementService.isVisible(testDatasetIds, BOB).isEmpty());
     }
   }
 
@@ -217,10 +208,9 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       bootstrapper.run();
       authorizationEnforcer.enforce(instanceId, systemUser, Action.ADMIN);
       authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      Predicate<EntityId> filter = authorizationEnforcer.createFilter(systemUser);
-      Assert.assertFalse(filter.apply(ns1));
-      Assert.assertTrue(filter.apply(instanceId));
-      Assert.assertTrue(filter.apply(NamespaceId.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM, instanceId),
+                          authorizationEnforcer.isVisible(ImmutableSet.of(ns1, instanceId, NamespaceId.SYSTEM),
+                                                          systemUser));
     }
   }
 
@@ -233,9 +223,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authorizerInstantiator.get().grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
-      Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);
-      Assert.assertTrue(filter.apply(NS));
-      Assert.assertTrue(filter.apply(ds));
+      Assert.assertEquals(2, authEnforcementService.isVisible(ImmutableSet.<EntityId>of(NS, ds), BOB).size());
     }
   }
 
