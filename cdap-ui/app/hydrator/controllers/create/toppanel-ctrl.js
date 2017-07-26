@@ -532,7 +532,7 @@ class HydratorPlusPlusTopPanelCtrl {
     let previewConfig = {
       startStages: [],
       endStages: [],
-      runtimeArgs: Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArguments)
+      runtimeArgs: Object.assign({}, macrosWithNonEmptyValues, this.userRuntimeArgumentsMap)
     };
 
     if (this.state.artifact.name === this.GLOBALS.etlDataPipeline) {
