@@ -132,7 +132,7 @@ Note that the start and stop times are **not** optional.
    :stub-columns: 1
 
    * - HTTP Method
-     - ``GET /v3/services/system/appfabric/logs?start=1428541200&stop=1428541500``
+     - ``GET /v3/system/services/appfabric/logs?start=1428541200&stop=1428541500``
    * - Description
      - Return the logs for the *AppFabric* service
        beginning ``Thu, 09 Apr 2015 01:00:00 GMT`` and
