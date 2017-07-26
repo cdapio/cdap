@@ -72,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +90,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
   static final Type INPUT_ALIAS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
+  static final Type CONNECTOR_DATASETS_TYPE = new TypeToken<HashSet<String>>() { }.getType();
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final Logger PIPELINE_LOG = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                               Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
@@ -106,8 +108,15 @@ public class ETLMapReduce extends AbstractMapReduce {
   // this is only visible at configure time, not at runtime
   private final BatchPhaseSpec phaseSpec;
 
+  private final Set<String> connectorDatasets;
+
   public ETLMapReduce(BatchPhaseSpec phaseSpec) {
+    this(phaseSpec, new HashSet<String>());
+  }
+
+  public ETLMapReduce(BatchPhaseSpec phaseSpec, Set<String> connectorDatasets) {
     this.phaseSpec = phaseSpec;
+    this.connectorDatasets = connectorDatasets;
   }
 
   @Override
@@ -154,6 +163,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec));
+    properties.put(Constants.CONNECTOR_DATASETS, GSON.toJson(connectorDatasets));
     setProperties(properties);
   }
 
@@ -178,6 +188,8 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                          context, context.getNamespace());
 
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    Set<String> connectorDatasets = GSON.fromJson(properties.get(Constants.CONNECTOR_DATASETS),
+                                                  CONNECTOR_DATASETS_TYPE);
 
     for (Map.Entry<String, String> pipelineProperty : phaseSpec.getPipelineProperties().entrySet()) {
       hConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
@@ -191,7 +203,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
         StageInfo stageInfo = phaseSpec.getPhase().getStage(sourceName);
-        MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageInfo);
+        MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageInfo,
+                                                                        connectorDatasets);
         batchSource.prepareRun(sourceContext);
         runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
         for (String inputAlias : sourceContext.getInputNames()) {
@@ -218,7 +231,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
       try {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
-        MapReduceBatchContext sinkContext = new MapReduceBatchContext(context, mrMetrics, stageInfo);
+        MapReduceBatchContext sinkContext = new MapReduceBatchContext(context, mrMetrics, stageInfo, connectorDatasets);
         batchSink.prepareRun(sinkContext);
         runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
         finishers.add(batchSink, sinkContext);

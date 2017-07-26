@@ -63,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -328,7 +329,8 @@ public class SmartWorkflow extends AbstractWorkflow {
       applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
       programAdder.addSpark(programName);
     } else {
-      applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec));
+      applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec,
+                                                          new HashSet<>(connectorDatasets.values())));
       programAdder.addMapReduce(programName);
     }
   }

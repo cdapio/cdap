@@ -49,8 +49,10 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
   private final Set<String> outputNames;
   private final Set<String> inputNames;
   private final Caller caller;
+  private final Set<String> connectorDatasets;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo,
+                               Set<String> connectorDatasets) {
     super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
           context.getAdmin(), stageInfo, new BasicArguments(context));
     this.mrContext = context;
@@ -58,6 +60,11 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
     this.isPreviewEnabled = context.getDataTracer(stageInfo.getName()).isEnabled();
+    this.connectorDatasets = Collections.unmodifiableSet(connectorDatasets);
+  }
+
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageInfo stageInfo) {
+    this(context, metrics, stageInfo, new HashSet<String>());
   }
 
   @Override
@@ -169,7 +176,8 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
    * Get the output, if preview is enabled, return the output with a {@link NullOutputFormatProvider}.
    */
   private Output getOutput(Output output) {
-    if (isPreviewEnabled) {
+    // Do no return NullOutputFormat for connector datasets
+    if (isPreviewEnabled && !connectorDatasets.contains(output.getName())) {
       return Output.of(output.getName(), new NullOutputFormatProvider());
     }
     return output;
