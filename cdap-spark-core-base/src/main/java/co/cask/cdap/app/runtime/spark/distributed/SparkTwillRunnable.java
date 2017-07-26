@@ -36,12 +36,6 @@ final class SparkTwillRunnable extends AbstractProgramTwillRunnable<ProgramRunne
   }
 
   @Override
-  protected boolean propagateServiceError() {
-    // Don't propagate Spark failure as failure. This is to avoid infinite retry of this runnable.
-    return false;
-  }
-
-  @Override
   protected ProgramRunner createProgramRunner(Injector injector) {
     // Inside the TwillRunanble, we use the "Local" SparkRunner, since we need to actually submit the job.
     // The actual execution mode of the job is governed by the framework configuration,

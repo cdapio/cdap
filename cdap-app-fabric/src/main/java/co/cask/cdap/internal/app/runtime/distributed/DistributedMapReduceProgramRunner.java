@@ -93,7 +93,7 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
     Resources resources = SystemArguments.getResources(clientArgs, spec.getDriverResources());
 
     // Add runnable. Only one instance for the MR driver
-    launchConfig.addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()), resources, 1)
+    launchConfig.addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()), resources, 1, 0)
     // Add extra resources, classpath and dependencies
       .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<String, LocalizeResource>()))
       .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()))
