@@ -34,6 +34,7 @@ import co.cask.cdap.datapipeline.DataPipelineApp;
 import co.cask.cdap.datapipeline.SmartWorkflow;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.MockSource;
+import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
 import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.ExceptionTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
@@ -169,6 +170,154 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+  }
+
+  @Test
+  public void testMultiPhasePreview() throws Exception {
+    testMultiplePhase(Engine.MAPREDUCE);
+    testMultiplePhase(Engine.SPARK);
+  }
+
+  private void testMultiplePhase(Engine engine) throws Exception {
+    /*
+     * source1 ----> t1 ------
+     *                        | --> innerjoin ----> t4 ------
+     * source2 ----> t2 ------                                 |
+     *                                                         | ---> outerjoin --> sink1
+     *                                                         |
+     * source3 -------------------- t3 ------------------------
+     */
+
+    PreviewManager previewManager = getPreviewManager();
+
+    Schema inputSchema1 = Schema.recordOf(
+      "customerRecord",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "itemRecord",
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_price", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("cust_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema3 = Schema.recordOf(
+      "transactionRecord",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("c_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("i_id", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema outSchema2 = Schema.recordOf(
+      "join.output",
+      Schema.Field.of("t_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("c_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("i_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customer_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_price", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("cust_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("cust_name", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+
+    String source1MulitJoinInput = "multiJoinSource1-" + engine;
+    String source2MultiJoinInput = "multiJoinSource2-" + engine;
+    String source3MultiJoinInput = "multiJoinSource3-" + engine;
+    String outputName = "multiJoinOutput-" + engine;
+    String sinkName = "multiJoinOutputSink-" + engine;
+    String outerJoinName = "multiJoinOuter-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source1", MockSource.getPlugin(source1MulitJoinInput, inputSchema1)))
+      .addStage(new ETLStage("source2", MockSource.getPlugin(source2MultiJoinInput, inputSchema2)))
+      .addStage(new ETLStage("source3", MockSource.getPlugin(source3MultiJoinInput, inputSchema3)))
+      .addStage(new ETLStage("t1", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t2", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t3", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("t4", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("innerjoin", MockJoiner.getPlugin("t1.customer_id=t2.cust_id",
+                                                               "t1,t2", "")))
+      .addStage(new ETLStage(outerJoinName, MockJoiner.getPlugin("t4.item_id=t3.i_id",
+                                                                 "", "")))
+      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
+      .addConnection("source1", "t1")
+      .addConnection("source2", "t2")
+      .addConnection("source3", "t3")
+      .addConnection("t1", "innerjoin")
+      .addConnection("t2", "innerjoin")
+      .addConnection("innerjoin", "t4")
+      .addConnection("t3", outerJoinName)
+      .addConnection("t4", outerJoinName)
+      .addConnection(outerJoinName, sinkName)
+      .setEngine(engine)
+      .setNumOfRecordsPreview(100)
+      .build();
+
+    // Construct the preview config with the program name and program type
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), source1MulitJoinInput,
+                       DatasetProperties.of(ImmutableMap.of("schema", inputSchema1.toString())));
+    addDatasetInstance(Table.class.getName(), source2MultiJoinInput,
+                       DatasetProperties.of(ImmutableMap.of("schema", inputSchema2.toString())));
+    addDatasetInstance(Table.class.getName(), source3MultiJoinInput,
+                       DatasetProperties.of(ImmutableMap.of("schema", inputSchema3.toString())));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+
+    ingestData(inputSchema1, inputSchema2, inputSchema3, source1MulitJoinInput, source2MultiJoinInput,
+               source3MultiJoinInput);
+
+    // Wait for the preview status go into COMPLETED.
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewRunner.getStatus();
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+
+    checkPreviewStore(previewRunner, sinkName, 3);
+    validateMetric(3L, previewId, sinkName + ".records.in", previewRunner);
+  }
+
+  private void ingestData(Schema inputSchema1, Schema inputSchema2, Schema inputSchema3, String source1MulitJoinInput,
+                          String source2MultiJoinInput, String source3MultiJoinInput) throws Exception {
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1).set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1).set("customer_id", "2")
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1).set("customer_id", "3")
+      .set("customer_name", "jane").build();
+
+    StructuredRecord recordCar = StructuredRecord.builder(inputSchema2).set("item_id", "11").set("item_price", 10000L)
+      .set("cust_id", "1").set("cust_name", "samuel").build();
+    StructuredRecord recordBike = StructuredRecord.builder(inputSchema2).set("item_id", "22").set("item_price", 100L)
+      .set("cust_id", "3").set("cust_name", "jane").build();
+
+    StructuredRecord recordTrasCar = StructuredRecord.builder(inputSchema3).set("t_id", "1").set("c_id", "1")
+      .set("i_id", "11").build();
+    StructuredRecord recordTrasBike = StructuredRecord.builder(inputSchema3).set("t_id", "2").set("c_id", "3")
+      .set("i_id", "22").build();
+    StructuredRecord recordTrasPlane = StructuredRecord.builder(inputSchema3).set("t_id", "3").set("c_id", "4")
+      .set("i_id", "33").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source1MulitJoinInput));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob, recordJane));
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source2MultiJoinInput));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordCar, recordBike));
+    inputManager = getDataset(NamespaceId.DEFAULT.dataset(source3MultiJoinInput));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike, recordTrasPlane));
   }
 
   @Test
