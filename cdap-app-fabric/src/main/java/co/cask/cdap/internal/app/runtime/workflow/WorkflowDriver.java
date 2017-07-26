@@ -61,6 +61,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.customaction.BasicCustomActionContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -172,19 +173,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
                                                                          program, options, programStateWriter);
 
-    this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
-    this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null,
-                                                         basicWorkflowToken, program, programOptions, cConf,
-                                                         metricsCollectionService, datasetFramework, txClient,
-                                                         discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager, messagingService);
-
-    this.workflowRunId = program.getId().run(basicWorkflowContext.getRunId());
-    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
-                                                     program.getName(), workflowRunId.getRun());
+    this.workflowRunId = program.getId().run(ProgramRunners.getRunId(options));
     this.datasetFramework = new NameMappedDatasetFramework(datasetFramework,
                                                            workflowSpec.getLocalDatasetSpecs().keySet(),
                                                            workflowRunId.getRun());
+    this.basicWorkflowToken = new BasicWorkflowToken(cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+    this.basicWorkflowContext = new BasicWorkflowContext(workflowSpec, null,
+                                                         basicWorkflowToken, program, programOptions, cConf,
+                                                         metricsCollectionService, this.datasetFramework, txClient,
+                                                         discoveryServiceClient, nodeStates, pluginInstantiator,
+                                                         secureStore, secureStoreManager, messagingService);
+
+    this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
+                                                     program.getName(), workflowRunId.getRun());
     this.pluginInstantiator = pluginInstantiator;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
@@ -278,8 +279,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     httpService.stopAndWait();
-    deleteLocalDatasets();
     destroyWorkflow();
+    deleteLocalDatasets();
     if (pluginInstantiator != null) {
       pluginInstantiator.close();
     }
