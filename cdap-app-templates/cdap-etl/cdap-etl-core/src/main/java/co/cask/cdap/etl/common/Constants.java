@@ -30,6 +30,7 @@ public final class Constants {
   public static final String EVENT_TYPE_TAG = "MDC:eventType";
   public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "lifecycle";
   public static final String SPARK_PROGRAM_PLUGIN_TYPE = "sparkprogram";
+  public static final String CONNECTOR_DATASETS = "connector.datasets";
   public static final Schema ERROR_SCHEMA = Schema.recordOf(
     "error",
     Schema.Field.of(ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
