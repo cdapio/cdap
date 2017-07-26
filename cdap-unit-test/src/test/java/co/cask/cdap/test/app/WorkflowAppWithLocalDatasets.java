@@ -63,6 +63,8 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
   public static final String CSV_FILESET_DATASET = "csvfileset";
   public static final String WORKFLOW_NAME = "WorkflowWithLocalDatasets";
   public static final String WORKFLOW_RUNS_DATASET = "workflowruns";
+  // used to test availability of local datasets in workflow lifecycle methods
+  public static final String UNIQUE_ID_DATASET = "uniqueId";
 
   @Override
   public void configure() {
@@ -86,10 +88,16 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
       super.initialize(context);
       KeyValueTable workflowRuns = context.getDataset(WORKFLOW_RUNS_DATASET);
       workflowRuns.write(context.getRunId().getId(), "STARTED");
+      KeyValueTable uniqueIdTable = context.getDataset(UNIQUE_ID_DATASET);
+      uniqueIdTable.write("id", context.getRunId().getId());
     }
 
     @Override
     public void destroy() {
+      KeyValueTable uniqueIdTable = getContext().getDataset(UNIQUE_ID_DATASET);
+      if (uniqueIdTable.read("id") == null) {
+        throw new RuntimeException("Failed to read from local dataset in destroy method.");
+      }
       KeyValueTable workflowRuns = getContext().getDataset(WORKFLOW_RUNS_DATASET);
       String status = Bytes.toString(workflowRuns.read(getContext().getRunId().getId()));
       if (!"STARTED".equals(status)) {
@@ -112,6 +120,7 @@ public class WorkflowAppWithLocalDatasets extends AbstractApplication {
         .setInputFormat(TextInputFormat.class)
         .setOutputFormat(TextOutputFormat.class)
         .build());
+      createLocalDataset(UNIQUE_ID_DATASET, KeyValueTable.class);
       addAction(new LocalDatasetWriter());
       addSpark("JavaSparkCSVToSpaceConverter");
       addMapReduce("WordCount");
