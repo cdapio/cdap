@@ -103,6 +103,9 @@ export default class CreateDatasetBtn extends Component {
       .list({ namespace })
       .subscribe(res => {
         corePlugins = find(res, { 'name': 'core-plugins' });
+
+        corePlugins.version = '[1.7.0, 3.0.0)';
+
         const getPluginConfig = (pluginName) => {
           return {
             name: pluginName,

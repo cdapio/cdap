@@ -202,7 +202,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     for (String sourceName : phaseSpec.getPhase().getSources()) {
       try {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
-
         StageSpec stageSpec = phaseSpec.getPhase().getStage(sourceName);
         MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageSpec,
                                                                         connectorDatasets);
