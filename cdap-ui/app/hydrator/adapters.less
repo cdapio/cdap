@@ -423,19 +423,46 @@ body.theme-cdap {
   }
 }
 
-.popover {
-  .well.metrics-popover {
-    background-color: white;
-    padding-top: 0;
+.popover.metrics-popover {
+  .popover-title {
     padding-bottom: 5px;
+    padding-left: 15px;
 
+    h4,
     h5 {
-      margin-top: 15px;
-      font-weight: 600;
+      color: initial;
     }
 
-    p {
-      color: #397cf1;
+    h4 {
+      margin-bottom: -3px;
+    }
+  }
+
+  .popover-content {
+    padding-left: 15px;
+
+    .metrics-content {
+      background-color: white;
+
+      .metrics-records-out,
+      .metrics-errors {
+        display: inline-block;
+        width: 48%;
+
+        h5 {
+          margin-top: 0;
+          margin-bottom: 4px;
+          font-weight: 600;
+        }
+      }
+
+      .metrics-records-out {
+        color: #0099ff;
+      }
+
+      .metrics-errors {
+        color: @cdap-light-red;
+      }
     }
   }
 }
