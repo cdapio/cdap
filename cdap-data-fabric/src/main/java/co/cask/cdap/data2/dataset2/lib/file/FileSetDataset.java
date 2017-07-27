@@ -106,13 +106,18 @@ public final class FileSetDataset implements FileSet, DatasetOutputCommitter {
                                             new FileSetLocationFactory(baseLocation.getLocationFactory()));
     this.outputLocation = determineOutputLocation();
     this.inputLocations = determineInputLocations();
-    this.inputFormatClassName = FileSetProperties.getInputFormat(spec.getProperties());
-    this.outputFormatClassName = FileSetProperties.getOutputFormat(spec.getProperties());
+    // runtime arguments can override intputFormatClassName, outputFormatClassName, permissions
+    this.inputFormatClassName = secondIfFirstIsNull(FileSetProperties.getInputFormat(runtimeArguments),
+                                                    FileSetProperties.getInputFormat(spec.getProperties()));
+    this.outputFormatClassName = secondIfFirstIsNull(FileSetProperties.getOutputFormat(runtimeArguments),
+                                                     FileSetProperties.getOutputFormat(spec.getProperties()));
+    this.permissions = secondIfFirstIsNull(FileSetProperties.getFilePermissions(runtimeArguments),
+                                           FileSetProperties.getFilePermissions(spec.getProperties()));
+  }
 
-    // runtime arguments can override permissions
-    this.permissions = FileSetProperties.getFilePermissions(runtimeArguments) != null
-      ? FileSetProperties.getFilePermissions(runtimeArguments)
-      : FileSetProperties.getFilePermissions(spec.getProperties());
+  // similar to Objects.firstNonNull, but we allow both parameters to be null
+  private <T> T secondIfFirstIsNull(T first, T second) {
+    return first != null ? first : second;
   }
 
   /**

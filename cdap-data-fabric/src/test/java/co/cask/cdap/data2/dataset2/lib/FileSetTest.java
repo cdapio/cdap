@@ -31,6 +31,10 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import org.apache.hadoop.mapreduce.lib.input.CombineTextInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.filesystem.Location;
@@ -190,6 +194,34 @@ public class FileSetTest {
     Assert.assertEquals(group, grandchild.getGroup());
     Assert.assertEquals(customPermissions, child.getPermissions());
     Assert.assertEquals(customPermissions, grandchild.getPermissions());
+  }
+
+  @Test
+  public void testInputOutputFormatClassAtRuntime() throws Exception {
+    // create a dataset with text input and output formats
+    DatasetId datasetId = OTHER_NAMESPACE.dataset("testRuntimeFormats");
+    dsFrameworkUtil.createInstance("fileSet", datasetId, FileSetProperties.builder()
+      .setInputFormat(TextInputFormat.class)
+      .setOutputFormat(TextOutputFormat.class)
+      .build());
+
+    // without passing anything in arguments, the input/output format classes will come from dataset properties
+    FileSet fs = dsFrameworkUtil.getInstance(datasetId);
+    Assert.assertEquals(TextInputFormat.class.getName(), fs.getInputFormatClassName());
+    Assert.assertEquals(TextOutputFormat.class.getName(), fs.getOutputFormatClassName());
+
+    // allow overriding the input format in dataset runtime args
+    fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
+      FileSetProperties.INPUT_FORMAT, CombineTextInputFormat.class.getName()));
+    Assert.assertEquals(CombineTextInputFormat.class.getName(), fs.getInputFormatClassName());
+    Assert.assertEquals(TextOutputFormat.class.getName(), fs.getOutputFormatClassName());
+
+    // allow overriding both the input and output format in dataset runtime args
+    fs = dsFrameworkUtil.getInstance(datasetId, ImmutableMap.of(
+      FileSetProperties.INPUT_FORMAT, CombineTextInputFormat.class.getName(),
+      FileSetProperties.OUTPUT_FORMAT, NullOutputFormat.class.getName()));
+    Assert.assertEquals(CombineTextInputFormat.class.getName(), fs.getInputFormatClassName());
+    Assert.assertEquals(NullOutputFormat.class.getName(), fs.getOutputFormatClassName());
   }
 
   @Test
