@@ -199,9 +199,17 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
 
   @Test
   public void testPartitionedFileSetWithMR() throws Exception {
+    testPartitionedFileSetWithMR(false);
+  }
 
-    final ApplicationWithPrograms app = deployApp(AppWithPartitionedFileSet.class);
+  @Test
+  public void testPartitionedFileSetWithMRWithCombineFileInputFormat() throws Exception {
+    testPartitionedFileSetWithMR(true);
+  }
 
+  private void testPartitionedFileSetWithMR(boolean useCombineFileInputFormat) throws Exception {
+    ApplicationWithPrograms app = deployApp(AppWithPartitionedFileSet.class,
+                                            new AppWithPartitionedFileSet.AppConfig(useCombineFileInputFormat));
     // write a value to the input table
     final Table table = datasetCache.getDataset(AppWithPartitionedFileSet.INPUT);
     Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
@@ -298,7 +306,9 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
         public void apply() {
           Row row = output.get(Bytes.toBytes("a"));
           Assert.assertEquals("1", row.getString("x"));
+          Assert.assertEquals("{type=x, time=150000}", row.getString("x_key"));
           Assert.assertEquals("2", row.getString("y"));
+          Assert.assertEquals("{type=y, time=200000}", row.getString("y_key"));
         }
       });
 
@@ -323,7 +333,9 @@ public class MapReduceWithPartitionedTest extends MapReduceRunnerTestBase {
         public void apply() {
           Row row = output.get(Bytes.toBytes("b"));
           Assert.assertEquals("1", row.getString("x"));
+          Assert.assertEquals("{type=x, time=150000}", row.getString("x_key"));
           Assert.assertNull(row.get("y"));
+          Assert.assertNull(row.get("y_key"));
         }
       });
 
