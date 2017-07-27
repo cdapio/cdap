@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, $filter, uuid, $tooltip, DAGPlusPlusNodesDispatcher) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions) {
 
     var vm = this;
 
@@ -23,34 +23,17 @@ angular.module(PKG.name + '.commons')
     dispatcher.register('onUndoActions', resetEndpointsAndConnections);
     dispatcher.register('onRedoActions', resetEndpointsAndConnections);
 
-    var numberFilter = $filter('number');
-
     // var endpoints = [];
 
     let localX, localY;
 
     var SHOW_METRICS_THRESHOLD = 0.8;
-    var METRICS_THRESHOLD = 999999999999;
     var selected = [];
-    var labels = [];
 
     var separation = $scope.separation || 200; // node separation length
 
     var nodeWidth = 200;
     var nodeHeight = 80;
-
-    var metricsLabel = [
-      [ 'Custom', {
-        create: function (label) {
-          labels.push(label);
-          return angular.element('<div><span class="metric-label-text"></span> / <span class="metric-error-label"></span></div>');
-        },
-        width: 100,
-        location: [4.3, 0],
-        id: 'metricLabel',
-        cssClass: 'metric-label'
-      }]
-    ];
 
     var dragged = false;
     var canvasDragged = false;
@@ -157,6 +140,7 @@ angular.module(PKG.name + '.commons')
             scope.data = {
               nodeName: node.name
             };
+            scope.version = node.plugin.artifact.version;
 
             nodePopovers[node.name] = {
               scope: scope,
@@ -173,43 +157,6 @@ angular.module(PKG.name + '.commons')
 
           });
 
-          if (vm.scale <= SHOW_METRICS_THRESHOLD) {
-            hideMetricsLabel();
-          }
-
-          angular.forEach(labels, function (endpoint) {
-            var label = endpoint.getOverlay('metricLabel');
-
-            let childrenElem = angular.element(label.getElement()).children();
-
-            angular.forEach(childrenElem, (child) => {
-              var tooltip;
-
-              if (child.className === 'metric-label-text') {
-                tooltip = $tooltip(angular.element(child), {
-                  trigger: 'hover',
-                  title: 'Records Out',
-                  delay: 300,
-                  container: 'body'
-                });
-              } else if (child.className === 'metric-error-label') {
-                tooltip = $tooltip(angular.element(child), {
-                  trigger: 'hover',
-                  title: 'Error Records',
-                  delay: 300,
-                  container: 'body'
-                });
-              }
-
-              $scope.$on('$destroy', function () {
-                if (tooltip) {
-                  tooltip.destroy();
-                }
-              });
-            });
-
-          });
-
           $scope.$watch('metricsData', function () {
             if (Object.keys($scope.metricsData).length === 0) {
               angular.forEach(nodePopovers, function (value) {
@@ -219,38 +166,21 @@ angular.module(PKG.name + '.commons')
 
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
-            });
 
-            angular.forEach(labels, function (endpoint) {
-              var label = endpoint.getOverlay('metricLabel');
-              if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
-                angular.element(label.getElement()).children()
-                  .text(0);
-                return;
-              }
-
-              var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut || 0;
-              var recordsError = $scope.metricsData[endpoint.elementId].recordsError || 0;
-
-              // hide label if the metric is greater than METRICS_THRESHOLD.
-              // the intent is to hide the metrics when the length is greater than 12.
-              // Since records out metrics is an integer we can do a straight comparison
-              if(recordsOut > METRICS_THRESHOLD) {
-                label.hide();
-              } else if (recordsOut <= METRICS_THRESHOLD && vm.scale >= SHOW_METRICS_THRESHOLD ) {
-                label.show();
-              }
-
-              let children = angular.element(label.getElement()).children();
-
-              angular.forEach(children, (child) => {
-                if (child.className === 'metric-label-text') {
-                  angular.element(child).text(numberFilter(recordsOut, 0));
-                } else if (child.className === 'metric-error-label') {
-                  angular.element(child).text(numberFilter(recordsError, 0));
+              $timeout(function () {
+                let nodeElem = document.getElementById(`${key}`);
+                let nodeMetricsElem = nodeElem.querySelector(`.node-metrics`);
+                if (nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
+                  let recordsOutLabelElem = nodeMetricsElem.querySelector('.metric-records-out-label');
+                  if (recordsOutLabelElem) {
+                    recordsOutLabelElem.parentNode.removeChild(recordsOutLabelElem);
+                  }
+                  let errorsLabelElem = nodeMetricsElem.querySelector('.metric-errors-label');
+                  if (errorsLabelElem) {
+                    errorsLabelElem.parentNode.removeChild(errorsLabelElem);
+                  }
                 }
               });
-
             });
           }, true);
         }
@@ -266,48 +196,58 @@ angular.module(PKG.name + '.commons')
       }, 500);
     }
 
+    function closeNodePopover(node) {
+      var nodeInfo = nodePopovers[node.name];
+      if (nodePopoverTimeout) {
+        $timeout.cancel(nodePopoverTimeout);
+      }
+      if (nodeInfo && nodeInfo.popover) {
+        nodeInfo.popover.hide();
+        nodeInfo.popover.destroy();
+        nodeInfo.popover = null;
+      }
+    }
+
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
       var nodeInfo = nodePopovers[node.name];
 
-      nodeInfo.popover = $popover(nodeInfo.element, {
-        trigger: 'manual',
-        placement: 'auto right',
-        target: angular.element(nodeInfo.element[0]),
-        templateUrl: $scope.nodePopoverTemplate,
-        container: 'main',
-        scope: nodeInfo.scope
-      });
-      nodeInfo.popover.$promise
-        .then(function () {
-          if (nodePopoverTimeout) {
-            $timeout.cancel(nodePopoverTimeout);
-          }
+      if (nodePopoverTimeout) {
+        $timeout.cancel(nodePopoverTimeout);
+      }
 
-          nodePopoverTimeout = $timeout(function () {
-            nodeInfo.popover.show();
-          });
+      if (nodeInfo.element && nodeInfo.scope) {
+        nodeInfo.popover = $popover(nodeInfo.element, {
+          trigger: 'manual',
+          placement: 'auto right',
+          target: angular.element(nodeInfo.element[0]),
+          templateUrl: $scope.nodePopoverTemplate,
+          container: 'main',
+          scope: nodeInfo.scope
         });
+        nodeInfo.popover.$promise
+          .then(function () {
+
+            // Needs a timeout here to avoid showing popups instantly when just moving
+            // cursor across a node
+            nodePopoverTimeout = $timeout(function () {
+              if (nodeInfo.popover && typeof nodeInfo.popover.show === 'function') {
+                nodeInfo.popover.show();
+              }
+            }, 500);
+          });
+      }
     };
 
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
-      var nodeInfo = nodePopovers[node.name];
-      if (!nodeInfo.popover) { return; }
-
-      nodeInfo.popover.hide();
-      nodeInfo.popover.destroy();
-      nodeInfo.popover = null;
+      closeNodePopover(node);
     };
 
     vm.zoomIn = function () {
       vm.scale += 0.1;
-
-      if (vm.scale >= SHOW_METRICS_THRESHOLD) {
-        showMetricsLabel();
-      }
 
       setZoom(vm.scale, vm.instance);
     };
@@ -315,30 +255,9 @@ angular.module(PKG.name + '.commons')
     vm.zoomOut = function () {
       if (vm.scale <= 0.2) { return; }
 
-      if (vm.scale <= SHOW_METRICS_THRESHOLD) {
-        hideMetricsLabel();
-      }
-
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
-
-    function showMetricsLabel() {
-      angular.forEach(labels, function (label) {
-        if ($scope.metricsData[label.elementId] && $scope.metricsData[label.elementId].recordsOut > METRICS_THRESHOLD) {
-          return;
-        }
-
-        label.getOverlay('metricLabel').show();
-      });
-    }
-
-    function hideMetricsLabel() {
-      angular.forEach(labels, function (label) {
-        label.getOverlay('metricLabel').hide();
-      });
-    }
-
 
     /**
      * Utily function from jsPlumb
@@ -376,11 +295,6 @@ angular.module(PKG.name + '.commons')
         };
         if (vm.isDisabled) {
           sourceObj.enabled = false;
-        }
-        if ($scope.showMetrics) {
-          sourceObj.endpoint = {
-            connectorOverlays: metricsLabel
-          };
         }
         vm.instance.makeSource(node.name, sourceObj);
 
@@ -706,8 +620,18 @@ angular.module(PKG.name + '.commons')
       } else {
         vm.clearNodeSelection();
         node.selected = true;
+
+        closeNodePopover(node);
+        HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
         DAGPlusPlusNodesActionsFactory.selectNode(node.name);
       }
+    };
+
+    vm.onMetricsClick = function(event, node) {
+      event.stopPropagation();
+      closeNodePopover(node);
+      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true);
+      DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
     vm.onNodeDelete = function (event, node) {
@@ -892,7 +816,6 @@ angular.module(PKG.name + '.commons')
     };
 
     $scope.$on('$destroy', function () {
-      labels = [];
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
 

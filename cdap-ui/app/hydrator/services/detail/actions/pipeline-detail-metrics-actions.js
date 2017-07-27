@@ -118,4 +118,8 @@ angular.module(PKG.name + '.feature.hydrator')
       dispatcher.dispatch('onReset');
     };
 
+    this.setMetricsTabActive = function(active) {
+      dispatcher.dispatch('onSetMetricsTabActive', active);
+    };
+
   });

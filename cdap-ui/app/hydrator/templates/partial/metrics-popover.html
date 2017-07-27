@@ -14,22 +14,26 @@
   the License.
 -->
 
-<div class="popover">
+<div class="popover metrics-popover">
   <div class="arrow"></div>
   <div class="popover-title">
     <h4>
       <span>{{ data.nodeName }}</span>
     </h4>
+    <h5>{{ version }}</h5>
   </div>
   <div class="popover-content">
-    <div class="well metrics-popover">
-      <h5>Records In</h5>
-      <p ng-if="data.metrics.recordsIn">{{ data.metrics.recordsIn | number: 0 }}</p>
-      <p ng-if="!data.metrics.recordsIn">Not Available</p>
-
-      <h5>Records Out</h5>
-      <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | number: 0 }}</p>
-      <p ng-if="!data.metrics.recordsOut">Not Available</p>
+    <div class="metrics-content">
+      <div class="metrics-records-out">
+        <h5>Records Out</h5>
+        <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | myLeadingEllipsis: 13:8: 'number': 0 }}</p>
+        <p ng-if="!data.metrics.recordsOut">0</p>
+      </div>
+      <div class="metrics-errors">
+        <h5>Errors</h5>
+        <p ng-if="data.metrics.recordsError">{{ data.metrics.recordsError | myLeadingEllipsis: 13:8: 'number': 0 }}</p>
+        <p ng-if="!data.metrics.recordsError">0</p>
+      </div>
     </div>
   </div>
 </div>

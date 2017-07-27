@@ -1248,8 +1248,8 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
-      recordsInTitle: "Records In - Run # "
-      recordsOutTitle: "Records out - Run # ${runNumber}"
+      recordsInTitle: "Records In - Run #{runNumber}"
+      recordsOutTitle: "Records out - Run #{runNumber}"
       seconds: Seconds
     runsHistoryGraph:
       hint:
