@@ -23,8 +23,6 @@ angular.module(PKG.name + '.commons')
     dispatcher.register('onUndoActions', resetEndpointsAndConnections);
     dispatcher.register('onRedoActions', resetEndpointsAndConnections);
 
-    // var endpoints = [];
-
     let localX, localY;
 
     var SHOW_METRICS_THRESHOLD = 0.8;
@@ -75,31 +73,6 @@ angular.module(PKG.name + '.commons')
       repaintTimeout = $timeout(function () { vm.instance.repaintEverything(); });
     }
 
-
-    /*
-    FIXME: This should be fixed. Right now the assumption is to update
-     the store before my-dag directive is rendered. What happens if we get the
-     data after the rendering? The init function is never called or the DAG is not
-     rendered based on the data.
-
-     Right now there is a cycle which prevents us from listening to the NodeStore
-     changes. The infinite recurrsion happens like this,
-     Assuming we have this
-     NodesStore.registerChangeListener(init);
-     1. User adds a connection in view
-     2. 'connection' event is fired by jsplumb
-     3. On connection event we call 'formatConnections' function
-     4. 'formatConnections' constructs the 'connections' array and sets it to NodesStore
-     5. Now NodesStore fires an update to changelisteners.
-     6. 'init' function gets called.
-     6. 'init' function again programmatically connects all the nodes and sets it to NodesStore
-     7. Control goes to step 5
-     7. Hence the loop.
-
-     We need to be able to separate render of graph from data and incremental user interactions.
-     - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
-     - User should be able interact with the dag and  incremental changes.
-    */
     function init() {
       $scope.nodes = DAGPlusPlusNodesStore.getNodes();
       $scope.connections = DAGPlusPlusNodesStore.getConnections();
@@ -108,7 +81,6 @@ angular.module(PKG.name + '.commons')
       vm.comments = DAGPlusPlusNodesStore.getComments();
 
       initTimeout = $timeout(function () {
-        // addEndpoints();
         initNodes();
         addConnections();
         vm.instance.bind('connection', setConnection);
@@ -308,55 +280,6 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    // function addEndpoints() {
-    //   angular.forEach($scope.nodes, function (node) {
-    //     if (endpoints.indexOf(node.name) !== -1) {
-    //       return;
-    //     }
-    //     endpoints.push(node.name);
-
-    //     var type = GLOBALS.pluginConvert[node.type];
-
-    //     switch(type) {
-    //       case 'source':
-    //         vm.instance.addEndpoint(node.name, sourceOrigin, {uuid: 'Origin' + node.name});
-    //         vm.instance.addEndpoint(node.name, sourceTarget, {uuid: 'Target' + node.name});
-    //         break;
-    //       case 'sink':
-    //         vm.instance.addEndpoint(node.name, sinkOrigin, {uuid: 'Origin' + node.name});
-    //         vm.instance.addEndpoint(node.name, sinkTarget, {uuid: 'Target' + node.name});
-    //         break;
-    //       case 'action':
-    //         vm.instance.addEndpoint(node.name, actionOrigin, {
-    //           uuid: 'Origin' + node.name,
-    //           cssClass: node.type + '-anchor'
-    //         });
-    //         vm.instance.addEndpoint(node.name, actionTarget, {
-    //           uuid: 'Target' + node.name,
-    //           cssClass: node.type + '-anchor'
-    //         });
-    //         break;
-    //       default:
-    //         // Need to id each end point so that it can be used later to make connections.
-    //         var originId = {uuid: 'Origin' + node.name};
-    //         var targetId = {uuid: 'Target' + node.name};
-    //         if (node.plugin.name === 'Wrangler') {
-    //           originId.cssClass = 'wrangler-anchor';
-    //           targetId.cssClass = 'wrangler-anchor';
-    //         }
-
-    //         if (node.type === 'errortransform') {
-    //           originId.cssClass = 'error-anchor';
-    //           targetId.cssClass = 'error-anchor';
-    //         }
-
-    //         vm.instance.addEndpoint(node.name, transformOrigin, originId);
-    //         vm.instance.addEndpoint(node.name, transformTarget, targetId);
-    //         break;
-    //     }
-    //   });
-    // }
-
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
         var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
@@ -505,10 +428,10 @@ angular.module(PKG.name + '.commons')
     });
 
     jsPlumb.ready(function() {
-      var dagSettings2 = DAGPlusPlusFactory.getSettings2();
+      var dagSettings = DAGPlusPlusFactory.getSettings();
 
       jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance(dagSettings2);
+      vm.instance = jsPlumb.getInstance(dagSettings);
 
       init();
 
@@ -547,24 +470,6 @@ angular.module(PKG.name + '.commons')
 
       DAGPlusPlusNodesStore.registerOnChangeListener(function () {
         vm.activeNodeId = DAGPlusPlusNodesStore.getActiveNodeId();
-
-        // if (!vm.isDisabled) {
-        //   if (nodesTimeout) {
-        //     $timeout.cancel(nodesTimeout);
-        //   }
-        //   nodesTimeout = $timeout(function () {
-        //     // resetEndpointsAndConnections();
-        //     makeNodesDraggable();
-        //   });
-
-        //   if (commentsTimeout) {
-        //     $timeout.cancel(commentsTimeout);
-        //   }
-
-        //   commentsTimeout = $timeout(function () {
-        //     makeCommentsDraggable();
-        //   });
-        // }
 
         // can do keybindings only if no node is selected
         if (!vm.activeNodeId) {
