@@ -347,45 +347,6 @@ my-dag-plus {
         font-size: 16px;
         color: @hamburger-menu-color;
       }
-
-      .node-popover-menu {
-        width: 150px;
-        border: 1px solid black;
-        position: absolute;
-        background-color: white;
-        right: -119px;
-        top: 51px;
-        z-index: 1000;
-
-        .menu-icon {
-          color: @hamburger-hover-color;
-          padding: 5px;
-        }
-
-        .menu-content {
-          padding: 5px 10px;
-          color: @configure-btn-label-color;
-
-          .menu-content-action {
-            &:hover {
-              background-color: @node-menu-action-bg-color;
-            }
-
-            &.disabled {
-              cursor: not-allowed;
-              opacity: 0.5;
-            }
-
-            &.menu-content-delete {
-              color: @node-menu-delete-color;
-            }
-          }
-
-          hr {
-            margin: 5px 0;
-          }
-        }
-      }
       &.realtimesource,
       &.streamingsource,
       &.batchsource {
@@ -421,6 +382,54 @@ my-dag-plus {
       &.sparkprogram {
         color: @spark-plugins-color;
       }
+    }
+
+    .dag-popover-menu,
+    .node-popover-menu {
+      width: 150px;
+      border: 1px solid black;
+      background-color: white;
+      z-index: 1000;
+
+      .menu-icon {
+        color: @hamburger-hover-color;
+        padding: 5px;
+      }
+
+      .menu-content {
+        padding: 5px 10px;
+        color: @configure-btn-label-color;
+
+        .menu-content-action {
+          &:hover {
+            background-color: @node-menu-action-bg-color;
+          }
+
+          &.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+          }
+
+          &.menu-content-delete {
+            cursor: pointer;
+            color: @node-menu-delete-color;
+          }
+        }
+
+        hr {
+          margin: 5px 0;
+        }
+      }
+    }
+
+    .node-popover-menu {
+      position: absolute;
+      right: -119px;
+      top: 51px;
+    }
+
+    .dag-popover-menu {
+      position: fixed;
     }
 
     .comment-box {
@@ -504,55 +513,14 @@ my-dag-plus {
         fill: transparent;
         stroke: transparent;
       }
-
-      /*svg {
-        overflow: visible;
-      }
-      rect {
-        fill: white;
-        stroke-width: 3px;
-      }
-      circle {
-        fill: white;
-        stroke-width: 4px;
-      }
-      &-anchor-sourceAnchor {
-        circle,
-        rect {
-          stroke: @source-plugins-color;
-        }
-      }
-      &-anchor-transformAnchor {
-        circle {
-          stroke: @transform-plugins-color;
-        }
-
-        &.error-anchor {
-          circle {
-            stroke: @error-transform;
-          }
-        }
-
-      }
-      &-anchor-sinkAnchor {
-        circle,
-        rect {
-          stroke: @sink-plugins-color;
-        }
-      }
-      &-anchor-actionAnchor {
-        rect {
-          stroke: @action-plugins-color;
-        }
-
-        &.sparkprogram-anchor {
-          rect { stroke: @spark-plugins-color; }
-        }
-      }*/
     }
 
-    .jsplumb-connector path:last-child {
-      stroke-width: 0;
+    .jsplumb-connector {
+      cursor: pointer;
+
+      path:last-child {
+        stroke-width: 0;
+      }
     }
 
     /* metrics overlay */

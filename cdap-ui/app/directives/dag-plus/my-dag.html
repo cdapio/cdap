@@ -95,7 +95,7 @@
 
 <div class="my-js-dag"
     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick, 'preview-mode': previewMode }"
-    ng-click="DAGPlusPlusCtrl.clearNodeSelection(); DAGPlusPlusCtrl.toggleMenu(null)">
+    ng-click="DAGPlusPlusCtrl.clearNodeSelection(); DAGPlusPlusCtrl.toggleNodeMenu(null); DAGPlusPlusCtrl.openDagMenu(false);">
     <div id="diagram-container">
       <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
@@ -183,7 +183,7 @@
               <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
                     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                     class="menu-icon menu-icon-node fa fa-bars float-xs-right"
-                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name, $event)">
+                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
               </span>
             </div>
           </div>
@@ -192,7 +192,7 @@
                 class="node-popover-menu">
             <div
               class="menu-icon fa fa-bars"
-              ng-click="DAGPlusPlusCtrl.toggleMenu(node.name, $event)">
+              ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
             </div>
             <div class="menu-content">
               <div class="menu-content-action disabled">
@@ -237,7 +237,26 @@
           </div>
 
         </div>
-
+      </div>
+      <div ng-show="DAGPlusPlusCtrl.dagMenuOpen"
+            ng-click="$event.stopPropagation()"
+            class="dag-popover-menu">
+        <div class="menu-content">
+          <div class="menu-content-action disabled">
+            Copy
+          </div>
+          <div class="menu-content-action disabled">
+            Duplicate
+          </div>
+          <div class="menu-content-action disabled">
+            Create Template
+          </div>
+          <hr />
+          <div class="menu-content-action menu-content-delete"
+            ng-click="DAGPlusPlusCtrl.removeSelectedConnections(); DAGPlusPlusCtrl.openDagMenu(false)">
+            Delete
+          </div>
+        </div>
       </div>
     </div>
 </div>
