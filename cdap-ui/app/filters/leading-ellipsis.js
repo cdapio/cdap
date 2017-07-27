@@ -17,26 +17,16 @@
 /**
  * Similar to ellipsis.js filter, but show ellipses in the front instead
  **/
-angular.module(PKG.name+'.filters').filter('myLeadingEllipsis', function($filter) {
-  return function (input, limit, lastDigitsToShow, additionalFilter, ...additionalFilterArgs) {
+angular.module(PKG.name+'.filters').filter('myLeadingEllipsis', function() {
+  return function (input, limit, lastDigitsToShow) {
     if (typeof input !== 'string') {
       input = input.toString();
     }
 
-    var res = input;
-
     if (input.length > limit && limit > lastDigitsToShow) {
-      var digitsToShow = input.substring(input.length - lastDigitsToShow);
-      if (additionalFilter) {
-        if (additionalFilterArgs) {
-          digitsToShow = $filter(additionalFilter)(digitsToShow, additionalFilterArgs.toString());
-        } else {
-          digitsToShow = $filter(additionalFilter)(digitsToShow);
-        }
-      }
-      res = '\u2026 ' + digitsToShow;
+      return '\u2026' + input.substring(input.length - lastDigitsToShow);
     }
 
-    return res;
+    return input;
   };
 });
