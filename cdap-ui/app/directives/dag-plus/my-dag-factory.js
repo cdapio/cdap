@@ -16,97 +16,8 @@
 
 angular.module(PKG.name + '.commons')
   .factory('DAGPlusPlusFactory', function() {
-    var defaultSettings = {
-      Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true} ],
-      ConnectionsDetachable: true
-    };
-    var connectorStyle = {
-      strokeStyle: '#666e82',
-      fillStyle: '#666e82',
-      radius: 5,
-      lineWidth: 2
-    };
-    var connectorOverlays = {
-      connectorOverlays: [
-        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
-      ]
-    };
-
-    var commonSettings = {
-      endpoint: 'Dot',
-      maxConnections: -1, // -1 means unlimited connections
-      paintStyle: {
-        strokeStyle: '#4e5568',
-        fillStyle: '#4e5568',
-        radius: 11,
-        lineWidth: 3
-      },
-      anchors: [ 'Static']
-    };
-    var originSettings = angular.extend({
-      isSource: true,
-      connectorStyle: connectorStyle,
-      connectorOverlays: [
-        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
-      ],
-      anchor: [ 1, 0.5, 1, 0 ]
-    }, commonSettings);
-    var targetSettings = angular.extend({
-      isTarget: true,
-      connectorOverlays: [
-        [ 'Arrow', { location: 1, length: 12, width: 12, height: 10, foldback: 1 } ],
-      ],
-      anchor: [ 0, 0.5, -1, 0 ],
-      connectorStyle: connectorStyle
-    }, commonSettings);
-
-    var rectEndpoint = {
-      width: 7,
-      height: 7,
-      fillStyle: '#666e82',
-      strokeStyle: '#666e82'
-    };
 
     function getSettings() {
-      var settings = {
-        default: defaultSettings,
-        commonSettings: angular.extend(commonSettings, connectorOverlays),
-        sourceOrigin: angular.copy(originSettings),
-        sourceTarget: angular.copy(targetSettings),
-        transformOrigin: angular.copy(originSettings),
-        transformTarget: angular.copy(targetSettings),
-        sinkOrigin: angular.copy(originSettings),
-        sinkTarget: angular.copy(targetSettings),
-        actionOrigin: angular.copy(originSettings),
-        actionTarget: angular.copy(targetSettings),
-      };
-
-      settings.sourceOrigin.anchor.push('sourceAnchor');
-      settings.sourceTarget.anchor.push('sourceAnchor');
-      settings.sourceTarget.endpoint = 'Rectangle';
-      settings.sourceTarget.endpointStyle = angular.copy(rectEndpoint);
-
-      settings.transformOrigin.anchor.push('transformAnchor');
-      settings.transformTarget.anchor.push('transformAnchor');
-
-      settings.sinkOrigin.anchor.push('sinkAnchor');
-      settings.sinkTarget.anchor.push('sinkAnchor');
-      settings.sinkOrigin.endpoint = 'Rectangle';
-      settings.sinkOrigin.endpointStyle = angular.copy(rectEndpoint);
-
-      settings.actionOrigin.anchor.push('actionAnchor');
-      settings.actionTarget.anchor.push('actionAnchor');
-      settings.actionOrigin.connectorStyle['stroke-dasharray'] = [2,2];
-      settings.sinkOrigin.connectorStyle['stroke-dasharray'] = [2,2];
-      settings.actionOrigin.endpoint = 'Rectangle';
-      settings.actionOrigin.endpointStyle = angular.copy(rectEndpoint);
-      settings.actionTarget.endpoint = 'Rectangle';
-      settings.actionTarget.endpointStyle = angular.copy(rectEndpoint);
-
-      return settings;
-    }
-
-    function getSettings2() {
       var settings = {
         Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
         Endpoint: 'Dot',
@@ -297,7 +208,6 @@ angular.module(PKG.name + '.commons')
 
     return {
       getSettings: getSettings,
-      getSettings2: getSettings2,
       getIcon: getIcon,
       getGraphLayout: getGraphLayout
     };
