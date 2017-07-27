@@ -90,6 +90,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_MESSAGE = "msg";
 
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
@@ -282,6 +283,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       write(key, new RunRecordMeta(record, properties));
     }
   }
+
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
@@ -925,6 +927,18 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
     keyBuilder.add(key);
     write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+  }
+
+  public String retrieveSubscriberState(String topic) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    return get(keyBuilder.build(), String.class);
+  }
+
+  public void persistSubscriberState(String topic, String messageId) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    write(keyBuilder.build(), Bytes.toBytes(messageId));
   }
 
   private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,

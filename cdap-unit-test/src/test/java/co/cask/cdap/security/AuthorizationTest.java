@@ -759,9 +759,6 @@ public class AuthorizationTest extends TestBase {
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
 
-    if (flowManager.isRunning()) {
-      flowManager.stop();
-    }
     waitForNoRunningPrograms(flowManager);
   }
 
@@ -995,9 +992,6 @@ public class AuthorizationTest extends TestBase {
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
 
-    if (sparkManager.isRunning()) {
-      sparkManager.stop();
-    }
     waitForNoRunningPrograms(sparkManager);
   }
 
@@ -1170,10 +1164,8 @@ public class AuthorizationTest extends TestBase {
 
     // switch back to BOB and run spark again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
-
     sparkManager.start(args);
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
-
+    sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 1, 120, TimeUnit.SECONDS);
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
     verifyDummyData(outputDatasetNSMeta.getNamespaceId(), "output");

@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -55,11 +55,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
-  private final RuntimeStore store;
+  private final Store store;
   private final ExecutorService taskExecutorService;
 
   @Inject
-  ProgramNotificationSubscriberService(MessagingService messagingService, RuntimeStore store, CConfiguration cConf,
+  ProgramNotificationSubscriberService(MessagingService messagingService, Store store, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     super(messagingService, cConf, datasetFramework, txClient);
     this.cConf = cConf;
@@ -96,14 +96,21 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * Thread that receives TMS notifications and persists the program status notification to the store
    */
   private class ProgramStatusNotificationSubscriberThread extends NotificationSubscriberThread {
+    private final String topic;
 
     ProgramStatusNotificationSubscriberThread(String topic) {
       super(topic);
+      this.topic = topic;
     }
 
     @Override
     public String loadMessageId() {
-      return null;
+      return store.retrieveSubscriberState(topic);
+    }
+
+    @Override
+    public void updateMessageId(String lastFetchedMessageId) {
+      store.persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override
@@ -136,7 +143,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
       final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
       final ProgramRunStatus programRunStatus = runStatus;
-
+      System.out.println("PERSIST " + programRunIdString + " " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           if (stateChangeTime == -1) {

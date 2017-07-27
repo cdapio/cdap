@@ -117,7 +117,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     @Override
     public void run() {
-      messageId = loadMessageId();
+      messageId = fetchLastProcessedMessageId();
       while (!stopping) {
         try {
           long sleepTime = processNotifications();
@@ -131,12 +131,14 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       }
     }
 
-    /**
-     * Loads the message id from storage
-     *
-     * @return the message id, or null if no message id is stored
-     */
-    public abstract String loadMessageId();
+    private String fetchLastProcessedMessageId() {
+      return Transactionals.execute(transactional, new TxCallable<String>() {
+        @Override
+        public String call(DatasetContext context) throws Exception {
+          return loadMessageId();
+        }
+      });
+    }
 
     /**
      * Fetches new notifications and configures time for next fetch
@@ -204,9 +206,27 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
           processNotification(context, notification);
           lastFetchedMessageId = message.getId();
         }
+
+        if (lastFetchedMessageId != null) {
+          updateMessageId(lastFetchedMessageId);
+        }
+
         return lastFetchedMessageId;
       }
     }
+
+    /**
+     * Loads the message id from storage. Note that this method is already executed inside a transaction.
+     *
+     * @return the message id, or null if no message id has been stored
+     */
+    public abstract String loadMessageId();
+
+    /**
+     * Persists the message id to storage. Note that this method is already executed inside a transaction.
+     *
+     */
+    public abstract void updateMessageId(String lastFetchedMessageId);
 
     /**
      * Processes the fetched notification
@@ -238,23 +258,12 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     @Override
     public String loadMessageId() {
-      return Transactionals.execute(transactional, new TxCallable<String>() {
-        @Override
-        public String call(DatasetContext context) throws Exception {
-          return jobQueue.retrieveSubscriberState(topic);
-        }
-      });
+      return jobQueue.retrieveSubscriberState(topic);
     }
 
     @Override
-    public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
-      // Get the last fetched messageId
-      String lastFetchedMessageId = super.fetchAndProcessNotifications(context, fetcher);
-      // Persist the the last message id for the topic to the job queue
-      if (lastFetchedMessageId != null) {
-        jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
-      }
-      return lastFetchedMessageId;
+    public void updateMessageId(String lastFetchedMessageId) {
+      jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override

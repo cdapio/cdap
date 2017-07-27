@@ -19,6 +19,7 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
