@@ -26,12 +26,12 @@
     <div class="metrics-content">
       <div class="metrics-records-out">
         <h5>Records Out</h5>
-        <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | myLeadingEllipsis: 13:8: 'number': 0 }}</p>
+        <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | myLeadingEllipsis: 13:8 | myNumberWithEllipsis: 0 }}</p>
         <p ng-if="!data.metrics.recordsOut">0</p>
       </div>
       <div class="metrics-errors">
         <h5>Errors</h5>
-        <p ng-if="data.metrics.recordsError">{{ data.metrics.recordsError | myLeadingEllipsis: 13:8: 'number': 0 }}</p>
+        <p ng-if="data.metrics.recordsError">{{ data.metrics.recordsError | myLeadingEllipsis: 13:8 | myNumberWithEllipsis: 0 }}</p>
         <p ng-if="!data.metrics.recordsError">0</p>
       </div>
     </div>

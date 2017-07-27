@@ -160,18 +160,20 @@
             </div>
             <div class="node-metrics"
                   ng-show="DAGPlusPlusCtrl.isDisabled">
-              <a class="metric-records-out"
-                  ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
-                <span class="metric-records-out-label">Records Out:</span>
-                <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 13:8: 'number': 0">
+              <a ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
+                <span class="metric-records-out"
+                    ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
+                  <span class="metric-records-out-label">Records Out:</span>
+                  <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
+                  </span>
+                </span>
+                <span>/</span>
+                <span class="metric-errors">
+                  <span class="metric-errors-label">Errors:</span>
+                  <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
+                  </span>
                 </span>
               </a>
-              <span>/</span>
-              <span class="metric-errors">
-                <span class="metric-errors-label">Errors:</span>
-                <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 13:8: 'number': 0">
-                </span>
-              </span>
             </div>
             <div class="node-actions">
               <span class="node-actions-error-alert float-xs-left">
