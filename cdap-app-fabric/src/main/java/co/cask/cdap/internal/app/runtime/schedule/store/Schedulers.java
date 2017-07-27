@@ -25,6 +25,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
@@ -55,6 +56,7 @@ import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -148,6 +150,20 @@ public class Schedulers {
       @Override
       public ScheduleDetail apply(@Nullable ProgramSchedule input) {
         return input == null ? null : input.toScheduleDetail();
+      }
+    });
+  }
+
+  /**
+   * Convert a list of program schedules into a list of schedule details.
+   */
+  public static List<ScheduleDetail> toScheduleDetails(Collection<ProgramScheduleRecord> schedules) {
+    List<ProgramScheduleRecord> scheduleList = new ArrayList<>(schedules);
+    return Lists.transform(scheduleList, new Function<ProgramScheduleRecord, ScheduleDetail>() {
+      @Nullable
+      @Override
+      public ScheduleDetail apply(@Nullable ProgramScheduleRecord input) {
+        return input == null ? null : input.getSchedule().toScheduleDetail();
       }
     });
   }

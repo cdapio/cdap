@@ -541,6 +541,9 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
       }
       return triggerKeys;
     }
+    if (trigger instanceof ProgramStatusTrigger) {
+      return Collections.singletonList(((ProgramStatusTrigger) trigger).getProgramId().toString());
+    }
     return Collections.emptyList();
   }
 

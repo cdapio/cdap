@@ -21,7 +21,6 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;
@@ -60,6 +59,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProtoConstraintCodec;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
@@ -74,9 +74,11 @@ import co.cask.cdap.security.impersonation.CurrentUGIProvider;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -126,6 +128,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -882,6 +885,29 @@ public abstract class AppFabricTestBase {
     return doGetSchedules(namespace, schedulesUrl);
   }
 
+  protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
+                                                               co.cask.cdap.api.ProgramStatus... programStatuses)
+    throws Exception {
+    String schedulesUrl = String.format("schedules/trigger-type/program-status?trigger-namespace-id=%s" +
+                                          "&trigger-app-name=%s&trigger-app-version=%s" +
+                                          "&trigger-program-type=%s&trigger-program-name=%s", programId.getNamespace(),
+                                        programId.getApplication(), programId.getVersion(),
+                                        programId.getType().getCategoryName(), programId.getProgram());
+    if (programStatuses.length > 0) {
+      List<co.cask.cdap.api.ProgramStatus> programStatusList = Arrays.asList(programStatuses);
+      Lists.transform(programStatusList, new Function<co.cask.cdap.api.ProgramStatus, String>() {
+
+        @Nullable
+        @Override
+        public String apply(co.cask.cdap.api.ProgramStatus status) {
+          return status.name();
+        }
+      });
+      schedulesUrl = schedulesUrl + "&trigger-program-statuses=" + Joiner.on(",").join(programStatuses);
+    }
+    return doGetSchedules(namespace, schedulesUrl);
+  }
+
   protected List<ScheduleDetail> getSchedules(String namespace, String appName,
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/workflows/%s/schedules", appName, workflowName);
@@ -892,6 +918,20 @@ public abstract class AppFabricTestBase {
                                               String workflowName) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules", appName, appVersion,
                                         workflowName);
+    return doGetSchedules(namespace, schedulesUrl);
+  }
+
+  protected List<ScheduleDetail> getSchedules(String namespace, String appName,
+                                              String workflowName, ProtoTrigger.Type type) throws Exception {
+    String schedulesUrl = String.format("apps/%s/workflows/%s/schedules?trigger-type=%s",
+                                        appName, workflowName, type.getCategoryName());
+    return doGetSchedules(namespace, schedulesUrl);
+  }
+
+  protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
+                                              String workflowName, ProtoTrigger.Type type) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules?trigger-type=%s",
+                                        appName, appVersion, workflowName, type.getCategoryName());
     return doGetSchedules(namespace, schedulesUrl);
   }
 

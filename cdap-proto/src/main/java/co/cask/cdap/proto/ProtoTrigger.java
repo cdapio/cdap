@@ -22,6 +22,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -35,10 +37,37 @@ public abstract class ProtoTrigger implements Trigger {
    * Represents all known trigger types in REST requests/responses.
    */
   public enum Type {
-    TIME,
-    PARTITION,
-    STREAM_SIZE,
-    PROGRAM_STATUS
+    TIME("time"),
+    PARTITION("partition"),
+    STREAM_SIZE("stream-size"),
+    PROGRAM_STATUS("program-status");
+
+    private static final Map<String, Type> CATEGORY_MAP;
+
+    static {
+      CATEGORY_MAP = new HashMap<>();
+      for (Type type : Type.values()) {
+        CATEGORY_MAP.put(type.getCategoryName(), type);
+      }
+    }
+
+    private final String cateogryName;
+
+    Type(String cateogryName) {
+      this.cateogryName = cateogryName;
+    }
+
+    public String getCategoryName() {
+      return cateogryName;
+    }
+
+    public static Type valueOfCategoryName(String categoryName) {
+      Type type = CATEGORY_MAP.get(categoryName);
+      if (type == null) {
+        throw new IllegalArgumentException("Unknown category name " + categoryName);
+      }
+      return type;
+    }
   }
 
   private final Type type;

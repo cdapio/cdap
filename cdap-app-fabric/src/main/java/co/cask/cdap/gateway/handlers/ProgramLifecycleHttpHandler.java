@@ -51,6 +51,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -76,6 +77,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoConstraint;
+import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
@@ -126,6 +128,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -615,8 +618,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param triggerProgramType program type of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramName program name of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramStatuses comma separated {@link ProgramStatus} in {@link ProgramStatusTrigger}.
-   *                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
-   *                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
+   *                               Schedules with {@link ProgramStatusTrigger} triggered by any {@link ProgramStatus}
+   *                               in triggerProgramStatuses will be returned.
    */
   @GET
   @Path("schedules/trigger-type/program-status")
@@ -629,6 +632,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                         @QueryParam("trigger-program-name") String triggerProgramName,
                                         @QueryParam("trigger-program-statuses") String triggerProgramStatuses)
     throws BadRequestException {
+
     boolean asScheduleSpec = returnScheduleAsSpec(format);
     if (triggerNamespaceId == null && triggerAppName == null && triggerAppVersion == null
       && triggerProgramType == null && triggerProgramName == null) {
@@ -711,28 +715,49 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
+  /**
+   * See {@link #getAllSchedules(HttpRequest, HttpResponder, String, String, String, String, String)}
+   */
   @GET
-  @Path("apps/{app-name}/schedules")
+  @Path("apps/{app-name}/schedules/trigger-type/program-status")
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
-                              @QueryParam("format") String format) throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format);
+                              @QueryParam("format") String format,
+                              @QueryParam("trigger-type") String triggerType)
+    throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format, triggerType
+    );
   }
 
+  /**
+   * Get schedules in a given application, optionally filtered by the given
+   * {@link co.cask.cdap.proto.ProtoTrigger.Type}.
+   *  @param namespaceId namespace of the application to get schedules from
+   * @param appName name of the application to get schedules from
+   * @param appVersion version of the application to get schedules from
+   * @param format format of the returned schedules. Use "detail" to return {@link ScheduleDetail}
+   *               or "spec" to return {@link ScheduleSpecification}
+   * @param triggerType trigger type of returned schedules. If not specify, all schedules
+   *                    are returned regardless of trigger type
+   */
   @GET
   @Path("apps/{app-name}/versions/{app-version}/schedules")
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
                               @PathParam("app-version") String appVersion,
-                              @QueryParam("format") String format) throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, appVersion, null, format);
+                              @QueryParam("format") String format,
+                              @QueryParam("trigger-type") String triggerType)
+    throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespaceId, appName, appVersion, null, format, triggerType
+    );
   }
 
   protected void doGetSchedules(HttpResponder responder, String namespace, String app, String version,
-                                @Nullable String workflow, @Nullable String format)
+                                @Nullable String workflow, @Nullable String format, @Nullable String triggerType)
     throws NotFoundException, BadRequestException {
+
     boolean asScheduleSpec = returnScheduleAsSpec(format);
     ApplicationId applicationId = new ApplicationId(namespace, app, version);
     ApplicationSpecification appSpec = store.getApplication(applicationId);
@@ -749,6 +774,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } else {
       schedules = programScheduler.listSchedules(applicationId);
     }
+
+    if (triggerType != null) {
+      final ProtoTrigger.Type type = ProtoTrigger.Type.valueOfCategoryName(triggerType);
+      // Filter schedules by trigger type
+      Iterator<ProgramSchedule> iterator = schedules.iterator();
+      while (iterator.hasNext()) {
+        // Remove the schedule if its trigger type does not match the given type
+        if (!((ProtoTrigger) iterator.next().getTrigger()).getType().equals(type)) {
+          iterator.remove();
+        }
+      }
+    }
+
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     if (asScheduleSpec) {
       List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);

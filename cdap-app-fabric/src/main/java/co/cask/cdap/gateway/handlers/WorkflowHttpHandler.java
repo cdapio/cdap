@@ -261,8 +261,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("namespace-id") String namespace,
                                    @PathParam("app-id") String application,
                                    @PathParam("workflow-id") String workflow,
-                                   @QueryParam("format") String format) throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, format);
+                                   @QueryParam("format") String format,
+                                   @QueryParam("trigger-type") String triggerType)
+    throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespace, application, ApplicationId.DEFAULT_VERSION, workflow, format, triggerType);
   }
 
   /**
@@ -275,8 +277,10 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
                                    @PathParam("app-id") String application,
                                    @PathParam("app-version") String version,
                                    @PathParam("workflow-id") String workflow,
-                                   @QueryParam("format") String format) throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespace, application, version, workflow, format);
+                                   @QueryParam("format") String format,
+                                   @QueryParam("trigger-type") String triggerType)
+    throws NotFoundException, BadRequestException {
+    doGetSchedules(responder, namespace, application, version, workflow, format, triggerType);
   }
 
   @GET
