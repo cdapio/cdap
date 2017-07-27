@@ -16,28 +16,44 @@
 
 angular.module(PKG.name + '.commons')
   .factory('DAGPlusPlusFactory', function() {
+    var defaultConnectionStyle = {
+      PaintStyle: {
+        strokeStyle: '#4e5568',
+        lineWidth: 2,
+        outlineColor: 'transparent',
+        outlineWidth: 4
+      },
+      HoverPaintStyle: { strokeStyle: '#58b7f6', lineWidth: 4 }
+    };
+
+    var selectedConnectionStyle = {
+      paintStyle: {
+        strokeStyle: '#58b7f6',
+        lineWidth: 4,
+        outlineColor: 'transparent',
+        outlineWidth: 4
+      }
+    };
+
+    var defaultSettings = angular.extend({
+      Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
+      Endpoint: 'Dot',
+      EndpointStyle: { radius: 1 },
+      Connector: [ 'Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0 } ],
+      ConnectionOverlays: [
+        ['Arrow', {
+            location: 1,
+            id: 'arrow',
+            length: 14,
+            foldback: 0.8
+        }]
+      ]
+    }, defaultConnectionStyle);
 
     function getSettings() {
       var settings = {
-        Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
-        Endpoint: 'Dot',
-        EndpointStyle: { radius: 1 },
-        Connector: [ 'Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0 } ],
-        PaintStyle: {
-          strokeStyle: '#4e5568',
-          lineWidth: 2,
-          outlineColor: 'transparent',
-          outlineWidth: 4
-        },
-        HoverPaintStyle: { strokeStyle: '#58B7F6', lineWidth: 4 },
-        ConnectionOverlays: [
-          ['Arrow', {
-              location: 1,
-              id: 'arrow',
-              length: 14,
-              foldback: 0.8
-          }]
-        ]
+        default: defaultSettings,
+        selectedConnectionStyle: selectedConnectionStyle
       };
 
       return settings;
