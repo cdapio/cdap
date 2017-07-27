@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithMultipleScheduledWorkflows;
+import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
@@ -25,6 +25,7 @@ import co.cask.cdap.DummyAppWithTrackingTable;
 import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
@@ -72,7 +73,6 @@ import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -137,9 +137,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
   private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
 
   private static final String EMPTY_ARRAY_JSON = "[]";
   private static final String STOPPED = "STOPPED";
@@ -958,63 +955,115 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
     Id.Namespace idTestNamespace2 = testNamespace2.toId();
     Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
-    addAppArtifact(artifactId, AppWithMultipleScheduledWorkflows.class);
+    addAppArtifact(artifactId, AppWithMultipleSchedules.class);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    Id.Application appDefault = new Id.Application(idTestNamespace2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME);
-    ApplicationId app1 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION1);
-    ApplicationId app2 = testNamespace2.app(APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME, VERSION2);
+    Id.Application appDefault = new Id.Application(idTestNamespace2, AppWithMultipleSchedules.NAME);
+    ApplicationId app1 = testNamespace2.app(AppWithMultipleSchedules.NAME, VERSION1);
+    ApplicationId app2 = testNamespace2.app(AppWithMultipleSchedules.NAME, VERSION2);
     Assert.assertEquals(200, deploy(appDefault, appRequest).getStatusLine().getStatusCode());
     Assert.assertEquals(200, deploy(app1, appRequest).getStatusLine().getStatusCode());
     Assert.assertEquals(200, deploy(app2, appRequest).getStatusLine().getStatusCode());
 
-    // Schedule spec from non-versioned API
-    List<ScheduleDetail> someSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                      APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    // Schedule details from non-versioned API
+    List<ScheduleDetail> someSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                      AppWithMultipleSchedules.SOME_WORKFLOW);
     Assert.assertEquals(2, someSchedules.size());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(0).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules.get(1).getProgram().getProgramName());
+    Assert.assertEquals(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules.get(0).getProgram().getProgramName());
+    Assert.assertEquals(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules.get(1).getProgram().getProgramName());
 
-    // Schedule spec from non-versioned API
-    List<ScheduleDetail> anotherSchedules = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                         APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+    // Schedule details from non-versioned API
+    List<ScheduleDetail> anotherSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                         AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     Assert.assertEquals(3, anotherSchedules.size());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
                         anotherSchedules.get(0).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
                         anotherSchedules.get(1).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
+    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_WORKFLOW,
                         anotherSchedules.get(2).getProgram().getProgramName());
+
+    // Schedule details from non-versioned API filtered by Trigger type
+    List<ScheduleDetail> filteredTimeSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                              AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
+                                                              ProtoTrigger.Type.TIME);
+    Assert.assertEquals(1, filteredTimeSchedules.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, filteredTimeSchedules);
+
+    // Schedule details from non-versioned API filtered by Trigger type
+    List<ScheduleDetail> programStatusSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                              AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
+                                                              ProtoTrigger.Type.PROGRAM_STATUS);
+    Assert.assertEquals(4, programStatusSchedules.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, programStatusSchedules);
 
     deleteApp(appDefault, 200);
 
     // Schedule of app1 from versioned API
-    List<ScheduleDetail> someSchedules1 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                       VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    List<ScheduleDetail> someSchedules1 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
+                                                       AppWithMultipleSchedules.SOME_WORKFLOW);
     Assert.assertEquals(2, someSchedules1.size());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(0).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSchedules1.get(1).getProgram().getProgramName());
+    assertProgramInSchedules(AppWithMultipleSchedules.SOME_WORKFLOW, someSchedules1);
     // validate backward-compatible API
-    List<ScheduleSpecification> someSpecs1 = getScheduleSpecs(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                              VERSION1, APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW);
+    List<ScheduleSpecification> someSpecs1 = getScheduleSpecs(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                              VERSION1, AppWithMultipleSchedules.SOME_WORKFLOW);
     Assert.assertEquals(2, someSpecs1.size());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSpecs1.get(0).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW, someSpecs1.get(1).getProgram().getProgramName());
+    assertProgramInScheduleSpecs(AppWithMultipleSchedules.SOME_WORKFLOW, someSpecs1);
+
+    // Schedule details from versioned API filtered by Trigger type
+    filteredTimeSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
+                                         AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
+                                         ProtoTrigger.Type.TIME);
+    Assert.assertEquals(1, filteredTimeSchedules.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, filteredTimeSchedules);
+
+    // Schedule details from versioned API filtered by Trigger type
+    programStatusSchedules = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME, VERSION1,
+                                          AppWithMultipleSchedules.TRIGGERED_WORKFLOW,
+                                          ProtoTrigger.Type.PROGRAM_STATUS);
+    Assert.assertEquals(4, programStatusSchedules.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, programStatusSchedules);
+
+    // Schedules triggered by SOME_WORKFLOW's completed or failed or killed status
+    ProgramId someWorkflow = app1.workflow(AppWithMultipleSchedules.SOME_WORKFLOW);
+    List<ScheduleDetail> triggeredSchedules1 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
+                                                                             ProgramStatus.COMPLETED,
+                                                                             ProgramStatus.FAILED,
+                                                                             ProgramStatus.KILLED);
+    Assert.assertEquals(3, triggeredSchedules1.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules1);
+    // Schedules triggered by SOME_WORKFLOW's completed status
+    List<ScheduleDetail> triggeredByCompletedSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
+                                                                                       ProgramStatus.COMPLETED);
+    Assert.assertEquals(2, triggeredByCompletedSchedules.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredByCompletedSchedules);
+    // Schedules triggered by ANOTHER_WORKFLOW regardless of program status
+    ProgramId anotherWorkflow = app1.workflow(AppWithMultipleSchedules.ANOTHER_WORKFLOW);
+    List<ScheduleDetail> triggeredSchedules2 = listSchedulesByTriggerProgram(TEST_NAMESPACE2, anotherWorkflow);
+    Assert.assertEquals(1, triggeredSchedules2.size());
+    assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules2);
 
     deleteApp(app1, 200);
 
-    // Schedule spec of app2 from versioned API
-    List<ScheduleDetail> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME,
-                                                          VERSION2, APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW);
+    // Schedule detail of app2 from versioned API
+    List<ScheduleDetail> anotherSchedules2 = getSchedules(TEST_NAMESPACE2, AppWithMultipleSchedules.NAME,
+                                                          VERSION2, AppWithMultipleSchedules.ANOTHER_WORKFLOW);
     Assert.assertEquals(3, anotherSchedules2.size());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
-                        anotherSchedules2.get(0).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
-                        anotherSchedules2.get(1).getProgram().getProgramName());
-    Assert.assertEquals(APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW,
-                        anotherSchedules2.get(2).getProgram().getProgramName());
+    assertProgramInSchedules(AppWithMultipleSchedules.ANOTHER_WORKFLOW, anotherSchedules2);
 
     deleteApp(app2, 200);
+  }
+
+  private void assertProgramInSchedules(String programName, List<ScheduleDetail> schedules) {
+    for (ScheduleDetail scheduleDetail : schedules) {
+      Assert.assertEquals(programName, scheduleDetail.getProgram().getProgramName());
+    }
+  }
+
+  private void assertProgramInScheduleSpecs(String programName, List<ScheduleSpecification> schedules) {
+    for (ScheduleSpecification scheduleDetail : schedules) {
+      Assert.assertEquals(programName, scheduleDetail.getProgram().getProgramName());
+    }
   }
 
   @Test
