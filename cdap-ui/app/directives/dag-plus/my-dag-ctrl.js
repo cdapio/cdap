@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory) {
 
     var vm = this;
 
@@ -88,7 +88,7 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('click', selectConnection);
-        vm.instance.bind('beforeDrop', checkIfConnectionExists);
+        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
         Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
         Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
@@ -333,7 +333,7 @@ angular.module(PKG.name + '.commons')
     }
 
     vm.removeSelectedConnections = function() {
-      if (selectedConnections.length === 0) { return; }
+      if (selectedConnections.length === 0 || vm.isDisabled) { return; }
 
       angular.forEach(selectedConnections, function (selectedConnectionObj) {
         removeConnection(selectedConnectionObj, false);
@@ -346,6 +346,8 @@ angular.module(PKG.name + '.commons')
     };
 
     function selectConnection(seletectedConnObj) {
+      if (vm.isDisabled) { return; }
+
       var selectedConnection = _.find(selectedConnections, function (conn) {
         return conn.sourceId === seletectedConnObj.sourceId && conn.targetId === seletectedConnObj.targetId;
       });
@@ -357,11 +359,31 @@ angular.module(PKG.name + '.commons')
       seletectedConnObj.toggleType('selected');
     }
 
-    // return false if connection already exists, which will prevent the connecton from being formed
-    function checkIfConnectionExists(connObj) {
-      return !_.find($scope.connections, function (conn) {
+    function checkIfConnectionExistsOrValid(connObj) {
+      // return false if connection already exists, which will prevent the connecton from being formed
+      var exists = _.find($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
+      if (exists) { return false; }
+
+      // else check if the connection is valid
+      var fromNode = connObj.sourceId,
+          toNode = connObj.targetId;
+
+      angular.forEach($scope.nodes, function (node) {
+        if (node.name === fromNode) {
+          fromNode = node;
+        } else if (node.name === toNode) {
+          toNode = node;
+        }
+      });
+
+      var valid = true;
+
+      NonStorePipelineErrorFactory.connectionIsValid(fromNode, toNode, function(invalidConnection) {
+        if (invalidConnection) { valid = false }
+      });
+      return valid;
     }
 
     function resetEndpointsAndConnections() {
@@ -385,7 +407,7 @@ angular.module(PKG.name + '.commons')
         addConnections();
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
-        vm.instance.bind('beforeDrop', checkIfConnectionExists);
+        vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
       });
 
       if (commentsTimeout) {
@@ -499,7 +521,6 @@ angular.module(PKG.name + '.commons')
           e.preventDefault();
           vm.openDagMenu(true);
           positionMenu(e, dagMenu);
-          // vm.dagMenuOpen = true;
         }
       });
 
@@ -786,11 +807,15 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.undoActions = function () {
-      DAGPlusPlusNodesActionsFactory.undoActions();
+      if (!vm.isDisabled) {
+        DAGPlusPlusNodesActionsFactory.undoActions();
+      }
     };
 
     vm.redoActions = function () {
-      DAGPlusPlusNodesActionsFactory.redoActions();
+      if (!vm.isDisabled) {
+        DAGPlusPlusNodesActionsFactory.redoActions();
+      }
     };
 
     $scope.$on('$destroy', function () {
