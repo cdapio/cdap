@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -203,12 +203,7 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
   });
 };
 
-let allConnectionsValid = (GLOBALS, nodes, connections, cb) => {
-  let nodesMap = {};
-  angular.forEach(nodes, (node) => {
-    nodesMap[node.name] = node;
-  });
-
+let connectionIsValid = (GLOBALS, fromNode, toNode, cb) => {
 
   /**
    * Rules:
@@ -218,31 +213,40 @@ let allConnectionsValid = (GLOBALS, nodes, connections, cb) => {
    *    4. Action can only be connected to Action or Source
    **/
 
+  let fromType = GLOBALS.pluginConvert[fromNode.type],
+      toType = GLOBALS.pluginConvert[toNode.type];
+
+  switch (fromType) {
+    case 'source':
+    case 'transform':
+      if (!(toType === 'transform' || toType === 'sink')) {
+        cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
+      }
+      break;
+    case 'sink':
+      if (toType !== 'action') {
+        cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
+      }
+      break;
+    case 'action':
+      if (!(toType === 'action' || toType === 'source')) {
+        cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
+      }
+      break;
+  }
+};
+
+let allConnectionsValid = (GLOBALS, nodes, connections, cb) => {
+  let nodesMap = {};
+  angular.forEach(nodes, (node) => {
+    nodesMap[node.name] = node;
+  });
+
   angular.forEach(connections, (conn) => {
     let from = nodesMap[conn.from],
         to = nodesMap[conn.to];
 
-    let fromType = GLOBALS.pluginConvert[from.type],
-        toType = GLOBALS.pluginConvert[to.type];
-
-    switch (fromType) {
-      case 'source':
-      case 'transform':
-        if (!(toType === 'transform' || toType === 'sink')) {
-          cb(from.plugin.label + ' → ' + to.plugin.label);
-        }
-        break;
-      case 'sink':
-        if (toType !== 'action') {
-          cb(from.plugin.label + ' → ' + to.plugin.label);
-        }
-        break;
-      case 'action':
-        if (!(toType === 'action' || toType === 'source')) {
-          cb(from.plugin.label + ' → ' + to.plugin.label);
-        }
-        break;
-    }
+    connectionIsValid(GLOBALS, from, to, cb);
   });
 };
 
@@ -362,6 +366,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),
     allConnectionsValid: allConnectionsValid.bind(null, GLOBALS),
+    connectionIsValid: connectionIsValid.bind(null, GLOBALS),
     validateImportJSON: validateImportJSON.bind(null, myHelpers, GLOBALS)
   };
 };
