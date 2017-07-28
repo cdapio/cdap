@@ -34,6 +34,7 @@ import co.cask.cdap.etl.mock.test.HydratorTestBase;
 import co.cask.cdap.etl.mock.transform.FilterErrorTransform;
 import co.cask.cdap.etl.mock.transform.FlattenErrorTransform;
 import co.cask.cdap.etl.mock.transform.IdentityTransform;
+import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
@@ -762,6 +763,99 @@ public class DataStreamsTest extends HydratorTestBase {
       },
       4,
       TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testSplitterTransform() throws Exception {
+    Schema schema = Schema.recordOf("user",
+                                    Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
+                                    Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                    Schema.Field.of("email", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    StructuredRecord user0 = StructuredRecord.builder(schema).set("id", 0L).build();
+    StructuredRecord user1 = StructuredRecord.builder(schema).set("id", 1L).set("email", "one@example.com").build();
+    StructuredRecord user2 = StructuredRecord.builder(schema).set("id", 2L).set("name", "two").build();
+    StructuredRecord user3 = StructuredRecord.builder(schema)
+      .set("id", 3L).set("name", "three").set("email", "three@example.com").build();
+
+    String sink1Name = "splitSink1";
+    String sink2Name = "splitSink2";
+
+    /*
+     *
+     *                                            |null --> sink1
+     *                       |null--> splitter2 --|
+     * source --> splitter1--|                    |non-null --|
+     *                       |                                |--> sink2
+     *                       |non-null------------------------|
+     */
+    DataStreamsConfig config = DataStreamsConfig.builder()
+      .setBatchInterval("5s")
+      .addStage(new ETLStage("source", MockSource.getPlugin(schema, ImmutableList.of(user0, user1, user2, user3))))
+      .addStage(new ETLStage("splitter1", NullFieldSplitterTransform.getPlugin("name")))
+      .addStage(new ETLStage("splitter2", NullFieldSplitterTransform.getPlugin("email")))
+      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
+      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addConnection("source", "splitter1")
+      .addConnection("splitter1", "splitter2", "null")
+      .addConnection("splitter1", "sink2", "non-null")
+      .addConnection("splitter2", "sink1", "null")
+      .addConnection("splitter2", "sink2", "non-null")
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("SplitterTest");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // run pipeline
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start();
+    sparkManager.waitForStatus(true, 10, 1);
+
+    // check output
+    // sink1 should only have records where both name and email are null (user0)
+    final DataSetManager<Table> sink1Manager = getDataset(sink1Name);
+    final Set<StructuredRecord> expected1 = ImmutableSet.of(user0);
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink1Manager.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>();
+          outputRecords.addAll(MockSink.readOutput(sink1Manager));
+          return expected1.equals(outputRecords);
+        }
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    // sink2 should have anything with a non-null name or non-null email
+    final DataSetManager<Table> sink2Manager = getDataset(sink2Name);
+    final Set<StructuredRecord> expected2 = ImmutableSet.of(user1, user2, user3);
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          sink2Manager.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>();
+          outputRecords.addAll(MockSink.readOutput(sink2Manager));
+          return expected2.equals(outputRecords);
+        }
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    validateMetric(appId, "source.records.out", 4);
+    validateMetric(appId, "splitter1.records.in", 4);
+    validateMetric(appId, "splitter1.records.out.non-null", 2);
+    validateMetric(appId, "splitter1.records.out.null", 2);
+    validateMetric(appId, "splitter2.records.in", 2);
+    validateMetric(appId, "splitter2.records.out.non-null", 1);
+    validateMetric(appId, "splitter2.records.out.null", 1);
+    validateMetric(appId, "sink1.records.in", 1);
+    validateMetric(appId, "sink2.records.in", 3);
   }
 
   private void validateMetric(ApplicationId appId, String metric,

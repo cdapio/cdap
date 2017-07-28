@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -80,8 +81,13 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> transform(StageSpec stageSpec) {
-    return wrap(stream.transform(new DynamicTransform<T, Object>(new DynamicDriverContext(stageSpec, sec))));
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec) {
+    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec), false)));
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec) {
+    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec), true)));
   }
 
   @Override
@@ -95,7 +101,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<Tuple2<Boolean, Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec);
     JavaPairDStream<Object, T> keyedCollection =
       stream.transformToPair(new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext));

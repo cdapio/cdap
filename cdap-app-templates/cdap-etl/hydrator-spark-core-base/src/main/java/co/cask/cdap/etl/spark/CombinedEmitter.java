@@ -19,8 +19,9 @@ package co.cask.cdap.etl.spark;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.common.BasicErrorRecord;
-import scala.Tuple2;
+import co.cask.cdap.etl.common.RecordInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +32,9 @@ import java.util.Map;
  *
  * @param <T> the type of object to emit
  */
-public class CombinedEmitter<T> implements Emitter<T> {
+public class CombinedEmitter<T> implements Emitter<T>, MultiOutputEmitter<T> {
   private final String stageName;
-  private final List<Tuple2<Boolean, Object>> emitted = new ArrayList<>();
+  private final List<RecordInfo<Object>> emitted = new ArrayList<>();
 
   public CombinedEmitter(String stageName) {
     this.stageName = stageName;
@@ -41,20 +42,25 @@ public class CombinedEmitter<T> implements Emitter<T> {
 
   @Override
   public void emit(T value) {
-    emitted.add(new Tuple2<Boolean, Object>(false, value));
+    emitted.add(RecordInfo.<Object>builder(value, stageName).build());
+  }
+
+  @Override
+  public void emit(String port, Object value) {
+    emitted.add(RecordInfo.<Object>builder(value, stageName).fromPort(port).build());
   }
 
   @Override
   public void emitError(InvalidEntry<T> invalidEntry) {
     ErrorRecord<T> errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(), stageName,
                                                         invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
-    emitted.add(new Tuple2<Boolean, Object>(true, errorRecord));
+    emitted.add(RecordInfo.<Object>builder(errorRecord, stageName).isError().build());
   }
 
   /**
-   * @return all output and errors emitted. If the first val is true, it is an error. Otherwise it is an output.
+   * @return all output and errors emitted.
    */
-  public Iterable<Tuple2<Boolean, Object>> getEmitted() {
+  public Iterable<RecordInfo<Object>> getEmitted() {
     return emitted;
   }
 

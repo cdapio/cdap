@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
@@ -24,7 +25,8 @@ import javax.annotation.Nullable;
  *
  * @param <T> the type of value
  */
-public class RecordInfo<T> {
+public class RecordInfo<T> implements Serializable {
+  private static final long serialVersionUID = 2507536440619795611L;
   private final T value;
   private final String fromStage;
   private final String fromPort;

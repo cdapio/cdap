@@ -17,7 +17,7 @@
 package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.etl.api.ErrorRecord;
-import scala.Tuple2;
+import co.cask.cdap.etl.common.RecordInfo;
 
 import java.util.Collections;
 
@@ -26,12 +26,12 @@ import java.util.Collections;
  *
  * @param <T> type of error record
  */
-public class OutputFilter<T> implements FlatMapFunc<Tuple2<Boolean, Object>, ErrorRecord<T>> {
+public class ErrorPassFilter<T> implements FlatMapFunc<RecordInfo<Object>, ErrorRecord<T>> {
 
   @Override
-  public Iterable<ErrorRecord<T>> call(Tuple2<Boolean, Object> input) throws Exception {
+  public Iterable<ErrorRecord<T>> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
-    return input._1() ?
-      Collections.singletonList((ErrorRecord<T>) input._2()) : Collections.<ErrorRecord<T>>emptyList();
+    return input.isError() ?
+      Collections.singletonList((ErrorRecord<T>) input.getValue()) : Collections.<ErrorRecord<T>>emptyList();
   }
 }

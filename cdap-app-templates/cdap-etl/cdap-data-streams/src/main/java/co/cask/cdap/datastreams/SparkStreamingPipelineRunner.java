@@ -23,6 +23,7 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
@@ -41,7 +42,6 @@ import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
-import scala.Tuple2;
 
 import java.util.List;
 
@@ -64,7 +64,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   }
 
   @Override
-  protected SparkCollection<Tuple2<Boolean, Object>> getSource(StageSpec stageSpec) throws Exception {
+  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec) throws Exception {
     StreamingSource<Object> source;
     if (checkpointsDisabled) {
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
@@ -94,9 +94,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
       // it will create a new function for each RDD, which would limit each RDD but not the entire DStream.
       javaDStream = javaDStream.transform(new LimitingFunction<>(spec.getNumOfRecordsPreview()));
     }
-    JavaDStream<Tuple2<Boolean, Object>> outputDStream = javaDStream
+    JavaDStream<RecordInfo<Object>> outputDStream = javaDStream
       .transform(new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer))
-      .map(new WrapOutputTransformFunction<>());
+      .map(new WrapOutputTransformFunction<>(stageSpec.getName()));
     return new DStreamCollection<>(sec, outputDStream);
   }
 

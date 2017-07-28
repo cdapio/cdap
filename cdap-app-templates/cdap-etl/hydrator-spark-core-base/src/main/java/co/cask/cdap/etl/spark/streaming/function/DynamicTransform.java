@@ -16,14 +16,16 @@
 
 package co.cask.cdap.etl.spark.streaming.function;
 
+import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.Compat;
+import co.cask.cdap.etl.spark.function.FlatMapFunc;
+import co.cask.cdap.etl.spark.function.MultiOutputTransformFunction;
 import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.streaming.Time;
-import scala.Tuple2;
 
 /**
  * Serializable function that can be used to perform a flat map on a DStream. Dynamically instantiates
@@ -31,20 +33,24 @@ import scala.Tuple2;
  * that macro substitution occurs.
  *
  * @param <T> type of input object
- * @param <U> type of output object
  */
-public class DynamicTransform<T, U> implements Function2<JavaRDD<T>, Time, JavaRDD<Tuple2<Boolean, Object>>> {
+public class DynamicTransform<T> implements Function2<JavaRDD<T>, Time, JavaRDD<RecordInfo<Object>>> {
   private final DynamicDriverContext dynamicDriverContext;
-  private transient FlatMapFunction<T, Tuple2<Boolean, Object>> function;
+  private final boolean isMultiOutput;
+  private transient FlatMapFunction<T, RecordInfo<Object>> function;
 
-  public DynamicTransform(DynamicDriverContext dynamicDriverContext) {
+  public DynamicTransform(DynamicDriverContext dynamicDriverContext, boolean isMultiOutput) {
     this.dynamicDriverContext = dynamicDriverContext;
+    this.isMultiOutput = isMultiOutput;
   }
 
   @Override
-  public JavaRDD<Tuple2<Boolean, Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
+  public JavaRDD<RecordInfo<Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(new TransformFunction<T, U>(dynamicDriverContext.getPluginFunctionContext()));
+      FlatMapFunc<T, RecordInfo<Object>> flatMap = isMultiOutput ?
+        new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext()) :
+        new TransformFunction<T>(dynamicDriverContext.getPluginFunctionContext());
+      function = Compat.convert(flatMap);
     }
     return input.flatMap(function);
   }
