@@ -20,51 +20,51 @@ import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var shortid = require('shortid');
 import T from 'i18n-react';
 import classnames from 'classnames';
+import LoadingSVG from 'components/LoadingSVG';
 
 const propTypes = {
   isLoading: PropTypes.bool,
-  services: PropTypes.oneOfType([
-    PropTypes.arrayOf(
-      PropTypes.shape({
-        name : PropTypes.string,
-        version: PropTypes.string,
-        url: PropTypes.string,
-        logs: PropTypes.string
-      })
-    ),
-    PropTypes.string
-  ])
+  platforms: PropTypes.object
 };
 
-function AdminOverviewPane({services}) {
+function AdminOverviewPane({platforms, isLoading}) {
   let cards;
-  let isEmpty = services.length === 1 && services[0].name === 'CDAP';
-  cards = services
-    .filter(service => service.name !== 'CDAP')
-    .map((service) => {
-      if (service.name !== 'CDAP') {
+  cards = Object.keys(platforms)
+    .filter(platform => platforms[platform].name !== 'CDAP')
+    .map((platform) => {
+      platform = platforms[platform];
+      if (platform.name !== 'CDAP') {
         return (
           <OverviewPaneCard
             key={shortid.generate()}
-            name={service.name}
-            version={service.version}
-            url={service.url}
-            logs={service.logs}
+            name={platform.name}
+            version={platform.version}
+            url={platform.url}
+            logs={platform.logs}
           />
         );
       }
     });
 
+  const renderContents = () => {
+    if (isLoading) {
+      return (
+        <LoadingSVG />
+      );
+    }
+
+    if (!cards.length) {
+      return (<h3>{T.translate('features.Administration.Component-Overview.emptyMessage')}</h3>);
+    }
+
+    return cards;
+  };
+
   return (
     <div className="overview-pane">
       <span>{T.translate('features.Administration.Component-Overview.label')}</span>
       <div className={classnames('overview-pane-container', {'empty-container': !cards.length})}>
-      {
-        isEmpty ?
-          <h3>{T.translate('features.Administration.Component-Overview.emptyMessage')}</h3>
-        :
-          cards
-      }
+        { renderContents() }
       </div>
     </div>
   );
