@@ -16,8 +16,6 @@
 
 @import "../../../styles/variables.scss";
 
-$alert-font-color: white;
-
 .connections-upload-container {
   .upload-content-container { padding: 10px; }
   .file-drop-container { padding: 75px; }
@@ -32,25 +30,7 @@ $alert-font-color: white;
   }
 
   .upload-error {
-    position: absolute;
-    background-color: $alert-danger-bg;
-    top: 50px;
-    left: 0;
-    right: 0;
-    color: $alert-font-color;
-    height: 40px;
-    line-height: 40px;
-
-    .message {
-      position: absolute;
-      left: 15px;
-      right: 50px;
-    }
-
-    .close-button {
-      position: absolute;
-      right: 25px;
-      cursor: pointer;
-    }
+    color: $alert-danger-bg;
+    margin-top: 10px;
   }
 }

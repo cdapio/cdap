@@ -41,7 +41,6 @@ export default class ConnectionsUpload extends Component {
     this.fileHandler = this.fileHandler.bind(this);
     this.recordDelimiterHandler = this.recordDelimiterHandler.bind(this);
     this.upload = this.upload.bind(this);
-    this.clearError = this.clearError.bind(this);
   }
 
   fileHandler(e) {
@@ -108,10 +107,6 @@ export default class ConnectionsUpload extends Component {
       });
   }
 
-  clearError() {
-    this.setState({error: false});
-  }
-
   render() {
     let uploadDisabled = !this.state.file || this.state.file.size > FILE_SIZE_LIMIT;
 
@@ -122,20 +117,12 @@ export default class ConnectionsUpload extends Component {
           <span className="message">
             {T.translate(`${PREFIX}.fileSizeError`)}
           </span>
-
-          <span
-            className="close-button"
-            onClick={this.clearError}
-          >
-            x
-          </span>
         </div>
       );
     }
 
     return (
       <div className="connections-upload-container">
-        {error}
         <div className="top-panel">
           <div className="title">
             <h5>
@@ -193,6 +180,8 @@ export default class ConnectionsUpload extends Component {
               </form>
             </div>
           </div>
+
+          {error}
         </div>
       </div>
     );
