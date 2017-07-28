@@ -34,6 +34,9 @@
  var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
  var CDAPHelpers = require('../cdap/services/helpers');
  var Mousetrap = require('mousetrap');
+ var StatusFactory = require('../cdap/services/StatusFactory').default;
+ var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
+ var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
 
  export {
   Store,
@@ -53,5 +56,8 @@
   Mousetrap,
   PipelineSummary,
   PipelineNodeMetricsGraph,
-  CDAPHelpers
+  CDAPHelpers,
+  StatusFactory,
+  LoadingIndicator,
+  StatusAlertMessage
 };
