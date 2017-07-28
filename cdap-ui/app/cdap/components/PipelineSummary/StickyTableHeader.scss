@@ -17,7 +17,8 @@
 @mixin stickyheader($col1Width: 20%, $col2Width: 20%, $col3Width: 30%, $col4Width: 20%, $col5Width: 10%, $bgColor: white ) {
   .table-container {
     height: calc(100% - 50px);
-    .table {
+    .table,
+    .table-sm {
       margin: 0;
       background: $bgColor;
       thead,
