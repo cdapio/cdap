@@ -160,7 +160,8 @@
             </div>
             <div class="node-metrics"
                   ng-show="DAGPlusPlusCtrl.isDisabled">
-              <a ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
+              <a class="node-metrics-labels"
+                ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
                 <span class="metric-records-out"
                     ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
                   <span class="metric-records-out-label">Records Out:</span>

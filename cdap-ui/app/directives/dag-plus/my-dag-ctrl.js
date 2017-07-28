@@ -88,6 +88,7 @@ angular.module(PKG.name + '.commons')
         addConnections();
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
+        vm.instance.bind('connectionMoved', moveConnection);
         vm.instance.bind('click', selectConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
@@ -279,7 +280,6 @@ angular.module(PKG.name + '.commons')
           isTarget: true,
           dropOptions: { hoverClass: 'drag-hover' },
           anchor: 'ContinuousLeft',
-          paintStyle: { radius: 10 },
           allowLoopback: false
         });
       });
@@ -330,7 +330,16 @@ angular.module(PKG.name + '.commons')
       if (updateStore) {
         DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
       }
+    }
 
+    function moveConnection(moveInfo) {
+      let oldConnection = {
+        sourceId: moveInfo.originalSourceId,
+        targetId: moveInfo.originalTargetId
+      };
+      // don't need to call addConnection for the new connection, since that will be done
+      // automatically as part of the 'connection' event
+      removeConnection(oldConnection, false);
     }
 
     vm.removeSelectedConnections = function() {
@@ -833,6 +842,7 @@ angular.module(PKG.name + '.commons')
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['del', 'backspace']);
+      vm.instance.unbind(); // unbind all events
     });
 
   });
