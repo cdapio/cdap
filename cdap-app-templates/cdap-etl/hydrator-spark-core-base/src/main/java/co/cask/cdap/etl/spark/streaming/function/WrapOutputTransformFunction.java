@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.streaming.function;
 
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 import org.apache.spark.api.java.function.Function;
 
 /**
@@ -33,6 +34,6 @@ public class WrapOutputTransformFunction<T> implements Function<T, RecordInfo<T>
 
   @Override
   public RecordInfo<T> call(T inputRecord) throws Exception {
-    return RecordInfo.builder(inputRecord, stageName).build();
+    return RecordInfo.builder(inputRecord, stageName, RecordType.OUTPUT).build();
   }
 }

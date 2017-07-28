@@ -19,9 +19,16 @@ package co.cask.cdap.datastreams;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.mock.alert.NullAlertTransform;
+import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
 import co.cask.cdap.etl.mock.batch.MockSink;
 import co.cask.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
@@ -52,6 +59,7 @@ import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -71,7 +79,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class DataStreamsTest extends HydratorTestBase {
-
+  private static final Gson GSON = new Gson();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static int startCount = 0;
@@ -833,6 +841,7 @@ public class DataStreamsTest extends HydratorTestBase {
     // sink2 should have anything with a non-null name or non-null email
     final DataSetManager<Table> sink2Manager = getDataset(sink2Name);
     final Set<StructuredRecord> expected2 = ImmutableSet.of(user1, user2, user3);
+
     Tasks.waitFor(
       true,
       new Callable<Boolean>() {
@@ -847,6 +856,9 @@ public class DataStreamsTest extends HydratorTestBase {
       4,
       TimeUnit.MINUTES);
 
+    sparkManager.stop();
+    sparkManager.waitForStatus(false, 10, 1);
+
     validateMetric(appId, "source.records.out", 4);
     validateMetric(appId, "splitter1.records.in", 4);
     validateMetric(appId, "splitter1.records.out.non-null", 2);
@@ -856,6 +868,88 @@ public class DataStreamsTest extends HydratorTestBase {
     validateMetric(appId, "splitter2.records.out.null", 1);
     validateMetric(appId, "sink1.records.in", 1);
     validateMetric(appId, "sink2.records.in", 3);
+  }
+
+  @Test
+  public void testAlertPublisher() throws Exception {
+    String sinkName = "alertSink";
+    final String topic = "alertTopic";
+
+    Schema schema = Schema.recordOf("x", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
+    StructuredRecord record1 = StructuredRecord.builder(schema).set("id", 1L).build();
+    StructuredRecord record2 = StructuredRecord.builder(schema).set("id", 2L).build();
+    StructuredRecord alertRecord = StructuredRecord.builder(schema).build();
+
+    /*
+     * source --> nullAlert --> sink
+     *               |
+     *               |--> TMS publisher
+     */
+    DataStreamsConfig config = DataStreamsConfig.builder()
+      .setBatchInterval("5s")
+      .addStage(new ETLStage("source", MockSource.getPlugin(schema, ImmutableList.of(record1, record2, alertRecord))))
+      .addStage(new ETLStage("nullAlert", NullAlertTransform.getPlugin("id")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addStage(new ETLStage("tms", TMSAlertPublisher.getPlugin(topic, NamespaceId.DEFAULT.getNamespace())))
+      .addConnection("source", "nullAlert")
+      .addConnection("nullAlert", "sink")
+      .addConnection("nullAlert", "tms")
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("AlertTest");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start();
+    sparkManager.waitForStatus(true, 10, 1);
+
+    final Set<StructuredRecord> expectedRecords = ImmutableSet.of(record1, record2);
+    final Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<String, String>()));
+    final DataSetManager<Table> sinkTable = getDataset(sinkName);
+
+    Tasks.waitFor(
+      true,
+      new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          // get alerts from TMS
+          try {
+            getMessagingAdmin(NamespaceId.DEFAULT.getNamespace()).getTopicProperties(topic);
+          } catch (TopicNotFoundException e) {
+            return false;
+          }
+          MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
+          Set<Alert> actualMessages = new HashSet<>();
+          try (CloseableIterator<Message> iter =
+                 messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), topic, 5, 0)) {
+            while (iter.hasNext()) {
+              Message message = iter.next();
+              Alert alert = GSON.fromJson(message.getPayloadAsString(), Alert.class);
+              actualMessages.add(alert);
+            }
+          }
+
+          // get records from sink
+          sinkTable.flush();
+          Set<StructuredRecord> outputRecords = new HashSet<>();
+          outputRecords.addAll(MockSink.readOutput(sinkTable));
+
+          return expectedRecords.equals(outputRecords) && expectedMessages.equals(actualMessages);
+        }
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStatus(false, 10, 1);
+
+    validateMetric(appId, "source.records.out", 3);
+    validateMetric(appId, "nullAlert.records.in", 3);
+    validateMetric(appId, "nullAlert.records.out", 2);
+    validateMetric(appId, "nullAlert.records.alert", 1);
+    validateMetric(appId, "sink.records.in", 2);
+    validateMetric(appId, "tms.records.in", 1);
   }
 
   private void validateMetric(ApplicationId appId, String metric,

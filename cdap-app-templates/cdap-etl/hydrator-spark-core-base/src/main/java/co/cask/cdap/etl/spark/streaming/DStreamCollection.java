@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
@@ -35,6 +36,7 @@ import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorAggregate;
 import co.cask.cdap.etl.spark.streaming.function.DynamicAggregatorGroupBy;
 import co.cask.cdap.etl.spark.streaming.function.DynamicSparkCompute;
 import co.cask.cdap.etl.spark.streaming.function.DynamicTransform;
+import co.cask.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
 import co.cask.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import co.cask.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import co.cask.cdap.etl.spec.StageSpec;
@@ -44,7 +46,6 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
-import scala.Tuple2;
 
 import javax.annotation.Nullable;
 
@@ -136,6 +137,11 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
     Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
+  }
+
+  @Override
+  public void publishAlerts(final StageSpec stageSpec) throws Exception {
+    Compat.foreachRDD((JavaDStream<Alert>) stream, new StreamingAlertPublishFunction(sec, stageSpec));
   }
 
   @Override

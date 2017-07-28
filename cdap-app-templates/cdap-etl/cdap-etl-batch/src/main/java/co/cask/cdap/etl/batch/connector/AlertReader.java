@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Reads alerts written by an {@link AlertPublisherSink}.
+ * Reads alerts written by an AlertPublisherSink.
  */
 public class AlertReader extends AbstractCloseableIterator<Alert> {
   private static final Gson GSON = new Gson();

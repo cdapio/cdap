@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark.function;
 
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -40,7 +41,7 @@ public class OutputPassFilter<T> implements FlatMapFunc<RecordInfo<Object>, T> {
   @Override
   public Iterable<T> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
-    return !input.isError() && Objects.equals(port, input.getFromPort()) ?
+    return input.getType() == RecordType.OUTPUT && Objects.equals(port, input.getFromPort()) ?
       Collections.singletonList((T) input.getValue()) : Collections.<T>emptyList();
   }
 }

@@ -16,12 +16,14 @@
 
 package co.cask.cdap.etl.spark;
 
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.common.BasicErrorRecord;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,19 +44,25 @@ public class CombinedEmitter<T> implements Emitter<T>, MultiOutputEmitter<T> {
 
   @Override
   public void emit(T value) {
-    emitted.add(RecordInfo.<Object>builder(value, stageName).build());
+    emitted.add(RecordInfo.<Object>builder(value, stageName, RecordType.OUTPUT).build());
   }
 
   @Override
   public void emit(String port, Object value) {
-    emitted.add(RecordInfo.<Object>builder(value, stageName).fromPort(port).build());
+    emitted.add(RecordInfo.<Object>builder(value, stageName, RecordType.OUTPUT).fromPort(port).build());
   }
 
   @Override
   public void emitError(InvalidEntry<T> invalidEntry) {
     ErrorRecord<T> errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(), stageName,
                                                         invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
-    emitted.add(RecordInfo.<Object>builder(errorRecord, stageName).isError().build());
+    emitted.add(RecordInfo.<Object>builder(errorRecord, stageName, RecordType.ERROR).build());
+  }
+
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    Alert alert = new Alert(stageName, payload);
+    emitted.add(RecordInfo.<Object>builder(alert, stageName, RecordType.ALERT).build());
   }
 
   /**
@@ -68,8 +76,4 @@ public class CombinedEmitter<T> implements Emitter<T>, MultiOutputEmitter<T> {
     emitted.clear();
   }
 
-  @Override
-  public void emitAlert(Map<String, String> payload) {
-    // todo: implement after multioutput refactoring is done
-  }
 }

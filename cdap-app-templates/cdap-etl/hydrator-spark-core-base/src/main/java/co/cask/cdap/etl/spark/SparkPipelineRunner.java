@@ -18,6 +18,8 @@ package co.cask.cdap.etl.spark;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.JoinElement;
@@ -34,6 +36,7 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.spark.function.AlertPassFilter;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
 import co.cask.cdap.etl.spark.function.ErrorPassFilter;
 import co.cask.cdap.etl.spark.function.ErrorTransformFunction;
@@ -52,7 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Base Spark program to run a Hydrator pipeline.
@@ -77,8 +79,7 @@ public abstract class SparkPipelineRunner {
     MacroEvaluator macroEvaluator =
       new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
-    Map<StageKey, SparkCollection<Object>> stageDataCollections = new HashMap<>();
-    Map<String, SparkCollection<ErrorRecord<Object>>> stageErrorCollections = new HashMap<>();
+    Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 
     // should never happen, but removes warning
     if (pipelinePhase.getDag() == null) {
@@ -90,15 +91,22 @@ public abstract class SparkPipelineRunner {
       //noinspection ConstantConditions
       String pluginType = stageSpec.getPluginType();
 
+      EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
+
       // don't want to do an additional filter for stages that can emit errors,
       // but aren't connected to an ErrorTransform
+      // similarly, don't want to do an additional filter for alerts when the stage isn't connected to
+      // an AlertPublisher
       boolean hasErrorOutput = false;
+      boolean hasAlertOutput = false;
       Set<String> outputs = pipelinePhase.getStageOutputs(stageSpec.getName());
       for (String output : outputs) {
+        String outputPluginType = pipelinePhase.getStage(output).getPluginType();
         //noinspection ConstantConditions
-        if (ErrorTransform.PLUGIN_TYPE.equals(pipelinePhase.getStage(output).getPluginType())) {
+        if (ErrorTransform.PLUGIN_TYPE.equals(outputPluginType)) {
           hasErrorOutput = true;
-          break;
+        } else if (AlertPublisher.PLUGIN_TYPE.equals(outputPluginType)) {
+          hasAlertOutput = true;
         }
       }
 
@@ -112,9 +120,11 @@ public abstract class SparkPipelineRunner {
           // means the input to this stage is in a separate phase. For example, it is an action.
           continue;
         }
-        StageSpec.Port port = inputStageSpec.getOutputPorts().get(stageName);
-        StageKey inputKey = new StageKey(inputStageName, port.getPort());
-        inputDataCollections.put(inputStageName, stageDataCollections.get(inputKey));
+        String port = inputStageSpec.getOutputPorts().get(stageName).getPort();
+        SparkCollection<Object> inputRecords = port == null ?
+          emittedRecords.get(inputStageName).outputRecords :
+          emittedRecords.get(inputStageName).outputPortRecords.get(port);
+        inputDataCollections.put(inputStageName, inputRecords);
       }
 
       // if this stage has multiple inputs, and is not a joiner plugin, or an error transform
@@ -129,7 +139,6 @@ public abstract class SparkPipelineRunner {
         }
       }
 
-      SparkCollection<ErrorRecord<Object>> stageErrors = null;
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
       if (stageData == null) {
 
@@ -137,12 +146,8 @@ public abstract class SparkPipelineRunner {
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType)) {
           SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec);
-          if (hasErrorOutput) {
-            // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
-            combinedData.cache();
-            stageErrors = combinedData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-          }
-          stageData = combinedData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
@@ -154,41 +159,21 @@ public abstract class SparkPipelineRunner {
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec);
-        if (hasErrorOutput) {
-          // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
-          combinedData.cache();
-          stageErrors = combinedData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-        }
-        stageData = combinedData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                    combinedData, hasErrorOutput, hasAlertOutput);
 
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec);
-        if (hasErrorOutput || stageSpec.getOutputPorts().size() > 1) {
-          // need to cache, otherwise the stage can be computed multiple times, once for each port and once for errors.
-          combinedData.cache();
-        }
-        if (hasErrorOutput) {
-          stageErrors = combinedData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-        }
-        // set collections for each port, implemented as a filter on the port.
-        for (StageSpec.Port portSpec : stageSpec.getOutputPorts().values()) {
-          String port = portSpec.getPort();
-          SparkCollection<Object> portData = combinedData.flatMap(stageSpec,
-                                                                  Compat.convert(new OutputPassFilter<>(port)));
-          if (shouldCache(pipelinePhase, stageSpec)) {
-            portData = portData.cache();
-          }
-          stageDataCollections.put(new StageKey(stageName, port), portData);
-        }
+        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                    combinedData, hasErrorOutput, hasAlertOutput);
 
       } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
 
         // union all the errors coming into this stage
         SparkCollection<ErrorRecord<Object>> inputErrors = null;
         for (String inputStage : stageInputs) {
-          SparkCollection<ErrorRecord<Object>> inputErrorsFromStage =
-            (SparkCollection<ErrorRecord<Object>>) stageErrorCollections.get(inputStage);
+          SparkCollection<ErrorRecord<Object>> inputErrorsFromStage = emittedRecords.get(inputStage).errorRecords;
           if (inputErrorsFromStage == null) {
             continue;
           }
@@ -202,18 +187,14 @@ public abstract class SparkPipelineRunner {
         if (inputErrors != null) {
           SparkCollection<RecordInfo<Object>> combinedData =
             inputErrors.flatMap(stageSpec, Compat.convert(new ErrorTransformFunction<>(pluginFunctionContext)));
-          if (hasErrorOutput) {
-            // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
-            combinedData.cache();
-            stageErrors = combinedData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-          }
-          stageData = combinedData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
         }
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        stageData = stageData.compute(stageSpec, sparkCompute);
+        emittedBuilder = emittedBuilder.setOutput(stageData.compute(stageSpec, sparkCompute));
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -224,12 +205,8 @@ public abstract class SparkPipelineRunner {
 
         Integer partitions = stagePartitions.get(stageName);
         SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions);
-        if (hasErrorOutput) {
-          // need to cache, otherwise the stage can be computed twice, once for output and once for errors.
-          combinedData.cache();
-          stageErrors = combinedData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-        }
-        stageData = combinedData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                    combinedData, hasErrorOutput, hasAlertOutput);
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -294,30 +271,39 @@ public abstract class SparkPipelineRunner {
           throw new IllegalStateException("There are no inputs into join stage " + stageName);
         }
 
-        stageData = mergeJoinResults(stageSpec, joinedInputs).cache();
+        emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs).cache());
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        stageData = stageData.window(stageSpec, windower);
+        emittedBuilder = emittedBuilder.setOutput(stageData.window(stageSpec, windower));
+
+      } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
+
+        // union all the alerts coming into this stage
+        SparkCollection<Alert> inputAlerts = null;
+        for (String inputStage : stageInputs) {
+          SparkCollection<Alert> inputErrorsFromStage = emittedRecords.get(inputStage).alertRecords;
+          if (inputErrorsFromStage == null) {
+            continue;
+          }
+          if (inputAlerts == null) {
+            inputAlerts = inputErrorsFromStage;
+          } else {
+            inputAlerts = inputAlerts.union(inputErrorsFromStage);
+          }
+        }
+
+        if (inputAlerts != null) {
+          inputAlerts.publishAlerts(stageSpec);
+        }
 
       } else {
         throw new IllegalStateException(String.format("Stage %s is of unsupported plugin type %s.",
                                                       stageName, pluginType));
       }
 
-      if (shouldCache(pipelinePhase, stageSpec)) {
-        stageData = stageData.cache();
-        if (stageErrors != null) {
-          stageErrors = stageErrors.cache();
-        }
-      }
-
-      if (!SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
-        // splitter transforms were handled above.
-        stageDataCollections.put(new StageKey(stageName), stageData);
-      }
-      stageErrorCollections.put(stageName, stageErrors);
+      emittedRecords.put(stageName, emittedBuilder.build());
     }
   }
 
@@ -344,39 +330,110 @@ public abstract class SparkPipelineRunner {
     return false;
   }
 
+  private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
+                                            StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
+                                            boolean hasErrors, boolean hasAlerts) {
+
+    if (hasErrors || hasAlerts || stageSpec.getOutputPorts().size() > 1) {
+      // need to cache, otherwise the stage can be computed once per type of emitted record
+      stageData = stageData.cache();
+    }
+
+    boolean shouldCache = shouldCache(pipelinePhase, stageSpec);
+
+    if (hasErrors) {
+      SparkCollection<ErrorRecord<Object>> errors =
+        stageData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
+      if (shouldCache) {
+        errors = errors.cache();
+      }
+      builder.setErrors(errors);
+    }
+    if (hasAlerts) {
+      SparkCollection<Alert> alerts = stageData.flatMap(stageSpec, Compat.convert(new AlertPassFilter()));
+      if (shouldCache) {
+        alerts = alerts.cache();
+      }
+      builder.setAlerts(alerts);
+    }
+
+    if (SplitterTransform.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
+      // set collections for each port, implemented as a filter on the port.
+      for (StageSpec.Port portSpec : stageSpec.getOutputPorts().values()) {
+        String port = portSpec.getPort();
+        SparkCollection<Object> portData = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>(port)));
+        if (shouldCache) {
+          portData = portData.cache();
+        }
+        builder.addPort(port, portData);
+      }
+    } else {
+      SparkCollection<Object> outputs = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
+      if (shouldCache) {
+        outputs = outputs.cache();
+      }
+      builder.setOutput(outputs);
+    }
+
+    return builder;
+  }
+
   /**
-   * Key for the Spark collection of records emitted by a specific stage.
+   * Holds all records emitted by a stage.
    */
-  private static class StageKey {
-    private final String stage;
-    private final String port;
+  private static class EmittedRecords {
+    private final Map<String, SparkCollection<Object>> outputPortRecords;
+    private final SparkCollection<Object> outputRecords;
+    private final SparkCollection<ErrorRecord<Object>> errorRecords;
+    private final SparkCollection<Alert> alertRecords;
 
-    private StageKey(String stage) {
-      this(stage, null);
+    private EmittedRecords(Map<String, SparkCollection<Object>> outputPortRecords,
+                           SparkCollection<Object> outputRecords,
+                           SparkCollection<ErrorRecord<Object>> errorRecords,
+                           SparkCollection<Alert> alertRecords) {
+      this.outputPortRecords = outputPortRecords;
+      this.outputRecords = outputRecords;
+      this.errorRecords = errorRecords;
+      this.alertRecords = alertRecords;
     }
 
-    private StageKey(String stage, @Nullable String port) {
-      this.stage = stage;
-      this.port = port;
+    private static Builder builder() {
+      return new Builder();
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
+    private static class Builder {
+      private Map<String, SparkCollection<Object>> outputPortRecords;
+      private SparkCollection<Object> outputRecords;
+      private SparkCollection<ErrorRecord<Object>> errorRecords;
+      private SparkCollection<Alert> alertRecords;
+
+      private Builder() {
+        outputPortRecords = new HashMap<>();
       }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
+
+      private Builder addPort(String port, SparkCollection<Object> records) {
+        outputPortRecords.put(port, records);
+        return this;
       }
 
-      StageKey that = (StageKey) o;
+      private Builder setOutput(SparkCollection<Object> records) {
+        outputRecords = records;
+        return this;
+      }
 
-      return Objects.equals(stage, that.stage) && Objects.equals(port, that.port);
-    }
+      private Builder setErrors(SparkCollection<ErrorRecord<Object>> errors) {
+        errorRecords = errors;
+        return this;
+      }
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(stage, port);
+      private Builder setAlerts(SparkCollection<Alert> alerts) {
+        alertRecords = alerts;
+        return this;
+      }
+
+      private EmittedRecords build() {
+        return new EmittedRecords(outputPortRecords, outputRecords, errorRecords, alertRecords);
+      }
     }
   }
 }

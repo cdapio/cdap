@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -23,7 +24,8 @@ import java.util.Objects;
 /**
  * An alert emitted by a stage in the pipeline.
  */
-public class Alert {
+public class Alert implements Serializable {
+  private static final long serialVersionUID = -3280276088177879979L;
   private final String stageName;
   private final Map<String, String> payload;
 

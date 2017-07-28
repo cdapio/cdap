@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark;
 
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
@@ -60,6 +61,8 @@ public interface SparkCollection<T> {
   void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
 
   void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
+
+  void publishAlerts(StageSpec stageSpec) throws Exception;
 
   SparkCollection<T> window(StageSpec stageSpec, Windower windower);
 }

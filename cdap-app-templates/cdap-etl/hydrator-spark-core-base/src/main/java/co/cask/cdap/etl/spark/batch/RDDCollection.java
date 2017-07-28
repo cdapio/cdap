@@ -18,11 +18,20 @@ package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.api.Alert;
+import co.cask.cdap.etl.api.AlertPublisher;
+import co.cask.cdap.etl.api.AlertPublisherContext;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
+import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -35,6 +44,7 @@ import co.cask.cdap.etl.spark.function.PairFlatMapFunc;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.function.TransformFunction;
 import co.cask.cdap.etl.spec.StageSpec;
+import com.google.gson.Gson;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -51,6 +61,7 @@ import javax.annotation.Nullable;
  * @param <T> type of object in the collection
  */
 public class RDDCollection<T> implements SparkCollection<T> {
+  private static final Gson GSON = new Gson();
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
   private final DatasetContext datasetContext;
@@ -152,6 +163,23 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
     JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     sink.run(sparkPluginContext, countedRDD);
+  }
+
+  @Override
+  public void publishAlerts(StageSpec stageSpec) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+    AlertPublisher alertPublisher = pluginFunctionContext.createPlugin();
+
+    AlertPublisherContext alertPublisherContext =
+      new DefaultAlertPublisherContext(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(),
+                                       stageSpec, new BasicArguments(sec), sec.getMessagingContext(),
+                                       sec.getAdmin());
+    alertPublisher.initialize(alertPublisherContext);
+    StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageSpec.getName());
+    TrackedIterator<Alert> trackedAlerts =
+      new TrackedIterator<>(((JavaRDD<Alert>) rdd).collect().iterator(), stageMetrics, Constants.Metrics.RECORDS_IN);
+    alertPublisher.publish(trackedAlerts);
+    alertPublisher.destroy();
   }
 
   @Override

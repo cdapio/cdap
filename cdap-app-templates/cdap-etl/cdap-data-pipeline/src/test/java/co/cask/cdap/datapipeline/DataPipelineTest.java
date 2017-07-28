@@ -155,6 +155,7 @@ public class DataPipelineTest extends HydratorTestBase {
   @Test
   public void testAlertPublisher() throws Exception {
     testAlertPublisher(Engine.MAPREDUCE);
+    testAlertPublisher(Engine.SPARK);
   }
 
   private void testAlertPublisher(Engine engine) throws Exception {
@@ -167,6 +168,7 @@ public class DataPipelineTest extends HydratorTestBase {
      *               |--> TMS publisher
      */
     ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
       .addStage(new ETLStage("nullAlert", NullAlertTransform.getPlugin("id")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
@@ -208,6 +210,13 @@ public class DataPipelineTest extends HydratorTestBase {
     }
     Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<String, String>()));
     Assert.assertEquals(expectedMessages, actualMessages);
+
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "nullAlert.records.in");
+    validateMetric(2, appId, "nullAlert.records.out");
+    validateMetric(1, appId, "nullAlert.records.alert");
+    validateMetric(2, appId, "sink.records.in");
+    validateMetric(1, appId, "tms.records.in");
   }
 
   @Test

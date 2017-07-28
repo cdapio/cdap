@@ -183,11 +183,6 @@ public class MapReduceTransformExecutorFactory<T> {
                                           runtimeContext.getInputSchemas().size()), stageMetrics,
           taskContext.getDataTracer(stageName));
       }
-    } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
-      // alert publishers are only instantiated on the mapreduce client, in the destroy method.
-      // the actual mapreduce job is only responsible for writing alerts to a file that will
-      // be read by the mapreduce client and sent to the AlertPublisher.
-
     }
 
     Transformation transformation = getInitializedTransformation(stageSpec);

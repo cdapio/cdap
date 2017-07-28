@@ -33,6 +33,7 @@ import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.Engine;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -54,8 +55,10 @@ import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.PipelinePlan;
@@ -259,7 +262,10 @@ public class SmartWorkflow extends AbstractWorkflow {
       PartitionedFileSet alertConnector = workflowContext.getDataset(name);
       try (CloseableIterator<Alert> alerts =
              new AlertReader(alertConnector.getPartitions(PartitionFilter.ALWAYS_MATCH))) {
-        alertPublisher.publish(alerts);
+        StageMetrics stageMetrics = new DefaultStageMetrics(workflowMetrics, name);
+        TrackedIterator<Alert> trackedIterator =
+          new TrackedIterator<>(alerts, stageMetrics, Constants.Metrics.RECORDS_IN);
+        alertPublisher.publish(trackedIterator);
       } catch (Exception e) {
         LOG.warn("Stage {} had errors publishing alerts. Alerts may not have been published.", name, e);
       }
