@@ -14,27 +14,33 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
-import classnames from 'classnames';
+import React, {Component} from 'react';
 import LoadingIndicatorStore, {BACKENDSTATUS, LOADINGSTATUS} from 'components/LoadingIndicator/LoadingIndicatorStore';
 import T from 'i18n-react';
 import {Modal} from 'reactstrap';
+import LoadingSVG from 'components/LoadingSVG';
+
+const PREFIX = 'features.LoadingIndicator';
 
 require('./LoadingIndicator.scss');
 
 export default class LoadingIndicator extends Component {
-  constructor(props) {
-    super(props);
-    let {message = '', subtitle = ''} = this.props;
-    this.state = {
-      showLoading: false,
-      message,
-      subtitle
-    };
+
+  static defaultProps = {
+    icon: '',
+    message: T.translate('features.LoadingIndicator.defaultMessage')
+  };
+
+  state = {
+    showLoading: false
   }
+
   componentDidMount() {
     this.loadingIndicatorStoreSubscription = LoadingIndicatorStore.subscribe(() => {
-      let {status, message = '', subtitle = ''} = LoadingIndicatorStore.getState().loading;
+      if (location.pathname.indexOf('/cdap/administration') !== -1) {
+        return;
+      }
+      let {status, services = []} = LoadingIndicatorStore.getState().loading;
       let showLoading;
       if ([BACKENDSTATUS.BACKENDUP, BACKENDSTATUS.NODESERVERUP, LOADINGSTATUS.HIDELOADING].indexOf(status) !== -1) {
         showLoading = false;
@@ -42,158 +48,73 @@ export default class LoadingIndicator extends Component {
       if ([LOADINGSTATUS.SHOWLOADING, BACKENDSTATUS.NODESERVERDOWN, BACKENDSTATUS.BACKENDDOWN].indexOf(status) !== -1) {
         showLoading = true;
       }
-      this.setState({
-        showLoading,
-        message,
-        subtitle
-      });
+      if (this.state.showLoading !== showLoading) {
+        this.setState({
+          showLoading,
+          services,
+          status
+        });
+      }
     });
   }
   componentWillUnmount() {
     this.loadingIndicatorStoreSubscription();
   }
-  render() {
-    return this.state.showLoading ?
-      (
-        <Modal
-          isOpen={this.state.showLoading}
-          toggle={() =>{}}
-          zIndex={2000}
-          className="loading-indicator"
-        >
 
-          <div className="text-xs-center">
-            {this.props.icon ? (
-              <div className={classnames('fa', this.props.icon)}></div>
-            ) : (
-              <div className="icon-loading-bars">
-                <svg
-                  className="loading-bar"
-                  version="1.1"
-                  x="0px"
-                  y="0px"
-                  width="24px"
-                  height="30px"
-                  viewBox="0 0 24 30"
-                >
-                  <rect
-                    x="0"
-                    y="10"
-                    width="4"
-                    height="10"
-                    fill="#333"
-                    opacity="0.2"
-                  >
-                    <animate
-                      attributeName="opacity"
-                      attributeType="XML"
-                      values="0.2; 1; .2"
-                      begin="0s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="height"
-                      attributeType="XML"
-                      values="10; 20; 10"
-                      begin="0s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="y"
-                      attributeType="XML"
-                      values="10; 5; 10"
-                      begin="0s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                  <rect
-                    x="8"
-                    y="10"
-                    width="4"
-                    height="10"
-                    fill="#333"
-                    opacity="0.2"
-                  >
-                    <animate
-                      attributeName="opacity"
-                      attributeType="XML"
-                      values="0.2; 1; .2"
-                      begin="0.15s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="height"
-                      attributeType="XML"
-                      values="10; 20; 10"
-                      begin="0.15s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="y"
-                      attributeType="XML"
-                      values="10; 5; 10"
-                      begin="0.15s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                  <rect
-                    x="16"
-                    y="10"
-                    width="4"
-                    height="10"
-                    fill="#333"
-                    opacity="0.2"
-                  >
-                    <animate
-                      attributeName="opacity"
-                      attributeType="XML"
-                      values="0.2; 1; .2"
-                      begin="0.3s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="height"
-                      attributeType="XML"
-                      values="10; 20; 10"
-                      begin="0.3s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="y"
-                      attributeType="XML"
-                      values="10; 5; 10"
-                      begin="0.3s"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
-                  </rect>
-                </svg>
-              </div>
-            )}
-            <h2> {this.state.message} </h2>
-            <h4>{this.state.subtitle}</h4>
+  renderCallsToAction() {
+    return (
+      <div className="subtitle">
+        <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
+        {
+          this.state.status === BACKENDSTATUS.NODESERVERDOWN ?
+            null
+          :
+            <a href="/cdap/administration"> {T.translate(`${PREFIX}.systemDashboard`)}</a>
+        }
+        <span> {T.translate(`${PREFIX}.contactadmin`)} </span>
+      </div>
+    );
+  }
+  renderContent() {
+    let message;
+    let {loading} = LoadingIndicatorStore.getState();
+    if (loading.status === BACKENDSTATUS.BACKENDDOWN) {
+      if (this.state.services.length === 1) {
+        message = T.translate(`${PREFIX}.serviceDown`, {serviceName: this.state.servives[0].name});
+      } else {
+        message = T.translate(`${PREFIX}.servicesDown`);
+      }
+    }
+    if (loading.status === BACKENDSTATUS.NODESERVERDOWN) {
+      message = T.translate(`${PREFIX}.nodeserverDown`);
+    }
+
+    return (
+      <div>
+        <h2> {message} </h2>
+        {this.renderCallsToAction()}
+      </div>
+    );
+  }
+  render() {
+    if (!this.state.showLoading) {
+      return null;
+    }
+    return (
+      <Modal
+        isOpen={this.state.showLoading}
+        toggle={() =>{}}
+        zIndex={2000}
+        className="loading-indicator"
+      >
+
+        <div className="text-xs-center">
+          <div className="icon-loading-bars">
+            <LoadingSVG />
           </div>
-        </Modal>
-      )
-    :
-      null;
+          {this.renderContent()}
+        </div>
+      </Modal>
+    );
   }
 }
-LoadingIndicator.defaultProps = {
-  icon: '',
-  message: T.translate('features.LoadingIndicator.defaultMessage')
-};
-
-LoadingIndicator.propTypes = {
-  message: PropTypes.string,
-  subtitle: PropTypes.string,
-  icon: PropTypes.string
-};

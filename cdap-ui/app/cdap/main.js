@@ -71,7 +71,7 @@ class CDAP extends Component {
       });
     }
 
-    StatusFactory.startPolling();
+    StatusFactory.startPollingForBackendStatus();
     this.eventEmitter.on(globalEvents.NONAMESPACE, () => {
       this.setState({
         authorizationFailed: true
