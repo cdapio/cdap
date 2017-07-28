@@ -59,7 +59,7 @@ public class LineageDataset extends AbstractDataset {
   // -------------------------------------------------------------------------------
   // | d | <id.dataset> | <inverted-start-time> | p | <id.run>     | <access-type> |
   // -------------------------------------------------------------------------------
-  // | p | <id.run>     | <inverted-start-time> | p | <id.dataset> | <access-type> |
+  // | p | <id.run>     | <inverted-start-time> | d | <id.dataset> | <access-type> |
   // -------------------------------------------------------------------------------
   //
   // Stream access from program:

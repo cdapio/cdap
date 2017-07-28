@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.FieldEntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.InstanceId;
@@ -71,6 +72,7 @@ public enum EntityType {
   NOTIFICATION_FEED(NotificationFeedId.class, Id.NotificationFeed.class),
   ARTIFACT(ArtifactId.class, Id.Artifact.class),
   DATASET(DatasetId.class, Id.DatasetInstance.class),
+  FIELD(FieldEntityId.class, null),
   SECUREKEY(SecureKeyId.class, null),
   TOPIC(TopicId.class, null),
 

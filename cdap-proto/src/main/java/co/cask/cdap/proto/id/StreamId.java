@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,9 +67,8 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
 
   @Override
   public int hashCode() {
-    Integer hashCode = this.hashCode;
     if (hashCode == null) {
-      this.hashCode = hashCode = Objects.hash(super.hashCode(), namespace, stream);
+      hashCode = Objects.hash(super.hashCode(), namespace, stream);
     }
     return hashCode;
   }
@@ -96,6 +95,10 @@ public class StreamId extends NamespacedEntityId implements ParentedId<Namespace
 
   public StreamViewId view(String view) {
     return new StreamViewId(namespace, stream, view);
+  }
+
+  public StreamFieldId field(String field) {
+    return new StreamFieldId(namespace, stream, field);
   }
 
   public byte[] toBytes() {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,26 +18,22 @@ package co.cask.cdap.proto.id;
 import co.cask.cdap.proto.element.EntityType;
 
 /**
- * An {@link EntityId} which belongs to a namespace.
+ * An {@link NamespacedEntityId} which refers to a specific field.
  */
-public abstract class NamespacedEntityId extends EntityId {
+public abstract class FieldEntityId extends NamespacedEntityId {
 
-  protected final String namespace;
+  protected final String field;
 
-  protected NamespacedEntityId(String namespace, EntityType entity) {
-    super(entity);
-    if (namespace == null) {
-      throw new NullPointerException("Namespace cannot be null.");
+  protected FieldEntityId(String namespace, String field) {
+    super(namespace, EntityType.FIELD);
+    if (field == null) {
+      throw new NullPointerException("Field cannot be null.");
     }
-    ensureValidNamespace(namespace);
-    this.namespace = namespace;
+    ensureValidId("field", field);
+    this.field = field;
   }
 
-  public String getNamespace() {
-    return namespace;
-  }
-
-  public NamespaceId getNamespaceId() {
-    return new NamespaceId(getNamespace());
+  public String getField() {
+    return field;
   }
 }
