@@ -63,6 +63,7 @@ angular.module(PKG.name + '.commons')
         fitToScreenTimeout = null,
         initTimeout = null,
         nodePopoverTimeout = null,
+        metricsTimeout = null,
         resetTimeout = null;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
@@ -143,8 +144,8 @@ angular.module(PKG.name + '.commons')
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
 
-              $timeout(function () {
-                let nodeElem = document.getElementById(`${key}`);
+              metricsTimeout = $timeout(function () {
+                let nodeElem = document.getElementById(key);
                 let nodeMetricsElem = nodeElem.querySelector(`.node-metrics`);
                 if (nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
                   let recordsOutLabelElem = nodeMetricsElem.querySelector('.metric-records-out-label');
@@ -492,10 +493,7 @@ angular.module(PKG.name + '.commons')
     }
 
     function positionMenu(e, menu) {
-      console.log(e);
       var menuPosition = getPosition(e);
-      console.log(menuPosition.x);
-      console.log(menuPosition.y);
       menu.style.left = menuPosition.x + 'px';
       menu.style.top = menuPosition.y + 'px';
     }
@@ -831,6 +829,7 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
+      $timeout.cancel(metricsTimeout);
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['del', 'backspace']);
