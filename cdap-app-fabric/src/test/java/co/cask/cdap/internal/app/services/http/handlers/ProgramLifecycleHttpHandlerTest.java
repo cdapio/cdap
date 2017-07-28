@@ -185,9 +185,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(dummyMR1, 404);
     Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-    // start map-reduce and verify status
+    // start map-reduce and verify runs
     startProgram(dummyMR2);
-    waitState(dummyMR2, RUNNING);
+    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING);
 
     // stop the mapreduce program and check the status
     stopProgram(dummyMR2);
@@ -211,8 +211,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     runId = historyRuns.get(1).getPid();
     stopProgram(dummyMR2, runId, 200);
-
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 1);
+    waitState(dummyMR2, STOPPED);
+    verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 2);
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
@@ -221,6 +221,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop all runs of the map-reduce program
     stopProgram(dummyMR2, 200);
+    waitState(dummyMR2, STOPPED);
     verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 4);
 
     // get run records, all runs should be stopped
@@ -367,13 +368,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(sleepWorkflow2, 200);
     startProgram(sleepWorkflow1, 200);
     startProgram(sleepWorkflow2, 200);
+    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING, 1);
+    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
-    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.KILLED, 1);
     // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.KILLED, 1);
+    // Rather than assume all workflow runs are killed, let's check for 0 RUNNING workflows, which means they
+    // are either KILLED or COMPLETED
+    assertProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING, 0);
+    assertProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 0);
+
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 

@@ -128,7 +128,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
-    programNotificationSubscriberService.start();
+    programNotificationSubscriberService.startAndWait();
   }
 
   @Override

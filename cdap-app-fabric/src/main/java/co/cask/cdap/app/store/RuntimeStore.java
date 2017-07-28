@@ -19,80 +19,13 @@ package co.cask.cdap.app.store;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A store for runtime information of a {@link Program}.
  */
 public interface RuntimeStore {
-  /**
-   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
-
-   * @param id id of the program
-   * @param pid run id
-   * @param startTime start timestamp in seconds
-   * @param twillRunId Twill run id
-   * @param runtimeArgs the runtime arguments for this program run
-   * @param systemArgs the system arguments for this program run
-   */
-  void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
-                Map<String, String> runtimeArgs, Map<String, String> systemArgs);
-
-  /**
-   * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
-   *
-   * @param id id of the program
-   * @param pid run id
-   * @param twillRunId Twill run id
-   */
-  void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId);
-
-  /**
-   * Logs end of program run.
-   *
-   * @param id id of the program
-   * @param pid run id
-   * @param endTime end timestamp in seconds
-   * @param runStatus {@link ProgramRunStatus} of program run
-   */
-  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus);
-
-  /**
-   * Logs end of program run.
-   *
-   * @param id id of the program
-   * @param pid run id
-   * @param endTime end timestamp in seconds
-   * @param runStatus {@link ProgramRunStatus} of program run
-   * @param failureCause failure cause if the program failed to execute
-   */
-  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
-               @Nullable BasicThrowable failureCause);
-
-  /**
-   * Logs suspend of a program run.
-   *
-   * @param id id of the program
-   * @param pid run id
-   */
-  void setSuspend(ProgramId id, String pid);
-
-  /**
-   * Logs resume of a program run.
-   *
-   * @param id id of the program
-   * @param pid run id
-   */
-  void setResume(ProgramId id, String pid);
-
   /**
    * Updates the {@link WorkflowToken} for a specified run of a workflow.
    *

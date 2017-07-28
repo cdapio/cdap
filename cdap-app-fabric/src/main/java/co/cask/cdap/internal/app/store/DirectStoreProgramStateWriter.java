@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.store;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.service.Retries;
@@ -35,10 +36,10 @@ import java.util.concurrent.TimeUnit;
  * An implementation of the ProgramStateWriter that persists directly to the store
  */
 public final class DirectStoreProgramStateWriter implements ProgramStateWriter {
-  private final RuntimeStore store;
+  private final Store store;
 
   @Inject
-  public DirectStoreProgramStateWriter(RuntimeStore store) {
+  public DirectStoreProgramStateWriter(Store store) {
     this.store = store;
   }
 

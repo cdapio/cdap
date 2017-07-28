@@ -1034,6 +1034,16 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
+  protected void assertProgramRuns(final ProgramId program, final ProgramRunStatus status, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() == expected;
+      }
+    }, 15, TimeUnit.SECONDS);
+  }
+
   protected List<RunRecord> getProgramRuns(ProgramId program, ProgramRunStatus status) throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(),
                                 program.getVersion(), program.getType().getCategoryName(), program.getProgram(),

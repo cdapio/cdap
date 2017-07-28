@@ -81,6 +81,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
@@ -932,7 +933,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
   public String retrieveSubscriberState(String topic) {
     MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
       .add(topic);
-    return get(keyBuilder.build(), String.class);
+    byte[] rawBytes = get(keyBuilder.build(), BYTE_TYPE);
+    return (rawBytes == null) ? null : Bytes.toString(rawBytes);
   }
 
   public void persistSubscriberState(String topic, String messageId) {

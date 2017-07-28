@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -119,6 +120,7 @@ public class PreviewRunnerModule extends PrivateModule {
         .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
     );
 
+    bind(TopicMessageIdStore.class).to(DefaultStore.class);
     bind(Store.class).to(DefaultStore.class);
     bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 

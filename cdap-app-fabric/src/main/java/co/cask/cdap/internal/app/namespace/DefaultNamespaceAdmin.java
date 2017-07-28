@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;

@@ -224,7 +224,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     /**
      * Persists the message id to storage. Note that this method is already executed inside a transaction.
-     *
      */
     public abstract void updateMessageId(String lastFetchedMessageId);
 

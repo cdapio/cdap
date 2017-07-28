@@ -73,6 +73,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
@@ -352,6 +353,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
       datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
+      bind(TopicMessageIdStore.class).to(DefaultStore.class);
       bind(Store.class).to(DefaultStore.class);
       // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
       bind(RuntimeStore.class).to(DefaultStore.class);

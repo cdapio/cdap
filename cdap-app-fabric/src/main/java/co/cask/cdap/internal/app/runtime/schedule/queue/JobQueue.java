@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.queue;
 
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ScheduleId;
@@ -28,7 +27,7 @@ import javax.annotation.Nullable;
  * Responsible for keeping track of {@link Job}s, which correspond to schedules that have been triggered,
  * but not yet executed.
  */
-public interface JobQueue extends TopicMessageIdStore {
+public interface JobQueue {
 
   /**
    * Returns a {@link CloseableIterator} over all the jobs associated with the given schedule Id.

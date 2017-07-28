@@ -25,6 +25,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
@@ -55,14 +56,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
+  private final TopicMessageIdStore topicMessageIdStore;
   private final Store store;
   private final ExecutorService taskExecutorService;
 
   @Inject
-  ProgramNotificationSubscriberService(MessagingService messagingService, Store store, CConfiguration cConf,
+  ProgramNotificationSubscriberService(MessagingService messagingService, TopicMessageIdStore topicMessageIdStore,
+                                       Store store, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     super(messagingService, cConf, datasetFramework, txClient);
     this.cConf = cConf;
+    this.topicMessageIdStore = topicMessageIdStore;
     this.store = store;
     this.taskExecutorService =
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
@@ -105,12 +109,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     @Override
     public String loadMessageId() {
-      return store.retrieveSubscriberState(topic);
+      return topicMessageIdStore.retrieveSubscriberState(topic);
     }
 
     @Override
     public void updateMessageId(String lastFetchedMessageId) {
-      store.persistSubscriberState(topic, lastFetchedMessageId);
+      topicMessageIdStore.persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override
