@@ -16,11 +16,6 @@
 
 import {combineReducers, createStore} from 'redux';
 
-const defaultLoadingState = {
-  status: 'BACKENDUP',
-  message: '',
-  subtitle: ''
-};
 const defaultAction = {
   action : '',
   payload : {}
@@ -32,6 +27,10 @@ const BACKENDSTATUS = {
   NODESERVERUP: 'NODESERVERUP',
   BACKENDDOWN: 'BACKENDDOWN'
 };
+const defaultLoadingState = {
+  status: BACKENDSTATUS.BACKENDUP,
+  services: []
+};
 const LOADINGSTATUS = {
   SHOWLOADING: 'SHOWLOADING',
   HIDELOADING: 'HIDELOADING'
@@ -41,11 +40,10 @@ const loading = (state = defaultLoadingState, action = defaultAction) => {
   switch (action.type) {
     case 'STATUSUPDATE':
       {
-        let {status = LOADINGSTATUS.HIDELOADING, message = '', subtitle = ''} = action.payload;
+        let {status = state.status, services = []} = action.payload;
         return Object.assign({}, state, {
           status,
-          message,
-          subtitle
+          services
         });}
     default:
       return state;

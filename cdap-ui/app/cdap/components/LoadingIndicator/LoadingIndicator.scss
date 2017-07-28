@@ -22,6 +22,7 @@
 
     .modal-content {
       padding: 10px;
+      box-shadow: none;
 
       .icon-loading-bars {
         background-color: rgba(255, 255, 255, 0.7);
@@ -43,6 +44,14 @@
       }
       h2 {
         margin-top: 10px;
+        // This is for the difference in the way bootstrap 3 and 4 handle styling in angular vs react UIs.
+        font-weight: 500;
+        font-size: 25px;
+      }
+      .subtitle {
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
       }
     }
   }
