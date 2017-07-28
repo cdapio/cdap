@@ -102,15 +102,20 @@ my-dag-plus {
 
       .border-radius(4px);
       .box {
-        cursor: pointer;
         height: @node-box-height-big;
         .border-color-hover(@node-box-height-big);
 
         .node {
+          cursor: initial;
+
           .endpoint-circle {
             top: 41px;
           }
         }
+      }
+
+      .jsplumb-connector {
+        cursor: initial;
       }
     }
 
@@ -237,12 +242,16 @@ my-dag-plus {
           white-space: nowrap;
           text-overflow: ellipsis;
 
-          .metric-records-out {
-            color: @records-out-metric-color;
-          }
+          .node-metrics-labels {
+            cursor: pointer;
 
-          .metric-errors {
-            color: @error-metric-color;
+            .metric-records-out {
+              color: @records-out-metric-color;
+            }
+
+            .metric-errors {
+              color: @error-metric-color;
+            }
           }
         }
 
@@ -521,6 +530,10 @@ my-dag-plus {
       path:last-child {
         stroke-width: 0;
       }
+    }
+
+    .jsplumb-dragging {
+      z-index: 2;
     }
 
     /* metrics overlay */
