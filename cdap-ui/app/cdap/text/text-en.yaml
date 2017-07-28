@@ -150,86 +150,14 @@ features:
         tag-management: Tag Management
         view-config: View Configurations
         view-invalid: View Invalid Transactions
-    DetailPanel:
-      headers:
-        apps: Apps
-        blocks: Blocks
-        lasthourload: Load (last hour)
-        entities: Entities
-        load: Load
-        nodes: Nodes
-        queues: Queues
-        resources: Resources
-        storage: Storage
-        transactions: Transactions
-        connections: Connections
-      labels:
-        Accepted: Accepted
-        RemainingBytes: Available
-        Applications: Applications
-        Artifacts: Artifacts
-        AverageRegionsPerServer: Average Regions per Server
-        ClientErrors: Client Errors
-        CorruptBlocks: Corrupt Blocks
-        Datasets: Datasets
-        DeadRegionServers: Dead Region Servers
-        ErrorLogs: Errors in Logs
-        Failed: Failed
-        Finished: Finished
-        FreeMemory: Free Memory
-        FreeVCores: Free Virtual Cores
-        HealthyNodes: Healthy Nodes
-        HealthyContainers: Healthy Containers
-        Killed: Killed
-        New: New
-        NewNodes: New Nodes
-        NewContainers: New Containers
-        Masters: Masters
-        MissingBlocks: Missing Blocks
-        Namenodes: Namenodes
-        Datanodes: Datanodes
-        Namespaces: Namespaces
-        NumCommittingChangeSets: Committing Changes
-        NumCommittedChangeSets: Committed Changes
-        NumInProgressTransactions: In-Progress Transactions
-        NumInvalidTransactions: Invalid Transactions
-        NumRequests: No. of Requests
-        Programs: Programs
-        ReadPointer: Read Pointer
-        RegionServers: Region Servers
-        RegionsInTransition: Regions in Transition
-        Running: Running
-        ServerErrors: Server Errors
-        Snapshots: Snapshots
-        Stopped: Stopped
-        Streams: Streams
-        StreamViews: Stream Views
-        Submitted: Submitted
-        Successful: Successful
-        Tables: Tables
-        Total: Total
-        TotalBytes: Total
-        TotalNodes: Total Nodes
-        TotalContainers: Total Containers
-        TotalMemory: Total Memory
-        TotalRegions: Total Regions
-        TotalRequests: Total Requests
-        TotalVCores: Total Virtual Cores
-        UnderReplicatedBlocks: Under Replicated Blocks
-        UsedBytes: Used
-        UsedMemory: Used Memory
-        UsedVCores: Used Virtual Cores
-        UnusableNodes: Unusable Nodes
-        UnusableContainers: Unusable Containers
-        WarnLogs: Warnings in Logs
-        WritePointer: Write Pointer
     PageTitle: CDAP | Management
-    Panels:
-      application: Application
-      memory: Memory
-      nodes: Nodes
-      virtual-cores: Virtual Cores
     Services:
+      title: Services
+      headers:
+        status: Status
+        name: Name
+        provisioned: Provisioned
+        requested: Requested
       appfabric: App Fabric
       dataset_executor: Dataset Executor
       explore_service: Explore Service
@@ -243,6 +171,7 @@ features:
       setBtn: Set
       streams: Streams
       transaction: Transaction
+      viewlogs: View Logs
     Top:
       primaryLabelOne: DAY
       primaryLabelTwo: HR
@@ -255,6 +184,7 @@ features:
         singular: second ago
       version-label: Version
     Title: Administration
+    uptimeLabel: Uptime {time}
   AppDetailedView:
     History:
       emptyMessage: No Runs found.
@@ -1109,8 +1039,13 @@ features:
     # backendDown: 'CDAP Services are not available',
     backendDown: 'Unable to connect to CDAP'
     backendDownSubtitle: 'Attempting to connect...'
+    contactadmin: Contact System Administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
+    servicesDown: We deteced a few system services are down
+    serviceDown: We detect that {serviceName} is down
+    systemDashboard: View System Services Dashboard
+    tryMessage: 'You can try to: '
 
   Market:
     action-types:
