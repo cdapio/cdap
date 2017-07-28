@@ -1,26 +1,26 @@
 /*
  * Copyright © 2017 Cask Data, Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * Licensed under the Apache License, Version 2.0 (the 'License'); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distributed on an 'AS IS' BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import "whatwg-fetch";
+import 'whatwg-fetch';
 import LoadingIndicatorStore, {
   BACKENDSTATUS
-} from "components/LoadingIndicator/LoadingIndicatorStore";
-import StatusAlertMessageStore from "components/StatusAlertMessage/StatusAlertMessageStore";
-import cookie from "react-cookie";
-import isNil from "lodash/isNil";
-import Rx from "rx";
+} from 'components/LoadingIndicator/LoadingIndicatorStore';
+import StatusAlertMessageStore from 'components/StatusAlertMessage/StatusAlertMessageStore';
+import cookie from 'react-cookie';
+import isNil from 'lodash/isNil';
+import Rx from 'rx';
 import SystemServicesStore, {pollSystemServices} from 'services/SystemServicesStore';
 
 let pollingObservable;
@@ -45,7 +45,7 @@ const parseAndDispatchBackendStatus = response => {
     }
     if ([BACKENDSTATUS.BACKENDDOWN].indexOf(loadingState.status) !== -1) {
       StatusAlertMessageStore.dispatch({
-        type: "VIEWUPDATE",
+        type: 'VIEWUPDATE',
         payload: {
           view: true
         }
@@ -87,12 +87,12 @@ const dispatchNodeServerDown = () => {
 const getRequestInfo = () => {
   let headers = {};
   let requestInfo = {
-    credentials: "include"
+    credentials: 'include'
   };
   if (window.CDAP_CONFIG.securityEnabled) {
-    let token = cookie.load("CDAP_Auth_Token");
+    let token = cookie.load('CDAP_Auth_Token');
     if (!isNil(token)) {
-      headers.Authorization = "Bearer " + token;
+      headers.Authorization = 'Bearer ' + token;
     }
     requestInfo.headers = headers;
   }
@@ -125,7 +125,7 @@ const startPolling = () => {
     .interval(2000)
     .flatMap(() =>
       Rx.Observable
-        .fromPromise(fetch("/backendstatus", getRequestInfo()))
+        .fromPromise(fetch('/backendstatus', getRequestInfo()))
         .catch(error => {
           dispatchNodeServerDown();
           return Rx.Observable.of(`Error: ${error}`);
