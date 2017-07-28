@@ -18,7 +18,7 @@ angular.module(PKG.name + '.services')
   .service('myLoadingService', function($q, EventPipe) {
     var deferred;
     this.showLoadingIcon = function() {
-      if (deferred){ 
+      if (deferred) {
         return deferred.promise;
       }
       deferred = $q.defer();
@@ -30,16 +30,16 @@ angular.module(PKG.name + '.services')
     this.hideLoadingIcon = function() {
       if (!deferred) {
         return $q.when(true);
-      } 
+      }
       EventPipe.emit('hideLoadingIcon');
       deferred.resolve(true);
       deferred = null;
     };
 
-    this.hideLoadingIconImmediate = function(){
+    this.hideLoadingIconImmediate = function() {
       if (!deferred) {
         return $q.when(true);
-      } 
+      }
       EventPipe.emit('hideLoadingIcon.immediate');
       deferred.resolve(true);
       deferred = null;

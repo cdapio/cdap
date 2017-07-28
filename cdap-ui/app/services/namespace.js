@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, myHelpers, $state, StatusFactory) {
+  .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, myHelpers, $state) {
 
     this.namespaceList = [];
-    StatusFactory.startPolling();
+    window.CaskCommon.StatusFactory.startPollingForBackendStatus();
     var data = new MyCDAPDataSource(),
         prom,
         queryInProgress = null;
@@ -40,7 +40,7 @@ angular.module(PKG.name + '.services')
             .then(
               (function(res) {
 
-                if(!res.length && !$state.includes('admin.**')) {
+                if (!res.length && !$state.includes('admin.**')) {
                   $state.go('unauthorized');
                 }
 
