@@ -382,7 +382,7 @@ angular.module(PKG.name + '.commons')
       var valid = true;
 
       NonStorePipelineErrorFactory.connectionIsValid(fromNode, toNode, function(invalidConnection) {
-        if (invalidConnection) { valid = false }
+        if (invalidConnection) { valid = false; }
       });
       return valid;
     }
