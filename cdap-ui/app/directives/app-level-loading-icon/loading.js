@@ -84,7 +84,7 @@ angular.module(PKG.name + '.commons')
 
         // Should use this hide when we are just loading a state
         EventPipe.on('hideLoadingIcon.immediate', function() {
-          if (modal){
+          if (modal) {
             // This is needed if the loading icon is shown and closed even before opened.
             // EventPipe will execute the listener immediately when the event is emitted,
             // however $alert which internally used $modal opens up only during next tick.
@@ -98,7 +98,7 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('showLoadingIcon', function(message, userCloseEnabled) {
-          if(!modal && !isBackendDown) {
+          if (!modal && !isBackendDown) {
             $scope.message = message || 'Loading...';
             if (!userCloseEnabled) {
               modalObj.keyboard = false;
