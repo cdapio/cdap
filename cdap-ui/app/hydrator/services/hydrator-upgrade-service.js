@@ -30,19 +30,11 @@ class HydratorUpgradeService {
       const supportedVersion = new window.CaskCommon.Version(version);
       const versionRange = new window.CaskCommon.VersionRange(range);
 
-      if (versionRange.versionIsInRange(supportedVersion)) {
-        return true;
-      } else {
-        return false;
-      }
+      return versionRange.versionIsInRange(supportedVersion);
     }
 
     // Check equality if range is just a single version
-    if (range !== version) {
-      return false;
-    }
-
-    return true;
+    return range === version;
   }
 
   checkPipelineArtifactVersion(config) {
