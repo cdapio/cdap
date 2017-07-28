@@ -618,8 +618,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * @param triggerProgramType program type of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramName program name of the triggering program in {@link ProgramStatusTrigger}
    * @param triggerProgramStatuses comma separated {@link ProgramStatus} in {@link ProgramStatusTrigger}.
-   *                               Schedules with {@link ProgramStatusTrigger} triggered by any {@link ProgramStatus}
-   *                               in triggerProgramStatuses will be returned.
+   *                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
+   *                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
    */
   @GET
   @Path("schedules/trigger-type/program-status")
@@ -719,21 +719,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * See {@link #getAllSchedules(HttpRequest, HttpResponder, String, String, String, String, String)}
    */
   @GET
-  @Path("apps/{app-name}/schedules/trigger-type/program-status")
+  @Path("apps/{app-name}/schedules")
   public void getAllSchedules(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("app-name") String appName,
                               @QueryParam("format") String format,
                               @QueryParam("trigger-type") String triggerType)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format, triggerType
-    );
+    doGetSchedules(responder, namespaceId, appName, ApplicationId.DEFAULT_VERSION, null, format, triggerType);
   }
 
   /**
    * Get schedules in a given application, optionally filtered by the given
    * {@link co.cask.cdap.proto.ProtoTrigger.Type}.
-   *  @param namespaceId namespace of the application to get schedules from
+   * @param namespaceId namespace of the application to get schedules from
    * @param appName name of the application to get schedules from
    * @param appVersion version of the application to get schedules from
    * @param format format of the returned schedules. Use "detail" to return {@link ScheduleDetail}
@@ -750,14 +749,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                               @QueryParam("format") String format,
                               @QueryParam("trigger-type") String triggerType)
     throws NotFoundException, BadRequestException {
-    doGetSchedules(responder, namespaceId, appName, appVersion, null, format, triggerType
-    );
+    doGetSchedules(responder, namespaceId, appName, appVersion, null, format, triggerType);
   }
 
   protected void doGetSchedules(HttpResponder responder, String namespace, String app, String version,
                                 @Nullable String workflow, @Nullable String format, @Nullable String triggerType)
     throws NotFoundException, BadRequestException {
-
     boolean asScheduleSpec = returnScheduleAsSpec(format);
     ApplicationId applicationId = new ApplicationId(namespace, app, version);
     ApplicationSpecification appSpec = store.getApplication(applicationId);
