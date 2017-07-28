@@ -337,9 +337,9 @@ angular.module(PKG.name + '.commons')
       if (selectedConnections.length === 0 || vm.isDisabled) { return; }
 
       angular.forEach(selectedConnections, function (selectedConnectionObj) {
-        removeConnection(selectedConnectionObj, false);
         vm.instance.unbind('connectionDetached');
         vm.instance.detach(selectedConnectionObj);
+        removeConnection(selectedConnectionObj, false);
         vm.instance.bind('connectionDetached', removeConnection);
       });
       selectedConnections = [];
