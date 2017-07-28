@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES, MY_CONFIG) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES, MY_CONFIG, GLOBALS) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.myHelpers = myHelpers;
@@ -149,8 +149,11 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getBackpressure = function() {
       return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
     };
+    this.getProperties = function() {
+      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties');
+    };
     this.getCustomConfig = function() {
-      if (this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties')) {
+      if (this.getProperties()) {
         let customConfig = {};
         let currentConfig = this.state.cloneConfig.config;
         let backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
@@ -179,6 +182,30 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       }
       return customConfigForDisplay;
+    };
+    this.setCustomConfig = function(customConfig) {
+      // have to do this because oldCustomConfig is already part of this.state.config.properties
+      let oldCustomConfig = this.getCustomConfig();
+      let oldProperties = angular.copy(this.state.cloneConfig.config.properties);
+      angular.forEach(oldCustomConfig, function(oldValue, oldKey) {
+        if (oldProperties.hasOwnProperty(oldKey)) {
+          delete oldProperties[oldKey];
+        }
+      });
+
+      let newCustomConfig = {};
+      angular.forEach(customConfig, function(configValue, configKey) {
+        let newKey = configKey;
+        if (GLOBALS.etlBatchPipelines.indexOf(this.state.cloneConfig.artifact.name) !== -1 && this.getEngine() === 'mapreduce') {
+          newKey = 'system.mapreduce.' + configKey;
+        } else {
+          newKey = 'system.spark.' + configKey;
+        }
+        newCustomConfig[newKey] = configValue;
+      }, this);
+
+      let newProperties = angular.extend(oldProperties, newCustomConfig);
+      return newProperties;
     };
     this.getNumExecutors = function() {
       if (this.isDistributed) {
