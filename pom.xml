@@ -128,7 +128,7 @@
     <jline.version>2.12</jline.version>
     <jsch.version>0.1.42</jsch.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.8.2.2</kafka.version>
+    <kafka.version>0.10.0.0</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
     <mockftp.version>2.6</mockftp.version>
