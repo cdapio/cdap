@@ -223,11 +223,9 @@
         </my-post-run-actions>
       </div>
 
-      <fieldset class="configuration-content-container"
-                ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'"
-                ng-disabled="BatchPipelineConfigCtrl.isDeployed">
-        <div class="configuration-step-content engine-config"
-              ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
+      <div class="configuration-step-content configuration-content-container engine-config"
+            ng-if="BatchPipelineConfigCtrl.activeTab === 'engineConfig'">
+        <fieldset ng-disabled="BatchPipelineConfigCtrl.isDeployed">
           <div class="step-content-heading">
             Select the type of engine running your batch pipeline
           </div>
@@ -247,21 +245,39 @@
               MapReduce
             </label>
           </div>
-          <div class="add-custom-config">
-            <span ng-if="!BatchPipelineConfigCtrl.isDeployed">
-              <a class="add-custom-config-label"
-                  ng-click="BatchPipelineConfigCtrl.showCustomConfig = !BatchPipelineConfigCtrl.showCustomConfig">
-                  <span class="fa"
-                        ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !BatchPipelineConfigCtrl.showCustomConfig}">
-                   </span>
-                  Show Custom Config
-              </a>
+        </fieldset>
+        <div class="add-custom-config">
+          <span ng-if="!BatchPipelineConfigCtrl.isDeployed">
+            <a class="add-custom-config-label"
+                ng-click="BatchPipelineConfigCtrl.showCustomConfig = !BatchPipelineConfigCtrl.showCustomConfig">
+                <span class="fa"
+                      ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !BatchPipelineConfigCtrl.showCustomConfig}">
+                 </span>
+                Show Custom Config
+            </a>
+            <i class="fa fa-info-circle"
+               uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
+               tooltip-placement="right">
+            </i>
+            <span class="float-xs-right num-rows"
+                  ng-if="BatchPipelineConfigCtrl.showCustomConfig">
+                {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
+              <ng-pluralize
+                count="BatchPipelineConfigCtrl.customEngineConfig.pairs.length"
+                when="{'one': 'custom config',
+                      'other': 'custom configs'}">
+              </ng-pluralize>
+            </span>
+          </span>
+          <span ng-if="(BatchPipelineConfigCtrl.isDeployed) || (!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showCustomConfig)">
+            <hr />
+            <span ng-if="BatchPipelineConfigCtrl.isDeployed">
+              <label>Custom Config</label>
               <i class="fa fa-info-circle"
                  uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
                  tooltip-placement="right">
               </i>
-              <span class="float-xs-right num-rows"
-                    ng-if="BatchPipelineConfigCtrl.showCustomConfig">
+              <span class="float-xs-right num-rows">
                   {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
                 <ng-pluralize
                   count="BatchPipelineConfigCtrl.customEngineConfig.pairs.length"
@@ -270,37 +286,19 @@
                 </ng-pluralize>
               </span>
             </span>
-            <span ng-if="(BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.showCustomConfig)">
-              <hr />
-              <span ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.customEngineConfig.pairs.length > 0">
-                <label>Custom Config</label>
-                <i class="fa fa-info-circle"
-                   uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying {{ BatchPipelineConfigCtrl.engineForDisplay }} program."
-                   tooltip-placement="right">
-                </i>
-                <span class="float-xs-right num-rows">
-                    {{ BatchPipelineConfigCtrl.customEngineConfig.pairs.length }}
-                  <ng-pluralize
-                    count="BatchPipelineConfigCtrl.customEngineConfig.pairs.length"
-                    when="{'one': 'custom config',
-                          'other': 'custom configs'}">
-                  </ng-pluralize>
-                </span>
-              </span>
-              <div class="custom-config-labels key-value-pair-labels">
-                <span class="key-label">Name</span>
-                <span class="value-label">Value</span>
-              </div>
-              <div class="custom-config-values key-value-pair-values">
-                <key-value-pairs
-                  key-values="BatchPipelineConfigCtrl.customEngineConfig"
-                  on-key-value-change="BatchPipelineConfigCtrl.onCustomEngineConfigChange"
-                ></key-value-pairs>
-              </div>
-            </span>
-          </div>
+            <div class="custom-config-labels key-value-pair-labels">
+              <span class="key-label">Name</span>
+              <span class="value-label">Value</span>
+            </div>
+            <div class="custom-config-values key-value-pair-values">
+              <key-value-pairs
+                key-values="BatchPipelineConfigCtrl.customEngineConfig"
+                on-key-value-change="BatchPipelineConfigCtrl.onCustomEngineConfigChange"
+              ></key-value-pairs>
+            </div>
+          </span>
         </div>
-      </fieldset>
+      </div>
 
       <div class="configuration-step-navigation">
         <div class="apply-run-container"
@@ -329,9 +327,9 @@
           </button>
           <button
             class="btn btn-secondary"
-            ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs' && BatchPipelineConfigCtrl.activeTab !== engineConfig"
-            ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline || BatchPipelineConfigCtrl.startingPipeline"
-            ng-click="BatchPipelineConfigCtrl.updatePipeline()">
+            ng-if="BatchPipelineConfigCtrl.isDeployed && BatchPipelineConfigCtrl.activeTab !== 'runtimeArgs'"
+            ng-disabled="!BatchPipelineConfigCtrl.enablePipelineUpdate || BatchPipelineConfigCtrl.updatingPipeline || BatchPipelineConfigCtrl.startingPipeline || BatchPipelineConfigCtrl.buttonsAreDisabled()"
+            ng-click="BatchPipelineConfigCtrl.updateAndClose()">
             <span ng-if="!BatchPipelineConfigCtrl.updatingPipeline">Save</span>
             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">Saving</span>
             <span ng-if="BatchPipelineConfigCtrl.updatingPipeline">
