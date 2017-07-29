@@ -21,6 +21,8 @@ import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MouseTrap from 'mousetrap';
+import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
+import IconSVG from 'components/IconSVG';
 
 require('./FilterDirective.scss');
 
@@ -56,7 +58,8 @@ export default class FilterDirective extends Component {
       textFilter: '',
       rowFilter: 'KEEP',
       customFilter: '',
-      ignoreCase: false
+      ignoreCase: false,
+      customConditionTooltip: false
     };
 
     this.handleConditionSelect = this.handleConditionSelect.bind(this);
@@ -203,12 +206,45 @@ export default class FilterDirective extends Component {
       });
   }
 
+  toggleCustomTooltip() {
+    this.setState({
+      customConditionTooltip: !this.state.customConditionTooltip
+    });
+  }
+
   renderCustomFilter() {
     if (this.state.selectedCondition.substr(0, 6) !== 'CUSTOM') { return null; }
 
     return (
       <div>
-        <br />
+        <div className="custom-condition-container">
+          <strong>{T.translate(`${PREFIX}.customconditionlabel`)}</strong>
+          <div id="customConditionTooltip">
+            <IconSVG
+              name="icon-info-circle"
+              onClick={this.toggleCustomTooltip.bind(this)}
+            />
+          </div>
+          <Popover
+            placement="right"
+            tether={{classPrefix: 'filter-popover'}}
+            isOpen={this.state.customConditionTooltip}
+            target="customConditionTooltip"
+            toggle={this.toggleCustomTooltip.bind(this)}
+          >
+            <PopoverTitle>{T.translate(`${PREFIX}.customconditiontooltiptitle`)}</PopoverTitle>
+            <PopoverContent>
+              <span>{T.translate(`${PREFIX}.customconditiontooltip`)}</span>
+              <a
+                href="http://commons.apache.org/proper/commons-jexl/"
+                target="_blank"
+              >
+                {T.translate(`${PREFIX}.customconditiontooltiplink`)}
+              </a>
+            </PopoverContent>
+          </Popover>
+        </div>
+
         <textarea
           className="form-control"
           value={this.state.customFilter}
