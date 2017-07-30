@@ -55,6 +55,7 @@ $action-btn-inactive-color: #aaaaaa;
         .title {
           overflow: hidden;
           text-overflow: ellipsis;
+          white-space: nowrap;
         }
 
         .connection-type {
