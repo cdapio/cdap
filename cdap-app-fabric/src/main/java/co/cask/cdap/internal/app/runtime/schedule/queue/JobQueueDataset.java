@@ -25,15 +25,16 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.annotations.VisibleForTesting;
@@ -174,21 +175,13 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   }
 
   private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
-    if (trigger instanceof TimeTrigger || trigger instanceof StreamSizeTrigger) {
-      // TimeTrigger/StreamSizeTrigger is satisfied as soon as the Notification arrive, due to how the Notification
-      // is initially created
+    if (trigger instanceof TimeTrigger) {
+      // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created.
+      // This is for backward compatibility, since TimeTrigger#isSatisfied looks for the filed
+      // cron expression in notification, which does not exist in notifications from pre-4.3 version
       return true;
     }
-    if (trigger instanceof PartitionTrigger) {
-      PartitionTrigger partitionTrigger = (PartitionTrigger) trigger;
-      int numPartitions = 0;
-      for (Notification notification : notifications) {
-        String numPartitionsString = notification.getProperties().get("numPartitions");
-        numPartitions += Integer.parseInt(numPartitionsString);
-      }
-      return numPartitions >= partitionTrigger.getNumPartitions();
-    }
-    throw new IllegalArgumentException("Unknown trigger class: " + trigger.getClass());
+    return ((SatisfiableTrigger) trigger).isSatisfied(notifications);
   }
 
   @Override

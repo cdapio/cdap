@@ -58,7 +58,7 @@ public final class ScheduleTaskPublisher {
     throws Exception {
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(ProgramOptionConstants.SCHEDULE_ID, scheduleId.toString());
+    properties.put(ProgramOptionConstants.SCHEDULE_ID, GSON.toJson(scheduleId));
     properties.put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(systemOverrides));
     properties.put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(userOverrides));
 

@@ -16,7 +16,7 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.api.schedule.Trigger;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -45,6 +45,8 @@ public class ProtoTriggerCodec implements JsonSerializer<Trigger>, JsonDeseriali
     map.put(ProtoTrigger.Type.PARTITION, ProtoTrigger.PartitionTrigger.class);
     map.put(ProtoTrigger.Type.STREAM_SIZE, ProtoTrigger.StreamSizeTrigger.class);
     map.put(ProtoTrigger.Type.PROGRAM_STATUS, ProtoTrigger.ProgramStatusTrigger.class);
+    map.put(ProtoTrigger.Type.AND, ProtoTrigger.AndTrigger.class);
+    map.put(ProtoTrigger.Type.OR, ProtoTrigger.OrTrigger.class);
     return map;
   }
 

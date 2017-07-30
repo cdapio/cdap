@@ -327,8 +327,10 @@ class ConstraintCheckerService extends AbstractIdleService {
       ConstraintContext constraintContext = new ConstraintContext(job, now, store);
       for (Constraint constraint : job.getSchedule().getConstraints()) {
         if (!(constraint instanceof CheckableConstraint)) {
-          // this shouldn't happen, since all Constraint implementations should extend AbstractConstraint
-          throw new IllegalArgumentException("Implementation of Constraint must extend AbstractConstraint");
+          // this shouldn't happen, since implementation of Constraint in ProgramSchedule
+          // should implement CheckableConstraint
+          throw new IllegalArgumentException("Implementation of Constraint in ProgramSchedule" +
+                                               " must implement CheckableConstraint");
         }
 
         CheckableConstraint abstractConstraint = (CheckableConstraint) constraint;
