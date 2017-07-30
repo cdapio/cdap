@@ -16,19 +16,29 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.TopicId;
+import co.cask.cdap.proto.id.WorkflowId;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -54,12 +64,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
   private final CConfiguration cConf;
   private ExecutorService taskExecutorService;
+  private final DatasetFramework datasetFramework;
+  private final MessagingService messagingService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                        DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     super(messagingService, cConf, datasetFramework, txClient);
     this.cConf = cConf;
+    this.datasetFramework = datasetFramework;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -195,6 +209,24 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           LOG.error("Cannot persist ProgramRunStatus %s for Program %s", programRunStatus, programRunId);
           return;
       }
+
+      // TODO hack to prevent converting ProgramRunStatus to ProgramStatus for STARTING - is there a better way?
+      // Can we add ProgramStatus#STARTING? Since ProgramRunStatus should be deprecated anyways
+      // Do we map STARTING to INITIALIZING?
+      if (programRunStatus != ProgramRunStatus.STARTING) {
+        ProgramStatus programStatus = ProgramStatus.valueOf(programRunStatus.toString().toUpperCase());
+        String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
+                                                                                  programStatus);
+
+        if (canTriggerOtherPrograms(context, triggerKeyForProgramStatus)) {
+          // Now forward the notification to the scheduler
+          TopicId programStatusTriggerTopic =
+            NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+          messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
+                                     .addPayloads(GSON.toJson(notification))
+                                     .build());
+        }
+      }
     }
 
     /**
@@ -207,6 +239,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
       return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
+    }
+
+    private boolean canTriggerOtherPrograms(DatasetContext context, String triggerKey)
+      throws IOException, DatasetManagementException {
+      return !Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey).isEmpty();
     }
   }
 }

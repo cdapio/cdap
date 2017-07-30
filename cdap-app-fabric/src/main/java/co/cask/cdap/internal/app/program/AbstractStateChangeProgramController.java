@@ -21,9 +21,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.util.concurrent.Service;
 import org.apache.twill.common.Threads;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -47,6 +47,7 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -97,6 +98,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
@@ -123,6 +125,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -598,6 +601,70 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(programId);
     }
     responder.sendJson(HttpResponseStatus.OK, specification);
+  }
+
+  /**
+   * Get schedules containing {@link ProgramStatusTrigger} filtered by triggering program
+   * and triggering program statuses.
+   *
+   * @param format format of the returned schedules. Use "detail" to return {@link ScheduleDetail}
+   *               or "spec" to return {@link ScheduleSpecification}
+   * @param triggerNamespaceId namespace of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerAppName application name of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerAppVersion application version of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerProgramType program type of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerProgramName program name of the triggering program in {@link ProgramStatusTrigger}
+   * @param triggerProgramStatuses comma separated {@link ProgramStatus} in {@link ProgramStatusTrigger}.
+   *                               Schedules with {@link ProgramStatusTrigger} triggered by none of the
+   *                               {@link ProgramStatus} in triggerProgramStatuses will be filtered out.
+   */
+  @GET
+  @Path("schedules/trigger-type/program-status")
+  public void getProgramStatusSchedules(HttpRequest request, HttpResponder responder,
+                                        @QueryParam("format") String format,
+                                        @QueryParam("trigger-namespace-id") String triggerNamespaceId,
+                                        @QueryParam("trigger-app-name") String triggerAppName,
+                                        @QueryParam("trigger-app-version") String triggerAppVersion,
+                                        @QueryParam("trigger-program-type") String triggerProgramType,
+                                        @QueryParam("trigger-program-name") String triggerProgramName,
+                                        @QueryParam("trigger-program-statuses") String triggerProgramStatuses)
+    throws BadRequestException {
+    boolean asScheduleSpec = returnScheduleAsSpec(format);
+    if (triggerNamespaceId == null && triggerAppName == null && triggerAppVersion == null
+      && triggerProgramType == null && triggerProgramName == null) {
+      throw new BadRequestException("Must specify the triggering program to find schedules " +
+                                      "triggered by program statuses");
+    }
+    // Filter by triggering programId and in program status trigger
+    ApplicationId appId = triggerAppVersion == null ? new ApplicationId(triggerNamespaceId, triggerAppName)
+      : new ApplicationId(triggerNamespaceId, triggerAppName, triggerAppVersion);
+    final ProgramId triggerProgramId = appId.program(ProgramType.valueOfCategoryName(triggerProgramType),
+                                                     triggerProgramName);
+
+    Collection<ProgramScheduleRecord> schedules = new HashSet<>();
+    Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
+    if (triggerProgramStatuses == null) {
+      queryProgramStatuses = ImmutableSet.of(co.cask.cdap.api.ProgramStatus.COMPLETED,
+                                             co.cask.cdap.api.ProgramStatus.FAILED,
+                                             co.cask.cdap.api.ProgramStatus.KILLED);
+    } else {
+      for (String status : triggerProgramStatuses.split(",")) {
+        queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
+      }
+    }
+
+    for (co.cask.cdap.api.ProgramStatus status : queryProgramStatuses) {
+      String triggerKey = Schedulers.triggerKeyForProgramStatus(triggerProgramId, status);
+      schedules.addAll(programScheduler.findSchedules(triggerKey));
+    }
+
+    List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
+    if (asScheduleSpec) {
+      List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
+      responder.sendJson(HttpResponseStatus.OK, specs, Schedulers.SCHEDULE_SPECS_TYPE, GSON_FOR_SCHEDULES);
+    } else {
+      responder.sendJson(HttpResponseStatus.OK, details, Schedulers.SCHEDULE_DETAILS_TYPE, GSON_FOR_SCHEDULES);
+    }
   }
 
   @GET
