@@ -161,8 +161,8 @@ public interface ScheduleBuilder {
                                               ProgramStatus... programStatuses);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace and application
-   * transitions to any one of the given program statuses.
+   * Create a schedule which is triggered when the given program in the given namespace
+   * and application with default version transitions to any one of the given program statuses.
    *
    * @see #triggerOnProgramStatus(String, String, String, ProgramType, String, ProgramStatus...)
    */
@@ -170,7 +170,7 @@ public interface ScheduleBuilder {
                                               String program, ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule which is triggered when the given program given application in the same namespace
+   * Creates a schedule which is triggered when the given program in the given application in the same namespace
    * transitions to any one of the given program statuses.
    *
    * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
@@ -186,4 +186,12 @@ public interface ScheduleBuilder {
    */
   ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                               ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule with a given {@link Trigger}
+   *
+   * @param trigger the trigger to be contained in the schedule
+   * @return a {@link ScheduleCreationSpec}
+   */
+  ScheduleCreationSpec triggerOn(Trigger trigger);
 }

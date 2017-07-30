@@ -260,7 +260,14 @@ class NotificationSubscriberService extends AbstractIdleService {
                  properties);
         return;
       }
-      ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
+      ScheduleId scheduleId;
+      try {
+        scheduleId = GSON.fromJson(scheduleIdString, ScheduleId.class);
+      } catch (JsonSyntaxException e) {
+        // If the notification is from pre-4.3 version, scheduleId is not in JSON format,
+        // parse it with fromString method
+        scheduleId = ScheduleId.fromString(scheduleIdString);
+      }
       ProgramScheduleRecord record;
       try {
         record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
@@ -282,7 +289,7 @@ class NotificationSubscriberService extends AbstractIdleService {
     @Override
     protected void updateJobQueue(DatasetContext context, Notification notification)
       throws IOException, DatasetManagementException {
-      String datasetIdString = notification.getProperties().get("datasetId");
+      String datasetIdString = notification.getProperties().get(Notification.DATASET_ID);
       if (datasetIdString == null) {
         return;
       }

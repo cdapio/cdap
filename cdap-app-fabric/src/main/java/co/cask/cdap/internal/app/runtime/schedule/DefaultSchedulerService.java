@@ -59,16 +59,20 @@ public class DefaultSchedulerService {
       Trigger trigger = context.getTrigger();
       String key = trigger.getKey().getName();
       String[] parts = key.split(":");
-      Preconditions.checkArgument(parts.length == 6, String.format("Trigger's key name %s has %d parts instead of 6",
-                                                                   key, parts.length));
+      // Simple time trigger has 6 parts but time trigger in composite trigger has 7 with an extra cron expression part
+      Preconditions.checkArgument(parts.length == 6 || parts.length == 7,
+                                  String.format("Trigger's key name %s has %d parts instead of 6 or 7",
+                                                key, parts.length));
 
       String namespaceId = parts[0];
       String applicationId = parts[1];
       String appVersion = parts[2];
       // Skip program type in parts[3] and program name in parts[4]
       String scheduleName = parts[5];
-
       ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+      if (parts.length == 7) {
+        builder.put(ProgramOptionConstants.CRON_EXPRESSION, parts[6]);
+      }
 
       builder.put(ProgramOptionConstants.SCHEDULE_NAME, scheduleName);
 

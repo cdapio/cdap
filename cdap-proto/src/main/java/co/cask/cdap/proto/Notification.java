@@ -32,6 +32,10 @@ import java.util.Objects;
  */
 public class Notification {
 
+  public static final String DATASET_ID = "datasetId";
+  public static final String NUM_PARTITIONS = "numPartitions";
+  public static final String PARTITION_KEYS = "partitionKeys";
+
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
 
@@ -55,9 +59,9 @@ public class Notification {
   public static Notification forPartitions(DatasetId datasetId,
                                            Collection<? extends PartitionKey> partitionKeys) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("datasetId", datasetId.toString());
-    properties.put("numPartitions", Integer.toString(partitionKeys.size()));
-    properties.put("partitionKeys", GSON.toJson(partitionKeys));
+    properties.put(DATASET_ID, datasetId.toString());
+    properties.put(NUM_PARTITIONS, Integer.toString(partitionKeys.size()));
+    properties.put(PARTITION_KEYS, GSON.toJson(partitionKeys));
     return new Notification(Notification.Type.PARTITION, properties);
   }
 

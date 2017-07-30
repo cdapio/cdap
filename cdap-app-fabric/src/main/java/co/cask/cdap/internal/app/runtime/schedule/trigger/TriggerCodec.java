@@ -16,11 +16,15 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ProtoTriggerCodec;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
@@ -34,9 +38,21 @@ public class TriggerCodec extends ProtoTriggerCodec {
       .put(ProtoTrigger.Type.PARTITION, PartitionTrigger.class)
       .put(ProtoTrigger.Type.STREAM_SIZE, StreamSizeTrigger.class)
       .put(ProtoTrigger.Type.PROGRAM_STATUS, ProgramStatusTrigger.class)
+      .put(ProtoTrigger.Type.AND, AndTrigger.class)
+      .put(ProtoTrigger.Type.OR, OrTrigger.class)
       .build();
 
   public TriggerCodec() {
     super(TYPE_TO_INTERNAL_TRIGGER);
+  }
+
+  @Override
+  public Trigger deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+    throws JsonParseException {
+    Trigger trigger = super.deserialize(json, typeOfT, context);
+    if (trigger instanceof AbstractCompositeTrigger) {
+      ((AbstractCompositeTrigger) trigger).initializeUnitTriggers();
+    }
+    return trigger;
   }
 }

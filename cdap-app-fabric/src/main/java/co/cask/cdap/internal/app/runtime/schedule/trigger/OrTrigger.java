@@ -14,22 +14,29 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.trigger;
+package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.proto.Notification;
+
+import java.util.List;
 
 /**
- * A builder to create a Trigger object.
+ * A Trigger that schedules a ProgramSchedule, when at least one of the internal triggers are satisfied.
  */
-public interface TriggerBuilder extends Trigger {
+public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTrigger {
 
-  /**
-   * Builds a Trigger given the deployed namespace, application, and application version.
-   *
-   * @param namespace the namespace
-   * @param applicationName the deployed application name
-   * @param applicationVersion the deployed application version
-   * @return a Trigger
-   */
-  Trigger build(String namespace, String applicationName, String applicationVersion);
+  public OrTrigger(Trigger... triggers) {
+    super(Type.OR, triggers);
+  }
+
+  @Override
+  public boolean isSatisfied(List<Notification> notifications) {
+    for (Trigger trigger : triggers) {
+      if (((SatisfiableTrigger) trigger).isSatisfied(notifications)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

@@ -16,14 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
  */
-public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Trigger {
+public class TimeTrigger extends ProtoTrigger.TimeTrigger implements SatisfiableTrigger {
+  private static final Gson GSON = new Gson();
+  private static final java.lang.reflect.Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   public TimeTrigger(String cronExpression) {
     super(cronExpression);
@@ -33,5 +42,25 @@ public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Trigger {
   @Override
   public void validate() {
     Schedulers.validateCronExpression(cronExpression);
+  }
+
+  @Override
+  public boolean isSatisfied(List<Notification> notifications) {
+    for (Notification notification : notifications) {
+      if (!notification.getNotificationType().equals(Notification.Type.TIME)) {
+        continue;
+      }
+      String systemOverridesString = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+      if (systemOverridesString != null) {
+        Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
+        return cronExpression.equals(systemOverrides.get(ProgramOptionConstants.CRON_EXPRESSION));
+      }
+    }
+    return false;
+  }
+
+  @Override
+  public List<String> getTriggerKeys() {
+    return ImmutableList.of();
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.trigger;
+package co.cask.cdap.api.schedule;
 
 /**
  * The mechanism by which a ProgramSchedule is scheduled.

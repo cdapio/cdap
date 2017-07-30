@@ -18,19 +18,22 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when a certain status of a program has been achieved.
  */
-public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements Trigger {
+public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements SatisfiableTrigger {
+
   public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
     super(programId, programStatuses);
   }
@@ -38,5 +41,15 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
   @VisibleForTesting
   public ProgramStatusTrigger(ProgramId programId, ProgramStatus... programStatuses) {
     super(programId, new HashSet<>(Arrays.asList(programStatuses)));
+  }
+
+  @Override
+  public boolean isSatisfied(List<Notification> notifications) {
+    return true;
+  }
+
+  @Override
+  public List<String> getTriggerKeys() {
+    return ImmutableList.of(programId.toString());
   }
 }

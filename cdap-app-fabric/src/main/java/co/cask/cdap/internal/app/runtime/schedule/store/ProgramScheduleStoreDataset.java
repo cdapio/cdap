@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -30,6 +29,7 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.NotFoundException;
@@ -40,11 +40,9 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -527,15 +525,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * extracted from composite triggers. Hence the return type of this method is a list.
    */
   private static List<String> extractTriggerKeys(ProgramSchedule schedule) {
-    Trigger trigger = schedule.getTrigger();
-    if (trigger instanceof PartitionTrigger) {
-      String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDataset());
-      return Collections.singletonList(triggerKey);
-    }
-    if (trigger instanceof ProgramStatusTrigger) {
-      return Collections.singletonList(((ProgramStatusTrigger) trigger).getProgramId().toString());
-    }
-    return Collections.emptyList();
+    return ((SatisfiableTrigger) schedule.getTrigger()).getTriggerKeys();
   }
 
   private static String rowKeyForSchedule(ScheduleId scheduleId) {

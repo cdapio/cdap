@@ -30,6 +30,7 @@ import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
+import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
@@ -110,6 +111,11 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
   @Override
   public void schedule(ScheduleCreationSpec programSchedule) {
 
+  }
+
+  @Override
+  public TriggerFactory getTriggerFactory() {
+    return null;
   }
 
   @Override

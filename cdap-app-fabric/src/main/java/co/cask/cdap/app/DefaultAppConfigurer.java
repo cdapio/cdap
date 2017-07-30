@@ -30,6 +30,7 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -49,15 +50,13 @@ import co.cask.cdap.internal.app.runtime.flow.DefaultFlowConfigurer;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.ApplicationId;
 import com.google.common.annotations.VisibleForTesting;
@@ -66,7 +65,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -89,6 +87,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, ScheduleSpecification> schedules = new HashMap<>();
   private final Map<String, ScheduleCreationSpec> scheduleSpecs = new HashMap<>();
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
+  private final TriggerFactory triggerFactory;
   private String name;
   private String description;
 
@@ -108,6 +107,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
+    this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
   }
 
   @Override
@@ -249,6 +249,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void schedule(ScheduleCreationSpec scheduleCreationSpec) {
     doAddSchedule(scheduleCreationSpec);
+  }
+
+  @Override
+  public TriggerFactory getTriggerFactory() {
+    return triggerFactory;
   }
 
   @Override

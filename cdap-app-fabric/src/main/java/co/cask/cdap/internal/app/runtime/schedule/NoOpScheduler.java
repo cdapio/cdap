@@ -62,29 +62,6 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
-  public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
-  public void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
-  public void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException {
-
-  }
-
-  @Override
-  public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) throws SchedulerException {
-
-  }
-
-  @Override
   public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
                                              String scheduleName) throws ScheduleNotFoundException {
     throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));
