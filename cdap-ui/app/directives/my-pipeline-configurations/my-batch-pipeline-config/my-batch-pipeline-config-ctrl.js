@@ -49,7 +49,7 @@ class MyBatchPipelineConfigCtrl {
       'pairs': HydratorPlusPlusHydratorService.convertMapToKeyValuePairs(this.store.getCustomConfigForDisplay())
     };
 
-    if (this.customEngineConfig.pairs.length === 0 && !this.isDeployed) {
+    if (this.customEngineConfig.pairs.length === 0) {
       this.customEngineConfig.pairs.push({
         key: '',
         value: '',
@@ -83,6 +83,7 @@ class MyBatchPipelineConfigCtrl {
 
   onCustomEngineConfigChange(newCustomConfig) {
     this.customEngineConfig = newCustomConfig;
+    this.updatePipelineEditStatus();
   }
 
   onEngineChange() {
@@ -209,15 +210,18 @@ class MyBatchPipelineConfigCtrl {
     let isResourceModified = !isResourcesEqual(oldConfig.config.resources, updatedConfig.config.resources);
     let isDriverResourceModidified = !isResourcesEqual(oldConfig.config.driverResources, updatedConfig.config.driverResources);
     let isProcessTimingModified = oldConfig.config.processTimingEnabled !== updatedConfig.config.processTimingEnabled;
-    this.enablePipelineUpdate = (
+    let isCustomEngineConfigModified = oldConfig.config.properties !== updatedConfig.config.properties;
+
+    // Pipeline update is only necessary in Detail view (i.e. after pipeline has been deployed)
+    this.enablePipelineUpdate = this.isDeployed && (
       isStageLoggingChanged ||
       isResourceModified ||
       isDriverResourceModidified ||
-      isProcessTimingModified
+      isProcessTimingModified ||
+      isCustomEngineConfigModified
     );
   }
   getUpdatedPipelineConfig() {
-
     let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());
     delete pipelineconfig.__ui__;
     if (this.instrumentation) {
@@ -227,13 +231,12 @@ class MyBatchPipelineConfigCtrl {
     pipelineconfig.config.driverResources = this.driverResources;
     pipelineconfig.config.stageLoggingEnabled = this.stageLogging;
     pipelineconfig.config.processTimingEnabled = this.instrumentation;
-
+    pipelineconfig.config.properties = this.store.setCustomConfig(this.HydratorPlusPlusHydratorService.convertKeyValuePairsToMap(this.customEngineConfig));
 
     return pipelineconfig;
   }
   updatePipeline(updatingPipeline = true) {
     let pipelineConfig = this.getUpdatedPipelineConfig();
-    this.updatingPipeline = updatingPipeline;
     this.updatingPipeline = updatingPipeline;
     return this.myPipelineApi
       .save(

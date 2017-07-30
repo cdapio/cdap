@@ -246,10 +246,9 @@
         </div>
       </div>
 
-      <fieldset class="configuration-content-container"
-                ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'"
-                ng-disabled="RealtimePipelineConfigCtrl.isDeployed">
-        <div class="configuration-step-content engine-config">
+      <div class="configuration-step-content configuration-content-container engine-config"
+            ng-if="RealtimePipelineConfigCtrl.activeTab === 'engineConfig'">
+        <fieldset ng-disabled="RealtimePipelineConfigCtrl.isDeployed">
           <div class="step-content-heading">
             Select the type of engine running your realtime pipeline
           </div>
@@ -280,21 +279,39 @@
               </i>
             </div>
           </div>
-          <div class="add-custom-config">
-            <span ng-hide="RealtimePipelineConfigCtrl.isDeployed">
-              <a class="add-custom-config-label"
-                  ng-click="RealtimePipelineConfigCtrl.showCustomConfig = !RealtimePipelineConfigCtrl.showCustomConfig">
-                  <span class="fa"
-                        ng-class="{'fa-caret-down': RealtimePipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !RealtimePipelineConfigCtrl.showCustomConfig}">
-                   </span>
-                  Show Custom Config
-              </a>
+        </fieldset>
+        <div class="add-custom-config">
+          <span ng-hide="RealtimePipelineConfigCtrl.isDeployed">
+            <a class="add-custom-config-label"
+                ng-click="RealtimePipelineConfigCtrl.showCustomConfig = !RealtimePipelineConfigCtrl.showCustomConfig">
+                <span class="fa"
+                      ng-class="{'fa-caret-down': RealtimePipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !RealtimePipelineConfigCtrl.showCustomConfig}">
+                 </span>
+                Show Custom Config
+            </a>
+            <i class="fa fa-info-circle"
+               uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
+               tooltip-placement="right">
+            </i>
+            <span class="float-xs-right num-rows"
+                  ng-if="RealtimePipelineConfigCtrl.showCustomConfig">
+                {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
+              <ng-pluralize
+                count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
+                when="{'one': 'custom config',
+                      'other': 'custom configs'}">
+              </ng-pluralize>
+            </span>
+          </span>
+          <span ng-if="(RealtimePipelineConfigCtrl.isDeployed) || (!RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.showCustomConfig)">
+            <hr />
+            <span ng-if="RealtimePipelineConfigCtrl.isDeployed">
+              <label>Custom Config</label>
               <i class="fa fa-info-circle"
                  uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
                  tooltip-placement="right">
               </i>
-              <span class="float-xs-right num-rows"
-                    ng-if="RealtimePipelineConfigCtrl.showCustomConfig">
+              <span class="float-xs-right num-rows">
                   {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
                 <ng-pluralize
                   count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
@@ -303,37 +320,19 @@
                 </ng-pluralize>
               </span>
             </span>
-            <span ng-if="(RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 0) || (!RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.showCustomConfig)">
-              <hr />
-              <span ng-if="RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.customEngineConfig.pairs.length > 0">
-                <label>Custom Config</label>
-                <i class="fa fa-info-circle"
-                   uib-tooltip="Enter key-value pairs of configuration parameters that will be passed to the underlying Apache Spark Streaming program."
-                   tooltip-placement="right">
-                </i>
-                <span class="float-xs-right num-rows">
-                    {{ RealtimePipelineConfigCtrl.customEngineConfig.pairs.length }}
-                  <ng-pluralize
-                    count="RealtimePipelineConfigCtrl.customEngineConfig.pairs.length"
-                    when="{'one': 'custom config',
-                          'other': 'custom configs'}">
-                  </ng-pluralize>
-                </span>
-              </span>
-              <div class="custom-config-labels key-value-pair-labels">
-                <span class="key-label">Name</span>
-                <span class="value-label">Value</span>
-              </div>
-              <div class="custom-config-values key-value-pair-values">
-                <key-value-pairs
-                  key-values="RealtimePipelineConfigCtrl.customEngineConfig"
-                  on-key-value-change="RealtimePipelineConfigCtrl.onCustomEngineConfigChange"
-                ></key-value-pairs>
-              </div>
-            </span>
-          </div>
+            <div class="custom-config-labels key-value-pair-labels">
+              <span class="key-label">Name</span>
+              <span class="value-label">Value</span>
+            </div>
+            <div class="custom-config-values key-value-pair-values">
+              <key-value-pairs
+                key-values="RealtimePipelineConfigCtrl.customEngineConfig"
+                on-key-value-change="RealtimePipelineConfigCtrl.onCustomEngineConfigChange"
+              ></key-value-pairs>
+            </div>
+          </span>
         </div>
-      </fieldset>
+      </div>
 
       <div class="configuration-step-navigation">
         <div class="apply-run-container"
@@ -362,7 +361,7 @@
           </button>
           <button
             class="btn btn-secondary"
-            ng-if="RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.activeTab !== 'runtimeArgs' && RealtimePipelineConfigCtrl.activeTab !== engineConfig"
+            ng-if="RealtimePipelineConfigCtrl.isDeployed && RealtimePipelineConfigCtrl.activeTab !== 'runtimeArgs'"
             ng-disabled="!RealtimePipelineConfigCtrl.enablePipelineUpdate || RealtimePipelineConfigCtrl.startingPipeline || RealtimePipelineConfigCtrl.updatingPipeline "
             ng-click="RealtimePipelineConfigCtrl.updatePipeline()">
             <span ng-if="!RealtimePipelineConfigCtrl.updatingPipeline">Save</span>
