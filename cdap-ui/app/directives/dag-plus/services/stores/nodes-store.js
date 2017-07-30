@@ -225,7 +225,7 @@ class DAGPlusPlusNodesStore {
     this.emitChange();
   }
   getConnections() {
-    return this.state.connections;
+    return angular.copy(this.state.connections);
   }
   setConnections(connections) {
     this.state.connections = connections;

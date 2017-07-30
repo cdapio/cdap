@@ -95,7 +95,7 @@
 
 <div class="my-js-dag"
     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick, 'preview-mode': previewMode }"
-    ng-click="DAGPlusPlusCtrl.clearNodeSelection()">
+    ng-click="DAGPlusPlusCtrl.clearNodeSelection(); DAGPlusPlusCtrl.toggleNodeMenu(null); DAGPlusPlusCtrl.openDagMenu(false);">
     <div id="diagram-container">
       <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
@@ -110,6 +110,10 @@
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
+            <div class="endpoint-circle"
+                  ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}">
+              <div class="endpoint-caret"></div>
+            </div>
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
@@ -137,11 +141,11 @@
               <div class="node-metadata">
                 <div class="node-name" ng-bind="node.plugin.label || node.name | myEllipsis: 15"></div>
                 <div class="node-version"
-                      ng-class="{ 'hidden': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
+                      ng-class="{ 'hidden': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
                       ng-bind="node.plugin.artifact.version">
                 </div>
                 <button class="node-configure-btn"
-                        ng-class="{'btn-shown': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
+                        ng-class="{'btn-shown': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
                         ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
                   <span class="node-configure-btn-label">
                     <span ng-if="!DAGPlusPlusCtrl.isDisabled">
@@ -154,23 +158,57 @@
                 </button>
               </div>
             </div>
-            <div
-              ng-if="!DAGPlusPlusCtrl.showNodeMenu[node.name]"
-              ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
-              class="menu-icon menu-icon-node fa fa-bars"
-              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
+            <div class="node-metrics"
+                  ng-show="DAGPlusPlusCtrl.isDisabled">
+              <a class="node-metrics-labels"
+                ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
+                <span class="metric-records-out"
+                    ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
+                  <span class="metric-records-out-label">Records Out:</span>
+                  <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
+                  </span>
+                </span>
+                <span>/</span>
+                <span class="metric-errors">
+                  <span class="metric-errors-label">Errors:</span>
+                  <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
+                  </span>
+                </span>
+              </a>
             </div>
-            <div ng-if="DAGPlusPlusCtrl.showNodeMenu[node.name]"
-                  class="node-popover-menu">
-              <div
-                class="menu-icon fa fa-bars"
-                ng-click="DAGPlusPlusCtrl.toggleMenu(node.name)">
+            <div class="node-actions">
+              <span class="node-actions-error-alert float-xs-left">
+                <span class="node-actions-error">Error</span>
+                <span>Alert</span>
+              </span>
+              <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
+                    ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
+                    class="menu-icon menu-icon-node fa fa-bars float-xs-right"
+                    ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
+              </span>
+            </div>
+          </div>
+          <div ng-if="DAGPlusPlusCtrl.nodeMenuOpen === node.name"
+                ng-click="$event.stopPropagation()"
+                class="node-popover-menu">
+            <div
+              class="menu-icon fa fa-bars"
+              ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
+            </div>
+            <div class="menu-content">
+              <div class="menu-content-action disabled">
+                Copy
               </div>
-              <div class="menu-content">
-                <div class="menu-content-action menu-content-delete"
-                  ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
-                  Delete
-                </div>
+              <div class="menu-content-action disabled">
+                Duplicate
+              </div>
+              <div class="menu-content-action disabled">
+                Create Template
+              </div>
+              <hr />
+              <div class="menu-content-action menu-content-delete"
+                ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
+                Delete
               </div>
             </div>
           </div>
@@ -200,7 +238,26 @@
           </div>
 
         </div>
-
+      </div>
+      <div ng-show="DAGPlusPlusCtrl.dagMenuOpen"
+            ng-click="$event.stopPropagation()"
+            class="dag-popover-menu">
+        <div class="menu-content">
+          <div class="menu-content-action disabled">
+            Copy
+          </div>
+          <div class="menu-content-action disabled">
+            Duplicate
+          </div>
+          <div class="menu-content-action disabled">
+            Create Template
+          </div>
+          <hr />
+          <div class="menu-content-action menu-content-delete"
+            ng-click="DAGPlusPlusCtrl.removeSelectedConnections(); DAGPlusPlusCtrl.openDagMenu(false)">
+            Delete
+          </div>
+        </div>
       </div>
     </div>
 </div>
