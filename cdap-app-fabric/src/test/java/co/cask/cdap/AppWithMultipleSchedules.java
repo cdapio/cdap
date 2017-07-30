@@ -33,6 +33,7 @@ public class AppWithMultipleSchedules extends AbstractApplication {
   public static final String SOME_WORKFLOW = "SomeWorkflow";
   public static final String ANOTHER_WORKFLOW = "AnotherWorkflow";
   public static final String TRIGGERED_WORKFLOW = "TriggeredWorkflow";
+  public static final String WORKFLOW_COMPLETED_SCHEDULE = "WorkflowCompletedSchedule2";
 
   @Override
   public void configure() {
@@ -55,7 +56,7 @@ public class AppWithMultipleSchedules extends AbstractApplication {
     schedule(buildSchedule("WorkflowCompletedFailedSchedule", ProgramType.WORKFLOW, TRIGGERED_WORKFLOW)
                .triggerOnProgramStatus(ProgramType.WORKFLOW, SOME_WORKFLOW,
                                        ProgramStatus.COMPLETED, ProgramStatus.FAILED));
-    schedule(buildSchedule("WorkflowCompletedSchedule2", ProgramType.WORKFLOW, TRIGGERED_WORKFLOW)
+    schedule(buildSchedule(WORKFLOW_COMPLETED_SCHEDULE, ProgramType.WORKFLOW, TRIGGERED_WORKFLOW)
                .triggerOnProgramStatus(ProgramType.WORKFLOW, ANOTHER_WORKFLOW, ProgramStatus.COMPLETED));
   }
 
@@ -122,5 +123,3 @@ public class AppWithMultipleSchedules extends AbstractApplication {
     }
   }
 }
-
-

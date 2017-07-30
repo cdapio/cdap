@@ -29,6 +29,7 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
@@ -122,6 +123,12 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
   public void addNotification(ProgramScheduleRecord record, Notification notification) {
     boolean jobExists = false;
     ProgramSchedule schedule = record.getSchedule();
+
+    // Only add notifications for enabled schedules
+    if (record.getMeta().getStatus() != ProgramScheduleStatus.SCHEDULED) {
+      return;
+    }
+
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {
       while (jobs.hasNext()) {
         Job job = jobs.next();

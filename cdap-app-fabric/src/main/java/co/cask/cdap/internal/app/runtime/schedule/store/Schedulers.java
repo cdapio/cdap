@@ -86,11 +86,14 @@ public class Schedulers {
 
   public static Set<String> triggerKeysForProgramStatus(ProgramId programId, Set<ProgramStatus> programStatuses) {
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
-    String programIdString = programId.toString();
     for (ProgramStatus status : programStatuses) {
-      triggerKeysBuilder.add(programIdString +  "." + status.toString().toLowerCase());
+      triggerKeysBuilder.add(triggerKeyForProgramStatus(programId, status));
     }
     return triggerKeysBuilder.build();
+  }
+
+  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
+    return programId.toString() +  "." + programStatus.toString().toLowerCase();
   }
 
   public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {
