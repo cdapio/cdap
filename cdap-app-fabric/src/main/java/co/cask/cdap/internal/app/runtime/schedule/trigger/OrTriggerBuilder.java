@@ -16,30 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.proto.Notification;
-import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.id.StreamId;
-import com.google.common.collect.ImmutableSet;
-
-import java.util.List;
-import java.util.Set;
+import co.cask.cdap.api.schedule.Trigger;
 
 /**
- * A Trigger that schedules a ProgramSchedule, based on new data in a stream.
+ * A Trigger builder that builds a {@link OrTrigger}.
  */
-public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements SatisfiableTrigger {
+public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
 
-  public StreamSizeTrigger(StreamId streamId, int triggerMB) {
-    super(streamId, triggerMB);
+  public OrTriggerBuilder(Trigger... triggers) {
+    super(triggers);
   }
 
   @Override
-  public boolean isSatisfied(List<Notification> notifications) {
-    return true;
-  }
-
-  @Override
-  public Set<String> getTriggerKeys() {
-    return ImmutableSet.of();
+  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
+    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
   }
 }

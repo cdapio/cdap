@@ -19,11 +19,11 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -30,6 +30,7 @@ import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedStreamSizeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.notifications.service.NotificationContext;
@@ -208,10 +209,16 @@ public class StreamSizeScheduler implements Scheduler {
     }
   }
 
+  private static StreamSizeSchedule toStreamSizeSchedule(ProgramSchedule schedule) {
+    StreamSizeTrigger trigger = (StreamSizeTrigger) schedule.getTrigger();
+    return new StreamSizeSchedule(schedule.getName(), schedule.getDescription(),
+                                  trigger.getStreamId().getStream(), trigger.getTriggerMB());
+  }
+
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
     ProgramId program = schedule.getProgramId();
-    StreamSizeSchedule streamSizeSchedule = Schedulers.toStreamSizeSchedule(schedule);
+    StreamSizeSchedule streamSizeSchedule = toStreamSizeSchedule(schedule);
     scheduleStreamSizeSchedule(program, program.getType().getSchedulableType(),
                                schedule.getProperties(), streamSizeSchedule);
   }
@@ -290,7 +297,6 @@ public class StreamSizeScheduler implements Scheduler {
     return ImmutableList.of();
   }
 
-  @Override
   public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
     String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
@@ -301,7 +307,6 @@ public class StreamSizeScheduler implements Scheduler {
     subscriber.suspendScheduleTask(program, programType, scheduleName);
   }
 
-  @Override
   public void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
     String scheduleId = AbstractSchedulerService.scheduleIdFor(program, programType, scheduleName);
@@ -312,7 +317,6 @@ public class StreamSizeScheduler implements Scheduler {
     subscriber.resumeScheduleTask(program, programType, scheduleName);
   }
 
-  @Override
   public void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
     throws ScheduleNotFoundException, SchedulerException {
     String scheduleId = AbstractSchedulerService.scheduleIdFor(programId, programType, scheduleName);
@@ -325,7 +329,6 @@ public class StreamSizeScheduler implements Scheduler {
     // have to worry about race conditions between add/delete of schedules
   }
 
-  @Override
   public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) throws SchedulerException {
     char startChar = ':';
     char endChar = (char) (startChar + 1);

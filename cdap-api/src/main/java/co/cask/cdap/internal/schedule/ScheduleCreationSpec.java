@@ -17,8 +17,8 @@
 package co.cask.cdap.internal.schedule;
 
 import co.cask.cdap.api.app.ProgramType;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 
 import java.util.List;
 import java.util.Map;
