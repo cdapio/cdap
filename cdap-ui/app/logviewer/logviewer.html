@@ -16,28 +16,31 @@
 
 <!DOCTYPE html>
 <html lang="en" ng-app="cdap-ui">
+
 <head>
-    <title>CDAP | Logs </title>
+  <title>CDAP | Logs </title>
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Cask Data Application Platform">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="/logviewer/" ></base>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Cask Data Application Platform">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/logviewer/"></base>
 
-    <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
-    <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
+  <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
+  <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
+
 <body ng-class="bodyClass" ng-controller="BodyCtrl">
   <my-global-navbar></my-global-navbar>
 
-  <main class="container"
-        id="app-container">
+  <main class="container" id="app-container">
     <ui-view></ui-view>
   </main>
 
   <div class="alerts" id="alerts"></div>
-  <loading-icon></loading-icon>
+  <loading-indicator></loading-indicator>
+  <status-alert-message></status-alert-message>
+
   <footer ng-if="!$state.params.iframe">
     <div class="container">
       <div class="row text-muted" ng-cloak>
@@ -60,4 +63,5 @@
   <script type="text/javascript" src="/assets/bundle/common.es6.js"></script>
   <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
 </body>
+
 </html>

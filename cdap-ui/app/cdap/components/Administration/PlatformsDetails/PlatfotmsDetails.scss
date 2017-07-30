@@ -1,0 +1,88 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../styles/variables.scss';
+$height_of_header: 42px;
+$height_of_conent: 450px;
+
+.platform-details {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+
+  &.loading {
+    height: 450px;
+    background: $cdap-gray;
+    margin-top: 40px;
+  }
+
+  .generic-details {
+    &.hbase {
+      > div {
+        &:nth-child(2) {
+          height: 50%;
+        }
+      }
+    }
+    &.hdfs {
+      flex-direction: row;
+    }
+  }
+
+  .nav.nav-tabs {
+    height: $height_of_header;
+    border-bottom: 0;
+    width: 100%;
+
+    .nav-item {
+      margin-bottom: 0;
+      height: 100%;
+      .nav-link {
+        font-size: 15px;
+        padding-top: 0;
+        cursor: pointer;
+
+        &.active {
+          border: 0;
+          font-weight: bold;
+          border-bottom: 2px solid $cdap_orange;
+          padding-bottom: 0;
+          height: 100%;
+        }
+        &:hover {
+          border: 0;
+          font-weight: bold;
+          &.active {
+            border-bottom: 2px solid $cdap_orange;
+          }
+        }
+      }
+    }
+  }
+  .tab-content {
+    background: $cdap-gray;
+    padding: 10px;
+    width: 100%;
+    height: $height_of_conent;
+
+    .tab-pane {
+      height: 100%;
+      overflow: auto;
+    }
+  }
+}
