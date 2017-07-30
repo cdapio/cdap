@@ -24,6 +24,7 @@ angular.module(PKG.name + '.services')
         loadArtifactJSON = loadArtifactPath + '/versions/:version/properties',
         listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime + ',' + GLOBALS.etlDataPipeline + ',' + GLOBALS.etlDataStreams,
         artifactsPath = '/namespaces/:namespace/artifacts?scope=SYSTEM',
+        artifactsBasePath = '/namespaces/:namespace/artifacts',
         extensionsFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions',
         pluginFetchBase = extensionsFetchBase + '/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
@@ -45,6 +46,8 @@ angular.module(PKG.name + '.services')
         loadArtifact: myHelpers.getConfig('POST', 'REQUEST', loadArtifactPath, false, {contentType: 'application/java-archive'}),
         loadJson: myHelpers.getConfig('PUT', 'REQUEST', loadArtifactJSON, false, {contentType: 'application/json'}),
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
+        getAllArtifacts:myHelpers.getConfig('GET', 'REQUEST', artifactsBasePath, true),
+
         fetchArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsPath, true),
         fetchExtensions: myHelpers.getConfig('GET', 'REQUEST', extensionsFetchPath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
@@ -55,7 +58,6 @@ angular.module(PKG.name + '.services')
         fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
-
         fetchArtifactProperties: myHelpers.getConfig('GET', 'REQUEST', artifactPropertiesPath),
 
         // The above three could be replaced by this one.
