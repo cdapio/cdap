@@ -22,6 +22,7 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -35,6 +36,7 @@ import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.BasicProgramContext;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
@@ -42,6 +44,7 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
@@ -61,6 +64,7 @@ import java.util.List;
  */
 public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramRunner.class);
+  private static final Gson GSON = new Gson();
   private final ProgramRunnerFactory programRunnerFactory;
   private final ServiceAnnouncer serviceAnnouncer;
   private final InetAddress hostname;
@@ -120,6 +124,12 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).setContext(new BasicProgramContext(programId.run(runId)));
     }
 
+    // A Workflow could have also gotten the workflow token from another Workflow
+    String workflowTokenString = options.getArguments().getOption(ProgramOptionConstants.WORKFLOW_TOKEN);
+    WorkflowToken workflowToken = workflowTokenString == null
+      ? null
+      : GSON.fromJson(workflowTokenString, BasicWorkflowToken.class);
+
     // List of all Closeable resources that needs to be cleanup
     final List<Closeable> closeables = new ArrayList<>();
     try {
@@ -128,7 +138,8 @@ public class WorkflowProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec, programRunnerFactory,
+      WorkflowDriver driver = new WorkflowDriver(program, options, hostname, workflowSpec,
+                                                 workflowToken, programRunnerFactory,
                                                  metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                  txClient, runtimeStore, cConf, pluginInstantiator,
                                                  secureStore, secureStoreManager, messagingService, programStateWriter);

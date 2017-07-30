@@ -17,6 +17,7 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
+import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
@@ -318,6 +319,56 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     testScheduleUpdate("disable");
     testScheduleUpdate("update");
     testScheduleUpdate("delete");
+  }
+
+  @Test
+  @Category(XSlowTests.class)
+  public void testProgramEvents() throws Exception {
+    // Deploy the app
+    deploy(AppWithMultipleSchedules.class);
+
+    CConfiguration cConf = CConfiguration.create();
+
+    // Override the topic so that sending notifications from the program state writer go directly to the scheduler
+    // instead of through the ProgramNotificationSubscriberService
+    // The notifications should not be persisted to the store
+    cConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC,
+              cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    TopicId programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
+
+    long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+    // These notifications should not trigger the program
+    programStateWriter.error(ANOTHER_WORKFLOW.run(RunIds.generate()), null);
+    programStateWriter.killed(SOME_WORKFLOW.run(RunIds.generate()));
+    waitUntilProcessed(programEventTopic, lastProcessed);
+    Assert.assertEquals(0, getRuns(TRIGGERED_WORKFLOW));
+
+    // Enable the schedule
+    scheduler.enableSchedule(APP_MULT_ID.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
+
+    // Send a program status notification with a workflow token
+    BasicWorkflowToken token = new BasicWorkflowToken(1);
+    token.setCurrentNode("NODE");
+    String dummyKey = "dummy.key";
+    String dummyValue = "dummy.value";
+    token.put(dummyKey, dummyValue);
+
+    ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
+    store.updateWorkflowToken(anotherWorkflowRun, token);
+    programStateWriter.completed(anotherWorkflowRun);
+    waitUntilProcessed(programEventTopic, lastProcessed);
+
+    // Wait for a completed run record
+    assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
+
+    ProgramRunId latestRun = getLatestRun(TRIGGERED_WORKFLOW);
+    WorkflowId scheduledWorkflow = TRIGGERED_WORKFLOW.getParent().workflow(TRIGGERED_WORKFLOW.getProgram());
+    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
+
+    // The triggered workflow should contain the workflow token sent from the notification of the triggering program
+    Assert.assertEquals(Value.of(dummyValue), runToken.get(dummyKey));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {

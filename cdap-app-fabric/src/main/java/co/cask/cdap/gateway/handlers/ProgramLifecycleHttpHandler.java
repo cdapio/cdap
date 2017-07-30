@@ -99,7 +99,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
@@ -638,28 +638,24 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       : new ApplicationId(triggerNamespaceId, triggerAppName, triggerAppVersion);
     final ProgramId triggerProgramId = appId.program(ProgramType.valueOfCategoryName(triggerProgramType),
                                                      triggerProgramName);
-    Collection<ProgramScheduleRecord> schedules = programScheduler.findSchedules(triggerProgramId.toString());
-    if (triggerProgramStatuses != null) {
-      final Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
-      try {
-        for (String status : triggerProgramStatuses.split(",")) {
-          queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
-        }
-      } catch (Exception e) {
-        throw new BadRequestException(String.format("Unable to parse program statuses '%s'. Must be comma separated " +
-                                                      "valid ProgramStatus names such as COMPLETED, FAILED, KILLED.",
-                                                    triggerProgramStatuses), e);
-      }
-      Iterator<ProgramScheduleRecord> iterator = schedules.iterator();
-      while (iterator.hasNext()) {
-        // Remove the schedule if none of its triggering program statuses is in the query program statuses set
-        Set<co.cask.cdap.api.ProgramStatus> triggerProgramStatusesSet =
-          ((ProgramStatusTrigger) iterator.next().getSchedule().getTrigger()).getProgramStatuses();
-        if (Sets.intersection(triggerProgramStatusesSet, queryProgramStatuses).isEmpty()) {
-          iterator.remove();
-        }
+
+    Collection<ProgramScheduleRecord> schedules = new HashSet<>();
+    Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
+    if (triggerProgramStatuses == null) {
+      queryProgramStatuses = ImmutableSet.of(co.cask.cdap.api.ProgramStatus.COMPLETED,
+                                             co.cask.cdap.api.ProgramStatus.FAILED,
+                                             co.cask.cdap.api.ProgramStatus.KILLED);
+    } else {
+      for (String status : triggerProgramStatuses.split(",")) {
+        queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
       }
     }
+
+    for (co.cask.cdap.api.ProgramStatus status : queryProgramStatuses) {
+      String triggerKey = Schedulers.triggerKeyForProgramStatus(triggerProgramId, status);
+      schedules.addAll(programScheduler.findSchedules(triggerKey));
+    }
+
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     if (asScheduleSpec) {
       List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -79,6 +80,10 @@ public class Schedulers {
 
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
+  }
+
+  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
+    return programId.toString() + "." + programStatus.toString().toLowerCase();
   }
 
   public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {
