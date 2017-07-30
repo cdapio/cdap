@@ -442,6 +442,26 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
   }
 
   /**
+   * Retrieve all schedule records for a given application.
+   *
+   * @param appId the application for which to list the schedule records.
+   * @return a list of schedule records for the application; never null
+   */
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) {
+    return listScheduleRecords(appId, null);
+  }
+
+  /**
+   * Retrieve all schedule records for a given program.
+   *
+   * @param programId the program for which to list the schedule records.
+   * @return a list of schedule records for the program; never null
+   */
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) {
+    return listScheduleRecords(programId.getParent(), programId);
+  }
+
+  /**
    * Find all schedules that have a trigger with a given trigger key.
    *
    * @param triggerKey the trigger key to look up
@@ -481,6 +501,10 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
 
   /*------------------- private helpers ---------------------*/
 
+  /**
+   * List schedules in a given application and if the programId is not null, only return the schedules
+   * which can launch the given program
+   */
   private List<ProgramSchedule> listSchedules(ApplicationId appId, @Nullable ProgramId programId) {
     List<ProgramSchedule> result = new ArrayList<>();
     byte[] prefix = keyPrefixForApplicationScan(appId);
@@ -492,6 +516,28 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
           ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
           if (programId == null || programId.equals(schedule.getProgramId())) {
             result.add(schedule);
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * List schedule records in a given application and if the programId is not null, only return the schedules
+   * which can launch the given program
+   */
+  private List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId, @Nullable ProgramId programId) {
+    List<ProgramScheduleRecord> result = new ArrayList<>();
+    byte[] prefix = keyPrefixForApplicationScan(appId);
+    try (Scanner scanner = store.scan(new Scan(prefix, Bytes.stopKeyForPrefix(prefix)))) {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        byte[] serialized = row.get(SCHEDULE_COLUMN_BYTES);
+        if (serialized != null) {
+          ProgramSchedule schedule = GSON.fromJson(Bytes.toString(serialized), ProgramSchedule.class);
+          if (programId == null || programId.equals(schedule.getProgramId())) {
+            result.add(new ProgramScheduleRecord(schedule, extractMetaFromRow(schedule.getScheduleId(), row)));
           }
         }
       }

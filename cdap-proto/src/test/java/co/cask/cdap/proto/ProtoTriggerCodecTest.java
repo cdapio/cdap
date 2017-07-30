@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
@@ -67,16 +68,16 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testObjectContainingTrigger() {
-    ScheduleDetail sched1 = new ScheduleDetail("sched1", "one partition schedule",
-                                                 new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
-                                                 ImmutableMap.of("prop3", "abc"),
-                                                 new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of(), null);
-    ScheduleDetail sched2 = new ScheduleDetail("schedone", "one time schedule",
+    ScheduleDetail sched1 = new ScheduleDetail("default", "app1", "1.0.0", "sched1", "one partition schedule",
+                                               new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
+                                               ImmutableMap.of("prop3", "abc"),
+                                               new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
+                                               ImmutableList.<Constraint>of(), null, "SUSPENDED");
+    ScheduleDetail sched2 = new ScheduleDetail("default", "app1", "1.0.0", "schedone", "one time schedule",
                                                  new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
                                                  ImmutableMap.of("prop", "all"),
                                                  new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of(), null);
+                                                 ImmutableList.<Constraint>of(), null, "SUSPENDED");
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(sched1), ScheduleDetail.class));
     Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(sched2), ScheduleDetail.class));
   }

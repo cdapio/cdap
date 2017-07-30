@@ -84,16 +84,16 @@ public class Schedulers {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
   }
 
-  public static Set<String> triggerKeysForProgramStatus(ProgramId programId, Set<ProgramStatus> programStatuses) {
+  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
+    return "programStatus:" + programId.toString() +  "." + programStatus.toString().toLowerCase();
+  }
+
+  public static Set<String> triggerKeysForProgramStatuses(ProgramId programId, Set<ProgramStatus> programStatuses) {
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
     for (ProgramStatus status : programStatuses) {
       triggerKeysBuilder.add(triggerKeyForProgramStatus(programId, status));
     }
     return triggerKeysBuilder.build();
-  }
-
-  public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
-    return programId.toString() +  "." + programStatus.toString().toLowerCase();
   }
 
   public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {
@@ -154,26 +154,13 @@ public class Schedulers {
   /**
    * Convert a list of program schedules into a list of schedule details.
    */
-  public static List<ScheduleDetail> toScheduleDetails(List<ProgramSchedule> schedules) {
-    return Lists.transform(schedules, new Function<ProgramSchedule, ScheduleDetail>() {
-      @Nullable
-      @Override
-      public ScheduleDetail apply(@Nullable ProgramSchedule input) {
-        return input == null ? null : input.toScheduleDetail();
-      }
-    });
-  }
-
-  /**
-   * Convert a list of program schedules into a list of schedule details.
-   */
   public static List<ScheduleDetail> toScheduleDetails(Collection<ProgramScheduleRecord> schedules) {
     List<ProgramScheduleRecord> scheduleList = new ArrayList<>(schedules);
     return Lists.transform(scheduleList, new Function<ProgramScheduleRecord, ScheduleDetail>() {
       @Nullable
       @Override
       public ScheduleDetail apply(@Nullable ProgramScheduleRecord input) {
-        return input == null ? null : input.getSchedule().toScheduleDetail();
+        return input == null ? null : input.toScheduleDetail();
       }
     });
   }

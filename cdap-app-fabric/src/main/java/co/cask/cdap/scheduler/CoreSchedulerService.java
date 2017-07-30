@@ -475,6 +475,26 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(final ApplicationId appId) throws NotFoundException {
+    return execute(new StoreTxRunnable<List<ProgramScheduleRecord>, RuntimeException>() {
+      @Override
+      public List<ProgramScheduleRecord> run(ProgramScheduleStoreDataset store) {
+        return store.listScheduleRecords(appId);
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(final ProgramId programId) throws NotFoundException {
+    return execute(new StoreTxRunnable<List<ProgramScheduleRecord>, RuntimeException>() {
+      @Override
+      public List<ProgramScheduleRecord> run(ProgramScheduleStoreDataset store) {
+        return store.listScheduleRecords(programId);
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
   public Collection<ProgramScheduleRecord> findSchedules(final String triggerKey) {
     checkStarted();
     return execute(new StoreTxRunnable<Collection<ProgramScheduleRecord>, RuntimeException>() {

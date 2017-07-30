@@ -48,6 +48,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
@@ -1035,6 +1036,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                              ProgramStatus.KILLED);
     Assert.assertEquals(3, triggeredSchedules1.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules1);
+
+    List<ScheduleDetail> filteredSchedules =
+      listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SCHEDULED,
+                                    ProgramStatus.COMPLETED, ProgramStatus.FAILED, ProgramStatus.KILLED);
+    // No schedule is enabled yet
+    Assert.assertEquals(0, filteredSchedules.size());
+    filteredSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SUSPENDED,
+                                                      ProgramStatus.COMPLETED,
+                                                      ProgramStatus.FAILED,
+                                                      ProgramStatus.KILLED);
+    // All schedules are suspended
+    Assert.assertEquals(3, filteredSchedules.size());
+
     // Schedules triggered by SOME_WORKFLOW's completed status
     List<ScheduleDetail> triggeredByCompletedSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
                                                                                        ProgramStatus.COMPLETED);
@@ -1317,32 +1331,37 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     TimeTrigger timeTrigger = new TimeTrigger(timeSchedule.getCronEntry());
     ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
-    ScheduleDetail timeDetail = new ScheduleDetail(scheduleName, specification.getSchedule().getDescription(),
+    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                                                   scheduleName, specification.getSchedule().getDescription(),
                                                    specification.getProgram(), specification.getProperties(),
                                                    timeTrigger, Collections.<Constraint>emptyList(),
-                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
-      new ScheduleDetail(partitionScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         partitionScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), partitionTrigger,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestPartitionDetail =
-      new ScheduleDetail(partitionScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         partitionScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), protoPartition,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail expectedOrDetail =
-      new ScheduleDetail(orScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         orScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(),
                          new OrTrigger(timeTrigger, partitionTrigger),
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestOrDetail =
-      new ScheduleDetail(orScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         orScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), protoOr,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", timeDetail);
@@ -1354,8 +1373,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // adding a schedule to invalid type of program type should fail
     ScheduleDetail invalidScheduleDetail = new ScheduleDetail(
+      TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
       scheduleName, "Something", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, AppWithSchedule.MAPREDUCE),
-      properties, protoTime, ImmutableList.<Constraint>of(), TimeUnit.MINUTES.toMillis(1));
+      properties, protoTime, ImmutableList.<Constraint>of(), TimeUnit.MINUTES.toMillis(1), null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, invalidScheduleDetail);
     Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), response.getStatusLine().getStatusCode());
 
@@ -1417,9 +1437,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
-    ScheduleDetail detail2 = new ScheduleDetail(null, "Something 2", programInfo, properties,
+    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
+                                                null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
-                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6));
+                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
@@ -1477,9 +1498,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleUpdateDetail invalidUpdateDetail = new ScheduleUpdateDetail("updatedDescription", null, null, "streamName",
                                                                         null, ImmutableMap.<String, String>of());
     ScheduleDetail validScheduleDetail = new ScheduleDetail(
+      TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
       AppWithSchedule.SCHEDULE, "updatedDescription", null, ImmutableMap.<String, String>of(),
       new ProtoTrigger.StreamSizeTrigger(new NamespaceId(TEST_NAMESPACE1).stream(AppWithSchedule.STREAM), 10),
-      ImmutableList.<Constraint>of(new ConcurrencyConstraint(5)), null);
+      ImmutableList.<Constraint>of(new ConcurrencyConstraint(5)), null, null);
 
     // trying to update schedule for a non-existing app should fail
     HttpResponse response = updateSchedule(TEST_NAMESPACE1, "nonExistingApp", null, AppWithSchedule.SCHEDULE,
@@ -1525,8 +1547,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("0/15 * * * * ?", ((TimeTrigger) schedule.getTrigger()).getCronExpression());
 
     // try to update the schedule again but this time with property as null. It should retain the old properties
-    ScheduleDetail scheduleDetail = new ScheduleDetail(AppWithSchedule.SCHEDULE, "updatedDescription", null, null,
-                                                       new ProtoTrigger.TimeTrigger("0 4 * * *"), null, null);
+    ScheduleDetail scheduleDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME,
+                                                       ApplicationId.DEFAULT_VERSION, AppWithSchedule.SCHEDULE,
+                                                       "updatedDescription", null, null,
+                                                       new ProtoTrigger.TimeTrigger("0 4 * * *"), null, null, null);
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE, scheduleDetail);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     schedule = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE);
