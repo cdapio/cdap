@@ -74,6 +74,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>co.cask.wrangler</groupId>
+      <artifactId>wrangler-api</artifactId>
+      <version>${wrangler.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_2.11</artifactId>
       <scope>provided</scope>
@@ -135,7 +140,7 @@
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*</_exportcontents>
+              <_exportcontents>co.cask.cdap.etl.api.*;org.apache.avro.*;co.cask.wrangler.api.*</_exportcontents>
             </instructions>
           </configuration>
           <executions>
