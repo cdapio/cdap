@@ -23,6 +23,7 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -59,7 +60,6 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
@@ -658,12 +658,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
     }
-
-    for (co.cask.cdap.api.ProgramStatus status : queryProgramStatuses) {
-      String triggerKey = Schedulers.triggerKeyForProgramStatus(triggerProgramId, status);
+    for (String triggerKey : Schedulers.triggerKeysForProgramStatus(triggerProgramId, queryProgramStatuses)) {
       schedules.addAll(programScheduler.findSchedules(triggerKey));
     }
-
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     if (asScheduleSpec) {
       List<ScheduleSpecification> specs = ScheduleDetail.toScheduleSpecs(details);
@@ -962,14 +959,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
     }
     List<Constraint> runConstraints = toConstraints(scheduleSpec.getSchedule().getRunConstraints());
-    return new ScheduleDetail(scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
-                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints, null);
+    return new ScheduleDetail(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
+                              scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
+                              scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints,
+                              null, null);
   }
 
   private ScheduleDetail toScheduleDetail(ScheduleUpdateDetail updateDetail, ProgramSchedule existing) {
     ScheduleUpdateDetail.Schedule scheduleUpdate = updateDetail.getSchedule();
     if (scheduleUpdate == null) {
-      return new ScheduleDetail(null, null, null, updateDetail.getProperties(), null, null, null);
+      return new ScheduleDetail(null, null, null, null, null, null, updateDetail.getProperties(), null, null, null, null);
     }
     Trigger trigger = null;
     if (scheduleUpdate.getCronExpression() != null
@@ -979,7 +978,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                         " stream name and data trigger configuration in the same schedule update details %s. " +
                         "Schedule update detail must contain only one trigger.", updateDetail));
     }
-    NamespaceId namespaceId = existing.getProgramId().getNamespaceId();
+    ProgramId programId = existing.getProgramId();
+    NamespaceId namespaceId = programId.getNamespaceId();
     if (scheduleUpdate.getCronExpression() != null) {
       trigger = new TimeTrigger(updateDetail.getSchedule().getCronExpression());
     } else if (existing.getTrigger() instanceof StreamSizeTrigger) {
@@ -1001,8 +1001,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                       updateDetail, existing.getTrigger().getClass()));
     }
     List<Constraint> constraints = toConstraints(scheduleUpdate.getRunConstraints());
-    return new ScheduleDetail(null, scheduleUpdate.getDescription(), null,
-                              updateDetail.getProperties(), trigger, constraints, null);
+    return new ScheduleDetail(namespaceId.getNamespace(), programId.getApplication(), programId.getVersion(),
+                              null, scheduleUpdate.getDescription(), null,
+                              updateDetail.getProperties(), trigger, constraints, null, null);
   }
 
   private List<Constraint> toConstraints(RunConstraints runConstraints) {

@@ -17,10 +17,11 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
@@ -39,15 +40,21 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testTriggerCodec() {
-    testTriggerCodec(new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4));
+    ProtoTrigger.PartitionTrigger partitionTrigger =
+      new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4);
+    testTriggerCodec(partitionTrigger);
 
-    testTriggerCodec(new ProtoTrigger.TimeTrigger("* * * * *"));
+    ProtoTrigger.TimeTrigger timeTrigger = new ProtoTrigger.TimeTrigger("* * * * *");
+    testTriggerCodec(timeTrigger);
 
     testTriggerCodec(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 17));
 
-    testTriggerCodec(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                    ProgramType.FLOW, "myprog"),
-                                                    ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED)));
+    ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
+      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+                                            ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED));
+    testTriggerCodec(ProtoTrigger.or(ProtoTrigger.and(partitionTrigger,
+                                                      programStatusTrigger.or(timeTrigger, programStatusTrigger)),
+                                     timeTrigger, programStatusTrigger));
   }
 
   private void testTriggerCodec(ProtoTrigger trigger) {
@@ -61,16 +68,16 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testObjectContainingTrigger() {
-    ScheduleDetail sched1 = new ScheduleDetail("sched1", "one partition schedule",
-                                                 new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
-                                                 ImmutableMap.of("prop3", "abc"),
-                                                 new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of(), null);
-    ScheduleDetail sched2 = new ScheduleDetail("schedone", "one time schedule",
+    ScheduleDetail sched1 = new ScheduleDetail("default", "app1", "1.0.0", "sched1", "one partition schedule",
+                                               new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
+                                               ImmutableMap.of("prop3", "abc"),
+                                               new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
+                                               ImmutableList.<Constraint>of(), null, "DISABLED");
+    ScheduleDetail sched2 = new ScheduleDetail("default", "app1", "1.0.0", "schedone", "one time schedule",
                                                  new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
                                                  ImmutableMap.of("prop", "all"),
                                                  new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of(), null);
+                                                 ImmutableList.<Constraint>of(), null, "DISABLED");
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(sched1), ScheduleDetail.class));
     Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(sched2), ScheduleDetail.class));
   }

@@ -14,20 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.trigger;
+package co.cask.cdap.api.schedule;
 
 /**
- * A builder to create a Trigger object.
+ * A condition must be satisfied in order to trigger a schedule.
  */
-public interface TriggerBuilder {
-
-  /**
-   * Builds a Trigger given the deployed namespace, application, and application version.
-   *
-   * @param namespace the namespace
-   * @param applicationName the deployed application name
-   * @param applicationVersion the deployed application version
-   * @return a Trigger
-   */
-  Trigger build(String namespace, String applicationName, String applicationVersion);
+public interface Trigger {
 }

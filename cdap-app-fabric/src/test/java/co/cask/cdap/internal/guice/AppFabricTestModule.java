@@ -164,22 +164,6 @@ public final class AppFabricTestModule extends AbstractModule {
       }
 
       @Override
-      public void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void deleteSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName) {
-      }
-
-      @Override
-      public void deleteSchedules(ProgramId programId, SchedulableProgramType programType) {
-      }
-
-      @Override
       public ProgramScheduleStatus scheduleState(ProgramId program, SchedulableProgramType programType,
                                                  String scheduleName) throws ScheduleNotFoundException {
         throw new ScheduleNotFoundException(program.getParent().schedule(scheduleName));

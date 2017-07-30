@@ -17,9 +17,9 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.ProtoTriggerCodec;
@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class TriggerCodecTest {
@@ -84,18 +85,36 @@ public class TriggerCodecTest {
 
   @Test
   public void testTriggerCodec() {
-    testSerDeserYieldsTrigger(new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4),
-                              new PartitionTrigger(new DatasetId("test", "myds"), 4));
-    testSerDeserYieldsTrigger(new ProtoTrigger.TimeTrigger("* * * * *"),
-                              new TimeTrigger("* * * * *"));
+    ProtoTrigger.PartitionTrigger protoPartition = new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4);
+    PartitionTrigger partitionTrigger = new PartitionTrigger(new DatasetId("test", "myds"), 4);
+    testSerDeserYieldsTrigger(protoPartition, partitionTrigger);
+
+    ProtoTrigger.TimeTrigger protoTime = new ProtoTrigger.TimeTrigger("* * * * *");
+    TimeTrigger timeTrigger = new TimeTrigger("* * * * *");
+    testSerDeserYieldsTrigger(protoTime, timeTrigger);
+
     testSerDeserYieldsTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("test", "str"), 1000),
                               new StreamSizeTrigger(new StreamId("test", "str"), 1000));
-    testSerDeserYieldsTrigger(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                                                  ProgramType.FLOW, "myprog"),
-                                                                    ImmutableSet.of(ProgramStatus.COMPLETED)),
-                              new ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                                     ProgramType.FLOW, "myprog"),
-                                                       ImmutableSet.of(ProgramStatus.COMPLETED)));
+
+    ProtoTrigger.ProgramStatusTrigger protoProgramStatus =
+      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+                                            ImmutableSet.of(ProgramStatus.COMPLETED));
+    ProgramStatusTrigger programStatusTrigger =
+      new ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+                             ImmutableSet.of(ProgramStatus.COMPLETED));
+    testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
+
+    ProtoTrigger.OrTrigger protoOr =
+      new ProtoTrigger.OrTrigger(protoPartition, new ProtoTrigger.AndTrigger(protoTime, protoProgramStatus));
+    OrTrigger orTrigger =
+      new OrTrigger(partitionTrigger, new AndTrigger(timeTrigger, programStatusTrigger));
+    testSerDeserYieldsTrigger(protoOr, orTrigger);
+
+    ProtoTrigger.AndTrigger protoAnd =
+      new ProtoTrigger.AndTrigger(protoOr, protoTime, new ProtoTrigger.OrTrigger(protoPartition, protoProgramStatus));
+    AndTrigger andTrigger =
+      new AndTrigger(orTrigger, timeTrigger, new OrTrigger(partitionTrigger, programStatusTrigger));
+    testSerDeserYieldsTrigger(protoAnd, andTrigger);
   }
 
   private void testSerDeserYieldsTrigger(ProtoTrigger proto, Trigger trigger) {

@@ -23,7 +23,7 @@ import co.cask.cdap.internal.schedule.TimeSchedule;
 /**
  * Schedule Type.
  *
- * @deprecated as of 4.2.0. Use {@link co.cask.cdap.internal.schedule.trigger.Trigger} instead.
+ * @deprecated as of 4.2.0. Use {@link co.cask.cdap.api.schedule.Trigger} instead.
  */
 @Deprecated
 public enum ScheduleType {

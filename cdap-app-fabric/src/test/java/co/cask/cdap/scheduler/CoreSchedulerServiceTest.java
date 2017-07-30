@@ -18,9 +18,11 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleSchedules;
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -60,11 +62,13 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -117,7 +121,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final ScheduleId TSCHED11_ID = APP1_ID.schedule("tsched11");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
-  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows", VERSION1);
   private static final ApplicationId APP_MULT_ID = NamespaceId.DEFAULT.app(AppWithMultipleSchedules.NAME);
   private static final ProgramId WORKFLOW_1 = APP_ID.program(ProgramType.WORKFLOW,
                                                              AppWithFrequentScheduledWorkflows.SOME_WORKFLOW);
@@ -275,7 +279,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
 
-    deploy(AppWithFrequentScheduledWorkflows.class);
+    // Deploy the app with version
+    Id.Artifact appArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithschedules", VERSION1);
+    addAppArtifact(appArtifactId, AppWithFrequentScheduledWorkflows.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(appArtifactId.getName(), appArtifactId.getVersion().getVersion()));
+    deploy(APP_ID, appRequest);
 
     // Resume the schedule because schedules are initialized as paused
     enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);
@@ -287,16 +296,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       testNewPartition(i + 1);
     }
 
+    // Enable COMPOSITE_SCHEDULE after previous new data partitions notifications are published
+    enableSchedule(AppWithFrequentScheduledWorkflows.COMPOSITE_SCHEDULE);
+
     // disable the two partition schedules, send them notifications (but they should not trigger)
     int runs1 = getRuns(WORKFLOW_1);
     int runs2 = getRuns(WORKFLOW_2);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
 
-    publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
     long minPublishTime = System.currentTimeMillis();
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     // This would make sure the subscriber has processed the data event
     waitUntilProcessed(dataEventTopic, minPublishTime);
 
@@ -316,6 +327,20 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
         return job.getSchedule().getTrigger() instanceof ProtoTrigger.PartitionTrigger;
       }
     }));
+
+    ProgramId compositeWorkflow = APP_ID.workflow(AppWithFrequentScheduledWorkflows.COMPOSITE_WORKFLOW);
+    // Workflow scheduled with the composite trigger has never been started
+    Assert.assertEquals(0, getRuns(compositeWorkflow));
+
+    // Publish two more new partition notifications to satisfy the partition trigger in the composite trigger,
+    // and thus the whole composite trigger will be satisfied
+    minPublishTime = System.currentTimeMillis();
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    // This would make sure the subscriber has processed the data event
+    waitUntilProcessed(dataEventTopic, minPublishTime);
+    // Wait for 1 run to complete for compositeWorkflow
+    waitForCompleteRuns(1, compositeWorkflow);
 
     for (RunRecordMeta runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
@@ -402,7 +427,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // send one notification to it
     long minPublishTime = System.currentTimeMillis();
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitUntilProcessed(dataEventTopic, minPublishTime);
 
     // A pending job will be created, but it won't run
@@ -443,7 +468,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
     // single notification should not trigger workflow 2 yet (if it does, then the job was not removed)
     minPublishTime = System.currentTimeMillis();
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitUntilProcessed(dataEventTopic, minPublishTime);
 
     // Again, a pending job will be created, but it won't run since updating the schedule would remove pending trigger
@@ -460,7 +485,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     Assert.assertEquals(runs, getRuns(WORKFLOW_2));
     // publish one more notification, this should kick off the workflow
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitForCompleteRuns(runs + 1, WORKFLOW_2);
   }
 
@@ -477,9 +502,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   private void testNewPartition(int expectedNumRuns) throws Exception {
-    publishNotification(dataEventTopic, WORKFLOW_1, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
-    publishNotification(dataEventTopic, WORKFLOW_2, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME1);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
     try {
       waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
@@ -511,8 +536,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
   }
 
-  private void publishNotification(TopicId topicId, ProgramId programId, String dataset) throws Exception {
-    DatasetId datasetId = programId.getNamespaceId().dataset(dataset);
+  private void publishNotification(TopicId topicId, NamespaceId namespaceId, String dataset) throws Exception {
+    DatasetId datasetId = namespaceId.dataset(dataset);
     PartitionKey partitionKey = PartitionKey.builder().addIntField("part1", 1).build();
     Notification notification = Notification.forPartitions(datasetId, ImmutableList.of(partitionKey));
     messagingService.publish(StoreRequestBuilder.of(topicId).addPayloads(GSON.toJson(notification)).build());

@@ -19,11 +19,11 @@ package co.cask.cdap.proto;
 import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +40,9 @@ import javax.annotation.Nullable;
  */
 public class ScheduleDetail {
 
+  private final String namespace;
+  private final String application;
+  private final String applicationVersion;
   private final String name;
   private final String description;
   private final ScheduleProgramInfo program;
@@ -47,14 +50,22 @@ public class ScheduleDetail {
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
   private final Long timeoutMillis;
+  private final String scheduleStatus;
 
-  public ScheduleDetail(@Nullable String name,
+  public ScheduleDetail(@Nullable String namespace,
+                        @Nullable String application,
+                        @Nullable String applicationVersion,
+                        @Nullable String name,
                         @Nullable String description,
                         @Nullable ScheduleProgramInfo program,
                         @Nullable Map<String, String> properties,
                         @Nullable Trigger trigger,
                         @Nullable List<? extends Constraint> constraints,
-                        @Nullable Long timeoutMillis) {
+                        @Nullable Long timeoutMillis,
+                        @Nullable String scheduleStatus) {
+    this.namespace = namespace;
+    this.application = application;
+    this.applicationVersion = applicationVersion;
     this.name = name;
     this.description = description;
     this.program = program;
@@ -62,6 +73,22 @@ public class ScheduleDetail {
     this.trigger = trigger;
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
+    this.scheduleStatus = scheduleStatus;
+  }
+
+  @Nullable
+  public String getNamespace() {
+    return namespace;
+  }
+
+  @Nullable
+  public String getApplication() {
+    return application;
+  }
+
+  @Nullable
+  public String getApplicationVersion() {
+    return applicationVersion;
   }
 
   @Nullable
@@ -97,6 +124,11 @@ public class ScheduleDetail {
   @Nullable
   public Long getTimeoutMillis() {
     return timeoutMillis;
+  }
+
+  @Nullable
+  public String getScheduleStatus() {
+    return scheduleStatus;
   }
 
   @Override

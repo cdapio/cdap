@@ -17,6 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
@@ -161,8 +162,26 @@ public interface ScheduleBuilder {
                                               ProgramStatus... programStatuses);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace and application
-   * transitions to any one of the given program statuses.
+   * Create a schedule which is triggered when the given program in the given namespace, application, and
+   * application version transitions to any one of the given program statuses.
+   *
+   * @param programNamespace the namespace where this program is defined
+   * @param application the name of the application where this program is defined
+   * @param appVersion the version of the application
+   * @param programType the type of the program, as supported by the system
+   * @param program the name of the program
+   * @param runtimeArgs
+   * @param programStatuses the set of statuses to trigger the schedule. The schedule will be triggered if the status of
+   *                        the specific program transitioned to one of these statuses.
+   * @return a {@link ScheduleCreationSpec}
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application, String appVersion,
+                                              ProgramType programType, String program, Map<String, String> runtimeArgs,
+                                              ProgramStatus... programStatuses);
+
+  /**
+   * Create a schedule which is triggered when the given program in the given namespace
+   * and application with default version transitions to any one of the given program statuses.
    *
    * @see #triggerOnProgramStatus(String, String, String, ProgramType, String, ProgramStatus...)
    */
@@ -170,7 +189,7 @@ public interface ScheduleBuilder {
                                               String program, ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule which is triggered when the given program given application in the same namespace
+   * Creates a schedule which is triggered when the given program in the given application in the same namespace
    * transitions to any one of the given program statuses.
    *
    * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
@@ -186,4 +205,14 @@ public interface ScheduleBuilder {
    */
   ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                               ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule which is triggered when the given {@link Trigger} is satisfied
+   *
+   * @param trigger the {@link Trigger} to be satisfied to trigger the schedule. {@link Trigger} can be created
+   *                by calling methods from {@link TriggerFactory} obatined from
+   *                {@link AbstractApplication#getTriggerFactory()}
+   * @return a {@link ScheduleCreationSpec}
+   */
+  ScheduleCreationSpec triggerOn(Trigger trigger);
 }
