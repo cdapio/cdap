@@ -23,7 +23,19 @@
   </div>
 </div>
 
-<div class="modal-body">
+<div
+  class="modal-body"
+  ng-if="PipelineUpgradeController.loading"
+>
+  <h3 class="text-xs-center">
+    <span class="fa fa-spin fa-spinner">
+  </h3>
+</div>
+
+<div
+  class="modal-body"
+  ng-if="!PipelineUpgradeController.loading"
+>
   <h4>
     Your pipeline cannot be imported because of the following issues:
   </h4>
@@ -113,7 +125,10 @@
 
 </div>
 
-<div class="modal-footer">
+<div
+  class="modal-footer"
+  ng-if="!PipelineUpgradeController.loading"
+>
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"

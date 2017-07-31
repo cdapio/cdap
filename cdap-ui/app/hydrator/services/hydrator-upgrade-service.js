@@ -151,7 +151,10 @@ class HydratorUpgradeService {
         let allStages = [];
         this.fixAllDisabled = true;
 
+        this.loading = true;
+
         const checkStages = () => {
+          this.loading = true;
           HydratorUpgradeService.getNonExistingStages(rPipelineConfig)
             .then((res) => {
               allStages = res.map((stage) => {
@@ -172,6 +175,13 @@ class HydratorUpgradeService {
               });
 
               this.fixAllDisabled = this.missingArtifactStages.length > 0;
+
+              if (this.problematicStages.length === 0 && this.missingArtifactStages.length === 0 && this.pipelineArtifact) {
+                HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
+                $state.go('hydrator.create', { data: rPipelineConfig });
+              } else {
+                this.loading = false;
+              }
             });
 
           eventEmitter.off(globalEvents.MARKETCLOSING, checkStages);
@@ -198,6 +208,12 @@ class HydratorUpgradeService {
           });
 
           newConfig.config.stages = stages;
+
+          if (newConfig.__ui__) {
+            delete newConfig.__ui__;
+          }
+
+          console.log('newConfig', newConfig);
 
           HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
           $state.go('hydrator.create', { data: newConfig });
