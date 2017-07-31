@@ -134,6 +134,7 @@ export default class CreateRule extends Component {
                   <DSVEditor
                     values={this.state.then}
                     onChange={this.onRulesChange}
+                    placeholder="Action"
                   />
                 </Col>
               </FormGroup>

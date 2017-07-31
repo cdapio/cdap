@@ -37,8 +37,7 @@ function collect(connect, monitor) {
     connectDropTarget: connect.dropTarget(),
     // You can ask the monitor about the current drag state:
     isOver: monitor.isOver(),
-    canDrop: monitor.canDrop(),
-    itemType: monitor.getItemType()
+    canDrop: monitor.canDrop()
   };
 }
 class RuleBookDetails extends Component {

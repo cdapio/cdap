@@ -217,9 +217,7 @@ class Rule extends Component {
   }
 
   renderRow = () => {
-    const { isDragging, connectDragSource } = this.props;
-
-    console.log(isDragging);
+    const { connectDragSource } = this.props;
     return (
       connectDragSource(
         <div onClick={this.viewDetails}>
