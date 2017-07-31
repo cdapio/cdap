@@ -64,7 +64,7 @@ export default class DataPrepDown extends Component {
     });
   }
 
-  isRulesEnginedActive = (match, location) => {
+  isRulesEnginedActive = (match, location = window.location) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let rulesenginepath = `/ns/${namespace}/ruleengine`;
     if (match && match.isExact) {
@@ -73,7 +73,7 @@ export default class DataPrepDown extends Component {
     return location.pathname.startsWith(rulesenginepath);
   };
 
-  isDataPrepActive = (match, location) => {
+  isDataPrepActive = (match, location = window.location) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let dataprepBasePath = `/ns/${namespace}/dataprep`;
     let connectionsBasePath = `/ns/${namespace}/connections`;
@@ -127,7 +127,7 @@ export default class DataPrepDown extends Component {
               url={rulesengineurl}
               isActive={this.isRulesEnginedActive}
             >
-              Rules Engine
+              Rules Management
             </NavLinkWrapper>
           </DropdownItem>
         </CustomDropdownMenu>
