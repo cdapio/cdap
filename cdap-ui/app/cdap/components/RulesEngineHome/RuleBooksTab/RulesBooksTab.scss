@@ -48,4 +48,13 @@
       }
     }
   }
+
+  @media (max-width: 1000px) {
+    .rule-books-container {
+      .rule-book {
+        width: calc(100% - 20px);
+      }
+    }
+  }
+
 }

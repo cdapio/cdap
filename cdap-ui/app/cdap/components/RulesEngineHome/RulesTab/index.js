@@ -20,14 +20,15 @@ import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import Rule from 'components/RulesEngineHome/Rule';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
-
+import CreateRule from 'components/RulesEngineHome/CreateRule';
 
 require('./RulesTab.scss');
 
 export default class RulesTab extends Component {
   state = {
     rules: RulesEngineStore.getState().rules.list,
-    searchStr: ''
+    searchStr: '',
+    createRule: false
   };
 
   updateSearchStr = (e) => {
@@ -37,7 +38,15 @@ export default class RulesTab extends Component {
   };
 
   addRule =() => {
-    console.log('TODO: Create a new rule');
+    this.setState({
+      createRule: true
+    });
+  };
+
+  resetCreateRule = () => {
+    this.setState({
+      createRule: false
+    });
   };
 
   componentDidMount() {
@@ -89,6 +98,12 @@ export default class RulesTab extends Component {
             Last Updated
           </Col>
         </Row>
+        {
+          this.state.createRule ?
+            <CreateRule onClose={this.resetCreateRule}/>
+          :
+            null
+        }
         {
           rules.map(rule => {
             return (

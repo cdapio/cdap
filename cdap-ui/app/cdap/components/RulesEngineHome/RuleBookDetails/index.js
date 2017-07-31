@@ -14,7 +14,7 @@
  * the License.
 */
 
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
 import RulesEngineStore, {RULESENGINEACTIONS}  from 'components/RulesEngineHome/RulesEngineStore';
 import {Input, Button} from 'reactstrap';
 import isNil from 'lodash/isNil';
@@ -24,12 +24,32 @@ import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
+import { DropTarget } from 'react-dnd';
+import {DragTypes} from 'components/RulesEngineHome/Rule';
+import classnames from 'classnames';
 
 require('./RuleBookDetails.scss');
 
-export default class RuleBookDetails extends Component {
+function collect(connect, monitor) {
+  return {
+    // Call this function inside render()
+    // to let React DnD handle the drag events:
+    connectDropTarget: connect.dropTarget(),
+    // You can ask the monitor about the current drag state:
+    isOver: monitor.isOver(),
+    canDrop: monitor.canDrop()
+  };
+}
+class RuleBookDetails extends Component {
+  static propTypes = {
+    isOver: PropTypes.bool.isRequired,
+    canDrop: PropTypes.bool.isRequired,
+    connectDropTarget: PropTypes.func.isRequired
+  };
+
   state = {
     activeRuleBook: null,
+    ruleHover: false,
     create: {
       name: '',
       description: '',
@@ -51,6 +71,11 @@ export default class RuleBookDetails extends Component {
     });
   }
 
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      ruleHover: nextProps.isOver
+    });
+  }
   removeRule = (ruleid) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     MyRulesEngine
@@ -77,27 +102,6 @@ export default class RuleBookDetails extends Component {
       );
   }
 
-  renderRules(rules) {
-    if (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) {
-      return null;
-    }
-    return (
-      rules.map((rule, i) => {
-        return (
-          <tr>
-            <td>{i+1} </td>
-            <td>{rule.id}</td>
-            <td>{rule.description}</td>
-            <td>
-              <a onClick={this.removeRule.bind(this, rule.id)}>
-                Remove
-              </a>
-            </td>
-          </tr>
-        );
-      })
-    );
-  }
   onNameChangeHandler = (e) => {
     this.setState({
       create: Object.assign({}, this.state.create, {
@@ -163,6 +167,28 @@ export default class RuleBookDetails extends Component {
     );
   };
 
+  renderRules(rules) {
+    if (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) {
+      return null;
+    }
+    return (
+      rules.map((rule, i) => {
+        return (
+          <tr>
+            <td>{i+1} </td>
+            <td>{rule.id}</td>
+            <td>{rule.description}</td>
+            <td>
+              <a onClick={this.removeRule.bind(this, rule.id)}>
+                Remove
+              </a>
+            </td>
+          </tr>
+        );
+      })
+    );
+  }
+
   render() {
     if (this.state.createMode) {
       return this.renderCreateRulebook();
@@ -173,6 +199,8 @@ export default class RuleBookDetails extends Component {
     let {rulebookDetails} = this.state;
     let {rulebooks} = RulesEngineStore.getState();
     let rules = rulebooks.activeRulebookRules;
+    const {connectDropTarget, isOver} = this.props;
+    console.log('props', isOver);
     return (
       <div className="rule-book-details">
         <h3>{rulebookDetails.id}</h3>
@@ -190,15 +218,24 @@ export default class RuleBookDetails extends Component {
           {rulebookDetails.description}
         </p>
 
-        <div className="rules-container">
-          <div className="title"> Rules ({rules.length}) </div>
-          <table className="table">
-            <tbody>
-              {this.renderRules(rules)}
-            </tbody>
-          </table>
-        </div>
+        {
+          connectDropTarget(
+            <div className={classnames("rules-container", {
+              'drag-hover': this.state.ruleHover
+            })}>
+              <div className="title"> Rules ({rules.length}) </div>
+              <table className="table">
+                <tbody>
+                  {this.renderRules(rules)}
+                </tbody>
+              </table>
+            </div>
+          )
+        }
       </div>
     );
   }
 }
+
+
+export default DropTarget(DragTypes.RULE, {}, collect)(RuleBookDetails);

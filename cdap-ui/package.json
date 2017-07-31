@@ -124,6 +124,8 @@
     "react-addons-update": "15.3.1",
     "react-cookie": "0.4.8",
     "react-datetime": "2.8.6",
+    "react-dnd": "^2.4.0",
+    "react-dnd-html5-backend": "^2.4.1",
     "react-dom": "15.3.1",
     "react-dropzone": "3.6.0",
     "react-file-download": "0.3.2",

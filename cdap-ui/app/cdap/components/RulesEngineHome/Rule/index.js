@@ -28,9 +28,44 @@ import shortid from 'shortid';
 import {preventPropagation} from 'services/helpers';
 import RulebooksPopover from 'components/RulesEngineHome/Rule/RulebooksPopover';
 import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import { DragSource } from 'react-dnd';
 
 require('./Rule.scss');
 
+const DragTypes = {
+  RULE: 'RULE'
+};
+
+export {DragTypes};
+
+const ruleSource = {
+  beginDrag(props) {
+    // Return the data describing the dragged item
+    const rule = { id: props.rule };
+    return rule;
+  },
+
+  endDrag(props, monitor) {
+    if (!monitor.didDrop()) {
+      return;
+    }
+
+    // When dropped on a compatible target, do something
+    const item = monitor.getItem();
+    const dropResult = monitor.getDropResult();
+    console.log(item, dropResult);
+  }
+};
+
+function collect(connect, monitor) {
+  return {
+    // Call this function inside render()
+    // to let React DnD handle the drag events:
+    connectDragSource: connect.dragSource(),
+    // You can ask the monitor about the current drag state:
+    isDragging: monitor.isDragging()
+  };
+}
 class Rule extends Component {
   static propTypes = {
     rule: PropTypes.object,
@@ -61,6 +96,12 @@ class Rule extends Component {
   }
 
   viewDetails = () => {
+    if (this.state.viewDetails) {
+      RulesEngineStore.dispatch({
+        type: RULESENGINEACTIONS.RESETACTIVERULE
+      });
+      return;
+    }
     RulesEngineStore.dispatch({
       type: RULESENGINEACTIONS.SETACTIVERULE,
       payload: {
@@ -176,25 +217,29 @@ class Rule extends Component {
   }
 
   renderRow = () => {
+    const { connectDragSource } = this.props;
     return (
-      <div onClick={this.viewDetails}>
-        <Col xs="7">
-          <div className="svg-arrow-wrapper">
-            {
-              !this.state.viewDetails ?
-                <IconSVG name="icon-caret-right" />
-              :
-                <IconSVG name="icon-caret-down" />
-            }
-          </div>
-          {this.props.rule.id}
-        </Col>
-        <Col xs="5">
-          {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
-        </Col>
-      </div>
+      connectDragSource(
+        <div onClick={this.viewDetails}>
+          <Col xs="7">
+            <div className="svg-arrow-wrapper">
+              {
+                !this.state.viewDetails ?
+                  <IconSVG name="icon-caret-right" />
+                :
+                  <IconSVG name="icon-caret-down" />
+              }
+            </div>
+            {this.props.rule.id}
+          </Col>
+          <Col xs="5">
+            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
+          </Col>
+        </div>
+      )
     );
   }
+
   render() {
     return (
         <div
@@ -214,4 +259,4 @@ class Rule extends Component {
   }
 }
 
-export default Rule;
+export default DragSource(DragTypes.RULE, ruleSource, collect)(Rule);

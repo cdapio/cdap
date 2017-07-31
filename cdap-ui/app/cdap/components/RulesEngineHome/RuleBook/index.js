@@ -41,16 +41,15 @@ export default function RuleBook({bookDetails}) {
         {id}
         <small className="version-label">Version: {version}</small>
       </strong>
-      <div>
-        <span> Owner: </span>
+      <div className="rule-book-owner">
+        <strong> Owner: </strong>
         <span> {owner} </span>
       </div>
-      <div>
-        <div>Last Updated on: </div>
+      <div className="rule-book-updated-date">
         <div>{moment(updated * 1000).format('MM-DD-YYYY HH:mm')}</div>
       </div>
-      <div>
-        {numOfRules} Rules
+      <div className="rule-book-num-of-rules">
+        <strong>{numOfRules} Rules</strong>
       </div>
       <p>
         {description}

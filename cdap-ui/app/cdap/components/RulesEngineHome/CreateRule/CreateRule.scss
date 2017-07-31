@@ -16,43 +16,35 @@
 
 @import '../../../styles/variables.scss';
 
-.rule-book {
-  margin: 10px;
-  border: 1px solid #cccccc;
+.create-rule-container {
   padding: 10px;
-  min-height: 200px;
-  cursor: pointer;
+  border: 2px solid $brand-primary;
+  margin-left: -10px;
+  margin-right: -10px;
 
-  > div {
-    line-height: 1;
+  .when-then-clause-container {
+    padding-top: 10px;
+  }
+  hr {
+    margin-left: -10px;
+    margin-right: -10px;
+    background: lightgray;
+  }
+  .btn-container {
+    display: flex;
+    justify-content: space-between;
 
-    strong {
-      margin-bottom: 0;
-      font-size: 12px;
+    .btn-secondary,
+    .btn-secondary:hover,
+    .btn-secondary:active {
+      border: 0;
+      box-shadow: none;
+      outline: none;
+      background: transparent;
+      color: $brand-primary;
     }
   }
-  .rule-book-owner {
-    margin-bottom: 5px;
-  }
-  .rule-book-updated-date {
-    margin-bottom: 9px;
-  }
-  .rule-book-num-of-rules {
-    margin-bottom: 14px;
-  }
-
-  &.active {
-    border: 4px solid $brand-primary;
-  }
-
-  strong {
-    font-size: 14px;
-    margin-bottom: 10px;
-    display: inline-block;
-
-    .version-label {
-      color: gray;
-      display: block;
-    }
+  .dsv-editor-container .dsv-row-container input.form-control {
+    border: 1px solid rgba(0, 0, 0, 0.15);
   }
 }
