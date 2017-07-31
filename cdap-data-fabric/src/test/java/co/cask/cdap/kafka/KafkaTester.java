@@ -35,8 +35,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import kafka.admin.AdminUtils;
+import kafka.admin.RackAwareMode;
 import kafka.utils.ZKStringSerializer$;
+import kafka.utils.ZkUtils;
 import org.I0Itec.zkclient.ZkClient;
+import org.I0Itec.zkclient.ZkConnection;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.utils.Networks;
@@ -388,7 +391,9 @@ public class KafkaTester extends ExternalResource {
    * Creates a topic with the given number of partitions.
    */
   public void createTopic(String topic, int partitions) {
-    AdminUtils.createTopic(new ZkClient(zkServer.getConnectionStr(), 20000, 2000, ZKStringSerializer$.MODULE$),
-                           topic, partitions, 1, new Properties());
+    int sessionTimeout = 20000;
+    ZkClient zkClient = new ZkClient(zkServer.getConnectionStr(), sessionTimeout, 2000, ZKStringSerializer$.MODULE$);
+    ZkUtils zkUtils = new ZkUtils(zkClient, new ZkConnection(zkServer.getConnectionStr(), sessionTimeout), false);
+    AdminUtils.createTopic(zkUtils, topic, partitions, 1, new Properties(), RackAwareMode.Disabled$.MODULE$);
   }
 }
