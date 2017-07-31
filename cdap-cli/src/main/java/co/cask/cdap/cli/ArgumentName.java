@@ -155,7 +155,7 @@ public enum ArgumentName {
   public static final String ENTITY_DESCRIPTION_TEMPLATE_STRING = "'<%s>' " +
     "is of the form '<entity-type>:<entity-id>', where '<entity-type>' is one of " +
     "%s" +
-    "'artifact', 'app', 'dataset', 'program', 'stream', or 'view'.\n" +
+    "'artifact', 'application', 'dataset', 'program', 'stream', or 'view'.\n" +
     "\n" +
     "%s" +
     "For artifacts and apps, " +
