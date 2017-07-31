@@ -30,6 +30,23 @@ $table_row_border_color: #cccccc;
     margin: 10px 0 20px;
   }
   .rules-container {
+    min-height: 300px;
+    padding: 10px;
+    margin-left: -10px;
+    margin-right: -10px;
+
+    &.drag-hover {
+      border: 3px dashed $brand-primary;
+      background: #e8e9e9;
+
+      &:after {
+        content: 'Drag and Drop a rule to add it to this rulebook';
+        position: absolute;
+        left: 30%;
+        font-size: 20px;
+        top: 8px;
+      }
+    }
     .title {
       font-weight: 700;
       font-size: 15px;

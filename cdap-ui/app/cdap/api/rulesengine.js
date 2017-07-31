@@ -24,6 +24,7 @@ const rbbasepath = `${basepath}/rulebooks/:rulebookid`;
 const  MyRulesEngineApi = {
   getRulebooks: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rulebooks`),
   getRules: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules`),
+  createRule: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/rules`),
   getRuleDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules/:ruleid`),
   addRuleToRuleBook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
   removeRuleFromRuleBook: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${rbbasepath}/rules/:ruleid`),

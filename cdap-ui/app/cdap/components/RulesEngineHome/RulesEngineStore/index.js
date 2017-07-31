@@ -45,6 +45,7 @@ const RULESENGINEACTIONS = {
   SETACTIVERULEBOOK: 'SETACTIVERULEBOOK',
   SETCREATERULEBOOK: 'SETCREATERULEBOOK',
   SETACTIVERULE: 'SETACTIVERULE',
+  RESETACTIVERULE: 'RESETACTIVERULE',
   SETERROR: 'SETERROR',
   RESETERROR: 'RESETERROR'
 };
@@ -82,6 +83,10 @@ const rules = (state = DEFAULTRULESSTATE, action = defaultAction) => {
     case RULESENGINEACTIONS.SETACTIVERULE:
       return Object.assign({}, state, {
         activeRuleId: action.payload.activeRuleId
+      });
+    case RULESENGINEACTIONS.RESETACTIVERULE:
+      return Object.assign({}, state, {
+        activeRuleId: null
       });
     default:
       return state;

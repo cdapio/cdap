@@ -28,6 +28,11 @@ $tab_header_height: 40px;
   .left-panel {
     width: 30%;
     border-right: 1px solid #cccccc;
+    min-width: 450px;
+
+    @media (max-width: 1000px) {
+      min-width: 300px;
+    }
   }
   .right-panel {
     width: 70%;

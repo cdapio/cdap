@@ -25,10 +25,12 @@ import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import {Provider} from 'react-redux';
 import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
+import getDndContextProvider from 'components/RulesEngineHome/DnDContextProvider';
 
 require('./RulesEngineHome.scss');
+var DnDContextProvider = getDndContextProvider();
 
-export default class RulesEngineHome extends Component {
+class RulesEngineHome extends Component {
   state = {
     activeTab: '1'
   };
@@ -111,3 +113,4 @@ export default class RulesEngineHome extends Component {
     );
   }
 }
+export default DnDContextProvider(RulesEngineHome);
