@@ -14,36 +14,24 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
+import React, {Component, PropTypes} from 'react';
 
-.rules-tab {
-  padding: 20px;
+export default class RuleDetails extends Component {
+  static propTypes = {
+    ruleid: PropTypes.string
+  };
 
-  input {
-    border-radius: 0;
-  }
-  > button {
-    margin: 10px 0;
-    color: $brand-primary;
-  }
-  .container {
-    margin-top: 10px;
-  }
-  .container > .row {
-    &:first-child {
-      font-weight: bolder;
-      &:hover {
-        background: transparent;
-      }
-    }
+  state = {
+    rulebookid: this.props.ruleid
+  };
 
-    .name {
-      padding-left: 20px;
-    }
-  }
-  .svg-arrow-wrapper {
-    display: inline-block;
-    font-size: 20px;
-    line-height: 1;
+  render() {
+    return (
+      <div className="rule-details-container">
+        <pre>
+          {this.props.ruleid}
+        </pre>
+      </div>
+    );
   }
 }

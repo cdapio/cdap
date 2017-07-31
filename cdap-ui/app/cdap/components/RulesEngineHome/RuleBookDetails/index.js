@@ -15,25 +15,66 @@
 */
 
 import React, {Component} from 'react';
-import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
+import RulesEngineStore, {RULESENGINEACTIONS}  from 'components/RulesEngineHome/RulesEngineStore';
+import {Input, Button} from 'reactstrap';
 import isNil from 'lodash/isNil';
+import isEmpty from 'lodash/isEmpty';
+import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import MyRulesEngine from 'api/rulesengine';
+import NamespaceStore from 'services/NamespaceStore';
+import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import moment from 'moment';
+
 require('./RuleBookDetails.scss');
 
 export default class RuleBookDetails extends Component {
   state = {
-    activeRuleBook: null
+    activeRuleBook: null,
+    create: {
+      name: '',
+      description: '',
+      rules: []
+    }
   };
 
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
       let activeRulebook = rulebooks.activeRulebookId;
+      let createMode = rulebooks.createRulebook;
       let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
       this.setState({
         rulebookDetails,
-        activeRuleBook: activeRulebook
+        activeRuleBook: activeRulebook,
+        createMode
       });
     });
+  }
+
+  removeRule = (ruleid) => {
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    MyRulesEngine
+      .removeRuleFromRuleBook({
+        namespace,
+        rulebookid: this.state.rulebookDetails.id,
+        ruleid
+      })
+      .subscribe(
+        () => {
+          getRuleBooks();
+        },
+        err => {
+          RulesEngineStore.dispatch({
+            type: RULESENGINEACTIONS.SETERROR,
+            payload: {
+              error: {
+                showError: true,
+                message: typeof err === 'string' ? err : err.response.message
+              }
+            }
+          });
+        }
+      );
   }
 
   renderRules(rules) {
@@ -47,14 +88,85 @@ export default class RuleBookDetails extends Component {
             <td>{i+1} </td>
             <td>{rule.id}</td>
             <td>{rule.description}</td>
-            <td>Remove</td>
+            <td>
+              <a onClick={this.removeRule.bind(this, rule.id)}>
+                Remove
+              </a>
+            </td>
           </tr>
         );
       })
     );
   }
+  onNameChangeHandler = (e) => {
+    this.setState({
+      create: Object.assign({}, this.state.create, {
+        name: e.target.value
+      })
+    });
+  };
+
+  onDescriptionChangeHandler = (e) => {
+    this.setState({
+      create: Object.assign({}, this.state.create, {
+        description: e.target.value
+      })
+    });
+  };
+
+  createRulebook = () => {
+    createNewRuleBook(this.state.create);
+  }
+
+  renderCreateRulebook = () => {
+    return (
+      <div className="rule-book-create">
+        <div className="create-metadata-container">
+          <Input
+            value={this.state.create.name}
+            onChange={this.onNameChangeHandler}
+            placeholder="Add Name"
+          />
+          <div>
+            <span> Owner : </span>
+            <span> Admin </span>
+          </div>
+          <div>
+            <span> Created </span>
+            <span> Created Today </span>
+          </div>
+          <textarea
+            rows="10"
+            className="form-control"
+            value={this.state.create.description}
+            onChange={this.onDescriptionChangeHandler}
+            placeholder="Add Description"
+          >
+          </textarea>
+          <div className="button-container">
+            <Button
+              color="primary"
+              onClick={this.createRulebook}
+              disabled={isEmpty(this.state.create.name)}
+            >
+              Create
+            </Button>
+          </div>
+        </div>
+
+        <strong> Rules (0) </strong>
+        {
+          this.renderRules(this.state.create.rules)
+        }
+        <hr />
+      </div>
+    );
+  };
 
   render() {
+    if (this.state.createMode) {
+      return this.renderCreateRulebook();
+    }
     if (isNil(this.state.activeRuleBook)) {
       return null;
     }
@@ -70,8 +182,8 @@ export default class RuleBookDetails extends Component {
             <span> {rulebookDetails.user}</span>
           </div>
           <div>
-            <span>Created on </span>
-            <span>{rulebookDetails.created}</span>
+            <span>Last Updated on: </span>
+            <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
           </div>
         </div>
         <p>

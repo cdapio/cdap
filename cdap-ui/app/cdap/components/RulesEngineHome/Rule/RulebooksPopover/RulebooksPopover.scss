@@ -14,36 +14,28 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
+.rule-book-popover {
+  position: relative;
+  display: inline-block;
 
-.rules-tab {
-  padding: 20px;
-
-  input {
+  .btn.btn-secondary {
     border-radius: 0;
   }
-  > button {
-    margin: 10px 0;
-    color: $brand-primary;
-  }
-  .container {
-    margin-top: 10px;
-  }
-  .container > .row {
-    &:first-child {
-      font-weight: bolder;
+
+  .sub-menu {
+    position: absolute;
+    background: white;
+    top: 0;
+    left: 100%;
+    z-index: 1000;
+    box-shadow: 1px 2px 5px #cccccc;
+    min-width: 180px;
+    border: 1px solid #cccccc;
+    > div {
+      padding: 5px;
       &:hover {
-        background: transparent;
+        background: #cccccc;
       }
     }
-
-    .name {
-      padding-left: 20px;
-    }
-  }
-  .svg-arrow-wrapper {
-    display: inline-block;
-    font-size: 20px;
-    line-height: 1;
   }
 }

@@ -19,11 +19,16 @@ import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
 const basepath = '/namespaces/:namespace/apps/yare/services/service/methods';
+const rbbasepath = `${basepath}/rulebooks/:rulebookid`;
 
 const  MyRulesEngineApi = {
   getRulebooks: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rulebooks`),
   getRules: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules`),
-  getRulesForRuleBook: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rulebooks/:rulebookid/rules`)
+  getRuleDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules/:ruleid`),
+  addRuleToRuleBook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
+  removeRuleFromRuleBook: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
+  getRulesForRuleBook: apiCreator(dataSrc, 'GET', 'REQUEST', `${rbbasepath}/rules`),
+  createRulebook: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/rulebooks`)
 };
 
 export default MyRulesEngineApi;

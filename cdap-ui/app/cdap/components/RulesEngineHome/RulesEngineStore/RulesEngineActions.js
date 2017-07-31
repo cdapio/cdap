@@ -25,13 +25,18 @@ const getRuleBooks = () => {
   })
     .subscribe(
       (res) => {
+        let {rulebooks} = RulesEngineStore.getState();
         RulesEngineStore.dispatch({
           type: RULESENGINEACTIONS.SETRULEBOOKS,
           payload: {
             rulebooks: res.values
           }
         });
-        setActiveRulebook(res.values[0].id);
+        if (rulebooks.activeRulebookId) {
+          setActiveRulebook(rulebooks.activeRulebookId);
+        } else {
+          setActiveRulebook(res.values[0].id);
+        }
       }
     );
 };
@@ -86,10 +91,45 @@ const getRules = () => {
       );
 };
 
+const createNewRuleBook = (config) => {
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let urlParams = {namespace};
+  let headers = {'Content-Type': 'application/json'};
+  let postBody = {
+    ...config,
+    id: config.name,
+    user: 'Admin',
+    source: 'Website'
+  };
+
+  MyRulesEngineApi
+    .createRulebook(urlParams, postBody,headers)
+    .subscribe(
+      (res) => {
+        console.log('Done!!', res);
+        RulesEngineStore.dispatch({
+          type: RULESENGINEACTIONS.SETCREATERULEBOOK,
+          payload: {
+            isCreate: false
+          }
+        });
+        getRuleBooks();
+      }
+    );
+};
+
+const resetError = () => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.RESETERROR
+  });
+};
+
 
 export {
   getRuleBooks,
   getRules,
   getRulesForActiveRuleBook,
-  setActiveRulebook
+  setActiveRulebook,
+  createNewRuleBook,
+  resetError
 };

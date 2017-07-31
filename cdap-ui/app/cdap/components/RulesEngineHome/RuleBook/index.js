@@ -19,12 +19,12 @@ import moment from 'moment';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import classnames from 'classnames';
 import {setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-
+import isNil from 'lodash/isNil';
 require('./RuleBook.scss');
 
 export default function RuleBook({bookDetails}) {
-  let {id, user:owner, created:createDate, rules, description} = bookDetails;
-  let numOfRules = rules.split(',').length || 0;
+  let {id, user:owner, updated, rules, description, version} = bookDetails;
+  let numOfRules = !isNil(rules) && typeof rules === 'string' ? rules.split(',').length : 0;
   const onClick = () => {
     setActiveRulebook(id);
   };
@@ -37,14 +37,17 @@ export default function RuleBook({bookDetails}) {
         active: rulebooks.activeRulebookId === id
       })}
     >
-      <strong> {id} </strong>
+      <strong>
+        {id}
+        <small className="version-label">Version: {version}</small>
+      </strong>
       <div>
         <span> Owner: </span>
         <span> {owner} </span>
       </div>
       <div>
-        <span>Created on </span>
-        <span>{moment(createDate).format('MM-DD-YYYY')}</span>
+        <div>Last Updated on: </div>
+        <div>{moment(updated * 1000).format('MM-DD-YYYY HH:mm')}</div>
       </div>
       <div>
         {numOfRules} Rules

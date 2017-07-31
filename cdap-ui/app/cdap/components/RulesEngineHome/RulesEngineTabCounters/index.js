@@ -39,7 +39,7 @@ RulesCount.propTypes = {
 
 const mapRulesStateToProps = (state) => {
   return {
-    count: state.rules.length
+    count: state.rules.list.length
   };
 };
 
