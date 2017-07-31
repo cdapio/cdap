@@ -98,6 +98,7 @@ class HydratorPlusPlusConfigStore {
       this.setGracefulStop(this.state.config.stopGracefully);
       this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
       this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
+      this.setNodes(this.state.config.stages || []);
     }
     this.__defaultState = angular.copy(this.state);
   }
