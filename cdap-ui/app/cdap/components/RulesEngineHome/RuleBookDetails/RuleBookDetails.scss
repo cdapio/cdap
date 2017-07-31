@@ -15,6 +15,7 @@
 */
 
 @import '../RulesEngineHome.scss';
+@import '../../../styles/variables.scss';
 
 $table_row_border_color: #cccccc;
 
@@ -38,11 +39,30 @@ $table_row_border_color: #cccccc;
       tr {
         td {
           border-color: $table_row_border_color;
+          a {
+            text-decoration: underline;
+            color: $brand-primary;
+            cursor: pointer;
+          }
         }
         &:last-child {
           border-bottom: 1px solid $table_row_border_color;
         }
       }
+    }
+  }
+}
+
+.rule-book-create {
+  padding: 30px;
+
+  .create-metadata-container {
+    .form-control {
+      margin-bottom: 20px;
+    }
+    .button-container {
+      display: flex;
+      justify-content: flex-end;
     }
   }
 }

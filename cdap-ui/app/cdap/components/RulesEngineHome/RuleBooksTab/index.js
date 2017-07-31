@@ -17,14 +17,16 @@
 import React, {Component} from 'react';
 import RuleBook from 'components/RulesEngineHome/RuleBook';
 import {Input} from 'reactstrap';
-import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
+import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import Fuse from 'fuse.js';
+import isEmpty from 'lodash/isEmpty';
 
 require('./RulesBooksTab.scss');
 
 export default class RuleBooksTab extends Component {
   state = {
     searchStr: '',
-    rulebooks: []
+    rulebooks: RulesEngineStore.getState().rulebooks.list
   };
 
   componentDidMount() {
@@ -41,6 +43,53 @@ export default class RuleBooksTab extends Component {
       searchStr: e.target.value
     });
   }
+
+  createNewRuleBook = () => {
+    RulesEngineStore.dispatch({
+      type: RULESENGINEACTIONS.SETCREATERULEBOOK,
+      payload:{
+        isCreate: true
+      }
+    });
+  };
+
+  renderRulebooks() {
+
+    if (isEmpty(this.state.searchStr)) {
+      return (
+        this.state
+          .rulebooks
+          .map(rulebook => {
+            return (<RuleBook bookDetails={rulebook}/>);
+          })
+      );
+    }
+
+    // TODO not sure about performance
+    const fuseOptions = {
+      caseSensitive: true,
+      threshold: 0,
+      location: 0,
+      distance: 100,
+      maxPatternLength: 32,
+      keys: [
+        "id",
+        "user",
+        "rules",
+        "description",
+        "source"
+      ]
+    };
+
+    let fuse = new Fuse(this.state.rulebooks, fuseOptions);
+    return (
+      fuse.search(this.state.searchStr)
+        .map(rulebook => {
+          return (<RuleBook bookDetails={rulebook}/>);
+        })
+    );
+  }
+
   render() {
     return (
       <div className="rule-books-tab">
@@ -50,20 +99,16 @@ export default class RuleBooksTab extends Component {
           onChange={this.updateSearchStr}
         />
         <div className="rule-books-container">
-          <div className="rule-book center">
+          <div
+            className="rule-book center"
+            onClick={this.createNewRuleBook}
+          >
             <strong> Create a new Rulebook </strong>
             <div>
               +
             </div>
           </div>
-          {
-            this
-              .state
-              .rulebooks
-              .map(rulebook => {
-                return (<RuleBook bookDetails={rulebook}/>);
-              })
-          }
+          {this.renderRulebooks()}
         </div>
       </div>
     );

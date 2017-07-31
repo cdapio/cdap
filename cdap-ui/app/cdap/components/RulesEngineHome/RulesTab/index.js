@@ -15,16 +15,18 @@
 */
 
 import React, {Component} from 'react';
-import {Col, Row, Button, Input, Container} from 'reactstrap';
-import IconSVG from 'components/IconSVG';
-import moment from 'moment';
+import {Col, Row, Button, Input} from 'reactstrap';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
+import Rule from 'components/RulesEngineHome/Rule';
+import Fuse from 'fuse.js';
+import isEmpty from 'lodash/isEmpty';
+
 
 require('./RulesTab.scss');
 
 export default class RulesTab extends Component {
   state = {
-    rules: [],
+    rules: RulesEngineStore.getState().rules.list,
     searchStr: ''
   };
 
@@ -42,57 +44,76 @@ export default class RulesTab extends Component {
     RulesEngineStore.subscribe(() => {
       let {rules} = RulesEngineStore.getState();
       this.setState({
-        rules
+        rules: rules.list
       });
     });
   }
 
-  render() {
-    if (!this.state.rules.length) {
-      return null;
+  getFilteredRules() {
+    if (isEmpty(this.state.searchStr)) {
+      return this.state.rules;
     }
+
+    // TODO not sure about performance
+    const fuseOptions = {
+      caseSensitive: true,
+      threshold: 0,
+      location: 0,
+      distance: 100,
+      maxPatternLength: 32,
+      keys: [
+        "id",
+        "description",
+        "action"
+      ]
+    };
+
+    let fuse = new Fuse(this.state.rules, fuseOptions);
+    return fuse.search(this.state.searchStr);
+  }
+
+  renderRules(rules) {
+    if (!rules.length) {
+      return (<h4> No Rules found </h4>);
+    }
+
+    return (
+      <div className="container">
+        <Row>
+          <Col xs="7">
+            <div className="name">
+              Name
+            </div>
+          </Col>
+          <Col xs="5">
+            Last Updated
+          </Col>
+        </Row>
+        {
+          rules.map(rule => {
+            return (
+              <Rule rule={rule} />
+            );
+          })
+        }
+      </div>
+    );
+  }
+
+  render() {
+    let rules = this.getFilteredRules();
+
     return (
       <div className="rules-tab">
         <Input
-          placeholder="Search Rulebook by name, owner or description"
+          placeholder="Search Rules by name, action or description"
           value={this.state.searchStr}
           onChange={this.updateSearchStr}
         />
         <Button onClick={this.addRule}>
           Create a New Rule
         </Button>
-        <Container>
-          <Row>
-            <Col xs="8">
-              <div className="name">
-                Name
-              </div>
-            </Col>
-            <Col xs="4">
-              Date
-            </Col>
-          </Row>
-          {
-            this
-              .state
-              .rules
-              .map(rule => {
-                return (
-                  <Row>
-                    <Col xs="8">
-                      <div className="svg-arrow-wrapper">
-                        <IconSVG name="icon-caret-right" />
-                      </div>
-                      {rule.id}
-                    </Col>
-                    <Col xs="4">
-                      {moment(rule.updated * 1000).format('MM-DD-YYYY')}
-                    </Col>
-                  </Row>
-                );
-              })
-            }
-        </Container>
+        {this.renderRules(rules)}
       </div>
     );
   }

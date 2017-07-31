@@ -20,18 +20,33 @@ import {defaultAction} from 'services/helpers';
 const DEFAULTRULEBOOKSSTATE = {
   list: [],
   activeRulebookId: null,
-  activeRulebookRules: []
+  activeRulebookRules: [],
+  createRulebook: false
 };
+const DEFAULTRULESSTATE = {
+  list: [],
+  activeRuleId: null
+};
+
+const DEFAULTERRORSTATE = {
+  showError: false,
+  message: null
+};
+
 const DEFAULTRULESENGINESTATE = {
   rulebooks: DEFAULTRULEBOOKSSTATE,
-  rules: []
+  rules: DEFAULTRULESSTATE
 };
 
 const RULESENGINEACTIONS = {
   SETRULEBOOKS: 'SETRULEBOOKS',
   SETRULESFORACTIVERULEBOOK: 'SETRULESFORACTIVERULEBOOK',
   SETRULES: 'SETRULES',
-  SETACTIVERULEBOOK: 'SETACTIVERULEBOOK'
+  SETACTIVERULEBOOK: 'SETACTIVERULEBOOK',
+  SETCREATERULEBOOK: 'SETCREATERULEBOOK',
+  SETACTIVERULE: 'SETACTIVERULE',
+  SETERROR: 'SETERROR',
+  RESETERROR: 'RESETERROR'
 };
 
 const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
@@ -47,17 +62,38 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
       });
     case RULESENGINEACTIONS.SETRULESFORACTIVERULEBOOK:
       return Object.assign({}, state,{
-        activeRulebookRules: action.payload.rules
+        activeRulebookRules: action.payload.rules,
+      });
+    case RULESENGINEACTIONS.SETCREATERULEBOOK:
+      return Object.assign({}, state, {
+        createRulebook: action.payload.isCreate
       });
     default:
       return state;
   }
 };
 
-const rules = (state = [], action = defaultAction) => {
+const rules = (state = DEFAULTRULESSTATE, action = defaultAction) => {
   switch (action.type) {
     case RULESENGINEACTIONS.SETRULES:
-      return action.payload.rules || state;
+      return Object.assign({}, state, {
+        list: action.payload.rules || state.list
+      });
+    case RULESENGINEACTIONS.SETACTIVERULE:
+      return Object.assign({}, state, {
+        activeRuleId: action.payload.activeRuleId
+      });
+    default:
+      return state;
+  }
+};
+
+const error = (state = DEFAULTERRORSTATE, action = defaultAction) => {
+  switch (action.type) {
+    case RULESENGINEACTIONS.SETERROR:
+      return Object.assign({}, state, action.payload.error);
+    case RULESENGINEACTIONS.RESETERROR:
+      return DEFAULTERRORSTATE;
     default:
       return state;
   }
@@ -66,7 +102,8 @@ const rules = (state = [], action = defaultAction) => {
 const RulesEngineStore = createStore(
   combineReducers({
     rulebooks,
-    rules
+    rules,
+    error
   }),
   DEFAULTRULESENGINESTATE,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

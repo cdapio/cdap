@@ -22,20 +22,14 @@
   input {
     border-radius: 0;
   }
-  button {
+  > button {
     margin: 10px 0;
     color: $brand-primary;
   }
   .container {
     margin-top: 10px;
   }
-  .row {
-    border-bottom: 1px solid #cccccc;
-    padding: 7px;
-    cursor: pointer;
-    padding-left: 0;
-    padding-right: 0;
-
+  .container > .row {
     &:first-child {
       font-weight: bolder;
       &:hover {
@@ -43,15 +37,8 @@
       }
     }
 
-    :first-child {
-      padding-left: 0;
-    }
-
     .name {
       padding-left: 20px;
-    }
-    &:hover {
-      background: #cccccc;
     }
   }
   .svg-arrow-wrapper {

@@ -24,6 +24,7 @@ import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import {Provider} from 'react-redux';
 import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
+import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
 
 require('./RulesEngineHome.scss');
 
@@ -85,16 +86,27 @@ export default class RulesEngineHome extends Component {
             </Nav>
             <TabContent activeTab={this.state.activeTab}>
               <TabPane tabId="1">
-                <RuleBooksTab />
+                {
+                  this.state.activeTab === '1' ?
+                    <RuleBooksTab />
+                  :
+                    null
+                }
               </TabPane>
               <TabPane tabId="2">
-                <RulesTab />
+                {
+                  this.state.activeTab === '2' ?
+                    <RulesTab />
+                  :
+                    null
+                }
               </TabPane>
             </TabContent>
         </div>
         <div className="right-panel">
           <RuleBookDetails />
         </div>
+        <RulesEngineAlert />
       </div>
     );
   }
