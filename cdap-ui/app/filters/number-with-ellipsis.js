@@ -15,7 +15,9 @@
  */
 
 /**
- * Similar to ellipsis.js filter, but show ellipses in the front instead
+ * Similar to the angular 'number' filter and takes the same arguments, but also works
+ * on strings with ellipses. e.g. '...11111' -> '...11,111'. If the string doesn't
+ * contain ellipses, then just applies the angular 'number' filter.
  **/
 angular.module(PKG.name+'.filters').filter('myNumberWithEllipsis', function($filter) {
   return function (input, ...numberFilterArgs) {

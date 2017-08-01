@@ -41,7 +41,10 @@ angular.module(PKG.name + '.commons')
 
     var nodePopovers = {};
     var selectedConnections = [];
-    var endpointClicked;
+    var endpointClicked = false;
+    var diagramEl = null;
+    var dagMenu = null;
+    var endpointFilterElems = [];
 
     vm.scale = 1.0;
 
@@ -485,6 +488,11 @@ angular.module(PKG.name + '.commons')
         vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
         initNodes();
         addConnections();
+        endpointFilterElems = document.getElementsByClassName('endpoint-circle');
+        angular.forEach(endpointFilterElems, function(endpointFilterElem) {
+          endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
+          endpointFilterElem.addEventListener('mouseup', unclickEndpoint);
+        });
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
@@ -577,14 +585,24 @@ angular.module(PKG.name + '.commons')
       menu.style.top = menuPosition.y + 'px';
     }
 
+    function unclickEndpoint() {
+      endpointClicked = false;
+    }
+
+    function openContextMenu(e) {
+      if (selectedConnections.length > 0) {
+        e.preventDefault();
+        vm.openDagMenu(true);
+        positionMenu(e, dagMenu);
+      }
+    }
+
     angular.element(document).ready(function() {
       makeNodesDraggable();
 
-      let endpointFilterElems = document.getElementsByClassName('endpoint-circle');
+      endpointFilterElems = document.getElementsByClassName('endpoint-circle');
       angular.forEach(endpointFilterElems, function(endpointFilterElem) {
-        endpointFilterElem.addEventListener('mouseup', function() {
-          endpointClicked = false;
-        });
+        endpointFilterElem.addEventListener('mouseup', unclickEndpoint);
       });
     });
 
@@ -598,15 +616,9 @@ angular.module(PKG.name + '.commons')
 
       init();
 
-      let diagramEl = document.getElementById('diagram-container');
-      let dagMenu = document.querySelector('.dag-popover-menu');
-      diagramEl.addEventListener('contextmenu', function(e) {
-        if (selectedConnections.length > 0) {
-          e.preventDefault();
-          vm.openDagMenu(true);
-          positionMenu(e, dagMenu);
-        }
-      });
+      diagramEl = document.getElementById('diagram-container');
+      dagMenu = document.querySelector('.dag-popover-menu');
+      diagramEl.addEventListener('contextmenu', openContextMenu);
 
       // Making canvas draggable
       vm.secondInstance = jsPlumb.getInstance();
@@ -908,7 +920,7 @@ angular.module(PKG.name + '.commons')
 
       angular.element($window).off('resize', vm.instance.repaintEverything);
 
-      // Cancelling all timeouts
+      // Cancelling all timeouts, key bindings and event listeners
       $timeout.cancel(repaintTimeout);
       $timeout.cancel(commentsTimeout);
       $timeout.cancel(nodesTimeout);
@@ -916,9 +928,15 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
       $timeout.cancel(metricsTimeout);
+      diagramEl.removeEventListener('contextmenu', openContextMenu);
+      angular.forEach(endpointFilterElems, function(endpointFilterElem) {
+        endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
+      });
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['del', 'backspace']);
+      dispatcher.unregister('onUndoActions');
+      dispatcher.unregister('onRedoActions');
       vm.instance.unbind(); // unbind all events
     });
 
