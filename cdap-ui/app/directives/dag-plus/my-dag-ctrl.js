@@ -41,6 +41,7 @@ angular.module(PKG.name + '.commons')
 
     var nodePopovers = {};
     var selectedConnections = [];
+    var endpointClicked;
 
     vm.scale = 1.0;
 
@@ -89,8 +90,13 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('connectionMoved', moveConnection);
-        vm.instance.bind('click', selectConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+        vm.instance.bind('beforeDrag', unselectConnections);
+        // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
+        // but seems like the 'click' event is triggered both when clicking on an endpoint &&
+        // clicking on a connection
+        vm.instance.bind('click', selectEndpointOrConnection);
+
         Mousetrap.bind(['command+z', 'ctrl+z'], vm.undoActions);
         Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
         Mousetrap.bind(['del', 'backspace'], vm.removeSelectedConnections);
@@ -268,7 +274,26 @@ angular.module(PKG.name + '.commons')
       angular.forEach($scope.nodes, function (node) {
         let sourceObj = {
           isSource: true,
-          filter: '.endpoint-circle',
+          filter: function(event, element) {
+            // we need this variable because when the user clicks on the endpoint circle, multiple
+            // 'mousedown' events are fired
+            if (!endpointClicked) {
+              endpointClicked = true;
+              let sourceElem = element.id;
+              let endpoints = vm.instance.getEndpoints(sourceElem);
+              for (let i = 0; i < endpoints.length; i++) {
+                let endpoint = endpoints[i];
+                if (endpoint.connections && endpoint.connections.length > 0) {
+                  if (endpoint.connections[0].sourceId === node.name) {
+                    selectEndpointOrConnection(endpoint);
+                    break;
+                  }
+                }
+              }
+            }
+
+            return event.target.className === 'endpoint-circle';
+          },
           connectionType: 'basic'
         };
         if (vm.isDisabled) {
@@ -355,18 +380,58 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     };
 
-    function selectConnection(seletectedConnObj) {
-      if (vm.isDisabled) { return; }
+    function selectEndpointOrConnection(seletectedObj) {
+      // is endpoint
+      if (seletectedObj.endpoint) {
+        if (seletectedObj.connections && seletectedObj.connections.length > 0) {
+          let connections = vm.instance.getConnections({
+            source: seletectedObj.connections[0].sourceId
+          });
 
-      var selectedConnection = _.find(selectedConnections, function (conn) {
-        return conn.sourceId === seletectedConnObj.sourceId && conn.targetId === seletectedConnObj.targetId;
-      });
-      if (selectedConnection) {
-        selectedConnections.splice(selectedConnections.indexOf(selectedConnection), 1);
+          // This is to toggle all connections coming from an endpoint.
+          // If zero, one or more (but not all) of the connections are already selected,
+          // then just select the remaining ones. Else if they're all selected,
+          // then unselect them.
+
+          if (_.difference(connections, selectedConnections).length !== 0) {
+            connections.forEach(connection => {
+              if (selectedConnections.indexOf(connection) === -1) {
+                selectedConnections.push(connection);
+                connection.setType('selected');
+              }
+            });
+          } else {
+            connections.forEach(connection => {
+              if (selectedConnections.indexOf(connection) !== -1) {
+                selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+                connection.setType('basic');
+              }
+            });
+          }
+        }
+
+      // is connection
       } else {
-        selectedConnections.push(seletectedConnObj);
+        if (vm.isDisabled) { return; }
+
+        if (selectedConnections.indexOf(seletectedObj) === -1) {
+          selectedConnections.push(seletectedObj);
+        } else {
+          selectedConnections.splice(selectedConnections.indexOf(seletectedObj), 1);
+        }
+        seletectedObj.toggleType('selected');
       }
-      seletectedConnObj.toggleType('selected');
+    }
+
+    function unselectConnectionsOfNode(sourceId) {
+      if (!selectedConnections.length) { return false; }
+
+      selectedConnections.forEach(connection => {
+        if (connection.sourceId === sourceId) {
+          selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+          connection.setType('basic');
+        }
+      });
     }
 
     function checkIfConnectionExistsOrValid(connObj) {
@@ -394,6 +459,11 @@ angular.module(PKG.name + '.commons')
         if (invalidConnection) { valid = false; }
       });
       return valid;
+    }
+
+    function unselectConnections(params) {
+      unselectConnectionsOfNode(params.sourceId);
+      endpointClicked = false;
     }
 
     function resetEndpointsAndConnections() {
@@ -509,6 +579,13 @@ angular.module(PKG.name + '.commons')
 
     angular.element(document).ready(function() {
       makeNodesDraggable();
+
+      let endpointFilterElems = document.getElementsByClassName('endpoint-circle');
+      angular.forEach(endpointFilterElems, function(endpointFilterElem) {
+        endpointFilterElem.addEventListener('mouseup', function() {
+          endpointClicked = false;
+        });
+      });
     });
 
     jsPlumb.ready(function() {
@@ -814,13 +891,13 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.undoActions = function () {
-      if (!vm.isDisabled) {
+      if (!vm.isDisabled && vm.undoStates.length > 0) {
         DAGPlusPlusNodesActionsFactory.undoActions();
       }
     };
 
     vm.redoActions = function () {
-      if (!vm.isDisabled) {
+      if (!vm.isDisabled && vm.redoStates.length > 0) {
         DAGPlusPlusNodesActionsFactory.redoActions();
       }
     };
