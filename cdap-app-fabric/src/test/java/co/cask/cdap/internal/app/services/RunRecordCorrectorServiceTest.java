@@ -21,6 +21,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -30,32 +31,32 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Service;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 
 /**
- * Unit test for {@link ProgramLifecycleService}
+ * Unit test for {@link RunRecordCorrectorService}
  */
-public class ProgramLifecycleServiceTest extends AppFabricTestBase {
+public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
-  private static ProgramLifecycleService programLifecycleService;
   private static Store store;
+  private static ProgramLifecycleService programLifecycleService;
   private static ProgramRuntimeService runtimeService;
 
   @BeforeClass
   public static void setup() throws Exception {
-    programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
     store = getInjector().getInstance(DefaultStore.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
+    programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
   }
 
   @Test
@@ -118,9 +119,8 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
     Assert.assertEquals(0, runRecords.size());
 
-    // Lets fix it
-    Set<String> processedInvalidRunRecordIds = Sets.newHashSet();
-    programLifecycleService.validateAndCorrectRunningRunRecords(ProgramType.FLOW, processedInvalidRunRecordIds);
+    // Start the RunRecordCorrectorService, which will fix the run record
+    new LocalRunRecordCorrectorService(store, programLifecycleService, runtimeService).startUp();
 
     // Verify there is one FAILED run record for the application
     runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());

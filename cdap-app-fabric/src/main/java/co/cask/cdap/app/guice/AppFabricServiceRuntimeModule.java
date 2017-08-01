@@ -81,7 +81,10 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.TriggerMisfireLogger;
 import co.cask.cdap.internal.app.services.AppFabricServer;
+import co.cask.cdap.internal.app.services.DistributedRunRecordCorrectorService;
+import co.cask.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.RunRecordCorrectorService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
@@ -158,6 +161,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
+                               bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
@@ -201,6 +206,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                              @Override
                              protected void configure() {
                                bind(AppFabricServer.class).to(StandaloneAppFabricServer.class).in(Scopes.SINGLETON);
+                               bind(RunRecordCorrectorService.class).to(LocalRunRecordCorrectorService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
@@ -268,6 +275,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new AbstractModule() {
                              @Override
                              protected void configure() {
+                               bind(RunRecordCorrectorService.class).to(DistributedRunRecordCorrectorService.class)
+                                 .in(Scopes.SINGLETON);
                                bind(SchedulerService.class).to(DistributedSchedulerService.class).in(Scopes.SINGLETON);
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
