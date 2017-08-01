@@ -20,6 +20,8 @@ import {Input} from 'reactstrap';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
+import isNil from 'lodash/isNil';
+import LoadingSVG from 'components/LoadingSVG';
 
 require('./RulesBooksTab.scss');
 
@@ -54,6 +56,10 @@ export default class RuleBooksTab extends Component {
   };
 
   renderRulebooks() {
+
+    if (isNil(this.state.rulebooks)) {
+      return (<LoadingSVG />);
+    }
 
     if (isEmpty(this.state.searchStr)) {
       return (

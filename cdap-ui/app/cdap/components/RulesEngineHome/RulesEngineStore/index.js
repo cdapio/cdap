@@ -16,16 +16,17 @@
 
 import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
+import {objectQuery} from 'services/helpers';
 
 const DEFAULTRULEBOOKSSTATE = {
-  list: [],
+  list: null,
   activeRulebookId: null,
-  activeRulebookRules: [],
+  activeRulebookRules: null,
   createRulebook: false
 };
 const DEFAULTRULESSTATE = {
-  list: [],
-  activeRuleId: null
+  list: null,
+  activeRuleId: null,
 };
 
 const DEFAULTERRORSTATE = {
@@ -41,7 +42,9 @@ const DEFAULTRULESENGINESTATE = {
 const RULESENGINEACTIONS = {
   SETRULEBOOKS: 'SETRULEBOOKS',
   SETRULESFORACTIVERULEBOOK: 'SETRULESFORACTIVERULEBOOK',
+  SETRULEBOOKSLOADING: 'SETRULEBOOKSLOADING',
   SETRULES: 'SETRULES',
+  SETRULESLOADING: 'SETRULESLOADING',
   SETACTIVERULEBOOK: 'SETACTIVERULEBOOK',
   SETCREATERULEBOOK: 'SETCREATERULEBOOK',
   SETACTIVERULE: 'SETACTIVERULE',
@@ -55,7 +58,7 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
     case RULESENGINEACTIONS.SETRULEBOOKS:
       return Object.assign({}, state, {
         list: action.payload.rulebooks,
-        activeRulebookId: action.payload.rulebooks[0].id
+        activeRulebookId: objectQuery(action, 'payload', 'rulebooks', 0, 'id')
       });
     case RULESENGINEACTIONS.SETACTIVERULEBOOK:
       return Object.assign({}, state, {
@@ -69,6 +72,10 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
       return Object.assign({}, state, {
         createRulebook: action.payload.isCreate
       });
+    case RULESENGINEACTIONS.SETRULEBOOKSLOADING:
+      return Object.assign({}, state, {
+        loading: action.payload.loading
+      });
     default:
       return state;
   }
@@ -78,15 +85,21 @@ const rules = (state = DEFAULTRULESSTATE, action = defaultAction) => {
   switch (action.type) {
     case RULESENGINEACTIONS.SETRULES:
       return Object.assign({}, state, {
-        list: action.payload.rules || state.list
+        list: action.payload.rules || state.list,
+        loading: false
       });
     case RULESENGINEACTIONS.SETACTIVERULE:
       return Object.assign({}, state, {
-        activeRuleId: action.payload.activeRuleId
+        activeRuleId: action.payload.activeRuleId,
+        loading: false
       });
     case RULESENGINEACTIONS.RESETACTIVERULE:
       return Object.assign({}, state, {
         activeRuleId: null
+      });
+    case RULESENGINEACTIONS.SETRULESLOADING:
+      return Object.assign({}, state, {
+        loading: true
       });
     default:
       return state;

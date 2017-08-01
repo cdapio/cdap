@@ -17,15 +17,19 @@
 import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {MyArtifactApi} from 'api/artifact';
-import MyDataPrepApi from 'api/dataprep';
 import Version from 'services/VersionRange/Version';
 import T from 'i18n-react';
 import Rx from 'rx';
 
-const PREFIX = 'features.DataPrep.Upgrade';
-const MIN_DATAPREP_VERSION = '2.1.0';
 
-export default function enableDataPreparationService(shouldStopService) {
+
+export default function enableDataPreparationService({
+  shouldStopService,
+  artifactName,
+  api,
+  i18nPrefix,
+  MIN_VERSION
+}) {
   function enableService(observer) {
 
     /**
@@ -39,37 +43,39 @@ export default function enableDataPreparationService(shouldStopService) {
 
     MyArtifactApi.list({ namespace })
       .subscribe((res) => {
-        let wranglerArtifacts = res.filter((artifact) => {
-          return artifact.name === 'wrangler-service';
+        let appArtifact = res.filter((artifact) => {
+          return artifact.name === artifactName;
         });
 
-        if (wranglerArtifacts.length === 0) {
+        if (appArtifact.length === 0) {
           observer.onError({
-            error: 'Cannot find wrangler-service artifact'
+            error: `Cannot find ${artifactName} artifact`
           });
           return;
         }
 
-        let versionsArray = wranglerArtifacts.map((artifact) => {
+        let versionsArray = appArtifact.map((artifact) => {
           return artifact.version;
         });
 
         let highestVersion = findHighestVersion(versionsArray, true);
 
-        let minimumVersion = new Version(MIN_DATAPREP_VERSION);
+        if (MIN_VERSION) {
+          let minimumVersion = new Version(MIN_VERSION);
 
-        if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
-          observer.onError({
-            error: T.translate(`${PREFIX}.minimumVersionError`, {
-              highestVersion,
-              minimumVersion: MIN_DATAPREP_VERSION
-            })
-          });
-          return;
+          if (minimumVersion.compareTo(new Version(highestVersion)) > 0) {
+            observer.onError({
+              error: T.translate(`${i18nPrefix}.minimumVersionError`, {
+                highestVersion,
+                minimumVersion: MIN_VERSION
+              })
+            });
+            return;
+          }
         }
 
 
-        let highestVersionArtifact = wranglerArtifacts.filter((artifact) => {
+        let highestVersionArtifact = appArtifact.filter((artifact) => {
           return artifact.version === highestVersion;
         });
 
@@ -83,7 +89,7 @@ export default function enableDataPreparationService(shouldStopService) {
           highestVersionArtifact = highestVersionArtifact[0];
         }
 
-        MyDataPrepApi.getApp({ namespace })
+        api.getApp({ namespace })
           .subscribe((res) => {
             if (res.artifact.version !== highestVersion) {
               // there's higher version available, so create
@@ -107,7 +113,7 @@ export default function enableDataPreparationService(shouldStopService) {
   function createApp(artifact, observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.createApp({ namespace }, { artifact })
+    api.createApp({ namespace }, { artifact })
       .subscribe(() => {
         startService(observer);
       }, (err) => {
@@ -121,7 +127,7 @@ export default function enableDataPreparationService(shouldStopService) {
   function startService(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.startService({ namespace })
+    api.startService({ namespace })
       .subscribe(() => {
         pollServiceStatus(observer);
       }, (err) => {
@@ -135,7 +141,7 @@ export default function enableDataPreparationService(shouldStopService) {
   function pollServiceStatus(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let servicePoll = MyDataPrepApi.pollServiceStatus({ namespace })
+    let servicePoll = api.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'RUNNING') {
           servicePoll.dispose();
@@ -153,7 +159,7 @@ export default function enableDataPreparationService(shouldStopService) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
     function ping() {
-      MyDataPrepApi.ping({ namespace })
+      api.ping({ namespace })
         .subscribe(() => {
           observer.onNext();
         }, (err) => {
@@ -177,7 +183,7 @@ export default function enableDataPreparationService(shouldStopService) {
   function stopService(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.stopService({ namespace })
+    api.stopService({ namespace })
       .subscribe(() => {
         pollStopServiceStatus(observer);
       }, (err) => {
@@ -192,7 +198,7 @@ export default function enableDataPreparationService(shouldStopService) {
   function pollStopServiceStatus(observer) {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    let servicePoll = MyDataPrepApi.pollServiceStatus({ namespace })
+    let servicePoll = api.pollServiceStatus({ namespace })
       .subscribe((res) => {
         if (res.status === 'STOPPED') {
           enableService(observer);

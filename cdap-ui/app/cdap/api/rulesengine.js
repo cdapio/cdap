@@ -18,18 +18,30 @@ import Datasource from 'services/datasource';
 import {apiCreator} from 'services/resource-helper';
 
 let dataSrc = new Datasource();
-const basepath = '/namespaces/:namespace/apps/yare/services/service/methods';
-const rbbasepath = `${basepath}/rulebooks/:rulebookid`;
+const appPath = '/namespaces/:namespace/apps/yare';
+const serviceBasepath = `${appPath}/services/service`;
+const serviceMethodsBasepath = `${appPath}/services/service/methods`;
+const rbbasepath = `${serviceMethodsBasepath}/rulebooks/:rulebookid`;
 
 const  MyRulesEngineApi = {
-  getRulebooks: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rulebooks`),
-  getRules: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules`),
-  createRule: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/rules`),
-  getRuleDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/rules/:ruleid`),
+  getRulebooks: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rulebooks`),
+  getRules: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`),
+  createRule: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceMethodsBasepath}/rules`),
+  getRuleDetails: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules/:ruleid`),
   addRuleToRuleBook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
   removeRuleFromRuleBook: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
   getRulesForRuleBook: apiCreator(dataSrc, 'GET', 'REQUEST', `${rbbasepath}/rules`),
-  createRulebook: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/rulebooks`)
+  createRulebook: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceMethodsBasepath}/rulebooks`),
+
+
+  // WRANGLER SERVICE MANAGEMENT
+  getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
+  startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/start`),
+  stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/stop`),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceBasepath}/status`),
+  createApp: apiCreator(dataSrc, 'PUT', 'REQUEST', `${appPath}`),
+  ping: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceMethodsBasepath}/rules`, { interval: 2000 }),
+
 };
 
 export default MyRulesEngineApi;

@@ -34,7 +34,8 @@ const getRuleBooks = () => {
         });
         if (rulebooks.activeRulebookId) {
           setActiveRulebook(rulebooks.activeRulebookId);
-        } else {
+        }
+        if (res.values.length) {
           setActiveRulebook(res.values[0].id);
         }
       }

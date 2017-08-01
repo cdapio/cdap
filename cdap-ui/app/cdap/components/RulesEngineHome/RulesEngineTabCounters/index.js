@@ -15,6 +15,7 @@
 */
 import React, {PropTypes} from 'react';
 import {connect} from 'react-redux';
+import isNil from 'lodash/isNil';
 
 const Count = ({count}) => <span>{count}</span>;
 Count.propTypes = {
@@ -23,7 +24,7 @@ Count.propTypes = {
 
 const mapRuleBookStateToProps = (state) => {
   return {
-    count: state.rulebooks.list.length
+    count: isNil(state.rulebooks.list) ? 0 : state.rulebooks.list.length
   };
 };
 
@@ -39,7 +40,7 @@ RulesCount.propTypes = {
 
 const mapRulesStateToProps = (state) => {
   return {
-    count: state.rules.list.length
+    count: isNil(state.rules.list) ? 0 : state.rules.list.length
   };
 };
 

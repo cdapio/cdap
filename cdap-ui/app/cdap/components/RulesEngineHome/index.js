@@ -25,17 +25,27 @@ import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import {Provider} from 'react-redux';
 import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
-import getDndContextProvider from 'components/RulesEngineHome/DnDContextProvider';
+import { DragDropContext } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
+import NamespaceStore from 'services/NamespaceStore';
+import MyRulesEngineApi from 'api/rulesengine';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import RulesEngineServiceControl from 'components/RulesEngineHome/RulesEngineServiceControl';
 
 require('./RulesEngineHome.scss');
-var DnDContextProvider = getDndContextProvider();
 
 class RulesEngineHome extends Component {
   state = {
-    activeTab: '1'
+    activeTab: '1',
+    loading: true,
+    backendDown: false
   };
 
   componentDidMount() {
+    this.checkIfBackendUp();
+  }
+
+  fetchRulesAndRulebooks = () => {
     getRuleBooks();
     getRules();
   }
@@ -46,7 +56,48 @@ class RulesEngineHome extends Component {
     });
   }
 
+  checkIfBackendUp() {
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    MyRulesEngineApi
+      .ping({namespace})
+      .subscribe(
+        () => {
+          this.setState({
+            loading: false
+          });
+          this.fetchRulesAndRulebooks();
+        },
+        () => {
+          this.setState({
+            backendDown: true,
+            loading: false
+          });
+        }
+      );
+  }
+
+  onServiceStart() {
+    this.setState({
+      loading: false,
+      backendDown: false
+    });
+    this.fetchRulesAndRulebooks();
+  }
   render() {
+    if (this.state.loading) {
+      return (
+        <LoadingSVGCentered />
+      );
+    }
+
+    if (this.state.backendDown) {
+      return (
+        <RulesEngineServiceControl
+          onServiceStart={this.onServiceStart.bind(this)}
+        />
+      );
+    }
+
     return (
       <div className="rules-engine-home">
         <div className="left-panel">
@@ -113,4 +164,4 @@ class RulesEngineHome extends Component {
     );
   }
 }
-export default DnDContextProvider(RulesEngineHome);
+export default DragDropContext(HTML5Backend)(RulesEngineHome);

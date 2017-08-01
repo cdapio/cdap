@@ -1,0 +1,60 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../styles/variables.scss';
+
+$table_row_border_color: #cccccc;
+
+.rules-container {
+  .row {
+    padding: 10px 0;
+    border-bottom: 1px solid #cccccc;
+  }
+
+  &.drag-hover {
+    border: 3px dashed $brand-primary;
+    background: #e8e9e9;
+
+    &:after {
+      content: 'Drag and Drop a rule to add it to this rulebook';
+      position: absolute;
+      left: 30%;
+      font-size: 20px;
+      top: 8px;
+    }
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+  .table {
+    tr {
+      td {
+        border-color: $table_row_border_color;
+        a {
+          text-decoration: underline;
+          color: $brand-primary;
+          cursor: pointer;
+        }
+      }
+      &:last-child {
+        border-bottom: 1px solid $table_row_border_color;
+      }
+    }
+  }
+}

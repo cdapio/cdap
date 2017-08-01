@@ -22,6 +22,7 @@ import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import isEmpty from 'lodash/isEmpty';
 
 require('./CreateRule.scss');
 
@@ -29,6 +30,12 @@ export default class CreateRule extends Component {
   static propTypes = {
     onClose: PropTypes.func
   };
+
+  componentDidMount() {
+    if (this.nameRef) {
+      setTimeout(() => this.nameRef.focus(), 1);
+    }
+  }
 
   state = {
     when: null,
@@ -61,6 +68,14 @@ export default class CreateRule extends Component {
       description: e.target.value
     });
   };
+
+  isActionsEmpty = () => {
+    return isEmpty(this.state.then.map(action => action.property).join(''));
+  };
+
+  isApplyBtnDisabled = () => {
+    return isEmpty(this.state.name) || isEmpty(this.state.description) || isEmpty(this.state.when) || this.isActionsEmpty();
+  }
 
   createRule = () => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -98,6 +113,7 @@ export default class CreateRule extends Component {
               value={this.state.name}
               onChange={this.onNameChange}
               placeholder="Add Name for Rule"
+              getRef={(ref) => this.nameRef = ref}
             />
           </Col>
           <Col xs="5">
@@ -143,12 +159,13 @@ export default class CreateRule extends Component {
         </Row>
         <hr />
         <div className="btn-container">
-          <div
+          <button
             className="btn btn-primary"
             onClick={this.createRule}
+            disabled={this.isApplyBtnDisabled()}
           >
             Apply
-          </div>
+          </button>
           <div
             className="btn btn-secondary"
             onClick={this.props.onClose}
