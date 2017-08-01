@@ -20,8 +20,8 @@ angular.module(PKG.name + '.commons')
     var vm = this;
 
     var dispatcher = DAGPlusPlusNodesDispatcher.getDispatcher();
-    dispatcher.register('onUndoActions', resetEndpointsAndConnections);
-    dispatcher.register('onRedoActions', resetEndpointsAndConnections);
+    var undoListenerId = dispatcher.register('onUndoActions', resetEndpointsAndConnections);
+    var redoListenerId = dispatcher.register('onRedoActions', resetEndpointsAndConnections);
 
     let localX, localY;
 
@@ -935,8 +935,8 @@ angular.module(PKG.name + '.commons')
       Mousetrap.unbind(['command+z', 'ctrl+z']);
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['del', 'backspace']);
-      dispatcher.unregister('onUndoActions');
-      dispatcher.unregister('onRedoActions');
+      dispatcher.unregister('onUndoActions', undoListenerId);
+      dispatcher.unregister('onRedoActions', redoListenerId);
       vm.instance.unbind(); // unbind all events
     });
 
