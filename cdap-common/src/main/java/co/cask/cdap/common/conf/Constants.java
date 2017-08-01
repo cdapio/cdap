@@ -1244,6 +1244,7 @@ public final class Constants {
     public static final String PAYLOAD_TABLE_HBASE_SPLITS = "messaging.payload.table.hbase.splits";
     public static final String SYSTEM_TOPICS = "messaging.system.topics";
     public static final String TABLE_CACHE_EXPIRATION_SECONDS = "messaging.table.expiration.seconds";
+    public static final String TABLE_HBASE_SPLIT_POLICY = "messaging.table.hbase.split.policy";
     public static final String TOPIC_DEFAULT_TTL_SECONDS = "messaging.topic.default.ttl.seconds";
     public static final String COPROCESSOR_METADATA_CACHE_UPDATE_FREQUENCY_SECONDS =
       "messaging.coprocessor.metadata.cache.update.frequency.seconds";
