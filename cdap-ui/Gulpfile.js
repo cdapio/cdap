@@ -301,7 +301,11 @@ gulp.task('js:app:babel', function() {
 });
 
 gulp.task('js:app', ['js:app:babel', 'js:app:hydrator', 'js:app:tracker', 'js:app:logviewer']);
-gulp.task('watch:js:app', ['watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:logviewer']);
+gulp.task('watch:js:app', [
+  'watch:js:app:hydrator',
+  'watch:js:app:tracker',
+  'watch:js:app:logviewer'
+]);
 gulp.task('polyfill', function () {
   return gulp.src([
     './app/polyfill.js',

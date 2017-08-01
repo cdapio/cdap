@@ -49,7 +49,7 @@
 
       <ul>
         <li ng-repeat="stage in PipelineUpgradeController.missingArtifactStages">
-          {{ stage.stageInfo.plugin.artifact.name }}
+          {{ stage.stageInfo.plugin.name }} <em>({{ stage.stageInfo.plugin.artifact.name }})</em>
         </li>
       </ul>
 
@@ -132,9 +132,16 @@
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"
-    ng-disabled="PipelineUpgradeController.fixAllDisabled"
+    ng-if="!PipelineUpgradeController.fixAllDisabled"
   >
     Fix All
+  </button>
+  <button
+    class="btn btn-primary"
+    ng-click="PipelineUpgradeController.proceed()"
+    ng-if="PipelineUpgradeController.fixAllDisabled"
+  >
+    Proceed
   </button>
   <button
     class="btn btn-default"

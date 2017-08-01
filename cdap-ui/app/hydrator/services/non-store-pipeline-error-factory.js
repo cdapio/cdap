@@ -96,7 +96,8 @@ let hasAtleastOneSource = (myHelpers, GLOBALS, nodes, cb) => {
     cb(false);
   }
   nodes.forEach( node => {
-    if (GLOBALS.pluginConvert[node.type] === 'source') {
+    let type = node.type || node.plugin.type;
+    if (GLOBALS.pluginConvert[type] === 'source') {
       countSource++;
     }
   });
@@ -149,7 +150,8 @@ let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
     cb(false);
   }
   nodes.forEach( node => {
-    if (GLOBALS.pluginConvert[node.type] === 'sink') {
+    let type = node.type || node.plugin.type;
+    if (GLOBALS.pluginConvert[type] === 'sink') {
       countSink++;
     }
   });
@@ -178,7 +180,8 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
   });
 
   angular.forEach(nodes, (node) => {
-    switch (GLOBALS.pluginConvert[node.type]) {
+    let type = node.type || node.plugin.type;
+    switch (GLOBALS.pluginConvert[type]) {
       case 'source':
         if (!outputConnection[node.name]){
           cb(node);

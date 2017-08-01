@@ -15,12 +15,13 @@
  */
 
 class HydratorUpgradeService {
-  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore) {
+  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore) {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
     this.$uibModal = $uibModal;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
+    this.leftPanelStore = HydratorPlusPlusLeftPanelStore;
   }
 
   _checkVersionIsInRange(range, version) {
@@ -46,74 +47,90 @@ class HydratorUpgradeService {
   }
 
   /**
-   * Create artifacts map based on the artifacts array we get from backend.
-   * This will be a map of artifact name with the latest artifact version info.
+   * Create plugin artifacts map based on left panel store.
+   * The key will be '<plugin name>-<plugin type>-<artifact name>'
+   * Each map will contain an array of all the artifacts and
+   * also information about highest version.
    * If there exist 2 artifacts with same version, it will maintain both scopes in an array.
    **/
-  _createArtifactsMap(artifactsList) {
-    let artifactsMap = {};
+  _createPluginsMap() {
+    let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+    let pluginTypes = Object.keys(plugins);
 
-    artifactsList.forEach((artifact) => {
-      let name = artifact.name;
+    let pluginsMap = {};
 
-      if (!artifactsMap[name]) {
-        artifactsMap[name] = artifact;
-      } else if (artifactsMap[name].version === artifact.version) {
-        artifactsMap[name].scope = [artifactsMap[name].scope, artifact.scope];
-      } else {
-        let prevVersion = new window.CaskCommon.Version(artifactsMap[name].version);
-        let currVersion = new window.CaskCommon.Version(artifact.version);
+    pluginTypes.forEach((type) => {
+      plugins[type].forEach((plugin) => {
+        let key = `${plugin.name}-${type}-${plugin.artifact.name}`;
 
-        if (currVersion.compareTo(prevVersion) === 1) {
-          artifactsMap[name] = artifact;
-        }
-      }
-    });
-
-    return artifactsMap;
-  }
-
-  getNonExistingStages(pipelineConfig) {
-    let stages = pipelineConfig.config.stages;
-
-    return this.myPipelineApi.getAllArtifacts({namespace: this.$state.params.namespace})
-      .$promise
-      .then((res) => {
-        let artifactsMap = this._createArtifactsMap(res);
-
-        let transformedStages = [];
-
-        stages.forEach((stage) => {
-          let stageArtifact = stage.plugin.artifact;
-
-          let data = {
-            stageInfo: stage,
-            error: null
-          };
-
-          if (!artifactsMap[stageArtifact.name]) {
-            data.error = 'NOTFOUND';
-          } else if (!this._checkVersionIsInRange(stageArtifact.version, artifactsMap[stageArtifact.name].version)) {
-            data.error = 'VERSION_MISMATCH';
-            data.suggestion = artifactsMap[stageArtifact.name];
-
-            if (typeof data.suggestion.scope !== 'string') {
-              // defaulting to USER scope when both version exists
-              data.suggestion.scope = 'USER';
-            }
-          } else if (artifactsMap[stageArtifact.name].scope.indexOf(stageArtifact.scope) < 0) {
-            data.error = 'SCOPE_MISMATCH';
-            data.suggestion = artifactsMap[stageArtifact.name];
-          }
-
-          transformedStages.push(data);
+        let allArtifacts = plugin.allArtifacts.map((artifactInfo) => {
+          return artifactInfo.artifact;
         });
 
-        return transformedStages;
+        let highestVersion;
 
-      }, (err) => {
-        console.log('cannot fetch artifacts', err);
+        allArtifacts.forEach((artifact) => {
+          if (!highestVersion) {
+            highestVersion = artifact;
+          } else if (highestVersion.version === artifact.version) {
+            highestVersion.scope = [highestVersion.scope, artifact.scope];
+          } else {
+            let prevVersion = new window.CaskCommon.Version(highestVersion.version);
+            let currVersion = new window.CaskCommon.Version(artifact.version);
+
+            if (currVersion.compareTo(prevVersion) === 1) {
+              highestVersion = artifact;
+            }
+          }
+        });
+
+        let value = {
+          allArtifacts,
+          highestVersion
+        };
+
+        pluginsMap[key] = value;
       });
+    });
+
+    return pluginsMap;
+  }
+
+  getErrorStages(pipelineConfig) {
+    let stages = pipelineConfig.config.stages;
+    let pluginsMap = this._createPluginsMap();
+
+    let transformedStages = [];
+
+    stages.forEach((stage) => {
+      let stageKey = `${stage.plugin.name}-${stage.plugin.type}-${stage.plugin.artifact.name}`;
+
+      let stageArtifact = stage.plugin.artifact;
+
+      let data = {
+        stageInfo: stage,
+        error: null
+      };
+
+      if (!pluginsMap[stageKey]) {
+        data.error = 'NOTFOUND';
+      } else if (!this._checkVersionIsInRange(stageArtifact.version, pluginsMap[stageKey].highestVersion.version)) {
+        data.error = 'VERSION_MISMATCH';
+        data.suggestion = pluginsMap[stageKey].highestVersion;
+
+        if (typeof data.suggestion.scope !== 'string') {
+          // defaulting to USER scope when both version exists
+          data.suggestion.scope = 'USER';
+        }
+      } else if (pluginsMap[stageKey].highestVersion.scope.indexOf(stageArtifact.scope) < 0) {
+        data.error = 'SCOPE_MISMATCH';
+        data.suggestion = pluginsMap[stageKey].highestVersion;
+      }
+
+      transformedStages.push(data);
+    });
+
+    return transformedStages;
   }
 
   upgradePipelineArtifactVersion(pipelineConfig) {
@@ -136,10 +153,9 @@ class HydratorUpgradeService {
       keyboard: false,
       windowTopClass: 'hydrator-modal center upgrade-modal',
       controllerAs: 'PipelineUpgradeController',
-      controller: function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS) {
+      controller: function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore) {
         let eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
         let globalEvents = window.CaskCommon.globalEvents;
-
 
         this.pipelineConfig = rPipelineConfig;
         this.cdapVersion = $rootScope.cdapVersion;
@@ -155,43 +171,41 @@ class HydratorUpgradeService {
 
         const checkStages = () => {
           this.loading = true;
-          HydratorUpgradeService.getNonExistingStages(rPipelineConfig)
-            .then((res) => {
-              allStages = res.map((stage) => {
-                stage.icon = DAGPlusPlusFactory.getIcon(stage.stageInfo.plugin.name.toLowerCase());
-                stage.type = GLOBALS.pluginConvert[stage.stageInfo.plugin.type];
-                return stage;
-              });
+          let transformedStages = HydratorUpgradeService.getErrorStages(rPipelineConfig);
 
-              this.problematicStages = [];
-              this.missingArtifactStages = [];
+          allStages = transformedStages.map((stage) => {
+            stage.icon = DAGPlusPlusFactory.getIcon(stage.stageInfo.plugin.name.toLowerCase());
+            stage.type = GLOBALS.pluginConvert[stage.stageInfo.plugin.type];
+            return stage;
+          });
 
-              res.forEach((artifact) => {
-                if (artifact.error === 'NOTFOUND') {
-                  this.missingArtifactStages.push(artifact);
-                } else if (artifact.error) {
-                  this.problematicStages.push(artifact);
-                }
-              });
+          this.problematicStages = [];
+          this.missingArtifactStages = [];
 
-              this.fixAllDisabled = this.missingArtifactStages.length > 0;
+          transformedStages.forEach((artifact) => {
+            if (artifact.error === 'NOTFOUND') {
+              this.missingArtifactStages.push(artifact);
+            } else if (artifact.error) {
+              this.problematicStages.push(artifact);
+            }
+          });
 
-              if (this.problematicStages.length === 0 && this.missingArtifactStages.length === 0 && this.pipelineArtifact) {
-                HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
-                $state.go('hydrator.create', { data: rPipelineConfig });
-              } else {
-                this.loading = false;
-              }
-            });
+          this.fixAllDisabled = this.missingArtifactStages.length > 0;
 
-          eventEmitter.off(globalEvents.MARKETCLOSING, checkStages);
+          if (this.problematicStages.length === 0 && this.missingArtifactStages.length === 0 && this.pipelineArtifact) {
+            HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
+            $state.go('hydrator.create', { data: rPipelineConfig });
+          } else {
+            this.loading = false;
+          }
         };
 
         checkStages();
 
+        let sub = HydratorPlusPlusLeftPanelStore.subscribe(checkStages);
+
         this.openMarket = () => {
           eventEmitter.emit(globalEvents.OPENMARKET);
-          eventEmitter.on(globalEvents.MARKETCLOSING, checkStages);
         };
 
         this.fixAll = () => {
@@ -213,15 +227,39 @@ class HydratorUpgradeService {
             delete newConfig.__ui__;
           }
 
-          console.log('newConfig', newConfig);
+          HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
+          $state.go('hydrator.create', { data: newConfig });
+        };
+
+        this.proceed = () => {
+          let newConfig = HydratorUpgradeService.upgradePipelineArtifactVersion(rPipelineConfig);
+
+          let stages = allStages.map((stage) => {
+            let updatedStageInfo = stage.stageInfo;
+
+            if (stage.error && stage.error === 'NOTFOUND') {
+              updatedStageInfo.error = true;
+              updatedStageInfo.errorCount = 1;
+              updatedStageInfo.errorMessage = 'Plugin cannot be found';
+            } else if (stage.error) {
+              updatedStageInfo.plugin.artifact = stage.suggestion;
+            }
+
+            return updatedStageInfo;
+          });
+
+          newConfig.config.stages = stages;
+
+          if (newConfig.__ui__) {
+            delete newConfig.__ui__;
+          }
 
           HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
           $state.go('hydrator.create', { data: newConfig });
         };
 
-
         $scope.$on('$destroy', () => {
-          eventEmitter.off(globalEvents.MARKETCLOSING, checkStages);
+          sub();
         });
 
       },
