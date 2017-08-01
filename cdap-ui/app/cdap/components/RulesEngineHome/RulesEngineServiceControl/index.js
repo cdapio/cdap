@@ -17,6 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import MyRuleEngineApi from 'api/rulesengine';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
+import LoadingSVG from 'components/LoadingSVG';
 
 require('./RulesEngineServiceControl.scss');
 
@@ -31,6 +32,9 @@ export default class RulesEngineServiceControl extends Component {
   };
 
   enableRulesEngine = () => {
+    this.setState({
+      loading: true
+    });
     enableDataPreparationService({
       shouldStopService: false,
       artifactName: 'rules-engine-service',
@@ -66,12 +70,18 @@ export default class RulesEngineServiceControl extends Component {
               <li>Speed and Scalability</li>
             </ul>
           </div>
-          <div
+          <button
             className="btn btn-primary"
             onClick={this.enableRulesEngine}
+            disabled={this.state.loading}
           >
-            Enable Rules Engine
-          </div>
+            {
+              this.state.loading ?
+                <LoadingSVG height="16px"/>
+              :
+                null
+            } <span className="btn-label">Enable Rules Engine</span>
+          </button>
         </div>
       </div>
     );

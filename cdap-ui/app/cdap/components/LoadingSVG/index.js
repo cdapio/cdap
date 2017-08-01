@@ -14,18 +14,18 @@
  * the License.
  */
 
-import React from 'react';
+import React, {PropTypes} from 'react';
 require('./LoadingSVG.scss');
 
-export default function LoadingSVG() {
+export default function LoadingSVG({height = "30px", width ="24px"}) {
   return (
     <svg
       className="loading-bar"
       version="1.1"
       x="0px"
       y="0px"
-      width="24px"
-      height="30px"
+      width={width}
+      height={height}
       viewBox="0 0 24 30"
       style={{'enable-background': 'new 0 0 50 50'}}
     >
@@ -131,3 +131,8 @@ export default function LoadingSVG() {
     </svg>
   );
 }
+
+LoadingSVG.propTypes = {
+  height: PropTypes.string,
+  width: PropTypes.string
+};

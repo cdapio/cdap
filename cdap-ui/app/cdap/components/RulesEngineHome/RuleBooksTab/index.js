@@ -22,6 +22,7 @@ import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
 import LoadingSVG from 'components/LoadingSVG';
+import classnames from 'classnames';
 
 require('./RulesBooksTab.scss');
 
@@ -104,7 +105,9 @@ export default class RuleBooksTab extends Component {
           value={this.state.searchStr}
           onChange={this.updateSearchStr}
         />
-        <div className="rule-books-container">
+        <div className={classnames("rule-books-container", {
+          'loading': isNil(this.state.rulebooks)
+        })}>
           <div
             className="rule-book center"
             onClick={this.createNewRuleBook}

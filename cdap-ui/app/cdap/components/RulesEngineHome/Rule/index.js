@@ -169,10 +169,10 @@ class Rule extends Component {
       );
   }
 
-  rederDetails = () => {
+  renderDetails = () => {
     if (this.state.detailsLoading) {
       return (
-        <Col xs="12">
+        <Col xs="12" className="text-xs-center">
           <LoadingSVG />
         </Col>
       );
@@ -250,7 +250,7 @@ class Rule extends Component {
           {this.renderRow()}
           {
             this.state.viewDetails ?
-              this.rederDetails()
+              this.renderDetails()
             :
               null
           }

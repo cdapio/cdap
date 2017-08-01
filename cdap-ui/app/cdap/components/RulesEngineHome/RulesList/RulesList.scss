@@ -21,7 +21,7 @@ $table_row_border_color: #cccccc;
 .rules-container {
   .row {
     padding: 10px 0;
-    border-bottom: 1px solid #cccccc;
+    border-bottom: 1px solid $table_row_border_color;
   }
 
   &.drag-hover {
@@ -42,19 +42,15 @@ $table_row_border_color: #cccccc;
     font-size: 15px;
     margin-bottom: 20px;
   }
-  .table {
-    tr {
-      td {
-        border-color: $table_row_border_color;
-        a {
-          text-decoration: underline;
-          color: $brand-primary;
-          cursor: pointer;
-        }
-      }
-      &:last-child {
-        border-bottom: 1px solid $table_row_border_color;
-      }
+  .btn-link {
+    &:focus,
+    &:active,
+    &:hover {
+      outline: none;
+      background: transparent;
+      border: 0;
     }
+    color: $brand-primary;
+    cursor: pointer;
   }
 }

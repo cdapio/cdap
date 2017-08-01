@@ -16,16 +16,14 @@
 
 import React, {Component} from 'react';
 import RulesEngineStore, {RULESENGINEACTIONS}  from 'components/RulesEngineHome/RulesEngineStore';
-import {Input, Button} from 'reactstrap';
 import isNil from 'lodash/isNil';
-import isEmpty from 'lodash/isEmpty';
-import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {getRulesForActiveRuleBook, resetCreateRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
 import RulesList from 'components/RulesEngineHome/RulesList';
 import LoadingSVG from 'components/LoadingSVG';
+import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
 
 require('./RuleBookDetails.scss');
 
@@ -33,16 +31,15 @@ require('./RuleBookDetails.scss');
 export default class RuleBookDetails extends Component {
   state = {
     activeRuleBook: null,
-    create: {
-      name: '',
-      description: '',
-      rules: []
-    }
+    createMode: false
   };
 
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
+      if (!rulebooks.list) {
+        return;
+      }
       let activeRulebook = rulebooks.activeRulebookId;
       let createMode = rulebooks.createRulebook;
       let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
@@ -64,7 +61,7 @@ export default class RuleBookDetails extends Component {
       })
       .subscribe(
         () => {
-          getRuleBooks();
+          getRulesForActiveRuleBook();
         },
         err => {
           RulesEngineStore.dispatch({
@@ -96,47 +93,13 @@ export default class RuleBookDetails extends Component {
     });
   };
 
-  createRulebook = () => {
-    createNewRuleBook(this.state.create);
-  }
-
   renderCreateRulebook = () => {
     return (
-      <div className="rule-book-create">
-        <div className="create-metadata-container">
-          <Input
-            value={this.state.create.name}
-            onChange={this.onNameChangeHandler}
-            placeholder="Add Name"
-          />
-          <div>
-            <span> Owner : </span>
-            <span> Admin </span>
-          </div>
-          <div>
-            <span> Created </span>
-            <span> Created Today </span>
-          </div>
-          <textarea
-            rows="10"
-            className="form-control"
-            value={this.state.create.description}
-            onChange={this.onDescriptionChangeHandler}
-            placeholder="Add Description"
-          >
-          </textarea>
-          <div className="button-container">
-            <Button
-              color="primary"
-              onClick={this.createRulebook}
-              disabled={isEmpty(this.state.create.name)}
-            >
-              Create
-            </Button>
-          </div>
-        </div>
-         <RulesList rules={[]} />
-      </div>
+      <CreateRulebook
+        onCancel={() => {
+          resetCreateRuleBook();
+        }}
+      />
     );
   };
 
@@ -160,7 +123,11 @@ export default class RuleBookDetails extends Component {
     }
 
     if (isNil(rulebooks.list)) {
-      return (<LoadingSVG />);
+      return (
+        <div className="rule-book-details loading">
+          <LoadingSVG />
+        </div>
+      );
     }
 
     if (isNil(this.state.activeRuleBook) && !rulebooks.list.length) {

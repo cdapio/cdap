@@ -106,17 +106,20 @@ const createNewRuleBook = (config) => {
   MyRulesEngineApi
     .createRulebook(urlParams, postBody,headers)
     .subscribe(
-      (res) => {
-        console.log('Done!!', res);
-        RulesEngineStore.dispatch({
-          type: RULESENGINEACTIONS.SETCREATERULEBOOK,
-          payload: {
-            isCreate: false
-          }
-        });
+      () => {
+        resetCreateRuleBook();
         getRuleBooks();
       }
     );
+};
+
+const resetCreateRuleBook = () => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.SETCREATERULEBOOK,
+    payload: {
+      isCreate: false
+    }
+  });
 };
 
 const resetError = () => {
@@ -132,5 +135,6 @@ export {
   getRulesForActiveRuleBook,
   setActiveRulebook,
   createNewRuleBook,
-  resetError
+  resetError,
+  resetCreateRuleBook
 };

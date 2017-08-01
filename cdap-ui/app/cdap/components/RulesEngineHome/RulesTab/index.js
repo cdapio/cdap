@@ -97,9 +97,7 @@ export default class RulesTab extends Component {
       <div className="container">
         <Row>
           <Col xs="7">
-            <div className="name">
-              Name
-            </div>
+            Name
           </Col>
           <Col xs="5">
             Last Updated

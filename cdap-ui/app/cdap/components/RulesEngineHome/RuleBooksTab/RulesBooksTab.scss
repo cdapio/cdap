@@ -47,6 +47,15 @@
         }
       }
     }
+    &.loading {
+      justify-content: center;
+      align-items: center;
+      height: calc(100% - 31px);
+
+      .rule-book.center {
+        display: none;
+      }
+    }
   }
 
   @media (max-width: 1000px) {

@@ -48,7 +48,13 @@ function RulesList({rules, onRemove, connectDropTarget, isOver}) {
                 <Col xs={3}>{rule.id}</Col>
                 <Col xs={5}>{rule.description}</Col>
                 <Col xs={3}>
-                  <a onClick={() => onRemove(rule.id)}> Remove </a>
+                  <button
+                    className="btn btn-link"
+                    href
+                    onClick={() => onRemove(rule.id)}
+                  >
+                    Remove
+                  </button>
                 </Col>
               </Row>
             );
