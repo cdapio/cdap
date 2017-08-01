@@ -18,6 +18,7 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleSchedules;
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
@@ -25,10 +26,14 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.workflow.Value;
+import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -37,6 +42,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
@@ -44,7 +50,9 @@ import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -59,6 +67,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.cdap.proto.id.WorkflowId;
@@ -86,6 +95,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -106,6 +116,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
   private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows");
+  private static final ApplicationId APP_MULT_ID = NamespaceId.DEFAULT.app(AppWithMultipleSchedules.NAME);
   private static final ProgramId WORKFLOW_1 = APP_ID.program(ProgramType.WORKFLOW,
                                                              AppWithFrequentScheduledWorkflows.SOME_WORKFLOW);
   private static final ProgramId WORKFLOW_2 = APP_ID.program(ProgramType.WORKFLOW,
@@ -114,6 +125,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_1);
   private static final ProgramId SCHEDULED_WORKFLOW_2 =
     APP_ID.program(ProgramType.WORKFLOW, AppWithFrequentScheduledWorkflows.SCHEDULED_WORKFLOW_2);
+  private static final ProgramId SOME_WORKFLOW = APP_MULT_ID.program(ProgramType.WORKFLOW,
+                                                                     AppWithMultipleSchedules.SOME_WORKFLOW);
+  private static final ProgramId ANOTHER_WORKFLOW = APP_MULT_ID.program(ProgramType.WORKFLOW,
+                                                                        AppWithMultipleSchedules.ANOTHER_WORKFLOW);
+  private static final ProgramId TRIGGERED_WORKFLOW = APP_MULT_ID.program(ProgramType.WORKFLOW,
+                                                                          AppWithMultipleSchedules.TRIGGERED_WORKFLOW);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -134,6 +151,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
+    messagingService = getInjector().getInstance(MessagingService.class);
+    store = getInjector().getInstance(Store.class);
 
     DynamicDatasetCache datasetCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(getInjector().getInstance(DatasetFramework.class)), getTxClient(),
@@ -251,10 +270,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   @Test
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
-    messagingService = getInjector().getInstance(MessagingService.class);
     CConfiguration cConf = getInjector().getInstance(CConfiguration.class);
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
-    store = getInjector().getInstance(Store.class);
 
     deploy(AppWithFrequentScheduledWorkflows.class);
 
@@ -472,6 +489,14 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
         return getRuns(program);
       }
     }, 10, TimeUnit.SECONDS);
+  }
+
+  private ProgramRunId getLatestRun(ProgramId workflowId) {
+    return (ProgramRunId) getAllRuns(workflowId).toArray()[0];
+  }
+
+  private Set<ProgramRunId> getAllRuns(ProgramId workflowId) {
+    return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).keySet();
   }
 
   private int getRuns(ProgramId workflowId) {

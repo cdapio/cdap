@@ -524,8 +524,8 @@
   </property>
 
   <property>
-    <name>program.status.trigger.topic</name>
-    <value>programstatustrigger</value>
+    <name>program.status.trigger.event.topic</name>
+    <value>programstatustriggerevent</value>
     <description>
       Topic name for publishing program status trigger events
     </description>
@@ -1731,7 +1731,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic},${program.status.event.topic},${program.status.trigger.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic},${program.status.event.topic},${program.status.trigger.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
