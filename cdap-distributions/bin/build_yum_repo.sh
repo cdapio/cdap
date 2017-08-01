@@ -106,6 +106,12 @@ function sign_packages_in_repo_staging() {
     else
       # Sign away
       sign_rpm_package ${__rpm}
+      # Verify signature succeeded
+      verify_signature_on_package ${__rpm}
+      __ret=$?
+      if [ ${__ret} -ne 0 ]; then
+        die "Package signature failed for ${__rpm}"
+      fi
     fi
   done
 }
