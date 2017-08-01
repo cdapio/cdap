@@ -74,7 +74,7 @@ public class ProgramClientTestRun extends ClientTestBase {
   @Test
   public void testBatchProgramCalls() throws Exception {
     NamespaceId namespace = NamespaceId.DEFAULT;
-    final ApplicationId appId = namespace.app(FakeApp.NAME);
+    ApplicationId appId = namespace.app(FakeApp.NAME);
     BatchProgram flow = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     BatchProgram service = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, "not" + FakeFlow.NAME);
@@ -130,18 +130,12 @@ public class ProgramClientTestRun extends ClientTestBase {
       // check programs are in stopped state
       programs = ImmutableList.of(flow, service);
       statusList = programClient.getStatus(namespace, programs);
-      for (final BatchProgramStatus status : statusList) {
+      for (BatchProgramStatus status : statusList) {
         Assert.assertEquals(200, status.getStatusCode());
         Assert.assertEquals("Program = " + status.getProgramId(), "STOPPED", status.getStatus());
 
-        Tasks.waitFor(true, new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return programClient.getProgramRuns(appId.program(status.getProgramType(), status.getProgramId()),
-                                                ProgramRunStatus.RUNNING.name(), 0L, Long.MAX_VALUE,
-                                                Integer.MAX_VALUE).isEmpty();
-          }
-        }, 5, TimeUnit.SECONDS);
+        assertProgramRuns(programClient, appId.program(status.getProgramType(), status.getProgramId()),
+                          ProgramRunStatus.RUNNING, 0);
       }
     } finally {
       try {

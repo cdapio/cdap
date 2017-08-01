@@ -857,7 +857,6 @@ public class AuthorizationTest extends TestBase {
       Assert.assertArrayEquals(key, results.read(key));
     }
     flowManager.stop();
-    flowManager.waitForStatus(false);
     flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
 
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
@@ -1166,7 +1165,7 @@ public class AuthorizationTest extends TestBase {
     // switch back to BOB and run spark again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
     sparkManager.start(args);
-    sparkManager.waitForRuns(ProgramRunStatus.COMPLETED, 1, 120, TimeUnit.SECONDS);
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());

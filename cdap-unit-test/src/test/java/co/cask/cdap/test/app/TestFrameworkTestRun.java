@@ -906,7 +906,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(2, workflowToken.getTokenData().size());
 
-    // Wait for all workflow runs to finish execution
+    // Wait for all workflow runs to finish execution, in case more than one run happened with an enabled schedule
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

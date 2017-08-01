@@ -58,7 +58,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final CConfiguration cConf;
   private final TopicMessageIdStore topicMessageIdStore;
   private final Store store;
-  private final ExecutorService taskExecutorService;
+  private ExecutorService taskExecutorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, TopicMessageIdStore topicMessageIdStore,
@@ -68,15 +68,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.cConf = cConf;
     this.topicMessageIdStore = topicMessageIdStore;
     this.store = store;
-    this.taskExecutorService =
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-status-subscriber-task-%d")
-                                                              .build());
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting ProgramNotificationSubscriberService");
 
+    taskExecutorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+                                                          .setNameFormat("program-status-subscriber-task-%d")
+                                                          .build());
     taskExecutorService.submit(new ProgramStatusNotificationSubscriberThread(
       cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)));
   }
@@ -144,36 +144,34 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       final Map<String, String> userArguments = getArguments(properties, ProgramOptionConstants.USER_OVERRIDES);
       final Map<String, String> systemArguments = getArguments(properties, ProgramOptionConstants.SYSTEM_OVERRIDES);
 
-      final long stateChangeTime = getTime(notification.getProperties(), ProgramOptionConstants.LOGICAL_START_TIME);
-      final long endTime = getTime(notification.getProperties(), ProgramOptionConstants.END_TIME);
+      final long stateChangeTimeSecs = getTimeSeconds(notification.getProperties(),
+                                                      ProgramOptionConstants.LOGICAL_START_TIME);
+      final long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
       final ProgramRunStatus programRunStatus = runStatus;
-      System.out.println("PERSIST " + programRunIdString + " " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
-          if (stateChangeTime == -1) {
+          if (stateChangeTimeSecs == -1) {
             throw new IllegalArgumentException("Start time was not specified in program starting notification for " +
                                                "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStart(programRunId.getParent(), programRunId.getRun(),
-                             TimeUnit.MILLISECONDS.toSeconds(stateChangeTime), twillRunId,
+              store.setStart(programRunId.getParent(), programRunId.getRun(), stateChangeTimeSecs, twillRunId,
                              userArguments, systemArguments);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
           break;
         case RUNNING:
-          if (stateChangeTime == -1) {
+          if (stateChangeTimeSecs == -1) {
             throw new IllegalArgumentException("Run time was not specified in program running notification for " +
                                                "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setRunning(programRunId.getParent(), programRunId.getRun(),
-                               TimeUnit.MILLISECONDS.toSeconds(stateChangeTime), twillRunId);
+              store.setRunning(programRunId.getParent(), programRunId.getRun(), stateChangeTimeSecs, twillRunId);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -198,21 +196,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           break;
         case COMPLETED:
         case KILLED:
-          if (endTime == -1) {
+          if (endTimeSecs == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
                                                "program run {}" + programRunId);
           }
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStop(programRunId.getParent(), programRunId.getRun(), TimeUnit.MILLISECONDS.toSeconds(endTime),
-                            programRunStatus, null);
+              store.setStop(programRunId.getParent(), programRunId.getRun(), endTimeSecs, programRunStatus, null);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
           break;
         case FAILED:
-          if (endTime == -1) {
+          if (endTimeSecs == -1) {
             throw new IllegalArgumentException("End time was not specified in program status notification for " +
                                                "program run {}" + programRunId);
           }
@@ -223,8 +220,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
-              store.setStop(programRunId.getParent(), programRunId.getRun(), TimeUnit.MILLISECONDS.toSeconds(endTime),
-                            programRunStatus, cause);
+              store.setStop(programRunId.getParent(), programRunId.getRun(), endTimeSecs, programRunStatus, cause);
               return null;
             }
           }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
@@ -235,19 +231,33 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
     }
 
-    private long getTime(Map<String, String> properties, String option) {
+    /**
+     * Helper method to extract the time from the given properties map, or return -1 if no value was found
+     *
+     * @param properties the properties map
+     * @param option the key to lookup in the properties map
+     * @return the time in seconds, or -1 if not found
+     */
+    private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
-      return (timeString == null) ? -1 : Long.valueOf(timeString);
+      return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
     }
 
+    /**
+     * Helper method to return the arguments from the given properties map at the given key. This function guarantees a
+     * non-null return value
+     *
+     * @param properties the properties map
+     * @param option the key to lookup in the properties map
+     * @return a map of properties from the properties map, or an empty map of no map was found
+     */
     private Map<String, String> getArguments(Map<String, String> properties, String option) {
       String argumentsString = properties.get(option);
       if (argumentsString == null) {
         return ImmutableMap.of();
       }
       Map<String, String> arguments = GSON.fromJson(argumentsString, STRING_STRING_MAP);
-      return (arguments == null) ? new BasicArguments().asMap()
-                                 : new BasicArguments(arguments).asMap();
+      return new BasicArguments(arguments).asMap();
     }
   }
 }

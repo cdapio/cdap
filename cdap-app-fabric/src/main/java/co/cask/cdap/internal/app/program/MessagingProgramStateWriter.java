@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.program;
 
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.app.RunIds;
@@ -70,7 +69,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
-
     publish(programRunId, properties);
   }
 
@@ -82,7 +80,6 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     if (twillRunId != null) {
       properties.put(ProgramOptionConstants.TWILL_RUN_ID, twillRunId);
     }
-
     publish(programRunId, properties);
   }
 

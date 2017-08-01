@@ -109,7 +109,9 @@ public interface ProgramController {
 
     State(ProgramRunStatus runStatus) {
       this.runStatus = runStatus;
-      this.programStatus = ProgramRunStatus.RUNNING == runStatus ? ProgramStatus.RUNNING : ProgramStatus.STOPPED;
+      this.programStatus = ProgramRunStatus.STARTING == runStatus || ProgramRunStatus.RUNNING == runStatus ?
+        ProgramStatus.RUNNING :
+        ProgramStatus.STOPPED;
     }
 
     public ProgramRunStatus getRunStatus() {

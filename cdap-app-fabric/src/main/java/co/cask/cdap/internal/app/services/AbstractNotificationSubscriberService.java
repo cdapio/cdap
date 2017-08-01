@@ -117,7 +117,14 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     @Override
     public void run() {
-      messageId = fetchLastProcessedMessageId();
+      // Fetch the last processed message for the topic
+      messageId = Transactionals.execute(transactional, new TxCallable<String>() {
+        @Override
+        public String call(DatasetContext context) throws Exception {
+          return loadMessageId();
+        }
+      });
+
       while (!stopping) {
         try {
           long sleepTime = processNotifications();
@@ -131,21 +138,12 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       }
     }
 
-    private String fetchLastProcessedMessageId() {
-      return Transactionals.execute(transactional, new TxCallable<String>() {
-        @Override
-        public String call(DatasetContext context) throws Exception {
-          return loadMessageId();
-        }
-      });
-    }
-
     /**
      * Fetches new notifications and configures time for next fetch
      *
      * @return sleep time in milliseconds before next fetch
      */
-    public long processNotifications() {
+    long processNotifications() {
       try {
         final MessageFetcher fetcher = messagingContext.getMessageFetcher();
         String lastFetchedMessageId = Transactionals.execute(transactional, new TxCallable<String>() {
@@ -187,7 +185,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      * @return the last fetched message id
      * @throws Exception
      */
-    public String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
+    String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
       String lastFetchedMessageId = null;
       try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
                                                                topic, 100, messageId)) {
@@ -207,6 +205,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
           lastFetchedMessageId = message.getId();
         }
 
+        // Persist the last fetched message id
         if (lastFetchedMessageId != null) {
           updateMessageId(lastFetchedMessageId);
         }
@@ -288,7 +287,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       jobQueue.addNotification(record, notification);
     }
 
-    public JobQueueDataset getJobQueue() {
+    protected JobQueueDataset getJobQueue() {
       return jobQueue;
     }
   }
