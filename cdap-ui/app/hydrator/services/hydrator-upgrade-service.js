@@ -214,29 +214,6 @@ class HydratorUpgradeService {
           let stages = allStages.map((stage) => {
             let updatedStageInfo = stage.stageInfo;
 
-            if (stage.error) {
-              updatedStageInfo.plugin.artifact = stage.suggestion;
-            }
-
-            return updatedStageInfo;
-          });
-
-          newConfig.config.stages = stages;
-
-          if (newConfig.__ui__) {
-            delete newConfig.__ui__;
-          }
-
-          HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
-          $state.go('hydrator.create', { data: newConfig });
-        };
-
-        this.proceed = () => {
-          let newConfig = HydratorUpgradeService.upgradePipelineArtifactVersion(rPipelineConfig);
-
-          let stages = allStages.map((stage) => {
-            let updatedStageInfo = stage.stageInfo;
-
             if (stage.error && stage.error === 'NOTFOUND') {
               updatedStageInfo.error = true;
               updatedStageInfo.errorCount = 1;

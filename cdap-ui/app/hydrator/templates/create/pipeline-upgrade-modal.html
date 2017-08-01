@@ -132,16 +132,9 @@
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"
-    ng-if="!PipelineUpgradeController.fixAllDisabled"
   >
-    Fix All
-  </button>
-  <button
-    class="btn btn-primary"
-    ng-click="PipelineUpgradeController.proceed()"
-    ng-if="PipelineUpgradeController.fixAllDisabled"
-  >
-    Proceed
+    <span ng-if="!PipelineUpgradeController.fixAllDisabled">Fix All</span>
+    <span ng-if="PipelineUpgradeController.fixAllDisabled">Proceed</span>
   </button>
   <button
     class="btn btn-default"
