@@ -20,7 +20,10 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.RetryStrategy;
@@ -30,6 +33,7 @@ import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
+import co.cask.cdap.internal.app.runtime.schedule.TaskExecutionException;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.CheckableConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintContext;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintResult;
@@ -296,7 +300,21 @@ class ConstraintCheckerService extends AbstractIdleService {
         return true;
       }
 
-      taskRunner.launch(job);
+      try {
+        taskRunner.launch(job);
+      } catch (NamespaceNotFoundException | TaskExecutionException e) {
+        if (e instanceof TaskExecutionException && !(e.getCause() instanceof ProgramNotFoundException
+          || e.getCause() instanceof ApplicationNotFoundException)) {
+          // Only catch the TaskExecutionException if its cause is ProgramNotFoundException
+          // or ApplicationNotFoundException
+          throw e;
+        }
+        // This can happen when the namespace or app containing the program is deleted, but the job is already in
+        // PENDING_LAUNCH state, so the job is not marked as to be deleted. Simply catch the TaskExecutionException
+        // to skip retrying on failure and continue to delete this job
+        LOG.info("Skip launching job {} because the program {} it tries to launch no longer exists",
+                 job.getJobKey(), job.getSchedule().getProgramId());
+      }
       // this should not have a conflict, because any updates to the job will first check to make sure that
       // it is not PENDING_LAUNCH
       jobQueue.deleteJob(job);
