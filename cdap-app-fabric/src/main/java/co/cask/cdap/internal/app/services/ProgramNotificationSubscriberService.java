@@ -210,22 +210,21 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           return;
       }
 
-      // TODO hack to prevent converting ProgramRunStatus to ProgramStatus for STARTING - is there a better way?
-      // Can we add ProgramStatus#STARTING? Since ProgramRunStatus should be deprecated anyways
-      // Do we map STARTING to INITIALIZING?
-      if (programRunStatus != ProgramRunStatus.STARTING) {
-        ProgramStatus programStatus = ProgramStatus.valueOf(programRunStatus.toString().toUpperCase());
-        String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
-                                                                                  programStatus);
+      ProgramStatus programStatus;
+      try {
+        programStatus = ProgramRunStatus.toProgramStatus(programRunStatus);
+      } catch (IllegalArgumentException e) {
+        return;
+      }
 
-        if (canTriggerOtherPrograms(context, triggerKeyForProgramStatus)) {
-          // Now forward the notification to the scheduler
-          TopicId programStatusTriggerTopic =
-            NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-          messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
-                                     .addPayloads(GSON.toJson(notification))
-                                     .build());
-        }
+      // Forward the notification to the scheduler only if it can trigger at least one other program
+      if (canTriggerOtherPrograms(context, Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
+                                                                                 programStatus))) {
+        TopicId programStatusTriggerTopic =
+          NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+        messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
+                                   .addPayloads(GSON.toJson(notification))
+                                   .build());
       }
     }
 

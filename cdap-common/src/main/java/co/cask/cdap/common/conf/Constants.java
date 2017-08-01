@@ -275,7 +275,7 @@ public final class Constants {
     /**
      * Topic name for publishing program status events to the messaging system
     */
-    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
+    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.trigger.event.topic";
 
     public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
   }

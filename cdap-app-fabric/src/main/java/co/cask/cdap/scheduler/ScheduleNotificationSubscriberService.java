@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramRunId;
@@ -84,6 +85,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
+    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread());
   }
 
   @Override
@@ -181,8 +183,8 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
    * Processes notifications that are guaranteed to trigger a program
    */
   private class ProgramStatusEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
-    ProgramStatusEventNotificationSubscriberThread(String topic) {
-      super(topic);
+    ProgramStatusEventNotificationSubscriberThread() {
+      super(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
     }
 
     @Override
@@ -190,13 +192,13 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       throws IOException, DatasetManagementException {
 
       String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
-      String programStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+      String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
 
       ProgramStatus programStatus = null;
       try {
-        programStatus = ProgramStatus.valueOf(programStatusString);
+        programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
       } catch (IllegalArgumentException e) {
-        LOG.warn("Invalid program status {} passed for programId {}", programStatusString, programRunIdString, e);
+        LOG.warn("Invalid program status {} passed for programId {}", programRunStatusString, programRunIdString, e);
         // Fall through, let the thread return normally
       }
 

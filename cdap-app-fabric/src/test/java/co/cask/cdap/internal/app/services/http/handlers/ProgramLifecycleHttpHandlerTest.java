@@ -16,7 +16,7 @@
 
 package co.cask.cdap.internal.app.services.http.handlers;
 
-import co.cask.cdap.AppWithMultipleScheduledWorkflows;
+import co.cask.cdap.AppWithMultipleSchedules;
 import co.cask.cdap.AppWithSchedule;
 import co.cask.cdap.AppWithServices;
 import co.cask.cdap.AppWithWorker;
@@ -61,7 +61,6 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.ScheduleUpdateDetail;
@@ -72,7 +71,6 @@ import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
@@ -137,7 +135,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
   private static final String APP_WITH_SERVICES_SERVICE_NAME = "NoOpService";
   private static final String APP_WITH_WORKFLOW_APP_ID = "AppWithWorkflow";
   private static final String APP_WITH_WORKFLOW_WORKFLOW_NAME = "SampleWorkflow";
-  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleScheduledWorkflows";
+  private static final String APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME = "AppWithMultipleSchedules";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_SOMEWORKFLOW = "SomeWorkflow";
   private static final String APP_WITH_MULTIPLE_WORKFLOWS_ANOTHERWORKFLOW = "AnotherWorkflow";
 
@@ -980,7 +978,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     NamespaceId testNamespace2 = new NamespaceId(TEST_NAMESPACE2);
     Id.Namespace idTestNamespace2 = testNamespace2.toId();
     Id.Artifact artifactId = Id.Artifact.from(idTestNamespace2, "appwithmultiplescheduledworkflows", VERSION1);
-    addAppArtifact(artifactId, AppWithMultipleScheduledWorkflows.class);
+    addAppArtifact(artifactId, AppWithMultipleSchedules.class);
     AppRequest<? extends Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     Id.Application appDefault = new Id.Application(idTestNamespace2, APP_WITH_MULTIPLE_WORKFLOWS_APP_NAME);
