@@ -18,7 +18,6 @@ package co.cask.cdap.flow.stream;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
@@ -74,7 +73,5 @@ public class FlowStreamIntegrationTestRun extends TestFrameworkTestBase {
     if (flowletMetrics.getException() > 0) {
       Assert.fail("StreamReader test failed");
     }
-    flowManager.stop();
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 }

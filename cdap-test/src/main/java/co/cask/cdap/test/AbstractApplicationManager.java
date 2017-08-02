@@ -69,5 +69,4 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
     return getHistory(programId.toEntityId(), status);
   }
-
 }

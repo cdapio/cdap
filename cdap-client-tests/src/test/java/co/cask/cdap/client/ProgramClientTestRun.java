@@ -36,6 +36,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
@@ -98,10 +99,10 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // wait for all programs to be in RUNNING status
-      programClient.waitForStatus(namespace.app(flow.getAppId()).flow(flow.getProgramId()),
-                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
-      programClient.waitForStatus(namespace.app(service.getAppId()).service(service.getProgramId()),
-                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
+      assertProgramRuns(programClient, namespace.app(flow.getAppId()).flow(flow.getProgramId()),
+                        ProgramRunStatus.RUNNING, 1);
+      assertProgramRuns(programClient, namespace.app(service.getAppId()).service(service.getProgramId()),
+                        ProgramRunStatus.RUNNING, 1);
 
       // make a batch call for status of programs, one of which does not exist
       List<BatchProgram> programs = ImmutableList.of(flow, service, missing);
@@ -162,7 +163,6 @@ public class ProgramClientTestRun extends ClientTestBase {
       LOG.info("Starting flow");
       programClient.start(flow);
       assertProgramRunning(programClient, flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.RUNNING, 1);
 
       LOG.info("Getting flow history");
       programClient.getAllProgramRuns(flow, 0, Long.MAX_VALUE, Integer.MAX_VALUE);
@@ -187,7 +187,6 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       LOG.info("Stopping flow");
       programClient.stop(flow);
-      assertProgramStopped(programClient, flow);
       assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
 
       testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
@@ -195,9 +194,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       LOG.info("Starting flow with debug");
       programClient.start(flow, true);
       assertProgramRunning(programClient, flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.RUNNING, 1);
       programClient.stop(flow);
-      assertProgramStopped(programClient, flow);
       assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 2);
     } finally {
       try {

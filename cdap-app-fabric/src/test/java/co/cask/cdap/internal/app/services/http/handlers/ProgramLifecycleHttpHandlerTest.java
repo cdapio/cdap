@@ -191,7 +191,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop the mapreduce program and check the status
     stopProgram(dummyMR2);
-    waitState(dummyMR2, STOPPED);
     verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED);
 
     // start multiple runs of the map-reduce program
@@ -211,7 +210,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     runId = historyRuns.get(1).getPid();
     stopProgram(dummyMR2, runId, 200);
-    waitState(dummyMR2, STOPPED);
     verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 2);
 
     // start multiple runs of the map-reduce program
@@ -221,7 +219,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop all runs of the map-reduce program
     stopProgram(dummyMR2, 200);
-    waitState(dummyMR2, STOPPED);
     verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 4);
 
     // get run records, all runs should be stopped
@@ -337,10 +334,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.RUNNING);
 
     stopProgram(wordFrequencyService1, null, 200, null);
-    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.KILLED);
     stopProgram(wordFrequencyService2, null, 200, null);
-    verifyProgramRuns(wordFrequencyService2, ProgramRunStatus.KILLED);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
+    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.KILLED);
+    verifyProgramRuns(wordFrequencyService2, ProgramRunStatus.KILLED);
     verifyProgramRuns(wordFrequencyServiceDefault, ProgramRunStatus.KILLED);
 
     Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
@@ -659,12 +656,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop the flow
     stopProgram(wordcountFlow1);
-    waitState(wordcountFlow1, STOPPED);
     verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
 
     // stop the service
     stopProgram(service2);
-    waitState(service2, STOPPED);
     verifyProgramRuns(service2, ProgramRunStatus.KILLED);
 
     // try posting a status request with namespace2 for apps in namespace1

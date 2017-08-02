@@ -341,7 +341,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     startProgram(programId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramStatus.RUNNING.name());
     verifyProgramRuns(programId, ProgramRunStatus.RUNNING);
 
     // Get runid for the running Workflow

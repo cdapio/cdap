@@ -759,7 +759,7 @@ public class AuthorizationTest extends TestBase {
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
 
-    waitForNoRunningPrograms(flowManager);
+    waitForStoppedPrograms(flowManager);
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -992,7 +992,7 @@ public class AuthorizationTest extends TestBase {
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
 
-    waitForNoRunningPrograms(sparkManager);
+    waitForStoppedPrograms(sparkManager);
   }
 
   @Test
@@ -1061,7 +1061,7 @@ public class AuthorizationTest extends TestBase {
 
     // stop all the runs of the workflow so that the current namespace can be deleted after the test
     workflowManager.stop();
-    waitForNoRunningPrograms(workflowManager);
+    waitForStoppedPrograms(workflowManager);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1347,7 +1347,7 @@ public class AuthorizationTest extends TestBase {
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
   }
 
-  private void waitForNoRunningPrograms(final ProgramManager programManager) throws Exception {
+  private void waitForStoppedPrograms(final ProgramManager programManager) throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

@@ -27,7 +27,6 @@ import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -57,8 +56,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-
-import static co.cask.cdap.proto.ProgramStatus.STOPPED;
 
 /**
  * Tests lineage recording and query.
@@ -115,7 +112,7 @@ public class LineageTestRun extends MetadataTestBase {
       RunId flowRunId = runAndWait(flow);
       // Wait for few seconds so that the stop time secs is more than start time secs.
       TimeUnit.SECONDS.sleep(2);
-      waitForStop(flow, true, ProgramRunStatus.KILLED);
+      waitForStop(flow, true);
       long stopTime = TimeMathParser.nowInSeconds();
 
       // Fetch dataset lineage
@@ -239,13 +236,13 @@ public class LineageTestRun extends MetadataTestBase {
       RunId workerRunId = runAndWait(worker);
 
       // Wait for programs to finish
-      waitForStop(flow, true, ProgramRunStatus.KILLED);
-      waitForStop(mapreduce, false, ProgramRunStatus.COMPLETED);
-      waitForStop(mapreduce2, false, ProgramRunStatus.COMPLETED);
-      waitForStop(spark, false, ProgramRunStatus.COMPLETED);
-      waitForStop(workflow, false, ProgramRunStatus.COMPLETED);
-      waitForStop(worker, false, ProgramRunStatus.COMPLETED);
-      waitForStop(service, true, ProgramRunStatus.KILLED);
+      waitForStop(flow, true);
+      waitForStop(mapreduce, false);
+      waitForStop(mapreduce2, false);
+      waitForStop(spark, false);
+      waitForStop(workflow, false);
+      waitForStop(worker, false);
+      waitForStop(service, true);
 
       long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
       long oneHour = TimeUnit.HOURS.toSeconds(1);
@@ -352,24 +349,13 @@ public class LineageTestRun extends MetadataTestBase {
     return getRunId(program);
   }
 
-  private void waitForStop(ProgramId program, boolean needsStop, ProgramRunStatus expected) throws Exception {
+  private void waitForStop(ProgramId program, boolean needsStop) throws Exception {
     if (needsStop && programClient.getStatus(program).equals(ProgramRunStatus.RUNNING.toString())) {
       LOG.info("Stopping program {}", program);
       programClient.stop(program);
     }
-    waitForProgramRun(program, expected);
+    assertProgramRuns(programClient, program, ProgramRunStatus.RUNNING, 0);
     LOG.info("Program {} has stopped", program);
-  }
-
-  private void waitForProgramRun(final ProgramId program, final ProgramRunStatus status) throws Exception {
-    final AtomicReference<Iterable<RunRecord>> runRecords = new AtomicReference<>();
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        runRecords.set(programClient.getProgramRuns(program, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE));
-        return Iterables.size(runRecords.get()) > 0;
-      }
-    }, 60, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
   }
 
   private RunId getRunId(ProgramId program) throws Exception {

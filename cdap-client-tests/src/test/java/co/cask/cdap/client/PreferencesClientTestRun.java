@@ -101,7 +101,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
 
       programClient.start(service, false, propMap);
       assertProgramRunning(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.RUNNING, 1);
 
       URL serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       HttpResponse response = getServiceResponse(serviceURL);
@@ -116,7 +115,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
       client.deleteInstancePreferences();
       programClient.start(service);
       assertProgramRunning(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.RUNNING, 1);
       propMap.remove("key");
       propMap.remove("run");
       propMap.remove("logical.start.time");
@@ -136,7 +134,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
       programClient.setRuntimeArgs(service, propMap);
       programClient.start(service);
       assertProgramRunning(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.RUNNING, 1);
       serviceURL = new URL(serviceClient.getServiceURL(service), AppReturnsArgs.ENDPOINT);
       response = getServiceResponse(serviceURL);
       assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -146,7 +143,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
-      assertProgramStopped(programClient, service);
       assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 3);
       appClient.delete(app);
     }

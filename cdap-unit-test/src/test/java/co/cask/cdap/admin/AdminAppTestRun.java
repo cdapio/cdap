@@ -289,7 +289,6 @@ public class AdminAppTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
-      serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     }
   }
 

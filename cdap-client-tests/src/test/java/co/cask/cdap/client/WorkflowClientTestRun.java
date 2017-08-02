@@ -89,8 +89,6 @@ public class WorkflowClientTestRun extends ClientTestBase {
       NamespaceId.DEFAULT.app(AppWithWorkflow.NAME).workflow(AppWithWorkflow.SampleWorkflow.NAME);
 
     programClient.start(workflowId, false, runtimeArgs);
-    assertProgramRunning(programClient, workflowId);
-    assertProgramRuns(programClient, workflowId, ProgramRunStatus.RUNNING, 1);
     programClient.waitForStatus(workflowId, ProgramStatus.STOPPED, 60, TimeUnit.SECONDS);
     assertProgramRuns(programClient, workflowId, ProgramRunStatus.COMPLETED, 1);
 
