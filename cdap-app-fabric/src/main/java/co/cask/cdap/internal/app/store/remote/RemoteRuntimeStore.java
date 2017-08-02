@@ -20,16 +20,10 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of RuntimeStore, which uses an HTTP Client to execute the actual store operations in a remote
