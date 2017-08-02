@@ -280,7 +280,7 @@ angular.module(PKG.name + '.commons')
           filter: function(event, element) {
             // we need this variable because when the user clicks on the endpoint circle, multiple
             // 'mousedown' events are fired
-            if (!endpointClicked) {
+            if (event.target.className === 'endpoint-circle' && !endpointClicked) {
               endpointClicked = true;
               let sourceElem = element.id;
               let endpoints = vm.instance.getEndpoints(sourceElem);
@@ -729,6 +729,9 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.removeNode(node.name);
       vm.instance.unbind('connectionDetached');
       vm.instance.remove(node.name);
+      selectedConnections = selectedConnections.filter(function(selectedConnObj) {
+        return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
+      });
       vm.instance.bind('connectionDetached', removeConnection);
     };
 
