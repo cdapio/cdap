@@ -137,7 +137,6 @@ public class MasterTwillApplication implements TwillApplication {
     TwillSpecification.Builder.RunnableSetter runnableSetter =
       addMessaging(
         addDatasetOpExecutor(
-          addLogSaverService(
             addStreamService(
               addTransactionService(
                 addMetricsProcessor (
@@ -147,9 +146,15 @@ public class MasterTwillApplication implements TwillApplication {
                 )
               )
             )
-          )
         )
       );
+
+    if (cConf.getBoolean("logsaver.enabled")) {
+      LOG.info("Adding logsaver runnable.");
+      runnableSetter = addLogSaverService(runnableSetter);
+    } else {
+      LOG.info("logsaver disabled - will not launch logsaver runnable.");
+    }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       LOG.info("Adding explore runnable.");
