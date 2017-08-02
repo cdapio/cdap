@@ -316,6 +316,9 @@ public final class HBaseTableFactory implements TableFactory {
       // Update CDAP version, table prefix
       HBaseTableUtil.setVersion(newDescriptor);
       HBaseTableUtil.setTablePrefix(newDescriptor, cConf);
+      // Disable auto-splitting
+      newDescriptor.setValue(HTableDescriptor.SPLIT_POLICY,
+                             cConf.get(Constants.MessagingSystem.TABLE_HBASE_SPLIT_POLICY));
 
       // Disable Table
       disableTable(ddlExecutor, tableId);
@@ -353,17 +356,20 @@ public final class HBaseTableFactory implements TableFactory {
           try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
             // If table exists, then skip creating coprocessor etc
             if (!tableExists) {
-              TableId metadataTableId = tableUtil.createHTableId(NamespaceId.SYSTEM, cConf.get(
-                Constants.MessagingSystem.METADATA_TABLE_NAME));
+              TableId metadataTableId = tableUtil.createHTableId(
+                NamespaceId.SYSTEM, cConf.get(Constants.MessagingSystem.METADATA_TABLE_NAME));
 
               ColumnFamilyDescriptorBuilder cfdBuilder =
                 HBaseTableUtil.getColumnFamilyDescriptorBuilder(Bytes.toString(COLUMN_FAMILY), hConf);
 
-              TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf);
-              tdBuilder.addColumnFamily(cfdBuilder.build())
+              TableDescriptorBuilder tdBuilder = HBaseTableUtil.getTableDescriptorBuilder(tableId, cConf)
+                .addColumnFamily(cfdBuilder.build())
                 .addProperty(Constants.MessagingSystem.HBASE_MESSAGING_TABLE_PREFIX_NUM_BYTES, Integer.toString(1))
                 .addProperty(Constants.MessagingSystem.KEY_DISTRIBUTOR_BUCKETS_ATTR, Integer.toString(splits))
                 .addProperty(Constants.MessagingSystem.HBASE_METADATA_TABLE_NAMESPACE, metadataTableId.getNamespace())
+                // Disable auto-splitting
+                .addProperty(HTableDescriptor.SPLIT_POLICY,
+                             cConf.get(Constants.MessagingSystem.TABLE_HBASE_SPLIT_POLICY))
                 .addCoprocessor(coprocessorManager.getCoprocessorDescriptor(coprocessor, Coprocessor.PRIORITY_USER));
 
               // Set the key distributor size the same as the initial number of splits,
