@@ -17,10 +17,10 @@
 import React, {Component} from 'react';
 import { Nav, NavItem, TabPane, TabContent, NavLink} from 'reactstrap';
 import classnames from 'classnames';
+import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
 import RuleBooksTab from 'components/RulesEngineHome/RuleBooksTab';
 import RulesTab from 'components/RulesEngineHome/RulesTab';
 import {getRuleBooks, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import {Provider} from 'react-redux';
 import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
@@ -31,6 +31,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import RulesEngineServiceControl from 'components/RulesEngineHome/RulesEngineServiceControl';
+import Helmet from 'react-helmet';
 
 require('./RulesEngineHome.scss');
 
@@ -100,6 +101,9 @@ class RulesEngineHome extends Component {
 
     return (
       <div className="rules-engine-home">
+        <Helmet
+          title="Rules Management"
+        />
         <div className="left-panel">
           <Nav tabs>
             <NavItem>

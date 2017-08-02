@@ -158,6 +158,7 @@ export default class RuleBookDetails extends Component {
           :
             <RulesList
               rules={rules}
+              rulebookid={rulebookDetails.id}
               onRemove={this.removeRule}
             />
         }

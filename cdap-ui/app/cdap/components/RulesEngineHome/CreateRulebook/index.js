@@ -27,15 +27,43 @@ export default class CreateRulebook extends Component {
     rules: []
   };
 
+  onNameChangeHandler = (e) => {
+    this.setState({
+      name: e.target.value
+    });
+  };
+
+  onDescriptionChangeHandler = (e) => {
+    this.setState({
+      description: e.target.value
+    });
+  };
+
+  onRulesAdd = (rule) => {
+    this.setState({
+      rules: [...this.state.rules, rule]
+    });
+  };
+
+  onRemove = (ruleid) => {
+    this.setState({
+      rules: this.state.rules.filter(rule => rule.id !== ruleid)
+    });
+  }
+
   createRulebook = () => {
-    createNewRuleBook(this.state.create);
+    let config = {};
+    let {name, description, rules} = this.state;
+    rules = rules.map(rule => rule.id);
+    config = {id: name, description, rules};
+    createNewRuleBook(config);
   }
   render() {
     return (
       <div className="rule-book-create">
         <div className="create-metadata-container">
           <Input
-            value={this.state.create.name}
+            value={this.state.name}
             onChange={this.onNameChangeHandler}
             placeholder="Add Name"
           />
@@ -50,7 +78,7 @@ export default class CreateRulebook extends Component {
           <textarea
             rows="10"
             className="form-control"
-            value={this.state.create.description}
+            value={this.state.description}
             onChange={this.onDescriptionChangeHandler}
             placeholder="Add Description"
           >
@@ -59,13 +87,17 @@ export default class CreateRulebook extends Component {
             <Button
               color="primary"
               onClick={this.createRulebook}
-              disabled={isEmpty(this.state.create.name)}
+              disabled={isEmpty(this.state.name)}
             >
               Create
             </Button>
           </div>
         </div>
-         <RulesList rules={[]} />
+         <RulesList
+          rules={this.state.rules}
+          onRuleAdd={this.onRulesAdd}
+          onRemove={this.onRemove}
+        />
       </div>
     );
   }

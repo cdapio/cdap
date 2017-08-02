@@ -98,7 +98,6 @@ const createNewRuleBook = (config) => {
   let headers = {'Content-Type': 'application/json'};
   let postBody = {
     ...config,
-    id: config.name,
     user: 'Admin',
     source: 'Website'
   };

@@ -14,13 +14,23 @@
  * the License.
 */
 
-import React, {PropTypes} from 'react';
+import React, {PropTypes, Component} from 'react';
 import {Row, Col} from 'reactstrap';
 import {DragTypes} from 'components/RulesEngineHome/Rule';
 import { DropTarget } from 'react-dnd';
 import classnames from 'classnames';
+import MyRulesEngineApi from 'api/rulesengine';
+import NamespaceStore from 'services/NamespaceStore';
+import {getRulesForActiveRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 
 require('./RulesList.scss');
+
+const dropTarget = {
+  drop: (props, monitor, component) => {
+    let item = monitor.getItem();
+    component.addRuleToRulebook(item.rule);
+  }
+};
 
 function collect(connect, monitor) {
   return {
@@ -30,45 +40,67 @@ function collect(connect, monitor) {
   };
 }
 
-function RulesList({rules, onRemove, connectDropTarget, isOver}) {
-  console.log('isOver', isOver);
-  return connectDropTarget(
-    <div className={classnames("rules-container", {
-      'drag-hover': isOver
-    })}>
-      <div className="title"> Rules ({rules.length}) </div>
-      {
-        (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
-          null
-        :
-          rules.map((rule, i) => {
-            return (
-              <Row>
-                <Col xs={1}>{i + 1}</Col>
-                <Col xs={3}>{rule.id}</Col>
-                <Col xs={5}>{rule.description}</Col>
-                <Col xs={3}>
-                  <button
-                    className="btn btn-link"
-                    href
-                    onClick={() => onRemove(rule.id)}
-                  >
-                    Remove
-                  </button>
-                </Col>
-              </Row>
-            );
-          })
-      }
-    </div>
-  );
+class RulesList extends Component {
+  static propTypes = {
+    rulebookid: PropTypes.string,
+    rules: PropTypes.arrayOf(PropTypes.object),
+    onRemove: PropTypes.func,
+    connectDropTarget: PropTypes.func.isRequired,
+    isOver: PropTypes.bool.isRequired,
+    onRuleAdd: PropTypes.func
+  };
+  addRuleToRulebook(rule) {
+    if (this.props.onRuleAdd) {
+      this.props.onRuleAdd(rule);
+      return;
+    }
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    MyRulesEngineApi
+      .addRuleToRuleBook({
+        namespace,
+        rulebookid: this.props.rulebookid,
+        ruleid: rule.id
+      })
+      .subscribe(
+        (res) => {
+          console.log(res);
+          getRulesForActiveRuleBook();
+        }
+      );
+  }
+  render() {
+    let rules = this.props.rules;
+    return this.props.connectDropTarget(
+      <div className={classnames("rules-container", {
+        'drag-hover': this.props.isOver
+      })}>
+        <div className="title"> Rules ({rules.length}) </div>
+        {
+          (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
+            null
+          :
+            rules.map((rule, i) => {
+              return (
+                <Row>
+                  <Col xs={1}>{i + 1}</Col>
+                  <Col xs={3}>{rule.id}</Col>
+                  <Col xs={5}>{rule.description}</Col>
+                  <Col xs={3}>
+                    <button
+                      className="btn btn-link"
+                      href
+                      onClick={() => this.props.onRemove(rule.id)}
+                    >
+                      Remove
+                    </button>
+                  </Col>
+                </Row>
+              );
+            })
+        }
+      </div>
+    );
+  }
 }
-RulesList.propTypes = {
-  rules: PropTypes.arrayOf(PropTypes.object),
-  onRemove: PropTypes.func,
-  isOver: PropTypes.bool.isRequired,
-  canDrop: PropTypes.bool.isRequired,
-  connectDropTarget: PropTypes.func.isRequired
-};
 
-export default DropTarget(DragTypes.RULE, {}, collect)(RulesList);
+export default DropTarget(DragTypes.RULE, dropTarget, collect)(RulesList);

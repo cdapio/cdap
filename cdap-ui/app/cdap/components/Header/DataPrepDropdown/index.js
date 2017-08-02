@@ -100,7 +100,7 @@ export default class DataPrepDown extends Component {
     return (
       <Dropdown
         className={classnames("daraprep-dropdown", {
-          'active': location.pathname.indexOf('dataprep') !== -1 || location.pathname.indexOf('rulesengine') !== -1
+          'active': location.pathname.match(/\/dataprep$/) || location.pathname.match(/\/rulesengine$/)
         })}
         isOpen={this.state.toggleDropdown}
         toggle={this.toggleMetadataDropdown}

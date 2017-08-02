@@ -41,7 +41,7 @@ export {DragTypes};
 const ruleSource = {
   beginDrag(props) {
     // Return the data describing the dragged item
-    const rule = { id: props.rule };
+    const rule = { rule: props.rule };
     return rule;
   },
 
@@ -49,11 +49,6 @@ const ruleSource = {
     if (!monitor.didDrop()) {
       return;
     }
-
-    // When dropped on a compatible target, do something
-    const item = monitor.getItem();
-    const dropResult = monitor.getDropResult();
-    console.log(item, dropResult);
   }
 };
 
