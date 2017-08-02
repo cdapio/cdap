@@ -16,13 +16,20 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import co.cask.cdap.api.data.batch.SplitReader
 import org.apache.spark.TaskContext
+import org.apache.spark.executor.InputMetrics
 
 /**
-  * Spark2 SplitReaderIterator, which does not have access to Spark's metrics.
+  * Spark 1 implementation of [[co.cask.cdap.app.runtime.spark.data.AbstractDatumScannerIterator]] that supports
+  * emitting metrics.
   */
-class SplitReaderIterator[K, V](context: TaskContext, splitReader: SplitReader[K, V])
-  extends AbstractDatumScannerIterator(context, splitReader) {
+class DatumScannerIterator[T](context: TaskContext,
+                              scanner: DatumScanner[T]) extends AbstractDatumScannerIterator[T](context, scanner) {
 
+  val inputMetrics: Option[InputMetrics] = context.taskMetrics.inputMetrics
+
+  override def incrementMetrics(): Unit = {
+    // TODO: Add metrics for size being read. It requires dataset to expose it.
+    inputMetrics.foreach(_.incRecordsRead(1L))
+  }
 }
