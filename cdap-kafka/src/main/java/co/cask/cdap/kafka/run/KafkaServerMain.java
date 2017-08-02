@@ -45,6 +45,13 @@ import java.util.concurrent.TimeUnit;
  * Runs embedded Kafka server.
  */
 public class KafkaServerMain extends DaemonMain {
+  //copy over JARs (to master and kafka lib dirs):
+  // cdap-kafka
+  // cdap-common (contains modified EmbeddedKafkaServer)
+  // kafka-server
+  // kafka-client
+  // tec.101
+
   private static final Logger LOG = LoggerFactory.getLogger(KafkaServerMain.class);
 
   private Properties kafkaProperties;
@@ -115,6 +122,10 @@ public class KafkaServerMain extends DaemonMain {
       int brokerId = generateBrokerId(address);
       LOG.info(String.format("Initializing server with broker id %d", brokerId));
       kafkaProperties.setProperty("broker.id", Integer.toString(brokerId));
+      // reserved.broker.max.id defaults to 1000, in kafka 0.9.0+
+      // otherwise: Caused by: java.lang.IllegalArgumentException: requirement failed: broker.id must be equal or
+      // greater than -1 and not greater than reserved.broker.max.id
+      kafkaProperties.setProperty("broker.id.generation.enable", Boolean.toString(false));
     }
 
     if (kafkaProperties.getProperty("zookeeper.connect") == null) {
