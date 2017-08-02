@@ -23,8 +23,11 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Collections;
@@ -34,20 +37,20 @@ import java.util.UUID;
 /**
  * Default implementation of {@link BatchSinkContext} for spark contexts.
  */
-public class SparkBatchSinkContext extends AbstractSparkBatchContext implements BatchSinkContext {
+public class SparkBatchSinkContext extends AbstractBatchContext implements BatchSinkContext {
   private final SparkBatchSinkFactory sinkFactory;
   private final boolean isPreviewEnabled;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               LookupProvider lookupProvider, StageSpec stageSpec) {
-    super(sparkContext, lookupProvider, stageSpec);
+                               PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, JavaSparkExecutionContext sec,
-                               DatasetContext datasetContext, long logicalStartTime, StageSpec stageSpec) {
-    super(sec, datasetContext, logicalStartTime, stageSpec);
+                               DatasetContext datasetContext, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
   }

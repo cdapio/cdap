@@ -17,29 +17,24 @@
 package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Map;
 
 /**
- * Implementation of {@link BatchActionContext} within a CDAP workflow.
+ * Implementation of {@link BatchActionContext} within a pipeline.
  */
 public class WorkflowBackedActionContext extends AbstractBatchContext implements BatchActionContext {
   private final WorkflowContext workflowContext;
 
-  public WorkflowBackedActionContext(WorkflowContext workflowContext,
-                                     Metrics metrics,
-                                     StageSpec stageSpec,
-                                     BasicArguments arguments) {
-    super(workflowContext, metrics, new DatasetContextLookupProvider(workflowContext),
-          workflowContext.getLogicalStartTime(), workflowContext.getAdmin(), stageSpec, arguments);
+  public WorkflowBackedActionContext(WorkflowContext workflowContext, PipelineRuntime pipelineRuntime,
+                                     StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, workflowContext, workflowContext.getAdmin());
     this.workflowContext = workflowContext;
   }
 
@@ -56,10 +51,5 @@ public class WorkflowBackedActionContext extends AbstractBatchContext implements
   @Override
   public boolean isSuccessful() {
     return workflowContext.getState().getStatus() == ProgramStatus.COMPLETED;
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    throw new UnsupportedOperationException("Deprecated getHadoopJob() method is not supported.");
   }
 }

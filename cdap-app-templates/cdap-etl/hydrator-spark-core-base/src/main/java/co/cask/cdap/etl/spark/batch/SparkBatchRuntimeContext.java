@@ -16,15 +16,12 @@
 
 package co.cask.cdap.etl.spark.batch;
 
-import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
-import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.NoLookupProvider;
 import co.cask.cdap.etl.spec.StageSpec;
 
@@ -36,27 +33,13 @@ import java.util.Map;
 public class SparkBatchRuntimeContext extends AbstractTransformContext
   implements BatchRuntimeContext, BatchJoinerRuntimeContext {
 
-  private final long logicalStartTime;
-
-  public SparkBatchRuntimeContext(PluginContext pluginContext, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
-                                  long logicalStartTime, StageSpec stageSpec, BasicArguments arguments) {
-    super(pluginContext, serviceDiscoverer, metrics, NoLookupProvider.INSTANCE, stageSpec, arguments);
-    this.logicalStartTime = logicalStartTime;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return logicalStartTime;
+  public SparkBatchRuntimeContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, NoLookupProvider.INSTANCE);
   }
 
   @Override
   public Map<String, String> getRuntimeArguments() {
     return arguments.asMap();
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    throw new UnsupportedOperationException("Not supported");
   }
 
   @Override

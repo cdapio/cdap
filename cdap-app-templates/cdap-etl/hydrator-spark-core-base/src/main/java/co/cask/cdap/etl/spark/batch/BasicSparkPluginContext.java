@@ -16,15 +16,16 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.SparkConf;
+
+import javax.annotation.Nullable;
 
 /**
  * Implementation of SparkPluginContext that delegates to a SparkContext.
@@ -33,17 +34,10 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
 
   private final SparkClientContext sparkContext;
 
-  public BasicSparkPluginContext(SparkClientContext sparkContext, StageSpec stageSpec) {
-    super(sparkContext, sparkContext.getMetrics(), new DatasetContextLookupProvider(sparkContext),
-          sparkContext.getLogicalStartTime(), sparkContext.getAdmin(), stageSpec, new BasicArguments(sparkContext));
+  public BasicSparkPluginContext(@Nullable SparkClientContext sparkContext, PipelineRuntime pipelineRuntime,
+                                 StageSpec stageSpec, DatasetContext datasetContext, Admin admin) {
+    super(pipelineRuntime, stageSpec, datasetContext, admin);
     this.sparkContext = sparkContext;
-  }
-
-  public BasicSparkPluginContext(JavaSparkExecutionContext sec, DatasetContext datasetContext, StageSpec stageSpec) {
-    super(sec.getPluginContext(), sec.getServiceDiscoverer(), datasetContext, sec.getMetrics(),
-          new DatasetContextLookupProvider(datasetContext), sec.getLogicalStartTime(), sec.getAdmin(), stageSpec,
-          new BasicArguments(sec));
-    this.sparkContext = null;
   }
 
   @Override
@@ -52,10 +46,5 @@ public class BasicSparkPluginContext extends AbstractBatchContext implements Spa
       throw new UnsupportedOperationException("Spark configurations cannot be updated in realtime pipelines.");
     }
     sparkContext.setSparkConf(sparkConf);
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
   }
 }

@@ -16,34 +16,27 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.Admin;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchAggregatorContext;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
-import org.apache.hadoop.mapreduce.Job;
 
 /**
  * Batch Aggregator Context.
  */
 public class DefaultAggregatorContext extends AbstractBatchContext implements BatchAggregatorContext {
-  private final Job job;
   private Integer numPartitions;
   private Class<?> groupKeyClass;
   private Class<?> groupValueClass;
 
-  public DefaultAggregatorContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
-    super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
-    this.job = context.getHadoopJob();
-  }
-
-  public DefaultAggregatorContext(SparkClientContext context, StageSpec stageSpec) {
-    super(context, context.getMetrics(), new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
-    this.job = null;
+  public DefaultAggregatorContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
+                                  DatasetContext datasetContext, Admin admin) {
+    super(pipelineRuntime, stageSpec, datasetContext, admin);
   }
 
   @Override
@@ -75,13 +68,5 @@ public class DefaultAggregatorContext extends AbstractBatchContext implements Ba
 
   public Class<?> getGroupValueClass() {
     return groupValueClass;
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    if (job == null) {
-      throw new UnsupportedOperationException("Hadoop Job is not available in Spark");
-    }
-    return (T) job;
   }
 }

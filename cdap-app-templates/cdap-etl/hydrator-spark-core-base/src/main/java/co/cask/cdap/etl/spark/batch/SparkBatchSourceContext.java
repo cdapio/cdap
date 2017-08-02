@@ -19,8 +19,9 @@ package co.cask.cdap.etl.spark.batch;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.UUID;
@@ -28,13 +29,13 @@ import java.util.UUID;
 /**
  * Default implementation of {@link BatchSourceContext} for spark contexts.
  */
-public class SparkBatchSourceContext extends AbstractSparkBatchContext implements BatchSourceContext {
+public class SparkBatchSourceContext extends AbstractBatchContext implements BatchSourceContext {
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 StageSpec stageSpec) {
-    super(sparkContext, new DatasetContextLookupProvider(sparkContext), stageSpec);
+                                 PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }

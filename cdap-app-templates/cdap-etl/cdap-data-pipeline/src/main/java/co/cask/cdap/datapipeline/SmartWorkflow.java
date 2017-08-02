@@ -51,13 +51,13 @@ import co.cask.cdap.etl.batch.connector.AlertReader;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
 import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ControlDag;
@@ -207,6 +207,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
                                                             spec.isStageLoggingEnabled(),
                                                             spec.isProcessTimingEnabled());
@@ -224,7 +225,8 @@ public class SmartWorkflow extends AbstractWorkflow {
       stageSpecs.put(stageName, stageSpec);
       if (AlertPublisher.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
         AlertPublisher alertPublisher = context.newPluginInstance(stageName, macroEvaluator);
-        AlertPublisherContext alertContext = new DefaultAlertPublisherContext(context, workflowMetrics, stageSpec);
+        AlertPublisherContext alertContext =
+          new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, context, context.getAdmin());
         alertPublisher.initialize(alertContext);
         alertPublishers.put(stageName, alertPublisher);
       }
@@ -239,13 +241,12 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // Execute the post actions only if pipeline is not running in preview mode.
     if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
-      BasicArguments arguments = new BasicArguments(workflowContext.getToken(), workflowContext.getRuntimeArguments());
+      PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
         StageSpec stageSpec = stageSpecs.get(name);
-        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
-                                                                     stageSpec, arguments);
+        BatchActionContext context = new WorkflowBackedActionContext(workflowContext, pipelineRuntime, stageSpec);
         try {
           action.run(context);
         } catch (Throwable t) {

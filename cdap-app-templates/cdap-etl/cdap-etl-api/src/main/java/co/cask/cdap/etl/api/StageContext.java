@@ -33,11 +33,33 @@ import javax.annotation.Nullable;
 public interface StageContext extends ServiceDiscoverer {
 
   /**
-   * Gets the unique stage name of the transform, useful for setting the context of logging in transforms.
+   * Gets the unique stage name.
    *
    * @return stage name
    */
   String getStageName();
+
+  /**
+   * Gets the namespace of the pipeline.
+   *
+   * @return the pipeline namespace
+   */
+  String getNamespace();
+
+  /**
+   * Gets the name of the pipeline.
+   *
+   * @return pipeline name
+   */
+  String getPipelineName();
+
+  /**
+   * Returns the logical start time of the batch. For batch pipelines, this is the time the pipeline was triggered.
+   * For realtime pipelines, this is the time for the current microbatch being processed.
+   *
+   * @return Logical time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
+   */
+  long getLogicalStartTime();
 
   /**
    * Get an instance of {@link StageMetrics}, used to collect metrics for this stage. Metrics emitted from one stage
@@ -119,6 +141,16 @@ public interface StageContext extends ServiceDiscoverer {
    */
   @Nullable
   Schema getOutputSchema();
+
+  /**
+   * Return the output port schemas for the stage. The map key is the port name and the map value is the schema for
+   * that port. This map is the same map that was set at configure time by {@link MultiOutputPipelineConfigurable}.
+   * Stages that do not implement {@link MultiOutputPipelineConfigurable} should not use this method. If they do,
+   * an empty map will be returned.
+   *
+   * @return the map of output ports to their schema
+   */
+  Map<String, Schema> getOutputPortSchemas();
 
   /**
    * Return the pipeline arguments for this run.

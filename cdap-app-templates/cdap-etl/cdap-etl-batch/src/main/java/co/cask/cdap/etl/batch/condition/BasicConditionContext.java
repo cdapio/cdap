@@ -25,6 +25,7 @@ import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.api.condition.StageStatistics;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
@@ -40,7 +41,7 @@ public class BasicConditionContext extends AbstractStageContext implements Condi
 
   public BasicConditionContext(WorkflowContext context, ServiceDiscoverer serviceDiscoverer, Metrics metrics,
                                StageSpec stageInfo, BasicArguments arguments) {
-    super(context, serviceDiscoverer, metrics, stageInfo, arguments);
+    super(new PipelineRuntime(context, metrics), stageInfo);
     this.context = context;
   }
 

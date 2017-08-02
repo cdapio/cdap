@@ -27,6 +27,7 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.common.AbstractStageContext;
 import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.tephra.TransactionFailureException;
@@ -45,7 +46,9 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final Admin admin;
 
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
-    super(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(), stageSpec, new BasicArguments(sec));
+    super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
+                              sec.getLogicalStartTime(), new BasicArguments(sec), sec.getMetrics(),
+                              sec.getPluginContext(), sec.getServiceDiscoverer()), stageSpec);
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();

@@ -25,8 +25,8 @@ import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
-import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -104,16 +104,15 @@ public class ETLWorkflow extends AbstractWorkflow {
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
     if (workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
       return;
     }
-    BasicArguments arguments = new BasicArguments(workflowContext.getToken(), workflowContext.getRuntimeArguments());
     for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
       String name = endingActionEntry.getKey();
       PostAction action = endingActionEntry.getValue();
       StageSpec stageSpec = postActionSpecs.get(name);
-      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, workflowMetrics,
-                                                                   stageSpec, arguments);
+      BatchActionContext context = new WorkflowBackedActionContext(workflowContext, pipelineRuntime, stageSpec);
       try {
         action.run(context);
       } catch (Throwable t) {

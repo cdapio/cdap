@@ -26,15 +26,16 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
-import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.function.AggregatorAggregateFunction;
 import co.cask.cdap.etl.spark.function.AggregatorGroupByFunction;
 import co.cask.cdap.etl.spark.function.CountingFunction;
@@ -138,8 +139,9 @@ public class RDDCollection<T> implements SparkCollection<T> {
   @Override
   public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
     compute.initialize(sparkPluginContext);
 
     JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
@@ -158,8 +160,9 @@ public class RDDCollection<T> implements SparkCollection<T> {
   @Override
   public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
     String stageName = stageSpec.getName();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     SparkExecutionPluginContext sparkPluginContext =
-      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
+      new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
 
     JavaRDD<T> countedRDD = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), "records.in", null)).cache();
     sink.run(sparkPluginContext, countedRDD);
@@ -169,11 +172,10 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public void publishAlerts(StageSpec stageSpec) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
     AlertPublisher alertPublisher = pluginFunctionContext.createPlugin();
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
 
     AlertPublisherContext alertPublisherContext =
-      new DefaultAlertPublisherContext(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(),
-                                       stageSpec, new BasicArguments(sec), sec.getMessagingContext(),
-                                       sec.getAdmin());
+      new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, sec.getMessagingContext(), sec.getAdmin());
     alertPublisher.initialize(alertPublisherContext);
     StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageSpec.getName());
     TrackedIterator<Alert> trackedAlerts =

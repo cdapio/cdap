@@ -26,26 +26,30 @@ import scala.Tuple2;
 /**
  * Function that uses a BatchSink to transform one object into a pair.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
+ *
+ * @param <IN> type of input object
+ * @param <OUT_KEY> type of output key
+ * @param <OUT_VAL> type of output val
  */
-public class BatchSinkFunction implements PairFlatMapFunc<Object, Object, Object> {
+public class BatchSinkFunction<IN, OUT_KEY, OUT_VAL> implements PairFlatMapFunc<IN, OUT_KEY, OUT_VAL> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Object, KeyValue<Object, Object>> transform;
-  private transient TransformingEmitter<KeyValue<Object, Object>, Tuple2<Object, Object>> emitter;
+  private transient TrackedTransform<IN, KeyValue<OUT_KEY, OUT_VAL>> transform;
+  private transient TransformingEmitter<KeyValue<OUT_KEY, OUT_VAL>, Tuple2<OUT_KEY, OUT_VAL>> emitter;
 
   public BatchSinkFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<Tuple2<Object, Object>> call(Object input) throws Exception {
+  public Iterable<Tuple2<OUT_KEY, OUT_VAL>> call(IN input) throws Exception {
     if (transform == null) {
-      BatchSink<Object, Object, Object> batchSink = pluginFunctionContext.createPlugin();
+      BatchSink<IN, OUT_KEY, OUT_VAL> batchSink = pluginFunctionContext.createPlugin();
       batchSink.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer());
-      emitter = new TransformingEmitter<>(new Function<KeyValue<Object, Object>, Tuple2<Object, Object>>() {
+      emitter = new TransformingEmitter<>(new Function<KeyValue<OUT_KEY, OUT_VAL>, Tuple2<OUT_KEY, OUT_VAL>>() {
         @Override
-        public Tuple2<Object, Object> apply(KeyValue<Object, Object> input) {
+        public Tuple2<OUT_KEY, OUT_VAL> apply(KeyValue<OUT_KEY, OUT_VAL> input) {
           return new Tuple2<>(input.getKey(), input.getValue());
         }
       });

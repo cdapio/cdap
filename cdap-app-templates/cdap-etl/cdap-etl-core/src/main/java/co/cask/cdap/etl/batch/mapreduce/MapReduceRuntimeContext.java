@@ -19,16 +19,14 @@ package co.cask.cdap.etl.batch.mapreduce;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
-import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
-import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.spec.StageSpec;
-import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -41,21 +39,17 @@ import java.util.concurrent.Callable;
  */
 public class MapReduceRuntimeContext extends AbstractTransformContext
   implements BatchRuntimeContext, BatchJoinerRuntimeContext {
+  private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   private final MapReduceTaskContext context;
-  private final Map<String, String> runtimeArgs;
-  private final Caller caller;
 
-  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
-                                 LookupProvider lookup, Map<String, String> runtimeArgs, StageSpec stageSpec) {
-    super(context, context, metrics, lookup, stageSpec, new BasicArguments(context.getWorkflowToken(), runtimeArgs));
+  public MapReduceRuntimeContext(MapReduceTaskContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(context));
     this.context = context;
-    this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
-    this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   }
 
   @Override
   public long getLogicalStartTime() {
-    return caller.callUnchecked(new Callable<Long>() {
+    return CALLER.callUnchecked(new Callable<Long>() {
       @Override
       public Long call() {
         return context.getLogicalStartTime();
@@ -65,17 +59,12 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    return runtimeArgs;
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    throw new UnsupportedOperationException("Not supported");
+    return arguments.asMap();
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    return caller.callUnchecked(new Callable<T>() {
+    return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(name);
@@ -86,7 +75,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name)
     throws DatasetInstantiationException {
-    return caller.callUnchecked(new Callable<T>() {
+    return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(namespace, name);
@@ -97,7 +86,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return caller.callUnchecked(new Callable<T>() {
+    return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(name, arguments);
@@ -108,7 +97,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   @Override
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments) throws DatasetInstantiationException {
-    return caller.callUnchecked(new Callable<T>() {
+    return CALLER.callUnchecked(new Callable<T>() {
       @Override
       public T call() throws DatasetInstantiationException {
         return context.getDataset(namespace, name, arguments);
@@ -118,7 +107,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public void releaseDataset(final Dataset dataset) {
-    caller.callUnchecked(new Callable<Void>() {
+    CALLER.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         context.releaseDataset(dataset);
@@ -129,7 +118,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
 
   @Override
   public void discardDataset(final Dataset dataset) {
-    caller.callUnchecked(new Callable<Void>() {
+    CALLER.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
         context.discardDataset(dataset);

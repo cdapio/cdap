@@ -41,13 +41,8 @@ public interface BatchRuntimeContext extends DatasetContext, TransformContext {
    * Returns runtime arguments of the Batch Job.
    *
    * @return runtime arguments of the Batch Job.
-   */
-  Map<String, String> getRuntimeArguments();
-
-  /**
-   * Returns the hadoop job.
-   * @deprecated this method will be removed.
+   * @deprecated use {@link #getArguments()} instead
    */
   @Deprecated
-  <T> T getHadoopJob();
+  Map<String, String> getRuntimeArguments();
 }
