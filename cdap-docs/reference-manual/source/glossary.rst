@@ -220,17 +220,6 @@ Glossary
    ETL
       Refers to the *Extract*, *Transform* and *Load* of data.
 
-   ETL Application
-      A type of :term:`Application` created from one of the system :term:`artifacts <artifact>` shipped with CDAP,
-      ``cdap-data-pipeline`` and ``cdap-etl-realtime``. An ETL Application defines a source to read
-      from, zero or more transformations to perform on the data read from the source, and one or more
-      sinks to write the transformed data to.
-
-   ETL Plugin
-      A :term:`plugin` of type *BatchSource*, *RealtimeSource*, *BatchSink*, *RealtimeSink,* or
-      *Transformation*, packaged in a JAR file format, for use as a :term:`plugin`
-      in an :term:`ETL Application`.
-
    Plugin
       A plugin extends an :term:`application` by implementing an interface
       expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.

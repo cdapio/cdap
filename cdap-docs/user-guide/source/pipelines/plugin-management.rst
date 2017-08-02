@@ -87,7 +87,7 @@ A sample JDBC Driver Plugin configuration:
   .. parsed-literal::
   
     {
-      "parents": [ "cdap-etl-batch[|version|,\ |version|]" ],
+      "parents": [ "cdap-data-pipeline[|version|,\ |version|]" ],
       "plugins": [
         {
           "name" : "mysql",

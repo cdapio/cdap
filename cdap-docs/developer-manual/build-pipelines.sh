@@ -281,6 +281,8 @@ function pipelines_download_includes() {
   download_md_file mongodb-plugins MongoDB-batchsink.md
   download_md_file mongodb-plugins MongoDB-batchsource.md
   download_md_file solrsearch-plugins SolrSearch-batchsink.md
+  download_md_file spark-plugins File-streamingsource.md
+  download_md_file spark-plugins HTTPPoller-streamingsource.md
   download_md_file spark-plugins Twitter-streamingsource.md
   download_md_file transform-plugins CloneRecord-transform.md
   download_md_file transform-plugins Compressor-transform.md

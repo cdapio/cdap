@@ -17,7 +17,6 @@ CDAP Pipelines Version |cdap-pipelines-version|
 These plugins work with:
 
   - *Data Pipeline - Batch* (``cdap-data-pipeline`` artifact)
-  - *Batch Pipeline* (``cdap-etl-batch`` artifact, deprecated as of CDAP 3.5.0)
 
 .. toctree::
     :maxdepth: 1
@@ -39,14 +38,4 @@ These plugins work with:
     :glob:
     
     *streamingsource*
-
-These plugins work with:
-
-  - *Realtime Pipeline* (``cdap-etl-realtime`` artifact, deprecated as of CDAP 3.5.0)
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    *realtime*
 

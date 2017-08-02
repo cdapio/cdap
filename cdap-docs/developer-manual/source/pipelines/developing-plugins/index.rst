@@ -26,10 +26,6 @@ pipelines should refer to the documentation on :ref:`using plugins
 CDAP provides for the creation of custom plugins to extend the existing
 ``cdap-data-pipeline`` and ``cdap-data-streams`` system artifacts.
 
-**Note:** *As of CDAP 3.5.0, the* ``cdap-etl-batch`` *artifact has been deprecated and replaced with the*
-``cdap-data-pipeline``, *artifact, and the* ``cdap-etl-realtime`` *artifact has been deprecated and replaced with the*
-``cdap-data-streams``, *artifact.*
-
 Deploying plugins is covered under :ref:`Plugin Management: Plugin Deployment
 <cdap-pipelines-plugin-management-deployment>`, for deploying as either a system or user
 artifact.
