@@ -52,6 +52,13 @@ public class ConnectorDag extends Dag {
     this.connectors = new HashMap<>(connectors);
   }
 
+  public ConnectorDag(Dag dag, Set<String> reduceNodes, Set<String> isolationNodes, Map<String, String> connectors) {
+    super(dag);
+    this.reduceNodes = ImmutableSet.copyOf(reduceNodes);
+    this.isolationNodes = ImmutableSet.copyOf(isolationNodes);
+    this.connectors = new HashMap<>(connectors);
+  }
+
   /**
    * Insert connector nodes into the dag.
    *
@@ -394,6 +401,7 @@ public class ConnectorDag extends Dag {
     private final Set<String> reduceNodes;
     private final Set<String> isolationNodes;
     private final Map<String, String> connectors;
+    private Dag dag;
 
     private Builder() {
       this.connections = new HashSet<>();
@@ -439,12 +447,26 @@ public class ConnectorDag extends Dag {
     }
 
     public Builder addConnections(Collection<Connection> connections) {
+      if (dag != null) {
+        throw new IllegalArgumentException("Must specify either connections or dag but not both.");
+      }
       this.connections.addAll(connections);
       return this;
     }
 
+    public Builder addDag(Dag dag) {
+      if (!connections.isEmpty()) {
+        throw new IllegalArgumentException("Must specify either connections or dag but not both.");
+      }
+      this.dag = dag;
+      return this;
+    }
+
     public ConnectorDag build() {
-      return new ConnectorDag(connections, reduceNodes, isolationNodes, connectors);
+      if (dag == null) {
+        return new ConnectorDag(connections, reduceNodes, isolationNodes, connectors);
+      }
+      return new ConnectorDag(dag, reduceNodes, isolationNodes, connectors);
     }
   }
 }

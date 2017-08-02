@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.planner;
 
+import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.proto.Connection;
@@ -30,8 +31,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -80,6 +83,8 @@ public class PipelinePlanner {
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
     Set<String> actionNodes = new HashSet<>();
+    Set<String> conditionNodes = new HashSet<>();
+
     Map<String, StageSpec> specs = new HashMap<>();
 
     for (StageSpec stage : spec.getStages()) {
@@ -93,6 +98,10 @@ public class PipelinePlanner {
       if (actionTypes.contains(pluginType)) {
         // Collect all Action nodes from spec
         actionNodes.add(stage.getName());
+      }
+      if (Condition.PLUGIN_TYPE.equals(pluginType)) {
+        // Collect all Condition nodes from spec
+        conditionNodes.add(stage.getName());
       }
       specs.put(stage.getName(), stage);
     }
@@ -283,5 +292,28 @@ public class PipelinePlanner {
     return Joiner.on('.').join(new TreeSet<>(sources)) +
       ".to." +
       Joiner.on('.').join(new TreeSet<>(sinks));
+  }
+
+  @VisibleForTesting
+  static Set<Dag> split(Set<Connection> connections, Set<String> conditions, Set<String> reduceNodes,
+                        Set<String> isolationNodes) {
+    Dag dag = new Dag(connections);
+    Set<Dag> subdags = dag.splitByConditions(conditions);
+
+    Set<Dag> result = new HashSet<>();
+    for (Dag subdag : subdags) {
+      Set<String> subdagReduceNodes = Sets.intersection(reduceNodes, subdag.getNodes());
+      Set<String> subdagIsolationNodes = Sets.intersection(isolationNodes, subdag.getNodes());
+
+      ConnectorDag cdag = ConnectorDag.builder()
+        .addDag(subdag)
+        .addReduceNodes(subdagReduceNodes)
+        .addIsolationNodes(subdagIsolationNodes)
+        .build();
+
+      cdag.insertConnectors();
+      result.addAll(cdag.split());
+    }
+    return result;
   }
 }

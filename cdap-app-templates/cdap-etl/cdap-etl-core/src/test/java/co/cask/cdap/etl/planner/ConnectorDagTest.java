@@ -21,7 +21,9 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -650,4 +652,177 @@ public class ConnectorDagTest {
     Assert.assertEquals(expected, cdag);
   }
 
+  @Test
+  public void testSimpleCondition() throws Exception {
+
+    /*
+      file - csv - condition - sink1
+                      |
+                      |-------sink2
+     */
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("file", "csv"),
+      new Connection("csv", "condition"),
+      new Connection("condition", "sink1"),
+      new Connection("condition", "sink2")
+    );
+
+    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
+    Set<String> reduceNodes = new HashSet<>();
+    Set<String> isolationNodes = new HashSet<>();
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+
+    Dag dag1 = new Dag(ImmutableSet.of(
+      new Connection("file", "csv"),
+      new Connection("csv", "condition")));
+    Dag dag2 = new Dag(ImmutableSet.of(
+      new Connection("condition", "sink1")));
+    Dag dag3 = new Dag(ImmutableSet.of(
+      new Connection("condition", "sink2")));
+
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3);
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testSimpleConditionWithReducers() throws Exception {
+    /*
+             |--- n2
+        n1 --|
+             |--- n3(r) --- n4---condition----n5
+                                    |
+                                    |---------n6
+    */
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n1", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "condition"),
+      new Connection("condition", "n5"),
+      new Connection("condition", "n6")
+    );
+
+    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
+    Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
+    Set<String> isolationNodes = new HashSet<>();
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+
+    Dag dag1 = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n1", "n3.connector")));
+    Dag dag2 = new Dag(ImmutableSet.of(
+      new Connection("n3.connector", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "condition")));
+    Dag dag3 = new Dag(ImmutableSet.of(
+      new Connection("condition", "n5")));
+    Dag dag4 = new Dag(ImmutableSet.of(
+      new Connection("condition", "n6")));
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4);
+    Assert.assertEquals(actual, expected);
+  }
+
+
+  @Test
+  public void testSimpleConditionWithMultipleSources() throws Exception {
+    /*
+             |--- n2
+        n1 --|
+             |--- n3(r) --- n4---condition----n5
+                    |                |
+        n11---------|                |---------n6
+    */
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n1", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "condition"),
+      new Connection("condition", "n5"),
+      new Connection("condition", "n6"),
+      new Connection("n11", "n3")
+    );
+
+    Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
+    Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
+    Set<String> isolationNodes = new HashSet<>();
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+
+    Dag dag1 = new Dag(ImmutableSet.of(
+      new Connection("n1", "n2"),
+      new Connection("n1", "n3.connector"),
+      new Connection("n11", "n3.connector")));
+    Dag dag2 = new Dag(ImmutableSet.of(
+      new Connection("n3.connector", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "condition")));
+    Dag dag3 = new Dag(ImmutableSet.of(
+      new Connection("condition", "n5")));
+    Dag dag4 = new Dag(ImmutableSet.of(
+      new Connection("condition", "n6")));
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4);
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testConditionDag() throws Exception {
+
+    /*
+          file - csv - c1 - t1---agg1--agg2---sink1
+                        |
+                        ----c2 - sink2
+                             |
+                              ------c3 - sink3
+
+     */
+
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("file", "csv"),
+      new Connection("csv", "c1"),
+      new Connection("c1", "t1"),
+      new Connection("t1", "agg1"),
+      new Connection("agg1", "agg2"),
+      new Connection("agg2", "sink1"),
+      new Connection("c1", "c2"),
+      new Connection("c2", "sink2"),
+      new Connection("c2", "c3"),
+      new Connection("c3", "sink3")
+    );
+
+    Set<String> conditions = new HashSet<>(Arrays.asList("c1", "c2", "c3"));
+    Set<String> reduceNodes = new HashSet<>(Arrays.asList("agg1", "agg2"));
+    Set<String> isolationNodes = new HashSet<>();
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+
+    Dag dag1 = new Dag(
+      ImmutableSet.of(
+        new Connection("file", "csv"),
+        new Connection("csv", "c1")));
+    Dag dag2 = new Dag(
+      ImmutableSet.of(
+        new Connection("c1", "t1"),
+        new Connection("t1", "agg1"),
+        new Connection("agg1", "agg2.connector")));
+    Dag dag3 = new Dag(
+      ImmutableSet.of(
+        new Connection("agg2.connector", "agg2"),
+        new Connection("agg2", "sink1")));
+    Dag dag4 = new Dag(
+      ImmutableSet.of(
+        new Connection("c1", "c2")));
+    Dag dag5 = new Dag(
+      ImmutableSet.of(
+        new Connection("c2", "sink2")));
+    Dag dag6 = new Dag(
+      ImmutableSet.of(
+        new Connection("c2", "c3")));
+    Dag dag7 = new Dag(
+      ImmutableSet.of(
+        new Connection("c3", "sink3")));
+
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4, dag5, dag6, dag7);
+    Assert.assertEquals(actual, expected);
+  }
 }
