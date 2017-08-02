@@ -44,7 +44,8 @@ var webpackConfig = {
       'react-cookie',
       'whatwg-fetch',
       'react-vis',
-      'clipboard'
+      'clipboard',
+      'react-dnd'
     ]
   },
   output: {

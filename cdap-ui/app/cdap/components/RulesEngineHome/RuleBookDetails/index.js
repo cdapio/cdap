@@ -14,52 +14,32 @@
  * the License.
 */
 
-import React, {Component, PropTypes} from 'react';
+import React, {Component} from 'react';
 import RulesEngineStore, {RULESENGINEACTIONS}  from 'components/RulesEngineHome/RulesEngineStore';
-import {Input, Button} from 'reactstrap';
 import isNil from 'lodash/isNil';
-import isEmpty from 'lodash/isEmpty';
-import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {getRulesForActiveRuleBook, resetCreateRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
-import { DropTarget } from 'react-dnd';
-import {DragTypes} from 'components/RulesEngineHome/Rule';
-import classnames from 'classnames';
+import RulesList from 'components/RulesEngineHome/RulesList';
+import LoadingSVG from 'components/LoadingSVG';
+import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
 
 require('./RuleBookDetails.scss');
 
-function collect(connect, monitor) {
-  return {
-    // Call this function inside render()
-    // to let React DnD handle the drag events:
-    connectDropTarget: connect.dropTarget(),
-    // You can ask the monitor about the current drag state:
-    isOver: monitor.isOver(),
-    canDrop: monitor.canDrop()
-  };
-}
-class RuleBookDetails extends Component {
-  static propTypes = {
-    isOver: PropTypes.bool.isRequired,
-    canDrop: PropTypes.bool.isRequired,
-    connectDropTarget: PropTypes.func.isRequired
-  };
 
+export default class RuleBookDetails extends Component {
   state = {
     activeRuleBook: null,
-    ruleHover: false,
-    create: {
-      name: '',
-      description: '',
-      rules: []
-    }
+    createMode: false
   };
 
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
+      if (!rulebooks.list) {
+        return;
+      }
       let activeRulebook = rulebooks.activeRulebookId;
       let createMode = rulebooks.createRulebook;
       let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
@@ -71,11 +51,6 @@ class RuleBookDetails extends Component {
     });
   }
 
-  componentWillReceiveProps(nextProps) {
-    this.setState({
-      ruleHover: nextProps.isOver
-    });
-  }
   removeRule = (ruleid) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     MyRulesEngine
@@ -86,7 +61,7 @@ class RuleBookDetails extends Component {
       })
       .subscribe(
         () => {
-          getRuleBooks();
+          getRulesForActiveRuleBook();
         },
         err => {
           RulesEngineStore.dispatch({
@@ -118,89 +93,49 @@ class RuleBookDetails extends Component {
     });
   };
 
-  createRulebook = () => {
-    createNewRuleBook(this.state.create);
-  }
-
   renderCreateRulebook = () => {
     return (
-      <div className="rule-book-create">
-        <div className="create-metadata-container">
-          <Input
-            value={this.state.create.name}
-            onChange={this.onNameChangeHandler}
-            placeholder="Add Name"
-          />
-          <div>
-            <span> Owner : </span>
-            <span> Admin </span>
-          </div>
-          <div>
-            <span> Created </span>
-            <span> Created Today </span>
-          </div>
-          <textarea
-            rows="10"
-            className="form-control"
-            value={this.state.create.description}
-            onChange={this.onDescriptionChangeHandler}
-            placeholder="Add Description"
-          >
-          </textarea>
-          <div className="button-container">
-            <Button
-              color="primary"
-              onClick={this.createRulebook}
-              disabled={isEmpty(this.state.create.name)}
-            >
-              Create
-            </Button>
-          </div>
-        </div>
-
-        <strong> Rules (0) </strong>
-        {
-          this.renderRules(this.state.create.rules)
-        }
-        <hr />
-      </div>
+      <CreateRulebook
+        onCancel={() => {
+          resetCreateRuleBook();
+        }}
+      />
     );
   };
 
-  renderRules(rules) {
-    if (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) {
-      return null;
-    }
+  renderEmptyView = () => {
     return (
-      rules.map((rule, i) => {
-        return (
-          <tr>
-            <td>{i+1} </td>
-            <td>{rule.id}</td>
-            <td>{rule.description}</td>
-            <td>
-              <a onClick={this.removeRule.bind(this, rule.id)}>
-                Remove
-              </a>
-            </td>
-          </tr>
-        );
-      })
+      <div className="rule-book-details empty">
+        <h2> No Rulebooks added </h2>
+        <div>
+          Please
+          <a onClick={() => this.setState({ createMode: true })}> click here </a>
+          to add one
+        </div>
+      </div>
     );
   }
 
   render() {
+    let {rulebooks} = RulesEngineStore.getState();
     if (this.state.createMode) {
       return this.renderCreateRulebook();
     }
-    if (isNil(this.state.activeRuleBook)) {
-      return null;
+
+    if (isNil(rulebooks.list)) {
+      return (
+        <div className="rule-book-details loading">
+          <LoadingSVG />
+        </div>
+      );
+    }
+
+    if (isNil(this.state.activeRuleBook) && !rulebooks.list.length) {
+      return this.renderEmptyView();
     }
     let {rulebookDetails} = this.state;
-    let {rulebooks} = RulesEngineStore.getState();
+
     let rules = rulebooks.activeRulebookRules;
-    const {connectDropTarget, isOver} = this.props;
-    console.log('props', isOver);
     return (
       <div className="rule-book-details">
         <h3>{rulebookDetails.id}</h3>
@@ -217,25 +152,18 @@ class RuleBookDetails extends Component {
         <p>
           {rulebookDetails.description}
         </p>
-
         {
-          connectDropTarget(
-            <div className={classnames("rules-container", {
-              'drag-hover': this.state.ruleHover
-            })}>
-              <div className="title"> Rules ({rules.length}) </div>
-              <table className="table">
-                <tbody>
-                  {this.renderRules(rules)}
-                </tbody>
-              </table>
-            </div>
-          )
+          isNil(rules) ?
+            <LoadingSVG />
+          :
+            <RulesList
+              rules={rules}
+              rulebookid={rulebookDetails.id}
+              onRemove={this.removeRule}
+            />
         }
       </div>
     );
   }
 }
 
-
-export default DropTarget(DragTypes.RULE, {}, collect)(RuleBookDetails);

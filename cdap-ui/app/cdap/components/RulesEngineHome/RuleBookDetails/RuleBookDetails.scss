@@ -17,11 +17,29 @@
 @import '../RulesEngineHome.scss';
 @import '../../../styles/variables.scss';
 
-$table_row_border_color: #cccccc;
-
 .rule-book-details {
   padding: $tab_header_height;
+  height: 100%;
 
+  &.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    a {
+      &:not([href]),
+      &:not([tabindex]) {
+        color: $brand-primary;
+        cursor: pointer;
+        text-decoration: none;
+      }
+    }
+  }
+  &.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
   h3 {
     font-weight: bolder;
   }
@@ -35,38 +53,6 @@ $table_row_border_color: #cccccc;
     margin-left: -10px;
     margin-right: -10px;
 
-    &.drag-hover {
-      border: 3px dashed $brand-primary;
-      background: #e8e9e9;
-
-      &:after {
-        content: 'Drag and Drop a rule to add it to this rulebook';
-        position: absolute;
-        left: 30%;
-        font-size: 20px;
-        top: 8px;
-      }
-    }
-    .title {
-      font-weight: 700;
-      font-size: 15px;
-      margin-bottom: 20px;
-    }
-    .table {
-      tr {
-        td {
-          border-color: $table_row_border_color;
-          a {
-            text-decoration: underline;
-            color: $brand-primary;
-            cursor: pointer;
-          }
-        }
-        &:last-child {
-          border-bottom: 1px solid $table_row_border_color;
-        }
-      }
-    }
   }
 }
 
@@ -75,7 +61,7 @@ $table_row_border_color: #cccccc;
 
   .create-metadata-container {
     .form-control {
-      margin-bottom: 20px;
+      margin: 10px 0;
     }
     .button-container {
       display: flex;

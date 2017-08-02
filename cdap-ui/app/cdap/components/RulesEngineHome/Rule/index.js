@@ -41,7 +41,7 @@ export {DragTypes};
 const ruleSource = {
   beginDrag(props) {
     // Return the data describing the dragged item
-    const rule = { id: props.rule };
+    const rule = { rule: props.rule };
     return rule;
   },
 
@@ -49,11 +49,6 @@ const ruleSource = {
     if (!monitor.didDrop()) {
       return;
     }
-
-    // When dropped on a compatible target, do something
-    const item = monitor.getItem();
-    const dropResult = monitor.getDropResult();
-    console.log(item, dropResult);
   }
 };
 
@@ -169,10 +164,10 @@ class Rule extends Component {
       );
   }
 
-  rederDetails = () => {
+  renderDetails = () => {
     if (this.state.detailsLoading) {
       return (
-        <Col xs="12">
+        <Col xs="12" className="text-xs-center">
           <LoadingSVG />
         </Col>
       );
@@ -250,7 +245,7 @@ class Rule extends Component {
           {this.renderRow()}
           {
             this.state.viewDetails ?
-              this.rederDetails()
+              this.renderDetails()
             :
               null
           }

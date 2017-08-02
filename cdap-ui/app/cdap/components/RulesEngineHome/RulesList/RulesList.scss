@@ -16,30 +16,42 @@
 
 @import '../../../styles/variables.scss';
 
-.rules-tab {
-  padding: 20px;
+$table_row_border_color: #cccccc;
 
-  input {
-    border-radius: 0;
+.rules-container {
+  .row {
+    padding: 10px 0;
+    border-bottom: 1px solid $table_row_border_color;
   }
-  > button {
-    margin: 10px 0;
-    color: $brand-primary;
-  }
-  .container {
-    margin-top: 10px;
-  }
-  .container > .row {
-    &:first-child {
-      font-weight: bolder;
-      &:hover {
-        background: transparent;
-      }
+
+  &.drag-hover {
+    border: 3px dashed $brand-primary;
+    background: #e8e9e9;
+
+    &:after {
+      content: 'Drag and Drop a rule to add it to this rulebook';
+      position: absolute;
+      left: 30%;
+      font-size: 20px;
+      top: 8px;
     }
   }
-  .svg-arrow-wrapper {
-    display: inline-block;
+
+  .title {
+    font-weight: 700;
     font-size: 15px;
-    line-height: 1;
+    margin-bottom: 20px;
+  }
+  .btn-link {
+    &:focus,
+    &:active,
+    &:hover {
+      outline: none;
+      background: transparent;
+      border: 0;
+    }
+    color: $brand-primary;
+    cursor: pointer;
+    padding: 0;
   }
 }

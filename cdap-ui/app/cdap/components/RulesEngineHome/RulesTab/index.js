@@ -21,6 +21,9 @@ import Rule from 'components/RulesEngineHome/Rule';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
 import CreateRule from 'components/RulesEngineHome/CreateRule';
+import isNil from 'lodash/isNil';
+import LoadingSVG from 'components/LoadingSVG';
+
 
 require('./RulesTab.scss');
 
@@ -82,17 +85,19 @@ export default class RulesTab extends Component {
   }
 
   renderRules(rules) {
-    if (!rules.length) {
-      return (<h4> No Rules found </h4>);
+    if (isNil(rules)) {
+      return (<LoadingSVG />);
+    }
+
+    if (!rules.length && !this.state.createRule) {
+      return (<h4 className="text-xs-center"> No Rules found </h4>);
     }
 
     return (
       <div className="container">
         <Row>
           <Col xs="7">
-            <div className="name">
-              Name
-            </div>
+            Name
           </Col>
           <Col xs="5">
             Last Updated
