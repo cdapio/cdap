@@ -14,7 +14,7 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
+@import '../../../../styles/variables.scss';
 
 $table_row_border_color: #cccccc;
 
@@ -22,6 +22,10 @@ $table_row_border_color: #cccccc;
   .row {
     padding: 10px 0;
     border-bottom: 1px solid $table_row_border_color;
+
+    &.dragging {
+      opacity: 0;
+    }
   }
 
   &.drag-hover {

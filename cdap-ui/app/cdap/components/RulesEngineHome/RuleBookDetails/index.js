@@ -21,9 +21,11 @@ import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRulesForActiveRuleBook, resetCreateRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
-import RulesList from 'components/RulesEngineHome/RulesList';
+import RulesList from 'components/RulesEngineHome/RulebookDetails/RulesList';
 import LoadingSVG from 'components/LoadingSVG';
 import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
+import debounce from 'lodash/debounce';
+import MyRulesEngineApi from 'api/rulesengine';
 
 require('./RuleBookDetails.scss');
 
@@ -51,6 +53,35 @@ export default class RuleBookDetails extends Component {
     });
   }
 
+  updateRulebook = debounce((rules) => {
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let urlparams = {
+      namespace,
+      rulebookid: this.state.rulebookDetails.id
+    };
+    let headers = {'Content-Type': 'application/json'};
+    let postBody = {
+      ...this.state.rulebookDetails,
+      rules: rules.map(rule => rule.id)
+    };
+    MyRulesEngineApi
+      .updateRulebook(urlparams, postBody, headers)
+      .subscribe(
+        () => {},
+        (err) => {
+          RulesEngineStore.dispatch({
+            type: RULESENGINEACTIONS.SETERROR,
+            payload: {
+              error: {
+                showError: true,
+                message: typeof err === 'string' ? err : err.response.message
+              }
+            }
+          });
+        }
+      );
+  }, 2000);
+
   removeRule = (ruleid) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     MyRulesEngine
@@ -75,7 +106,7 @@ export default class RuleBookDetails extends Component {
           });
         }
       );
-  }
+  };
 
   onNameChangeHandler = (e) => {
     this.setState({
@@ -160,6 +191,7 @@ export default class RuleBookDetails extends Component {
               rules={rules}
               rulebookid={rulebookDetails.id}
               onRemove={this.removeRule}
+              onRuleBookUpdate={this.updateRulebook}
             />
         }
       </div>

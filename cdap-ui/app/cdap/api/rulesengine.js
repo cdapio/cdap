@@ -32,6 +32,7 @@ const  MyRulesEngineApi = {
   removeRuleFromRuleBook: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${rbbasepath}/rules/:ruleid`),
   getRulesForRuleBook: apiCreator(dataSrc, 'GET', 'REQUEST', `${rbbasepath}/rules`),
   createRulebook: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceMethodsBasepath}/rulebooks`),
+  updateRulebook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}`),
 
 
   // WRANGLER SERVICE MANAGEMENT

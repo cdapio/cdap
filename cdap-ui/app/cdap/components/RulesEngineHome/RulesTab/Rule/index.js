@@ -26,7 +26,7 @@ import DSVEditor from 'components/DSVEditor';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import shortid from 'shortid';
 import {preventPropagation} from 'services/helpers';
-import RulebooksPopover from 'components/RulesEngineHome/Rule/RulebooksPopover';
+import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
 import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import { DragSource } from 'react-dnd';
 
@@ -135,6 +135,7 @@ class Rule extends Component {
   };
 
   onRulesChange(rows) {
+    // TODO: add edit feature for rule in rules tab.
     console.log(rows);
   }
 
