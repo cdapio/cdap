@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,9 +14,11 @@
  * the License.
  */
 
-package co.cask.cdap.spark.app
+package co.cask.cdap.app.runtime.spark
 
 /**
-  * A case class representing a person.
+  * Defines the trait for writing out metrics to Spark.
   */
-case class Person(name: String, age: Int) extends Serializable
+trait SparkMetricsWriter {
+  def incrementRecordWrite(count: Int): Unit
+}

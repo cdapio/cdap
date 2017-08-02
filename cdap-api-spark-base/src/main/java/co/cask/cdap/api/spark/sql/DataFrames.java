@@ -103,6 +103,20 @@ public final class DataFrames {
   }
 
   /**
+   * Creates a {@link StructuredRecord} from the data in the given {@link Row}.
+   *
+   * @param row contains the record data
+   * @param schema the {@link Schema} of the resulting {@link StructuredRecord}.
+   * @return a new {@link StructuredRecord} instance
+   */
+  public static StructuredRecord fromRow(Row row, Schema schema) {
+    if (schema.getType() != Schema.Type.RECORD) {
+      throw new IllegalArgumentException("Only record type schema is supported");
+    }
+    return (StructuredRecord) fromRowValue(row, schema, "");
+  }
+
+  /**
    * Actual method to convert {@link Schema} to Spark {@link DataType}. It is separated out for the generic casting.
    *
    * @param schema the schema to convert
@@ -232,9 +246,8 @@ public final class DataFrames {
     throw new IllegalArgumentException("Unsupported data type: " + dataType.typeName());
   }
 
-
   /**
-   * Converts a value from {@link StructuredRecord} to a value acceptable by {@link Row}
+   * Converts an object value to a value type acceptable by {@link Row}
    *
    * @param value the value to convert
    * @param dataType the target {@link DataType} of the value
@@ -352,6 +365,120 @@ public final class DataFrames {
 
     // Not support the CalendarInterval type for now, as there is no equivalent in Schema
     throw new IllegalArgumentException("Unsupported data type: " + dataType.typeName());
+  }
+
+  /**
+   * Converts a value from Spark {@link Row} into value acceptable for {@link StructuredRecord}.
+   *
+   * @param value the value to convert from
+   * @param schema the target {@link Schema} of the value
+   * @param path the current field path from the top. It is just for error message purpose.
+   * @return a value object acceptable to be used in {@link StructuredRecord}.
+   */
+  private static Object fromRowValue(Object value, Schema schema, String path) {
+    switch (schema.getType()) {
+      // For all simple types, return as is.
+      case NULL:
+        return null;
+      case BOOLEAN:
+      case INT:
+      case LONG:
+      case FLOAT:
+      case DOUBLE:
+      case STRING:
+        return value;
+      case BYTES:
+        return ByteBuffer.wrap((byte[]) value);
+      case ARRAY: {
+        // Value must be a collection
+        @SuppressWarnings("unchecked")
+        Collection<Object> collection = (Collection<Object>) value;
+        List<Object> result = new ArrayList<>(collection.size());
+
+        Schema componentSchema = schema.getComponentSchema();
+        Schema valueSchema = getNonNullIfNullable(componentSchema);
+
+        String elementPath = path + "[]";
+        for (Object element : collection) {
+          if (element == null && !componentSchema.isNullable()) {
+            throw new IllegalArgumentException("Null value is not allowed for array element at " + elementPath);
+          }
+          result.add(fromRowValue(element, valueSchema, path));
+        }
+        return result;
+      }
+      case MAP: {
+        // Value must be a Map
+        Map<?, ?> map = (Map<?, ?>) value;
+        Map<Object, Object> result = new LinkedHashMap<>(map.size());
+        Map.Entry<Schema, Schema> mapSchema = schema.getMapSchema();
+
+        // Map in Row object won't have null key, as StructType doesn't support it.
+        Schema keySchema = getNonNullIfNullable(mapSchema.getKey());
+        Schema valueSchema = getNonNullIfNullable(mapSchema.getValue());
+
+        String mapPath = path + "<>";
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+          if (entry.getValue() == null && !mapSchema.getValue().isNullable()) {
+            throw new IllegalArgumentException("Null value is not allowed for map at " + mapPath);
+          }
+          result.put(fromRowValue(entry.getKey(), keySchema, path),
+                     fromRowValue(entry.getValue(), valueSchema, path));
+        }
+        return result;
+      }
+      case RECORD: {
+        // Value must be a Row
+        Row row = (Row) value;
+        StructuredRecord.Builder builder = StructuredRecord.builder(schema);
+        int idx = 0;
+        for (Schema.Field field : schema.getFields()) {
+          String fieldPath = path + "/" + field.getName();
+          Schema fieldSchema = field.getSchema();
+
+          if (row.isNullAt(idx) && !fieldSchema.isNullable()) {
+            throw new NullPointerException("Null value is not allowed in record field at " + fieldPath);
+          }
+
+          fieldSchema = getNonNullIfNullable(fieldSchema);
+
+          // If the value is null for the field, just continue without setting anything to the StructuredRecord
+          if (row.isNullAt(idx)) {
+            idx++;
+            continue;
+          }
+
+          // Special case handling for ARRAY and MAP in order to get the Java type
+          if (fieldSchema.getType() == Schema.Type.ARRAY) {
+            builder.set(field.getName(), fromRowValue(row.getList(idx), fieldSchema, fieldPath));
+          } else if (fieldSchema.getType() == Schema.Type.MAP) {
+            builder.set(field.getName(), fromRowValue(row.getJavaMap(idx), fieldSchema, fieldPath));
+          } else {
+            Object fieldValue = row.get(idx);
+
+            // Date and timestamp special return type handling
+            if (fieldValue instanceof Date) {
+              fieldValue = ((Date) fieldValue).getTime();
+            } else if (fieldValue instanceof Timestamp) {
+              fieldValue = ((Timestamp) fieldValue).getTime();
+            }
+            builder.set(field.getName(), fromRowValue(fieldValue, fieldSchema, fieldPath));
+          }
+
+          idx++;
+        }
+        return builder.build();
+      }
+    }
+
+    throw new IllegalArgumentException("Unsupported schema: " + schema);
+  }
+
+  /**
+   * Returns the non-nullable part of the given {@link Schema} if it is nullable; otherwise return it as is.
+   */
+  private static Schema getNonNullIfNullable(Schema schema) {
+    return schema.isNullable() ? schema.getNonNullable() : schema;
   }
 
   private DataFrames() {

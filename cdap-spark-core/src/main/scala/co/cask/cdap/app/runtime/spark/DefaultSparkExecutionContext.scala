@@ -22,8 +22,9 @@ import java.util
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.SparkContext
+import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.{SparkContext, TaskContext}
 
 import scala.reflect.io.PlainFile
 import scala.tools.nsc.Settings
@@ -49,5 +50,20 @@ class DefaultSparkExecutionContext(sparkClassLoader: SparkClassLoader, localizeR
   override protected def createInterpreter(settings: Settings, classDir: File,
                                            urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter = {
     new DefaultSparkInterpreter(settings, new PlainFile(classDir), urlAdder, onClose)
+  }
+
+  override protected[spark] def createSparkMetricsWriterFactory(): (TaskContext) => SparkMetricsWriter = {
+    (context: TaskContext) => {
+      // Implementation of spark `OutputMetrics` for recording metrics output.
+      val outputMetrics = new OutputMetrics(DataWriteMethod.Hadoop) with SparkMetricsWriter {
+        private var records = 0
+
+        override def incrementRecordWrite(records: Int) = this.records += records
+
+        override def recordsWritten = records
+      }
+      context.taskMetrics.outputMetrics = Option(outputMetrics)
+      outputMetrics
+    }
   }
 }

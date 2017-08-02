@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.customaction.AbstractCustomAction
+import co.cask.cdap.api.data.schema.Schema
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
@@ -48,7 +49,11 @@ class TestSparkApp extends AbstractApplication[Config] {
     createDataset("TimeSeriesResult", classOf[TimeseriesTable])
 
     createDataset("PersonTable", classOf[ObjectMappedTable[Person]],
-                  ObjectMappedTableProperties.builder().setType(classOf[Person]).build())
+                  ObjectMappedTableProperties.builder()
+                    .setType(classOf[Person])
+                    .setRowKeyExploreName("id")
+                    .setRowKeyExploreType(Schema.Type.STRING)
+                    .build())
     addSpark(new DatasetSQLSpark)
 
     addSpark(new StreamSQLSpark)
