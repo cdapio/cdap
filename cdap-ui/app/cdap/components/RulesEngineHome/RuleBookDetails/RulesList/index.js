@@ -15,13 +15,16 @@
 */
 
 import React, {PropTypes, Component} from 'react';
-import {Row, Col} from 'reactstrap';
-import {DragTypes} from 'components/RulesEngineHome/Rule';
+import {DragTypes} from 'components/RulesEngineHome/RulesTab/Rule';
 import { DropTarget } from 'react-dnd';
 import classnames from 'classnames';
 import MyRulesEngineApi from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRulesForActiveRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import update from 'react/lib/update';
+import RulebookRule from 'components/RulesEngineHome/RuleBookDetails/RulebookRule';
+
 
 require('./RulesList.scss');
 
@@ -47,8 +50,20 @@ class RulesList extends Component {
     onRemove: PropTypes.func,
     connectDropTarget: PropTypes.func.isRequired,
     isOver: PropTypes.bool.isRequired,
-    onRuleAdd: PropTypes.func
+    onRuleAdd: PropTypes.func,
+    onRuleBookUpdate: PropTypes.func
   };
+
+  state = {
+    rulebookRules: this.props.rules
+  };
+
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      rulebookRules: nextProps.rules
+    });
+  }
+
   addRuleToRulebook(rule) {
     if (this.props.onRuleAdd) {
       this.props.onRuleAdd(rule);
@@ -62,42 +77,65 @@ class RulesList extends Component {
         ruleid: rule.id
       })
       .subscribe(
-        (res) => {
-          console.log(res);
+        () => {
           getRulesForActiveRuleBook();
+        },
+        (err) => {
+          RulesEngineStore.dispatch({
+            type: RULESENGINEACTIONS.SETERROR,
+            payload: {
+              error: {
+                showError: true,
+                message: typeof err === 'string' ? err : err.response.message
+              }
+            }
+          });
         }
       );
   }
+
+  onRulesSort = (dragIndex, hoverIndex) => {
+    const { rulebookRules } = this.state;
+    const dragRule = rulebookRules[dragIndex];
+
+    this.setState(update(this.state, {
+      rulebookRules: {
+        $splice: [
+          [dragIndex, 1],
+          [hoverIndex, 0, dragRule],
+        ],
+      },
+    }), this.props.onRuleBookUpdate.bind(null, this.state.rulebookRules));
+  };
+
   render() {
-    let rules = this.props.rules;
+    let rules = this.state.rulebookRules;
     return this.props.connectDropTarget(
       <div className={classnames("rules-container", {
         'drag-hover': this.props.isOver
       })}>
         <div className="title"> Rules ({rules.length}) </div>
-        {
-          (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
-            null
-          :
-            rules.map((rule, i) => {
-              return (
-                <Row>
-                  <Col xs={1}>{i + 1}</Col>
-                  <Col xs={3}>{rule.id}</Col>
-                  <Col xs={5}>{rule.description}</Col>
-                  <Col xs={3}>
-                    <button
-                      className="btn btn-link"
-                      href
-                      onClick={() => this.props.onRemove(rule.id)}
-                    >
-                      Remove
-                    </button>
-                  </Col>
-                </Row>
-              );
-            })
-        }
+        <div className="rules">
+          {
+            (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
+              null
+            :
+              rules.map((rule, i) => {
+                return (
+                  <RulebookRule
+                    key={rule.id}
+                    index={i}
+                    rule={rule}
+                    onRuleSort={this.onRulesSort}
+                    onRemove={this.props.onRemove}
+                  />
+                );
+              })
+          }
+          <div className="drag-drop-placeholder">
+            Add a rule by drag and drop from the rule list on the left
+          </div>
+        </div>
       </div>
     );
   }

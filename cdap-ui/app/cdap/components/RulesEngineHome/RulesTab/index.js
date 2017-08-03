@@ -17,7 +17,7 @@
 import React, {Component} from 'react';
 import {Col, Row, Button, Input} from 'reactstrap';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
-import Rule from 'components/RulesEngineHome/Rule';
+import Rule from 'components/RulesEngineHome/RulesTab/Rule';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
 import CreateRule from 'components/RulesEngineHome/CreateRule';

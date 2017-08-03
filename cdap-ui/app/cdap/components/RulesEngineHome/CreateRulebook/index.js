@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-import RulesList from 'components/RulesEngineHome/RulesList';
+import RulesList from 'components/RulesEngineHome/RulebookDetails/RulesList';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 
 export default class CreateRulebook extends Component {
@@ -40,6 +40,10 @@ export default class CreateRulebook extends Component {
   };
 
   onRulesAdd = (rule) => {
+    let isRuleAlreadyExist = this.state.rules.find(r => rule.id === r.id);
+    if (isRuleAlreadyExist) {
+      return;
+    }
     this.setState({
       rules: [...this.state.rules, rule]
     });

@@ -26,7 +26,7 @@ import DSVEditor from 'components/DSVEditor';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import shortid from 'shortid';
 import {preventPropagation} from 'services/helpers';
-import RulebooksPopover from 'components/RulesEngineHome/Rule/RulebooksPopover';
+import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
 import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import { DragSource } from 'react-dnd';
 
@@ -135,6 +135,7 @@ class Rule extends Component {
   };
 
   onRulesChange(rows) {
+    // TODO: add edit feature for rule in rules tab.
     console.log(rows);
   }
 
@@ -216,7 +217,7 @@ class Rule extends Component {
     return (
       connectDragSource(
         <div onClick={this.viewDetails}>
-          <Col xs="7">
+          <Col xs="6">
             <div className="svg-arrow-wrapper">
               {
                 !this.state.viewDetails ?
@@ -229,6 +230,9 @@ class Rule extends Component {
           </Col>
           <Col xs="5">
             {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
+          </Col>
+          <Col xs="1">
+            <IconSVG name="icon-bars" />
           </Col>
         </div>
       )
