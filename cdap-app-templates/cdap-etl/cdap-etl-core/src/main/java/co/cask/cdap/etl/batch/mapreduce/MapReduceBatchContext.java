@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -57,8 +58,8 @@ public class MapReduceBatchContext extends AbstractBatchContext
   private final Set<String> connectorDatasets;
 
   public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
-                               Set<String> connectorDatasets) {
-    super(pipelineRuntime, stageSpec, context, context.getAdmin());
+                               Set<String> connectorDatasets, DatasetContext datasetContext) {
+    super(pipelineRuntime, stageSpec, datasetContext, context.getAdmin());
     this.mrContext = context;
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();

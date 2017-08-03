@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
@@ -43,8 +44,8 @@ public class SparkBatchSourceContext extends AbstractBatchContext
   private final SparkClientContext sparkContext;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
-                                 PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
-    super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
+                                 PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, datasetContext, sparkContext.getAdmin());
     this.sparkContext = sparkContext;
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();

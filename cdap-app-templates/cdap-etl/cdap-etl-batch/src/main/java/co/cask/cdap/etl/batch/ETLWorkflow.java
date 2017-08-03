@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
@@ -81,6 +83,7 @@ public class ETLWorkflow extends AbstractWorkflow {
     setProperties(properties);
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
@@ -101,6 +104,7 @@ public class ETLWorkflow extends AbstractWorkflow {
     }
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();

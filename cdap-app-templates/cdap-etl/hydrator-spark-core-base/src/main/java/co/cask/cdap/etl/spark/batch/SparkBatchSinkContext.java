@@ -21,13 +21,11 @@ import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.SparkClientContext;
-import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
 import java.util.Collections;
@@ -42,8 +40,8 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
   private final boolean isPreviewEnabled;
 
   public SparkBatchSinkContext(SparkBatchSinkFactory sinkFactory, SparkClientContext sparkContext,
-                               PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
-    super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
+                               PipelineRuntime pipelineRuntime, DatasetContext datasetContext, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec, datasetContext, sparkContext.getAdmin());
     this.sinkFactory = sinkFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
