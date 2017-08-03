@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 public class MRJobInfo {
   @Nullable
   private String state;
-  @Nullable
   private Long startTime;
   @Nullable
   private Long stopTime;
@@ -53,7 +52,7 @@ public class MRJobInfo {
     this.state = state;
   }
 
-  public void setStartTime(@Nullable Long startTime) {
+  public void setStartTime(Long startTime) {
     this.startTime = startTime;
   }
 
@@ -66,7 +65,6 @@ public class MRJobInfo {
     return state;
   }
 
-  @Nullable
   public Long getStartTime() {
     return startTime;
   }
