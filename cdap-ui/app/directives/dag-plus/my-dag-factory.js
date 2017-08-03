@@ -39,7 +39,7 @@ angular.module(PKG.name + '.commons')
       Anchor: [ 1, 0.5, 1, 0, 5, 0 ],
       Endpoint: 'Dot',
       EndpointStyle: { radius: 10 },
-      Connector: [ 'Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0 } ],
+      Connector: [ 'Flowchart', { stub: [10, 15], alwaysRespectStubs: true, cornerRadius: 20, midpoint: 0.2 } ],
       ConnectionOverlays: [
         ['Arrow', {
             location: 1,

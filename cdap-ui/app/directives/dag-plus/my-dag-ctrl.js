@@ -536,7 +536,6 @@ angular.module(PKG.name + '.commons')
               }
             };
             DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-            // repaintEverything();
           }
         });
       }
