@@ -22,6 +22,7 @@ import DatasetDetailedView from 'components/DatasetDetailedView';
 import StreamDetailedView from 'components/StreamDetailedView';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import RulesEngineHome from 'components/RulesEngineHome';
 import DataPrepHome from 'components/DataPrepHome';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
@@ -43,6 +44,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
           <Route path="/ns/:namespace/datasets/:datasetId" component={DatasetDetailedView} />
           <Route path="/ns/:namespace/streams/:streamId" component={StreamDetailedView} />
+          <Route exact path="/ns/:namespace/rulesengine" component={RulesEngineHome} />
           <Route exact path="/ns/:namespace/dataprep" component={DataPrepHome} />
           <Route exact path="/ns/:namespace/dataprep/:workspaceId" component={DataPrepHome} />
           <Route path="/ns/:namespace/databasebrowser" render={() => {

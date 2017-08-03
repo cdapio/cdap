@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$tab_header_height: 40px;
+
+.rules-engine-home {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 104px);
+
+  .left-panel,
+  .right-panel {
+    height: 100%;
+  }
+  .left-panel {
+    width: 30%;
+    border-right: 1px solid #cccccc;
+    min-width: 450px;
+
+    @media (max-width: 1000px) {
+      min-width: 300px;
+    }
+  }
+  .right-panel {
+    width: 70%;
+  }
+  .nav.nav-tabs {
+    display: flex;
+    height: $tab_header_height;
+    .nav-item {
+      width: 50%;
+      margin-left: 0;
+      background: #cccccc;
+      cursor: pointer;
+
+      &:last-child {
+        .nav-link {
+          border-right: 0;
+        }
+      }
+
+      > * {
+        height: 100%;
+      }
+
+      .nav-link {
+        border-radius: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+      }
+    }
+  }
+  .tab-content {
+    height: calc(100% - #{$tab_header_height}); // height of tab header
+  }
+  .tab-pane,
+  .tab-pane > div {
+    height: 100%;
+  }
+  .tab-pane > div {
+    overflow-y: auto;
+  }
+}
