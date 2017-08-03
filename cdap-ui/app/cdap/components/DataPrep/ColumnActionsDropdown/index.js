@@ -261,6 +261,7 @@ export default class ColumnActionsDropdown extends Component {
     const tetherOption = {
       attachment: 'top right',
       targetAttachment: 'bottom left',
+      classPrefix: 'column_actions_dropdown',
       constraints: [
         {
           to: tableContainer,
