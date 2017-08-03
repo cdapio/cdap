@@ -16,6 +16,7 @@
 
 @import '../DropdownStyling.scss';
 
-.metadata-dropdown {
-  @include dropdownstyling;
+.daraprep-dropdown {
+  @include dropdownstyling($max_width: 140px);
 }
+

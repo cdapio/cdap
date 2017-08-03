@@ -14,8 +14,34 @@
  * the License.
  */
 
-@import '../DropdownStyling.scss';
+import React, {PropTypes} from 'react';
+import {NavLink} from 'react-router-dom';
 
-.metadata-dropdown {
-  @include dropdownstyling;
-}
+const NavLinkWrapper = ({children, to, isNativeLink, ...attributes}) => {
+  if (isNativeLink) {
+    return (
+      <a
+        href={to}
+        {...attributes}
+      >
+        {children}
+      </a>
+    );
+  }
+  return (
+    <NavLink
+      to={to}
+      {...attributes}
+    >
+      {children}
+    </NavLink>
+  );
+};
+
+NavLinkWrapper.propTypes = {
+  children: PropTypes.node,
+  to: PropTypes.string,
+  isNativeLink: PropTypes.bool
+};
+
+export default NavLinkWrapper;
