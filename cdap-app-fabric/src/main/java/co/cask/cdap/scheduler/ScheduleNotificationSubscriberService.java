@@ -34,6 +34,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +59,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   @Inject
   ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient);
+    super(messagingService, cConf, datasetFramework, txClient,
+          Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS);
+
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.taskExecutorService =
@@ -104,7 +107,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
     @Override
     public void run() {
-      jobQueue = getJobQueue();
+      jobQueue = super.getJobQueue();
       super.run();
     }
 
@@ -120,7 +123,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
     @Override
     public void processNotification(DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException, NotFoundException {
+      throws IOException, DatasetManagementException {
 
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
@@ -140,6 +143,13 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
       jobQueue.addNotification(record, notification);
     }
+
+    @Override
+    public JobQueueDataset getJobQueue() {
+      // Once we have gotten the job queue transactionally at the beginning of the thread run,
+      // we can override the method to just return the instance variable every other time
+      return jobQueue;
+    }
   }
 
   private class DataEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
@@ -151,6 +161,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     @Override
     public void processNotification(DatasetContext context, Notification notification)
       throws IOException, DatasetManagementException {
+
       String datasetIdString = notification.getProperties().get("datasetId");
       if (datasetIdString == null) {
         return;

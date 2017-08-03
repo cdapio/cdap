@@ -17,48 +17,46 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.messaging.Message;
-import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,28 +69,27 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final Transactional transactional;
   private final DatasetFramework datasetFramework;
+  private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
-  private final MultiThreadDatasetCache multiThreadDatasetCache;
+  private final int retryTimeOnTransactionFailure;
   private volatile boolean stopping = false;
 
   @Inject
   protected AbstractNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                                                  int retryTimeOnTransactionFailure) {
     this.cConf = cConf;
+    this.datasetFramework = datasetFramework;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
-    this.multiThreadDatasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework), txClient,
-      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null, messagingContext);
     this.transactional = Transactions.createTransactionalWithRetry(
-      Transactions.createTransactional(multiThreadDatasetCache, Schedulers.SUBSCRIBER_TX_TIMEOUT_SECONDS),
+      Transactions.createTransactional(new MultiThreadDatasetCache(
+        new SystemDatasetInstantiator(datasetFramework), new TransactionSystemClientAdapter(txClient),
+        NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-    this.datasetFramework = datasetFramework;
+    this.retryTimeOnTransactionFailure = retryTimeOnTransactionFailure;
   }
-
-  protected abstract void startUp();
 
   @Override
   protected void shutDown() {
@@ -118,7 +115,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     @Override
     public void run() {
       // Fetch the last processed message for the topic
-      messageId = Transactionals.execute(transactional, new TxCallable<String>() {
+      messageId = Transactions.executeUnchecked(transactional, new TxCallable<String>() {
         @Override
         public String call(DatasetContext context) throws Exception {
           return loadMessageId();
@@ -145,20 +142,54 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      */
     long processNotifications() {
       try {
-        final MessageFetcher fetcher = messagingContext.getMessageFetcher();
-        String lastFetchedMessageId = Transactionals.execute(transactional, new TxCallable<String>() {
-          @Override
-          public String call(DatasetContext context) throws Exception {
-            return fetchAndProcessNotifications(context, fetcher);
+        String lastFetchedMessageId = null;
+        // Gather a local copy of fetched notifications to batch process in one transaction
+        List<Notification> fetchedNotifications = new ArrayList<>();
+        try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher()
+                                                                   .fetch(NamespaceId.SYSTEM.getNamespace(), topic,
+                                                                          100, messageId)) {
+          LOG.trace("Fetch with messageId = {}", messageId);
+          while (iterator.hasNext() && !stopping) {
+            Message message = iterator.next();
+            lastFetchedMessageId = message.getId();
+            Notification notification;
+            try {
+              notification = GSON.fromJson(new String(message.getPayload(), StandardCharsets.UTF_8),
+                                           Notification.class);
+              fetchedNotifications.add(notification);
+            } catch (JsonSyntaxException e) {
+              LOG.warn("Failed to decode message with id {}. Skipped. ", message.getId(), e);
+              // lastFetchedMessageId was updated at the beginning of the loop to skip this message in next fetch
+              continue;
+            }
           }
-        }, ServiceUnavailableException.class, TopicNotFoundException.class);
-        failureCount = 0;
+        }
 
-        // Sleep for configured number of milliseconds if there's no notification, otherwise don't sleep
+        // Sleep for configured number of milliseconds if there's no notification
         if (lastFetchedMessageId == null) {
           return cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS);
         }
 
+        final List<Notification> notifications = fetchedNotifications;
+        final String lastMessageId = lastFetchedMessageId;
+        // Execute processed notifications in one transaction
+        Retries.supplyWithRetries(new Supplier<Void>() {
+          @Override
+          public Void get() {
+            Transactions.executeUnchecked(transactional, new TxCallable<Void>() {
+              @Override
+              public Void call(DatasetContext context) throws Exception {
+                fetchAndProcessNotifications(context, notifications);
+                updateMessageId(lastMessageId);
+                return null;
+              }
+            });
+            return null;
+          }
+        }, co.cask.cdap.common.service.RetryStrategies.fixDelay(retryTimeOnTransactionFailure, TimeUnit.SECONDS));
+
+        // Transaction was successful, so reset the failure count to 0
+        failureCount = 0;
         // The last fetched message id was persisted successfully, update the local field as well.
         messageId = lastFetchedMessageId;
         return 0L;
@@ -178,44 +209,26 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     }
 
     /**
-     * Fetches and decodes new notifications and processes them
+     * Processes a list of notifications
      *
      * @param context the dataset context
-     * @param fetcher the message fetcher
-     * @return the last fetched message id
+     * @param notifications the list of fetched notifications from TMS
      * @throws Exception
      */
-    String fetchAndProcessNotifications(DatasetContext context, MessageFetcher fetcher) throws Exception {
-      String lastFetchedMessageId = null;
-      try (CloseableIterator<Message> iterator = fetcher.fetch(NamespaceId.SYSTEM.getNamespace(),
-                                                               topic, 100, messageId)) {
-        LOG.trace("Fetch with messageId = {}", messageId);
-        while (iterator.hasNext() && !stopping) {
-          Message message = iterator.next();
-          Notification notification;
-          try {
-            notification = GSON.fromJson(new String(message.getPayload(), StandardCharsets.UTF_8),
-                                         Notification.class);
-          } catch (JsonSyntaxException e) {
-            LOG.warn("Failed to decode message with id {}. Skipped. ", message.getId(), e);
-            lastFetchedMessageId = message.getId(); // update messageId to skip this message in next fetch
-            continue;
-          }
-          processNotification(context, notification);
-          lastFetchedMessageId = message.getId();
-        }
-
-        // Persist the last fetched message id
-        if (lastFetchedMessageId != null) {
-          updateMessageId(lastFetchedMessageId);
-        }
-
-        return lastFetchedMessageId;
+    public void fetchAndProcessNotifications(DatasetContext context, List<Notification> notifications)
+      throws IOException, DatasetManagementException {
+      for (Notification notification : notifications) {
+        processNotification(context, notification);
       }
     }
 
     protected JobQueueDataset getJobQueue() {
-      return Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework);
+      return Transactions.executeUnchecked(transactional, new TxCallable<JobQueueDataset>() {
+        @Override
+        public JobQueueDataset call(DatasetContext context) throws Exception {
+          return Schedulers.getJobQueue(context, datasetFramework);
+        }
+      });
     }
 
     /**
@@ -231,12 +244,14 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     public abstract void updateMessageId(String lastFetchedMessageId);
 
     /**
-     * Processes the fetched notification
+     * Processes the notification
      *
      * @param context the dataset context
-     * @param notification the decoded notification
-     * @throws Exception
+     * @param notification the notification
+     * @throws IOException
+     * @throws DatasetManagementException
      */
-    public abstract void processNotification(DatasetContext context, Notification notification) throws Exception;
+    public abstract void processNotification(DatasetContext context, Notification notification) throws IOException,
+      DatasetManagementException;
   }
 }

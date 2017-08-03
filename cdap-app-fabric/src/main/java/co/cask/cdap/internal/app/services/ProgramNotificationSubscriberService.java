@@ -16,23 +16,26 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.app.store.Store;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -41,11 +44,13 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Service that receives program status notifications and persists to the store
@@ -53,21 +58,25 @@ import java.util.concurrent.TimeUnit;
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
+  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final TopicMessageIdStore topicMessageIdStore;
-  private final Store store;
+  private final AtomicBoolean upgradeComplete;
+  private final DatasetFramework datasetFramework;
   private ExecutorService taskExecutorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, TopicMessageIdStore topicMessageIdStore,
-                                       Store store, CConfiguration cConf,
-                                       DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient);
+                                       CConfiguration cConf, DatasetFramework datasetFramework,
+                                       TransactionSystemClient txClient) {
+    super(messagingService, cConf, datasetFramework, txClient, Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS);
     this.cConf = cConf;
     this.topicMessageIdStore = topicMessageIdStore;
-    this.store = store;
+    this.datasetFramework = datasetFramework;
+    this.upgradeComplete = new AtomicBoolean(false);
   }
 
   @Override
@@ -118,7 +127,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     @Override
-    public void processNotification(DatasetContext context, Notification notification) throws Exception {
+    public void processNotification(final DatasetContext context, Notification notification)
+      throws IOException, DatasetManagementException {
+
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRunIdString = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
@@ -129,10 +140,10 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
-      ProgramRunStatus runStatus = null;
+      ProgramRunStatus programRunStatus = null;
       if (programStatusString != null) {
         try {
-          runStatus = ProgramRunStatus.valueOf(programStatusString);
+          programRunStatus = ProgramRunStatus.valueOf(programStatusString);
         } catch (IllegalArgumentException e) {
           LOG.warn("Invalid program run status {} passed in notification for program {}",
                    programStatusString, programRunIdString);
@@ -140,102 +151,69 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         }
       }
 
-      final ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
-      final String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
+      ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
+      ProgramId programId = programRunId.getParent();
+      String runId = programRunId.getRun();
+      String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
+      long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
-      final long stateChangeTimeSecs = getTimeSeconds(notification.getProperties(),
-                                                      ProgramOptionConstants.LOGICAL_START_TIME);
-      final long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
-      final ProgramRunStatus programRunStatus = runStatus;
       switch(programRunStatus) {
         case STARTING:
+          long startTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.START_TIME);
           String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
           String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
           if (userArgumentsString == null || systemArgumentsString == null) {
-            throw new IllegalArgumentException((userArgumentsString == null) ? "user" : "system" + " arguments was "
-                                               + "not specified in program status notification for program run " +
-                                               programRunId);
+            LOG.warn((userArgumentsString == null) ? "user" : "system" + " arguments was not specified in program " +
+                     "status notification for program run " + programRunId);
+            return;
           }
-          if (stateChangeTimeSecs == -1) {
-            throw new IllegalArgumentException("Start time was not specified in program starting notification for " +
-                                                 "program run " + programRunId);
+          if (startTimeSecs == -1) {
+            LOG.warn("Start time was not specified in program starting notification for program run " + programRunId);
+            return;
           }
-          final Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
-          final Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStart(programRunId.getParent(), programRunId.getRun(), stateChangeTimeSecs, twillRunId,
-                             userArguments, systemArguments);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
+          Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
+          getAppMetadataStore(context).recordProgramStart(programId, runId, startTimeSecs, twillRunId,
+                                                          userArguments, systemArguments);
           break;
         case RUNNING:
-          if (stateChangeTimeSecs == -1) {
-            throw new IllegalArgumentException("Run time was not specified in program running notification for " +
-                                               "program run {}" + programRunId);
+          long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
+                                                     ProgramOptionConstants.LOGICAL_START_TIME);
+          if (logicalStartTimeSecs == -1) {
+            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            return;
           }
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setRunning(programRunId.getParent(), programRunId.getRun(), stateChangeTimeSecs, twillRunId);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+
+          getAppMetadataStore(context).recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId);
           break;
         case SUSPENDED:
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setSuspend(programRunId.getParent(), programRunId.getRun());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          getAppMetadataStore(context).recordProgramSuspend(programId, runId);
           break;
         case RESUMING:
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setResume(programRunId.getParent(), programRunId.getRun());
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          getAppMetadataStore(context).recordProgramResumed(programId, runId);
           break;
         case COMPLETED:
         case KILLED:
           if (endTimeSecs == -1) {
-            throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run {}" + programRunId);
+            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            return;
           }
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStop(programRunId.getParent(), programRunId.getRun(), endTimeSecs, programRunStatus, null);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          getAppMetadataStore(context).recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null);
           break;
         case FAILED:
           if (endTimeSecs == -1) {
-            throw new IllegalArgumentException("End time was not specified in program status notification for " +
-                                               "program run {}" + programRunId);
+            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            return;
           }
           String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
           final BasicThrowable cause = (errorString == null)
             ? null
             : GSON.fromJson(errorString, BasicThrowable.class);
-          Retries.supplyWithRetries(new Supplier<Void>() {
-            @Override
-            public Void get() {
-              store.setStop(programRunId.getParent(), programRunId.getRun(), endTimeSecs, programRunStatus, cause);
-              return null;
-            }
-          }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
+          getAppMetadataStore(context).recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause);
           break;
         default:
-          throw new UnsupportedOperationException(String.format("Cannot persist ProgramRunStatus %s for Program %s",
-                                                                programRunStatus, programRunId));
+          LOG.error("Cannot persist ProgramRunStatus %s for Program %s", programRunStatus, programRunId);
+          return;
       }
     }
 
@@ -249,6 +227,20 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
       return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
+    }
+
+    private AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
+      DatasetManagementException {
+      // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
+
+      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
+                                                    Table.class.getName(), DatasetProperties.EMPTY);
+      AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
+      boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+      if (isUpgradeComplete) {
+        upgradeComplete.set(true);
+      }
+      return appMetadataStore;
     }
   }
 }

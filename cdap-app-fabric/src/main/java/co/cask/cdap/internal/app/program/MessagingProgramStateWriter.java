@@ -16,11 +16,15 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
@@ -35,6 +39,7 @@ import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -47,10 +52,12 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   private static final Gson GSON = new Gson();
   private final MessagingService messagingService;
   private final TopicId topicId;
+  private final RetryStrategy retryStrategy;
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
     this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "program.message.");
     this.messagingService = messagingService;
   }
 
@@ -62,7 +69,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       startTime = System.currentTimeMillis();
     }
     ImmutableMap.Builder properties = ImmutableMap.<String, String>builder()
-      .put(ProgramOptionConstants.LOGICAL_START_TIME, String.valueOf(startTime))
+      .put(ProgramOptionConstants.START_TIME, String.valueOf(startTime))
       .put(ProgramOptionConstants.PROGRAM_STATUS, ProgramRunStatus.STARTING.name())
       .put(ProgramOptionConstants.USER_OVERRIDES, GSON.toJson(programOptions.getUserArguments().asMap()))
       .put(ProgramOptionConstants.SYSTEM_OVERRIDES, GSON.toJson(programOptions.getArguments().asMap()));
@@ -130,13 +137,38 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
     // ProgramRunId is always required in a notification
     properties.put(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId));
     Notification programStatusNotification = new Notification(Notification.Type.PROGRAM_STATUS, properties.build());
-    try {
-      messagingService.publish(StoreRequestBuilder.of(topicId)
-                                                  .addPayloads(GSON.toJson(programStatusNotification))
-                                                  .build()
-      );
-    } catch (Exception e) {
-      LOG.warn("Error while publishing notification for program {}: {}", programRunId, e);
+
+    int failureCount = 0;
+    long startTime = -1L;
+    boolean done = false;
+    // TODO CDAP-12255 this code was basically copied from MessagingMetricsCollectionService.TopicPayload#publish.
+    // This should be refactored into a common class for publishing to TMS with a retry strategy
+    while (!done) {
+      try {
+        messagingService.publish(StoreRequestBuilder.of(topicId)
+                                   .addPayloads(GSON.toJson(programStatusNotification))
+                                   .build());
+        done = true;
+      } catch (TopicNotFoundException | ServiceUnavailableException | IOException e) {
+        // These exceptions are retry-able due to TMS not completely started
+        if (startTime < 0) {
+          startTime = System.currentTimeMillis();
+        }
+        long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
+        if (retryMillis < 0) {
+          LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
+          break;
+        }
+        LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
+                  e.getMessage(), retryMillis);
+        try {
+          TimeUnit.MILLISECONDS.sleep(retryMillis);
+        } catch (InterruptedException e1) {
+          // Something explicitly stopping this thread. Simply just break and reset the interrupt flag.
+          Thread.currentThread().interrupt();
+          done = true;
+        }
+      }
     }
   }
 }
