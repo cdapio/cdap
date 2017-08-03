@@ -29,6 +29,7 @@ import javax.annotation.Nullable;
 public class ApplicationRecord {
   private final String type;
   private final String id;
+  private final String namespace;
   private final String name;
   private final String version;
   private final String description;
@@ -45,6 +46,7 @@ public class ApplicationRecord {
                            @Nullable String ownerPrincipal) {
     this.type = "App";
     this.artifact = artifact;
+    this.namespace = appId.getNamespace();
     this.name = appId.getApplication();
     this.description = description;
     this.version = appId.getVersion();
@@ -62,6 +64,10 @@ public class ApplicationRecord {
 
   public String getType() {
     return type;
+  }
+
+  public String getNamespace() {
+    return namespace;
   }
 
   @Deprecated

@@ -42,7 +42,9 @@ import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -54,6 +56,7 @@ import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -76,8 +79,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -95,7 +101,7 @@ import javax.ws.rs.QueryParam;
  * {@link co.cask.http.HttpHandler} for managing application lifecycle.
  */
 @Singleton
-@Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
+@Path(Constants.Gateway.API_VERSION_3)
 public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
@@ -132,10 +138,30 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Gets all of the applications defined in the specified namespaces. If no namespaces are specified, no applications
+   * are returned
+   */
+  @GET
+  @Path("/apps")
+  public void getApplicationsInNamespaces(HttpRequest request, HttpResponder responder,
+                                          @QueryParam("namespaces") String namespaces) throws Exception {
+
+    Collection<ApplicationRecord> appsInNamespaces = new HashSet<>();
+    List<String> namespaceList = (namespaces == null) ?
+      new ArrayList<String>() :
+      Arrays.asList(namespaces.split(","));
+    for (String namespace : namespaceList) {
+      NamespaceId namespaceId = validateNamespace(namespace);
+      appsInNamespaces.addAll(applicationLifecycleService.getApps(namespaceId, null));
+    }
+    responder.sendJson(HttpResponseStatus.OK, appsInNamespaces);
+  }
+
+  /**
    * Creates an application with the specified name from an artifact.
    */
   @PUT
-  @Path("/apps/{app-id}")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer create(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
@@ -156,7 +182,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deploys an application.
    */
   @POST
-  @Path("/apps")
+  @Path("/namespaces/{namespace-id}/apps")
   @AuditPolicy({AuditDetail.RESPONSE_BODY, AuditDetail.HEADERS})
   public BodyConsumer deploy(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
@@ -181,7 +207,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Creates an application with the specified name and app-id from an artifact.
    */
   @POST
-  @Path("/apps/{app-id}/versions/{version-id}/create")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}/create")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer createAppVersion(HttpRequest request, HttpResponder responder,
                                          @PathParam("namespace-id") final String namespaceId,
@@ -207,7 +233,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns a list of applications associated with a namespace.
    */
   @GET
-  @Path("/apps")
+  @Path("/namespaces/{namespace-id}/apps")
   public void getAllApps(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @QueryParam("artifactName") String artifactName,
@@ -229,7 +255,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the info associated with the application.
    */
   @GET
-  @Path("/apps/{app-id}")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") final String namespaceId,
                          @PathParam("app-id") final String appId)
@@ -243,7 +269,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the list of versions of the application.
    */
   @GET
-  @Path("/apps/{app-id}/versions")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/versions")
   public void listAppVersions(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") final String namespaceId,
                               @PathParam("app-id") final String appId) throws Exception {
@@ -259,7 +285,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the info associated with the application given appId and appVersion.
    */
   @GET
-  @Path("/apps/{app-id}/versions/{version-id}")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}")
   public void getAppVersionInfo(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") final String namespaceId,
                                 @PathParam("app-id") final String appId,
@@ -274,7 +300,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Returns the plugins in the application.
    */
   @GET
-  @Path("/apps/{app-id}/plugins")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/plugins")
   public void getPluginsInfo(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") final String namespaceId,
                              @PathParam("app-id") final String appId)
@@ -288,7 +314,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete an application specified by appId.
    */
   @DELETE
-  @Path("/apps/{app-id}")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") final String appId) throws Exception {
@@ -301,7 +327,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Delete an application specified by appId and versionId.
    */
   @DELETE
-  @Path("/apps/{app-id}/versions/{version-id}")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/versions/{version-id}")
   public void deleteAppVersion(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,
                         @PathParam("app-id") final String appId,
@@ -315,7 +341,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Deletes all applications in CDAP.
    */
   @DELETE
-  @Path("/apps")
+  @Path("/namespaces/{namespace-id}/apps")
   public void deleteAllApps(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId id = validateNamespace(namespaceId);
@@ -327,7 +353,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * Updates an existing application.
    */
   @POST
-  @Path("/apps/{app-id}/update")
+  @Path("/namespaces/{namespace-id}/apps/{app-id}/update")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void updateApp(HttpRequest request, HttpResponder responder,
                         @PathParam("namespace-id") final String namespaceId,

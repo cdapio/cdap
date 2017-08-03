@@ -54,6 +54,7 @@ import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -149,6 +150,7 @@ public abstract class AppFabricTestBase {
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
+  protected static final Type LIST_APP_RECORD_TYPE = new TypeToken<List<ApplicationRecord>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
   protected static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
@@ -547,6 +549,12 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     Assert.assertEquals("application/json", response.getFirstHeader(HttpHeaders.Names.CONTENT_TYPE).getValue());
     return readResponse(response, JsonObject.class);
+  }
+
+  protected List<ApplicationRecord> getAppsInNamespaces(String... namespaces) throws Exception {
+    String namespaceUrl = (namespaces == null) ? "" : String.format("?namespaces=%s", Joiner.on(",").join(namespaces));
+    HttpResponse response = doGet(String.format("%s/apps%s", Constants.Gateway.API_VERSION_3, namespaceUrl));
+    return readResponse(response, LIST_APP_RECORD_TYPE);
   }
 
   protected HttpResponse getAppResponse(String namespace, String appName) throws Exception {

@@ -210,7 +210,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @return list of all applications in the namespace that satisfy the specified predicate
    */
   public List<ApplicationRecord> getApps(final NamespaceId namespace,
-                                         com.google.common.base.Predicate<ApplicationRecord> predicate)
+                                         @Nullable com.google.common.base.Predicate<ApplicationRecord> predicate)
     throws Exception {
     List<ApplicationRecord> appRecords = new ArrayList<>();
     Set<ApplicationId> appIds = new HashSet<>();
@@ -230,7 +230,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
         new ArtifactSummary(appSpec.getName(), null) : ArtifactSummary.from(artifactId);
       ApplicationRecord record = new ApplicationRecord(artifactSummary, appId, appSpec.getDescription(),
                                                        ownerAdmin.getOwnerPrincipal(appId));
-      if (predicate.apply(record)) {
+      if (predicate == null || predicate.apply(record)) {
         appRecords.add(record);
       }
     }
