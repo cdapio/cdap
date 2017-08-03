@@ -64,7 +64,7 @@ class MyRealtimePipelineConfigCtrl {
       'pairs': HydratorPlusPlusHydratorService.convertMapToKeyValuePairs(this.store.getCustomConfigForDisplay())
     };
 
-    if (this.customEngineConfig.pairs.length === 0 && !this.isDeployed) {
+    if (this.customEngineConfig.pairs.length === 0) {
       this.customEngineConfig.pairs.push({
         key: '',
         value: '',
@@ -111,6 +111,7 @@ class MyRealtimePipelineConfigCtrl {
 
   onCustomEngineConfigChange(newCustomConfig) {
     this.customEngineConfig = newCustomConfig;
+    this.updatePipelineEditStatus();
   }
 
   checkForReset(runtimeArguments) {
@@ -145,24 +146,22 @@ class MyRealtimePipelineConfigCtrl {
 
   applyConfig() {
     this.applyRuntimeArguments();
-    if (!this.isDeployed) {
-      this.store.setBackpressure(this.backpressure);
-      this.store.setNumExecutors(this.numExecutors);
-      this.store.setCustomConfig(this.HydratorPlusPlusHydratorService.convertKeyValuePairsToMap(this.customEngineConfig));
-      this.store.setInstrumentation(this.instrumentation);
-      this.store.setStageLogging(this.stageLogging);
-      this.store.setCheckpointing(this.checkpointing);
-      this.store.setBatchInterval(this.batchIntervalTime + this.batchIntervalUnit);
-      this.store.setClientVirtualCores(this.clientResources.virtualCores);
-      this.store.setClientMemoryMB(this.clientResources.memoryMB);
-      this.store.setDriverVirtualCores(this.driverResources.virtualCores);
-      this.store.setDriverMemoryMB(this.driverResources.memoryMB);
-      this.store.setMemoryMB(this.executorResources.memoryMB);
-      this.store.setVirtualCores(this.executorResources.virtualCores);
-      this.previewStore.dispatch(
-        this.previewActions.setTimeoutInMinutes(this.timeoutInMinutes)
-      );
-    }
+    this.store.setBackpressure(this.backpressure);
+    this.store.setNumExecutors(this.numExecutors);
+    this.store.setCustomConfig(this.HydratorPlusPlusHydratorService.convertKeyValuePairsToMap(this.customEngineConfig));
+    this.store.setInstrumentation(this.instrumentation);
+    this.store.setStageLogging(this.stageLogging);
+    this.store.setCheckpointing(this.checkpointing);
+    this.store.setBatchInterval(this.batchIntervalTime + this.batchIntervalUnit);
+    this.store.setClientVirtualCores(this.clientResources.virtualCores);
+    this.store.setClientMemoryMB(this.clientResources.memoryMB);
+    this.store.setDriverVirtualCores(this.driverResources.virtualCores);
+    this.store.setDriverMemoryMB(this.driverResources.memoryMB);
+    this.store.setMemoryMB(this.executorResources.memoryMB);
+    this.store.setVirtualCores(this.executorResources.virtualCores);
+    this.previewStore.dispatch(
+      this.previewActions.setTimeoutInMinutes(this.timeoutInMinutes)
+    );
   }
 
   applyAndRunPipeline() {
@@ -193,6 +192,14 @@ class MyRealtimePipelineConfigCtrl {
   applyAndClose() {
     this.applyConfig();
     this.onClose();
+  }
+
+  updateAndClose() {
+    this.updatePipeline()
+    .then(() => {
+      this.applyConfig();
+      this.onClose();
+    });
   }
 
   buttonsAreDisabled() {
@@ -247,7 +254,6 @@ class MyRealtimePipelineConfigCtrl {
   }
 
   getUpdatedPipelineConfig() {
-
     let pipelineconfig = _.cloneDeep(this.store.getCloneConfig());
     delete pipelineconfig.__ui__;
     if (this.instrumentation) {
@@ -260,6 +266,11 @@ class MyRealtimePipelineConfigCtrl {
     pipelineconfig.config.disableCheckpoints = this.checkpointing;
     pipelineconfig.config.processTimingEnabled = this.instrumentation;
     pipelineconfig.config.stageLoggingEnabled = this.stageLogging;
+
+    // Have to do this, because unlike others we aren't actually directly modifying pipelineconfig.config.properties
+    this.store.setCustomConfig(this.HydratorPlusPlusHydratorService.convertKeyValuePairsToMap(this.customEngineConfig));
+    pipelineconfig.config.properties = this.store.getProperties();
+
     return pipelineconfig;
   }
 
@@ -277,15 +288,18 @@ class MyRealtimePipelineConfigCtrl {
     let isProcessTimingModified = oldConfig.config.processTimingEnabled !== updatedConfig.config.processTimingEnabled;
     let isStageLoggingModified = oldConfig.config.stageLoggingEnabled !== updatedConfig.config.stageLoggingEnabled;
     let isBatchIntervalModified = oldConfig.config.batchInterval !== updatedConfig.config.batchInterval;
+    let isCustomEngineConfigModified = oldConfig.config.properties !== updatedConfig.config.properties;
 
-    this.enablePipelineUpdate = (
+    // Pipeline update is only necessary in Detail view (i.e. after pipeline has been deployed)
+    this.enablePipelineUpdate = this.isDeployed && (
       isResourceModified ||
       isDriverResourceModidified ||
       isClientResourceModified ||
       isDisableCheckpointModified ||
       isProcessTimingModified ||
       isStageLoggingModified ||
-      isBatchIntervalModified
+      isBatchIntervalModified ||
+      isCustomEngineConfigModified
     );
   }
   updatePipeline(updatingPipeline = true) {
@@ -302,7 +316,7 @@ class MyRealtimePipelineConfigCtrl {
       .$promise
       .then(
         () => {
-          return this.$state.reload().then(() => this.updatingPipeline = false);
+          this.updatingPipeline = false;
         },
         (err) => {
           this.updatingPipeline = false;

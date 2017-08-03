@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES, MY_CONFIG) {
+  .service('HydratorPlusPlusDetailNonRunsStore', function(HydratorPlusPlusDetailDispatcher, HydratorPlusPlusHydratorService, myHelpers, HYDRATOR_DEFAULT_VALUES, MY_CONFIG, GLOBALS) {
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
     this.HYDRATOR_DEFAULT_VALUES = HYDRATOR_DEFAULT_VALUES;
     this.myHelpers = myHelpers;
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.feature.hydrator')
       this.emitChange();
     };
     this.getCloneConfig = function() {
-      return this.state.cloneConfig;
+      return angular.copy(this.state.cloneConfig);
     };
     this.getPipelineType = function() {
       return this.state.type;
@@ -111,58 +111,84 @@ angular.module(PKG.name + '.feature.hydrator')
       return match;
     };
     this.getArtifact = function() {
-      return this.state.cloneConfig.artifact;
+      return this.getCloneConfig().artifact;
     };
     this.getSchedule = function() {
-      return this.state.cloneConfig.config.schedule;
+      return this.getCloneConfig().config.schedule;
     };
     this.getEngine = function() {
-      return this.state.cloneConfig.config.engine;
+      return this.getCloneConfig().config.engine;
+    };
+    this.setEngine = function(engine) {
+      this.state.cloneConfig.config.engine = engine;
     };
     this.getPostActions = function() {
-      return this.state.cloneConfig.config.postActions;
+      return this.getCloneConfig().config.postActions;
     };
     this.getBatchInterval = function() {
-      return this.state.cloneConfig.config.batchInterval;
+      return this.getCloneConfig().config.batchInterval;
+    };
+    this.setBatchInterval = function(batchInterval) {
+      this.state.cloneConfig.config.batchInterval = batchInterval;
     };
     this.getInstance = function() {
-      return this.state.cloneConfig.config.instances;
+      return this.getCloneConfig().config.instances;
     };
     this.getDriverMemoryMB = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'memoryMB');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'driverResources', 'memoryMB');
+    };
+    this.setDriverMemoryMB = function(driverMemoryMB) {
+      this.state.cloneConfig.config.driverResources.memoryMB = driverMemoryMB;
     };
     this.getDriverVirtualCores = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'driverResources', 'virtualCores');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'driverResources', 'virtualCores');
+    };
+    this.setDriverVirtualCores = function(driverVirtualCores) {
+      this.state.cloneConfig.config.driverResources.virtualCores = driverVirtualCores;
     };
     this.getMemoryMB = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'memoryMB');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'resources', 'memoryMB');
+    };
+    this.setMemoryMB = function(memoryMB) {
+      this.state.cloneConfig.config.resources.memoryMB = memoryMB;
     };
     this.getVirtualCores = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'resources', 'virtualCores');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'resources', 'virtualCores');
+    };
+    this.setVirtualCores = function(virtualCores) {
+      this.state.cloneConfig.config.resources.virtualCores = virtualCores;
     };
     this.getClientMemoryMB = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'clientResources', 'memoryMB');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'clientResources', 'memoryMB');
+    };
+    this.setClientMemoryMB = function(clientMemoryMB) {
+      this.state.cloneConfig.config.clientResources.memoryMB = clientMemoryMB;
     };
     this.getClientVirtualCores = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'clientResources', 'virtualCores');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'clientResources', 'virtualCores');
+    };
+    this.setClientVirtualCores = function(clientVirtualCores) {
+      this.state.cloneConfig.config.clientResources.virtualCores = clientVirtualCores;
     };
     this.getBackpressure = function() {
-      return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'properties', 'system.spark.spark.streaming.backpressure.enabled');
+    };
+    this.setBackpressure = function(backpressure) {
+      this.state.cloneConfig.config.properties['system.spark.spark.streaming.backpressure.enabled'] = backpressure;
+    };
+    this.getProperties = function() {
+      return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'properties') || {};
     };
     this.getCustomConfig = function() {
-      if (this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties')) {
-        let customConfig = {};
-        let currentConfig = this.state.cloneConfig.config;
-        let backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
-        for (let key in currentConfig.properties) {
-          if (currentConfig.properties.hasOwnProperty(key) && backendProperties.indexOf(key) === -1) {
-            customConfig[key] = currentConfig.properties[key];
-          }
+      let customConfig = {};
+      let currentProperties = this.getProperties();
+      let backendProperties = ['system.spark.spark.streaming.backpressure.enabled', 'system.spark.spark.executor.instances', 'system.spark.spark.master'];
+      for (let key in currentProperties) {
+        if (currentProperties.hasOwnProperty(key) && backendProperties.indexOf(key) === -1) {
+          customConfig[key] = currentProperties[key];
         }
-        return customConfig;
-      } else {
-        return {};
       }
+      return customConfig;
     };
     this.getCustomConfigForDisplay = function() {
       let currentCustomConfig = this.getCustomConfig();
@@ -180,9 +206,33 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       return customConfigForDisplay;
     };
+    this.setCustomConfig = function(customConfig) {
+      // have to do this because oldCustomConfig is already part of this.state.config.properties
+      let oldCustomConfig = this.getCustomConfig();
+      let oldProperties = this.getProperties();
+      angular.forEach(oldCustomConfig, function(oldValue, oldKey) {
+        if (oldProperties.hasOwnProperty(oldKey)) {
+          delete oldProperties[oldKey];
+        }
+      });
+
+      let newCustomConfig = {};
+      angular.forEach(customConfig, function(configValue, configKey) {
+        let newKey = configKey;
+        if (GLOBALS.etlBatchPipelines.indexOf(this.state.cloneConfig.artifact.name) !== -1 && this.getEngine() === 'mapreduce') {
+          newKey = 'system.mapreduce.' + configKey;
+        } else {
+          newKey = 'system.spark.' + configKey;
+        }
+        newCustomConfig[newKey] = configValue;
+      }, this);
+
+      let newProperties = angular.extend(oldProperties, newCustomConfig);
+      this.state.cloneConfig.config.properties = newProperties;
+    };
     this.getNumExecutors = function() {
       if (this.isDistributed) {
-        return this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.executor.instances');
+        return this.myHelpers.objectQuery(this.getCloneConfig(), 'config', 'properties', 'system.spark.spark.executor.instances');
       } else {
         // format on standalone is 'local[{number}]'
         let formattedNum = this.myHelpers.objectQuery(this.state.cloneConfig, 'config', 'properties', 'system.spark.spark.master');
@@ -193,20 +243,39 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       }
     };
+    this.setNumExecutors = function(numExecutors) {
+      if (this.isDistributed) {
+        this.state.cloneConfig.config.properties['system.spark.spark.executor.instances'] = numExecutors;
+      } else {
+        this.state.cloneConfig.config.properties['system.spark.spark.master'] = `local[${numExecutors}]`;
+      }
+    };
     this.getInstrumentation = function() {
-      return this.state.cloneConfig.config.processTimingEnabled;
+      return this.getCloneConfig().config.processTimingEnabled;
+    };
+    this.setInstrumentation = function(instrumentation) {
+      this.state.cloneConfig.config.processTimingEnabled = instrumentation;
     };
     this.getStageLogging = function() {
-      return this.state.cloneConfig.config.stageLoggingEnabled;
+      return this.getCloneConfig().config.stageLoggingEnabled;
+    };
+    this.setStageLogging = function(stageLogging) {
+      this.state.cloneConfig.config.stageLoggingEnabled = stageLogging;
     };
     this.getCheckpointing = function() {
-      return this.state.cloneConfig.config.disableCheckpoints;
+      return this.getCloneConfig().config.disableCheckpoints;
+    };
+    this.setCheckpointing = function(checkpointing) {
+      this.state.cloneConfig.config.disableCheckpoints = checkpointing;
     };
     this.getNumRecordsPreview = function() {
-      return this.state.cloneConfig.config.numOfRecordsPreview;
+      return this.getCloneConfig().config.numOfRecordsPreview;
+    };
+    this.setNumRecordsPreview = function(numRecordsPreview) {
+      this.state.cloneConfig.config.numOfRecordsPreview = numRecordsPreview;
     };
     this.getMaxConcurrentRuns = function() {
-      return this.state.cloneConfig.config.maxConcurrentRuns;
+      return this.getCloneConfig().config.maxConcurrentRuns;
     };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
