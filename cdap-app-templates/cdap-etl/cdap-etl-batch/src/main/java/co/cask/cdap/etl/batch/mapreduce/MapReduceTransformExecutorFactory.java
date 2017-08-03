@@ -22,9 +22,7 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.etl.api.Aggregator;
-import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.api.AlertPublisherContext;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.JoinElement;
@@ -52,7 +50,6 @@ import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.NoErrorEmitter;
@@ -188,9 +185,12 @@ public class MapReduceTransformExecutorFactory<T> {
     Transformation transformation = getInitializedTransformation(stageSpec);
     boolean isLimitingSource =
       taskContext.getDataTracer(stageName).isEnabled() && BatchSource.PLUGIN_TYPE.equals(pluginType) && isMapPhase;
-    return new TrackedTransform<>(
-      isLimitingSource ? new LimitingTransform(transformation, numberOfRecordsPreview) : transformation,
-      stageMetrics, taskContext.getDataTracer(stageName));
+    transformation = isLimitingSource ? new LimitingTransform(transformation, numberOfRecordsPreview) : transformation;
+    // we emit metrics for records into alert publishers when the actual alerts are published,
+    // not when we write the alerts to the temporary dataset
+    String recordsInMetric = AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;
+    return new TrackedTransform<>(transformation, stageMetrics, recordsInMetric, Constants.Metrics.RECORDS_OUT,
+                                  taskContext.getDataTracer(stageName));
   }
 
   /**

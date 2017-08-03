@@ -32,8 +32,6 @@ import javax.annotation.Nullable;
  * @param <OUT> Type of output object
  */
 public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destroyable {
-  public static final String RECORDS_IN = "records.in";
-  public static final String RECORDS_OUT = "records.out";
   private final Transformation<IN, OUT> transform;
   private final StageMetrics metrics;
   private final String metricInName;
