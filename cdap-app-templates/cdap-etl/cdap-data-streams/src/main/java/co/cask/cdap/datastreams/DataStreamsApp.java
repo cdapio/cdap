@@ -18,6 +18,7 @@ package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
@@ -40,7 +41,7 @@ public class DataStreamsApp extends AbstractApplication<DataStreamsConfig> {
       new DataStreamsPipelineSpecGenerator(
         getConfigurer(),
         ImmutableSet.of(StreamingSource.PLUGIN_TYPE),
-        ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE)
+        ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE)
       );
     DataStreamsPipelineSpec spec = specGenerator.generateSpec(config);
     addSpark(new DataStreamsSparkLauncher(spec));

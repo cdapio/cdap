@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class PipeTransformExecutor<IN> implements Destroyable {
   public void runOneIteration(IN input) {
     for (String stageName : startingPoints) {
       PipeStage<RecordInfo> pipeStage = pipeStages.get(stageName);
-      pipeStage.consume(RecordInfo.builder(input, stageName).build());
+      pipeStage.consume(RecordInfo.builder(input, stageName, RecordType.OUTPUT).build());
     }
   }
 

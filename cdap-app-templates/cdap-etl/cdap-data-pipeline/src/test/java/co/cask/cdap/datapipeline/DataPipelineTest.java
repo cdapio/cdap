@@ -20,8 +20,11 @@ import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.messaging.Message;
+import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.workflow.NodeStatus;
@@ -33,10 +36,13 @@ import co.cask.cdap.datapipeline.mock.SpamMessage;
 import co.cask.cdap.datapipeline.service.ServiceApp;
 import co.cask.cdap.datapipeline.spark.LineFilterProgram;
 import co.cask.cdap.datapipeline.spark.WordCount;
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.mock.action.MockAction;
+import co.cask.cdap.etl.mock.alert.NullAlertTransform;
+import co.cask.cdap.etl.mock.alert.TMSAlertPublisher;
 import co.cask.cdap.etl.mock.batch.FilterTransform;
 import co.cask.cdap.etl.mock.batch.LookupTransform;
 import co.cask.cdap.etl.mock.batch.MockExternalSink;
@@ -84,6 +90,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.gson.Gson;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -109,7 +116,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class DataPipelineTest extends HydratorTestBase {
-
+  private static final Gson GSON = new Gson();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT_RANGE = new ArtifactSummary("app", "[0.1.0,1.1.0)");
@@ -143,6 +150,73 @@ public class DataPipelineTest extends HydratorTestBase {
   @After
   public void cleanupTest() throws Exception {
     getMetricsManager().resetAll();
+  }
+
+  @Test
+  public void testAlertPublisher() throws Exception {
+    testAlertPublisher(Engine.MAPREDUCE);
+    testAlertPublisher(Engine.SPARK);
+  }
+
+  private void testAlertPublisher(Engine engine) throws Exception {
+    String sourceName = "alertSource" + engine.name();
+    String sinkName = "alertSink" + engine.name();
+    String topic = "alertTopic" + engine.name();
+    /*
+     * source --> nullAlert --> sink
+     *               |
+     *               |--> TMS publisher
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("nullAlert", NullAlertTransform.getPlugin("id")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addStage(new ETLStage("tms", TMSAlertPublisher.getPlugin(topic, NamespaceId.DEFAULT.getNamespace())))
+      .addConnection("source", "nullAlert")
+      .addConnection("nullAlert", "sink")
+      .addConnection("nullAlert", "tms")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("AlertTest-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    Schema schema = Schema.recordOf("x", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.LONG))));
+    StructuredRecord record1 = StructuredRecord.builder(schema).set("id", 1L).build();
+    StructuredRecord record2 = StructuredRecord.builder(schema).set("id", 2L).build();
+    StructuredRecord alertRecord = StructuredRecord.builder(schema).build();
+
+    DataSetManager<Table> sourceTable = getDataset(sourceName);
+    MockSource.writeInput(sourceTable, ImmutableList.of(record1, record2, alertRecord));
+
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    manager.start();
+    manager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+
+    DataSetManager<Table> sinkTable = getDataset(sinkName);
+    Set<StructuredRecord> actual = new HashSet<>(MockSink.readOutput(sinkTable));
+    Set<StructuredRecord> expected = ImmutableSet.of(record1, record2);
+    Assert.assertEquals(expected, actual);
+
+    MessageFetcher messageFetcher = getMessagingContext().getMessageFetcher();
+    Set<Alert> actualMessages = new HashSet<>();
+    try (CloseableIterator<Message> iter = messageFetcher.fetch(NamespaceId.DEFAULT.getNamespace(), topic, 5, 0)) {
+      while (iter.hasNext()) {
+        Message message = iter.next();
+        Alert alert = GSON.fromJson(message.getPayloadAsString(), Alert.class);
+        actualMessages.add(alert);
+      }
+    }
+    Set<Alert> expectedMessages = ImmutableSet.of(new Alert("nullAlert", new HashMap<String, String>()));
+    Assert.assertEquals(expectedMessages, actualMessages);
+
+    validateMetric(3, appId, "source.records.out");
+    validateMetric(3, appId, "nullAlert.records.in");
+    validateMetric(2, appId, "nullAlert.records.out");
+    validateMetric(1, appId, "nullAlert.records.alert");
+    validateMetric(2, appId, "sink.records.in");
+    validateMetric(1, appId, "tms.records.in");
   }
 
   @Test

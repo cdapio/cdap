@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.connector;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -63,7 +64,7 @@ public class ConnectorSink extends BatchSink<RecordInfo<StructuredRecord>, NullW
     Map<String, String> arguments = new HashMap<>();
     PartitionKey outputPartition = PartitionKey.builder().addStringField("phase", phaseName).build();
     PartitionedFileSetArguments.setOutputPartitionKey(arguments, outputPartition);
-    context.addOutput(datasetName, arguments);
+    context.addOutput(Output.ofDataset(datasetName, arguments));
   }
 
   @Override
@@ -79,6 +80,7 @@ public class ConnectorSink extends BatchSink<RecordInfo<StructuredRecord>, NullW
     Schema inputSchema = input.getValue().getSchema();
     return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
       .set("stageName", stageName)
+      .set("type", input.getType().name())
       .set("schema", inputSchema.toString())
       .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
       .build();

@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.Transform;
@@ -53,7 +54,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE,
     Constants.CONNECTOR_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
     Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE,
-    Condition.PLUGIN_TYPE);
+    Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   @Override
   public void configure() {
@@ -63,7 +64,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
       getConfigurer(),
       ImmutableSet.of(BatchSource.PLUGIN_TYPE),
-      ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
+      ImmutableSet.of(BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE),
       TimePartitionedFileSet.class,
       FileSetProperties.builder()
         .setInputFormat(AvroKeyInputFormat.class)

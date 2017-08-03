@@ -14,13 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
+import co.cask.cdap.etl.api.Emitter;
 
 /**
- * Context for an {@link AlertPublisher}, exposing methods to publish messages to TMS.
+ * Type of records emitted from an {@link Emitter}.
  */
-public interface AlertPublisherContext extends StageContext, MessagingContext, MessagingAdmin {
+public enum RecordType {
+  OUTPUT,
+  ERROR,
+  ALERT;
 }

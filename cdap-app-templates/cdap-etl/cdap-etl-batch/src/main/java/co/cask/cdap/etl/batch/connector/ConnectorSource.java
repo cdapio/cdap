@@ -31,6 +31,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -59,6 +60,7 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, RecordInfo<
   static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
     "record",
     Schema.Field.of("stageName", Schema.of(Schema.Type.STRING)),
+    Schema.Field.of("type", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("schema", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("record", Schema.of(Schema.Type.STRING)));
   private final String datasetName;
@@ -108,7 +110,8 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, RecordInfo<
     } else {
       output = StructuredRecordStringConverter.fromJsonString(inputStr, schema);
     }
-    emitter.emit(RecordInfo.builder(output, stageName).build());
+    RecordType recordType = RecordType.valueOf((String) recordWithSchema.get("type"));
+    emitter.emit(RecordInfo.builder(output, stageName, recordType).build());
   }
 
 }

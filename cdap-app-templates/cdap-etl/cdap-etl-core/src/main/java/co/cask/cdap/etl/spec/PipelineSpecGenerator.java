@@ -341,7 +341,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
    * Sink stages have at least one input and no outputs.
    * There are no cycles in the pipeline.
    * All inputs into a stage have the same schema.
-   * ErrorTransforms only have BatchSource, Transform, or BatchAggregator as input stages
+   * ErrorTransforms only have BatchSource, Transform, or BatchAggregator as input stages.
+   * AlertPublishers have at least one input and no outputs and don't have SparkSink or BatchSink as input.
    *
    * Returns the stages in the order they should be configured to ensure that all input stages are configured
    * before their output.
@@ -434,44 +435,40 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       Set<String> stageOutputs = dag.getNodeOutputs(stageName);
       String stageType = stage.getPlugin().getType();
 
+      boolean isSource = isSource(stageType);
+      boolean isSink = isSink(stageType);
       // check source plugins are sources in the dag
-      if (isSource(stageType)) {
+      if (isSource) {
         if (!stageInputs.isEmpty() && !actionStages.containsAll(stageInputs)) {
           throw new IllegalArgumentException(
-            String.format("Source %s has incoming connections from %s. Sources cannot have any incoming connections.",
-                          stageName, Joiner.on(',').join(stageInputs)));
+            String.format("%s %s has incoming connections from %s. %s stages cannot have any incoming connections.",
+                          stageType, stageName, stageType, Joiner.on(',').join(stageInputs)));
         }
-      } else if (isSink(stageType)) {
+      } else if (isSink) {
         if (!stageOutputs.isEmpty() && !actionStages.containsAll(stageOutputs)) {
           throw new IllegalArgumentException(
-            String.format("Sink %s has outgoing connections to %s. Sinks cannot have any outgoing connections.",
-                          stageName, Joiner.on(',').join(stageOutputs)));
+            String.format("%s %s has outgoing connections to %s. %s stages cannot have any outgoing connections.",
+                          stageType, stageName, stageType, Joiner.on(',').join(stageOutputs)));
         }
-      } else {
-        // check that other non-action plugins are not sources or sinks in the dag
-        if (!isAction(stageType)) {
-          if (stageInputs.isEmpty()) {
-            throw new IllegalArgumentException(
-              String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
-          }
-          if (stageOutputs.isEmpty()) {
-            throw new IllegalArgumentException(
-              String.format("Stage %s is a dead end, it has no outgoing connections.", stageName));
+      } else if (ErrorTransform.PLUGIN_TYPE.equals(stageType)) {
+        for (String inputStage : stageInputs) {
+          String inputType = stageTypes.get(inputStage);
+          if (!VALID_ERROR_INPUTS.contains(inputType)) {
+            throw new IllegalArgumentException(String.format(
+              "ErrorTransform %s cannot have stage %s of type %s as input. Only %s stages can emit errors.",
+              stageName, inputStage, inputType, Joiner.on(',').join(VALID_ERROR_INPUTS)));
           }
         }
+      }
 
-        // check that error transforms only have stages that can emit errors as input
-        boolean isErrorTransform = ErrorTransform.PLUGIN_TYPE.equals(stageType);
-        if (isErrorTransform) {
-          for (String inputStage : stageInputs) {
-            String inputType = stageTypes.get(inputStage);
-            if (!VALID_ERROR_INPUTS.contains(inputType)) {
-              throw new IllegalArgumentException(String.format(
-                "ErrorTransform %s cannot have stage %s of type %s as input. Only %s stages can emit errors.",
-                stageName, inputStage, inputType, Joiner.on(',').join(VALID_ERROR_INPUTS)));
-            }
-          }
-        }
+      boolean isAction = isAction(stageType);
+      if (!isAction && !isSource && stageInputs.isEmpty()) {
+        throw new IllegalArgumentException(
+          String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
+      }
+      if (!isAction && !isSink && stageOutputs.isEmpty()) {
+        throw new IllegalArgumentException(
+          String.format("Stage %s is a dead end, it has no outgoing connections.", stageName));
       }
 
       stages.put(stageName, stage);
@@ -486,7 +483,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     return new ValidatedPipeline(traversalOrder, config);
   }
 
-  // will soon have another action type
   private boolean isAction(String pluginType) {
     return Action.PLUGIN_TYPE.equals(pluginType) || Constants.SPARK_PROGRAM_PLUGIN_TYPE.equals(pluginType);
   }

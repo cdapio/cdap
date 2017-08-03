@@ -16,23 +16,21 @@
 
 package co.cask.cdap.etl.spark.function;
 
-import co.cask.cdap.etl.api.ErrorRecord;
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.RecordType;
 
 import java.util.Collections;
 
 /**
- * Filters a SparkCollection containing both output and errors to one that just contains errors.
- *
- * @param <T> type of error record
+ * Filters a SparkCollection containing both output and errors to one that just contains alerts.
  */
-public class ErrorPassFilter<T> implements FlatMapFunc<RecordInfo<Object>, ErrorRecord<T>> {
+public class AlertPassFilter implements FlatMapFunc<RecordInfo<Object>, Alert> {
 
   @Override
-  public Iterable<ErrorRecord<T>> call(RecordInfo<Object> input) throws Exception {
+  public Iterable<Alert> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
-    return input.getType() == RecordType.ERROR ?
-      Collections.singletonList((ErrorRecord<T>) input.getValue()) : Collections.<ErrorRecord<T>>emptyList();
+    return input.getType() == RecordType.ALERT ?
+      Collections.singletonList((Alert) input.getValue()) : Collections.<Alert>emptyList();
   }
 }

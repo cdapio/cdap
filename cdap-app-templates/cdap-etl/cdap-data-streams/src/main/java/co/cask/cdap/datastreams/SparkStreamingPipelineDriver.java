@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.ErrorTransform;
 import co.cask.cdap.etl.api.SplitterTransform;
 import co.cask.cdap.etl.api.Transform;
@@ -62,7 +63,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
   private static final Set<String> SUPPORTED_PLUGIN_TYPES = ImmutableSet.of(
     StreamingSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE,
     BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, Windower.PLUGIN_TYPE,
-    ErrorTransform.PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE);
+    ErrorTransform.PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   @Override
   public void run(final JavaSparkExecutionContext sec) throws Exception {

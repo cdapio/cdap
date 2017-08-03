@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.ErrorRecord;
 import co.cask.cdap.etl.api.InvalidEntry;
@@ -23,8 +24,10 @@ import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.batch.mapreduce.ErrorOutputWriter;
 import co.cask.cdap.etl.common.BasicErrorRecord;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.RecordType;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -49,6 +52,7 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
   // port -> set of stages connected to that port
   private final Multimap<String, PipeStage<RecordInfo>> outputPortConsumers;
   private final Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers;
+  private final Set<PipeStage<RecordInfo<Alert>>> alertConsumers;
   private final ErrorOutputWriter<Object, Object> errorOutputWriter;
   private boolean logWarning;
 
@@ -56,11 +60,13 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
                      Set<PipeStage<RecordInfo>> outputConsumers,
                      Multimap<String, PipeStage<RecordInfo>> outputPortConsumers,
                      Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers,
+                     Set<PipeStage<RecordInfo<Alert>>> alertConsumers,
                      @Nullable ErrorOutputWriter<Object, Object> errorOutputWriter) {
     this.stageName = stageName;
     this.outputConsumers = ImmutableSet.copyOf(outputConsumers);
     this.outputPortConsumers = ImmutableMultimap.copyOf(outputPortConsumers);
     this.errorConsumers = ImmutableSet.copyOf(errorConsumers);
+    this.alertConsumers = ImmutableSet.copyOf(alertConsumers);
     this.errorOutputWriter = errorOutputWriter;
     this.logWarning = true;
   }
@@ -94,7 +100,8 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
 
     ErrorRecord<Object> errorRecord = new BasicErrorRecord<>(invalidEntry.getInvalidRecord(), stageName,
                                                              invalidEntry.getErrorCode(), invalidEntry.getErrorMsg());
-    RecordInfo<ErrorRecord<Object>> errorRecordInfo = RecordInfo.builder(errorRecord, stageName).isError().build();
+    RecordInfo<ErrorRecord<Object>> errorRecordInfo =
+      RecordInfo.builder(errorRecord, stageName, RecordType.ERROR).build();
     for (PipeStage<RecordInfo<ErrorRecord<Object>>> pipeTransform : errorConsumers) {
       pipeTransform.consume(errorRecordInfo);
     }
@@ -108,8 +115,17 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
     }
   }
 
+  @Override
+  public void emitAlert(Map<String, String> payload) {
+    Alert alert = new Alert(stageName, ImmutableMap.copyOf(payload));
+    RecordInfo<Alert> alertRecord = RecordInfo.builder(alert, stageName, RecordType.ALERT).build();
+    for (PipeStage<RecordInfo<Alert>> alertConsumer : alertConsumers) {
+      alertConsumer.consume(alertRecord);
+    }
+  }
+
   protected RecordInfo getPipeRecord(Object value) {
-    return RecordInfo.builder(value, stageName).build();
+    return RecordInfo.builder(value, stageName, RecordType.OUTPUT).build();
   }
 
   /**
@@ -122,11 +138,6 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
     return new Builder(stageName);
   }
 
-  @Override
-  public void emitAlert(Map<String, String> payload) {
-    // todo: implement
-  }
-
   /**
    * Base implementation of a Builder for a PipeEmitter.
    */
@@ -135,6 +146,7 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
     protected final Multimap<String, PipeStage<RecordInfo>> outputPortConsumers;
     protected final Set<PipeStage<RecordInfo<ErrorRecord<Object>>>> errorConsumers;
     protected final Set<PipeStage<RecordInfo>> outputConsumers;
+    protected final Set<PipeStage<RecordInfo<Alert>>> alertConsumers;
     protected ErrorOutputWriter<Object, Object> errorOutputWriter;
 
     protected Builder(String stageName) {
@@ -142,6 +154,7 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
       this.outputPortConsumers = HashMultimap.create();
       this.outputConsumers = new HashSet<>();
       this.errorConsumers = new HashSet<>();
+      this.alertConsumers = new HashSet<>();
       this.errorOutputWriter = null;
     }
 
@@ -160,13 +173,19 @@ public class PipeEmitter implements Emitter<Object>, MultiOutputEmitter<Object> 
       return this;
     }
 
+    public Builder addAlertConsumer(PipeStage<RecordInfo<Alert>> alertConsumer) {
+      alertConsumers.add(alertConsumer);
+      return this;
+    }
+
     public Builder setErrorOutputWriter(ErrorOutputWriter<Object, Object> errorOutputWriter) {
       this.errorOutputWriter = errorOutputWriter;
       return this;
     }
 
     public PipeEmitter build() {
-      return new PipeEmitter(stageName, outputConsumers, outputPortConsumers, errorConsumers, errorOutputWriter);
+      return new PipeEmitter(stageName, outputConsumers, outputPortConsumers, errorConsumers,
+                             alertConsumers, errorOutputWriter);
     }
   }
 }
