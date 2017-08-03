@@ -26,7 +26,6 @@ angular.module(PKG.name + '.commons')
     let localX, localY;
 
     var SHOW_METRICS_THRESHOLD = 0.8;
-    var selected = [];
 
     var separation = $scope.separation || 200; // node separation length
 
@@ -526,9 +525,6 @@ angular.module(PKG.name + '.commons')
             }
             localX = currentCoOrdinates.x;
             localY = currentCoOrdinates.y;
-            if (selected.indexOf(drag.el.id) === -1) {
-              vm.clearNodeSelection();
-            }
 
             dragged = true;
           },
@@ -540,7 +536,7 @@ angular.module(PKG.name + '.commons')
               }
             };
             DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-            repaintEverything();
+            // repaintEverything();
           }
         });
       }
@@ -671,53 +667,12 @@ angular.module(PKG.name + '.commons')
 
     });
 
-    vm.clearNodeSelection = function () {
-      if (canvasDragged) {
-        canvasDragged = false;
-        return;
-      }
-      selected = [];
-      vm.instance.clearDragSelection();
-      DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-      angular.forEach($scope.nodes, function (node) {
-        node.selected = false;
-      });
-      clearCommentSelection();
-    };
-
-    function checkSelection() {
-      vm.instance.clearDragSelection();
-
-      selected = [];
-      angular.forEach($scope.nodes, function (node) {
-        if (node.selected) {
-          selected.push(node.name);
-        }
-      });
-
-      vm.instance.addToDragSelection(selected);
-    }
-
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
 
-      if ((event.ctrlKey || event.metaKey)) {
-        node.selected = !node.selected;
-        DAGPlusPlusNodesActionsFactory.resetSelectedNode();
-
-        if (node.selected) {
-          checkSelection();
-        } else {
-          vm.instance.removeFromDragSelection(node.name);
-        }
-      } else {
-        vm.clearNodeSelection();
-        node.selected = true;
-
-        closeNodePopover(node);
-        HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
-        DAGPlusPlusNodesActionsFactory.selectNode(node.name);
-      }
+      closeNodePopover(node);
+      HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
+      DAGPlusPlusNodesActionsFactory.selectNode(node.name);
     };
 
     vm.onMetricsClick = function(event, node) {
