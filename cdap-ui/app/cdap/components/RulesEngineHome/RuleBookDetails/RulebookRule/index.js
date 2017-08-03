@@ -19,6 +19,7 @@ import {Col} from 'reactstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
+import IconSVG from 'components/IconSVG';
 
 const ItemTypes = {
   Rule: 'RULEBOOKRULE'
@@ -119,7 +120,7 @@ class RulebookRule extends Component {
         <Col xs={1}>{index + 1}</Col>
         <Col xs={3}>{rule.id}</Col>
         <Col xs={5}>{rule.description}</Col>
-        <Col xs={3}>
+        <Col xs={2}>
           <button
             className="btn btn-link"
             href
@@ -127,6 +128,9 @@ class RulebookRule extends Component {
           >
             Remove
           </button>
+        </Col>
+        <Col xs={1}>
+          <IconSVG name="icon-bars" />
         </Col>
       </div>
     ));

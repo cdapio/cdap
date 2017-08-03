@@ -40,6 +40,10 @@ export default class CreateRulebook extends Component {
   };
 
   onRulesAdd = (rule) => {
+    let isRuleAlreadyExist = this.state.rules.find(r => rule.id === r.id);
+    if (isRuleAlreadyExist) {
+      return;
+    }
     this.setState({
       rules: [...this.state.rules, rule]
     });

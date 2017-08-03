@@ -217,7 +217,7 @@ class Rule extends Component {
     return (
       connectDragSource(
         <div onClick={this.viewDetails}>
-          <Col xs="7">
+          <Col xs="6">
             <div className="svg-arrow-wrapper">
               {
                 !this.state.viewDetails ?
@@ -230,6 +230,9 @@ class Rule extends Component {
           </Col>
           <Col xs="5">
             {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
+          </Col>
+          <Col xs="1">
+            <IconSVG name="icon-bars" />
           </Col>
         </div>
       )

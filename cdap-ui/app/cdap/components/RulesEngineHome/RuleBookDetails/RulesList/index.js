@@ -115,22 +115,27 @@ class RulesList extends Component {
         'drag-hover': this.props.isOver
       })}>
         <div className="title"> Rules ({rules.length}) </div>
-        {
-          (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
-            null
-          :
-            rules.map((rule, i) => {
-              return (
-                <RulebookRule
-                  key={rule.id}
-                  index={i}
-                  rule={rule}
-                  onRuleSort={this.onRulesSort}
-                  onRemove={this.props.onRemove}
-                />
-              );
-            })
-        }
+        <div className="rules">
+          {
+            (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
+              null
+            :
+              rules.map((rule, i) => {
+                return (
+                  <RulebookRule
+                    key={rule.id}
+                    index={i}
+                    rule={rule}
+                    onRuleSort={this.onRulesSort}
+                    onRemove={this.props.onRemove}
+                  />
+                );
+              })
+          }
+          <div className="drag-drop-placeholder">
+            Add a rule by drag and drop from the rule list on the left
+          </div>
+        </div>
       </div>
     );
   }

@@ -26,6 +26,11 @@
       padding-left: 0;
     }
 
+    .icon-bars {
+      cursor: move;
+      color: gray;
+    }
+
     &.expanded {
       background: #eeeeee;
 
