@@ -284,12 +284,14 @@ angular.module(PKG.name + '.commons')
               endpointClicked = true;
               let sourceElem = element.id;
               let endpoints = vm.instance.getEndpoints(sourceElem);
-              for (let i = 0; i < endpoints.length; i++) {
-                let endpoint = endpoints[i];
-                if (endpoint.connections && endpoint.connections.length > 0) {
-                  if (endpoint.connections[0].sourceId === node.name) {
-                    selectEndpointOrConnection(endpoint);
-                    break;
+              if (endpoints) {
+                for (let i = 0; i < endpoints.length; i++) {
+                  let endpoint = endpoints[i];
+                  if (endpoint.connections && endpoint.connections.length > 0) {
+                    if (endpoint.connections[0].sourceId === node.name) {
+                      selectEndpointOrConnection(endpoint);
+                      break;
+                    }
                   }
                 }
               }
