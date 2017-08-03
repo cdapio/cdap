@@ -177,10 +177,6 @@
               </a>
             </div>
             <div class="node-actions">
-              <span class="node-actions-error-alert float-xs-left">
-                <span class="node-actions-error">Error</span>
-                <span>Alert</span>
-              </span>
               <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
                     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                     class="menu-icon menu-icon-node fa fa-bars float-xs-right"
@@ -196,16 +192,6 @@
               ng-click="DAGPlusPlusCtrl.toggleNodeMenu(node.name, $event)">
             </div>
             <div class="menu-content">
-              <div class="menu-content-action disabled">
-                Copy
-              </div>
-              <div class="menu-content-action disabled">
-                Duplicate
-              </div>
-              <div class="menu-content-action disabled">
-                Create Template
-              </div>
-              <hr />
               <div class="menu-content-action menu-content-delete"
                 ng-click="DAGPlusPlusCtrl.onNodeDelete($event, node)">
                 Delete
@@ -243,16 +229,6 @@
             ng-click="$event.stopPropagation()"
             class="dag-popover-menu">
         <div class="menu-content">
-          <div class="menu-content-action disabled">
-            Copy
-          </div>
-          <div class="menu-content-action disabled">
-            Duplicate
-          </div>
-          <div class="menu-content-action disabled">
-            Create Template
-          </div>
-          <hr />
           <div class="menu-content-action menu-content-delete"
             ng-click="DAGPlusPlusCtrl.removeSelectedConnections(); DAGPlusPlusCtrl.openDagMenu(false)">
             Delete
