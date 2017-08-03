@@ -702,14 +702,14 @@ angular.module(PKG.name + '.commons')
        * 3. Top most nodes
        * 4. Bottom most nodes
        **/
-      var minLeft = _.minBy($scope.nodes, function (node) {
+      var minLeft = _.min($scope.nodes, function (node) {
         if (node._uiPosition.left.indexOf('vw') !== -1) {
           var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
         }
         return parseInt(node._uiPosition.left, 10);
       });
-      var maxLeft = _.maxBy($scope.nodes, function (node) {
+      var maxLeft = _.max($scope.nodes, function (node) {
         if (node._uiPosition.left.indexOf('vw') !== -1) {
           var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
@@ -717,11 +717,11 @@ angular.module(PKG.name + '.commons')
         return parseInt(node._uiPosition.left, 10);
       });
 
-      var minTop = _.minBy($scope.nodes, function (node) {
+      var minTop = _.min($scope.nodes, function (node) {
         return parseInt(node._uiPosition.top, 10);
       });
 
-      var maxTop = _.maxBy($scope.nodes, function (node) {
+      var maxTop = _.max($scope.nodes, function (node) {
         return parseInt(node._uiPosition.top, 10);
       });
 
