@@ -17,7 +17,7 @@
 import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-import RulesList from 'components/RulesEngineHome/RulebookDetails/RulesList';
+import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 
 export default class CreateRulebook extends Component {

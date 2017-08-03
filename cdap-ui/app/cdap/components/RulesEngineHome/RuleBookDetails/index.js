@@ -21,7 +21,7 @@ import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {getRulesForActiveRuleBook, resetCreateRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
-import RulesList from 'components/RulesEngineHome/RulebookDetails/RulesList';
+import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import LoadingSVG from 'components/LoadingSVG';
 import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
 import debounce from 'lodash/debounce';
