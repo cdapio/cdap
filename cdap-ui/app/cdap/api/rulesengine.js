@@ -34,8 +34,7 @@ const  MyRulesEngineApi = {
   createRulebook: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceMethodsBasepath}/rulebooks`),
   updateRulebook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}`),
 
-
-  // WRANGLER SERVICE MANAGEMENT
+  // Yare service management
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),
   startService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/start`),
   stopService: apiCreator(dataSrc, 'POST', 'REQUEST', `${serviceBasepath}/stop`),
