@@ -19,9 +19,9 @@ import RenderObjectAsTable from 'components/RenderObjectAsTable';
 import capitalize from 'lodash/capitalize';
 import classnames from 'classnames';
 
-require('./Genericdetails.scss');
+require('./GenericDetails.scss');
 
-export default function Genericdetails({details, className}) {
+export default function GenericDetails({details, className}) {
   delete details.name;
   delete details.url;
   delete details.version;
@@ -43,7 +43,7 @@ export default function Genericdetails({details, className}) {
     </div>
   );
 }
-Genericdetails.propTypes = {
+GenericDetails.propTypes = {
   details: PropTypes.object,
   className: PropTypes.string
 };

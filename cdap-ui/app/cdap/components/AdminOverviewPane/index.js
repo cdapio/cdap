@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -33,17 +33,15 @@ function AdminOverviewPane({platforms, isLoading}) {
     .filter(platform => platforms[platform].name !== 'CDAP')
     .map((platform) => {
       platform = platforms[platform];
-      if (platform.name !== 'CDAP') {
-        return (
-          <OverviewPaneCard
-            key={shortid.generate()}
-            name={platform.name}
-            version={platform.version}
-            url={platform.url}
-            logs={platform.logs}
-          />
-        );
-      }
+      return (
+        <OverviewPaneCard
+          key={shortid.generate()}
+          name={platform.name}
+          version={platform.version}
+          url={platform.url}
+          logs={platform.logs}
+        />
+      );
     });
 
   const renderContents = () => {

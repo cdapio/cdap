@@ -18,13 +18,17 @@ import React, {Component, PropTypes} from 'react';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import Genericdetails from 'components/Administration/PlatformsDetails/Genericdetails';
+import GenericDetails from 'components/Administration/PlatformsDetails/GenericDetails';
 import LoadingSVG from 'components/LoadingSVG';
 
 const ADMINPREFIX = 'features.Administration.Component-Overview.headers';
-require('./PlatfotmsDetails.scss');
+require('./PlatformDetails.scss');
 
 export default class PlatformsDetails extends Component {
+  static propTypes = {
+    platforms: PropTypes.arrayOf(PropTypes.object)
+  };
+
   static defaultProps = {
     platforms: {}
   };
@@ -46,7 +50,7 @@ export default class PlatformsDetails extends Component {
     this.setState({
       activeTab
     });
-  }
+  };
 
   render() {
     if (!Object.keys(this.state.platforms).length) {
@@ -84,7 +88,7 @@ export default class PlatformsDetails extends Component {
               .map((platform, i) => {
                 return (
                   <TabPane tabId={platform} key={i}>
-                    <Genericdetails
+                    <GenericDetails
                       details={this.state.platforms[platform]}
                       className={platform}
                     />
@@ -97,6 +101,4 @@ export default class PlatformsDetails extends Component {
     );
   }
 }
-PlatformsDetails.propTypes = {
-  platforms: PropTypes.arrayOf(PropTypes.object)
-};
+

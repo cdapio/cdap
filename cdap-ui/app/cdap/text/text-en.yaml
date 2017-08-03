@@ -154,10 +154,10 @@ features:
     Services:
       title: Services
       headers:
-        status: Status
         name: Name
         provisioned: Provisioned
         requested: Requested
+        status: Status
       appfabric: App Fabric
       dataset_executor: Dataset Executor
       explore_service: Explore Service
