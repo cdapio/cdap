@@ -37,6 +37,7 @@
  var StatusFactory = require('../cdap/services/StatusFactory').default;
  var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
  var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
+ var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
 
  export {
   Store,
@@ -59,5 +60,6 @@
   CDAPHelpers,
   StatusFactory,
   LoadingIndicator,
-  StatusAlertMessage
+  StatusAlertMessage,
+  PipelineTriggersSidebars
 };
