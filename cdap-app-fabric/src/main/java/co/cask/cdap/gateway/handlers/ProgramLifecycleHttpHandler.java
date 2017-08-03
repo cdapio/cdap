@@ -98,8 +98,11 @@ import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
@@ -122,6 +125,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -641,13 +645,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     Collection<ProgramScheduleRecord> schedules = new HashSet<>();
     Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
+
     if (triggerProgramStatuses == null) {
       queryProgramStatuses = ImmutableSet.of(co.cask.cdap.api.ProgramStatus.COMPLETED,
                                              co.cask.cdap.api.ProgramStatus.FAILED,
                                              co.cask.cdap.api.ProgramStatus.KILLED);
     } else {
       for (String status : triggerProgramStatuses.split(",")) {
-        queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
+        try {
+          queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(String.format("%s is not a valid program status. Valid program statuses are: " +
+                                                        "%s", status, co.cask.cdap.api.ProgramStatus.values()));
+        }
       }
     }
 

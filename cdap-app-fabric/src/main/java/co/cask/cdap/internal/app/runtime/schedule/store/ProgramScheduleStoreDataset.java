@@ -531,7 +531,8 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     if (trigger instanceof PartitionTrigger) {
       String triggerKey = Schedulers.triggerKeyForPartition(((PartitionTrigger) trigger).getDataset());
       return Collections.singletonList(triggerKey);
-    } else if (trigger instanceof ProgramStatusTrigger) {
+    }
+    if (trigger instanceof ProgramStatusTrigger) {
       ProgramStatusTrigger programTrigger = (ProgramStatusTrigger) trigger;
       List<String> triggerKeys = new ArrayList<>();
 
@@ -540,9 +541,6 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
         triggerKeys.add(Schedulers.triggerKeyForProgramStatus(programTrigger.getProgramId(), programStatus));
       }
       return triggerKeys;
-    }
-    if (trigger instanceof ProgramStatusTrigger) {
-      return Collections.singletonList(((ProgramStatusTrigger) trigger).getProgramId().toString());
     }
     return Collections.emptyList();
   }

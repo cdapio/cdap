@@ -45,20 +45,21 @@ public interface ProgramStateWriter {
 
   /**
    * Updates the program run's status to be completed
-   *  @param programRunId the id of the program run
    *
+   * @param programRunId the id of the program run
    */
   void completed(ProgramRunId programRunId);
 
   /**
    * Updates the program run's status to be killed
-   *  @param programRunId the id of the program run
    *
+   * @param programRunId the id of the program run
    */
   void killed(ProgramRunId programRunId);
 
   /**
    * Updates the program run's status to be failed with a specified failure cause
+   *
    * @param programRunId the id of the program run
    * @param failureCause the cause of the failure
    */

@@ -19,6 +19,8 @@ package co.cask.cdap.scheduler;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.workflow.NodeValue;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -28,16 +30,18 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
-import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -48,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -211,28 +216,41 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
-      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programRunId.getParent(),
-                                                                                programStatus);
+      ProgramId programId = programRunId.getParent();
+      String runId = programRunId.getRun();
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
 
       for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
         if (schedule.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED) {
-          // If the triggered program is a workflow, send the notification that contains the workflow token to be used
-          if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
-            programRunId.getParent().getType() == ProgramType.WORKFLOW) {
+          // Copy over the user properties
+          RunRecordMeta triggeredProgramRun = getAppMetadataStore(context).getRun(programId, runId);
+          Map<String, String> triggeringProgramProperties = new HashMap<>();
+          triggeringProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
+                                          GSON.toJson(triggeredProgramRun.getProperties()));
 
-            Map<String, String> updatedProperties = notification.getProperties();
-            updatedProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN,
-                                  GSON.toJson(getAppMetadataStore(context).getWorkflowToken(new WorkflowId(programRunId.getParent().getParent(), programRunId.getProgram()),
-                                                                     programRunId.getRun())));
-            Notification notificationWithToken = new Notification(Notification.Type.PROGRAM_STATUS, updatedProperties);
-            getJobQueue(context).addNotification(schedule, notificationWithToken);
-          } else {
-            // Otherwise send the notification without the workflow token
-            Map<String, String> properties = new HashMap<>(notification.getProperties());
-            properties.remove(ProgramOptionConstants.WORKFLOW_TOKEN);
-            Notification programWithoutWorkflow = new Notification(Notification.Type.PROGRAM_STATUS, properties);
-            getJobQueue(context).addNotification(schedule, programWithoutWorkflow);
+          // If the triggered program is a workflow, send the notification that contains just the USER workflow token
+          if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
+            programId.getType() == ProgramType.WORKFLOW) {
+
+            // Copy over the workflow token and extract just the user scoped keys
+            WorkflowToken workflowToken = getAppMetadataStore(context).getWorkflowToken(programId, runId);
+            Map<String, List<NodeValue>> userValues = workflowToken.getAll(WorkflowToken.Scope.USER);
+
+            BasicWorkflowToken userWorkflowToken = new BasicWorkflowToken(
+              cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+            userWorkflowToken.setCurrentNode(programId.getProgram());
+
+            for (Map.Entry<String, List<NodeValue>> entry : userValues.entrySet()) {
+              for (NodeValue nodeValue : entry.getValue()) {
+                userWorkflowToken.put(entry.getKey(), nodeValue.getValue());
+              }
+            }
+            triggeringProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
           }
+
+          Notification triggeringProgram = new Notification(Notification.Type.PROGRAM_STATUS,
+                                                            triggeringProgramProperties);
+          getJobQueue(context).addNotification(schedule, triggeringProgram);
         }
       }
     }
