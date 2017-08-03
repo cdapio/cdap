@@ -23,9 +23,11 @@ import isEmpty from 'lodash/isEmpty';
 import CreateRule from 'components/RulesEngineHome/CreateRule';
 import isNil from 'lodash/isNil';
 import LoadingSVG from 'components/LoadingSVG';
-
+import T from 'i18n-react';
 
 require('./RulesTab.scss');
+
+const PREFIX = 'features.RulesEngine.RulesTab';
 
 export default class RulesTab extends Component {
   state = {
@@ -90,17 +92,17 @@ export default class RulesTab extends Component {
     }
 
     if (!rules.length && !this.state.createRule) {
-      return (<h4 className="text-xs-center"> No Rules found </h4>);
+      return (<h4 className="text-xs-center"> {T.translate(`${PREFIX}.norules`)} </h4>);
     }
 
     return (
       <div className="container">
         <Row>
           <Col xs="7">
-            Name
+            {T.translate(`commons.nameLabel`)}
           </Col>
           <Col xs="5">
-            Last Updated
+            {T.translate(`${PREFIX}.lastUpdated`)}
           </Col>
         </Row>
         {
@@ -126,12 +128,12 @@ export default class RulesTab extends Component {
     return (
       <div className="rules-tab">
         <Input
-          placeholder="Search Rules by name, action or description"
+          placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
           value={this.state.searchStr}
           onChange={this.updateSearchStr}
         />
         <Button onClick={this.addRule}>
-          Create a New Rule
+          {T.translate(`${PREFIX}.createRuleBtn`)}
         </Button>
         {this.renderRules(rules)}
       </div>

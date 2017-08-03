@@ -15,6 +15,7 @@
 */
 
 $tab_header_height: 40px;
+$leftpanel_border_color: #cccccc;
 
 .rules-engine-home {
   display: flex;
@@ -27,7 +28,7 @@ $tab_header_height: 40px;
   }
   .left-panel {
     width: 30%;
-    border-right: 1px solid #cccccc;
+    border-right: 1px solid $leftpanel_border_color;
     min-width: 450px;
 
     @media (max-width: 1000px) {
@@ -43,7 +44,7 @@ $tab_header_height: 40px;
     .nav-item {
       width: 50%;
       margin-left: 0;
-      background: #cccccc;
+      background: $leftpanel_border_color;
       cursor: pointer;
 
       &:last-child {

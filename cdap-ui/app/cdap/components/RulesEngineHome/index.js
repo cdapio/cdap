@@ -32,8 +32,10 @@ import MyRulesEngineApi from 'api/rulesengine';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import RulesEngineServiceControl from 'components/RulesEngineHome/RulesEngineServiceControl';
 import Helmet from 'react-helmet';
+import T from 'i18n-react';
 
 require('./RulesEngineHome.scss');
+const PREFIX = 'features.RulesEngine.Home';
 
 class RulesEngineHome extends Component {
   state = {
@@ -102,7 +104,7 @@ class RulesEngineHome extends Component {
     return (
       <div className="rules-engine-home">
         <Helmet
-          title="Rules Management"
+          title={T.translate(`${PREFIX}.pageTitle`)}
         />
         <div className="left-panel">
           <Nav tabs>
@@ -114,7 +116,7 @@ class RulesEngineHome extends Component {
                   })}
                 >
                   <strong>
-                    Rules Books (
+                    {T.translate(`${PREFIX}.Tabs.rbTitle`)} (
                       <Provider store={RulesEngineStore}>
                         <RuleBookCountWrapper />
                       </Provider>
@@ -131,7 +133,7 @@ class RulesEngineHome extends Component {
                   })}
                 >
                   <strong>
-                    Rules (
+                    {T.translate(`${PREFIX}.Tabs.rulesTitle`)} (
                       <Provider store={RulesEngineStore}>
                         <RulesCountWrapper />
                       </Provider>

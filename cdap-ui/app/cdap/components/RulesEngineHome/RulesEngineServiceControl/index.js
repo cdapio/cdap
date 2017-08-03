@@ -18,8 +18,10 @@ import React, {Component, PropTypes} from 'react';
 import MyRuleEngineApi from 'api/rulesengine';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
+import T from 'i18n-react';
 
 require('./RulesEngineServiceControl.scss');
+const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
 
 export default class RulesEngineServiceControl extends Component {
 
@@ -54,20 +56,18 @@ export default class RulesEngineServiceControl extends Component {
           <img src="/cdap_assets/img/RulesEnginePreview2.png" />
         </div>
         <div className="text-container">
-          <h2> Welcome Rules Engine Management </h2>
+          <h2> {T.translate(`${PREFIX}.title`)} </h2>
           <p>
-            Rules Engine is a sophisticated if-then-else statement interpreter that runs natively on big data system like Spark and Hadoop.
-            It provides an alternative computational model for transforming your data while empowering the business
-            users to specify and manage the transformations and policy enforcements.
+            {T.translate(`${PREFIX}.description`)}
           </p>
           <div className="rules-engine-benefit">
-            Some of the benefits of Rules Engine are,
+            {T.translate(`${PREFIX}.benefits.title`)}
 
             <ul>
-              <li>Non-Programmers who want to analyze big data</li>
-              <li>One-time infrastructure setup</li>
-              <li>Separation of Logic and Data</li>
-              <li>Speed and Scalability</li>
+              <li>{T.translate(`${PREFIX}.benefits.b1`)}</li>
+              <li>{T.translate(`${PREFIX}.benefits.b2`)}</li>
+              <li>{T.translate(`${PREFIX}.benefits.b3`)}</li>
+              <li>{T.translate(`${PREFIX}.benefits.b4`)}</li>
             </ul>
           </div>
           <button
@@ -80,7 +80,7 @@ export default class RulesEngineServiceControl extends Component {
                 <LoadingSVG height="16px"/>
               :
                 null
-            } <span className="btn-label">Enable Rules Engine</span>
+            } <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
           </button>
         </div>
       </div>

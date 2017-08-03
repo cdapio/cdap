@@ -14,6 +14,9 @@
  * the License.
 */
 
+$submenu_color: #cccccc;
+$submenu_bg_color: white;
+
 .rule-book-popover {
   position: relative;
   display: inline-block;
@@ -24,17 +27,17 @@
 
   .sub-menu {
     position: absolute;
-    background: white;
+    background: $submenu_bg_color;
     top: 0;
     left: 100%;
     z-index: 1000;
-    box-shadow: 1px 2px 5px #cccccc;
+    box-shadow: 1px 2px 5px $submenu_color;
     min-width: 180px;
-    border: 1px solid #cccccc;
+    border: 1px solid $submenu_color;
     > div {
       padding: 5px;
       &:hover {
-        background: #cccccc;
+        background: $submenu_color;
       }
     }
   }

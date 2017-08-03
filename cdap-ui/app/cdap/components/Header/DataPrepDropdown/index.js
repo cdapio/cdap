@@ -19,39 +19,9 @@ import { DropdownToggle, DropdownItem, Dropdown } from 'reactstrap';
 import CustomDropdownMenu from 'components/CustomDropdownMenu';
 import classnames from 'classnames';
 import NamespaceStore from 'services/NamespaceStore';
-import {NavLink} from 'react-router-dom';
-require('./DataPrepDropdown.scss');
+import NavLinkWrapper from 'components/NavLinkWrapper';
 
-const NavLinkWrapper = ({children, url, nativeLink, isActive, ...attributes}) => {
-  if (nativeLink) {
-    return (
-      <a
-        href={`/cdap/${url}`}
-        {...attributes}
-        className={classnames({
-          'active': isActive()
-        })}
-      >
-        {children}
-      </a>
-    );
-  }
-  return (
-    <NavLink
-      to={`/${url}`}
-      isActive={isActive}
-      {...attributes}
-    >
-      {children}
-    </NavLink>
-  );
-};
-NavLinkWrapper.propTypes = {
-  children: PropTypes.node,
-  url: PropTypes.string,
-  nativeLink: PropTypes.bool,
-  isActive: PropTypes.func
-};
+require('./DataPrepDropdown.scss');
 
 export default class DataPrepDown extends Component {
   state = {
@@ -93,39 +63,43 @@ export default class DataPrepDown extends Component {
 
   render() {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
-    let baseurl = `ns/${namespace}`;
+    let baseurl = `/ns/${namespace}`;
     let dataprepurl = `${baseurl}/dataprep`;
     let rulesengineurl = `${baseurl}/rulesengine`;
 
     return (
       <Dropdown
-        className={classnames("daraprep-dropdown", {
-          'active': location.pathname.match(/\/dataprep$/) || location.pathname.match(/\/rulesengine$/)
-        })}
+        className="daraprep-dropdown"
         isOpen={this.state.toggleDropdown}
         toggle={this.toggleMetadataDropdown}
       >
         <DropdownToggle
           caret
-          className={classnames({'active': location.pathname.indexOf('dataprep') !== -1})}
+          className={classnames({
+            'active': location.pathname.match(/\/dataprep$/) || location.pathname.match(/\/rulesengine$/)
+          })}
         >
           Data Preparation
         </DropdownToggle>
         <CustomDropdownMenu>
           <DropdownItem tag="li">
             <NavLinkWrapper
-              nativeLink={this.props.nativeLink}
-              url={dataprepurl}
-              isActive={this.isDataPrepActive}
+              isNativeLink={this.props.nativeLink}
+              to={dataprepurl}
+              className={classnames({
+                'active': this.isDataPrepActive()
+              })}
             >
               Home
             </NavLinkWrapper>
           </DropdownItem>
           <DropdownItem tag="li">
             <NavLinkWrapper
-              nativeLink={this.props.nativeLink}
-              url={rulesengineurl}
-              isActive={this.isRulesEnginedActive}
+              isNativeLink={this.props.nativeLink}
+              to={rulesengineurl}
+              className={classnames({
+                'active': this.isRulesEnginedActive()
+              })}
             >
               Rules Management
             </NavLinkWrapper>

@@ -16,9 +16,12 @@
 
 @import '../../../styles/variables.scss';
 
+$rulebook_container_border_color: #cccccc;
+$version_label_color: gray;
+
 .rule-book {
   margin: 10px;
-  border: 1px solid #cccccc;
+  border: 1px solid $rulebook_container_border_color;
   padding: 10px;
   min-height: 200px;
   cursor: pointer;
@@ -51,7 +54,7 @@
     display: inline-block;
 
     .version-label {
-      color: gray;
+      color: $version_label_color;
       display: block;
     }
   }

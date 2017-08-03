@@ -23,8 +23,10 @@ import NamespaceStore from 'services/NamespaceStore';
 import {getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import isEmpty from 'lodash/isEmpty';
+import T from 'i18n-react';
 
 require('./CreateRule.scss');
+const PREFIX = 'features.RulesEngine.CreateRule';
 
 export default class CreateRule extends Component {
   static propTypes = {
@@ -117,12 +119,12 @@ export default class CreateRule extends Component {
             />
           </Col>
           <Col xs="5">
-            Today
+            {T.translate(`${PREFIX}.form.today`)}
           </Col>
           <Col xs="12">
             <Form onSubmit={preventPropagation} className="when-then-clause-container">
               <FormGroup row>
-                <Label sm={4}> Description </Label>
+                <Label sm={4}> {T.translate(`${PREFIX}.form.description`)} </Label>
                 <Col sm={8}>
                   <textarea
                     value={this.state.description}
@@ -134,7 +136,7 @@ export default class CreateRule extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                <Label sm={2}> When </Label>
+                <Label sm={2}> {T.translate(`commons.when`)} </Label>
                 <Col sm={10}>
                   <textarea
                     value={this.state.when}
@@ -145,7 +147,7 @@ export default class CreateRule extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                <Label sm={2}> Then </Label>
+                <Label sm={2}> {T.translate(`commons.then`)} </Label>
                 <Col sm={10}>
                   <DSVEditor
                     values={this.state.then}
@@ -164,13 +166,13 @@ export default class CreateRule extends Component {
             onClick={this.createRule}
             disabled={this.isApplyBtnDisabled()}
           >
-            Apply
+            {T.translate(`${PREFIX}.form.apply`)}
           </button>
           <div
             className="btn btn-secondary"
             onClick={this.props.onClose}
           >
-            Cancel
+            {T.translate(`${PREFIX}.form.cancel`)}
           </div>
         </div>
       </div>

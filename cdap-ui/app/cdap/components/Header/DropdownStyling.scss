@@ -16,6 +16,10 @@
 
 @import '../../styles/variables.scss';
 
+$menu_font_color: white;
+$dropdown_bg_color: #333333;
+$dropdown_divider_bg_color: rgba(75, 75, 75, 1);
+
 @mixin dropdownstyling($min_width: 160px, $max_width: 210px) {
   display: inline-block;
   background: transparent;
@@ -30,7 +34,7 @@
     &:focus {
       outline: none;
       background: transparent;
-      color: white;
+      color: $menu_font_color;
     }
     .btn {
       background: transparent;
@@ -38,7 +42,7 @@
       &:focus {
         outline: none;
         background: transparent;
-        color: white;
+        color: $menu_font_color;
       }
     }
   }
@@ -48,7 +52,7 @@
         outline: none;
       }
       &:active {
-        color: white;
+        color: $menu_font_color;
         background: transparent;
       }
       &:hover {
@@ -80,10 +84,9 @@
       line-height: 50px;
       display: block;
       margin-right: 5px;
-      color: inherit;
     }
     .dropdown-menu {
-      background: #333333;
+      background: $dropdown_bg_color;
       border-radius: 0;
       min-width: $min_width;
       max-width: $max_width;
@@ -107,7 +110,7 @@
         }
       }
       .dropdown-divider {
-        background-color: rgba(75, 75, 75, 1);
+        background-color: $dropdown_divider_bg_color;
       }
     }
     &.open {

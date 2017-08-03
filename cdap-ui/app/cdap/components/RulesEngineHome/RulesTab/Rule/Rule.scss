@@ -14,9 +14,14 @@
  * the License.
 */
 
+$rule_row_bg_color: #cccccc;
+$rule_expanded_bg_color: #eeeeee;
+$dsv_editor_input_border_color: rgba(0, 0, 0, 0.15);
+$drag_bars_color: gray;
+
 .engine-rule {
   &.row {
-    border-bottom: 1px solid #cccccc;
+    border-bottom: 1px solid $rule_row_bg_color;
     padding: 7px;
     cursor: pointer;
     padding-left: 0;
@@ -28,14 +33,14 @@
 
     .icon-bars {
       cursor: move;
-      color: gray;
+      color: $drag_bars_color;
     }
 
     &.expanded {
-      background: #eeeeee;
+      background: $rule_expanded_bg_color;
 
       &:hover {
-        background: #eeeeee;
+        background: $rule_expanded_bg_color;
       }
 
       form {
@@ -45,7 +50,7 @@
       .dsv-editor-container .dsv-row-container {
         margin: 5px 0;
         input.form-control {
-          border: 1px solid rgba(0, 0, 0, 0.15);
+          border: 1px solid $dsv_editor_input_border_color;
         }
         .dsv-input-container {
           width: calc(100% - 50px);
@@ -59,7 +64,7 @@
       }
     }
     &:hover {
-      background: #cccccc;
+      background: $rule_row_bg_color;
     }
   }
 }

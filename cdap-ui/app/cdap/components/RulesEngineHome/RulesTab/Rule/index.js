@@ -29,6 +29,7 @@ import {preventPropagation} from 'services/helpers';
 import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
 import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import { DragSource } from 'react-dnd';
+import T from 'i18n-react';
 
 require('./Rule.scss');
 
@@ -54,10 +55,7 @@ const ruleSource = {
 
 function collect(connect, monitor) {
   return {
-    // Call this function inside render()
-    // to let React DnD handle the drag events:
     connectDragSource: connect.dragSource(),
-    // You can ask the monitor about the current drag state:
     isDragging: monitor.isDragging()
   };
 }
@@ -181,7 +179,7 @@ class Rule extends Component {
       <Col xs="12">
         <Form onSubmit={preventPropagation}>
           <FormGroup row>
-            <Label sm={2}> When </Label>
+            <Label sm={2}> {T.translate(`commons.when`)} </Label>
             <Col sm={10}>
               <textarea
                 value={this.state.ruleDetails.condition}
@@ -192,7 +190,7 @@ class Rule extends Component {
             </Col>
           </FormGroup>
           <FormGroup row>
-            <Label sm={2}> Then </Label>
+            <Label sm={2}> {T.translate(`commons.then`)} </Label>
             <Col sm={10}>
               <fieldset disabled={!this.state.edit}>
                 <DSVEditor

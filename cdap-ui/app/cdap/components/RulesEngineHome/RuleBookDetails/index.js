@@ -26,9 +26,11 @@ import LoadingSVG from 'components/LoadingSVG';
 import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
 import debounce from 'lodash/debounce';
 import MyRulesEngineApi from 'api/rulesengine';
+import T from 'i18n-react';
 
 require('./RuleBookDetails.scss');
 
+const PREFIX = 'features.RulesEngine.RulebookDetails';
 
 export default class RuleBookDetails extends Component {
   state = {
@@ -137,11 +139,11 @@ export default class RuleBookDetails extends Component {
   renderEmptyView = () => {
     return (
       <div className="rule-book-details empty">
-        <h2> No Rulebooks added </h2>
+        <h2> {T.translate(`${PREFIX}.norulebooks`)} </h2>
         <div>
-          Please
-          <a onClick={() => this.setState({ createMode: true })}> click here </a>
-          to add one
+          {T.translate('commons.please')}
+          <a onClick={() => this.setState({ createMode: true })}> {T.translate(`commons.clickhere`)} </a>
+          {T.translate(`${PREFIX}.addone`)}
         </div>
       </div>
     );
@@ -172,11 +174,11 @@ export default class RuleBookDetails extends Component {
         <h3>{rulebookDetails.id}</h3>
         <div className="rule-book-metadata">
           <div>
-            <span> Owner: </span>
+            <span> {T.translate(`${PREFIX}.owner`)}: </span>
             <span> {rulebookDetails.user}</span>
           </div>
           <div>
-            <span>Last Updated on: </span>
+            <span>{T.translate(`${PREFIX}.lastupdated`)}: </span>
             <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
           </div>
         </div>

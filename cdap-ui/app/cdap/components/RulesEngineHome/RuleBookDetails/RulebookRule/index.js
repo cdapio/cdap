@@ -20,6 +20,9 @@ import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
+import T from 'i18n-react';
+
+const PREFIX = 'features.RulesEngine.RulebookRule';
 
 const ItemTypes = {
   Rule: 'RULEBOOKRULE'
@@ -78,10 +81,6 @@ const dropTarget = {
     // Time to actually perform the action
     props.onRuleSort(dragIndex, hoverIndex);
 
-    // Note: we're mutating the monitor item here!
-    // Generally it's better to avoid mutations,
-    // but it's good here for the sake of performance
-    // to avoid expensive index searches.
     monitor.getItem().index = hoverIndex;
   },
   drop: (props, monitor) => {
@@ -126,7 +125,7 @@ class RulebookRule extends Component {
             href
             onClick={() => onRemove(rule.id)}
           >
-            Remove
+            {T.translate(`${PREFIX}.remove`)}
           </button>
         </Col>
         <Col xs={1}>

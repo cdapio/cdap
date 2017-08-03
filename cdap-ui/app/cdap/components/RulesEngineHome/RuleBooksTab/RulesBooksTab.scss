@@ -14,6 +14,8 @@
  * the License.
 */
 
+$create_rulebook_btn_font_color: #cccccc;
+
 .rule-books-tab {
   padding: 20px;
 
@@ -43,7 +45,7 @@
           line-height: 1;
           margin-top: -15px;
           font-weight: 100;
-          color: #cccccc;
+          color: $create_rulebook_btn_font_color;
         }
       }
     }

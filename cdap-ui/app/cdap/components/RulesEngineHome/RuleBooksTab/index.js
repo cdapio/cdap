@@ -23,8 +23,11 @@ import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
 import LoadingSVG from 'components/LoadingSVG';
 import classnames from 'classnames';
+import T from 'i18n-react';
 
 require('./RulesBooksTab.scss');
+
+const PREFIX = 'features.RulesEngine.RulebooksTab';
 
 export default class RuleBooksTab extends Component {
   state = {
@@ -112,7 +115,7 @@ export default class RuleBooksTab extends Component {
             className="rule-book center"
             onClick={this.createNewRuleBook}
           >
-            <strong> Create a new Rulebook </strong>
+            <strong> {T.translate(`${PREFIX}.createrulebook`)} </strong>
             <div>
               +
             </div>

@@ -19,6 +19,9 @@ import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
 import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import T from 'i18n-react';
+
+const PREFIX = 'features.RulesEngine.CreateRulebook';
 
 export default class CreateRulebook extends Component {
   state = {
@@ -69,22 +72,22 @@ export default class CreateRulebook extends Component {
           <Input
             value={this.state.name}
             onChange={this.onNameChangeHandler}
-            placeholder="Add Name"
+            placeholder={T.translate(`${PREFIX}.nameplaceholder`)}
           />
           <div>
-            <span> Owner : </span>
-            <span> Admin </span>
+            <span> {T.translate(`${PREFIX}.owner`)} : </span>
+            <span> {T.translate(`${PREFIX}.admin`)} </span>
           </div>
           <div>
-            <span> Created </span>
-            <span> Created Today </span>
+            <span> {T.translate(`${PREFIX}.created`)} </span>
+            <span> {T.translate(`${PREFIX}.createdToday`)} </span>
           </div>
           <textarea
             rows="10"
             className="form-control"
             value={this.state.description}
             onChange={this.onDescriptionChangeHandler}
-            placeholder="Add Description"
+            placeholder={T.translate(`${PREFIX}.descriptionplaceholder`)}
           >
           </textarea>
           <div className="button-container">
@@ -93,7 +96,7 @@ export default class CreateRulebook extends Component {
               onClick={this.createRulebook}
               disabled={isEmpty(this.state.name)}
             >
-              Create
+              {T.translate(`${PREFIX}.createBtnLabel`)}
             </Button>
           </div>
         </div>

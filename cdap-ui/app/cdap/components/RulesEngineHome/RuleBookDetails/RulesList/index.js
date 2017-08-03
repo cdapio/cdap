@@ -24,9 +24,11 @@ import {getRulesForActiveRuleBook} from 'components/RulesEngineHome/RulesEngineS
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import update from 'react/lib/update';
 import RulebookRule from 'components/RulesEngineHome/RuleBookDetails/RulebookRule';
-
+import T from 'i18n-react';
 
 require('./RulesList.scss');
+
+const PREFIX = 'features.RulesEngine.RulesList';
 
 const dropTarget = {
   drop: (props, monitor, component) => {
@@ -114,7 +116,7 @@ class RulesList extends Component {
       <div className={classnames("rules-container", {
         'drag-hover': this.props.isOver
       })}>
-        <div className="title"> Rules ({rules.length}) </div>
+        <div className="title"> {T.translate(`${PREFIX}.rulesLabel`)} ({rules.length}) </div>
         <div className="rules">
           {
             (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
@@ -133,7 +135,7 @@ class RulesList extends Component {
               })
           }
           <div className="drag-drop-placeholder">
-            Add a rule by drag and drop from the rule list on the left
+            {T.translate(`${PREFIX}.dropContainerText`)}
           </div>
         </div>
       </div>

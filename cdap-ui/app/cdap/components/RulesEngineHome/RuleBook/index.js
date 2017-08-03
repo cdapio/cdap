@@ -20,7 +20,11 @@ import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import classnames from 'classnames';
 import {setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import isNil from 'lodash/isNil';
+import T from 'i18n-react';
+
 require('./RuleBook.scss');
+
+const PREFIX = 'features.RulesEngine.Rulebook';
 
 export default function RuleBook({bookDetails}) {
   let {id, user:owner, updated, rules, description, version} = bookDetails;
@@ -39,17 +43,17 @@ export default function RuleBook({bookDetails}) {
     >
       <strong>
         {id}
-        <small className="version-label">Version: {version}</small>
+        <small className="version-label">{T.translate(`${PREFIX}.version`)}: {version}</small>
       </strong>
       <div className="rule-book-owner">
-        <strong> Owner: </strong>
+        <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
         <span> {owner} </span>
       </div>
       <div className="rule-book-updated-date">
         <div>{moment(updated * 1000).format('MM-DD-YYYY HH:mm')}</div>
       </div>
       <div className="rule-book-num-of-rules">
-        <strong>{numOfRules} Rules</strong>
+        <strong>{numOfRules} {T.translate(`${PREFIX}.rules`)}</strong>
       </div>
       <p>
         {description}

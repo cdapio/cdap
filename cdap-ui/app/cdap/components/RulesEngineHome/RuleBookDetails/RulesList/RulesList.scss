@@ -17,6 +17,8 @@
 @import '../../../../styles/variables.scss';
 
 $table_row_border_color: #cccccc;
+$dnd_bars_color: gray;
+$drop_container_bg_color: #e8e9e9;
 
 .rules-container {
   .rules {
@@ -33,7 +35,7 @@ $table_row_border_color: #cccccc;
       }
       .icon-bars {
         cursor: move;
-        color: gray;
+        color: $dnd_bars_color;
       }
     }
     .drag-drop-placeholder {
@@ -49,7 +51,7 @@ $table_row_border_color: #cccccc;
 
   &.drag-hover {
     border: 3px dashed $brand-primary;
-    background: #e8e9e9;
+    background: $drop_container_bg_color;
     position: relative;
     padding: 15px;
     margin-top: 10px;

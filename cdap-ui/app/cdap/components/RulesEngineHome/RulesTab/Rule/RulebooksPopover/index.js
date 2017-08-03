@@ -18,8 +18,10 @@ import React, {Component, PropTypes} from 'react';
 import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import Rx from 'rx';
 import {isDescendant} from 'services/helpers';
+import T from 'i18n-react';
 
 require('./RulebooksPopover.scss');
+const PREFIX = 'features.RulesEngine.RulebooksPopover';
 
 export default class RulebooksPopover extends Component {
   static propTypes = {
@@ -87,7 +89,7 @@ export default class RulebooksPopover extends Component {
         onClick={this.togglePopover}
         ref={(ref) => this.popover = ref}
       >
-        <div className="btn btn-secondary"> Add to RuleBook </div>
+        <div className="btn btn-secondary"> {T.translate(`${PREFIX}.addToRulebookbtn`)} </div>
         {this.renderPopover()}
       </div>
     );

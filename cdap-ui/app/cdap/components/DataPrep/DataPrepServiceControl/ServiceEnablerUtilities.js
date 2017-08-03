@@ -49,7 +49,7 @@ export default function enableDataPreparationService({
 
         if (appArtifact.length === 0) {
           observer.onError({
-            error: `Cannot find ${artifactName} artifact`
+            error: T.translate('features.ServiceEnableUtility.serviceNotFound', {artifactName})
           });
           return;
         }
