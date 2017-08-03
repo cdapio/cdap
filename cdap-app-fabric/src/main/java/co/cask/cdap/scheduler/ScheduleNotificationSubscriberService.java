@@ -18,16 +18,20 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
@@ -36,6 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +88,58 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
     }
     LOG.info("Stopped SchedulerNotificationSubscriberService.");
+  }
+
+  /**
+   * Thread that subscribes to TMS notifications and adds the notification containing the schedule id to the job queue
+   */
+  private class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
+    private JobQueueDataset jobQueue;
+    private String topic;
+
+    SchedulerEventNotificationSubscriberThread(String topic) {
+      super(topic);
+      this.topic = topic;
+    }
+
+    @Override
+    public void run() {
+      jobQueue = getJobQueue();
+      super.run();
+    }
+
+    @Override
+    public String loadMessageId() {
+      return jobQueue.retrieveSubscriberState(topic);
+    }
+
+    @Override
+    public void updateMessageId(String lastFetchedMessageId) {
+      jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
+    }
+
+    @Override
+    public void processNotification(DatasetContext context, Notification notification)
+      throws IOException, DatasetManagementException, NotFoundException {
+
+      Map<String, String> properties = notification.getProperties();
+      String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
+      if (scheduleIdString == null) {
+        LOG.warn("Cannot find schedule id in the notification with properties {}. Skipping current notification.",
+                 properties);
+        return;
+      }
+      ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
+      ProgramScheduleRecord record;
+      try {
+        record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
+      } catch (NotFoundException e) {
+        LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
+                 scheduleId, properties, e);
+        return;
+      }
+      jobQueue.addNotification(record, notification);
+    }
   }
 
   private class DataEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {

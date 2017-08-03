@@ -930,6 +930,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     write(keyBuilder.build(), ProjectInfo.getVersion().toString());
   }
 
+  @Nullable
   public String retrieveSubscriberState(String topic) {
     MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
       .add(topic);

@@ -77,7 +77,8 @@ public interface Store extends RuntimeStore {
   void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId);
 
   /**
-   * Logs end of program run.
+   * Logs end of program run and sets the run status to one of: {@link ProgramRunStatus#COMPLETED},
+   * or {@link ProgramRunStatus#KILLED}.
    *
    * @param id id of the program
    * @param pid run id
@@ -87,7 +88,7 @@ public interface Store extends RuntimeStore {
   void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus);
 
   /**
-   * Logs end of program run.
+   * Logs end of program run and sets the run status to {@link ProgramRunStatus#FAILED} with a failure cause.
    *
    * @param id id of the program
    * @param pid run id
@@ -99,7 +100,7 @@ public interface Store extends RuntimeStore {
                @Nullable BasicThrowable failureCause);
 
   /**
-   * Logs suspend of a program run.
+   * Logs suspend of a program run and sets the run status to {@link ProgramRunStatus#SUSPENDED}.
    *
    * @param id id of the program
    * @param pid run id
@@ -107,7 +108,7 @@ public interface Store extends RuntimeStore {
   void setSuspend(ProgramId id, String pid);
 
   /**
-   * Logs resume of a program run.
+   * Logs resume of a program run and sets the run status to {@link ProgramRunStatus#RUNNING}.
    *
    * @param id id of the program
    * @param pid run id

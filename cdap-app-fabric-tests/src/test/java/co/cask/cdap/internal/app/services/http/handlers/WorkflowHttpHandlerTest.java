@@ -379,8 +379,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramStatus.RUNNING.name());
-
     verifyProgramRuns(programId, ProgramRunStatus.RUNNING);
 
     // Resume on already running Workflow should give conflict
@@ -426,9 +424,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     Assert.assertTrue(lastSimpleActionDoneFile.createNewFile());
 
+    // Wait for the workflow to complete
     verifyProgramRuns(programId, ProgramRunStatus.COMPLETED);
-
-    waitState(programId, ProgramStatus.STOPPED.name());
 
     suspendWorkflow(programId, runId, 404);
 

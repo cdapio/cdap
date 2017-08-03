@@ -124,6 +124,11 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       String programRunIdString = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programStatusString = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
 
+      // Ignore notifications which specify an invalid ProgramRunId or ProgramRunStatus
+      if (programRunIdString == null || programStatusString == null) {
+        return;
+      }
+
       ProgramRunStatus runStatus = null;
       if (programStatusString != null) {
         try {
@@ -131,18 +136,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         } catch (IllegalArgumentException e) {
           LOG.warn("Invalid program run status {} passed in notification for program {}",
                    programStatusString, programRunIdString);
+          return;
         }
-      }
-
-      // Ignore notifications which specify an invalid ProgramRunId or ProgramRunStatus
-      if (programRunIdString == null || runStatus == null) {
-        return;
       }
 
       final ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       final String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
-      final Map<String, String> userArguments = getArguments(properties, ProgramOptionConstants.USER_OVERRIDES);
-      final Map<String, String> systemArguments = getArguments(properties, ProgramOptionConstants.SYSTEM_OVERRIDES);
 
       final long stateChangeTimeSecs = getTimeSeconds(notification.getProperties(),
                                                       ProgramOptionConstants.LOGICAL_START_TIME);
@@ -150,10 +149,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       final ProgramRunStatus programRunStatus = runStatus;
       switch(programRunStatus) {
         case STARTING:
+          String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
+          String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+          if (userArgumentsString == null || systemArgumentsString == null) {
+            throw new IllegalArgumentException((userArgumentsString == null) ? "user" : "system" + " arguments was "
+                                               + "not specified in program status notification for program run " +
+                                               programRunId);
+          }
           if (stateChangeTimeSecs == -1) {
             throw new IllegalArgumentException("Start time was not specified in program starting notification for " +
-                                               "program run {}" + programRunId);
+                                                 "program run " + programRunId);
           }
+          final Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
+          final Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
           Retries.supplyWithRetries(new Supplier<Void>() {
             @Override
             public Void get() {
@@ -241,23 +249,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
       return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
-    }
-
-    /**
-     * Helper method to return the arguments from the given properties map at the given key. This function guarantees a
-     * non-null return value
-     *
-     * @param properties the properties map
-     * @param option the key to lookup in the properties map
-     * @return a map of properties from the properties map, or an empty map of no map was found
-     */
-    private Map<String, String> getArguments(Map<String, String> properties, String option) {
-      String argumentsString = properties.get(option);
-      if (argumentsString == null) {
-        return ImmutableMap.of();
-      }
-      Map<String, String> arguments = GSON.fromJson(argumentsString, STRING_STRING_MAP);
-      return new BasicArguments(arguments).asMap();
     }
   }
 }

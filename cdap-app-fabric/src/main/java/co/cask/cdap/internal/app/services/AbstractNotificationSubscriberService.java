@@ -39,6 +39,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueue;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
@@ -95,20 +96,19 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
   @Override
   protected void shutDown() {
-    LOG.info("Stopping AbstractNotificationSubscriberService.");
     stopping = true;
   }
 
   /**
    * Thread that subscribes to TMS notifications on a specified topic and fetches notifications, retrying if necessary
    */
-  abstract class NotificationSubscriberThread implements Runnable {
+  protected abstract class NotificationSubscriberThread implements Runnable {
     private final String topic;
     private final RetryStrategy retryStrategy;
     private int failureCount;
     private String messageId;
 
-    NotificationSubscriberThread(String topic) {
+    protected NotificationSubscriberThread(String topic) {
       this.topic = topic;
       // TODO: [CDAP-11370] Need to be configured in cdap-default.xml. Retry with delay ranging from 0.1s to 30s
       retryStrategy =
@@ -214,6 +214,10 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       }
     }
 
+    protected JobQueueDataset getJobQueue() {
+      return Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework);
+    }
+
     /**
      * Loads the message id from storage. Note that this method is already executed inside a transaction.
      *
@@ -234,61 +238,5 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      * @throws Exception
      */
     public abstract void processNotification(DatasetContext context, Notification notification) throws Exception;
-  }
-
-  /**
-   * Thread that subscribes to TMS notifications and adds the notification containing the schedule id to the job queue
-   */
-  protected class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
-    private JobQueueDataset jobQueue;
-    private String topic;
-
-    public SchedulerEventNotificationSubscriberThread(String topic) {
-      super(topic);
-      this.topic = topic;
-    }
-
-    @Override
-    public void run() {
-      jobQueue = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework);
-      super.run();
-    }
-
-    @Override
-    public String loadMessageId() {
-      return jobQueue.retrieveSubscriberState(topic);
-    }
-
-    @Override
-    public void updateMessageId(String lastFetchedMessageId) {
-      jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
-    }
-
-    @Override
-    public void processNotification(DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException, NotFoundException {
-
-      Map<String, String> properties = notification.getProperties();
-      String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
-      if (scheduleIdString == null) {
-        LOG.warn("Cannot find schedule id in the notification with properties {}. Skipping current notification.",
-                 properties);
-        return;
-      }
-      ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
-      ProgramScheduleRecord record;
-      try {
-        record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
-      } catch (NotFoundException e) {
-        LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
-                 scheduleId, properties, e);
-        return;
-      }
-      jobQueue.addNotification(record, notification);
-    }
-
-    protected JobQueueDataset getJobQueue() {
-      return jobQueue;
-    }
   }
 }
