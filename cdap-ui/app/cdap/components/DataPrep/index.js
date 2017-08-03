@@ -38,6 +38,11 @@ import isEmpty from 'lodash/isEmpty';
 
 require('./DataPrep.scss');
 
+const i18nPrefix = 'features.DataPrep.Upgrade';
+const MIN_DATAPREP_VERSION = '2.1.0';
+const artifactName = 'wrangler-service';
+
+export {i18nPrefix, MIN_DATAPREP_VERSION, artifactName};
 /**
  *  Data Prep requires a container component (DataPrepHome) that will handle routing within React.
  *  This is beacause DataPrep component will be included in Pipelines.
