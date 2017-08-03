@@ -25,6 +25,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,14 +63,17 @@ public class Dag {
     validate();
   }
 
-  protected Dag(SetMultimap<String, String> outgoingConnections,
-                SetMultimap<String, String> incomingConnections) {
+  protected Dag(SetMultimap<String, String> outgoingConnections, SetMultimap<String, String> incomingConnections) {
     this.outgoingConnections = HashMultimap.create(outgoingConnections);
     this.incomingConnections = HashMultimap.create(incomingConnections);
     this.sources = new HashSet<>();
     this.sinks = new HashSet<>();
     this.nodes = new HashSet<>();
     init();
+  }
+
+  protected Dag(Dag other) {
+    this(other.outgoingConnections, other.incomingConnections);
   }
 
   /**
@@ -132,6 +136,61 @@ public class Dag {
     }
   }
 
+  /**
+   * Split the dag based on the input condition nodes.
+   * @param conditionNodes set of conditions based on which to split the Dag
+   * @return set of splitted dags
+   */
+  public Set<Dag> splitByConditions(Set<String> conditionNodes) {
+
+    /*
+      Consider the following example, where c1, c2, and c3 are conditions:
+
+          file - csv - c1 - t1---agg1--agg2---sink1
+                        |
+                        ----c2 - sink2
+                             |
+                              ------c3 - sink3
+
+      This method would split the above DAG by conditions. Meaning following set of Dags will be returned -
+
+      1. file - csv - c1
+      2. c1 - t1 - agg1 - agg2 - sink2
+      3. c1 - c2
+      4. c2 - sink2
+      5. c2 - c3
+      6. c3 - sink
+
+     */
+
+    Set<Dag> dags = new HashSet<>();
+    Set<String> parentStopperNodes = Sets.union(sources, conditionNodes);
+    Set<String> childStopperNodes = Sets.union(sinks, conditionNodes);
+    for (String condition : conditionNodes) {
+      Set<String> parentNodes = parentsOf(condition, parentStopperNodes);
+      Set<String> removeConditions = Sets.difference(parentNodes, conditionNodes);
+      // If the parentNodes only contain conditions, then do not add create subdag for them.
+      // This particular subdag will be created when we go from parent condition to child in the for loop below.
+      if (!removeConditions.isEmpty()) {
+        dags.add(createSubDag(accessibleFrom(removeConditions, childStopperNodes)));
+      }
+      // For child we need to add two sub-dags corresponding to the true and false branch
+      // Condition node has at least one and at max two output nodes
+      Set<String> outputs = getNodeOutputs(condition);
+      for (String output : outputs) {
+        if (conditionNodes.contains(output)) {
+          // condition is attached to the condition so just return that path
+          dags.add(createSubDag(new HashSet<>(Arrays.asList(condition, output))));
+          continue;
+        }
+        Set<String> childNodes = accessibleFrom(output, childStopperNodes);
+        childNodes.add(condition);
+        dags.add(createSubDag(childNodes));
+      }
+    }
+    return dags;
+  }
+
   public Set<String> getNodes() {
     return nodes;
   }
@@ -151,6 +210,7 @@ public class Dag {
   public Set<String> getNodeInputs(String node) {
     return Collections.unmodifiableSet(incomingConnections.get(node));
   }
+
 
   /**
    * Return all stages accessible from a starting stage.
