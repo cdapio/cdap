@@ -495,6 +495,7 @@ angular.module(PKG.name + '.commons')
           endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
           endpointFilterElem.addEventListener('mouseup', unclickEndpoint);
         });
+        makeNodesDraggable();
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
@@ -639,7 +640,7 @@ angular.module(PKG.name + '.commons')
         });
       }
 
-      // doing this to listen to changes to jsut $scope.nodes instead of everything else
+      // doing this to listen to changes to just $scope.nodes instead of everything else
       $scope.$watch('nodes', function() {
         if (!vm.isDisabled) {
           if (nodesTimeout) {
