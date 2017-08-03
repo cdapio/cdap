@@ -78,12 +78,13 @@ public class GetProgramRunsCommand extends AbstractCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("pid", "end status", "start", "stop")
+      .setHeader("pid", "end status", "init time", "start time", "stop time")
       .setRows(records, new RowMaker<RunRecord>() {
         @Override
         public List<?> makeRow(RunRecord object) {
-          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getRunTs(),
-                                    object.getStatus().name().equals("RUNNING") ? "" : object.getStopTs());
+          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(),
+                                    object.getRunTs() == null ? "" : object.getRunTs(),
+                                    object.getStopTs() == null ? "" : object.getStopTs());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
