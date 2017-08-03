@@ -241,10 +241,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     MRJobInfo mrJobInfo = mrJobInfoFetcher.getMRJobInfo(run.toId());
 
     mrJobInfo.setState(runRecordMeta.getStatus().name());
-    // Multiple runTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
+    // Multiple startTs / endTs by 1000, to be consistent with Task-level start/stop times returned by JobClient
     // in milliseconds. RunRecord returns seconds value.
-    // The start time of the MRJob is when the run record has been marked as RUNNING
-    mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecordMeta.getRunTs()));
+    // The start time of the MRJob is when the run record has been marked as STARTED
+    mrJobInfo.setStartTime(TimeUnit.SECONDS.toMillis(runRecordMeta.getStartTs()));
     Long stopTs = runRecordMeta.getStopTs();
     if (stopTs != null) {
       mrJobInfo.setStopTime(TimeUnit.SECONDS.toMillis(stopTs));
