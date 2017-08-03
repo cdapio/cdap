@@ -1,0 +1,90 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../../../styles/variables.scss';
+
+$table_row_border_color: #cccccc;
+$dnd_bars_color: gray;
+$drop_container_bg_color: #e8e9e9;
+
+.rules-container {
+  .rules {
+    .row {
+      padding: 10px 0;
+      border-bottom: 1px solid $table_row_border_color;
+
+      &:first-child {
+        border-top: 1px solid $table_row_border_color;
+      }
+
+      &.dragging {
+        opacity: 0;
+      }
+      .icon-bars {
+        cursor: move;
+        color: $dnd_bars_color;
+      }
+    }
+    .drag-drop-placeholder {
+      margin-left: -15px;
+      margin-right: -15px;
+      padding: 10px 0;
+      text-align: center;
+      border: 2px dashed $table_row_border_color;
+      margin-top: 10px;
+      color: $brand-primary;
+    }
+  }
+
+  &.drag-hover {
+    border: 3px dashed $brand-primary;
+    background: $drop_container_bg_color;
+    position: relative;
+    padding: 15px;
+    margin-top: 10px;
+
+    .drag-drop-placeholder {
+      display: none;
+    }
+    &:after {
+      content: 'Drag and Drop a rule to add it to this rulebook';
+      position: absolute;
+      left: 30%;
+      font-size: 20px;
+      top: 0;
+      color: $brand-primary;
+      opacity: 0.5;
+    }
+  }
+
+  .title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+  .btn-link {
+    &:focus,
+    &:active,
+    &:hover {
+      outline: none;
+      background: transparent;
+      text-decoration: none;
+    }
+    color: $brand-primary;
+    cursor: pointer;
+    padding: 0;
+  }
+}

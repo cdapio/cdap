@@ -19,6 +19,8 @@ import enableDataPreparationService from 'components/DataPrep/DataPrepServiceCon
 import T from 'i18n-react';
 import classnames from 'classnames';
 import {objectQuery} from 'services/helpers';
+import MyDataPrepApi from 'api/dataprep';
+import {i18nPrefix, MIN_DATAPREP_VERSION, artifactName} from 'components/DataPrep';
 
 require('./DataPrepServiceControl.scss');
 
@@ -45,8 +47,13 @@ export default class DataPrepServiceControl extends Component {
 
   enableService() {
     this.setState({loading: true});
-
-    enableDataPreparationService(false)
+    enableDataPreparationService({
+      shouldStopService: false,
+      artifactName,
+      api: MyDataPrepApi,
+      i18nPrefix,
+      MIN_VERSION: MIN_DATAPREP_VERSION
+    })
       .subscribe(() => {
         this.props.onServiceStart();
       }, (err) => {

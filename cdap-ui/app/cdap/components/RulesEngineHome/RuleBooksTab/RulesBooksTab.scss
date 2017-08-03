@@ -1,0 +1,71 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$create_rulebook_btn_font_color: #cccccc;
+
+.rule-books-tab {
+  padding: 20px;
+
+  input {
+    border-radius: 0;
+  }
+
+  .rule-books-container {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    // Stretch the parent by 20px on right and left as children have 10px margin
+    // between them and its always 2 column layout
+    margin-left: -20px;
+    margin-right: -20px;
+
+    .rule-book {
+      width: calc(50% - 20px);
+
+      &.center {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        > div {
+          font-size: 10em;
+          line-height: 1;
+          margin-top: -15px;
+          font-weight: 100;
+          color: $create_rulebook_btn_font_color;
+        }
+      }
+    }
+    &.loading {
+      justify-content: center;
+      align-items: center;
+      height: calc(100% - 31px);
+
+      .rule-book.center {
+        display: none;
+      }
+    }
+  }
+
+  @media (max-width: 1000px) {
+    .rule-books-container {
+      .rule-book {
+        width: calc(100% - 20px);
+      }
+    }
+  }
+
+}

@@ -1,10 +1,15 @@
 ---
 # Please keep this file alphabetically sorted!
 commons:
+  application: Application
+  back: Back
   cask: CASK
   cdap: CDAP
+  clickhere: click here
+  descriptionLabel: Description
   DSVEditor:
     placeholder: value
+  dataset: Dataset
   entity:
     application:
       plural: Applications
@@ -69,23 +74,22 @@ commons:
     view:
       plural: Stream Views
       singular: Stream View
+  formatLabel: Format
   hydrator: Cask Hydrator
   keyValPairs:
     keyPlaceholder: key
     reset: Reset
     valuePlaceholder: value
   market: Cask Market
-  resource-center: Add Entity
-  tracker: Cask Tracker
   nameLabel: Name
-  descriptionLabel: Description
-  formatLabel: Format
+  please: Please
+  resource-center: Add Entity
   schemaLabel: Schema
-  wrangler: Cask Wrangler
-  back: Back
-  application: Application
+  then: Then
+  tracker: Cask Tracker
   stream: Stream
-  dataset: Dataset
+  when: When
+  wrangler: Cask Wrangler
 features:
   AboutPage:
     copyright:
@@ -1162,6 +1166,9 @@ features:
     version: "Version :"
   Navbar:
     dataprepLabel: Data Preparation
+    Dataprep:
+      home: Home
+      rulesmgmt: Rules Management
     metadataLabel: Metadata
     Metadata:
       dictionaryLabel: Dictionary
@@ -1385,10 +1392,72 @@ features:
       actionbtn0: Create
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
+  RulesEngine:
+    CreateRule:
+      form:
+        actionplaceholder: Action
+        apply: Apply
+        cancel: Cancel
+        description: Description
+        descriptionplaceholder: Description for the rule
+        nameplaceholder: Name of the rule
+        today: Today
+    CreateRulebook:
+      admin: Admin
+      createBtnLabel: Create
+      created: Created
+      descriptionplaceholder: Add description
+      nameplaceholder: Add name
+      owner: Owner
+      today: Created Today
+    Home:
+      pageTitle: Rules Management
+      Tabs:
+        rbTitle: Rules Books
+        rulesTitle: Rules
+    Rulebook:
+      owner: Owner
+      rules: Rules
+      version: Version
+    RulebookDetails:
+      addone: to add one
+      lastupdated: Last Updated on
+      norulebooks: No Rulebooks added
+      owner: Owner # ?Again should we reuse?
+    RulebooksPopover:
+      addToRulebookbtn: Add to RuleBook
+      norulesbooks: No Rulebooks found
+    RulesEngineServiceControl:
+      benefits:
+        b1: Non-Programmers who want to analyze big data
+        b2: One-time infrastructure setup
+        b3: Separation of Logic and Data
+        b4: Speed and Scalability
+        title: Some of the benefits of Rules Engine are,
+      description: Rules Engine is a sophisticated if-then-else statement interpreter that runs natively on big data system like Spark and Hadoop.
+            It provides an alternative computational model for transforming your data while empowering the business
+            users to specify and manage the transformations and policy enforcements.
+      enableBtnLabel: Enable Rules Engine
+      title: Welcome to Rules Engine Management
+    RulesList:
+      dropContainerText: Add a rule by drag and drop from the rule list on the left
+      rulesLabel: Rules
+    RulebookRule:
+      remove: Remove
+    RulebooksTab:
+      createrulebook: Create a new Rulebook
+      searchplaceholder: Search Rulebook by name, owner or description
+    RulesTab:
+      createRuleBtn: Create a New Rule
+      lastUpdated: Last Updated
+      norules: No Rules found
+      searchPlaceholder: Search Rules by name, action or description
   SchemaEditor:
     Labels:
       fieldName: Field Name
       symbolName: Symbol Name
+  ServiceEnableUtility:
+    serviceNotFound: Cannot find {artifactName} artifact
   SplashScreen:
     buttons:
       getStarted: Read the Docs
