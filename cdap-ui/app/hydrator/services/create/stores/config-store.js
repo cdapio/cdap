@@ -98,6 +98,7 @@ class HydratorPlusPlusConfigStore {
       this.setGracefulStop(this.state.config.stopGracefully);
       this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
       this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
+      this.setNodes(this.state.config.stages || []);
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -182,7 +183,7 @@ class HydratorPlusPlusConfigStore {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
           name: node.plugin.name,
-          type: node.type,
+          type: node.type || node.plugin.type,
           label: node.plugin.label,
           artifact: node.plugin.artifact,
           properties: node.plugin.properties ,

@@ -23,7 +23,19 @@
   </div>
 </div>
 
-<div class="modal-body">
+<div
+  class="modal-body"
+  ng-if="PipelineUpgradeController.loading"
+>
+  <h3 class="text-xs-center">
+    <span class="fa fa-spin fa-spinner">
+  </h3>
+</div>
+
+<div
+  class="modal-body"
+  ng-if="!PipelineUpgradeController.loading"
+>
   <h4>
     Your pipeline cannot be imported because of the following issues:
   </h4>
@@ -37,7 +49,7 @@
 
       <ul>
         <li ng-repeat="stage in PipelineUpgradeController.missingArtifactStages">
-          {{ stage.stageInfo.plugin.artifact.name }}
+          {{ stage.stageInfo.plugin.name }} <em>({{ stage.stageInfo.plugin.artifact.name }})</em>
         </li>
       </ul>
 
@@ -113,13 +125,16 @@
 
 </div>
 
-<div class="modal-footer">
+<div
+  class="modal-footer"
+  ng-if="!PipelineUpgradeController.loading"
+>
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"
-    ng-disabled="PipelineUpgradeController.fixAllDisabled"
   >
-    Fix All
+    <span ng-if="!PipelineUpgradeController.fixAllDisabled">Fix All</span>
+    <span ng-if="PipelineUpgradeController.fixAllDisabled">Proceed</span>
   </button>
   <button
     class="btn btn-default"
