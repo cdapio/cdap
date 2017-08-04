@@ -404,6 +404,11 @@ public class DatasetClassRewriterTest {
     }
 
     @Override
+    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+      throw new UnsupportedOperationException("This method needs to be implemented!");
+    }
+
+    @Override
     public Predicate<EntityId> createFilter(Principal principal) throws Exception {
       return new Predicate<EntityId>() {
         @Override
@@ -433,6 +438,11 @@ public class DatasetClassRewriterTest {
       for (Action action : actions) {
         privileges.add(new Privilege(entity, action));
       }
+    }
+
+    @Override
+    public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+      throw new UnsupportedOperationException("This method needs to be implemented!");
     }
 
     @Override

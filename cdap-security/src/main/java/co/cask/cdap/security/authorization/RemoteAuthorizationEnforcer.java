@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -97,6 +98,12 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     if (!allowed) {
       throw new UnauthorizedException(principal, action, entity);
     }
+  }
+
+  @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    // TODO: needs to be implemented
+    throw new UnsupportedOperationException("This method needs to be implemented!");
   }
 
   private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {

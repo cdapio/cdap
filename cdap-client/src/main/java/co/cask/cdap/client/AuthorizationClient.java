@@ -88,6 +88,11 @@ public class AuthorizationClient extends AbstractAuthorizer {
   }
 
   @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    throw new UnsupportedOperationException("Visibility check is not supported via Java Client.");
+  }
+
+  @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
     throw new UnsupportedOperationException("Filtering is not supported via Java Client.");
   }

@@ -82,6 +82,12 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     doEnforce(entity, principal, Collections.singleton(action));
   }
 
+  @Override
+  public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    LOG.debug("Checking visibility of {} for principal {}.", entityIds, principal);
+    return authorizerInstantiator.get().isVisible(entityIds, principal);
+  }
+
   private void doEnforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     // bypass the check when the principal is the master user and the entity is in the system namespace
     if (entity instanceof NamespacedEntityId &&
