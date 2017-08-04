@@ -229,7 +229,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       }
     }
 
-    AppMetadataStore getAppMetadataStore(DatasetContext context) {
+    protected AppMetadataStore getAppMetadataStore(DatasetContext context) {
       // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
 
       try {

@@ -18,7 +18,6 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
 import co.cask.cdap.AppWithMultipleSchedules;
-import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
@@ -28,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
@@ -43,14 +43,15 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -90,7 +91,6 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -365,16 +365,13 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Enable the schedule
     scheduler.enableSchedule(APP_MULT_ID.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
 
-    // Send a program status notification with a workflow token
-    BasicWorkflowToken token = new BasicWorkflowToken(1);
-    token.setCurrentNode("NODE");
-    String dummyKey = "dummy.key";
-    String dummyValue = "dummy.value";
-    token.put(dummyKey, dummyValue);
+    String dummyUserKey = "dummy.user.argument.key";
+    String dummyUserValue = "dummy.user.argument.value";
+    // Start a program that writes to the workflow token with some user arguments
+    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
+    waitForCompleteRuns(1, ANOTHER_WORKFLOW);
 
-    ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
-    store.updateWorkflowToken(anotherWorkflowRun, token);
-    programStateWriter.completed(anotherWorkflowRun);
+    // Wait for a notification to come to the scheduler
     waitUntilProcessed(programEventTopic, lastProcessed);
 
     // Wait for a completed run record
@@ -385,7 +382,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
 
     // The triggered workflow should contain the workflow token sent from the notification of the triggering program
-    Assert.assertEquals(Value.of(dummyValue), runToken.get(dummyKey));
+    Assert.assertEquals(Value.of(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_VALUE),
+                        runToken.get(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_KEY));
+
+    RunRecordMeta record = store.getRun(latestRun.getParent(), latestRun.getRun());
+    Assert.assertEquals(ImmutableMap.of(dummyUserKey, dummyUserValue), ImmutableMap.copyOf(record.getProperties()));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {

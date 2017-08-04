@@ -19,26 +19,23 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
-import co.cask.cdap.proto.id.WorkflowId;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -214,6 +211,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       try {
         programStatus = ProgramRunStatus.toProgramStatus(programRunStatus);
       } catch (IllegalArgumentException e) {
+        // Return silently, this happens for statuses that are not meant to be scheduled
         return;
       }
 
@@ -222,9 +220,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                                                  programStatus))) {
         TopicId programStatusTriggerTopic =
           NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-        messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
-                                   .addPayloads(GSON.toJson(notification))
-                                   .build());
+        try {
+          messagingService.publish(StoreRequestBuilder.of(programStatusTriggerTopic)
+                                     .addPayloads(GSON.toJson(notification))
+                                     .build());
+        } catch (Exception e) {
+          // Will be retried when re-processing
+          LOG.error("Failed to publish messages to TMS: ", e);
+          Throwables.propagate(e);
+        }
       }
     }
 
