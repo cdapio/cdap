@@ -45,6 +45,7 @@ public class HBaseVersion {
   private static final String CDH59_CLASSIFIER = "cdh5.9.";
   private static final String CDH510_CLASSIFIER = "cdh5.10.";
   private static final String CDH511_CLASSIFIER = "cdh5.11.";
+  private static final String CDH512_CLASSIFIER = "cdh5.12.";
   private static final String CDH_CLASSIFIER = "cdh";
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseVersion.class);
@@ -62,7 +63,8 @@ public class HBaseVersion {
     HBASE_10_CDH56("1.0-cdh5.6"),
     HBASE_11("1.1"),
     HBASE_12_CDH57("1.2-cdh5.7"),
-    UNKNOWN("unknown");
+    UNKNOWN("unknown"),
+    UNKNOWN_CDH("unknown-cdh");
 
     final String majorVersion;
 
@@ -121,19 +123,27 @@ public class HBaseVersion {
 
   /**
    * Utility class to parse apart version number components.  The version string provided is expected to be in
-   * the format: major[.minor[.patch[.last]][-classifier][-SNAPSHOT]
+   * one of the formats below.
    *
-   * <p>Only the major version number is actually required.</p>
+   * <p>Only the major version number and classifier are actually required.</p>
    */
   public static class VersionNumber {
+    // Common pattern (for CDH, open source distro, etc.)
+    // major[.minor[.patch[.last]][-classifier][-SNAPSHOT]
     private static final Pattern PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-SNAPSHOT)?");
+      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-SNAPSHOT)?");
+
+    // HDP has a different format:
+    // major.minor.patch.hdp_major.hdp_minor.hdp_patch.hdp_last-package_number[-hadoop2],
+    // For now, we support only non-snapshot versions
+    private static final Pattern HDP_PATTERN =
+      Pattern.compile("(\\d+)(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(\\.(\\d+))(-(\\d+))(-hadoop2)?");
 
     // IBM has a different format where they add build number at the end,
     // major[.minor[.patch[.last]][-classifier][-buildNumber],
     // we ignore build number for now and support only non-snapshot versions.
     private static final Pattern IBM_PATTERN =
-      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(\\-(?!SNAPSHOT)([^\\-]+))?(\\-(\\d+))?");
+      Pattern.compile("(\\d+)(\\.(\\d+))?(\\.(\\d+))?(\\.(\\d+))?(-(?!SNAPSHOT)([^\\-]+))?(-(\\d+))?");
 
     private Integer major;
     private Integer minor;
@@ -178,6 +188,7 @@ public class HBaseVersion {
 
     public static VersionNumber create(String versionString) throws ParseException {
       Matcher matcher = PATTERN.matcher(versionString);
+      Matcher hdpMatcher = HDP_PATTERN.matcher(versionString);
       Matcher ibmMatcher = IBM_PATTERN.matcher(versionString);
       if (matcher.matches()) {
         String majorString = matcher.group(1);
@@ -192,6 +203,14 @@ public class HBaseVersion {
                                  last != null ? new Integer(last) : null,
                                  classifier,
                                  "-SNAPSHOT".equals(snapshotString));
+      } else if (hdpMatcher.matches()) {
+        String majorString = hdpMatcher.group(1);
+        String minorString = hdpMatcher.group(3);
+        String patchString = hdpMatcher.group(5);
+        return new VersionNumber(new Integer(majorString),
+                                 minorString != null ? new Integer(minorString) : null,
+                                 patchString != null ? new Integer(patchString) : null,
+                                 null, null, false);
       } else if (ibmMatcher.matches()) {
         String majorString = ibmMatcher.group(1);
         String minorString = ibmMatcher.group(3);
@@ -234,39 +253,57 @@ public class HBaseVersion {
   static Version determineVersionFromVersionString(String versionString) throws ParseException {
     if (versionString.startsWith(HBASE_94_VERSION)) {
       return Version.HBASE_94;
-    } else if (versionString.startsWith(HBASE_96_VERSION)) {
+    }
+    if (versionString.startsWith(HBASE_96_VERSION)) {
       return Version.HBASE_96;
-    } else if (versionString.startsWith(HBASE_98_VERSION)) {
+    }
+    if (versionString.startsWith(HBASE_98_VERSION)) {
       return Version.HBASE_98;
-    } else if (versionString.startsWith(HBASE_10_VERSION)) {
-      VersionNumber ver = VersionNumber.create(versionString);
-      if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
-        return Version.HBASE_10_CDH55;
-      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
-        return Version.HBASE_10_CDH56;
-      } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
-        return Version.HBASE_10_CDH;
-      } else {
-        return Version.HBASE_10;
-      }
-    } else if (versionString.startsWith(HBASE_11_VERSION)) {
+    }
+    VersionNumber ver = VersionNumber.create(versionString);
+    if (versionString.startsWith(HBASE_10_VERSION)) {
+      return getHBase10VersionFromVersion(ver);
+    }
+    if (versionString.startsWith(HBASE_11_VERSION)) {
       return Version.HBASE_11;
-    } else if (versionString.startsWith(HBASE_12_VERSION)) {
-      VersionNumber ver = VersionNumber.create(versionString);
-      if (ver.getClassifier() != null &&
-        (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
-          // CDH 5.7 compat module can be re-used with CDH 5.[8-11].x
-          ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
-          ver.getClassifier().startsWith(CDH511_CLASSIFIER))) {
-        return Version.HBASE_12_CDH57;
-      } else {
-        // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
-        return Version.HBASE_11;
+    }
+    if (versionString.startsWith(HBASE_12_VERSION)) {
+      return getHBase12VersionFromVersion(ver);
+    }
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      return Version.UNKNOWN_CDH;
+    }
+    return Version.UNKNOWN;
+  }
+
+  private static Version getHBase10VersionFromVersion(VersionNumber ver) {
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      if (ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
+        return Version.HBASE_10_CDH55;
       }
+      if (ver.getClassifier().startsWith(CDH56_CLASSIFIER)) {
+        return Version.HBASE_10_CDH56;
+      }
+      return Version.HBASE_10_CDH;
+    }
+    return Version.HBASE_10;
+  }
+
+  private static Version getHBase12VersionFromVersion(VersionNumber ver) {
+    if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+      if (ver.getClassifier().startsWith(CDH57_CLASSIFIER) ||
+        // CDH 5.7 compat module can be re-used with CDH 5.[8-11].x
+        ver.getClassifier().startsWith(CDH58_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH59_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH510_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH511_CLASSIFIER) ||
+        ver.getClassifier().startsWith(CDH512_CLASSIFIER)) {
+        return Version.HBASE_12_CDH57;
+      }
+      return Version.UNKNOWN_CDH;
     } else {
-      return Version.UNKNOWN;
+      // HBase-11 compat module can be re-used for HBASE-12 as there is no change needed in compat source.
+      return Version.HBASE_11;
     }
   }
 }

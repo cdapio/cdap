@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data.hbase;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.util.hbase.HBaseVersionSpecificFactory;
 import com.google.common.base.Preconditions;
 
@@ -46,6 +47,7 @@ public class HBaseTestFactory extends HBaseVersionSpecificFactory<HBaseTestBase>
   static final String PROPERTY_PREFIX = "cdap.hbase.test.";
 
   public HBaseTestFactory(Object... configs) {
+    super(CConfiguration.create());
     Preconditions.checkArgument(configs.length % 2 == 0,
                                 "Arguments must be in pair form like (k1, v1, k2, v2): %s", Arrays.toString(configs));
 

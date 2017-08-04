@@ -84,7 +84,7 @@ public class HBaseQueueClientFactory implements QueueClientFactory, ProgramConte
     this.cConf = cConf;
     this.hConf = hConf;
     this.queueAdmin = (HBaseQueueAdmin) queueAdmin;
-    this.queueUtil = new HBaseQueueUtilFactory().get();
+    this.queueUtil = new HBaseQueueUtilFactory(cConf).get();
     this.hBaseTableUtil = hBaseTableUtil;
     this.txExecutorFactory = txExecutorFactory;
     this.txMaxLifeTimeInMillis = TimeUnit.SECONDS.toMillis(cConf.getLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME,

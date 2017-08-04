@@ -334,7 +334,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner,
               }
 
               Iterable<Class<?>> dependencies = Iterables.concat(
-                Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass()),
+                Collections.singletonList(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf)),
                 getKMSSecureStore(cConf), this.dependencies);
 
               Iterable<String> yarnAppClassPath = Arrays.asList(

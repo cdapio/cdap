@@ -413,7 +413,20 @@ cdap_set_hbase() {
     1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
     1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
-    *) die "Unknown/Unsupported HBase version found: ${HBASE_VERSION}" ;;
+    *)
+      if [[ $(cdap_get_conf "hbase.version.resolution.strategy" "${CDAP_CONF}"/cdap-site.xml auto.strict) == 'auto.latest' ]]; then
+        local readonly __latest_hbase_compat
+        if [[ ${HBASE_VERSION} =~ -cdh ]]; then
+          __latest_hbase_compat=hbase-compat-1.2-cdh5.7.0 # must be updated if a new CDH HBase version is added
+        else
+          __latest_hbase_compat=hbase-compat-1.1 # must be updated if a new HBase version is added
+        fi
+        __compat="${CDAP_HOME}"/${__latest_hbase_compat}/lib/*
+        echo "Using ${__latest_hbase_compat} for HBase version ${HBASE_VERSION} due to 'auto.latest' resolution strategy."
+      else
+        die "Unknown or unsupported HBase version found: ${HBASE_VERSION}"
+      fi
+      ;;
   esac
   export CLASSPATH="${__compat}":${CLASSPATH}
   return 0

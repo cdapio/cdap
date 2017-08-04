@@ -553,7 +553,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
     List<Class<?>> classes = new ArrayList<>();
     classes.add(SparkMainWrapper.class);
-    classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass());
+    classes.add(HBaseTableUtilFactory.getHBaseTableUtilClass(cConf));
 
     // Add KMS class
     if (SecureStoreUtils.isKMSBacked(cConfCopy) && SecureStoreUtils.isKMSCapable()) {

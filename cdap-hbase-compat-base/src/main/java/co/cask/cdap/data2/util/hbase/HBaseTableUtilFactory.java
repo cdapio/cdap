@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,17 +25,16 @@ import com.google.inject.Inject;
  */
 public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTableUtil> {
 
-  private final CConfiguration cConf;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   public HBaseTableUtilFactory(CConfiguration cConf) {
-    this.cConf = cConf;
+    super(cConf);
     this.namespaceQueryAdmin = null;
   }
 
   @Inject
   public HBaseTableUtilFactory(CConfiguration cConf, NamespaceQueryAdmin namespaceQueryAdmin) {
-    this.cConf = cConf;
+    super(cConf);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
@@ -47,10 +46,10 @@ public class HBaseTableUtilFactory extends HBaseVersionSpecificFactory<HBaseTabl
     return hBaseTableUtil;
   }
 
-  public static Class<? extends HBaseTableUtil> getHBaseTableUtilClass() {
-    // Since we only need the class name, it is fine to have a null CConfiguration and null namespaceQueryAdmin,
+  public static Class<? extends HBaseTableUtil> getHBaseTableUtilClass(CConfiguration cConf) {
+    // Since we only need the class name, it is fine to have a null namespaceQueryAdmin,
     // since we do not use the tableUtil instance
-    return new HBaseTableUtilFactory(null).get().getClass();
+    return new HBaseTableUtilFactory(cConf).get().getClass();
   }
 
   @Override
