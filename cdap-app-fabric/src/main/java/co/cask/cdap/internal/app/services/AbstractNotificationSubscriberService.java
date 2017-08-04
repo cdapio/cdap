@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -40,6 +38,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
@@ -124,7 +123,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     @Override
     public void run() {
       // Fetch the last processed message for the topic
-      messageId = Transactionals.execute(transactional, new TxCallable<String>() {
+      messageId = Transactions.executeUnchecked(transactional, new TxCallable<String>() {
         @Override
         public String call(DatasetContext context) throws Exception {
           return loadMessageId(context);
@@ -182,7 +181,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            Transactionals.execute(transactional, new TxCallable<Void>() {
+            Transactions.executeUnchecked(transactional, new TxCallable<Void>() {
               @Override
               public Void call(DatasetContext context) throws Exception {
                 processFetchedNotifications(context, fetchedNotifications);

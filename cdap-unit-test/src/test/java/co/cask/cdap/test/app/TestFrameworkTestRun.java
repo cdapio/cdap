@@ -1014,6 +1014,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
