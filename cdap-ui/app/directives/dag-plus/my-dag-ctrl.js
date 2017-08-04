@@ -41,6 +41,7 @@ angular.module(PKG.name + '.commons')
     var nodePopovers = {};
     var selectedConnections = [];
     var endpointClicked = false;
+    var connectionDropped = false;
     var diagramEl = null;
     var dagMenu = null;
     var endpointFilterElems = [];
@@ -91,6 +92,7 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('connectionMoved', moveConnection);
+        vm.instance.bind('beforeStartDetach', onStartDetach);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         vm.instance.bind('beforeDrag', unselectConnections);
         // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
@@ -422,12 +424,21 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function onStartDetach() {
+      connectionDropped = false;
+    }
+
     function checkIfConnectionExistsOrValid(connObj) {
       // return false if connection already exists, which will prevent the connecton from being formed
+      if (connectionDropped) { return false; }
+
       var exists = _.find($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
-      if (exists) { return false; }
+      if (exists) {
+        connectionDropped = true;
+        return false;
+      }
 
       // else check if the connection is valid
       var fromNode = connObj.sourceId,
@@ -446,12 +457,16 @@ angular.module(PKG.name + '.commons')
       NonStorePipelineErrorFactory.connectionIsValid(fromNode, toNode, function(invalidConnection) {
         if (invalidConnection) { valid = false; }
       });
+      connectionDropped = true;
       return valid;
     }
 
     function unselectConnections(params) {
-      unselectConnectionsOfNode(params.sourceId);
-      endpointClicked = false;
+      if (endpointClicked) {
+        unselectConnectionsOfNode(params.sourceId);
+        endpointClicked = false;
+        connectionDropped = false;
+      }
     }
 
     function resetEndpointsAndConnections() {
@@ -460,6 +475,7 @@ angular.module(PKG.name + '.commons')
       vm.instance.unbind('connection');
       vm.instance.unbind('connectionDetached');
       vm.instance.unbind('beforeDrop');
+      vm.instance.unbind('beforeStartDetach');
       vm.instance.detachEveryConnection();
       vm.instance.deleteEveryEndpoint();
 
@@ -482,6 +498,7 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
+        vm.instance.bind('beforeStartDetach', onStartDetach);
       });
 
       if (commentsTimeout) {
