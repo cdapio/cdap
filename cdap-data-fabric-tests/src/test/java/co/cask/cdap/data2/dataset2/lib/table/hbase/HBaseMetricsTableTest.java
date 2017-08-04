@@ -40,6 +40,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTableTest;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.metrics.process.MetricsTableMigration;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -57,6 +58,7 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -84,13 +86,15 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   private static HBaseTableUtil tableUtil;
   private static DatasetFramework dsFramework;
   private static HBaseDDLExecutor ddlExecutor;
+  private static Configuration hConf;
+  private static CConfiguration cConf;
 
   @BeforeClass
   public static void setup() throws Exception {
-    CConfiguration conf = CConfiguration.create();
-    conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
+    cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(new DataFabricModules().getDistributedModules(),
-                                             new ConfigModule(conf, TEST_HBASE.getConfiguration()),
+                                             new ConfigModule(cConf, TEST_HBASE.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new TransactionMetricsModule(),
@@ -110,8 +114,9 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
                                              });
 
     dsFramework = injector.getInstance(DatasetFramework.class);
+    hConf = injector.getInstance(Configuration.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    ddlExecutor = new HBaseDDLExecutorFactory(conf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
+    ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getHBaseAdmin().getConfiguration()).get();
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
   }
 
@@ -134,10 +139,10 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // HBaseMetricsTable does not support mixed increment and incrementAndGet so the
     // updates and assertions here are different from MetricsTableTest.testConcurrentIncrement()
     Collection<? extends Thread> threads =
-        ImmutableList.of(new IncThread(getTable(testConcurrentIncrement), A, inc1, rounds),
-            new IncThread(getTable(testConcurrentIncrement), A, inc2, rounds),
-            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 5, rounds),
-            new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 2, rounds));
+      ImmutableList.of(new IncThread(getTable(testConcurrentIncrement), A, inc1, rounds),
+                       new IncThread(getTable(testConcurrentIncrement), A, inc2, rounds),
+                       new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 5, rounds),
+                       new IncAndGetThread(getTable(testConcurrentIncrement), A, R, 2, rounds));
     for (Thread t : threads) {
       t.start();
     }
@@ -223,6 +228,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                   .put(A, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B)))
                   .put(B, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B))).build());
+
     Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v2Table.get(A, A)));
     Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v2Table.get(A, B)));
     Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v2Table.get(B, A)));
@@ -230,8 +236,8 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
     // Add some gauge metrics to v3 tables
     combinedMetricsTable.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
-                  .put(B, mapOf(B, Bytes.toLong(B), C, Bytes.toLong(C)))
-                  .put(C, mapOf(P, Bytes.toLong(P), X, Bytes.toLong(X))).build());
+                               .put(B, mapOf(B, Bytes.toLong(B), C, Bytes.toLong(C)))
+                               .put(C, mapOf(P, Bytes.toLong(P), X, Bytes.toLong(X))).build());
     Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(combinedMetricsTable.get(B, B)));
     Assert.assertEquals(Bytes.toLong(C), Bytes.toLong(combinedMetricsTable.get(B, C)));
     Assert.assertEquals(Bytes.toLong(X), Bytes.toLong(combinedMetricsTable.get(C, X)));
@@ -272,6 +278,34 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     column = colIterator.next();
     Assert.assertEquals(7L, Bytes.toLong(column.getKey()));
     Assert.assertEquals(7L, Bytes.toLong(column.getValue()));
+  }
+
+  @Test
+  public void testDataMigration() throws Exception {
+    MetricsTable v2Table = getTable("V2Table");
+    MetricsTable v3Table = getTable("V3Table");
+
+    v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                  .put(A, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B)))
+                  .put(B, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B)))
+                  .put(X, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B))).build());
+    // add just column A value for key X in table v3, so this is an increment, while column B is a gauge.
+    v3Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                  .put(X, mapOf(A, Bytes.toLong(A))).build());
+    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table, cConf, hConf);
+    Assert.assertTrue(metricsTableMigration.isOldMetricsDataAvailable());
+    metricsTableMigration.transferData(Integer.MAX_VALUE);
+
+    Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v3Table.get(A, A)));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v3Table.get(A, B)));
+    Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v3Table.get(B, A)));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v3Table.get(B, B)));
+
+    // this is an increment
+    Assert.assertEquals(Bytes.toLong(A) * 2, Bytes.toLong(v3Table.get(X, A)));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v3Table.get(X, B)));
+
+    Assert.assertFalse(metricsTableMigration.isOldMetricsDataAvailable());
   }
 
   @Override

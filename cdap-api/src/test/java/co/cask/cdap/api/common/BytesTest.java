@@ -23,7 +23,6 @@ import org.junit.Test;
  * Unit tests for {@link Bytes} class.
  */
 public class BytesTest {
-
   @Test
   public void testHexString() {
     byte[] bytes = new byte[] {1, 2, 0, 127, -128, 63, -1};

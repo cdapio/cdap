@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
@@ -45,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
 
 /**
  *
@@ -72,11 +74,25 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     });
   }
 
+  @Override
+  public MetricsTable getV3MetricsTable(int resolution) {
+    String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                   Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts." + resolution);
+    return getResolutionMetricsTable(v3TableName);
+  }
+
+  @Override
+  public MetricsTable getV2MetricsTable(int resolution) {
+    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                   Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    return getResolutionMetricsTable(v2TableName);
+  }
+
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
   @Override
   public FactTable getOrCreateFactTable(int resolution) {
     String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                       Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
+                                   Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
 
     int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
@@ -113,6 +129,31 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       Throwables.propagate(e);
     }
     return table;
+  }
+
+  /**
+   * get the metrics table identified by tableName param if it exists, returns null if it doesn't exist.
+   * @param tableName
+   * @return
+   */
+  private MetricsTable getResolutionMetricsTable(String tableName) {
+    try {
+      // metrics tables are in the system namespace
+      DatasetId tableId = NamespaceId.SYSTEM.dataset(tableName);
+      MetricsTable table = null;
+      if (dsFramework.hasInstance(tableId)) {
+        table = getDataset(tableId);
+        return table;
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return null;
+  }
+
+  private <T extends Dataset> T getDataset(DatasetId datasetInstanceId)
+    throws DatasetManagementException, IOException {
+    return dsFramework.getDataset(datasetInstanceId, Collections.<String, String>emptyMap(), null);
   }
 
   protected MetricsTable getOrCreateResolutionMetricsTable(String v3TableName, TableProperties.Builder props,
