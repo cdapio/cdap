@@ -302,9 +302,22 @@ angular.module(PKG.name + '.commons')
 
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
-        var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
-        var targetNode = $scope.nodes.filter( node => node.name === conn.to);
-        if (!sourceNode.length || !targetNode.length) {
+        var sourceNode = null;
+        var targetNode = null;
+
+        for (let i = 0; i < $scope.nodes.length; i++) {
+          let currentNode = $scope.nodes[i];
+          if (currentNode.name === conn.from) {
+            sourceNode = currentNode;
+          } else if (currentNode.name === conn.to) {
+            targetNode = currentNode;
+          }
+          if (sourceNode && targetNode) {
+            break;
+          }
+        }
+
+        if (!sourceNode || !targetNode) {
           return;
         }
 
