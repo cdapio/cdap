@@ -435,7 +435,10 @@ angular.module(PKG.name + '.commons')
       var exists = _.find($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
-      if (exists) {
+
+      var sameNode = connObj.sourceId === connObj.targetId;
+
+      if (exists || sameNode) {
         connectionDropped = true;
         return false;
       }
