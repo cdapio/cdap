@@ -149,7 +149,11 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
                                    .addPayloads(GSON.toJson(programStatusNotification))
                                    .build());
         done = true;
-      } catch (TopicNotFoundException | ServiceUnavailableException | IOException e) {
+      } catch (IOException e) {
+        // These exceptions are not retry-able
+        LOG.error("Failed to publish messages to TMS: ", e);
+        break;
+      } catch (TopicNotFoundException | ServiceUnavailableException e) {
         // These exceptions are retry-able due to TMS not completely started
         if (startTime < 0) {
           startTime = System.currentTimeMillis();
