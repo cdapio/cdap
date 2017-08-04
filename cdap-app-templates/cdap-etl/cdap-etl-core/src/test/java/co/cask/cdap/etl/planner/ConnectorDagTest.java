@@ -22,13 +22,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  */
 public class ConnectorDagTest {
+
+  private static final Map<String, String> EMPTY_CONNECTORS = new HashMap<>();
 
   @Test
   public void testMultipleSourcesIsNoOp() {
@@ -671,7 +674,7 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("file", "csv"),
@@ -707,7 +710,7 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
@@ -748,7 +751,7 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
@@ -794,7 +797,7 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("c1", "c2", "c3"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("agg1", "agg2"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(
       ImmutableSet.of(
@@ -823,6 +826,39 @@ public class ConnectorDagTest {
         new Connection("c3", "sink3")));
 
     Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4, dag5, dag6, dag7);
+    Assert.assertEquals(actual, expected);
+  }
+
+  @Test
+  public void testMultipleNonNestedConditions() throws Exception {
+    /*
+       n1-c1-n2-n3-c2-n4
+     */
+    Set<Connection> connections = ImmutableSet.of(
+      new Connection("n1", "c1"),
+      new Connection("c1", "n2"),
+      new Connection("n2", "n3"),
+      new Connection("n3", "c2"),
+      new Connection("c2", "n4")
+    );
+    Set<String> conditions = new HashSet<>(Arrays.asList("c1", "c2"));
+    Set<String> reduceNodes = new HashSet<>();
+    Set<String> isolationNodes = new HashSet<>();
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+
+    Dag dag1 = new Dag(
+      ImmutableSet.of(
+        new Connection("n1", "c1")));
+    Dag dag2 = new Dag(
+      ImmutableSet.of(
+        new Connection("c1", "n2"),
+        new Connection("n2", "n3"),
+        new Connection("n3", "c2")));
+    Dag dag3 = new Dag(
+      ImmutableSet.of(
+        new Connection("c2", "n4")));
+
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3);
     Assert.assertEquals(actual, expected);
   }
 }
