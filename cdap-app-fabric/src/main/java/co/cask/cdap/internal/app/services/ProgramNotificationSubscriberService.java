@@ -58,14 +58,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
-  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
-  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final TopicMessageIdStore topicMessageIdStore;
-  private final AtomicBoolean upgradeComplete;
-  private final DatasetFramework datasetFramework;
   private ExecutorService taskExecutorService;
 
   @Inject
@@ -75,8 +71,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     super(messagingService, cConf, datasetFramework, txClient, Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS);
     this.cConf = cConf;
     this.topicMessageIdStore = topicMessageIdStore;
-    this.datasetFramework = datasetFramework;
-    this.upgradeComplete = new AtomicBoolean(false);
   }
 
   @Override
@@ -227,20 +221,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
       return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
-    }
-
-    private AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
-      DatasetManagementException {
-      // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
-
-      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
-                                                    Table.class.getName(), DatasetProperties.EMPTY);
-      AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
-      boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
-      if (isUpgradeComplete) {
-        upgradeComplete.set(true);
-      }
-      return appMetadataStore;
     }
   }
 }

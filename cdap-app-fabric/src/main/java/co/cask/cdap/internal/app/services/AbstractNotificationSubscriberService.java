@@ -17,9 +17,12 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -30,6 +33,7 @@ import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
@@ -38,8 +42,10 @@ import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
@@ -48,7 +54,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.tephra.RetryStrategies;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +63,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Abstract class that fetches notifications from TMS
@@ -66,13 +72,17 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNotificationSubscriberService.class);
   // Sampling log only log once per 10000
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
+  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final DatasetFramework datasetFramework;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
   private final int retryTimeOnTransactionFailure;
+  private final AtomicBoolean upgradeComplete;
+  private final DatasetFramework datasetFramework;
   private volatile boolean stopping = false;
 
   @Inject
@@ -89,6 +99,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
       RetryStrategies.retryOnConflict(20, 100)
     );
     this.retryTimeOnTransactionFailure = retryTimeOnTransactionFailure;
+    this.upgradeComplete = new AtomicBoolean(false);
   }
 
   @Override
@@ -229,6 +240,20 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
           return Schedulers.getJobQueue(context, datasetFramework);
         }
       });
+    }
+
+    protected AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
+      DatasetManagementException {
+      // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
+
+      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
+                                                    Table.class.getName(), DatasetProperties.EMPTY);
+      AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
+      boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+      if (isUpgradeComplete) {
+        upgradeComplete.set(true);
+      }
+      return appMetadataStore;
     }
 
     /**
