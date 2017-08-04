@@ -30,7 +30,7 @@ import org.junit.Test;
  */
 public class AlterStatementBuilderTest {
 
-  LocationFactory locationFactory = new LocalLocationFactory();
+  private LocationFactory locationFactory = new LocalLocationFactory();
 
   @Test
   public void testWithLocation() throws Exception {
@@ -120,7 +120,5 @@ public class AlterStatementBuilderTest {
                         "org.apache.hadoop.hive.serde2.avro.AvroSerDe");
     Assert.assertEquals(expected, actual);
   }
-
-
 
 }

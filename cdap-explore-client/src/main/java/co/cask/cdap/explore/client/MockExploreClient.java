@@ -116,6 +116,12 @@ public class MockExploreClient extends AbstractIdleService implements ExploreCli
   }
 
   @Override
+  public ListenableFuture<Void> concatenatePartition(DatasetId datasetInstance, DatasetSpecification spec,
+                                                     PartitionKey key) {
+    return null;
+  }
+
+  @Override
   public ListenableFuture<ExploreExecutionResult> submit(NamespaceId namespace, final String statement) {
     SettableFuture<ExploreExecutionResult> futureDelegate = SettableFuture.create();
     futureDelegate.set(new MockExploreExecutionResult(statementsToResults.get(statement).iterator(),

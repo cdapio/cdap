@@ -38,6 +38,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
+import co.cask.cdap.explore.table.AlterPartitionStatementBuilder;
 import co.cask.cdap.explore.table.AlterStatementBuilder;
 import co.cask.cdap.explore.table.CreateStatementBuilder;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
@@ -341,21 +342,12 @@ public class ExploreTableManager {
    * @throws SQLException if there was a problem with the add partition statement
    */
   public QueryHandle addPartition(DatasetId datasetId, Map<String, String> properties,
-                                  PartitionKey partitionKey, String fsPath)
-    throws ExploreException, SQLException {
-
-    StringBuilder str = new StringBuilder("ALTER TABLE ");
-    String database = ExploreProperties.getExploreDatabaseName(properties);
-    if (database != null) {
-      str.append(database).append(".");
-    }
-    str.append(tableNaming.getTableName(datasetId, properties))
-      .append(" ADD PARTITION ")
-      .append(generateHivePartitionKey(partitionKey))
-      .append(" LOCATION '")
-      .append(fsPath)
-      .append("'");
-    String addPartitionStatement = str.toString();
+                                  PartitionKey partitionKey, String fsPath) throws ExploreException, SQLException {
+    String addPartitionStatement =
+      new AlterPartitionStatementBuilder(ExploreProperties.getExploreDatabaseName(properties),
+                                         tableNaming.getTableName(datasetId, properties), partitionKey,
+                                         shouldEscapeColumns)
+        .buildAddStatement(fsPath);
 
     LOG.debug("Add partition for key {} dataset {} - {}", partitionKey, datasetId, addPartitionStatement);
 
@@ -375,19 +367,40 @@ public class ExploreTableManager {
   public QueryHandle dropPartition(DatasetId datasetId, Map<String, String> properties, PartitionKey partitionKey)
     throws ExploreException, SQLException {
 
-    StringBuilder str = new StringBuilder("ALTER TABLE ");
-    String database = ExploreProperties.getExploreDatabaseName(properties);
-    if (database != null) {
-      str.append(database).append(".");
-    }
-    str.append(tableNaming.getTableName(datasetId, properties))
-      .append(" DROP PARTITION ")
-      .append(generateHivePartitionKey(partitionKey));
-    String dropPartitionStatement = str.toString();
+    String dropPartitionStatement =
+      new AlterPartitionStatementBuilder(ExploreProperties.getExploreDatabaseName(properties),
+                                         tableNaming.getTableName(datasetId, properties), partitionKey,
+                                         shouldEscapeColumns)
+        .buildDropStatement();
 
     LOG.debug("Drop partition for key {} dataset {} - {}", partitionKey, datasetId, dropPartitionStatement);
 
     return exploreService.execute(datasetId.getParent(), dropPartitionStatement, IMMEDIATE_TIMEOUT_CONF);
+  }
+
+  /**
+   * Concatenates the partition in the Hive table for the given dataset.
+   *
+   * @param datasetId the ID of the dataset to drop the partition from
+   * @param properties additional dataset properties relevant to this operation
+   * @param partitionKey the partition key to drop
+   * @return the query handle for dropping the partition from the dataset
+   * @throws ExploreException if there was an exception dropping the partition
+   * @throws SQLException if there was a problem with the drop partition statement
+   */
+  public QueryHandle concatenatePartition(DatasetId datasetId, Map<String, String> properties,
+                                          PartitionKey partitionKey) throws ExploreException, SQLException {
+
+    String concatenatePartitionStatement =
+      new AlterPartitionStatementBuilder(ExploreProperties.getExploreDatabaseName(properties),
+                                         tableNaming.getTableName(datasetId, properties), partitionKey,
+                                         shouldEscapeColumns)
+        .buildConcatenateStatement();
+
+    LOG.debug("Concatenate partition for key {} dataset {} - {}",
+              partitionKey, datasetId, concatenatePartitionStatement);
+
+    return exploreService.execute(datasetId.getParent(), concatenatePartitionStatement, IMMEDIATE_TIMEOUT_CONF);
   }
 
   /**
@@ -773,26 +786,6 @@ public class ExploreTableManager {
     }
   }
 
-  private String generateHivePartitionKey(PartitionKey key) {
-    StringBuilder builder = new StringBuilder("(");
-    String sep = "";
-    for (Map.Entry<String, ? extends Comparable> entry : key.getFields().entrySet()) {
-      String fieldName = entry.getKey();
-      Comparable fieldValue = entry.getValue();
-      String quote = fieldValue instanceof String ? "'" : "";
-      builder.append(sep);
-      if (shouldEscapeColumns) {
-        // a literal backtick(`) is just a double backtick(``)
-        builder.append('`').append(fieldName.replace("`", "``")).append('`');
-      } else {
-        builder.append(fieldName);
-      }
-      builder.append("=").append(quote).append(fieldValue.toString()).append(quote);
-      sep = ", ";
-    }
-    builder.append(")");
-    return builder.toString();
-  }
 
   // TODO: replace with SchemaConverter.toHiveSchema when we tackle queries on Tables.
   //       but unfortunately, SchemaConverter is not compatible with this, for example:

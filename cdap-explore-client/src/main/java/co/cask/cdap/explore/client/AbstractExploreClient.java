@@ -215,6 +215,21 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
   }
 
   @Override
+  public ListenableFuture<Void> concatenatePartition(final DatasetId datasetInstance,
+                                                     final DatasetSpecification spec,
+                                                     final PartitionKey key) {
+    ListenableFuture<ExploreExecutionResult> futureResults = getResultsFuture(new HandleProducer() {
+      @Override
+      public QueryHandle getHandle() throws ExploreException, SQLException {
+        return doConcatenatePartition(datasetInstance, spec, key);
+      }
+    });
+
+    // Exceptions will be thrown in case of an error in the futureHandle
+    return Futures.transform(futureResults, Functions.<Void>constant(null));
+  }
+
+  @Override
   public ListenableFuture<ExploreExecutionResult> submit(final NamespaceId namespace, final String statement) {
     return getResultsFuture(new HandleProducer() {
       @Override

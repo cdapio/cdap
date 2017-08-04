@@ -284,26 +284,23 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
 
   private static EnableExploreParameters readEnableParameters(HttpRequest request)
     throws BadRequestException, IOException {
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      return GSON.fromJson(reader, EnableExploreParameters.class);
-    } catch (JsonSyntaxException | NullPointerException e) {
-      throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
-    }
+    return doReadExploreParameters(request, EnableExploreParameters.class);
   }
 
   private static DisableExploreParameters readDisableParameters(HttpRequest request)
     throws BadRequestException, IOException {
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      return GSON.fromJson(reader, DisableExploreParameters.class);
-    } catch (JsonSyntaxException | NullPointerException e) {
-      throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
-    }
+    return doReadExploreParameters(request, DisableExploreParameters.class);
   }
 
   private static UpdateExploreParameters readUpdateParameters(HttpRequest request)
     throws BadRequestException, IOException {
+    return doReadExploreParameters(request, UpdateExploreParameters.class);
+  }
+
+  private static <T> T doReadExploreParameters(HttpRequest request, Class<T> clz)
+    throws BadRequestException, IOException {
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
-      return GSON.fromJson(reader, UpdateExploreParameters.class);
+      return GSON.fromJson(reader, clz);
     } catch (JsonSyntaxException | NullPointerException e) {
       throw new BadRequestException("Cannot read dataset specification from request: " + e.getMessage(), e);
     }
@@ -365,94 +362,32 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
     impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        doAddPartition(request, responder, datasetId);
+        doPartitionOperation(request, responder, datasetId, new PartitionOperation() {
+          @Override
+          public QueryHandle submitOperation(PartitionKey partitionKey, Map<String, String> properties)
+            throws ExploreException, SQLException {
+            String fsPath = properties.get("path");
+            if (fsPath == null) {
+              responder.sendString(HttpResponseStatus.BAD_REQUEST, "path was not specified.");
+              return null;
+            }
+            return exploreTableManager.addPartition(datasetId, properties, partitionKey, fsPath);
+          }
+        });
         return null;
       }
     });
   }
 
-  private void doAddPartition(HttpRequest request, HttpResponder responder,
-                              DatasetId datasetId) {
-    Dataset dataset;
-    try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      dataset = datasetInstantiator.getDataset(datasetId);
-
-      if (dataset == null) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Cannot load dataset " + datasetId);
-        return;
-      }
-    } catch (IOException e) {
-      String classNotFoundMessage = isClassNotFoundException(e);
-      if (classNotFoundMessage != null) {
-        JsonObject json = new JsonObject();
-        json.addProperty("handle", QueryHandle.NO_OP.getHandle());
-        responder.sendJson(HttpResponseStatus.OK, json);
-        return;
-      }
-      LOG.error("Exception instantiating dataset {}.", datasetId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Exception instantiating dataset " + datasetId.getDataset());
-      return;
-    }
-
-    try {
-      if (!(dataset instanceof PartitionedFileSet)) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "not a partitioned dataset.");
-        return;
-      }
-      Partitioning partitioning = ((PartitionedFileSet) dataset).getPartitioning();
-
-      Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
-      Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-      String fsPath = properties.get("path");
-      if (fsPath == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "path was not specified.");
-        return;
-      }
-
-      PartitionKey partitionKey;
-      try {
-        partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
-      } catch (Exception e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "invalid partition key: " + e.getMessage());
-        return;
-      }
-      if (partitionKey == null) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST, "no partition key was given.");
-        return;
-      }
-
-      QueryHandle handle = exploreTableManager.addPartition(datasetId, properties, partitionKey, fsPath);
-      JsonObject json = new JsonObject();
-      json.addProperty("handle", handle.getHandle());
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-    }
+  abstract static class PartitionOperation {
+    // returns null if no operation was submitted, such as if the properties are not sufficient
+    @Nullable
+    abstract QueryHandle submitOperation(PartitionKey partitionKey, Map<String, String> properties)
+      throws ExploreException, SQLException;
   }
 
-
-  // this should really be a DELETE request. However, the partition key must be passed in the body
-  // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
-  @POST
-  @Path("datasets/{dataset}/deletePartition")
-  public void dropPartition(final HttpRequest request, final HttpResponder responder,
-                            @PathParam("namespace-id") String namespace,
-                            @PathParam("dataset") String datasetName,
-                            @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
-    final DatasetId datasetId = new DatasetId(namespace, datasetName);
-    propagateUserId(request);
-    impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        doDropPartition(request, responder, datasetId);
-        return null;
-      }
-    });
-  }
-
-  private void doDropPartition(HttpRequest request, HttpResponder responder, DatasetId datasetId) {
+  private void doPartitionOperation(HttpRequest request, HttpResponder responder, DatasetId datasetId,
+                                    PartitionOperation partitionOperation) {
     Dataset dataset;
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
       dataset = datasetInstantiator.getDataset(datasetId);
@@ -483,6 +418,7 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()));
       Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
 
+
       PartitionKey partitionKey;
       try {
         partitionKey = PartitionedFileSetArguments.getOutputPartitionKey(properties, partitioning);
@@ -495,7 +431,10 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
         return;
       }
 
-      QueryHandle handle = exploreTableManager.dropPartition(datasetId, properties, partitionKey);
+      QueryHandle handle = partitionOperation.submitOperation(partitionKey, properties);
+      if (handle == null) {
+        return;
+      }
       JsonObject json = new JsonObject();
       json.addProperty("handle", handle.getHandle());
       responder.sendJson(HttpResponseStatus.OK, json);
@@ -503,6 +442,57 @@ public class ExploreExecutorHttpHandler extends AbstractHttpHandler {
       LOG.error("Got exception:", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+
+  // this should really be a DELETE request. However, the partition key must be passed in the body
+  // of the request, and that does not work with many HTTP clients, including Java's URLConnection.
+  @POST
+  @Path("datasets/{dataset}/deletePartition")
+  public void dropPartition(final HttpRequest request, final HttpResponder responder,
+                            @PathParam("namespace-id") String namespace,
+                            @PathParam("dataset") String datasetName,
+                            @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId) throws Exception {
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
+    propagateUserId(request);
+    impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doPartitionOperation(request, responder, datasetId, new PartitionOperation() {
+          @Override
+          public QueryHandle submitOperation(PartitionKey partitionKey, Map<String, String> properties)
+            throws ExploreException, SQLException {
+            return exploreTableManager.dropPartition(datasetId, properties, partitionKey);
+          }
+        });
+        return null;
+      }
+    });
+  }
+
+
+  @POST
+  @Path("datasets/{dataset}/concatenatePartition")
+  public void concatenatePartition(final HttpRequest request, final HttpResponder responder,
+                                   @PathParam("namespace-id") String namespace,
+                                   @PathParam("dataset") String datasetName,
+                                   @HeaderParam(Constants.Security.Headers.PROGRAM_ID) String programId)
+    throws Exception {
+    final DatasetId datasetId = new DatasetId(namespace, datasetName);
+    propagateUserId(request);
+    impersonator.doAs(getEntityToImpersonate(datasetId, programId), new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        doPartitionOperation(request, responder, datasetId, new PartitionOperation() {
+          @Override
+          public QueryHandle submitOperation(PartitionKey partitionKey, Map<String, String> properties)
+            throws ExploreException, SQLException {
+            return exploreTableManager.concatenatePartition(datasetId, properties, partitionKey);
+          }
+        });
+        return null;
+      }
+    });
   }
 
   // returns the cause of the class not found exception if it is one. Otherwise returns null.

@@ -28,6 +28,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
@@ -188,6 +189,15 @@ public class ExploreFacade {
 
     ListenableFuture<Void> futureSuccess = exploreClient.dropPartition(datasetInstance, spec, key);
     handleExploreFuture(futureSuccess, "drop", "partition", datasetInstance.getDataset());
+  }
+
+  public ListenableFuture<Void> concatenatePartition(DatasetId datasetInstance, DatasetSpecification spec,
+                                                     PartitionKey key) throws ExploreException, SQLException {
+    if (!exploreEnabled) {
+      return Futures.immediateFuture(null);
+    }
+
+    return exploreClient.concatenatePartition(datasetInstance, spec, key);
   }
 
   public void createNamespace(NamespaceMeta namespace) throws ExploreException, SQLException {
