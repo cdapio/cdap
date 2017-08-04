@@ -26,11 +26,13 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.MessageFetcher;
@@ -43,11 +45,14 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +70,9 @@ import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -96,6 +103,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final List<ProcessMetricsThread> processMetricsThreads;
   private final String processMetricName;
   private final String delayMetricName;
+  private final int instanceId;
+  private final CConfiguration cConfiguration;
+  private final Configuration hConf;
 
   private long metricsProcessedCount;
 
@@ -114,9 +124,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           @Named(Constants.Metrics.QUEUE_SIZE) int queueSize,
                                           @Assisted Set<Integer> topicNumbers,
                                           @Assisted MetricsContext metricsContext,
-                                          @Assisted Integer instanceId) {
+                                          @Assisted Integer instanceId,
+                                          CConfiguration cConfiguration,
+                                          Configuration hConf) {
     this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
-         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId);
+         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId, cConfiguration, hConf);
   }
 
   @VisibleForTesting
@@ -131,7 +143,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis,
-                                   int instanceId) {
+                                   int instanceId, CConfiguration cConfiguration, Configuration hConf) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
     for (int topicNum : topicNumbers) {
@@ -156,6 +168,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.topicMessageIds = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
+    this.instanceId = instanceId;
+    this.cConfiguration = cConfiguration;
+    this.hConf = hConf;
     processMetricName = String.format("metrics.%s.process.count", instanceId);
     delayMetricName = String.format("metrics.%s.process.delay.ms", instanceId);
   }
@@ -192,6 +207,18 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     if (metaTable == null) {
       LOG.info("Could not get MetricsConsumerMetaTable, seems like we are being shut down");
       return;
+    }
+
+    if (instanceId == 0) {
+      // todo iterate migration resolution order list and schedule execution based on data availability.
+
+      ScheduledExecutorService scheduledExecutorService =
+        Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-data-migrator"));
+
+      DataMigrator dataMigrator = new DataMigrator(metricDatasetFactory, cConfiguration, hConf);
+      // todo change interval with config.
+      scheduledExecutorService.scheduleAtFixedRate(dataMigrator, 0, 1, TimeUnit.MINUTES);
+      LOG.info("Scheduled metrics migration thread");
     }
 
     for (TopicId topic : metricsTopics) {

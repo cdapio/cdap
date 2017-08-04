@@ -299,6 +299,7 @@ public class HBaseMetricsTable implements MetricsTable {
     try {
       hTable.delete(delete.build());
     } catch (IOException e) {
+      LOG.error("Delete failed in HBaseMetricsTable{}", e);
       throw new DataSetException("Delete failed on table " + tableId, e);
     }
   }

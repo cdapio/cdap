@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.store;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
@@ -48,6 +49,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -73,6 +77,20 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
         return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
+  }
+
+  @Override
+  public MetricsTable getV3MetricsTable(int resolution) {
+    String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                   Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts." + resolution);
+    return getResolutionMetricsTable(v3TableName);
+  }
+
+  @Override
+  public MetricsTable getV2MetricsTable(int resolution) {
+    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                   Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    return getResolutionMetricsTable(v2TableName);
   }
 
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
@@ -117,6 +135,31 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
       Throwables.propagate(e);
     }
     return table;
+  }
+
+  /**
+   * get the metrics table identified by tableName param if it exists, returns null if it doesn't exist.
+   * @param tableName
+   * @return
+   */
+  private MetricsTable getResolutionMetricsTable(String tableName) {
+    try {
+      // metrics tables are in the system namespace
+      DatasetId tableId = NamespaceId.SYSTEM.dataset(tableName);
+      MetricsTable table = null;
+      if (dsFramework.hasInstance(tableId)) {
+        table = getDataset(tableId);
+        return table;
+      }
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+    return null;
+  }
+
+  private <T extends Dataset> T getDataset(DatasetId datasetInstanceId)
+    throws DatasetManagementException, IOException {
+    return dsFramework.getDataset(datasetInstanceId, Collections.<String, String>emptyMap(), null);
   }
 
   private MetricsTable getOrCreateResolutionMetricsTable(String v2TableName, String v3TableName,
