@@ -336,7 +336,11 @@ public class HBaseMetricsTable implements MetricsTable {
     if (filter != null) {
       List<Pair<byte[], byte[]>> fuzzyPairs = Lists.newArrayListWithExpectedSize(filter.getFuzzyKeysData().size());
       for (ImmutablePair<byte[], byte[]> pair : filter.getFuzzyKeysData()) {
-        saltFilterPairs(fuzzyPairs, pair);
+        if (rowKeyDistributor != null) {
+          saltFilterPairs(fuzzyPairs, pair);
+        } else {
+          fuzzyPairs.add(Pair.newPair(pair.getFirst(), pair.getSecond()));
+        }
       }
       scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));
     }
@@ -346,6 +350,8 @@ public class HBaseMetricsTable implements MetricsTable {
   private void saltFilterPairs(List<Pair<byte[], byte[]>> fuzzyPairs, ImmutablePair<byte[], byte[]> pair) {
     byte[][] firstAllDistKeys = rowKeyDistributor.getAllDistributedKeys(pair.getFirst());
     for (byte[] firstAllDistKey : firstAllDistKeys) {
+      // Only salt the row keys, we do not need to salt mask because we have provided first byte as 1
+      // which means that this byte in provided row key is NOT fixed
       fuzzyPairs.add(Pair.newPair(firstAllDistKey, Bytes.add(new byte[]{1}, pair.getSecond())));
     }
   }

@@ -29,7 +29,7 @@ import java.util.List;
  * Filters data based on fuzzy row key. Performs fast-forwards during scanning.
  * It takes pairs (row key, fuzzy info) to match row keys. Where fuzzy info is
  * a byte array with 0 or 1 as its values:
- * <ul>m
+ * <ul>
  *   <li>
  *     0 - means that this byte in provided row key is fixed, i.e. row key's byte at same position
  *         must match

@@ -18,6 +18,8 @@ package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -51,10 +53,12 @@ import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -62,7 +66,9 @@ import org.junit.experimental.categories.Category;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedMap;
 
 import static org.junit.Assert.assertEquals;
 
@@ -145,6 +151,66 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     assertEquals(3 * rounds, Bytes.toLong(table.get(A, Y)));
     assertEquals(2 * rounds, Bytes.toLong(table.get(A, Z)));
     assertEquals(7 * rounds, Bytes.toLong(table.get(A, R)));
+  }
+
+  @Test
+  public void testCombinedScan() throws Exception {
+    MetricsTable v2Table = getTable("V2Table");
+    MetricsTable v3Table = getTable("V3Table");
+
+    v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                  .put(A, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B)))
+                  .put(B, mapOf(A, Bytes.toLong(A), B, Bytes.toLong(B))).build());
+    Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v2Table.get(A, A)));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v2Table.get(A, B)));
+    Assert.assertEquals(Bytes.toLong(A), Bytes.toLong(v2Table.get(B, A)));
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v2Table.get(B, B)));
+
+    v3Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
+                  .put(B, mapOf(B, Bytes.toLong(B), C, Bytes.toLong(C)))
+                  .put(C, mapOf(P, Bytes.toLong(P), X, Bytes.toLong(X))).build());
+    Assert.assertEquals(Bytes.toLong(B), Bytes.toLong(v3Table.get(B, B)));
+    Assert.assertEquals(Bytes.toLong(C), Bytes.toLong(v3Table.get(B, C)));
+    Assert.assertEquals(Bytes.toLong(X), Bytes.toLong(v3Table.get(C, X)));
+    Assert.assertEquals(Bytes.toLong(P), Bytes.toLong(v3Table.get(C, P)));
+
+    Scanner v2Scanner = v2Table.scan(null, null, null);
+    Scanner v3Scanner = v3Table.scan(null, null, null);
+
+    CombinedMetricsScanner combinedScanner = new CombinedMetricsScanner(v2Scanner, v3Scanner);
+
+    Row firstRow = combinedScanner.next();
+    Assert.assertEquals(1L, Bytes.toLong(firstRow.getRow()));
+    Iterator<Map.Entry<byte[], byte[]>> colIterator = firstRow.getColumns().entrySet().iterator();
+    Map.Entry<byte[], byte[]> column = colIterator.next();
+    Assert.assertEquals(1L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(1L, Bytes.toLong(column.getValue()));
+    column = colIterator.next();
+    Assert.assertEquals(2L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(2L, Bytes.toLong(column.getValue()));
+
+    Row secondRow = combinedScanner.next();
+    Assert.assertEquals(2L, Bytes.toLong(secondRow.getRow()));
+    colIterator = secondRow.getColumns().entrySet().iterator();
+    column = colIterator.next();
+    Assert.assertEquals(1L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(1L, Bytes.toLong(column.getValue()));
+    column = colIterator.next();
+    Assert.assertEquals(2L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(4L, Bytes.toLong(column.getValue()));
+    column = colIterator.next();
+    Assert.assertEquals(3L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(3L, Bytes.toLong(column.getValue()));
+
+    Row thirdRow = combinedScanner.next();
+    Assert.assertEquals(3L, Bytes.toLong(thirdRow.getRow()));
+    colIterator = thirdRow.getColumns().entrySet().iterator();
+    column = colIterator.next();
+    Assert.assertEquals(4L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(4L, Bytes.toLong(column.getValue()));
+    column = colIterator.next();
+    Assert.assertEquals(7L, Bytes.toLong(column.getKey()));
+    Assert.assertEquals(7L, Bytes.toLong(column.getValue()));
   }
 
   @Override

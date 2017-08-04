@@ -589,11 +589,12 @@ public final class Constants {
     // NOTE: "v3" to avoid conflict with data of older metrics system
     public static final String DEFAULT_METRIC_V3_TABLE_PREFIX = "metrics.v3.table";
     public static final String METRICS_HBASE_MAX_SCAN_THREADS = "metrics.hbase.max.scan.threads";
+    public static final String METICS_HBASE_TABLE_SPLITS = "metrics.v3.table.splits";
     // Hardcode this value because we do not want user to control it
     public static final int METRICS_HBASE_SPLITS = 16;
 
-    public static final String METICS_HBASE_TABLE_SPLITS = "metrics.v3.table.splits";
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
+
     public static final long DEFAULT_RETENTION_HOURS = 2;
 
     public static final int DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD = 100;

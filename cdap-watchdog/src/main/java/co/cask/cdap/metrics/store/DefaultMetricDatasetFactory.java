@@ -120,7 +120,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   }
 
   private MetricsTable getOrCreateResolutionMetricsTable(String v2TableName, String v3TableName,
-                                                         TableProperties.Builder props) {
+                                                 TableProperties.Builder props) {
     try {
       // metrics tables are in the system namespace
       DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);

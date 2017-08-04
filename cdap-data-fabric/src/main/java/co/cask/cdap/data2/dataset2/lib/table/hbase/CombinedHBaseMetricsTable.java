@@ -29,7 +29,7 @@ import java.util.SortedMap;
 import javax.annotation.Nullable;
 
 /**
- *
+ * Combined Metrics table to read from both v2 and v3 Tables
  */
 public class CombinedHBaseMetricsTable implements MetricsTable {
   private final MetricsTable v2HBaseTable;
