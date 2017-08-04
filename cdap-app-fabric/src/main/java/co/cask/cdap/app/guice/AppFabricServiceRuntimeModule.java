@@ -353,7 +353,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
       datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
 
-      bind(TopicMessageIdStore.class).to(DefaultStore.class);
       bind(Store.class).to(DefaultStore.class);
       // we can simply use DefaultStore for RuntimeStore, when its not running in a separate container
       bind(RuntimeStore.class).to(DefaultStore.class);

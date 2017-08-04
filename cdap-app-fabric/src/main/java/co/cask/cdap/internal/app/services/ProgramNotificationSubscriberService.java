@@ -16,24 +16,17 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
-import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -50,7 +43,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Service that receives program status notifications and persists to the store
@@ -61,22 +53,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
-  private final TopicMessageIdStore topicMessageIdStore;
   private ExecutorService taskExecutorService;
 
   @Inject
-  ProgramNotificationSubscriberService(MessagingService messagingService, TopicMessageIdStore topicMessageIdStore,
-                                       CConfiguration cConf, DatasetFramework datasetFramework,
-                                       TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient, Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS);
+  ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
+                                       DatasetFramework datasetFramework, TransactionSystemClient txClient) {
+    super(messagingService, cConf, datasetFramework, txClient);
     this.cConf = cConf;
-    this.topicMessageIdStore = topicMessageIdStore;
   }
 
   @Override
   protected void startUp() {
     LOG.info("Starting ProgramNotificationSubscriberService");
-
     taskExecutorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
                                                           .setNameFormat("program-status-subscriber-task-%d")
                                                           .build());
@@ -111,13 +99,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     @Override
-    public String loadMessageId() {
-      return topicMessageIdStore.retrieveSubscriberState(topic);
+    public String loadMessageId(DatasetContext context) {
+      return getAppMetadataStore(context).retrieveSubscriberState(topic);
     }
 
     @Override
-    public void updateMessageId(String lastFetchedMessageId) {
-      topicMessageIdStore.persistSubscriberState(topic, lastFetchedMessageId);
+    public void updateMessageId(DatasetContext context, String lastFetchedMessageId) {
+      getAppMetadataStore(context).persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override
@@ -162,7 +150,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             return;
           }
           if (startTimeSecs == -1) {
-            LOG.warn("Start time was not specified in program starting notification for program run " + programRunId);
+            LOG.warn("Start time was not specified in program notification for program run " + programRunId);
             return;
           }
           Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
@@ -174,7 +162,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
                                                      ProgramOptionConstants.LOGICAL_START_TIME);
           if (logicalStartTimeSecs == -1) {
-            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            LOG.warn("Logical start time was not specified in program notification for program run " + programRunId);
             return;
           }
 
@@ -200,9 +188,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             return;
           }
           String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
-          final BasicThrowable cause = (errorString == null)
-            ? null
-            : GSON.fromJson(errorString, BasicThrowable.class);
+          BasicThrowable cause = (errorString == null) ? null : GSON.fromJson(errorString, BasicThrowable.class);
           getAppMetadataStore(context).recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause);
           break;
         default:

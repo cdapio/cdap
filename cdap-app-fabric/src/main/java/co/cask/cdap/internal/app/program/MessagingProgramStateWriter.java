@@ -34,6 +34,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
@@ -152,7 +153,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
       } catch (IOException e) {
         // These exceptions are not retry-able
         LOG.error("Failed to publish messages to TMS: ", e);
-        break;
+        Throwables.propagate(e);
       } catch (TopicNotFoundException | ServiceUnavailableException e) {
         // These exceptions are retry-able due to TMS not completely started
         if (startTime < 0) {
@@ -161,7 +162,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
         long retryMillis = retryStrategy.nextRetry(++failureCount, startTime);
         if (retryMillis < 0) {
           LOG.error("Failed to publish messages to TMS and exceeded retry limit.", e);
-          break;
+          Throwables.propagate(e);
         }
         LOG.debug("Failed to publish messages to TMS due to {}. Will be retried in {} ms.",
                   e.getMessage(), retryMillis);

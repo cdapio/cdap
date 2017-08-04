@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -77,7 +78,7 @@ import static com.google.common.base.Predicates.and;
 /**
  * Store for application metadata
  */
-public class AppMetadataStore extends MetadataStoreDataset {
+public class AppMetadataStore extends MetadataStoreDataset implements TopicMessageIdStore {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -931,6 +932,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   @Nullable
+  @Override
   public String retrieveSubscriberState(String topic) {
     MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
       .add(topic);
@@ -938,6 +940,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return (rawBytes == null) ? null : Bytes.toString(rawBytes);
   }
 
+  @Override
   public void persistSubscriberState(String topic, String messageId) {
     MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
       .add(topic);

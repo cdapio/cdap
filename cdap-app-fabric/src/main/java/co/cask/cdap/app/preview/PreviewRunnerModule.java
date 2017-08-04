@@ -120,7 +120,6 @@ public class PreviewRunnerModule extends PrivateModule {
         .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
     );
 
-    bind(TopicMessageIdStore.class).to(DefaultStore.class);
     bind(Store.class).to(DefaultStore.class);
     bind(RouteStore.class).to(LocalRouteStore.class).in(Scopes.SINGLETON);
 

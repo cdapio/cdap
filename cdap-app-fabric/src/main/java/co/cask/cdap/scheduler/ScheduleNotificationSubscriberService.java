@@ -34,7 +34,6 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,23 +53,22 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
-  private final ExecutorService taskExecutorService;
+  private ExecutorService taskExecutorService;
 
   @Inject
   ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient,
-          Constants.Retry.LOCAL_DATASET_OPERATION_RETRY_DELAY_SECONDS);
+    super(messagingService, cConf, datasetFramework, txClient);
 
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
-    this.taskExecutorService =
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task-%d").build());
   }
 
   @Override
   protected void startUp() {
     LOG.info("Start running ScheduleNotificationSubscriberService");
+    taskExecutorService =
+      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task-%d").build());
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC)));
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
@@ -97,7 +95,6 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
    * Thread that subscribes to TMS notifications and adds the notification containing the schedule id to the job queue
    */
   private class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
-    private JobQueueDataset jobQueue;
     private String topic;
 
     SchedulerEventNotificationSubscriberThread(String topic) {
@@ -106,19 +103,13 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     }
 
     @Override
-    public void run() {
-      jobQueue = super.getJobQueue();
-      super.run();
+    public String loadMessageId(DatasetContext context) {
+      return getJobQueue(context).retrieveSubscriberState(topic);
     }
 
     @Override
-    public String loadMessageId() {
-      return jobQueue.retrieveSubscriberState(topic);
-    }
-
-    @Override
-    public void updateMessageId(String lastFetchedMessageId) {
-      jobQueue.persistSubscriberState(topic, lastFetchedMessageId);
+    public void updateMessageId(DatasetContext context, String lastFetchedMessageId) {
+      getJobQueue(context).persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override
@@ -141,14 +132,11 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
                  scheduleId, properties, e);
         return;
       }
-      jobQueue.addNotification(record, notification);
+      getJobQueue(context).addNotification(record, notification);
     }
 
-    @Override
-    public JobQueueDataset getJobQueue() {
-      // Once we have gotten the job queue transactionally at the beginning of the thread run,
-      // we can override the method to just return the instance variable every other time
-      return jobQueue;
+    JobQueueDataset getJobQueue(DatasetContext datasetContext) {
+      return Schedulers.getJobQueue(datasetContext, datasetFramework);
     }
   }
 
@@ -170,7 +158,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
         // ignore disabled schedules
         if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
-          getJobQueue().addNotification(schedule, notification);
+          getJobQueue(context).addNotification(schedule, notification);
         }
       }
     }

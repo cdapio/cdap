@@ -103,7 +103,7 @@ import javax.annotation.Nullable;
 /**
  * Implementation of the Store that ultimately places data into MetaDataTable.
  */
-public class DefaultStore implements Store, TopicMessageIdStore {
+public class DefaultStore implements Store {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStore.class);
   private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
   private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
@@ -928,27 +928,6 @@ public class DefaultStore implements Store, TopicMessageIdStore {
                                                              String serviceName,
                                                              ServiceSpecification serviceSpecification) {
     return new ApplicationSpecificationWithChangedServices(appSpec, serviceName, serviceSpecification);
-  }
-
-  @Override
-  public String retrieveSubscriberState(final String topic) {
-    return Transactions.executeUnchecked(transactional, new TxCallable<String>() {
-      @Override
-      public String call(DatasetContext context) throws Exception {
-        return getAppMetadataStore(context).retrieveSubscriberState(topic);
-      }
-    });
-  }
-
-  @Override
-  public void persistSubscriberState(final String topic, final String messageId) {
-    Transactions.executeUnchecked(transactional, new TxCallable<Void>() {
-      @Override
-      public Void call(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).persistSubscriberState(topic, messageId);
-        return null;
-      }
-    });
   }
 
   private static final class ApplicationSpecificationWithChangedServices extends ForwardingApplicationSpecification {

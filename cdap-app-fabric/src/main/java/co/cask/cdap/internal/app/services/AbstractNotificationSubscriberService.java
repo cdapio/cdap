@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.Transactionals;
+import co.cask.cdap.api.TxCallable;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
@@ -38,16 +40,14 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.data2.transaction.TransactionSystemClientAdapter;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.data2.transaction.TxCallable;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
-import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
-import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
@@ -72,6 +72,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   private static final Logger LOG = LoggerFactory.getLogger(AbstractNotificationSubscriberService.class);
   // Sampling log only log once per 10000
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
+  // These attributes are used to fetch the AppMetadataStore
   private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
   private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
 
@@ -80,15 +81,13 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
   private final CConfiguration cConf;
   private final Transactional transactional;
   private final MultiThreadMessagingContext messagingContext;
-  private final int retryTimeOnTransactionFailure;
   private final AtomicBoolean upgradeComplete;
   private final DatasetFramework datasetFramework;
   private volatile boolean stopping = false;
 
   @Inject
   protected AbstractNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient,
-                                                  int retryTimeOnTransactionFailure) {
+                                                  DatasetFramework datasetFramework, TransactionSystemClient txClient) {
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
@@ -98,7 +97,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
         NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null)),
       RetryStrategies.retryOnConflict(20, 100)
     );
-    this.retryTimeOnTransactionFailure = retryTimeOnTransactionFailure;
     this.upgradeComplete = new AtomicBoolean(false);
   }
 
@@ -126,10 +124,10 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
     @Override
     public void run() {
       // Fetch the last processed message for the topic
-      messageId = Transactions.executeUnchecked(transactional, new TxCallable<String>() {
+      messageId = Transactionals.execute(transactional, new TxCallable<String>() {
         @Override
         public String call(DatasetContext context) throws Exception {
-          return loadMessageId();
+          return loadMessageId(context);
         }
       });
 
@@ -153,9 +151,9 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      */
     long processNotifications() {
       try {
-        String lastFetchedMessageId = null;
         // Gather a local copy of fetched notifications to batch process in one transaction
-        List<Notification> fetchedNotifications = new ArrayList<>();
+        final List<Notification> fetchedNotifications = new ArrayList<>();
+        String lastFetchedMessageId = null;
         try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher()
                                                                    .fetch(NamespaceId.SYSTEM.getNamespace(), topic,
                                                                           100, messageId)) {
@@ -163,46 +161,44 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
           while (iterator.hasNext() && !stopping) {
             Message message = iterator.next();
             lastFetchedMessageId = message.getId();
-            Notification notification;
             try {
-              notification = GSON.fromJson(new String(message.getPayload(), StandardCharsets.UTF_8),
-                                           Notification.class);
+              Notification notification = GSON.fromJson(new String(message.getPayload(), StandardCharsets.UTF_8),
+                                                        Notification.class);
               fetchedNotifications.add(notification);
             } catch (JsonSyntaxException e) {
               LOG.warn("Failed to decode message with id {}. Skipped. ", message.getId(), e);
               // lastFetchedMessageId was updated at the beginning of the loop to skip this message in next fetch
-              continue;
             }
           }
         }
 
-        // Sleep for configured number of milliseconds if there's no notification
+        // Sleep for configured number of milliseconds if there are no notifications
         if (lastFetchedMessageId == null) {
           return cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS);
         }
 
-        final List<Notification> notifications = fetchedNotifications;
         final String lastMessageId = lastFetchedMessageId;
         // Execute processed notifications in one transaction
         Retries.supplyWithRetries(new Supplier<Void>() {
           @Override
           public Void get() {
-            Transactions.executeUnchecked(transactional, new TxCallable<Void>() {
+            Transactionals.execute(transactional, new TxCallable<Void>() {
               @Override
               public Void call(DatasetContext context) throws Exception {
-                fetchAndProcessNotifications(context, notifications);
-                updateMessageId(lastMessageId);
+                processFetchedNotifications(context, fetchedNotifications);
+                updateMessageId(context, lastMessageId);
                 return null;
               }
             });
             return null;
           }
-        }, co.cask.cdap.common.service.RetryStrategies.fixDelay(retryTimeOnTransactionFailure, TimeUnit.SECONDS));
+        }, co.cask.cdap.common.service.RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS,
+                                                                TimeUnit.SECONDS));
 
         // Transaction was successful, so reset the failure count to 0
         failureCount = 0;
         // The last fetched message id was persisted successfully, update the local field as well.
-        messageId = lastFetchedMessageId;
+        messageId = lastMessageId;
         return 0L;
 
       } catch (ServiceUnavailableException e) {
@@ -223,50 +219,49 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
      * Processes a list of notifications
      *
      * @param context the dataset context
-     * @param notifications the list of fetched notifications from TMS
+     * @param notifications the list of pairs of message ids and fetched notifications from TMS
      * @throws Exception
      */
-    public void fetchAndProcessNotifications(DatasetContext context, List<Notification> notifications)
+    void processFetchedNotifications(DatasetContext context, List<Notification> notifications)
       throws IOException, DatasetManagementException {
+
       for (Notification notification : notifications) {
         processNotification(context, notification);
       }
     }
 
-    protected JobQueueDataset getJobQueue() {
-      return Transactions.executeUnchecked(transactional, new TxCallable<JobQueueDataset>() {
-        @Override
-        public JobQueueDataset call(DatasetContext context) throws Exception {
-          return Schedulers.getJobQueue(context, datasetFramework);
-        }
-      });
-    }
-
-    protected AppMetadataStore getAppMetadataStore(DatasetContext datasetContext) throws IOException,
-      DatasetManagementException {
+    AppMetadataStore getAppMetadataStore(DatasetContext context) {
       // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
 
-      Table table = DatasetsUtil.getOrCreateDataset(datasetContext, datasetFramework, APP_META_INSTANCE_ID,
-                                                    Table.class.getName(), DatasetProperties.EMPTY);
-      AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
-      boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
-      if (isUpgradeComplete) {
-        upgradeComplete.set(true);
+      try {
+        Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
+                                                      Table.class.getName(), DatasetProperties.EMPTY);
+        AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
+        // If upgrade was not complete, check if it is and update boolean
+        if (!upgradeComplete.get()) {
+          boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+          if (isUpgradeComplete) {
+            upgradeComplete.set(true);
+          }
+        }
+        return appMetadataStore;
+      } catch (DatasetManagementException | IOException e) {
+        throw Throwables.propagate(e);
       }
-      return appMetadataStore;
     }
 
     /**
      * Loads the message id from storage. Note that this method is already executed inside a transaction.
      *
      * @return the message id, or null if no message id has been stored
+     * @param context
      */
-    public abstract String loadMessageId();
+    public abstract String loadMessageId(DatasetContext context);
 
     /**
      * Persists the message id to storage. Note that this method is already executed inside a transaction.
      */
-    public abstract void updateMessageId(String lastFetchedMessageId);
+    public abstract void updateMessageId(DatasetContext context, String lastFetchedMessageId);
 
     /**
      * Processes the notification
