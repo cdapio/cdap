@@ -21,7 +21,10 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.service.AuthorizationDatasetTypeService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
+import co.cask.cdap.data2.datafabric.dataset.service.DatasetTypeService;
+import co.cask.cdap.data2.datafabric.dataset.service.DefaultDatasetTypeService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
@@ -55,6 +58,7 @@ import java.util.Map;
  * Bindings for DataSet Service.
  */
 public class DataSetServiceModules extends RuntimeModule {
+  public static final String BASE_DATASET_TYPE_SERVICE = "baseDatasetTypeService";
 
   @Override
   public Module getInMemoryModules() {
@@ -90,6 +94,14 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
+
+            bind(DatasetTypeService.class)
+              .annotatedWith(Names.named(BASE_DATASET_TYPE_SERVICE))
+              .to(DefaultDatasetTypeService.class)
+              .in(Scopes.SINGLETON);
+
+            bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
+            expose(DatasetTypeService.class);
           }
         });
       }
@@ -132,6 +144,14 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetOpExecutor.class).to(LocalDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
+
+            bind(DatasetTypeService.class)
+              .annotatedWith(Names.named(BASE_DATASET_TYPE_SERVICE))
+              .to(DefaultDatasetTypeService.class)
+              .in(Scopes.SINGLETON);
+
+            bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
+            expose(DatasetTypeService.class);
           }
         });
       }
@@ -176,6 +196,14 @@ public class DataSetServiceModules extends RuntimeModule {
 
             bind(DatasetOpExecutor.class).to(YarnDatasetOpExecutor.class);
             expose(DatasetOpExecutor.class);
+
+            bind(DatasetTypeService.class)
+              .annotatedWith(Names.named(BASE_DATASET_TYPE_SERVICE))
+              .to(DefaultDatasetTypeService.class)
+              .in(Scopes.SINGLETON);
+
+            bind(DatasetTypeService.class).to(AuthorizationDatasetTypeService.class);
+            expose(DatasetTypeService.class);
           }
         });
       }

@@ -38,6 +38,7 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DynamicTransactionExecutorFactory;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpHTTPHandler;
@@ -233,11 +234,14 @@ public abstract class DatasetServiceTestBase {
       new DatasetInstanceManager(txSystemClientService, txExecutorFactory, inMemoryDatasetFramework);
     PrivilegesManager privilegesManager = injector.getInstance(PrivilegesManager.class);
 
-    DatasetTypeService typeService = new DatasetTypeService(
-      typeManager, namespaceAdmin, namespacedLocationFactory, authEnforcer, privilegesManager, authenticationContext,
-      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, txExecutorFactory, defaultModules);
+    DatasetTypeService defaultDatasetTypeService = new DefaultDatasetTypeService(
+      typeManager, namespaceAdmin, namespacedLocationFactory,
+      cConf, impersonator, txSystemClientService, inMemoryDatasetFramework, defaultModules);
+    DatasetTypeService typeService = new AuthorizationDatasetTypeService(defaultDatasetTypeService, authEnforcer,
+                                                                         privilegesManager, authenticationContext);
 
-    instanceService = new DatasetInstanceService(typeService, instanceManager, opExecutor, exploreFacade,
+    instanceService = new DatasetInstanceService(typeService, defaultDatasetTypeService,
+                                                 instanceManager, opExecutor, exploreFacade,
                                                  namespaceQueryAdmin, ownerAdmin, authEnforcer, privilegesManager,
                                                  authenticationContext);
 

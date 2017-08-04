@@ -86,6 +86,10 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
+    if (!isSecurityAuthorizationEnabled()) {
+      return entityIds;
+    }
+
     Set<EntityId> results = new HashSet<>();
     // filter out entity id which is in system namespace and principal is the master user
     for (EntityId entityId : entityIds) {

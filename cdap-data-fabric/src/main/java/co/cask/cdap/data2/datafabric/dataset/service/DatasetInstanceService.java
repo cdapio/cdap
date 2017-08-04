@@ -26,6 +26,7 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
+import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.audit.AuditPublisher;
 import co.cask.cdap.data2.audit.AuditPublishers;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -57,6 +58,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +80,8 @@ import javax.annotation.Nullable;
 public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
-  private final DatasetTypeService typeService;
+  private final DatasetTypeService authorizationDatasetTypeService;
+  private final DatasetTypeService byPassDatasetTypeService;
   private final DatasetInstanceManager instanceManager;
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
@@ -93,13 +96,17 @@ public class DatasetInstanceService {
 
   @VisibleForTesting
   @Inject
-  public DatasetInstanceService(DatasetTypeService typeService, DatasetInstanceManager instanceManager,
+  public DatasetInstanceService(DatasetTypeService authorizationDatasetTypeService,
+                                @Named(DataSetServiceModules.BASE_DATASET_TYPE_SERVICE)
+                                  DatasetTypeService byPassDatasetTypeService,
+                                DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade,
                                 NamespaceQueryAdmin namespaceQueryAdmin, OwnerAdmin ownerAdmin,
                                 AuthorizationEnforcer authorizationEnforcer, PrivilegesManager privilegesManager,
                                 AuthenticationContext authenticationContext) {
     this.opExecutorClient = opExecutorClient;
-    this.typeService = typeService;
+    this.authorizationDatasetTypeService = authorizationDatasetTypeService;
+    this.byPassDatasetTypeService = byPassDatasetTypeService;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
@@ -192,7 +199,7 @@ public class DatasetInstanceService {
     spec = DatasetsUtil.fixOriginalProperties(spec);
 
     DatasetTypeId datasetTypeId = instance.getParent().datasetType(spec.getType());
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType());
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
     if (typeMeta == null) {
       // TODO: This shouldn't happen unless CDAP is in an invalid state - maybe give different error
       throw new NotFoundException(datasetTypeId);
@@ -261,7 +268,7 @@ public class DatasetInstanceService {
       throw new DatasetAlreadyExistsException(datasetId);
     }
 
-    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
+    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(), false);
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
@@ -335,7 +342,7 @@ public class DatasetInstanceService {
     LOG.info("Update dataset {}, properties: {}", instance.getEntityName(), ConversionHelpers.toJson(properties));
     authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
 
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), existing.getType());
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), existing.getType(), true);
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(
@@ -457,20 +464,22 @@ public class DatasetInstanceService {
    *
    * @param namespaceId {@link NamespaceId} for the specified namespace
    * @param typeName the name of the dataset type to search
+   * @param byPassCheck a flag which determines whether to check privilege for the dataset type
    * @return {@link DatasetTypeMeta} for the type if found in either the specified namespace or in the system namespace,
    * null otherwise.
    * TODO: This may need to move to a util class eventually
    */
   @Nullable
-  private DatasetTypeMeta getTypeInfo(NamespaceId namespaceId, String typeName) throws Exception {
+  private DatasetTypeMeta getTypeInfo(NamespaceId namespaceId, String typeName, boolean byPassCheck) throws Exception {
     DatasetTypeId datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
     try {
-      return typeService.getType(datasetTypeId);
+      return byPassCheck ? byPassDatasetTypeService.getType(datasetTypeId) :
+        authorizationDatasetTypeService.getType(datasetTypeId);
     } catch (DatasetTypeNotFoundException e) {
       try {
         // Type not found in the instance's namespace. Now try finding it in the system namespace
         DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
-        return typeService.getType(systemDatasetTypeId);
+        return byPassDatasetTypeService.getType(systemDatasetTypeId);
       } catch (DatasetTypeNotFoundException exnWithSystemNS) {
         // if it's not found in system namespace, throw the original exception with the correct namespace
         throw e;
@@ -494,7 +503,7 @@ public class DatasetInstanceService {
     }
     metaCache.invalidate(instance);
 
-    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType());
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getParent(), spec.getType(), true);
     if (typeMeta == null) {
       throw new DatasetNotFoundException(instance);
     }
