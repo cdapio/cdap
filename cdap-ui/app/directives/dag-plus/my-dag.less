@@ -230,7 +230,6 @@ my-dag-plus {
         }
 
         .node-metrics {
-          font-size: 11px;
           position: absolute;
           bottom: 26px;
 
@@ -238,21 +237,6 @@ my-dag-plus {
           width: ~"-moz-calc(100% - 24px)";
           width: ~"-webkit-calc(100% - 24px)";
           width: ~"calc(100% - 24px)";
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-
-          .node-metrics-labels {
-            cursor: pointer;
-
-            .metric-records-out {
-              color: @records-out-metric-color;
-            }
-
-            .metric-errors {
-              color: @error-metric-color;
-            }
-          }
         }
 
         .node-actions {

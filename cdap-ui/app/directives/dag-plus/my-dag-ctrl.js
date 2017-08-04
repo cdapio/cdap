@@ -66,7 +66,6 @@ angular.module(PKG.name + '.commons')
         fitToScreenTimeout = null,
         initTimeout = null,
         nodePopoverTimeout = null,
-        metricsTimeout = null,
         resetTimeout = null;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
@@ -152,21 +151,6 @@ angular.module(PKG.name + '.commons')
 
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
-
-              metricsTimeout = $timeout(function () {
-                let nodeElem = document.getElementById(key);
-                let nodeMetricsElem = nodeElem.querySelector(`.node-metrics`);
-                if (nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
-                  let recordsOutLabelElem = nodeMetricsElem.querySelector('.metric-records-out-label');
-                  if (recordsOutLabelElem) {
-                    recordsOutLabelElem.parentNode.removeChild(recordsOutLabelElem);
-                  }
-                  let errorsLabelElem = nodeMetricsElem.querySelector('.metric-errors-label');
-                  if (errorsLabelElem) {
-                    errorsLabelElem.parentNode.removeChild(errorsLabelElem);
-                  }
-                }
-              });
             });
           }, true);
         }
@@ -668,7 +652,6 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
-
       closeNodePopover(node);
       HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(false);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);
@@ -887,7 +870,6 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(fitToScreenTimeout);
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
-      $timeout.cancel(metricsTimeout);
       diagramEl.removeEventListener('contextmenu', openContextMenu);
       angular.forEach(endpointFilterElems, function(endpointFilterElem) {
         endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);

@@ -160,21 +160,11 @@
             </div>
             <div class="node-metrics"
                   ng-show="DAGPlusPlusCtrl.isDisabled">
-              <a class="node-metrics-labels"
-                ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
-                <span class="metric-records-out"
-                    ng-click="DAGPlusPlusCtrl.onMetricsClick($event, node)">
-                  <span class="metric-records-out-label">Records Out:</span>
-                  <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
-                  </span>
-                </span>
-                <span>/</span>
-                <span class="metric-errors">
-                  <span class="metric-errors-label">Errors:</span>
-                  <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 11:8 | myNumberWithEllipsis: 0">
-                  </span>
-                </span>
-              </a>
+              <my-node-metrics
+                on-click="DAGPlusPlusCtrl.onMetricsClick"
+                node="node"
+                metrics-data="metricsData">
+              </my-node-metrics>
             </div>
             <div class="node-actions">
               <span ng-if="DAGPlusPlusCtrl.nodeMenuOpen !== node.name"
