@@ -874,7 +874,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
-        <version>${hbase98.version}</version>
+        <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -885,7 +885,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
-        <version>${hbase98.version}</version>
+        <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -904,7 +904,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
-        <version>${hbase98.version}</version>
+        <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -915,7 +915,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-server</artifactId>
-        <version>${hbase98.version}</version>
+        <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -1308,7 +1308,7 @@
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-testing-util</artifactId>
-        <version>${hbase98.version}</version>
+        <version>${hbase10.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>

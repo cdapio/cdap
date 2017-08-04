@@ -30,7 +30,8 @@ import org.apache.hadoop.hbase.TableExistsException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.TableNotDisabledException;
 import org.apache.hadoop.hbase.TableNotEnabledException;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.security.access.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,12 +52,12 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultHBaseDDLExecutor.class);
   private static final long MAX_CREATE_TABLE_WAIT = 5000L;    // Maximum wait of 5 seconds for table creation.
 
-  protected HBaseAdmin admin;
+  protected Admin admin;
 
   @Override
   public void initialize(HBaseDDLExecutorContext context) {
     try {
-      this.admin = new HBaseAdmin((Configuration) context.getConfiguration());
+      this.admin = ConnectionFactory.createConnection((Configuration) context.getConfiguration()).getAdmin();
     } catch (Exception e) {
       throw new RuntimeException("Failed to create HBaseAdmin.", e);
     }
@@ -116,7 +117,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
   public void createTableIfNotExists(TableDescriptor descriptor, @Nullable byte[][] splitKeys)
     throws IOException {
     HTableDescriptor htd = getHTableDescriptor(descriptor);
-    if (admin.tableExists(htd.getName())) {
+    if (admin.tableExists(htd.getTableName())) {
       return;
     }
 
@@ -138,7 +139,7 @@ public abstract class DefaultHBaseDDLExecutor implements HBaseDDLExecutor {
       long sleepTime = TimeUnit.MILLISECONDS.toNanos(5000L) / 10;
       sleepTime = sleepTime <= 0 ? 1 : sleepTime;
       do {
-        if (admin.tableExists(htd.getName())) {
+        if (admin.tableExists(htd.getTableName())) {
           if (tableExistsFailure) {
             LOG.info("Table '{}' exists now. Assuming that another process concurrently created it.",
                      Bytes.toString(htd.getName()));
