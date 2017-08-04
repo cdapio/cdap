@@ -322,7 +322,7 @@ public abstract class MetricsTableTest {
     Assert.assertEquals(9, count);
   }
 
-  private <T> SortedMap<byte[], T> mapOf(byte[] key, T value) {
+  protected  <T> SortedMap<byte[], T> mapOf(byte[] key, T value) {
     SortedMap<byte[], T> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     map.put(key, value);
     return map;

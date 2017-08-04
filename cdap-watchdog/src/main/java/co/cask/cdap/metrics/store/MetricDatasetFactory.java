@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metrics.store;
 
+import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 
@@ -23,6 +24,20 @@ import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
  * Manages metric system datasets.
  */
 public interface MetricDatasetFactory {
+
+  /**
+   * @param resolution resolution of {@link FactTable}
+   * @return A new instance of v2 {@link MetricsTable} if the table already exists, null otherwise
+   * @Nullable
+   */
+  MetricsTable getV2MetricsTable(int resolution);
+
+  /**
+   * @param resolution resolution of {@link FactTable}
+   * @return A new instance of v3 {@link MetricsTable} if the table already exists, null otherwise
+   * @Nullable
+   */
+  MetricsTable getV3MetricsTable(int resolution);
 
   /**
    * @param resolution resolution of {@link FactTable}
