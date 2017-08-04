@@ -17,11 +17,18 @@
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
@@ -30,18 +37,24 @@ import javax.annotation.Nullable;
  * Implements Scanner to merge data from v2 and v3 metrics tables.
  */
 public class CombinedMetricsScanner implements Scanner {
-
-  private final Scanner v2TableScanner;
+  private static final Logger LOG = LoggerFactory.getLogger(CombinedMetricsScanner.class);
+  private Scanner v2TableScanner;
   private final Scanner v3TableScanner;
+  private final DatasetId v2MetricsTableDatasetId;
+  private final DatasetFramework datasetFramework;
+
   private Row v2TableNextRow;
   private Row v3TableNextRow;
 
   @VisibleForTesting
-  public CombinedMetricsScanner(Scanner v2TableScanner, Scanner v3TableScanner) {
+  public CombinedMetricsScanner(@Nullable Scanner v2TableScanner, Scanner v3TableScanner,
+                                DatasetId v2MetricsTableDatasetId, DatasetFramework datasetFramework) {
     this.v2TableScanner = v2TableScanner;
     this.v3TableScanner = v3TableScanner;
-    this.v2TableNextRow = v2TableScanner.next();
+    this.v2TableNextRow = getV2TableScannerNextRow();
     this.v3TableNextRow = v3TableScanner.next();
+    this.v2MetricsTableDatasetId = v2MetricsTableDatasetId;
+    this.datasetFramework = datasetFramework;
   }
 
   @Nullable
@@ -104,14 +117,52 @@ public class CombinedMetricsScanner implements Scanner {
 
   @Override
   public void close() {
-    v3TableScanner.close();
-    v2TableScanner.close();
+    try {
+      v3TableScanner.close();
+    } finally {
+      if (v2TableScanner != null) {
+        v2TableScanner.close();
+      }
+    }
   }
 
   private Row advanceV2Scanner() {
     Row resultRow = v2TableNextRow;
-    v2TableNextRow = v2TableScanner.next();
+    v2TableNextRow = getV2TableScannerNextRow();
     return resultRow;
+  }
+
+  /**
+   * get next row from v2 table; if v2 table scanner is null; this returns null
+   * however if v2 table scanner is non-null, but return by calling scanner next
+   * if scanner next throws exception and if the cause is table doesn't exist, we close the scanner,
+   * set scanner to null and return null
+   * @return
+   */
+  @Nullable
+  private Row getV2TableScannerNextRow() {
+    if (v2TableScanner == null) {
+      return null;
+    }
+    try {
+      return v2TableScanner.next();
+    } catch (Exception e) {
+      if (e instanceof DataSetException || e instanceof RuntimeException) {
+        if (e.getCause() instanceof IOException) {
+          try {
+            if (!datasetFramework.hasInstance(v2MetricsTableDatasetId)) {
+              v2TableScanner.close();
+              v2TableScanner = null;
+              return null;
+            }
+          } catch (DatasetManagementException dme) {
+            LOG.error("Exception while checking dataset {} exists", v2MetricsTableDatasetId.getDataset(), dme);
+            throw e;
+          }
+        }
+      }
+      throw e;
+    }
   }
 
   private Row advanceV3Scanner() {

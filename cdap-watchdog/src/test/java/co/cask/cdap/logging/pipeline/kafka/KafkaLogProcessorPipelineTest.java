@@ -55,6 +55,9 @@ import co.cask.cdap.logging.pipeline.LogProcessorPipelineContext;
 import co.cask.cdap.logging.serialize.LoggingEventSerializer;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
 import co.cask.cdap.metrics.guice.MetricsStoreModule;
+import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -65,6 +68,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
+import com.google.inject.Scopes;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.runtime.TransactionModules;
 import org.apache.twill.filesystem.LocationFactory;
@@ -126,11 +130,12 @@ public class KafkaLogProcessorPipelineTest {
                       new AuthorizationTestModule(),
                       new AuthorizationEnforcementModule().getInMemoryModules(),
                       new AuthenticationContextModules().getNoOpModule(),
-                      new MetricsStoreModule(),
                       new AbstractModule() {
                         @Override
                         protected void configure() {
                           bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class);
+                          bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
+                          bind(MetricStore.class).to(DefaultMetricStore.class);
                         }
                       }),
                     1);

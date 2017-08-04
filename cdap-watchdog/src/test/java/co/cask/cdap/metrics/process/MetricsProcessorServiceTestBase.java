@@ -34,6 +34,7 @@ import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.metrics.MetricsTestBase;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
+import co.cask.cdap.metrics.store.LocalMetricsDatasetFactory;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
@@ -145,7 +146,7 @@ abstract class MetricsProcessorServiceTestBase extends MetricsTestBase {
       protected void configure() {
         bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
-        bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
+        bind(MetricDatasetFactory.class).to(LocalMetricsDatasetFactory.class).in(Scopes.SINGLETON);
         bind(MetricStore.class).to(DefaultMetricStore.class).in(Scopes.SINGLETON);
       }
     }));

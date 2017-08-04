@@ -612,6 +612,8 @@ public final class Constants {
 
     public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
 
+    public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
+
     /**
      * Metric's dataset related constants.
      */
