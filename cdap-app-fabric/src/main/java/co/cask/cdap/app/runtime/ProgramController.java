@@ -81,7 +81,7 @@ public interface ProgramController {
     /**
      * Trying to resume a suspended program.
      */
-    RESUMING(ProgramRunStatus.RUNNING),
+    RESUMING(ProgramRunStatus.RESUMING),
 
     /**
      * Trying to stop a program.

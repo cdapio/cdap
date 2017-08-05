@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.apps.HighPassFilterApp;
+import co.cask.cdap.proto.ProgramRunStatus;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -57,7 +58,7 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // Check the service status. Make sure it is running before querying it
-    waitState("services", "HighPassFilterApp", "Count", "RUNNING");
+    waitForProgramRuns("services", "HighPassFilterApp", "Count", ProgramRunStatus.RUNNING, 1);
 
     // Check the count. Gives it couple trials as it takes time for flow to process and write to the table
     checkCount("1");
@@ -74,11 +75,13 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
       "/v3/namespaces/default/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.KILLED, 1);
 
     response = GatewayFastTestsSuite.doPost(
       "/v3/namespaces/default/apps/HighPassFilterApp/flows/FilterFlow/start", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.RUNNING, 1);
 
     response = GatewayFastTestsSuite.doPost("/v3/namespaces/default/streams/inputvalue", "45");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
@@ -94,7 +97,7 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
       "/v3/namespaces/default/apps/HighPassFilterApp/flows/FilterFlow/stop", null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.KILLED, 2);
 
     json.addProperty("threshold", "100");
     response = GatewayFastTestsSuite.doPost(
@@ -118,8 +121,8 @@ public class RuntimeArgumentTestRun extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // Wait for program states. Make sure they are stopped before deletion
-    waitState("flows", "HighPassFilterApp", "FilterFlow", "STOPPED");
-    waitState("services", "HighPassFilterApp", "Count", "STOPPED");
+    waitForProgramRuns("flows", "HighPassFilterApp", "FilterFlow", ProgramRunStatus.KILLED, 2);
+    waitForProgramRuns("services", "HighPassFilterApp", "Count", ProgramRunStatus.KILLED, 1);
 
     response = GatewayFastTestsSuite.doDelete("/v3/namespaces/default/apps/HighPassFilterApp");
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());

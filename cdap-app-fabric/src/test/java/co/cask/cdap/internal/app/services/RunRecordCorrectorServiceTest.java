@@ -79,12 +79,12 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString()).size();
+        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING).size();
       }
     }, 5, TimeUnit.SECONDS);
 
     // Get the RunRecord
-    List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+    List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runRecords.size());
     final RunRecord rr = runRecords.get(0);
 
@@ -116,14 +116,14 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
 
     // Verify there is NO FAILED run record for the application
-    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
+    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED);
     Assert.assertEquals(0, runRecords.size());
 
     // Start the RunRecordCorrectorService, which will fix the run record
     new LocalRunRecordCorrectorService(store, programLifecycleService, runtimeService).startUp();
 
     // Verify there is one FAILED run record for the application
-    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
+    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED);
     Assert.assertEquals(1, runRecords.size());
     Assert.assertEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
   }
