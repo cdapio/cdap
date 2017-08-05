@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
@@ -38,6 +39,7 @@ public class SparkBatchSourceContext<T> extends AbstractSparkBatchContext
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
   private final SparkClientContext sparkContext;
+  private FieldLevelLineage fieldLevelLineage;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
                                  StageSpec stageSpec) {
@@ -81,5 +83,15 @@ public class SparkBatchSourceContext<T> extends AbstractSparkBatchContext
   @Override
   public T getContext() {
     return (T) this;
+  }
+
+  @Override
+  public void recordLineage(FieldLevelLineage f) {
+    this.fieldLevelLineage = f;
+  }
+
+  @Override
+  public FieldLevelLineage getFieldLevelLineage() {
+    return this.fieldLevelLineage;
   }
 }

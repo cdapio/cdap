@@ -27,6 +27,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -122,9 +123,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     setReducerResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getDriverResources());
 
-    Set<String> sources = phaseSpec.getPhase().getSources();
     // Planner should make sure this never happens
-    if (sources.isEmpty()) {
+    if (phaseSpec.getPhase().getSources().isEmpty()) {
       throw new IllegalArgumentException(String.format(
         "Pipeline phase '%s' must contain at least one source but it has no sources.", phaseSpec.getPhaseName()));
     }
@@ -196,9 +196,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageInfo);
         batchSource.prepareRun(sourceContext);
         runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
-//        for (String inputAlias : sourceContext.getInputNames()) {
-//          inputAliasToStage.put(inputAlias, sourceName);
-//        }
+        for (Object inputAlias : sourceContext.getInputNames()) {
+          inputAliasToStage.put((String) inputAlias, sourceName);
+        }
         finishers.add(batchSource, sourceContext);
       } catch (Exception e) {
         // Catch the Exception to generate a User Error Log for the Pipeline
@@ -209,12 +209,15 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
     }
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
-
-    for (StageSpec transformInfo : phase.getStagesOfType(Transform.PLUGIN_TYPE)) {
+    Set<StageSpec> transformStages = phase.getStagesOfType(Transform.PLUGIN_TYPE);
+    Map<String, FieldLevelLineage> transformFieldLevelLineages = new HashMap<>(transformStages.size());
+    for (StageSpec transformInfo : transformStages) {
       Transform transform = pluginInstantiator.newPluginInstance(transformInfo.getName(), evaluator);
       StageSubmitter<TransformContext> transformContext =
         new MapReduceBatchContext<>(context, mrMetrics, transformInfo);
       transform.prepareRun(transformContext);
+      transformFieldLevelLineages.put(transformInfo.getName(),
+                                      transformContext.getFieldLevelLineage());
       finishers.add(transform, transformContext);
     }
 
