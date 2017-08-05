@@ -25,10 +25,4 @@ final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduc
   MapReduceTwillRunnable(String name) {
     super(name);
   }
-
-  @Override
-  protected boolean propagateServiceError() {
-    // Don't propagate MR failure as failure. Quick fix for CDAP-749.
-    return false;
-  }
 }

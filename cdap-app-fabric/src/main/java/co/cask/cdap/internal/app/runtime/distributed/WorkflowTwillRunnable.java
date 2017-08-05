@@ -65,10 +65,4 @@ final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowP
       }
     });
   }
-
-  @Override
-  protected boolean propagateServiceError() {
-    // Don't propagate Workflow failure as failure. Quick fix for CDAP-749.
-    return false;
-  }
 }
