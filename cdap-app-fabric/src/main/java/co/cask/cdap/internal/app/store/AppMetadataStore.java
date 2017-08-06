@@ -314,7 +314,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     }
 
     ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    builder.put("runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
+    builder.put(ProgramOptionConstants.RUNTIME_ARGS, GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE));
     if (workflowRunId != null) {
       builder.put("workflowrunid", workflowRunId);
     }

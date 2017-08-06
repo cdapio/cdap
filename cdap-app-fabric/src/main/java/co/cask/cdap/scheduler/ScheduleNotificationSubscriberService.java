@@ -219,22 +219,22 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       ProgramId programId = programRunId.getParent();
       String runId = programRunId.getRun();
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+      RunRecordMeta triggeringProgramRun = getAppMetadataStore(context).getRun(programId, runId);
+      WorkflowToken triggeringWorkflowToken = getAppMetadataStore(context).getWorkflowToken(programId, runId);
 
       for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
         if (schedule.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED) {
           // Copy over the user properties
-          RunRecordMeta triggeredProgramRun = getAppMetadataStore(context).getRun(programId, runId);
-          Map<String, String> triggeringProgramProperties = new HashMap<>();
-          triggeringProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
-                                          GSON.toJson(triggeredProgramRun.getProperties()));
+          Map<String, String> triggeredProgramProperties = new HashMap<>();
+          triggeredProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
+                                         triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS));
 
           // If the triggered program is a workflow, send the notification that contains just the USER workflow token
           if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
             programId.getType() == ProgramType.WORKFLOW) {
 
             // Copy over the workflow token and extract just the user scoped keys
-            WorkflowToken workflowToken = getAppMetadataStore(context).getWorkflowToken(programId, runId);
-            Map<String, List<NodeValue>> userValues = workflowToken.getAll(WorkflowToken.Scope.USER);
+            Map<String, List<NodeValue>> userValues = triggeringWorkflowToken.getAll(WorkflowToken.Scope.USER);
 
             BasicWorkflowToken userWorkflowToken = new BasicWorkflowToken(
               cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
@@ -245,11 +245,11 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
                 userWorkflowToken.put(entry.getKey(), nodeValue.getValue());
               }
             }
-            triggeringProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
+            triggeredProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
           }
 
           Notification triggeringProgram = new Notification(Notification.Type.PROGRAM_STATUS,
-                                                            triggeringProgramProperties);
+                                                            triggeredProgramProperties);
           getJobQueue(context).addNotification(schedule, triggeringProgram);
         }
       }

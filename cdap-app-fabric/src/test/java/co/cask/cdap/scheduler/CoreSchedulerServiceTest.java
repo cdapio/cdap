@@ -102,6 +102,7 @@ import javax.annotation.Nullable;
 
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
@@ -368,8 +369,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     String dummyUserKey = "dummy.user.argument.key";
     String dummyUserValue = "dummy.user.argument.value";
     // Start a program that writes to the workflow token with some user arguments
-//    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
-    startProgram(ANOTHER_WORKFLOW, 200);
+    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
     waitForCompleteRuns(1, ANOTHER_WORKFLOW);
 
     // Wait for a notification to come to the scheduler
@@ -387,8 +387,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
                         runToken.get(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_KEY));
 
     RunRecordMeta record = store.getRun(latestRun.getParent(), latestRun.getRun());
-//  Fix this assertion
-//  Assert.assertEquals(ImmutableMap.of(dummyUserKey, dummyUserValue), ImmutableMap.copyOf(record.getProperties()));
+    Map<String, String> userOverrides = GSON.fromJson(record.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
+                                                      STRING_STRING_MAP);
+    Assert.assertEquals(dummyUserValue, userOverrides.get(dummyUserKey));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
