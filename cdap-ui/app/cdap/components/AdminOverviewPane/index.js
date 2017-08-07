@@ -1,5 +1,5 @@
   /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,8 +28,7 @@ const propTypes = {
 };
 
 function AdminOverviewPane({platforms, isLoading}) {
-  let cards;
-  cards = Object.keys(platforms)
+  let cards = Object.keys(platforms)
     .filter(platform => platforms[platform].name !== 'CDAP')
     .map((platform) => {
       platform = platforms[platform];
