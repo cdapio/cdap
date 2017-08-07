@@ -142,10 +142,14 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // since Bob now has some privileges on all datasets, the list API should return all datasets for him
     Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
-    // Since Alice has some privileges on the namespace, the list API should return all datasets under the namespace
+    // Alice should only be able to see dsId, since she only has privilege on this dataset
     SecurityRequestContext.setUserId(ALICE.getName());
-    Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
+    Assert.assertEquals(ImmutableSet.of(dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
+
+    // Grant privileges on other datasets to user Alice
+    grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(dsId2, ALICE, ImmutableSet.of(Action.EXECUTE));
 
     // Alice should only be able to delete datasets that she is the ADMIN
     dsFramework.deleteAllInstances(NamespaceId.DEFAULT);

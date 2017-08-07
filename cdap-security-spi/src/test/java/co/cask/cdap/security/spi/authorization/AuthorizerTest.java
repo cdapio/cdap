@@ -101,27 +101,6 @@ public abstract class AuthorizerTest {
   }
 
   @Test
-  // TODO: Enable when hierarchy is supported
-  @Ignore
-  public void testHierarchy() throws Exception {
-    Authorizer authorizer = get();
-
-    DatasetId dataset = namespace.dataset("bar");
-
-    verifyAuthFailure(namespace, user, Action.READ);
-
-    authorizer.grant(namespace, user, Collections.singleton(Action.READ));
-    authorizer.enforce(dataset, user, Action.READ);
-
-    authorizer.grant(dataset, user, Collections.singleton(Action.WRITE));
-    verifyAuthFailure(namespace, user, Action.WRITE);
-
-    authorizer.revoke(namespace, user, Collections.singleton(Action.READ));
-    authorizer.revoke(dataset);
-    verifyAuthFailure(namespace, user, Action.READ);
-  }
-
-  @Test
   public void testRBAC() throws Exception {
     Authorizer authorizer = get();
 

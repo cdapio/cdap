@@ -48,14 +48,12 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthorizationEnforcer.class);
 
   private final AuthorizerInstantiator authorizerInstantiator;
-  private final boolean propagatePrivileges;
   @Nullable
   private final Principal masterUser;
 
   @Inject
   DefaultAuthorizationEnforcer(CConfiguration cConf, AuthorizerInstantiator authorizerInstantiator) {
     super(cConf);
-    this.propagatePrivileges = cConf.getBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES);
     this.authorizerInstantiator = authorizerInstantiator;
     if (isSecurityAuthorizationEnabled()) {
       String masterPrincipal = SecurityUtil.getMasterPrincipal(cConf);
@@ -96,16 +94,6 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
       return;
     }
     LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
-    try {
-      authorizerInstantiator.get().enforce(entity, principal, actions);
-    } catch (UnauthorizedException e) {
-      // If privilege propagation is enabled then check for the privilege on the parent, if any.
-      if (propagatePrivileges && entity instanceof ParentedId) {
-        LOG.trace("Checking privilege for the parent of {}", entity.getEntityName());
-        doEnforce(((ParentedId) entity).getParent(), principal, actions);
-      } else {
-        throw e;
-      }
-    }
+    authorizerInstantiator.get().enforce(entity, principal, actions);
   }
 }

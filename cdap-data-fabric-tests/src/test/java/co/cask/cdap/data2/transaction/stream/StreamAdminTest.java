@@ -322,21 +322,17 @@ public abstract class StreamAdminTest {
     // Revoke all privileges on s1.
     revokeAndAssertSuccess(s1, USER, EnumSet.allOf(Action.class));
 
-    // User should still be able to list both streams because it has all privilege on the parent
+    // User should only be able to see s2 since he does not have privilege on s1
     specifications = streamAdmin.listStreams(nsId);
-    Assert.assertEquals(2, specifications.size());
-    Set<String> streamNames = ImmutableSet.of(s1.getStream(), s2.getStream());
-    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
-    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
+    Assert.assertEquals(1, specifications.size());
+    Assert.assertEquals(s2.getStream(), specifications.get(0).getName());
 
     // Revoke all privileges on s2.
     revokeAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
 
-    // User should still be able to list both streams because it has all privilege on the parent
+    // User should not be able to see any streams
     specifications = streamAdmin.listStreams(nsId);
-    Assert.assertEquals(2, specifications.size());
-    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
-    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
+    Assert.assertTrue(specifications.isEmpty());
 
     // Revoke all privileges on the namespace
     revokeAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));

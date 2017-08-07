@@ -846,7 +846,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private void ensureAccess(ProgramId programId) throws Exception {
     if (!hasAccess(programId)) {
-      throw new UnauthorizedException(authenticationContext.getPrincipal(), Action.READ, programId);
+      throw new UnauthorizedException(authenticationContext.getPrincipal(), programId);
     }
   }
 
