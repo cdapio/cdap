@@ -75,7 +75,7 @@ public class ArtifactSelectorProvider {
     String version = config.getVersion();
     ArtifactVersionRange range;
     try {
-      range = ArtifactVersionRange.parse(version);
+      range = version == null ? null : ArtifactVersionRange.parse(version);
     } catch (InvalidArtifactRangeException e) {
       throw new IllegalArgumentException(String.format("%s is an invalid artifact version." +
                                                          "Must be an exact version or a version range " +
