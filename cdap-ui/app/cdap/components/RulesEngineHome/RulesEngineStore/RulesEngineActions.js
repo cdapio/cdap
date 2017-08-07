@@ -17,6 +17,7 @@
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
+import isNil from 'lodash/isNil';
 
 const getRuleBooks = () => {
   let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -49,7 +50,9 @@ const setActiveRulebook = (id) => {
       activeRulebook: id
     }
   });
-  getRulesForActiveRuleBook();
+  if (!isNil(id)) {
+    getRulesForActiveRuleBook();
+  }
 };
 
 
