@@ -14,18 +14,19 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import RulesEngineStore, {RULESENGINEACTIONS}  from 'components/RulesEngineHome/RulesEngineStore';
+import React, {Component, PropTypes} from 'react';
+import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
 import isNil from 'lodash/isNil';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRulesForActiveRuleBook, resetCreateRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {getRulesForActiveRuleBook, resetCreateRuleBook, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import moment from 'moment';
 import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import LoadingSVG from 'components/LoadingSVG';
 import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
 import debounce from 'lodash/debounce';
 import MyRulesEngineApi from 'api/rulesengine';
+import RulebookMenu from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu';
 import T from 'i18n-react';
 
 require('./RuleBookDetails.scss');
@@ -33,27 +34,60 @@ require('./RuleBookDetails.scss');
 const PREFIX = 'features.RulesEngine.RulebookDetails';
 
 export default class RuleBookDetails extends Component {
+
+  static propTypes = {
+    onApply: PropTypes.func
+  };
+
   state = {
     activeRuleBook: null,
-    createMode: false
+    rulebookDetails: null,
+    createMode: false,
+    loading: true,
+    onApplying: false
+  };
+
+  updateState = () => {
+    let {rulebooks} = RulesEngineStore.getState();
+    if (isNil(rulebooks.list)) {
+      return;
+    }
+    let activeRulebook = rulebooks.activeRulebookId;
+    let createMode = rulebooks.createRulebook;
+    let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
+    rulebookDetails = {...rulebookDetails};
+    rulebookDetails.rules = rulebooks.activeRulebookRules;
+    this.setState({
+      rulebookDetails,
+      activeRuleBook: activeRulebook,
+      createMode,
+      loading: false
+    });
   };
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
-      let {rulebooks} = RulesEngineStore.getState();
-      if (!rulebooks.list) {
-        return;
-      }
-      let activeRulebook = rulebooks.activeRulebookId;
-      let createMode = rulebooks.createRulebook;
-      let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
-      this.setState({
-        rulebookDetails,
-        activeRuleBook: activeRulebook,
-        createMode
-      });
-    });
+    this.updateState();
+    RulesEngineStore.subscribe(this.updateState);
   }
+
+  onApply = () => {
+    this.setState({
+      onApplying: true
+    });
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let rulebookid = this.state.rulebookDetails.id;
+    MyRulesEngine
+      .getRulebook({
+        namespace,
+        rulebookid
+      })
+      .subscribe(
+        (res) => {
+          let rulebook = res.values[0];
+          this.props.onApply(rulebook);
+        }
+      );
+  };
 
   updateRulebook = debounce((rules) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -70,17 +104,7 @@ export default class RuleBookDetails extends Component {
       .updateRulebook(urlparams, postBody, headers)
       .subscribe(
         () => {},
-        (err) => {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETERROR,
-            payload: {
-              error: {
-                showError: true,
-                message: typeof err === 'string' ? err : err.response.message
-              }
-            }
-          });
-        }
+        setError
       );
   }, 2000);
 
@@ -96,34 +120,8 @@ export default class RuleBookDetails extends Component {
         () => {
           getRulesForActiveRuleBook();
         },
-        err => {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETERROR,
-            payload: {
-              error: {
-                showError: true,
-                message: typeof err === 'string' ? err : err.response.message
-              }
-            }
-          });
-        }
+        setError
       );
-  };
-
-  onNameChangeHandler = (e) => {
-    this.setState({
-      create: Object.assign({}, this.state.create, {
-        name: e.target.value
-      })
-    });
-  };
-
-  onDescriptionChangeHandler = (e) => {
-    this.setState({
-      create: Object.assign({}, this.state.create, {
-        description: e.target.value
-      })
-    });
   };
 
   renderCreateRulebook = () => {
@@ -147,15 +145,15 @@ export default class RuleBookDetails extends Component {
         </div>
       </div>
     );
-  }
+  };
 
   render() {
-    let {rulebooks} = RulesEngineStore.getState();
+    let {integration} = RulesEngineStore.getState();
     if (this.state.createMode) {
       return this.renderCreateRulebook();
     }
 
-    if (isNil(rulebooks.list)) {
+    if (this.state.loading) {
       return (
         <div className="rule-book-details loading">
           <LoadingSVG />
@@ -163,15 +161,37 @@ export default class RuleBookDetails extends Component {
       );
     }
 
-    if (isNil(this.state.activeRuleBook) && !rulebooks.list.length) {
+    if (isNil(this.state.activeRuleBook)) {
       return this.renderEmptyView();
     }
     let {rulebookDetails} = this.state;
 
-    let rules = rulebooks.activeRulebookRules;
     return (
       <div className="rule-book-details">
-        <h3>{rulebookDetails.id}</h3>
+        <div className="rule-book-name-header">
+          <h3>{rulebookDetails.id}</h3>
+          <div>
+            {
+              integration.embedded ?
+                <button
+                  className="btn btn-primary"
+                  onClick={this.onApply}
+                  disabled={this.state.onApplying}
+                >
+                  {
+                    this.state.onApplying ? <LoadingSVG /> : null
+                  }
+                  <span>Apply</span>
+                </button>
+              :
+                null
+            }
+            <RulebookMenu
+              rulebookid={rulebookDetails.id}
+              embedded={integration.embedded}
+            />
+          </div>
+        </div>
         <div className="rule-book-metadata">
           <div>
             <span> {T.translate(`${PREFIX}.owner`)}: </span>
@@ -185,17 +205,12 @@ export default class RuleBookDetails extends Component {
         <p>
           {rulebookDetails.description}
         </p>
-        {
-          isNil(rules) ?
-            <LoadingSVG />
-          :
-            <RulesList
-              rules={rules}
-              rulebookid={rulebookDetails.id}
-              onRemove={this.removeRule}
-              onRuleBookUpdate={this.updateRulebook}
-            />
-        }
+        <RulesList
+          rules={rulebookDetails.rules}
+          rulebookid={rulebookDetails.id}
+          onRemove={this.removeRule}
+          onRuleBookUpdate={this.updateRulebook}
+        />
       </div>
     );
   }
