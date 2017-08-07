@@ -1328,6 +1328,11 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
   RulesEngine:
+    AddRulesEngineToPipelineModal:
+      batchPipelineBtn: Batch Pipeline
+      message: Choose the type of pipeline to create
+      modalTitle: Add to Pipeline
+      realtimePipelineBtn: Realtime Pipeline
     CreateRule:
       form:
         actionplaceholder: Action
@@ -1350,15 +1355,25 @@ features:
       Tabs:
         rbTitle: Rules Books
         rulesTitle: Rules
+    ImportRulebook:
+      description: Upload your Rulebook file
+      footertitle: Failed to Upload Rulebook
+      shorttitle: Import Rulebook
+      title: Upload Rulebook
     Rulebook:
       owner: Owner
       rules: Rules
       version: Version
     RulebookDetails:
       addone: to add one
+      applyBtnLabel: Apply
       lastupdated: Last Updated on
       norulebooks: No Rulebooks added
       owner: Owner # ?Again should we reuse?
+    RulebookMenu:
+      createPipeline: Create a Pipeline
+      delete: Delete
+      download: Download
     RulebooksPopover:
       addToRulebookbtn: Add to RuleBook
       norulesbooks: No Rulebooks found
@@ -1381,6 +1396,7 @@ features:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
+      importrulebook: Import a Rulebook
       searchplaceholder: Search Rulebook by name, owner or description
     RulesTab:
       createRuleBtn: Create a New Rule

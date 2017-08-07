@@ -14,33 +14,29 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
-
-.rules-tab {
-  padding: 20px;
-
-  input {
-    border-radius: 0;
-  }
-  > button {
-    margin: 10px 0;
-    color: $brand-primary;
-  }
-  .rules-container {
-    margin-top: 10px;
-    padding: 0 10px;
-  }
-  .rules-container > .row {
-    &:first-child {
-      font-weight: bolder;
-      &:hover {
-        background: transparent;
+.rules-engine-to-pipeline-modal {
+  &.modal-dialog {
+    margin-top: 100px;
+    .modal-body {
+      padding: 0;
+      .message {
+        padding: 15px;
+        margin-bottom: 10px;
+      }
+      .action-buttons {
+        display: flex;
+        > a {
+          width: 50%;
+          border-radius: 0;
+          padding: 10px;
+          &:last-child {
+            border-left: 0;
+          }
+          > i {
+            margin-right: 10px;
+          }
+        }
       }
     }
-  }
-  .svg-arrow-wrapper {
-    display: inline-block;
-    font-size: 15px;
-    line-height: 1;
   }
 }

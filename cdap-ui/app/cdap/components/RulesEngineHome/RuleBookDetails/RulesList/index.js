@@ -20,8 +20,7 @@ import { DropTarget } from 'react-dnd';
 import classnames from 'classnames';
 import MyRulesEngineApi from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRulesForActiveRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import {getRulesForActiveRuleBook, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import update from 'react/lib/update';
 import RulebookRule from 'components/RulesEngineHome/RuleBookDetails/RulebookRule';
 import T from 'i18n-react';
@@ -82,17 +81,7 @@ class RulesList extends Component {
         () => {
           getRulesForActiveRuleBook();
         },
-        (err) => {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETERROR,
-            payload: {
-              error: {
-                showError: true,
-                message: typeof err === 'string' ? err : err.response.message
-              }
-            }
-          });
-        }
+        setError
       );
   }
 
@@ -107,7 +96,11 @@ class RulesList extends Component {
           [hoverIndex, 0, dragRule],
         ],
       },
-    }), this.props.onRuleBookUpdate.bind(null, this.state.rulebookRules));
+    }), () => {
+      if (this.props.onRuleBookUpdate) {
+        this.props.onRuleBookUpdate(this.state.rulebookRules);
+      }
+    });
   };
 
   render() {
@@ -116,7 +109,7 @@ class RulesList extends Component {
       <div className={classnames("rules-container", {
         'drag-hover': this.props.isOver
       })}>
-        <div className="title"> {T.translate(`${PREFIX}.rulesLabel`)} ({rules.length}) </div>
+        <div className="title"> {T.translate(`${PREFIX}.rulesLabel`)} ({Array.isArray(rules) ? rules.length : 0}) </div>
         <div className="rules">
           {
             (!Array.isArray(rules) || (Array.isArray(rules) && !rules.length)) ?
