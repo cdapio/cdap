@@ -146,8 +146,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public void startProgram(ProgramId programId, Map<String, String> arguments) {
     try {
-      String status = programClient.getStatus(programId);
-      Preconditions.checkState("STOPPED".equals(status), "Program %s is already running", programId);
       programClient.start(programId, false, arguments);
     } catch (Exception e) {
       throw Throwables.propagate(e);
