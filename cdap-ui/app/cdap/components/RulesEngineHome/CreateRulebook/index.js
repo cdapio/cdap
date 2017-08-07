@@ -68,7 +68,8 @@ export default class CreateRulebook extends Component {
     rules = rules.map(rule => rule.id);
     config = {id: name, description, rules};
     createNewRuleBook(config);
-  }
+  };
+
   render() {
     return (
       <div className="rule-book-create">
