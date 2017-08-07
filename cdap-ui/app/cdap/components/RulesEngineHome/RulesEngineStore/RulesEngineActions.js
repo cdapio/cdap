@@ -127,6 +127,23 @@ const resetError = () => {
   });
 };
 
+const resetStore = () => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.RESET
+  });
+};
+
+const setError = (err) => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.SETERROR,
+    payload: {
+      error: {
+        showError: true,
+        message: typeof err === 'string' ? err : err.response.message
+      }
+    }
+  });
+};
 
 export {
   getRuleBooks,
@@ -135,5 +152,7 @@ export {
   setActiveRulebook,
   createNewRuleBook,
   resetError,
-  resetCreateRuleBook
+  resetCreateRuleBook,
+  setError,
+  resetStore
 };

@@ -20,8 +20,7 @@ import {preventPropagation} from 'services/helpers';
 import DSVEditor from 'components/DSVEditor';
 import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
-import {getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
+import {getRules, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import isEmpty from 'lodash/isEmpty';
 import T from 'i18n-react';
 
@@ -92,17 +91,7 @@ export default class CreateRule extends Component {
           getRules();
           this.props.onClose();
         },
-        (err) => {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETERROR,
-            payload: {
-              error: {
-                showError: true,
-                message: typeof err === 'string' ? err : err.response.message
-              }
-            }
-          });
-        }
+        setError
       );
   }
 
