@@ -57,9 +57,11 @@ export default class RulesTab extends Component {
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rules} = RulesEngineStore.getState();
-      this.setState({
-        rules: rules.list
-      });
+      if (Array.isArray(rules) && rules.length > 0) {
+        this.setState({
+          rules: rules.list
+        });
+      }
     });
   }
 
