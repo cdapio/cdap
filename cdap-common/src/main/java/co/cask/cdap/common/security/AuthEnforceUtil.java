@@ -28,6 +28,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import org.objectweb.asm.Type;
@@ -53,15 +54,27 @@ public final class AuthEnforceUtil {
     // no-op
   }
 
-  private static final Map<Class<? extends EntityId>, Constructor<? extends EntityId>> CONS_CACHE =
-    new ConcurrentHashMap<>();
+  private static final Map<Class<? extends EntityId>, Constructor<? extends EntityId>> CONS_CACHE;
+
+  static {
+    CONS_CACHE = new ConcurrentHashMap<>();
+    CONS_CACHE.put(InstanceId.class, findConstructor(InstanceId.class));
+    CONS_CACHE.put(NamespaceId.class, findConstructor(NamespaceId.class));
+    CONS_CACHE.put(StreamId.class, findConstructor(StreamId.class));
+    CONS_CACHE.put(DatasetId.class, findConstructor(DatasetId.class));
+    CONS_CACHE.put(ApplicationId.class, findConstructor(ApplicationId.class));
+    CONS_CACHE.put(ArtifactId.class, findConstructor(ArtifactId.class));
+    CONS_CACHE.put(ProgramId.class, findConstructor(ProgramId.class));
+  }
 
   /**
    * Performs authorization enforcement
    *
    * @param authorizationEnforcer the {@link AuthorizationEnforcer} to use for performing the enforcement
-   * @param entities an {@link Object}[] of Strings from which an entity on which enforcement needs to be performed
-   *                 can be created of just {@link EntityId} on which on whose parent enforcement needs to be performed
+   * @param entities an {@link Object}[] of Strings from which an entity on which enforcement needs to be
+   * performed
+   * can be created of just {@link EntityId} on which on whose parent enforcement needs
+   * to be performed
    * @param authenticationContext the {@link AuthenticationContext}  of the user that performs the action
    * @param actions the {@link Action}s to check for during enforcement
    * @throws Exception {@link UnauthorizedException} if the given authenticationContext is not authorized to perform
@@ -91,16 +104,6 @@ public final class AuthEnforceUtil {
     }
   }
 
-
-  private static EntityId createEntityId(Class<? extends EntityId> entityClass, Object[] args)
-    throws IllegalAccessException, InvocationTargetException, InstantiationException {
-    Constructor<? extends EntityId> constructor = getConstructor(entityClass);
-
-    // its okay to call with object [] without checking that all of these are string because if one of them is not
-    // then newInstance call will throw IllegalArgumentException.
-    return constructor.newInstance(args);
-  }
-
   /**
    * Return the required size of entity parts to create the {@link EntityId} on which authorization enforcement
    * needs to be done as specified in {@link AuthEnforce#enforceOn()}
@@ -109,21 +112,21 @@ public final class AuthEnforceUtil {
    * @return the size of entity parts needed to create the above {@link EntityId}
    * @throws IllegalArgumentException of the given enforceOn is not of supported {@link EntityId} type
    */
-  static int verifyAndGetRequiredSize(Type enforceOn) {
+  static int getEntityIdPartsCount(Type enforceOn) {
     if (enforceOn.equals(Type.getType(InstanceId.class))) {
-      return getConstructor(InstanceId.class).getParameterTypes().length;
+      return CONS_CACHE.get(InstanceId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(NamespaceId.class))) {
-      return getConstructor(NamespaceId.class).getParameterTypes().length;
+      return CONS_CACHE.get(NamespaceId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(StreamId.class))) {
-      return getConstructor(StreamId.class).getParameterTypes().length;
+      return CONS_CACHE.get(StreamId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(DatasetId.class))) {
-      return getConstructor(DatasetId.class).getParameterTypes().length;
+      return CONS_CACHE.get(DatasetId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(ApplicationId.class))) {
-      return getConstructor(ApplicationId.class).getParameterTypes().length;
+      return CONS_CACHE.get(ApplicationId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(ArtifactId.class))) {
-      return getConstructor(ArtifactId.class).getParameterTypes().length;
+      return CONS_CACHE.get(ArtifactId.class).getParameterTypes().length;
     } else if (enforceOn.equals(Type.getType(ProgramId.class))) {
-      return getConstructor(ProgramId.class).getParameterTypes().length;
+      return CONS_CACHE.get(ProgramId.class).getParameterTypes().length;
     } else {
       throw new IllegalArgumentException(String.format("Failed to determine required number of entity parts " +
                                                          "needed for %s. Please make sure its a valid %s class " +
@@ -132,12 +135,19 @@ public final class AuthEnforceUtil {
     }
   }
 
-  private static Constructor<? extends EntityId> getConstructor(Class<? extends EntityId> entityClass) {
+  private static EntityId createEntityId(Class<? extends EntityId> entityClass, Object[] args)
+    throws IllegalAccessException, InvocationTargetException, InstantiationException {
     Constructor<? extends EntityId> constructor = CONS_CACHE.get(entityClass);
-    if (constructor != null) {
-      return constructor;
-    }
 
+    Preconditions.checkNotNull(constructor, String.format("Failed to find constructor for entity class %s. Please " +
+                                                            "make sure it exists.", entityClass));
+    // its okay to call with object [] without checking that all of these are string because if one of them is not
+    // then newInstance call will throw IllegalArgumentException.
+    return constructor.newInstance(args);
+  }
+
+  private static Constructor<? extends EntityId> findConstructor(Class<? extends EntityId> entityClass) {
+    Constructor<? extends EntityId> constructor = null;
     // Find the constructor with all String parameters
     for (Constructor<?> curConstructor : entityClass.getConstructors()) {
       if (Iterables.all(Arrays.asList(curConstructor.getParameterTypes()),
@@ -147,8 +157,6 @@ public final class AuthEnforceUtil {
       }
     }
     if (constructor != null) {
-      // It's ok to just put. If there are concurrent calls, both of them should end up with the same constructor.
-      CONS_CACHE.put(entityClass, constructor);
       return constructor;
     }
     // since constructor was not found throw an exception

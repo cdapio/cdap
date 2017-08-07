@@ -130,9 +130,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
   private static final Type ACTION_TYPE = Type.getType(Action.class);
   private static final Type NAME_TYPE = Type.getType(Name.class);
   private static final Type AUTH_ENFORCE_UTIL_TYPE = Type.getType(AuthEnforceUtil.class);
-  private static final Set<String> SUPPORTED_PARAMETER_ANNOTATIONS = Sets.newHashSet(Name.class.getName(),
-                                                                                     QueryParam.class.getName(),
-                                                                                     PathParam.class.getName());
+  private static final Set<String> SUPPORTED_PARAMETER_ANNOTATIONS =
+    Sets.newHashSet(Type.getType(Name.class).getDescriptor(), Type.getType(QueryParam.class).getDescriptor(),
+                    Type.getType(PathParam.class).getDescriptor());
 
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
@@ -228,8 +228,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
 
         @Override
         public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-          if (!(authEnforceAnnotationNode != null && visible &&
-                  (SUPPORTED_PARAMETER_ANNOTATIONS.contains(Type.getType(desc).getClassName())))) {
+          if (!(authEnforceAnnotationNode != null && visible && (SUPPORTED_PARAMETER_ANNOTATIONS.contains(desc)))) {
             return null;
           }
           // Since AuthEnforce annotation was used on this method then look for parameters with named annotation and
@@ -242,9 +241,9 @@ public class AuthEnforceRewriter implements ClassRewriter {
             // we already stored some annotation for this parameter update it if the current one is Name annotation
             // as its preferred
             if (Name.class.getName().equals(Type.getType(desc).getClassName())) {
-              LOG.info("Updating parameter details for parameter at position '%s' for method '%s' in class '%s' from " +
-                              "'%s' to '%s'. Since %s is preferred annotation.", parameter, methodName, className,
-                      parameterDetails.get(parameter), parameterDetail);
+              LOG.debug("Updating parameter details for parameter at position '{}' for method '{}' in class '{}' " +
+                          "from {}' to '{}'. Since %s is preferred annotation.", parameter, methodName, className,
+                        parameterDetails.get(parameter), parameterDetail);
               parameterDetails.put(parameter, parameterDetail);
             }
           } else {
@@ -269,7 +268,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
           for (String name : nodeProcessor.getEntities()) {
             // just need to check for empty string since it cannot be null as that will be a compilation error
             Preconditions.checkArgument(!name.isEmpty(), "Found an empty string in entity parts of annotation %s on " +
-                                          "method %s in class %s", nodeProcessor, methodName, className);
+              "method %s in class %s", nodeProcessor, methodName, className);
             // Make sure that the entities specified in the AuthEnforce annotation are found in method parameters
             // or class fields. Its fine if they exist at both places in that case we will give preference to
             // method parameters unless its been specified with this. in that case its always looked in class field.
@@ -278,7 +277,6 @@ public class AuthEnforceRewriter implements ClassRewriter {
             // method parameter with this.something
             if (name.startsWith("this.")) {
               String fieldName = getFieldName(name);
-              fieldDetails.containsKey(fieldName);
               entityPart = new EntityPartDetail(fieldName, true);
             } else {
               // preference to method parameters
@@ -317,7 +315,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
             Preconditions.checkArgument(entityPartType.equals(enforceOn), "Found invalid entity type '%s' for " +
                                           "enforceOn '%s' in annotation on '%s' method in '%s' class.",
                                         entityPartType.getClassName(), enforceOn.getClassName(), methodName, className);
-            AuthEnforceUtil.verifyAndGetRequiredSize(enforceOn);
+            AuthEnforceUtil.getEntityIdPartsCount(enforceOn);
           } else {
             // Since the entity part/parts provided is of String type so validate that we have sufficient part for
             // EntityId creation
@@ -329,7 +327,7 @@ public class AuthEnforceRewriter implements ClassRewriter {
                                             "AuthEnforce. Only String is supported in multiple parts.",
                                           entityPartDetail.getEntityName(), entityPartType);
             }
-            int requiredSize = AuthEnforceUtil.verifyAndGetRequiredSize(enforceOn);
+            int requiredSize = AuthEnforceUtil.getEntityIdPartsCount(enforceOn);
             Preconditions.checkArgument(requiredSize == entityPartDetails.size(), "Found %s entity parts in " +
                                           "AuthEnforce annotation on method %s in class %s to do enforcement on %s " +
                                           "which requires %s entity parts or an %s", entityPartDetails.size(),
