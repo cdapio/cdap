@@ -160,20 +160,13 @@ public class Dag {
       4. c2 - sink2
       5. c2 - c3
       6. c3 - sink
-
      */
 
     Set<Dag> dags = new HashSet<>();
-    Set<String> parentStopperNodes = Sets.union(sources, conditionNodes);
     Set<String> childStopperNodes = Sets.union(sinks, conditionNodes);
+
+    dags.add(createSubDag(accessibleFrom(sources, childStopperNodes)));
     for (String condition : conditionNodes) {
-      Set<String> parentNodes = parentsOf(condition, parentStopperNodes);
-      Set<String> removeConditions = Sets.difference(parentNodes, conditionNodes);
-      // If the parentNodes only contain conditions, then do not add create subdag for them.
-      // This particular subdag will be created when we go from parent condition to child in the for loop below.
-      if (!removeConditions.isEmpty()) {
-        dags.add(createSubDag(accessibleFrom(removeConditions, childStopperNodes)));
-      }
       // For child we need to add two sub-dags corresponding to the true and false branch
       // Condition node has at least one and at max two output nodes
       Set<String> outputs = getNodeOutputs(condition);
