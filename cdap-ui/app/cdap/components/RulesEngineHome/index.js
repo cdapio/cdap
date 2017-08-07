@@ -14,50 +14,75 @@
  * the License.
 */
 
-import React, {Component} from 'react';
-import { Nav, NavItem, TabPane, TabContent, NavLink} from 'reactstrap';
-import classnames from 'classnames';
-import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
-import RuleBooksTab from 'components/RulesEngineHome/RuleBooksTab';
-import RulesTab from 'components/RulesEngineHome/RulesTab';
-import {getRuleBooks, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
-import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
-import {Provider} from 'react-redux';
-import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHome/RulesEngineTabCounters';
+import React, {Component, PropTypes} from 'react';
+import {getRuleBooks, resetStore, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
-import { DragDropContext } from 'react-dnd';
-import HTML5Backend from 'react-dnd-html5-backend';
 import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import RulesEngineServiceControl from 'components/RulesEngineHome/RulesEngineServiceControl';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
-
-require('./RulesEngineHome.scss');
+import RulesEngineWrapper from 'components/RulesEngineHome/RulesEngineWrapper';
 const PREFIX = 'features.RulesEngine.Home';
 
-class RulesEngineHome extends Component {
+export default class RulesEngineHome extends Component {
+
+  static propTypes = {
+    embedded: PropTypes.bool,
+    onApply: PropTypes.func,
+    rulebookid: PropTypes.string
+  };
+
+  defaultProps = {
+    onApply: () => {}
+  };
+
+  constructor(props) {
+    super(props);
+    if (this.props.embedded) {
+      RulesEngineStore.dispatch({
+        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED
+      });
+    }
+  }
+
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.embedded) {
+      RulesEngineStore.dispatch({
+        type: RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED
+      });
+    }
+  }
+
   state = {
-    activeTab: '1',
     loading: true,
-    backendDown: false
+    backendDown: false,
+    embedded: this.props.embedded || false
   };
 
   componentDidMount() {
-    this.checkIfBackendUp();
+    if (this.props.embedded) {
+      // This is to avoid the jankiness when loading rules engine in modal
+      // modal has a dropin animation from top and react's render during this animation
+      // creates jankness while rendering. This is to smooth it out.
+      setTimeout(() => {
+        this.checkIfBackendUp();
+      }, 1000);
+    } else {
+      this.checkIfBackendUp();
+    }
+  }
+
+  componentDidUnmount() {
+    resetStore();
   }
 
   fetchRulesAndRulebooks = () => {
     getRuleBooks();
     getRules();
-  }
-
-  toggleTab = (activeTab) => {
-    this.setState({
-      activeTab
-    });
-  }
+  };
 
   checkIfBackendUp() {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -106,68 +131,9 @@ class RulesEngineHome extends Component {
         <Helmet
           title={T.translate(`${PREFIX}.pageTitle`)}
         />
-        <div className="left-panel">
-          <Nav tabs>
-            <NavItem>
-              <div onClick={this.toggleTab.bind(this, '1')}>
-                <NavLink
-                  className={classnames({
-                    'active': this.state.activeTab == '1'
-                  })}
-                >
-                  <strong>
-                    {T.translate(`${PREFIX}.Tabs.rbTitle`)} (
-                      <Provider store={RulesEngineStore}>
-                        <RuleBookCountWrapper />
-                      </Provider>
-                    )
-                  </strong>
-                </NavLink>
-              </div>
-            </NavItem>
-            <NavItem>
-              <div  onClick={this.toggleTab.bind(this, '2')}>
-                <NavLink
-                  className={classnames({
-                    'active': this.state.activeTab == '2'
-                  })}
-                >
-                  <strong>
-                    {T.translate(`${PREFIX}.Tabs.rulesTitle`)} (
-                      <Provider store={RulesEngineStore}>
-                        <RulesCountWrapper />
-                      </Provider>
-                    )
-                  </strong>
-                </NavLink>
-              </div>
-            </NavItem>
-            </Nav>
-            <TabContent activeTab={this.state.activeTab}>
-              <TabPane tabId="1">
-                {
-                  this.state.activeTab === '1' ?
-                    <RuleBooksTab />
-                  :
-                    null
-                }
-              </TabPane>
-              <TabPane tabId="2">
-                {
-                  this.state.activeTab === '2' ?
-                    <RulesTab />
-                  :
-                    null
-                }
-              </TabPane>
-            </TabContent>
-        </div>
-        <div className="right-panel">
-          <RuleBookDetails />
-        </div>
+          <RulesEngineWrapper onApply={this.props.onApply}/>
         <RulesEngineAlert />
       </div>
     );
   }
 }
-export default DragDropContext(HTML5Backend)(RulesEngineHome);
