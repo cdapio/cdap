@@ -229,6 +229,14 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig',
           'properties': 'properties'
         }
+      },
+      'rules-engine-editor': {
+        element: '<my-rules-engine-editor></my-rules-engine-editor>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'properties': 'properties'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];
