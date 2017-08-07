@@ -1446,6 +1446,7 @@ features:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
+      importrulebook: Import a Rulebook
       searchplaceholder: Search Rulebook by name, owner or description
     RulesTab:
       createRuleBtn: Create a New Rule
