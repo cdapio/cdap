@@ -1404,6 +1404,7 @@ features:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
+      importrulebook: Import a Rulebook
     RulesTab:
       createRuleBtn: Create a New Rule
       lastUpdated: Last Updated

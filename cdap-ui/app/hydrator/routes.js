@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       })
         .state('hydrator.create', {
-          url: '/studio?artifactType&draftId&workspaceId&configParams',
+          url: '/studio?artifactType&draftId&workspaceId&configParams&rulesengineid',
           onEnter: function() {
             document.title = 'CDAP | Studio';
           },
@@ -126,8 +126,16 @@ angular.module(PKG.name + '.feature.hydrator')
                   defer.resolve(false);
                 }
                 $window.localStorage.removeItem($stateParams.workspaceId);
-              }
-              else {
+              } else if ($stateParams.rulesengineid) {
+                try {
+                  let configParams = $window.localStorage.getItem($stateParams.rulesengineid);
+                  let config = JSON.parse(configParams);
+                  defer.resolve(config);
+                } catch (e) {
+                  defer.resolve(false);
+                }
+                $window.localStorage.removeItem($stateParams.rulesengineid);
+              } else {
                 defer.resolve(false);
               }
               return defer.promise;

@@ -33,6 +33,7 @@
  var PipelineSummary = require('../cdap/components/PipelineSummary').default;
  var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
  var CDAPHelpers = require('../cdap/services/helpers');
+ var RulesEngineHome = require('../cdap/components/RulesEngineHome').default;
  var Mousetrap = require('mousetrap');
 
  export {
@@ -53,5 +54,6 @@
   Mousetrap,
   PipelineSummary,
   PipelineNodeMetricsGraph,
-  CDAPHelpers
+  CDAPHelpers,
+  RulesEngineHome
 };
