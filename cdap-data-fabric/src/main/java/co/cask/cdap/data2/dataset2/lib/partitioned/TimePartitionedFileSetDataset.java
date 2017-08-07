@@ -149,6 +149,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
         "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
     }
     PartitionKey key = partitionKeyForTime(time);
+    assertNotExists(key, true);
     return new BasicTimePartitionOutput(this, getOutputPath(key), key);
   }
 

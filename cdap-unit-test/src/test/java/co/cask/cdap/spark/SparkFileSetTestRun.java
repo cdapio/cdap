@@ -101,7 +101,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
   private void testSparkWithFileSet(ApplicationManager applicationManager, String sparkProgram) throws Exception {
     DataSetManager<FileSet> filesetManager = getDataset("fs");
-    final FileSet fileset = filesetManager.get();
+    FileSet fileset = filesetManager.get();
 
     Location location = fileset.getLocation("nn");
     prepareFileInput(location);
@@ -128,10 +128,10 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
 
   private void testSparkWithCustomFileSet(ApplicationManager applicationManager,
                                           String sparkProgram) throws Exception {
-    final DataSetManager<SparkAppUsingFileSet.MyFileSet> myFileSetManager = getDataset("myfs");
+    DataSetManager<SparkAppUsingFileSet.MyFileSet> myFileSetManager = getDataset("myfs");
     SparkAppUsingFileSet.MyFileSet myfileset = myFileSetManager.get();
 
-    final FileSet fileset = myfileset.getEmbeddedFileSet();
+    FileSet fileset = myfileset.getEmbeddedFileSet();
 
     Location location = fileset.getLocation("nn");
     prepareFileInput(location);
@@ -214,11 +214,6 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     validateFileOutput(customPartition.getLocation());
 
     // Cleanup after running the test
-    tpfs.getPartitionOutput(inputTime).getLocation().delete(true);
-    tpfs.getPartitionOutput(customInputPartitionKey).getLocation().delete(true);
-    partition.getLocation().delete(true);
-    customPartition.getLocation().delete(true);
-
     tpfs.dropPartition(inputTime);
     tpfs.dropPartition(customInputPartitionKey);
     tpfs.dropPartition(partition.getPartitionKey());
@@ -241,7 +236,7 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     PartitionedFileSetArguments.setInputPartitionFilter(
       inputArgs, PartitionFilter.builder().addRangeCondition("x", "na", "nx").build());
     Map<String, String> outputArgs = new HashMap<>();
-    final PartitionKey outputKey = PartitionKey.builder().addStringField("x", "xx").build();
+    PartitionKey outputKey = PartitionKey.builder().addStringField("x", "xx").build();
     PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, outputKey);
     Map<String, String> args = new HashMap<>();
     args.putAll(RuntimeArguments.addScope(Scope.DATASET, "pfs", inputArgs));
@@ -258,8 +253,6 @@ public class SparkFileSetTestRun extends TestFrameworkTestBase {
     validateFileOutput(partition.getLocation());
 
     // Cleanup after test completed
-    location.delete(true);
-    partition.getLocation().delete(true);
     pfs.dropPartition(partitionOutput.getPartitionKey());
     pfs.dropPartition(partition.getPartitionKey());
 
