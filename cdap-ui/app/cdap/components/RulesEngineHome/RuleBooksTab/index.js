@@ -41,7 +41,7 @@ export default class RuleBooksTab extends Component {
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
-      if (Array.isArray(rulebooks.list) && rulebooks.list.length) {
+      if (Array.isArray(rulebooks.list)) {
         this.setState({
           rulebooks: rulebooks.list
         });
