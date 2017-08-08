@@ -111,7 +111,8 @@
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
             <div class="endpoint-circle"
-                  ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}">
+                  ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
+                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
               <div class="endpoint-caret"></div>
             </div>
             <div ng-if="node.error">

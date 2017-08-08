@@ -42,7 +42,6 @@ angular.module(PKG.name + '.commons')
     var endpointClicked = false;
     var connectionDropped = false;
     var diagramEl, dagMenu;
-    var endpointFilterElems = [];
 
     vm.scale = 1.0;
 
@@ -92,7 +91,7 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connectionMoved', moveConnection);
         vm.instance.bind('beforeStartDetach', onStartDetach);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
-        vm.instance.bind('beforeDrag', unselectConnections);
+        vm.instance.bind('beforeDrag', onBeforeDrag);
         // jsPlumb docs say the event for clicking on an endpoint is called 'endpointClick',
         // but seems like the 'click' event is triggered both when clicking on an endpoint &&
         // clicking on a connection
@@ -260,24 +259,11 @@ angular.module(PKG.name + '.commons')
       angular.forEach($scope.nodes, function (node) {
         let sourceObj = {
           isSource: true,
-          filter: function(event, element) {
+          filter: function(event) {
             // we need this variable because when the user clicks on the endpoint circle, multiple
             // 'mousedown' events are fired
             if (event.target.className === 'endpoint-circle' && !endpointClicked) {
               endpointClicked = true;
-              let sourceElem = element.id;
-              let endpoints = vm.instance.getEndpoints(sourceElem);
-              if (endpoints) {
-                for (let i = 0; i < endpoints.length; i++) {
-                  let endpoint = endpoints[i];
-                  if (endpoint.connections && endpoint.connections.length > 0) {
-                    if (endpoint.connections[0].sourceId === node.name) {
-                      selectEndpointOrConnection(endpoint);
-                      break;
-                    }
-                  }
-                }
-              }
             }
 
             return event.target.className === 'endpoint-circle';
@@ -423,17 +409,6 @@ angular.module(PKG.name + '.commons')
       }
     }
 
-    function unselectConnectionsOfNode(sourceId) {
-      if (!selectedConnections.length) { return false; }
-
-      selectedConnections.forEach(connection => {
-        if (connection.sourceId === sourceId) {
-          selectedConnections.splice(selectedConnections.indexOf(connection), 1);
-          connection.setType('basic');
-        }
-      });
-    }
-
     function onStartDetach() {
       connectionDropped = false;
     }
@@ -474,9 +449,8 @@ angular.module(PKG.name + '.commons')
       return valid;
     }
 
-    function unselectConnections(params) {
+    function onBeforeDrag() {
       if (endpointClicked) {
-        unselectConnectionsOfNode(params.sourceId);
         endpointClicked = false;
         connectionDropped = false;
       }
@@ -504,11 +478,6 @@ angular.module(PKG.name + '.commons')
         initNodes();
         addConnections();
         selectedConnections = [];
-        endpointFilterElems = document.getElementsByClassName('endpoint-circle');
-        angular.forEach(endpointFilterElems, function(endpointFilterElem) {
-          endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
-          endpointFilterElem.addEventListener('mouseup', unclickEndpoint);
-        });
         makeNodesDraggable();
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionDetached', removeConnection);
@@ -599,9 +568,24 @@ angular.module(PKG.name + '.commons')
       menu.style.top = menuPosition.y + 'px';
     }
 
-    function unclickEndpoint() {
+    vm.selectEndpoint = function(event, node) {
+      if (event.target.className === 'endpoint-circle') {
+        let sourceElem = node.name;
+        let endpoints = vm.instance.getEndpoints(sourceElem);
+        if (endpoints) {
+          for (let i = 0; i < endpoints.length; i++) {
+            let endpoint = endpoints[i];
+            if (endpoint.connections && endpoint.connections.length > 0) {
+              if (endpoint.connections[0].sourceId === node.name) {
+                selectEndpointOrConnection(endpoint);
+                break;
+              }
+            }
+          }
+        }
+      }
       endpointClicked = false;
-    }
+    };
 
     function openContextMenu(e) {
       if (selectedConnections.length > 0) {
@@ -613,11 +597,6 @@ angular.module(PKG.name + '.commons')
 
     angular.element(document).ready(function() {
       makeNodesDraggable();
-
-      endpointFilterElems = document.getElementsByClassName('endpoint-circle');
-      angular.forEach(endpointFilterElems, function(endpointFilterElem) {
-        endpointFilterElem.addEventListener('mouseup', unclickEndpoint);
-      });
     });
 
     jsPlumb.ready(function() {
@@ -900,9 +879,6 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(initTimeout);
       $timeout.cancel(nodePopoverTimeout);
       diagramEl.removeEventListener('contextmenu', openContextMenu);
-      angular.forEach(endpointFilterElems, function(endpointFilterElem) {
-        endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
-      });
       Mousetrap.reset();
       dispatcher.unregister('onUndoActions', undoListenerId);
       dispatcher.unregister('onRedoActions', redoListenerId);
