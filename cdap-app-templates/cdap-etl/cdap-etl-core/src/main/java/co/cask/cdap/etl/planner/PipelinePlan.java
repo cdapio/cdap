@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -48,6 +50,35 @@ public class PipelinePlan {
 
   public Set<Connection> getPhaseConnections() {
     return phaseConnections;
+  }
+
+  /**
+   * @return Conditions along with their phase connections
+   */
+  public Map<String, ConditionBranches> getConditionPhaseBranches() {
+    Map<String, ConditionBranches> conditionPhaseConnections = new HashMap<>();
+    for (Connection connection : phaseConnections) {
+      if (connection.getCondition() == null) {
+        continue;
+      }
+
+      if (!conditionPhaseConnections.containsKey(connection.getFrom())) {
+        conditionPhaseConnections.put(connection.getFrom(), new ConditionBranches(null, null));
+      }
+
+      ConditionBranches branches = conditionPhaseConnections.get(connection.getFrom());
+      String trueOutput;
+      String falseOutput;
+      if (connection.getCondition()) {
+        trueOutput = connection.getTo();
+        falseOutput = branches.getFalseOutput();
+      } else {
+        trueOutput = branches.getTrueOutput();
+        falseOutput = connection.getTo();
+      }
+      conditionPhaseConnections.put(connection.getFrom(), new ConditionBranches(trueOutput, falseOutput));
+    }
+    return conditionPhaseConnections;
   }
 
   @Override
