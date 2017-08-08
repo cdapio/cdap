@@ -26,10 +26,11 @@
     margin: 10px 0;
     color: $brand-primary;
   }
-  .container {
+  .rules-container {
     margin-top: 10px;
+    padding: 0 10px;
   }
-  .container > .row {
+  .rules-container > .row {
     &:first-child {
       font-weight: bolder;
       &:hover {

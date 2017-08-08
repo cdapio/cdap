@@ -39,7 +39,7 @@ export default class RulesEngineServiceControl extends Component {
     });
     enableDataPreparationService({
       shouldStopService: false,
-      artifactName: 'rules-engine-service',
+      artifactName: 'yare-service',
       api: MyRuleEngineApi,
       i18nPrefix: ''
     })
