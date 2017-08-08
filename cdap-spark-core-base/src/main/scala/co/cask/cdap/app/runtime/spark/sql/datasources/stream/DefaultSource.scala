@@ -28,7 +28,7 @@ import org.apache.spark.sql.types.StructType
 class DefaultSource extends RelationProvider with SchemaRelationProvider with DataSourceRegister {
 
   override def shortName(): String = {
-    "cdap.stream"
+    "cdapstream"
   }
 
   override def createRelation(sqlContext: SQLContext, parameters: Map[String, String]): BaseRelation = {

@@ -61,6 +61,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final Configuration hConf;
   private final String hostname;
   private final TransactionSystemClient txClient;
+  private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
   private final WorkflowProgramInfo workflowProgramInfo;
   private final LoggingContext loggingContext;
@@ -87,6 +88,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.hConf = hConf;
     this.hostname = hostname;
     this.txClient = txClient;
+    this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
@@ -174,6 +176,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
    */
   public LoggingContext getLoggingContext() {
     return loggingContext;
+  }
+
+  /**
+   * Returns the {@link DatasetFramework} used for this execution.
+   */
+  public DatasetFramework getDatasetFramework() {
+    return datasetFramework;
   }
 
   /**

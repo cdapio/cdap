@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
@@ -34,12 +33,7 @@ class DatasetSQLSpark extends AbstractSpark with SparkMain {
     val sc = new SparkContext
     val sql = new SQLContext(sc)
 
-    import sql.implicits._
-    sc.fromDataset[Array[Byte], Person]("PersonTable").values.toDF().registerTempTable("Person")
-
-    val v = sql.sql("SELECT * FROM Person WHERE age > 10")
-       .map(r =>
-         (Bytes.toBytes("new:" + r.getAs[String]("id")), new Person(r.getAs("id"), r.getAs("name"), r.getAs("age"))))
-        .saveAsDataset("PersonTable")
+    sql.sql("SELECT concat('new:', id) as id, name, age FROM cdap.PersonTable WHERE age > 10")
+      .write.format("cdap").save("PersonTable")
   }
 }

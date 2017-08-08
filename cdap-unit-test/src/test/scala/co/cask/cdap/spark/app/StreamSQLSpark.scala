@@ -40,7 +40,7 @@ class StreamSQLSpark extends AbstractSpark with SparkMain {
     val streamName = sec.getRuntimeArguments.get("input.stream")
 
     // Do a full scan
-    val allRecords = sql.sql(s"SELECT * FROM `cdap.stream`.`${streamName}`")
+    val allRecords = sql.sql(s"SELECT * FROM cdapstream.`${streamName}`")
     // Register a temp table InputStream as well.
     allRecords.registerTempTable("InputStream")
 
@@ -81,7 +81,7 @@ class StreamSQLSpark extends AbstractSpark with SparkMain {
 
     // Register a different table with different schema
     val newDF = sql.read
-      .format("cdap.stream")
+      .format("cdapstream")
       .schema(StructType(Seq(
         StructField("fname", DataTypes.StringType, true),
         StructField("lname", DataTypes.StringType, true),
@@ -103,7 +103,7 @@ class StreamSQLSpark extends AbstractSpark with SparkMain {
 
     // Raw event query
     val rawDF =
-      sql.read.format("cdap.stream").option("stream.format", "raw").load(streamName)
+      sql.read.format("cdapstream").option("stream.format", "raw").load(streamName)
     rawDF.registerTempTable("RawTable")
 
     val rawDecodedDF = sql

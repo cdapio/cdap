@@ -18,8 +18,8 @@ package co.cask.cdap.api.spark.sql;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import com.google.common.collect.ImmutableMap;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
@@ -27,9 +27,13 @@ import org.apache.spark.sql.types.MapType;
 import org.apache.spark.sql.types.StructType;
 import org.junit.Assert;
 import org.junit.Test;
+import scala.collection.JavaConversions;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Unit test for {@link DataFrames} class.
@@ -139,7 +143,7 @@ public class DataFramesTest {
   }
 
   @Test
-  public void testRowConvertion() {
+  public void testRowConversion() {
     Schema schema = Schema.recordOf(
       "Record0",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
@@ -191,5 +195,56 @@ public class DataFramesTest {
 
     Row fieldRow = row.getAs(10);
     Assert.assertEquals(Arrays.asList("a", "b", "c"), fieldRow.getList(0));
+  }
+
+  @Test
+  public void testRecordConversion() {
+    Row row = RowFactory.create(
+      true,
+      10,
+      20L,
+      30f,
+      40d,
+      "String",
+      new byte[] {1, 2, 3},
+      null,
+      JavaConversions.asScalaBuffer(Arrays.asList("1", "2", "3")).toSeq(),
+      JavaConversions.mapAsScalaMap(Collections.singletonMap("k", "v")),
+      RowFactory.create(JavaConversions.asScalaBuffer(Arrays.asList("a", "b", "c", null)))
+    );
+
+    Schema schema = Schema.recordOf(
+      "Record0",
+      Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
+      Schema.Field.of("intField", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("longField", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("floatField", Schema.of(Schema.Type.FLOAT)),
+      Schema.Field.of("doubleField", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("stringField", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("bytesField", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("nullableField", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("arrayField", Schema.arrayOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("mapField",
+                      Schema.nullableOf(Schema.mapOf(Schema.of(Schema.Type.STRING),
+                                                     Schema.nullableOf(Schema.of(Schema.Type.STRING))))),
+      Schema.Field.of("recordField",
+        Schema.recordOf("Record1",
+                        Schema.Field.of("array", Schema.arrayOf(Schema.nullableOf(Schema.of(Schema.Type.STRING))))))
+    );
+
+    StructuredRecord record = DataFrames.fromRow(row, schema);
+
+    Assert.assertTrue(record.<Boolean>get("booleanField"));
+    Assert.assertEquals(10, record.<Integer>get("intField").intValue());
+    Assert.assertEquals(20L, record.<Long>get("longField").longValue());
+    Assert.assertEquals(30f, record.<Float>get("floatField").floatValue(), 0.0001f);
+    Assert.assertEquals(40d, record.<Double>get("doubleField").doubleValue(), 0.0001d);
+    Assert.assertEquals("String", record.<String>get("stringField"));
+    Assert.assertEquals(ByteBuffer.wrap(new byte[] {1, 2, 3}), record.<ByteBuffer>get("bytesField"));
+    Assert.assertNull(record.get("nullableField"));
+    Assert.assertEquals(Arrays.asList("1", "2", "3"), record.<Collection<String>>get("arrayField"));
+    Assert.assertEquals(Collections.singletonMap("k", "v"), record.<Map<String, String>>get("mapField"));
+    Assert.assertEquals(Arrays.asList("a", "b", "c", null),
+                        record.<StructuredRecord>get("recordField").<Collection<String>>get("array"));
   }
 }

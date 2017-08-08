@@ -61,7 +61,8 @@ class DatasetRDD[K: ClassTag, V: ClassTag](@(transient @param) sc: SparkContext,
       // Depends on whether it is a BatchReadable or an InputFormatProvider, constructs a corresponding
       // RDD that this RDD delegates to
       dataset match {
-        case batchReadable: BatchReadable[K, V] => {
+        case br: BatchReadable[_, _] => {
+          val batchReadable = br.asInstanceOf[BatchReadable[K, V]]
           new BatchReadableRDD[K, V](sc, batchReadable, namespace, datasetName, arguments,
                                      splits.getOrElse(batchReadable.getSplits.toIterable), txServiceBaseURI)
         }

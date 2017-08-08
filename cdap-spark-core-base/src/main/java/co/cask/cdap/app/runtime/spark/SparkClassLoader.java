@@ -36,7 +36,7 @@ import java.util.List;
 public class SparkClassLoader extends CombineClassLoader {
 
   private final SparkRuntimeContext runtimeContext;
-  private SparkExecutionContext sparkExecutionContext;
+  private DefaultSparkExecutionContext sparkExecutionContext;
 
   /**
    * Finds the SparkClassLoader from the context ClassLoader hierarchy.
@@ -90,7 +90,7 @@ public class SparkClassLoader extends CombineClassLoader {
    *                                      in the current execution context. Only the {@link SparkMainWrapper} should
    *                                      pass in {@code true}.
    */
-  public synchronized SparkExecutionContext getSparkExecutionContext(boolean createIfNotExists) {
+  public synchronized DefaultSparkExecutionContext getSparkExecutionContext(boolean createIfNotExists) {
     if (sparkExecutionContext != null) {
       return sparkExecutionContext;
     }

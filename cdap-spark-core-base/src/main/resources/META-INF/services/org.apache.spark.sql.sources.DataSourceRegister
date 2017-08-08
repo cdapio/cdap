@@ -15,3 +15,4 @@
 #
 
 co.cask.cdap.app.runtime.spark.sql.datasources.stream.DefaultSource
+co.cask.cdap.app.runtime.spark.sql.datasources.dataset.DefaultSource

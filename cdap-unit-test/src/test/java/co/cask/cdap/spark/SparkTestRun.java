@@ -169,9 +169,9 @@ public class SparkTestRun extends TestFrameworkTestBase {
     DataSetManager<ObjectMappedTable<Person>> tableManager = getDataset("PersonTable");
 
     ObjectMappedTable<Person> table = tableManager.get();
-    table.write("1", new Person("1", "Bob", 10));
-    table.write("2", new Person("2", "Bill", 20));
-    table.write("3", new Person("3", "Berry", 30));
+    table.write("1", new Person("Bob", 10));
+    table.write("2", new Person("Bill", 20));
+    table.write("3", new Person("Berry", 30));
     tableManager.flush();
 
     SparkManager sparkManager = appManager.getSparkManager(DatasetSQLSpark.class.getSimpleName()).start();

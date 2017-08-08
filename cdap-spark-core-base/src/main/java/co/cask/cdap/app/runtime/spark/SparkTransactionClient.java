@@ -67,7 +67,8 @@ public final class SparkTransactionClient {
    */
   public Transaction getTransaction(int stageId, long timeout,
                                     TimeUnit timeUnit) throws TimeoutException, InterruptedException,
-                                                       TransactionFailureException {
+                                                              TransactionFailureException {
+
     long timeoutMillis = Math.max(0L, timeUnit.toMillis(timeout) - txPollIntervalMillis);
     Stopwatch stopwatch = new Stopwatch().start();
     Transaction transaction = getTransaction(stageId);
