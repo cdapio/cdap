@@ -20,8 +20,8 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.http.DefaultHttpRequestConfig;
 import co.cask.cdap.common.internal.remote.RemoteClient;
-import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -59,7 +59,7 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
 
   @Inject
   RemoteUGIProvider(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
-                    LocationFactory locationFactory, OwnerAdmin ownerAdmin, NamespaceQueryAdmin namespaceQueryAdmin) {
+                    LocationFactory locationFactory, OwnerAdmin ownerAdmin) {
     super(cConf, ownerAdmin);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false), "/v1/");
@@ -89,6 +89,15 @@ public class RemoteUGIProvider extends AbstractCachedUGIProvider {
         LOG.warn("Exception raised when deleting location {}", location, e);
       }
     }
+  }
+
+  /**
+   * In remote mode, we should not cache the explore request
+   */
+  @Override
+  protected boolean checkExploreAndDetermineCache(ImpersonationRequest impersonationRequest) throws IOException {
+    return !(impersonationRequest.getEntityId().getEntityType().equals(EntityType.NAMESPACE) &&
+      impersonationRequest.getImpersonatedOpType().equals(ImpersonatedOpType.EXPLORE));
   }
 
   private HttpResponse executeRequest(ImpersonationRequest impersonationRequest) throws IOException {
