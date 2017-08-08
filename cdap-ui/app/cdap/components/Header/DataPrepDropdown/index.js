@@ -85,7 +85,7 @@ export default class DataPrepDown extends Component {
           <DropdownItem tag="li">
             <NavLinkWrapper
               isNativeLink={this.props.nativeLink}
-              to={dataprepurl}
+              to={this.props.nativeLink ? `/cdap${dataprepurl}` : dataprepurl}
               className={classnames({
                 'active': this.isDataPrepActive()
               })}
@@ -96,7 +96,7 @@ export default class DataPrepDown extends Component {
           <DropdownItem tag="li">
             <NavLinkWrapper
               isNativeLink={this.props.nativeLink}
-              to={rulesengineurl}
+              to={this.props.nativeLink ? `/cdap${rulesengineurl}` : rulesengineurl}
               className={classnames({
                 'active': this.isRulesEnginedActive()
               })}
