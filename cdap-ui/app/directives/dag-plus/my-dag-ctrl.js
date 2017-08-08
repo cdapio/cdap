@@ -25,15 +25,14 @@ angular.module(PKG.name + '.commons')
 
     let localX, localY;
 
-    var SHOW_METRICS_THRESHOLD = 0.8;
+    const SHOW_METRICS_THRESHOLD = 0.8;
 
-    var separation = $scope.separation || 200; // node separation length
+    const separation = $scope.separation || 200; // node separation length
 
-    var nodeWidth = 200;
-    var nodeHeight = 80;
+    const nodeWidth = 200;
+    const nodeHeight = 80;
 
     var dragged = false;
-    var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
     vm.disableNodeClick = $scope.disableNodeClick;
@@ -42,8 +41,7 @@ angular.module(PKG.name + '.commons')
     var selectedConnections = [];
     var endpointClicked = false;
     var connectionDropped = false;
-    var diagramEl = null;
-    var dagMenu = null;
+    var diagramEl, dagMenu;
     var endpointFilterElems = [];
 
     vm.scale = 1.0;
@@ -61,13 +59,13 @@ angular.module(PKG.name + '.commons')
     vm.nodeMenuOpen = null;
     vm.dagMenuOpen = null;
 
-    var repaintTimeout = null,
-        commentsTimeout = null,
-        nodesTimeout = null,
-        fitToScreenTimeout = null,
-        initTimeout = null,
-        nodePopoverTimeout = null,
-        resetTimeout = null;
+    var repaintTimeout,
+        commentsTimeout,
+        nodesTimeout,
+        fitToScreenTimeout,
+        initTimeout,
+        nodePopoverTimeout,
+        resetTimeout;
 
     var Mousetrap = window.CaskCommon.Mousetrap;
 
@@ -302,8 +300,7 @@ angular.module(PKG.name + '.commons')
 
     function addConnections() {
       angular.forEach($scope.connections, function (conn) {
-        var sourceNode = null;
-        var targetNode = null;
+        var sourceNode, targetNode;
 
         for (let i = 0; i < $scope.nodes.length; i++) {
           let currentNode = $scope.nodes[i];
@@ -486,25 +483,27 @@ angular.module(PKG.name + '.commons')
     }
 
     function resetEndpointsAndConnections() {
-      // have to unbind and bind again, otherwise calling detachEveryConnection will call detachConnection()
-      // for every connection that we detach
-      vm.instance.unbind('connection');
-      vm.instance.unbind('connectionDetached');
-      vm.instance.unbind('beforeDrop');
-      vm.instance.unbind('beforeStartDetach');
-      vm.instance.detachEveryConnection();
-      vm.instance.deleteEveryEndpoint();
-
       if (resetTimeout) {
         $timeout.cancel(resetTimeout);
       }
+
       resetTimeout = $timeout(function () {
+        // have to unbind and bind again, otherwise calling detachEveryConnection will call detachConnection()
+        // for every connection that we detach
+        vm.instance.unbind('connection');
+        vm.instance.unbind('connectionDetached');
+        vm.instance.unbind('beforeDrop');
+        vm.instance.unbind('beforeStartDetach');
+        vm.instance.detachEveryConnection();
+        vm.instance.deleteEveryEndpoint();
+
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         $scope.connections = DAGPlusPlusNodesStore.getConnections();
         vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
         vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
         initNodes();
         addConnections();
+        selectedConnections = [];
         endpointFilterElems = document.getElementsByClassName('endpoint-circle');
         angular.forEach(endpointFilterElems, function(endpointFilterElem) {
           endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
@@ -515,15 +514,15 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         vm.instance.bind('beforeStartDetach', onStartDetach);
-      });
 
-      if (commentsTimeout) {
-        vm.comments = DAGPlusPlusNodesStore.getComments();
-        $timeout.cancel(commentsTimeout);
-      }
+        if (commentsTimeout) {
+          vm.comments = DAGPlusPlusNodesStore.getComments();
+          $timeout.cancel(commentsTimeout);
+        }
 
-      commentsTimeout = $timeout(function () {
-        makeCommentsDraggable();
+        commentsTimeout = $timeout(function () {
+          makeCommentsDraggable();
+        });
       });
     }
 
@@ -645,9 +644,6 @@ angular.module(PKG.name + '.commons')
             transformCanvas(e.pos[1], e.pos[0]);
             DAGPlusPlusNodesActionsFactory.resetPluginCount();
             DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
-          },
-          start: function () {
-            canvasDragged = true;
           }
         });
       }
@@ -907,9 +903,7 @@ angular.module(PKG.name + '.commons')
       angular.forEach(endpointFilterElems, function(endpointFilterElem) {
         endpointFilterElem.removeEventListener('mouseup', unclickEndpoint);
       });
-      Mousetrap.unbind(['command+z', 'ctrl+z']);
-      Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
-      Mousetrap.unbind(['del', 'backspace']);
+      Mousetrap.reset();
       dispatcher.unregister('onUndoActions', undoListenerId);
       dispatcher.unregister('onRedoActions', redoListenerId);
       vm.instance.unbind(); // unbind all events

@@ -15,26 +15,25 @@
  */
 
 /**
- * Similar to the angular 'number' filter and takes the same arguments, but also works
- * on strings with ellipses. e.g. '...11111' -> '...11,111'. If the string doesn't
- * contain ellipses, then just applies the angular 'number' filter.
+ * Adds comma separator to numeric strings with ellipsis. e.g. '...11111' -> '...11,111'.
+ * If the string doesn't contain ellipses, then just returns the number.
  **/
-angular.module(PKG.name+'.filters').filter('myNumberWithEllipsis', function($filter) {
-  return function (input, ...numberFilterArgs) {
+angular.module(PKG.name+'.filters').filter('myNumberWithEllipsis', function() {
+  return function (input) {
     if (input.indexOf('\u2026') !== -1) {
       let ellipsisIndex = input.indexOf('\u2026');
       let numberBeforeEllipsis = input.substring(0, ellipsisIndex);
       if (numberBeforeEllipsis.length > 0) {
-        numberBeforeEllipsis = $filter('number')(numberBeforeEllipsis, numberFilterArgs.toString());
+        numberBeforeEllipsis = parseInt(numberBeforeEllipsis, 10).toLocaleString('en');
       }
       let numberAfterEllipsis = input.substring(ellipsisIndex+1);
       if (numberAfterEllipsis.length > 0) {
-        numberAfterEllipsis = $filter('number')(numberAfterEllipsis, numberFilterArgs.toString());
+        numberAfterEllipsis = parseInt(numberAfterEllipsis, 10).toLocaleString('en');
       }
       return numberBeforeEllipsis + '\u2026' + numberAfterEllipsis;
 
     } else {
-      return $filter('number')(input, numberFilterArgs.toString());
+      return parseInt(input, 10).toLocaleString('en');
     }
   };
 });
