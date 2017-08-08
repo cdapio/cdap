@@ -41,8 +41,7 @@ public class Notification {
   public enum Type {
     TIME,
     STREAM_SIZE,
-    PARTITION,
-    PROGRAM_STATUS
+    PARTITION
   }
 
   private final Type notificationType;

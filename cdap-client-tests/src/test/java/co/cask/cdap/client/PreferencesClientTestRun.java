@@ -23,7 +23,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -109,7 +108,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1);
 
       long minStartTime = System.currentTimeMillis();
       client.deleteInstancePreferences();
@@ -127,7 +125,6 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 2);
 
       propMap.clear();
       minStartTime = System.currentTimeMillis();
@@ -143,7 +140,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 3);
+      assertProgramStopped(programClient, service);
       appClient.delete(app);
     }
   }

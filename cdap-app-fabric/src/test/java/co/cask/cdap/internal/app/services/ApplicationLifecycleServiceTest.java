@@ -256,7 +256,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getProgramRuns(programId.toId(), status).size();
+        return getProgramRuns(programId.toId(), status.toString()).size();
       }
     }, 5, TimeUnit.SECONDS);
   }

@@ -26,7 +26,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
-import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -65,7 +64,6 @@ public abstract class SchedulerTestBase {
   private static Scheduler scheduler;
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
-  private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static ProgramRuntimeService runtimeService;
   protected static MetricStore metricStore;
   protected static Injector injector;
@@ -110,8 +108,6 @@ public abstract class SchedulerTestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     runtimeService = injector.getInstance(ProgramRuntimeService.class);
-    programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
-    programNotificationSubscriberService.startAndWait();
   }
 
   @Test
@@ -181,7 +177,6 @@ public abstract class SchedulerTestBase {
   @AfterClass
   public static void tearDown() throws Exception {
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    programNotificationSubscriberService.stopAndWait();
   }
 
   /**

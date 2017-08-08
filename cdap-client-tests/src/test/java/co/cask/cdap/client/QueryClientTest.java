@@ -25,7 +25,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -128,7 +127,7 @@ public class QueryClientTest extends AbstractClientTest {
       }
     } finally {
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
+      assertProgramStopped(programClient, flow);
 
       try {
         appClient.delete(app);

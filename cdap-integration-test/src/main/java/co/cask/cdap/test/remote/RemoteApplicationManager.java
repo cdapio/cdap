@@ -20,7 +20,6 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
@@ -48,8 +47,6 @@ import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@link AbstractApplicationManager} for use in integration tests.
@@ -122,11 +119,10 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       for (ProgramRecord programRecord : applicationClient.listPrograms(application)) {
         // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
-        ProgramId programId = application.program(programRecord.getType(), programRecord.getName());
-        if (isRunning(programId)) {
-          programClient.stop(programId);
+        ProgramId id = application.program(programRecord.getType(), programRecord.getName());
+        if (isRunning(id)) {
+          programClient.stop(id);
         }
-        waitForStopped(programId);
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -137,7 +133,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public void stopProgram(ProgramId programId) {
     try {
       programClient.stop(programId);
-      waitForStopped(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -194,17 +189,5 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
     return programClient.getRuntimeArgs(programId);
-  }
-
-  @Override
-  public void waitForStopped(final ProgramId programId) throws Exception {
-    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
-    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
-    Tasks.waitFor(0, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getHistory(programId, ProgramRunStatus.RUNNING).size();
-      }
-    }, 10, TimeUnit.SECONDS);
   }
 }

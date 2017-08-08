@@ -50,6 +50,75 @@ public class RemoteRuntimeStoreHandler extends AbstractRemoteSystemOpsHandler {
   }
 
   @POST
+  @Path("/setStart")
+  public void setStart(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long startTime = deserializeNext(arguments);
+    String twillRunId = deserializeNext(arguments);
+    Map<String, String> runtimeArgs = deserializeNext(arguments);
+    Map<String, String> systemArgs = deserializeNext(arguments);
+    store.setStart(program, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/setRunning")
+  public void setRunning(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long startTime = deserializeNext(arguments);
+    String twillRunId = deserializeNext(arguments);
+    store.setRunning(program, pid, startTime, twillRunId);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/setStop")
+  public void setStop(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    long endTime = deserializeNext(arguments);
+    ProgramRunStatus runStatus = deserializeNext(arguments);
+    BasicThrowable failureCause = deserializeNext(arguments);
+    store.setStop(program, pid, endTime, runStatus, failureCause);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/setSuspend")
+  public void setSuspend(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    store.setSuspend(program, pid);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/setResume")
+  public void setResume(HttpRequest request, HttpResponder responder) throws Exception {
+    Iterator<MethodArgument> arguments = parseArguments(request);
+
+    ProgramId program = deserializeNext(arguments);
+    String pid = deserializeNext(arguments);
+    store.setResume(program, pid);
+
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
   @Path("/updateWorkflowToken")
   public void updateWorkflowToken(HttpRequest request, HttpResponder responder) throws Exception {
     Iterator<MethodArgument> arguments = parseArguments(request);

@@ -22,9 +22,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.UsageHandler;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
@@ -36,7 +34,6 @@ import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.junit.Assert;
@@ -54,7 +51,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Tests for {@link co.cask.cdap.gateway.handlers.UsageHandler}
@@ -81,12 +77,18 @@ public class UsageHandlerTestRun extends ClientTestBase {
     new ApplicationClient(getClientConfig()).delete(appId);
   }
 
-  private ProgramClient getProgramClient() {
-    return new ProgramClient(getClientConfig());
+  private void startProgram(ProgramId programId) throws Exception {
+    new ProgramClient(getClientConfig()).start(programId);
   }
 
-  private void startProgram(ProgramId programId) throws Exception {
-    getProgramClient().start(programId);
+  private void waitState(final ProgramId programId, ProgramStatus status) throws Exception {
+    final ProgramClient programclient = new ProgramClient(getClientConfig());
+    Tasks.waitFor(status, new Callable<ProgramStatus>() {
+      @Override
+      public ProgramStatus call() throws Exception {
+        return ProgramStatus.valueOf(programclient.getStatus(programId));
+      }
+    }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -142,8 +144,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       startProgram(program);
       // Wait for the worker to run and then stop.
-      assertProgramRunning(getProgramClient(), program);
-      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1);
+      waitState(program, ProgramStatus.RUNNING);
+      waitState(program, ProgramStatus.STOPPED);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
@@ -182,8 +184,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     // now that we only support dynamic dataset instantiation in initialize (and not in configure as before),
     // we must run the mapreduce program to register its usage
     startProgram(program);
-    assertProgramRunning(getProgramClient(), program);
-    assertProgramRuns(getProgramClient(), program, ProgramRunStatus.FAILED, 1);
+    waitState(program, ProgramStatus.STOPPED);
 
     try {
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
@@ -224,8 +225,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       // the program will run and stop by itself.
       startProgram(program);
-      assertProgramRunning(getProgramClient(), program);
-      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1);
+      waitState(program, ProgramStatus.STOPPED);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
@@ -250,8 +250,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       // the program will run and stop by itself.
       startProgram(program);
-      assertProgramRunning(getProgramClient(), program);
-      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1);
+      waitState(program, ProgramStatus.STOPPED);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
