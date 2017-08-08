@@ -45,6 +45,10 @@ $create_rulebook_btn_font_color: #cccccc;
         margin-top: 0;
         margin-bottom: 0;
 
+        &:only-child {
+          width: 100%;
+        }
+
         > div {
           height: 50%;
           display: flex;
