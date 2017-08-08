@@ -42,22 +42,27 @@ export default class Alert extends Component {
       });
     }
   }
-  onAlertClose () {
-    this.setState({showAlert: false, message: '', type: ''});
+  onClose = () => {
+    this.setState({
+      showAlert: false,
+      message: '',
+      type: ''
+    });
     if (this.props.onClose) {
       this.props.onClose();
     }
-  }
+  };
   render() {
     return (
       <Modal
         isOpen={this.state.showAlert}
         toggle={() => {}}
         backdrop={false}
+        keyboard={true}
         className="global-alert">
         <div className={this.state.type}>
           <span className="message">{this.state.message}</span>
-          <span className="fa fa-times" onClick={this.onAlertClose}></span>
+          <span className="fa fa-times" onClick={this.onClose}></span>
         </div>
       </Modal>
     );
@@ -66,10 +71,10 @@ export default class Alert extends Component {
 Alert.propTypes = {
   showAlert: PropTypes.bool,
   message: PropTypes.string,
+  onClose: PropTypes.func,
   type: PropTypes.oneOf([
     'success',
     'error',
     'info'
-  ]),
-  onClose: PropTypes.func
+  ])
 };

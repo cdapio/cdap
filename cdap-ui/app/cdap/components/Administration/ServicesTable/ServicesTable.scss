@@ -83,6 +83,22 @@ $height_of_conent: 450px;
         .status-circle {
           font-size: 18px;
         }
+        .request-instances {
+          input {
+            width: 50%;
+            padding-top: 0;
+            padding-bottom: 0;
+            display: inline-block;
+            height: 25px;
+          }
+          .requested-instances-holder {
+            padding: 10px;
+            &:hover {
+              border: 1px solid #cccccc;
+              background: white;
+            }
+          }
+        }
       }
     }
   }
