@@ -54,7 +54,6 @@ class Administration extends Component {
 
   componentWillUnmount() {
     document.querySelector('#header-namespace-dropdown').style.display = 'inline-block';
-    clearInterval(this.updatingInterval);
   }
 
   componentDidMount() {

@@ -238,7 +238,7 @@ export default class ServicesTable extends Component {
                       {
                         service.editInstance ?
                           <TextboxOnValium
-                            className="<form-control></form-control>"
+                            className="form-control"
                             value={service.requested}
                             onBlur={this.resetEditInstances}
                             onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
