@@ -17,6 +17,7 @@
 @import '../styles/variables.less';
 @import '../../bower_components/bootstrap/less/mixins.less';
 @import '../styles/themes/cdap/mixins.less';
+@import '../directives/dag-plus/color-constants.less';
 
 .modal.hydrator-modal {
   &.confirm-modal {
@@ -492,4 +493,43 @@ body.theme-cdap {
       }
     }
   }
+}
+
+.modal.upgrade-modal.hydrator-modal {
+  .modal-content .modal-body { padding-top: 0; }
+  .import-error-row {
+    padding: 10px;
+    border-bottom: 1px solid #c9ccd6;
+  }
+
+  .modal-body { overflow-x: hidden; }
+
+  h4 { font-weight: 500; }
+  .error-description { margin-bottom: 5px; }
+
+  .error-suggestion {
+    span:not(:first-child) {
+      margin-left: 20px;
+    }
+  }
+
+  .source {
+    color: @source-plugins-color;
+  }
+  .transform {
+    color: @transform-plugins-color;
+  }
+  .sink {
+    color: @sink-plugins-color;
+  }
+  .error {
+    color: @error-transform;
+  }
+  .action {
+    color: @action-plugins-color;
+  }
+  .action.sparkprogram {
+    color: @spark-plugins-color;
+  }
+
 }

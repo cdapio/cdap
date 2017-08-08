@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorStudioPlusPlus'
           },
           resolve: {
-            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService, GLOBALS) {
+            rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
               if ($stateParams.draftId) {
                 mySettings.get('hydratorDrafts', true)
@@ -74,11 +74,7 @@ angular.module(PKG.name + '.feature.hydrator')
                           supportedVersion: $rootScope.cdapVersion,
                           versionRange: draft.artifact.version
                         });
-                      let isOldArtifact = draft.artifact.name;
-                      if ([GLOBALS.etlRealtime, GLOBALS.etlBatch].indexOf(isOldArtifact) !== -1) {
-                        defer.reject(false);
-                        return defer.promise;
-                      }
+
                       if (isVersionInRange) {
                         draft.artifact.version = $rootScope.cdapVersion;
                       } else {
@@ -105,11 +101,6 @@ angular.module(PKG.name + '.feature.hydrator')
                     supportedVersion: $rootScope.cdapVersion,
                     versionRange: $stateParams.data.artifact.version
                   });
-                let isOldArtifact = $stateParams.data.artifact.name;
-                if ([GLOBALS.etlRealtime, GLOBALS.etlBatch].indexOf(isOldArtifact) !== -1) {
-                  defer.reject(false);
-                  return defer.promise;
-                }
                 if (isVersionInRange) {
                   $stateParams.data.artifact.version = $rootScope.cdapVersion;
                 } else {

@@ -44,24 +44,8 @@ class HydratorPlusPlusLeftPanelCtrl {
     let configStoreArtifact = this.HydratorPlusPlusConfigStore.getArtifact();
     this.selectedArtifact = rArtifacts.filter( ar => ar.name === configStoreArtifact.name)[0];
     this.artifactToRevert = this.selectedArtifact;
-    this.leftpanelStore.dispatch(
-      this.leftpanelActions.fetchExtensions({
-        namespace: $stateParams.namespace,
-        pipelineType: this.selectedArtifact.name,
-        version: this.rVersion.version,
-        scope: this.$scope
-      })
-    );
-    this.leftpanelStore.dispatch(
-      this.leftpanelActions.fetchTemplates(
-        { namespace: this.$stateParams.namespace },
-        { namespace: $stateParams.namespace, pipelineType: this.selectedArtifact.name, }
-      )
-    );
 
-    this.leftpanelStore.dispatch(
-      this.leftpanelActions.fetchDefaultVersion()
-    );
+    this.init();
 
     // FIXME: We need to refactor this subscriber to be more efficient. Perform less computation in controller & more in store.
     var sub = this.leftpanelStore.subscribe( () => {
@@ -104,7 +88,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         return;
       }
       this.pluginsMap = this.HydratorPlusPlusOrderingFactory.orderPluginTypes(this.pluginsMap);
-    });    
+    });
     var leftPanelStoreTimeout = $timeout(() => {
       this.leftpanelStore.dispatch({
         type: this.LEFTPANELSTORE_ACTIONS.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE
@@ -113,12 +97,49 @@ class HydratorPlusPlusLeftPanelCtrl {
       this.mySettings.set('plugin-default-version', defaultVersionMap);
     }, 10000);
 
+    this.leftPanelStoreFetchExtension = this.leftPanelStoreFetchExtension.bind(this);
+
+    let eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+    let globalEvents = window.CaskCommon.globalEvents;
+
+    eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.leftPanelStoreFetchExtension);
+
     this.$uibModal = $uibModal;
     this.$scope.$on('$destroy', () => {
       this.leftpanelStore.dispatch({ type: this.LEFTPANELSTORE_ACTIONS.RESET});
       sub();
       $timeout.cancel(leftPanelStoreTimeout);
+
+      eventEmitter.off(globalEvents.ARTIFACTUPLOAD, this.leftPanelStoreFetchExtension);
     });
+  }
+
+  init() {
+    this.leftpanelStore.dispatch(
+      this.leftpanelActions.fetchExtensions({
+        namespace: this.$stateParams.namespace,
+        pipelineType: this.selectedArtifact.name,
+        version: this.rVersion.version,
+        scope: this.$scope
+      })
+    );
+    this.leftpanelStore.dispatch(
+      this.leftpanelActions.fetchTemplates(
+        { namespace: this.$stateParams.namespace },
+        { namespace: this.$stateParams.namespace, pipelineType: this.selectedArtifact.name, }
+      )
+    );
+
+    this.leftpanelStore.dispatch(
+      this.leftpanelActions.fetchDefaultVersion()
+    );
+  }
+
+  leftPanelStoreFetchExtension() {
+    this.leftpanelStore.dispatch({ type: this.LEFTPANELSTORE_ACTIONS.RESET});
+    this.pluginsMap.splice(0, this.pluginsMap.length);
+
+    this.init();
   }
 
   onArtifactChange() {

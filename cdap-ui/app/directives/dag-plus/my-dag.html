@@ -113,7 +113,7 @@
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
-                   uib-tooltip="Please see node configuration panel"
+                   uib-tooltip="{{node.errorMessage || 'Please see node configuration panel'}}"
                    tooltip-append-to-body="true"
                    tooltip-class="tooltip-error">
                 <span class="badge badge-danger">
