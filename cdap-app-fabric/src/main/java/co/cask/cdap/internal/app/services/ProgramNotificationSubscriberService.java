@@ -16,17 +16,22 @@
 
 package co.cask.cdap.internal.app.services;
 
+import co.cask.cdap.api.ProgramSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
+import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -43,6 +48,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Service that receives program status notifications and persists to the store
@@ -122,19 +128,32 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         return;
       }
 
-      ProgramRunStatus programRunStatus = null;
-      if (programStatusString != null) {
-        try {
-          programRunStatus = ProgramRunStatus.valueOf(programStatusString);
-        } catch (IllegalArgumentException e) {
-          LOG.warn("Invalid program run status {} passed in notification for program {}",
-                   programStatusString, programRunIdString);
-          return;
-        }
+      ProgramRunStatus programRunStatus;
+      try {
+        programRunStatus = ProgramRunStatus.valueOf(programStatusString);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Invalid program run status {} passed in notification for program {}",
+                 programStatusString, programRunIdString);
+        return;
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramId programId = programRunId.getParent();
+
+      ApplicationMeta meta = getAppMetadataStore(context).getApplication(programRunId.getNamespace(),
+                                                                         programRunId.getApplication(),
+                                                                         programRunId.getVersion());
+      // Check if the application exists
+      if (meta == null) {
+        LOG.warn(new NotFoundException(programId.getParent()).getMessage());
+        return;
+      }
+      // Check if the program exists
+      if (getProgramSpecFromApp(meta.getSpec(), programRunId) == null) {
+        LOG.warn(new NotFoundException(programId).getMessage());
+        return;
+      }
+
       String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
@@ -194,6 +213,27 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         default:
           LOG.error("Cannot persist ProgramRunStatus %s for Program %s", programRunStatus, programRunId);
           return;
+      }
+    }
+
+    @Nullable
+    private ProgramSpecification getProgramSpecFromApp(ApplicationSpecification appSpec, ProgramRunId programRunId) {
+      String programName = programRunId.getProgram();
+      ProgramType type = programRunId.getType();
+      if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
+        return appSpec.getFlows().get(programName);
+      } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
+        return appSpec.getMapReduce().get(programName);
+      } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
+        return appSpec.getSpark().get(programName);
+      } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
+        return appSpec.getWorkflows().get(programName);
+      } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
+        return appSpec.getServices().get(programName);
+      } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
+        return appSpec.getWorkers().get(programName);
+      } else {
+        return null;
       }
     }
 

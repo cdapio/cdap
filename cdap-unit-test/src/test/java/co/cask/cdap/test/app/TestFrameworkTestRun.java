@@ -418,11 +418,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(appId, createRequest);
     ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
+    serviceManager.waitForStatus(true);
 
     URL serviceURL = serviceManager.getServiceURL();
     Gson gson = new Gson();
     Assert.assertEquals("tV1", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
     serviceManager.stop();
+    serviceManager.waitForStatus(false);
 
     appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version2");
     createRequest = new AppRequest<>(
@@ -431,6 +433,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     appManager = deployApplication(appId, createRequest);
     serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
+    serviceManager.waitForStatus(true);
 
     serviceURL = serviceManager.getServiceURL();
     Assert.assertEquals("tV2", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
@@ -809,10 +812,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testDeployWorkflowApp() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
-    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager(AppWithSchedule.WORKFLOW_NAME);
     List<ScheduleDetail> schedules = wfmanager.getProgramSchedules();
-    Assert.assertEquals(1, schedules.size());
-    String scheduleName = schedules.get(0).getName();
+    Assert.assertEquals(2, schedules.size());
+    String scheduleName = schedules.get(1).getName();
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
@@ -863,7 +866,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     //Check that after resume it goes to "SCHEDULED" state
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SCHEDULED);
 
-    wfmanager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    wfmanager.waitForStatus(true, 4, 5);
 
     // Make sure new runs happens after resume
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -1010,11 +1013,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     centralServiceManager.waitForStatus(true);
 
     WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
-    pingingWorker.waitForStatus(true);
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    serviceManager.waitForStatus(true);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
@@ -2046,6 +2048,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager workerManager = appManager.getWorkerManager(ConcurrentRunTestApp.TestWorker.class.getSimpleName());
     workerManager.start();
     // Start another time should fail as worker doesn't support concurrent run.
+    workerManager.waitForStatus(true);
     try {
       workerManager.start();
       Assert.fail("Expected failure to start worker");

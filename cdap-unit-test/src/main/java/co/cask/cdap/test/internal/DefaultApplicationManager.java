@@ -25,6 +25,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -166,7 +167,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       String status = appFabricClient.getStatus(application.getNamespace(), programId.getApplication(),
                                                 programId.getVersion(), programId.getProgram(), programId.getType());
-      return "STARTING".equals(status) || "RUNNING".equals(status);
+      return "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -204,17 +205,5 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
     return appFabricClient.getRuntimeArgs(programId);
-  }
-
-  @Override
-  public void waitForStopped(final ProgramId programId) throws Exception {
-    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
-    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
-    Tasks.waitFor(0, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return appFabricClient.getHistory(programId, ProgramRunStatus.RUNNING).size();
-      }
-    }, 10, TimeUnit.SECONDS);
   }
 }

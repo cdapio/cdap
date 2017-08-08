@@ -156,7 +156,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public boolean isRunning(ProgramId programId) {
     try {
       String status = programClient.getStatus(programId);
-      return "STARTING".equals(status) || "RUNNING".equals(status);
+      return "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -194,17 +194,5 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public Map<String, String> getRuntimeArgs(ProgramId programId) throws Exception {
     return programClient.getRuntimeArgs(programId);
-  }
-
-  @Override
-  public void waitForStopped(final ProgramId programId) throws Exception {
-    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
-    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
-    Tasks.waitFor(0, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        return getHistory(programId, ProgramRunStatus.RUNNING).size();
-      }
-    }, 10, TimeUnit.SECONDS);
   }
 }

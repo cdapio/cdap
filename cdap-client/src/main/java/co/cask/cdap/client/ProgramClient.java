@@ -360,9 +360,6 @@ public class ProgramClient {
             } catch (IOException ioe) {
               // ProgramClient#stop calls RestClient, which throws an IOException if the HTTP response code is 400,
               // which can be due to the program already being stopped when calling stop on it.
-              if (!"STOPPED".equals(getStatus(program))) {
-                throw ioe;
-              }
               // Most likely, there was a race condition that the program stopped between the time we checked its
               // status and calling the stop method.
               LOG.warn("Program {} is already stopped, proceeding even though the following exception is raised.",

@@ -163,7 +163,7 @@ public abstract class AbstractClientTest {
   }
 
   protected void assertProgramRuns(final ProgramClient programClient, final ProgramId program,
-                                  final ProgramRunStatus programRunStatus, final int expected)
+                                   final ProgramRunStatus programRunStatus, final int expected, int timeout)
     throws InterruptedException, ExecutionException, TimeoutException {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
@@ -171,7 +171,7 @@ public abstract class AbstractClientTest {
         return programClient.getProgramRuns(program, programRunStatus.name(),
                                             0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
       }
-    }, 10, TimeUnit.SECONDS);
+    }, timeout, TimeUnit.SECONDS);
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {

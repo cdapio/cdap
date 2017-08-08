@@ -128,7 +128,7 @@ public class QueryClientTest extends AbstractClientTest {
       }
     } finally {
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1, 10);
 
       try {
         appClient.delete(app);

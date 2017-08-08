@@ -1004,7 +1004,7 @@ public class AuthorizationTest extends TestBase {
 
     final WorkflowManager workflowManager =
       appManager.getWorkflowManager(AppWithSchedule.SampleWorkflow.class.getSimpleName());
-    ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.SCHEDULE_NAME);
+    ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.EVERY_HOUR_SCHEDULE);
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1053,15 +1053,8 @@ public class AuthorizationTest extends TestBase {
     scheduleManager.resume();
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
-    // wait for workflow to start
-    workflowManager.waitForStatus(true);
-
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
-
-    // stop all the runs of the workflow so that the current namespace can be deleted after the test
-    workflowManager.stop();
-    waitForStoppedPrograms(workflowManager);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
