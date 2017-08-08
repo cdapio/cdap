@@ -90,7 +90,7 @@ angular.module(PKG.name + '.services')
       'windower': pluginLabels['transform'],
       'errortransform': pluginLabels['errortransform'],
       'sparkprogram': pluginLabels['action'],
-      'alertpublisher': pluginLabels['transform']
+      'alertpublisher': pluginLabels['sink']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -110,7 +110,7 @@ angular.module(PKG.name + '.services')
       'action': 'action',
       'errortransform': 'transform',
       'sparkprogram': 'action',
-      'alertpublisher': 'transform'
+      'alertpublisher': 'sink'
     },
 
     artifactConvert: {

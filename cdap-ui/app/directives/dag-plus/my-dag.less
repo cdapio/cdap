@@ -271,7 +271,15 @@ my-dag-plus {
         .border-color-hover();
 
       }
-      &:not(.realtimesource):not(.batchsource):not(.streamingsource):not(.realtimesink):not(.batchsink):not(.sparksink):not(.action):not(.sparkprogram) {
+      &:not(.realtimesource),
+      &:not(.batchsource),
+      &:not(.streamingsource),
+      &:not(.realtimesink),
+      &:not(.batchsink),
+      &:not(.sparksink),
+      &:not(.action),
+      &:not(.sparkprogram),
+      &:not(.alertpublisher) {
         color: @transform-plugins-color;
         left: 30vw;
         .border-color-hover();
@@ -285,6 +293,7 @@ my-dag-plus {
       }
       &.realtimesink,
       &.batchsink,
+      &.alertpublisher,
       &.sparksink {
         color: @sink-plugins-color;
         left: 50vw;
