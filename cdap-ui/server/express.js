@@ -264,6 +264,10 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
     } else {
       port = cdapConfig['router.server.port'];
     }
+    var headers = {};
+    if (req.headers) {
+      headers = req.headers;
+    }
 
     var url = [
       protocol,
@@ -278,7 +282,10 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
 
     var opts = {
       method: 'POST',
-      url: url
+      url: url,
+      headers: {
+        'Content-Type': headers['content-type']
+      }
     };
 
     req
