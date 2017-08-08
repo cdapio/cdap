@@ -14,21 +14,25 @@
  * the License.
  */
 @import '../../styles/variables.scss';
-$grey-theme-color:  #e3e3e3;
+$grey-theme-color: #f5f5f5;
+$container_border_color: #eeeeee;
 $active-text-color: #000000;
 $uptime_version_color: gray;
 $height_of_header: 42px;
 $height_of_conent: 450px;
 
 .administration {
+
   width: 96%;
   height: 100%;
-  border: 2px solid $grey-theme-color;
+  border: 2px solid $container_border_color;
   margin: auto;
   margin-top: 20px;
   margin-bottom: 70px;
   background-color: $cdap-white;
-  padding: 20px;
+  > div {
+    padding: 10px;
+  }
 
   .primary-label {
     display: inline-flex;
@@ -39,6 +43,7 @@ $height_of_conent: 450px;
     padding: 0 10px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     .page-title {
       h3 {
         display: inline;
@@ -58,6 +63,8 @@ $height_of_conent: 450px;
   .services-details {
     display: flex;
     width: 100%;
+    background: $grey-theme-color;
+    padding: 10px;
 
     > div {
       width: calc(50% - 20px);
@@ -66,25 +73,15 @@ $height_of_conent: 450px;
     .services-table-section {
       strong {
         font-size: 18px;
-        height: $height_of_header;
         display: block;
       }
     }
   }
 
-  .admin-horizontal-line {
-    border: none;
-    height: 2px;
-    color: $grey-theme-color;
-    background-color: $grey-theme-color;
-    margin-top: 0;
-    margin-bottom: 0;
-    width: calc(100% + 40px);
-    margin-left: -20px;
-  }
-
   .admin-bottom-panel {
     display: flex;
     padding: 0 10px;
+    background: $grey-theme-color;
+    padding-bottom: 40px;
   }
 }

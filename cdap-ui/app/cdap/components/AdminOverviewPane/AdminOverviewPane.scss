@@ -14,22 +14,19 @@
  * the License.
  */
 @import '../../styles/variables.scss';
-$module-color-lightgrey: #f1f1f1;
 $spinner-icon-dimension: 50px;
+$pane_border_color: lightgray;
 
 .overview-pane {
-  margin-top: 25px;
   flex: 0.5;
   display: flex;
   flex-direction: column;
-  margin-left: 10px;
-  background-color: $module-color-lightgrey;
+  margin: 0 10px 10px;
 
   > span {
     font-size: 18px;
     font-weight: 600;
-    background-color: white;
-    padding: 10px 0;
+    background-color: transparent;
   }
 
   .spinner-container {
@@ -48,9 +45,13 @@ $spinner-icon-dimension: 50px;
   }
 
   .overview-pane-container {
-    margin-right: 20px;
     overflow: auto;
+    background: $cdap-white;
     height: 220px;
+    border: solid 1px $pane_border_color;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 20px 10px;
 
     &.empty-container {
       display: flex;

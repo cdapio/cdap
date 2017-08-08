@@ -15,8 +15,10 @@
 */
 
 @import '../../../styles/variables.scss';
-$height_of_header: 42px;
-$height_of_conent: 450px;
+@import '../ServicesTable/ServicesTable.scss';
+
+$platform_section_border_color: lightgray;
+$loading_container_bg_color: #eeeeee;
 
 .platform-details {
   height: 100%;
@@ -26,9 +28,9 @@ $height_of_conent: 450px;
   align-items: center;
 
   &.loading {
-    height: 450px;
-    background: $cdap-gray;
-    margin-top: 40px;
+    height: $height_of_conent;
+    background: $loading_container_bg_color;
+    margin-top: 27px;
   }
 
   .generic-details {
@@ -45,7 +47,6 @@ $height_of_conent: 450px;
   }
 
   .nav.nav-tabs {
-    height: $height_of_header;
     border-bottom: 0;
     width: 100%;
 
@@ -56,29 +57,31 @@ $height_of_conent: 450px;
         font-size: 15px;
         padding-top: 0;
         cursor: pointer;
+        padding-bottom: 0;
 
         &.active {
           border: 0;
           font-weight: bold;
-          border-bottom: 2px solid $cdap_orange;
-          padding-bottom: 0;
+          border-bottom: 4px solid $cdap_orange;
           height: 100%;
+          background: transparent;
         }
         &:hover {
           border: 0;
           font-weight: bold;
           &.active {
-            border-bottom: 2px solid $cdap_orange;
+            border-bottom: 4px solid $cdap_orange;
           }
         }
       }
     }
   }
   .tab-content {
-    background: $cdap-gray;
-    padding: 10px;
+    background: $cdap-white;
+    padding: 25px;
     width: 100%;
     height: $height_of_conent;
+    border: 1px solid $platform_section_border_color;
 
     .tab-pane {
       height: 100%;
