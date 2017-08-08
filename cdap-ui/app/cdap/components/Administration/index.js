@@ -254,7 +254,6 @@ class Administration extends Component {
             <PlatformsDetails platforms={cloneDeep(this.state.platformsDetails)} />
           </div>
         </div>
-        <hr className="admin-horizontal-line" />
         <div className="admin-bottom-panel">
           <AdminConfigurePane
             openNamespaceWizard={this.openNamespaceWizard}

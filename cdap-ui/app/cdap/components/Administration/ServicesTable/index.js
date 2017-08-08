@@ -29,6 +29,7 @@ import Alert from 'components/Alert';
 
 require('./ServicesTable.scss');
 
+const WAITTIME_FOR_ALTERNATE_STATUS = 10000;
 const ADMINPREFIX = 'features.Administration.Services';
 const DEFAULTSERVICES = [
   'appfabric',
@@ -112,8 +113,13 @@ export default class ServicesTable extends Component {
     });
   };
 
-  serviceInstanceRequested = (serviceid, value) => {
+  serviceInstanceRequested = (serviceid, index, value) => {
     console.log(serviceid, value);
+    let currentRequested = this.state.services[index].requested;
+    if (currentRequested === value) {
+      this.resetEditInstances();
+      return;
+    }
     MyServiceProviderApi
       .setProvisions({serviceid}, {instances : value})
       .subscribe(
@@ -129,15 +135,34 @@ export default class ServicesTable extends Component {
       );
   };
 
+  /*
+    - Make call to /system/services
+    - If it doesn't return within 10 seconds
+      |  - Call individual services. /system/services/:serviceid
+         |- If THAT didn't return within 10 seconds say the service is NOTOK
+         |- If that returns render the service status
+    - If it returns everything is just normal
+  */
+
   fetchServiceStatus = (serviceid) => {
     if (Object.keys(this.state.services).length) {
       return;
     }
+    let serviceTimeout = setTimeout(() => {
+      let services = {...this.state.services};
+      services[serviceid] = {
+        status: 'NOTOK'
+      };
+      this.setState({
+        services
+      });
+    }, WAITTIME_FOR_ALTERNATE_STATUS);
     this.servicePolls.push(
       MyServiceProviderApi
         .pollServiceStatus({serviceid})
         .subscribe(
           (res) => {
+            clearTimeout(serviceTimeout);
             let services = {...this.state.services};
             services[serviceid] = {
               status: res.status
@@ -155,7 +180,7 @@ export default class ServicesTable extends Component {
   }
 
   componentDidMount() {
-    let serviceStatusTimeout = setTimeout(this.fetchStatusFromIndividualServices, 10000);
+    let serviceStatusTimeout = setTimeout(this.fetchStatusFromIndividualServices, WAITTIME_FOR_ALTERNATE_STATUS);
     this.systemServicesSubscription = SystemServicesStore.subscribe(() => {
       let {services} = SystemServicesStore.getState();
       if (!isEqual(services, this.state.services)) {
@@ -216,7 +241,7 @@ export default class ServicesTable extends Component {
                             className="<form-control></form-control>"
                             value={service.requested}
                             onBlur={this.resetEditInstances}
-                            onChange={this.serviceInstanceRequested.bind(this, service.name)}
+                            onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
                           />
                         :
                           <span className="requested-instances-holder">{service.requested || '--'}</span>
