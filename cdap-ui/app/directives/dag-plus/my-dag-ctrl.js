@@ -462,14 +462,7 @@ angular.module(PKG.name + '.commons')
       }
 
       resetTimeout = $timeout(function () {
-        // have to unbind and bind again, otherwise calling detachEveryConnection will call detachConnection()
-        // for every connection that we detach
-        vm.instance.unbind('connection');
-        vm.instance.unbind('connectionDetached');
-        vm.instance.unbind('beforeDrop');
-        vm.instance.unbind('beforeStartDetach');
-        vm.instance.detachEveryConnection();
-        vm.instance.deleteEveryEndpoint();
+        vm.instance.reset();
 
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         $scope.connections = DAGPlusPlusNodesStore.getConnections();
@@ -480,9 +473,11 @@ angular.module(PKG.name + '.commons')
         selectedConnections = [];
         makeNodesDraggable();
         vm.instance.bind('connection', addConnection);
+        vm.instance.bind('connectionMoved', moveConnection);
         vm.instance.bind('connectionDetached', removeConnection);
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         vm.instance.bind('beforeStartDetach', onStartDetach);
+        vm.instance.bind('beforeDrag', onBeforeDrag);
 
         if (commentsTimeout) {
           vm.comments = DAGPlusPlusNodesStore.getComments();
