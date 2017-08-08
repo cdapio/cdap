@@ -29,6 +29,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
+import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -55,6 +56,45 @@ import java.util.Set;
  * Tests for {@link AppLifecycleHttpHandler}
  */
 public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
+
+  @Test
+  public void testGetAppsNamespaces() throws Exception {
+    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "default");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = deploy(ConfigTestApp.class, Constants.Gateway.API_VERSION_3_TOKEN, "default");
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = deploy(ConfigTestApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    // Get apps in default namespace
+    List<ApplicationRecord> defaultApps = getAppsInNamespaces("default");
+    Assert.assertNotNull(defaultApps);
+    Assert.assertEquals(2, defaultApps.size());
+    for (ApplicationRecord record : defaultApps) {
+      Assert.assertEquals("default", record.getNamespace());
+    }
+
+    // Get apps in default and test namespace
+    List<ApplicationRecord> defaultAndTestNamespace = getAppsInNamespaces("default", TEST_NAMESPACE1);
+    Assert.assertNotNull(defaultAndTestNamespace);
+    Assert.assertEquals(3, defaultAndTestNamespace.size());
+
+    // Get apps in namespace with no deployed apps
+    List<ApplicationRecord> testNamespace2Apps = getAppsInNamespaces(TEST_NAMESPACE2);
+    Assert.assertNotNull(testNamespace2Apps);
+    Assert.assertEquals(0, testNamespace2Apps.size());
+
+    // Get apps when no namespace is specified
+    List<ApplicationRecord> noApps = getAppsInNamespaces(null);
+    Assert.assertNotNull(noApps);
+    Assert.assertEquals(0, noApps.size());
+
+    // Delete all apps
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, "default"));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+  }
 
   /**
    * Tests deploying an application in a non-existing non-default namespace.
