@@ -49,4 +49,10 @@ public class ArtifactSelectorProviderTest {
                                                                "cdap-artifact_2.10", "1.0.0");
     PROVIDER.getPluginSelector(config);
   }
+
+  @Test
+  public void testNullsAllowed() {
+    ArtifactSelectorConfig config = new ArtifactSelectorConfig(null, null, null);
+    PROVIDER.getPluginSelector(config);
+  }
 }

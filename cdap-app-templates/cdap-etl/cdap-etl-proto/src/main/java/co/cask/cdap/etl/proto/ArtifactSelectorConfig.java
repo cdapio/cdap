@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.proto;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Part of the etl configuration, used to choose which artifact to use for a plugin. Normally created through
@@ -34,20 +35,23 @@ public class ArtifactSelectorConfig {
   }
 
   // for unit tests
-  public ArtifactSelectorConfig(String scope, String name, String version) {
+  public ArtifactSelectorConfig(@Nullable String scope, @Nullable String name, @Nullable String version) {
     this.scope = scope;
     this.name = name;
     this.version = version;
   }
 
+  @Nullable
   public String getScope() {
     return scope;
   }
 
+  @Nullable
   public String getName() {
     return name;
   }
 
+  @Nullable
   public String getVersion() {
     return version;
   }
