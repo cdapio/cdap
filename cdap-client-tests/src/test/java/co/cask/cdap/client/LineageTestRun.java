@@ -27,6 +27,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -56,6 +57,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
+
+import static co.cask.cdap.proto.ProgramStatus.STOPPED;
 
 /**
  * Tests lineage recording and query.
@@ -342,10 +345,19 @@ public class LineageTestRun extends MetadataTestBase {
     fetchLineage(datasetInstance, 100, 200, -10, BadRequestException.class);
   }
 
+  private void waitState(final ProgramId program, ProgramStatus state) throws Exception {
+    Tasks.waitFor(state.toString(), new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        return programClient.getStatus(program);
+      }
+    }, 60000, TimeUnit.SECONDS, 1000, TimeUnit.MILLISECONDS);
+  }
+
   private RunId runAndWait(final ProgramId program) throws Exception {
     LOG.info("Starting program {}", program);
     programClient.start(program);
-    assertProgramRunning(programClient, program);
+    waitState(program, ProgramStatus.RUNNING);
     return getRunId(program);
   }
 
@@ -354,7 +366,7 @@ public class LineageTestRun extends MetadataTestBase {
       LOG.info("Stopping program {}", program);
       programClient.stop(program);
     }
-    assertProgramRuns(programClient, program, ProgramRunStatus.RUNNING, 0);
+    waitState(program, STOPPED);
     LOG.info("Program {} has stopped", program);
   }
 
@@ -368,7 +380,8 @@ public class LineageTestRun extends MetadataTestBase {
       @Override
       public Integer call() throws Exception {
         runRecords.set(Iterables.filter(
-          programClient.getProgramRuns(program, ProgramRunStatus.ALL.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE),
+          programClient.getProgramRuns(program, ProgramRunStatus.RUNNING.toString(),
+                                       0, Long.MAX_VALUE, Integer.MAX_VALUE),
           new Predicate<RunRecord>() {
             @Override
             public boolean apply(RunRecord input) {

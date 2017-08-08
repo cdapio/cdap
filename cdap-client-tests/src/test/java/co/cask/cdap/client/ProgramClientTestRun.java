@@ -28,7 +28,6 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -36,7 +35,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.ImmutableList;
@@ -99,10 +97,10 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // wait for all programs to be in RUNNING status
-      assertProgramRuns(programClient, namespace.app(flow.getAppId()).flow(flow.getProgramId()),
-                        ProgramRunStatus.RUNNING, 1);
-      assertProgramRuns(programClient, namespace.app(service.getAppId()).service(service.getProgramId()),
-                        ProgramRunStatus.RUNNING, 1);
+      programClient.waitForStatus(namespace.app(flow.getAppId()).flow(flow.getProgramId()),
+                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
+      programClient.waitForStatus(namespace.app(service.getAppId()).service(service.getProgramId()),
+                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
 
       // make a batch call for status of programs, one of which does not exist
       List<BatchProgram> programs = ImmutableList.of(flow, service, missing);
@@ -134,9 +132,6 @@ public class ProgramClientTestRun extends ClientTestBase {
       for (BatchProgramStatus status : statusList) {
         Assert.assertEquals(200, status.getStatusCode());
         Assert.assertEquals("Program = " + status.getProgramId(), "STOPPED", status.getStatus());
-
-        assertProgramRuns(programClient, appId.program(status.getProgramType(), status.getProgramId()),
-                          ProgramRunStatus.RUNNING, 0);
       }
     } finally {
       try {
@@ -187,7 +182,7 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       LOG.info("Stopping flow");
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
+      assertProgramStopped(programClient, flow);
 
       testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
 
@@ -195,7 +190,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       programClient.start(flow, true);
       assertProgramRunning(programClient, flow);
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 2);
+      assertProgramStopped(programClient, flow);
     } finally {
       try {
         appClient.delete(app);
@@ -240,7 +235,6 @@ public class ProgramClientTestRun extends ClientTestBase {
     Assert.assertTrue(doneFile.createNewFile());
 
     assertProgramStopped(programClient, workflow);
-    assertProgramRuns(programClient, workflow, ProgramRunStatus.COMPLETED, 1);
     LOG.info("Workflow stopped");
   }
 }

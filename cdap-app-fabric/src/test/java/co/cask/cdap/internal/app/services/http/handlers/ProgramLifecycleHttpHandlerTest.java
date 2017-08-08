@@ -161,12 +161,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start a flow and check the status
     startProgram(wordcountFlow1);
-    waitState(wordcountFlow1, RUNNING);
+    waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
 
     // stop the flow and check the status
     stopProgram(wordcountFlow1);
     waitState(wordcountFlow1, STOPPED);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
 
     // deploy another app in a different namespace and verify
     response = deploy(DummyAppWithTrackingTable.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
@@ -182,23 +181,23 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(dummyMR1, 404);
     Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-    // start map-reduce and verify runs
+    // start map-reduce and verify status
     startProgram(dummyMR2);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING);
+    waitState(dummyMR2, ProgramRunStatus.RUNNING.toString());
 
     // stop the mapreduce program and check the status
     stopProgram(dummyMR2);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED);
+    waitState(dummyMR2, STOPPED);
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
     startProgram(dummyMR2);
 
     // verify that more than one map-reduce program runs are running
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
+    verifyProgramRuns(dummyMR2, "running", 1);
 
     // get run records corresponding to the program runs
-    List<RunRecord> historyRuns = getProgramRuns(dummyMR2, ProgramRunStatus.RUNNING);
+    List<RunRecord> historyRuns = getProgramRuns(dummyMR2, "running");
     Assert.assertEquals(2, historyRuns.size());
 
     // stop individual runs of the map-reduce program
@@ -207,19 +206,22 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     runId = historyRuns.get(1).getPid();
     stopProgram(dummyMR2, runId, 200);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 2);
+
+    waitState(dummyMR2, STOPPED);
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
     startProgram(dummyMR2);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
+    verifyProgramRuns(dummyMR2, "running", 1);
+    historyRuns = getProgramRuns(dummyMR2, "running");
+    Assert.assertEquals(2, historyRuns.size());
 
     // stop all runs of the map-reduce program
     stopProgram(dummyMR2, 200);
-    verifyProgramRuns(dummyMR2, ProgramRunStatus.KILLED, 4);
+    waitState(dummyMR2, STOPPED);
 
     // get run records, all runs should be stopped
-    historyRuns = getProgramRuns(dummyMR2, ProgramRunStatus.RUNNING);
+    historyRuns = getProgramRuns(dummyMR2, "running");
     Assert.assertTrue(historyRuns.isEmpty());
 
     // deploy an app containing a workflow
@@ -240,10 +242,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start workflow and check status
     startProgram(sleepWorkflow2);
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
+    waitState(sleepWorkflow2, ProgramRunStatus.RUNNING.toString());
 
     // workflow will stop itself
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.COMPLETED);
+    waitState(sleepWorkflow2, STOPPED);
 
     // cleanup
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));
@@ -278,7 +280,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(STOPPED, getProgramStatus(wordcountFlow1));
     // start flow
     startProgram(wordcountFlow1, 200);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
+    waitState(wordcountFlow1, RUNNING);
     // same flow cannot be run concurrently in the same app version
     startProgram(wordcountFlow1, 409);
 
@@ -295,13 +297,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(wordcountFlowDefault, 409);
 
     stopProgram(wordcountFlow1, null, 200, null);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
+    waitState(wordcountFlow1, "STOPPED");
 
     // wordcountFlow2 can be run after wordcountFlow1 is stopped
     startProgram(wordcountFlow2, 200);
-    verifyProgramRuns(wordcountFlow2, ProgramRunStatus.RUNNING);
     stopProgram(wordcountFlow2, null, 200, null);
-    verifyProgramRuns(wordcountFlow2, ProgramRunStatus.KILLED);
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
     ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
@@ -310,32 +310,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // start service
     startProgram(wordFrequencyService1, 200);
-    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.RUNNING);
+    waitState(wordFrequencyService1, RUNNING);
     // wordFrequencyService2 is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService2));
     // start service in version2
     startProgram(wordFrequencyService2, 200);
-    verifyProgramRuns(wordFrequencyService2, ProgramRunStatus.RUNNING);
+    waitState(wordFrequencyService2, RUNNING);
     // wordFrequencyServiceDefault is stopped initially
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyServiceDefault));
     // start service in default version
     startProgram(wordFrequencyServiceDefault, 200);
-    verifyProgramRuns(wordFrequencyServiceDefault, ProgramRunStatus.RUNNING);
+    waitState(wordFrequencyServiceDefault, RUNNING);
     // same service cannot be run concurrently in the same app version
     startProgram(wordFrequencyService1, 409);
     stopProgram(wordFrequencyService1, null, 200, null);
-    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.KILLED);
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
     startProgram(wordFrequencyService1, 200);
-    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.RUNNING);
 
     stopProgram(wordFrequencyService1, null, 200, null);
     stopProgram(wordFrequencyService2, null, 200, null);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
-    verifyProgramRuns(wordFrequencyService1, ProgramRunStatus.KILLED);
-    verifyProgramRuns(wordFrequencyService2, ProgramRunStatus.KILLED);
-    verifyProgramRuns(wordFrequencyServiceDefault, ProgramRunStatus.KILLED);
 
     Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
@@ -362,18 +357,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(sleepWorkflow2, 200);
     startProgram(sleepWorkflow1, 200);
     startProgram(sleepWorkflow2, 200);
-    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING, 1);
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
     // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
-    // Rather than assume all workflow runs are killed, let's check for 0 RUNNING workflows, which means they
-    // are either KILLED or COMPLETED
-    assertProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING, 0);
-    assertProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 0);
-
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
     Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
 
@@ -429,16 +417,14 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-    verifyProgramRuns(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                      ProgramRunStatus.RUNNING);
+    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
 
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                  409); // conflict
 
     // get run records for later use
     List<RunRecord> runs = getProgramRuns(
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                      ProgramRunStatus.RUNNING);
+      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "running");
     Assert.assertEquals(1, runs.size());
     String runId = runs.get(0).getPid();
 
@@ -451,7 +437,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       @Override
       public Boolean call() throws Exception {
         Id.Program id = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
-        return getProgramRuns(id, ProgramRunStatus.RUNNING).isEmpty();
+        return getProgramRuns(id, "running").isEmpty();
       }
     }, 10, TimeUnit.SECONDS);
 
@@ -526,16 +512,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
       // first run
       startProgram(sleepWorkflow1);
-      int numWorkflowRunsStopped = getProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED).size();
+      waitState(sleepWorkflow1, ProgramRunStatus.RUNNING.toString());
       // workflow stops by itself after actions are done
       waitState(sleepWorkflow1, STOPPED);
-      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
 
       // second run
       startProgram(sleepWorkflow1);
+      waitState(sleepWorkflow1, ProgramRunStatus.RUNNING.toString());
       // workflow stops by itself after actions are done
       waitState(sleepWorkflow1, STOPPED);
-      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
       String url = String.format("apps/%s/%s/%s/runs?status=completed", SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW
         .getCategoryName(), SLEEP_WORKFLOW_NAME);
@@ -631,7 +616,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
 
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -643,7 +627,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start the service
     startProgram(service2);
-    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
     // test status API after starting the service
     response = doPost(statusUrl2, "[{'appId': 'AppWithServices', 'programType': 'Service', 'programId': " +
       "'NoOpService'}]");
@@ -653,11 +636,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop the flow
     stopProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
+    waitState(wordcountFlow1, STOPPED);
 
     // stop the service
     stopProgram(service2);
-    verifyProgramRuns(service2, ProgramRunStatus.KILLED);
+    waitState(service2, STOPPED);
 
     // try posting a status request with namespace2 for apps in namespace1
     response = doPost(statusUrl2, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -739,7 +722,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
 
     response = doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
       "'runnableId': 'StreamSource'}]");
@@ -750,7 +732,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(service2);
-    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
 
     response = doPost(instancesUrl2, "[{'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService'," +
       " 'runnableId':'NoOpService'}]");
@@ -769,8 +750,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     stopProgram(wordcountFlow1);
     stopProgram(service2);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
-    verifyProgramRuns(service2, ProgramRunStatus.KILLED);
+    waitState(wordcountFlow1, STOPPED);
+    waitState(service2, STOPPED);
   }
 
   /**
@@ -949,7 +930,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                            WORDCOUNT_FLOW_NAME);
@@ -964,8 +944,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop
     stopProgram(wordcountFlow1);
-    waitState(wordcountFlow1, STOPPED);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.KILLED);
 
     // delete queues
     Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
@@ -1117,8 +1095,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       }
     }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
-
     // verify instances
     try {
       getServiceInstances(service1);
@@ -1153,7 +1129,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop service
     stopProgram(service1, 404);
     stopProgram(service2);
-    verifyProgramRuns(service2, ProgramRunStatus.KILLED);
 
     activeResponse = getServiceAvailability(service2);
     // Service has been stopped, so it should return 503
@@ -1782,30 +1757,27 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String namespace = program.getNamespace();
     // first run
     startProgram(program, 200);
-    verifyProgramRuns(program, ProgramRunStatus.RUNNING);
-
+    waitState(program, ProgramRunStatus.RUNNING.toString());
     stopProgram(program, null, 200, null);
-    verifyProgramRuns(program, ProgramRunStatus.KILLED);
+    waitState(program, STOPPED);
 
     // second run
     startProgram(program, 200);
-    verifyProgramRuns(program, ProgramRunStatus.RUNNING);
-
-    // one run should be active
+    waitState(program, ProgramRunStatus.RUNNING.toString());
     String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
       "" : "/versions/" + program.getVersion();
     String url = String.format("apps/%s%s/%s/%s/runs?status=running", program.getApplication(), urlAppVersionPart,
                                program.getType().getCategoryName(), program.getProgram());
-    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
-    // killed runs size should be 1 from the first run
+    //active size should be 1
+    historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
+    // completed runs size should be 1
     url = String.format("apps/%s%s/%s/%s/runs?status=killed", program.getApplication(), urlAppVersionPart,
                         program.getType().getCategoryName(), program.getProgram());
     historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
-    // stop the second run
     stopProgram(program, null, 200, null);
-    verifyProgramRuns(program, ProgramRunStatus.KILLED);
+    waitState(program, STOPPED);
 
     historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 2);
   }

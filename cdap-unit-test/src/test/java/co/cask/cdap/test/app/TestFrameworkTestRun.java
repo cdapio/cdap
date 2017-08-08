@@ -443,7 +443,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
 
     FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME).start();
-    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 1, 10, TimeUnit.SECONDS);
     StreamManager streamManager = getStreamManager(streamName);
     streamManager.send("abcd");
     streamManager.send("xyz");
@@ -834,7 +833,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(5); // Sleep for five seconds to make sure scheduled workflows are pending to run
+    TimeUnit.SECONDS.sleep(3); // Sleep for three seconds to make sure scheduled workflows are pending to run
     // All runs should be completed
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -863,8 +862,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     //Check that after resume it goes to "SCHEDULED" state
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SCHEDULED);
 
-    wfmanager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
-
     // Make sure new runs happens after resume
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -892,18 +889,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(2, workflowToken.getTokenData().size());
 
-    // Wait for all workflow runs to finish execution, in case more than one run happened with an enabled schedule
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        for (RunRecord meta : wfmanager.getHistory()) {
-          if (meta.getStatus() != ProgramRunStatus.COMPLETED) {
-            return false;
-          }
-        }
-        return true;
-      }
-    }, 10, TimeUnit.SECONDS);
+    // Wait until workflow finishes execution
+    waitForWorkflowStatus(wfmanager, ProgramRunStatus.COMPLETED);
 
     // Verify workflow token after workflow completion
     WorkflowTokenNodeDetail workflowTokenAtNode =
@@ -1014,7 +1001,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
-    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.

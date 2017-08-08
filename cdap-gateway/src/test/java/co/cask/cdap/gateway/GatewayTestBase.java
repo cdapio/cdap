@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.StreamService;
@@ -39,13 +38,10 @@ import co.cask.cdap.gateway.router.NettyRouter;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
-import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -53,10 +49,8 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -71,18 +65,16 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -97,8 +89,6 @@ public abstract class GatewayTestBase {
 
   private static final String hostname = "127.0.0.1";
   private static int port;
-
-  private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -122,7 +112,6 @@ public abstract class GatewayTestBase {
   private static DatasetService datasetService;
   private static NotificationService notificationService;
   private static StreamService streamService;
-  private static MessagingService messagingService;
   protected static NamespaceAdmin namespaceAdmin;
   private static TemporaryFolder tmpFolder = new TemporaryFolder();
 
@@ -194,10 +183,6 @@ public abstract class GatewayTestBase {
       })
     );
 
-    messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).startAndWait();
-    }
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);
@@ -244,9 +229,6 @@ public abstract class GatewayTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
-    if (messagingService instanceof Service) {
-      ((Service) messagingService).stopAndWait();
-    }
     conf.clear();
   }
 
@@ -266,6 +248,19 @@ public abstract class GatewayTestBase {
     return new URI("http://" + hostname + ":" + port + path);
   }
 
+  protected static void waitState(String programType, String appId, String programId, String state) throws Exception {
+    int trials = 0;
+    // it may take a while for workflow/mr to start...
+    while (trials++ < 20) {
+      String status = getState(programType, appId, programId);
+      if (status != null && state.equals(status)) {
+        break;
+      }
+      TimeUnit.SECONDS.sleep(1);
+    }
+    Assert.assertTrue(trials < 20);
+  }
+
   protected static String getState(String programType, String appId, String programId) throws Exception {
     HttpResponse response = GatewayFastTestsSuite.doGet(String.format("/v3/namespaces/default/apps/%s/%s/%s/status",
                                                                       appId, programType, programId));
@@ -274,21 +269,5 @@ public abstract class GatewayTestBase {
       return status.get("status").getAsString();
     }
     return null;
-  }
-
-  protected static void waitForProgramRuns(final String programType, final String appId, final String programId,
-                                            final ProgramRunStatus runStatus, final int expected)
-    throws Exception {
-
-    Tasks.waitFor(expected, new Callable<Integer>() {
-      @Override
-      public Integer call() throws Exception {
-        HttpResponse response = GatewayFastTestsSuite.doGet(
-                                  String.format("/v3/namespaces/default/apps/%s/%s/%s/runs?status=%s&start=%d&end=%d",
-                                                appId, programType, programId, runStatus, 0, Long.MAX_VALUE));
-        List<RunRecord> records = GSON.fromJson(EntityUtils.toString(response.getEntity()), RUN_RECORDS_TYPE);
-        return records.size();
-      }
-    }, 10, TimeUnit.SECONDS);
   }
 }

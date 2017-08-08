@@ -25,7 +25,6 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
@@ -62,7 +61,7 @@ import javax.annotation.Nullable;
  *   For TMS MessageId:
  *     'M':<topic>
  */
-public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicMessageIdStore {
+public class JobQueueDataset extends AbstractDataset implements JobQueue {
   private static final Logger LOG = LoggerFactory.getLogger(JobQueueDataset.class);
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
