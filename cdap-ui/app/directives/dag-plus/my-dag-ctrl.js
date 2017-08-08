@@ -478,6 +478,7 @@ angular.module(PKG.name + '.commons')
         vm.instance.bind('beforeDrop', checkIfConnectionExistsOrValid);
         vm.instance.bind('beforeStartDetach', onStartDetach);
         vm.instance.bind('beforeDrag', onBeforeDrag);
+        vm.instance.bind('click', selectEndpointOrConnection);
 
         if (commentsTimeout) {
           vm.comments = DAGPlusPlusNodesStore.getComments();
