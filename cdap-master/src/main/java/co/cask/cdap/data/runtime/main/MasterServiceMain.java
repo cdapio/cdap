@@ -938,6 +938,9 @@ public class MasterServiceMain extends DaemonMain {
           // Set the container to use MainClassLoader for class rewriting
           preparer.setClassLoader(MainClassLoader.class.getName());
 
+          // Set per service configurations
+          prepareServiceConfig(preparer, masterTwillApp.getRunnableConfigPrefixes());
+
           TwillController controller = preparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                       TimeUnit.SECONDS);
 
@@ -1001,6 +1004,36 @@ public class MasterServiceMain extends DaemonMain {
         }
       }
       return instanceCountMap;
+    }
+
+    /**
+     * Sets the configurations for each service.
+     */
+    private TwillPreparer prepareServiceConfig(TwillPreparer preparer, Map<String, String> runnableConfigPrefixes) {
+      for (Map.Entry<String, String> entry : runnableConfigPrefixes.entrySet()) {
+        String runnableName = entry.getKey();
+        String configPrefix = entry.getValue() + "twill.";
+
+        Map<String, String> config = new HashMap<>();
+        for (Map.Entry<String, String> confEntry : cConf) {
+          if (confEntry.getKey().startsWith(configPrefix)) {
+            // Get the key that twill recognize, which is prefixed with "twill."
+            String key = confEntry.getKey().substring(entry.getValue().length());
+            // Special case for jvm options.
+            if ("twill.jvm.opts".equals(key)) {
+              preparer.setJVMOptions(runnableName, confEntry.getValue());
+            } else {
+              config.put(key, confEntry.getValue());
+            }
+          }
+        }
+
+        if (!config.isEmpty()) {
+          preparer.withConfiguration(runnableName, config);
+        }
+      }
+
+      return preparer;
     }
 
 

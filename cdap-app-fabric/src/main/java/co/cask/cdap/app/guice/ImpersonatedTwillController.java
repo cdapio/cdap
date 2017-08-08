@@ -116,6 +116,11 @@ final class ImpersonatedTwillController implements TwillController {
   }
 
   @Override
+  public Future<String> restartInstances(String runnable, Set<Integer> instanceIds) {
+    return delegate.restartInstances(runnable, instanceIds);
+  }
+
+  @Override
   public Future<Map<String, LogEntry.Level>> updateLogLevels(Map<String, LogEntry.Level> logLevels) {
     return delegate.updateLogLevels(logLevels);
   }

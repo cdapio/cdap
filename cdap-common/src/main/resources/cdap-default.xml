@@ -192,7 +192,8 @@
     <name>twill.java.reserved.memory.mb</name>
     <value>250</value>
     <description>
-      Reserved non-heap memory in megabytes for Apache Twill container
+      Desired reserved non-heap memory in megabytes for Apache Twill container.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
     </description>
   </property>
 
@@ -239,7 +240,8 @@
     <name>twill.yarn.am.reserved.memory.mb</name>
     <value>${twill.java.reserved.memory.mb}</value>
     <description>
-      Reserved non-heap memory in megabytes for Apache Twill application master container
+      Desired reserved non-heap memory in megabytes for Apache Twill application master container.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} of the ${twill.yarn.am.memory.mb} setting.
     </description>
   </property>
 
@@ -1748,6 +1750,25 @@
     <value>604800</value>
     <description>
       The default time-to-live in seconds for messages in a topic
+    </description>
+  </property>
+
+  <property>
+    <!-- Use lower heap memory ratio for the messaging service, since it uses non-heap memory for the connections -->
+    <name>messaging.twill.java.heap.memory.ratio</name>
+    <value>0.6</value>
+    <description>
+      The minimum ratio of heap to non-heap memory for the messaging service container
+    </description>
+  </property>
+
+  <property>
+    <!-- Use higher reserved memory setting for the messaging service, since it uses non-heap memory for connections -->
+    <name>messaging.twill.java.reserved.memory.mb</name>
+    <value>512</value>
+    <description>
+      Desired reserved non-heap memory in megabytes for the messaging service container.
+      The actual value is bounded by the ${twill.java.heap.memory.ratio} setting of the container memory size.
     </description>
   </property>
 
