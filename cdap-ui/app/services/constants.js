@@ -48,7 +48,8 @@ angular.module(PKG.name + '.services')
         'batchjoiner': 'batchjoiner',
         'windower': 'windower',
         'errortransform': 'errortransform',
-        'sparkprogram': 'sparkprogram'
+        'sparkprogram': 'sparkprogram',
+        'alertpublisher': 'alertpublisher'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -65,7 +66,8 @@ angular.module(PKG.name + '.services')
         'batchjoiner': 'batchjoiner',
         'action': 'action',
         'errortransform': 'errortransform',
-        'sparkprogram': 'sparkprogram'
+        'sparkprogram': 'sparkprogram',
+        'alertpublisher': 'alertpublisher'
       },
       'post-run-actions': {
         'email': 'Send Email',
@@ -87,7 +89,8 @@ angular.module(PKG.name + '.services')
       'streamingsource': pluginLabels['source'],
       'windower': pluginLabels['transform'],
       'errortransform': pluginLabels['errortransform'],
-      'sparkprogram': pluginLabels['action']
+      'sparkprogram': pluginLabels['action'],
+      'alertpublisher': pluginLabels['transform']
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -106,7 +109,8 @@ angular.module(PKG.name + '.services')
       'batchjoiner': 'transform',
       'action': 'action',
       'errortransform': 'transform',
-      'sparkprogram': 'action'
+      'sparkprogram': 'action',
+      'alertpublisher': 'transform'
     },
 
     artifactConvert: {
