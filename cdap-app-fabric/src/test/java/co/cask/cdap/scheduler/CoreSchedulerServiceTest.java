@@ -64,6 +64,7 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -344,22 +345,25 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   public void testProgramEvents() throws Exception {
     // Deploy the app
     deploy(AppWithMultipleSchedules.class);
-
     CConfiguration cConf = CConfiguration.create();
 
-    // Override the topic so that sending notifications from the program state writer go directly to the scheduler
-    // instead of through the ProgramNotificationSubscriberService
-    // The notifications should not be persisted to the store
-    cConf.set(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC,
-              cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
-    TopicId programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+    TopicId programEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(cConf, messagingService);
 
-    long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
     // These notifications should not trigger the program
-    programStateWriter.error(ANOTHER_WORKFLOW.run(RunIds.generate()), null);
-    programStateWriter.killed(SOME_WORKFLOW.run(RunIds.generate()));
+    ProgramRunId anotherWorkflowRun = ANOTHER_WORKFLOW.run(RunIds.generate());
+    programStateWriter.start(anotherWorkflowRun, new SimpleProgramOptions(anotherWorkflowRun.getParent()), null);
+    programStateWriter.running(anotherWorkflowRun, null);
+    long lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    programStateWriter.error(anotherWorkflowRun, null);
+    waitUntilProcessed(programEventTopic, lastProcessed);
+
+    ProgramRunId someWorkflowRun = SOME_WORKFLOW.run(RunIds.generate());
+    programStateWriter.start(someWorkflowRun, new SimpleProgramOptions(someWorkflowRun.getParent()), null);
+    programStateWriter.running(someWorkflowRun, null);
+    lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    programStateWriter.killed(someWorkflowRun);
     waitUntilProcessed(programEventTopic, lastProcessed);
     Assert.assertEquals(0, getRuns(TRIGGERED_WORKFLOW));
 
@@ -372,22 +376,18 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
     waitForCompleteRuns(1, ANOTHER_WORKFLOW);
 
-    // Wait for a notification to come to the scheduler
-    waitUntilProcessed(programEventTopic, lastProcessed);
-
     // Wait for a completed run record
     assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
 
-    ProgramRunId latestRun = getLatestRun(TRIGGERED_WORKFLOW);
+    RunRecord latestRun = getProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED).get(0);
     WorkflowId scheduledWorkflow = TRIGGERED_WORKFLOW.getParent().workflow(TRIGGERED_WORKFLOW.getProgram());
-    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getRun());
+    WorkflowToken runToken = store.getWorkflowToken(scheduledWorkflow, latestRun.getPid());
 
     // The triggered workflow should contain the workflow token sent from the notification of the triggering program
     Assert.assertEquals(Value.of(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_VALUE),
                         runToken.get(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_KEY));
 
-    RunRecordMeta record = store.getRun(latestRun.getParent(), latestRun.getRun());
-    Map<String, String> userOverrides = GSON.fromJson(record.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
+    Map<String, String> userOverrides = GSON.fromJson(latestRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
                                                       STRING_STRING_MAP);
     Assert.assertEquals(dummyUserValue, userOverrides.get(dummyUserKey));
   }

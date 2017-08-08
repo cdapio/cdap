@@ -647,9 +647,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
 
     if (triggerProgramStatuses == null) {
-      queryProgramStatuses = ImmutableSet.of(co.cask.cdap.api.ProgramStatus.COMPLETED,
-                                             co.cask.cdap.api.ProgramStatus.FAILED,
-                                             co.cask.cdap.api.ProgramStatus.KILLED);
+      queryProgramStatuses = co.cask.cdap.api.ProgramStatus.TERMINAL_STATES();
     } else {
       for (String status : triggerProgramStatuses.split(",")) {
         try {

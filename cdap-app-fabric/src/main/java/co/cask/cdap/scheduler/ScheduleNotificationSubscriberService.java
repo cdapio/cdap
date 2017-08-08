@@ -42,6 +42,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -192,7 +193,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
    */
   private class ProgramStatusEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
     ProgramStatusEventNotificationSubscriberThread() {
-      super(cConf.get(Constants.Scheduler.PROGRAM_STATUS_EVENT_TOPIC));
+      super(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     }
 
     @Override
@@ -206,11 +207,11 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       try {
         programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
       } catch (IllegalArgumentException e) {
-        LOG.warn("Invalid program status {} passed for programId {}", programRunStatusString, programRunIdString, e);
-        // Fall through, let the thread return normally
+        // Return silently, this happens for statuses that are not meant to be scheduled
+        return;
       }
 
-      // Ignore notifications which specify an invalid ProgramId, RunId, or ProgramStatus
+      // Ignore notifications which specify an invalid programRunId or programStatus
       if (programRunIdString == null || programStatus == null) {
         return;
       }
@@ -219,39 +220,56 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       ProgramId programId = programRunId.getParent();
       String runId = programRunId.getRun();
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
-      RunRecordMeta triggeringProgramRun = getAppMetadataStore(context).getRun(programId, runId);
-      WorkflowToken triggeringWorkflowToken = getAppMetadataStore(context).getWorkflowToken(programId, runId);
+      Collection<ProgramScheduleRecord> triggeredSchedules = getSchedules(context, triggerKeyForProgramStatus);
 
-      for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
-        if (schedule.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED) {
-          // Copy over the user properties
-          Map<String, String> triggeredProgramProperties = new HashMap<>();
-          triggeredProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
-                                         triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS));
+      RunRecordMeta triggeringProgramRun = null;
+      WorkflowToken triggeringWorkflowToken = null;
 
-          // If the triggered program is a workflow, send the notification that contains just the USER workflow token
-          if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
-            programId.getType() == ProgramType.WORKFLOW) {
-
-            // Copy over the workflow token and extract just the user scoped keys
-            Map<String, List<NodeValue>> userValues = triggeringWorkflowToken.getAll(WorkflowToken.Scope.USER);
-
-            BasicWorkflowToken userWorkflowToken = new BasicWorkflowToken(
-              cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
-            userWorkflowToken.setCurrentNode(programId.getProgram());
-
-            for (Map.Entry<String, List<NodeValue>> entry : userValues.entrySet()) {
-              for (NodeValue nodeValue : entry.getValue()) {
-                userWorkflowToken.put(entry.getKey(), nodeValue.getValue());
-              }
-            }
-            triggeredProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
+      // Only fetch the triggering program information if there is at least one triggered and enabled schedule
+      Collection<ProgramScheduleRecord> enabledSchedules =
+        Collections2.filter(triggeredSchedules, new com.google.common.base.Predicate<ProgramScheduleRecord>() {
+          @Override
+          public boolean apply(ProgramScheduleRecord programScheduleRecord) {
+            return programScheduleRecord.getMeta().getStatus() == ProgramScheduleStatus.SCHEDULED;
           }
+        });
 
-          Notification triggeringProgram = new Notification(Notification.Type.PROGRAM_STATUS,
-                                                            triggeredProgramProperties);
-          getJobQueue(context).addNotification(schedule, triggeringProgram);
+      if (!enabledSchedules.isEmpty()) {
+        triggeringProgramRun = getAppMetadataStore(context).getRun(programId, runId);
+        triggeringWorkflowToken = getAppMetadataStore(context).getWorkflowToken(programId, runId);
+      }
+
+      for (ProgramScheduleRecord schedule : enabledSchedules) {
+        // Copy over the user runtime arguments
+        // TODO renaming done in a constraint?
+        Map<String, String> triggeredProgramProperties = new HashMap<>();
+        triggeredProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
+                                       triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS));
+
+        // TODO do we not copy over the workflow token?
+        // If the triggered program is a workflow, send the notification that contains just the USER workflow token
+        if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
+          programId.getType() == ProgramType.WORKFLOW) {
+
+          // Copy over the workflow token and extract just the user scoped keys
+          Map<String, List<NodeValue>> userValues = triggeringWorkflowToken.getAll(WorkflowToken.Scope.USER);
+
+          BasicWorkflowToken userWorkflowToken = new BasicWorkflowToken(
+            cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
+          userWorkflowToken.setCurrentNode(programId.getProgram());
+
+          for (Map.Entry<String, List<NodeValue>> entry : userValues.entrySet()) {
+            for (NodeValue nodeValue : entry.getValue()) {
+              userWorkflowToken.put(entry.getKey(), nodeValue.getValue());
+            }
+          }
+          triggeredProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
         }
+
+        // TODO send triggering program metadata? encode in system args, extract in AbstractContext as a readable format?
+        Notification triggeredProgramNotification = new Notification(Notification.Type.PROGRAM_STATUS,
+                                                                     triggeredProgramProperties);
+        getJobQueue(context).addNotification(schedule, triggeredProgramNotification);
       }
     }
   }

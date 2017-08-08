@@ -83,7 +83,7 @@ public class Schedulers {
   }
 
   public static String triggerKeyForProgramStatus(ProgramId programId, ProgramStatus programStatus) {
-    return programId.toString() + "." + programStatus.toString().toLowerCase();
+    return programId.toString() + "." + programStatus.name().toLowerCase();
   }
 
   public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {
