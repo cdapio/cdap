@@ -21,11 +21,11 @@ import javax.annotation.Nullable;
 /**
  * Simple class to hold the condition branch information.
  */
-class ConditionBranches {
+public class ConditionBranches {
   private final String trueOutput;
   private final String falseOutput;
 
-  ConditionBranches(@Nullable String trueOutput, @Nullable String falseOutput) {
+  public ConditionBranches(@Nullable String trueOutput, @Nullable String falseOutput) {
     this.trueOutput = trueOutput;
     this.falseOutput = falseOutput;
   }

@@ -47,6 +47,11 @@ public class ControlDag extends Dag {
     this.nodeVisits = HashMultiset.create();
   }
 
+  public ControlDag(Dag dag) {
+    super(dag);
+    this.nodeVisits = HashMultiset.create();
+  }
+
   /**
    * Record that this node was visited.
    *

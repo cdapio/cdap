@@ -60,23 +60,30 @@ import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.planner.ConditionBranches;
 import co.cask.cdap.etl.planner.ControlDag;
+import co.cask.cdap.etl.planner.Dag;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
+import co.cask.cdap.etl.proto.Connection;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
@@ -183,8 +190,61 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     dag = new ControlDag(plan.getPhaseConnections());
-    // after flattening, there is guaranteed to be just one source
-    dag.flatten();
+    if (plan.getConditionPhaseBranches().isEmpty()) {
+      // after flattening, there is guaranteed to be just one source
+      dag.flatten();
+    } else {
+      Map<String, ConditionBranches> conditionBranches = plan.getConditionPhaseBranches();
+      Set<String> conditions = conditionBranches.keySet();
+      // flatten only the part of the dag starting from sources and ending in conditions/sinks.
+      Set<String> dagNodes = dag.accessibleFrom(dag.getSources(), Sets.union(dag.getSinks(), conditions));
+      Set<String> dagNodesWithoutCondition = Sets.difference(dagNodes, conditions);
+      Dag subDag = dag.createSubDag(dagNodesWithoutCondition);
+      ControlDag cdag = new ControlDag(subDag);
+      cdag.flatten();
+
+      Set<Connection> connections = new HashSet<>();
+      // Add all connections from cdag
+      Deque<String> bfs = new LinkedList<>();
+      bfs.addAll(cdag.getSources());
+      while (bfs.peek() != null) {
+        String node = bfs.poll();
+        for (String output : cdag.getNodeOutputs(node)) {
+          connections.add(new Connection(node, output));
+          bfs.add(output);
+        }
+      }
+
+      // Add back the existing condition nodes and corresponding conditions
+      Set<String> conditionsFromDag = Sets.intersection(dagNodes, conditions);
+      for (String condition : conditionsFromDag) {
+        connections.add(new Connection(cdag.getSinks().iterator().next(), condition));
+      }
+      bfs.addAll(Sets.intersection(dagNodes, conditions));
+      while (bfs.peek() != null) {
+        String node = bfs.poll();
+        ConditionBranches branches = conditionBranches.get(node);
+        if (branches == null) {
+          // not a condition node. add outputs
+          for (String output : dag.getNodeOutputs(node)) {
+            connections.add(new Connection(node, output));
+            bfs.add(output);
+          }
+        } else {
+          // condition node
+          for (Boolean condition : Arrays.asList(true, false)) {
+            String phase = condition ? branches.getTrueOutput() : branches.getFalseOutput();
+            if (phase == null) {
+              continue;
+            }
+            connections.add(new Connection(node, phase, condition));
+            bfs.add(phase);
+          }
+        }
+      }
+      dag = new ControlDag(connections);
+    }
+
     String start = dag.getSources().iterator().next();
     addPrograms(start, getConfigurer());
   }
@@ -299,6 +359,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       }
     } else {
       addPrograms(outputs.iterator().next(), configurer);
+
     }
   }
 
