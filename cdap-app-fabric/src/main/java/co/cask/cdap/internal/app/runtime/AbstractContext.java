@@ -50,6 +50,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
+import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -148,7 +149,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.runId = ProgramRunners.getRunId(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
-    this.programMetrics = createProgramMetrics(program, runId, metricsService, metricsTags);
+    this.programMetrics = createProgramMetrics(program, runId,
+                                               cConf.getBoolean(Constants.Metrics.EMIT_PRGOGRAM_CONTAINER_METRICS) ?
+                                                 metricsService : new NoOpMetricsCollectionService(), metricsTags);
     this.userMetrics = new ProgramUserMetrics(programMetrics);
     this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
                                                           program.getType(),

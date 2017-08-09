@@ -1988,6 +1988,15 @@
     </description>
   </property>
 
+  <property>
+    <name>app.program.metrics.enabled</name>
+    <value>true</value>
+    <description>
+      Enable or disable emitting metrics from user application programs, by default set to true.
+    </description>
+  </property>
+
+
 
   <!-- Monitor Handler Configuration -->
 
