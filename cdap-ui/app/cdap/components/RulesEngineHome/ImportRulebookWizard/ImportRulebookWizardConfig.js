@@ -16,13 +16,16 @@
 
 import React from 'react';
 import RulebookUploadStep from 'components/RulesEngineHome/ImportRulebookWizard/RulebookUploadStep';
+import T from 'i18n-react';
+
+const PREFIX = 'features.RulesEngine.ImportRulebook';
 
 let commonSteps = [
   {
     id: 'upload',
-    shorttitle: 'Import Rulebook',
-    title: 'Upload Rulebook',
-    description: 'Upload your Rulebook file',
+    shorttitle: T.translate(`${PREFIX}.shorttitle`),
+    title: T.translate(`${PREFIX}.title`),
+    description: T.translate(`${PREFIX}.description`),
     content: (<RulebookUploadStep />),
     requiredFields: ['file']
   }
@@ -30,7 +33,7 @@ let commonSteps = [
 
 const RulebookUploadWizardConfig = {
   steps: commonSteps,
-  footertitle: 'Failed to Upload Rulebook'
+  footertitle: T.translate(`${PREFIX}.footertitle`)
 };
 
 

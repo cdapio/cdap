@@ -23,8 +23,10 @@ import {setActiveRulebook, getRuleBooks} from 'components/RulesEngineHome/RulesE
 import Rx from 'rx';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
+import T from 'i18n-react';
 
 require('./ImportRulebookWizard.scss');
+const PREFIX = 'features.RulesEngine.ImportRulebook';
 
 export default class ImportRulebookWizard extends Component {
 
@@ -96,7 +98,7 @@ export default class ImportRulebookWizard extends Component {
   render() {
     return (
       <WizardModal
-        title='Import Rulebook'
+        title={T.translate(`${PREFIX}.shorttitle`)}
         isOpen={this.state.isOpen}
         toggle={this.toggleWizard.bind(this, false)}
         className="rulebook-upload-wizard"
