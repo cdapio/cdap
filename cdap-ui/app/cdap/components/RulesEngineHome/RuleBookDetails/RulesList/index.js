@@ -96,7 +96,11 @@ class RulesList extends Component {
           [hoverIndex, 0, dragRule],
         ],
       },
-    }), this.props.onRuleBookUpdate.bind(null, this.state.rulebookRules));
+    }), () => {
+      if (this.props.onRuleBookUpdate) {
+        this.props.onRuleBookUpdate(this.state.rulebookRules);
+      }
+    });
   };
 
   render() {
