@@ -44,6 +44,12 @@ public abstract class ForwardingTwillPreparer implements TwillPreparer {
   }
 
   @Override
+  public TwillPreparer withConfiguration(String runnableName, Map<String, String> config) {
+    getDelegate().withConfiguration(runnableName, config);
+    return this;
+  }
+
+  @Override
   public TwillPreparer addLogHandler(LogHandler handler) {
     getDelegate().addLogHandler(handler);
     return this;
@@ -65,6 +71,12 @@ public abstract class ForwardingTwillPreparer implements TwillPreparer {
   @Override
   public TwillPreparer setJVMOptions(String options) {
     getDelegate().setJVMOptions(options);
+    return this;
+  }
+
+  @Override
+  public TwillPreparer setJVMOptions(String runnableName, String options) {
+    getDelegate().setJVMOptions(runnableName, options);
     return this;
   }
 

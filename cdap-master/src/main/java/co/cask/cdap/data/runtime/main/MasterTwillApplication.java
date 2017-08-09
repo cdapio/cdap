@@ -31,7 +31,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -70,16 +70,20 @@ public class MasterTwillApplication implements TwillApplication {
   private static final String NAME = Constants.Service.MASTER_SERVICES;
   private static final String CCONF_NAME = "cConf.xml";
   private static final String HCONF_NAME = "hConf.xml";
-  private static final Set<String> ALL_SERVICES = ImmutableSet.of(
-    Constants.Service.MESSAGING_SERVICE,
-    Constants.Service.TRANSACTION,
-    Constants.Service.DATASET_EXECUTOR,
-    Constants.Service.STREAMS,
-    Constants.Service.LOGSAVER,
-    Constants.Service.METRICS_PROCESSOR,
-    Constants.Service.METRICS,
-    Constants.Service.EXPLORE_HTTP_USER_SERVICE
-  );
+
+  // A map from service name to cConf configuration key prefix for service specific container configuration
+  // They are not necessarily the same (e.g. "transaction" vs "data.tx").
+  // We follow the same naming prefix for configuring containers' memory/vcores.
+  private static final Map<String, String> ALL_SERVICES = ImmutableMap.<String, String>builder()
+    .put(Constants.Service.MESSAGING_SERVICE, "messaging.")
+    .put(Constants.Service.TRANSACTION, "data.tx.")
+    .put(Constants.Service.DATASET_EXECUTOR, "dataset.executor.")
+    .put(Constants.Service.STREAMS, "stream.")
+    .put(Constants.Service.LOGSAVER, "log.saver.")
+    .put(Constants.Service.METRICS_PROCESSOR, "metrics.processor.")
+    .put(Constants.Service.METRICS, "metrics.")
+    .put(Constants.Service.EXPLORE_HTTP_USER_SERVICE, "explore.executor.")
+    .build();
 
   private final CConfiguration cConf;
 
@@ -91,7 +95,7 @@ public class MasterTwillApplication implements TwillApplication {
     this.instanceCountMap = instanceCountMap;
 
     Map<String, Map<String, LocalizeResource>> runnableLocalizeResources = new HashMap<>();
-    for (String service : ALL_SERVICES) {
+    for (String service : ALL_SERVICES.keySet()) {
       runnableLocalizeResources.put(service, new HashMap<String, LocalizeResource>());
     }
     this.runnableLocalizeResources = runnableLocalizeResources;
@@ -125,13 +129,20 @@ public class MasterTwillApplication implements TwillApplication {
     Path cConfPath = saveCConf(containerCConf, Files.createTempFile(tempDir, "cConf", ".xml"));
     Path hConfPath = saveHConf(hConf, Files.createTempFile(tempDir, "hConf", ".xml"));
 
-    for (String service : ALL_SERVICES) {
+    for (String service : ALL_SERVICES.keySet()) {
       Map<String, LocalizeResource> localizeResources = runnableLocalizeResources.get(service);
       localizeResources.put(CCONF_NAME, new LocalizeResource(cConfPath.toFile(), false));
       localizeResources.put(HCONF_NAME, new LocalizeResource(hConfPath.toFile(), false));
     }
 
     return extraClassPath;
+  }
+
+  /**
+   * Returns a map from runnable name to configuration prefixes.
+   */
+  Map<String, String> getRunnableConfigPrefixes() {
+    return ALL_SERVICES;
   }
 
   @Override
@@ -432,7 +443,7 @@ public class MasterTwillApplication implements TwillApplication {
 
     final File target = new File(tempDir.toFile(), "hbaseddlext.jar");
     BundleJarUtil.createJar(new File(ddlExecutorExtensionDir), target);
-    for (String service : ALL_SERVICES) {
+    for (String service : ALL_SERVICES.keySet()) {
       Map<String, LocalizeResource> localizeResourceMap = runnableLocalizeResources.get(service);
       localizeResourceMap.put(target.getName(), new LocalizeResource(target, true));
     }
