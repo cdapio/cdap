@@ -22,6 +22,8 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
+import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -69,8 +71,9 @@ public class DynamicSparkCompute<T, U> extends SparkCompute<T, U> {
       Transactionals.execute(sec, new TxRunnable() {
         @Override
         public void run(DatasetContext datasetContext) throws Exception {
+          PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
           SparkExecutionPluginContext sparkPluginContext =
-            new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, stageSpec);
+            new BasicSparkExecutionPluginContext(sec, jsc, datasetContext, pipelineRuntime, stageSpec);
           delegate.initialize(sparkPluginContext);
         }
       }, Exception.class);

@@ -48,12 +48,13 @@ import co.cask.cdap.etl.batch.UnwrapPipeStage;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.batch.join.Join;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.TrackedMultiOutputTransform;
 import co.cask.cdap.etl.common.TrackedTransform;
@@ -87,21 +88,20 @@ public class MapReduceTransformExecutorFactory<T> {
   private final MacroEvaluator macroEvaluator;
   private final PipelinePluginInstantiator pluginInstantiator;
   private final Metrics metrics;
-  private final Map<String, Map<String, String>> pluginRuntimeArgs;
   private final MapReduceTaskContext taskContext;
   private final String mapOutputKeyClassName;
   private final String mapOutputValClassName;
   private final int numberOfRecordsPreview;
+  private final BasicArguments arguments;
   private boolean isMapPhase;
 
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
-                                           Map<String, Map<String, String>> pluginRuntimeArgs,
+                                           BasicArguments arguments,
                                            String sourceStageName,
                                            int numberOfRecordsPreview) {
     this.taskContext = taskContext;
-    this.pluginRuntimeArgs = pluginRuntimeArgs;
     this.numberOfRecordsPreview = numberOfRecordsPreview;
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
@@ -115,15 +115,12 @@ public class MapReduceTransformExecutorFactory<T> {
     this.mapOutputKeyClassName = hConf.get(ETLMapReduce.MAP_KEY_CLASS);
     this.mapOutputValClassName = hConf.get(ETLMapReduce.MAP_VAL_CLASS);
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
+    this.arguments = arguments;
   }
 
   private MapReduceRuntimeContext createRuntimeContext(StageSpec stageInfo) {
-    Map<String, String> stageRuntimeArgs = pluginRuntimeArgs.get(stageInfo.getName());
-    if (stageRuntimeArgs == null) {
-      stageRuntimeArgs = new HashMap<>();
-    }
-    return new MapReduceRuntimeContext(taskContext, metrics, new DatasetContextLookupProvider(taskContext),
-                                       stageRuntimeArgs, stageInfo);
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(taskContext, metrics, arguments);
+    return new MapReduceRuntimeContext(taskContext, pipelineRuntime, stageInfo);
   }
 
   private <IN, ERROR> TrackedMultiOutputTransform<IN, ERROR> getMultiOutputTransform(StageSpec stageSpec)

@@ -27,22 +27,11 @@ import co.cask.cdap.etl.api.StageContext;
 public interface ActionContext extends StageContext, Transactional, SecureStore, SecureStoreManager {
 
   /**
-   * Returns the logical start time of the batch job which triggers this instance of an action.
-   * Logical start time is the time when the triggering Batch job is supposed to start if it is
-   * started by the scheduler. Otherwise it would be the current time when the action runs.
+   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so plugins should be
+   * careful to prefix any arguments that should not be clobbered by other pipeline stages.
    *
-   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
-   */
-  long getLogicalStartTime();
-
-  /**
-   * Return the arguments which can be updated.
+   * @return settable pipeline arguments
    */
   SettableArguments getArguments();
-
-  /**
-   * @return The application namespace
-   */
-  String getNamespace();
 
 }

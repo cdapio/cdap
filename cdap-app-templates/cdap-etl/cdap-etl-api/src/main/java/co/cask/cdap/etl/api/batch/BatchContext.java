@@ -17,11 +17,14 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.InstanceConflictException;
+import co.cask.cdap.etl.api.Arguments;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.api.action.SettableArguments;
 
 import java.util.Map;
 
@@ -52,19 +55,21 @@ public interface BatchContext extends DatasetContext, TransformContext {
   boolean datasetExists(String datasetName) throws DatasetManagementException;
 
   /**
-   * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
+   * Returns settable pipeline arguments. These arguments are shared by all pipeline stages, so plugins should be
+   * careful to prefix any arguments that should not be clobbered by other pipeline stages.
    *
-   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
+   * @return settable pipeline arguments
    */
-  long getLogicalStartTime();
+  @Override
+  SettableArguments getArguments();
 
   /**
    * Returns runtime arguments of the Batch Job.
    *
    * @return runtime arguments of the Batch Job.
+   * @deprecated use {@link #getArguments()} instead
    */
+  @Deprecated
   Map<String, String> getRuntimeArguments();
 
   /**
@@ -74,13 +79,9 @@ public interface BatchContext extends DatasetContext, TransformContext {
    * @param value value to update to
    * @param overwrite if {@code true} and if the key exists in the runtime arguments, it will get overwritten to
    *                  the given value; if {@code false}, the existing value of the key won't get updated.
-   */
-  void setRuntimeArgument(String key, String value, boolean overwrite);
-
-  /**
-   * Returns the hadoop job.
-   * @deprecated this method will be removed.
+   * @deprecated use {@link #getArguments()} instead
    */
   @Deprecated
-  <T> T getHadoopJob();
+  void setRuntimeArgument(String key, String value, boolean overwrite);
+
 }

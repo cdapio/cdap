@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.spark.batch;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -24,6 +25,7 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
@@ -40,6 +42,7 @@ import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.Finisher;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
@@ -126,6 +129,8 @@ public class ETLSpark extends AbstractSpark {
     PluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics(),
                                                                  phaseSpec.isStageLoggingEnabled(),
                                                                  phaseSpec.isProcessTimingEnabled());
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
+    Admin admin = context.getAdmin();
 
     for (StageSpec stageSpec : phaseSpec.getPhase()) {
       String stageName = stageSpec.getName();
@@ -133,28 +138,32 @@ public class ETLSpark extends AbstractSpark {
 
       if (BatchSource.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<BatchSourceContext> batchSource = pluginContext.newPluginInstance(stageName, evaluator);
-        BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context, stageSpec);
+        BatchSourceContext sourceContext = new SparkBatchSourceContext(sourceFactory, context,
+                                                                       pipelineRuntime, stageSpec);
         batchSource.prepareRun(sourceContext);
         finishers.add(batchSource, sourceContext);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(stageName, evaluator);
-        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, null, stageSpec);
+        BatchSinkContext sinkContext = new SparkBatchSinkContext(sinkFactory, context, pipelineRuntime, stageSpec);
         batchSink.prepareRun(sinkContext);
         finishers.add(batchSink, sinkContext);
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
         BatchConfigurable<SparkPluginContext> sparkSink = pluginContext.newPluginInstance(stageName, evaluator);
-        SparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, stageSpec);
+        SparkPluginContext sparkPluginContext = new BasicSparkPluginContext(context, pipelineRuntime, stageSpec,
+                                                                            context, admin);
         sparkSink.prepareRun(sparkPluginContext);
         finishers.add(sparkSink, sparkPluginContext);
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
         BatchAggregator aggregator = pluginContext.newPluginInstance(stageName, evaluator);
-        DefaultAggregatorContext aggregatorContext = new DefaultAggregatorContext(context, stageSpec);
+        DefaultAggregatorContext aggregatorContext = new DefaultAggregatorContext(pipelineRuntime, stageSpec,
+                                                                                  context, admin);
         aggregator.prepareRun(aggregatorContext);
         finishers.add(aggregator, aggregatorContext);
         stagePartitions.put(stageName, aggregatorContext.getNumPartitions());
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         BatchJoiner joiner = pluginContext.newPluginInstance(stageName, evaluator);
-        DefaultJoinerContext sparkJoinerContext = new DefaultJoinerContext(context, stageSpec);
+        DefaultJoinerContext sparkJoinerContext = new DefaultJoinerContext(pipelineRuntime, stageSpec,
+                                                                           context, admin);
         joiner.prepareRun(sparkJoinerContext);
         finishers.add(joiner, sparkJoinerContext);
         stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
@@ -172,6 +181,13 @@ public class ETLSpark extends AbstractSpark {
 
     finisher = finishers.build();
     context.localize("HydratorSpark.config", configFile.toURI());
+
+    WorkflowToken token = context.getWorkflowToken();
+    if (token != null) {
+      for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
+        token.put(entry.getKey(), entry.getValue());
+      }
+    }
   }
 
   @Override

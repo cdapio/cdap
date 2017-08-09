@@ -25,10 +25,10 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
-import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
@@ -86,8 +86,8 @@ public class PipelineAction extends AbstractCustomAction {
                                                                 context.getLogicalStartTime(),
                                                                 context,
                                                                 context.getNamespace()));
-    BasicArguments arguments = new BasicArguments(context);
-    ActionContext actionContext = new BasicActionContext(context, metrics, stageSpec, arguments);
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
+    ActionContext actionContext = new BasicActionContext(context, pipelineRuntime, stageSpec);
     if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {
       action.run(actionContext);
     }
@@ -95,7 +95,7 @@ public class PipelineAction extends AbstractCustomAction {
     if (token == null) {
       throw new IllegalStateException("WorkflowToken cannot be null when action is executed through Workflow.");
     }
-    for (Map.Entry<String, String> entry : arguments.getAddedArguments().entrySet()) {
+    for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
       token.put(entry.getKey(), entry.getValue());
     }
   }

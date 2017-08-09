@@ -25,10 +25,12 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import co.cask.cdap.etl.spark.streaming.function.ComputeTransformFunction;
 import co.cask.cdap.etl.spark.streaming.function.CountingTransformFunction;
@@ -120,9 +122,10 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     Transactionals.execute(sec, new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
+        PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
         SparkExecutionPluginContext sparkPluginContext =
           new BasicSparkExecutionPluginContext(sec, JavaSparkContext.fromSparkContext(stream.context().sparkContext()),
-                                               datasetContext, stageSpec);
+                                               datasetContext, pipelineRuntime, stageSpec);
         wrappedCompute.initialize(sparkPluginContext);
       }
     }, Exception.class);

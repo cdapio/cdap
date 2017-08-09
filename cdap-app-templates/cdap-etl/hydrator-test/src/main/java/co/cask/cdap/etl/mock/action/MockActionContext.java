@@ -99,6 +99,11 @@ public class MockActionContext implements ActionContext {
     return null;
   }
 
+  @Override
+  public Map<String, Schema> getOutputPortSchemas() {
+    return Collections.emptyMap();
+  }
+
   @Nullable
   @Override
   public URL getServiceURL(String applicationId, String serviceId) {
@@ -116,6 +121,11 @@ public class MockActionContext implements ActionContext {
   @Override
   public String getNamespace() {
     return NamespaceId.DEFAULT.getNamespace();
+  }
+
+  @Override
+  public String getPipelineName() {
+    return null;
   }
 
   @Override

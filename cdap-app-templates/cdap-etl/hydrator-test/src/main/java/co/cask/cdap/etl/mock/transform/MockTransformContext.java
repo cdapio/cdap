@@ -88,6 +88,21 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public String getNamespace() {
+    return null;
+  }
+
+  @Override
+  public String getPipelineName() {
+    return null;
+  }
+
+  @Override
+  public long getLogicalStartTime() {
+    return 0;
+  }
+
+  @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return null;
   }
@@ -107,6 +122,11 @@ public class MockTransformContext implements TransformContext {
   @Override
   public Schema getOutputSchema() {
     return null;
+  }
+
+  @Override
+  public Map<String, Schema> getOutputPortSchemas() {
+    return Collections.emptyMap();
   }
 
   @Override

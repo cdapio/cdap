@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
@@ -41,9 +42,10 @@ import java.util.Map;
  * Serializable collection of objects that can be used in Spark closures to instantiate plugins.
  */
 public class PluginFunctionContext implements Serializable {
-  private static final long serialVersionUID = 7591792350198264606L;
+  private static final long serialVersionUID = -7897960584858589314L;
 
   private final String namespace;
+  private final String pipelineName;
   private final long logicalStartTime;
   private final Map<String, String> arguments;
   private final PluginContext pluginContext;
@@ -55,18 +57,17 @@ public class PluginFunctionContext implements Serializable {
   private transient PipelinePluginContext pipelinePluginContext;
 
   public PluginFunctionContext(StageSpec stageSpec, JavaSparkExecutionContext sec) {
+    this(stageSpec, sec, new BasicArguments(sec).asMap(), sec.getLogicalStartTime());
+  }
+
+  // used in spark streaming, where each batch has a different batch time, and prepareRun is run per batch
+  public PluginFunctionContext(StageSpec stageSpec, JavaSparkExecutionContext sec,
+                               Map<String, String> arguments, long logicalStartTime) {
     this.namespace = sec.getNamespace();
+    this.pipelineName = sec.getApplicationSpecification().getName();
     this.stageSpec = stageSpec;
-    this.logicalStartTime = sec.getLogicalStartTime();
-    Map<String, String> arguments = new HashMap<>();
-    arguments.putAll(sec.getRuntimeArguments());
-    WorkflowToken token = sec.getWorkflowToken();
-    if (token != null) {
-      for (String tokenKey : token.getAll(WorkflowToken.Scope.USER).keySet()) {
-        arguments.put(tokenKey, token.get(tokenKey, WorkflowToken.Scope.USER).toString());
-      }
-    }
-    this.arguments = arguments;
+    this.logicalStartTime = logicalStartTime;
+    this.arguments = new HashMap<>(arguments);
     this.pluginContext = sec.getPluginContext();
     this.serviceDiscoverer = sec.getServiceDiscoverer();
     this.metrics = sec.getMetrics();
@@ -93,8 +94,10 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
-    return new SparkBatchRuntimeContext(getPluginContext(), serviceDiscoverer, metrics, logicalStartTime, stageSpec,
-                                        new BasicArguments(arguments));
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(namespace, pipelineName, logicalStartTime,
+                                                          new BasicArguments(arguments), metrics, pluginContext,
+                                                          serviceDiscoverer);
+    return new SparkBatchRuntimeContext(pipelineRuntime, stageSpec);
   }
 
   public DataTracer getDataTracer() {

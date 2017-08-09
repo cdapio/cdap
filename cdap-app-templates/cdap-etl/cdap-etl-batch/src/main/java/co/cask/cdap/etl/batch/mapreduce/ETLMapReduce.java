@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.batch.Output;
@@ -27,6 +28,7 @@ import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -48,6 +50,7 @@ import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
@@ -88,7 +91,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   static final String RUNTIME_ARGS_KEY = "cdap.etl.runtime.args";
   static final String INPUT_ALIAS_KEY = "cdap.etl.source.alias.key";
   static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
-  static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
+  static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type INPUT_ALIAS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   static final Type SINK_OUTPUTS_TYPE = new TypeToken<Map<String, SinkOutput>>() { }.getType();
   static final Type CONNECTOR_DATASETS_TYPE = new TypeToken<HashSet<String>>() { }.getType();
@@ -175,6 +178,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
       LogStageInjector.start();
     }
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, mrMetrics);
     CompositeFinisher.Builder finishers = CompositeFinisher.builder();
 
     Job job = context.getHadoopJob();
@@ -183,7 +187,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.setBoolean("mapreduce.reduce.speculative", false);
 
     // plugin name -> runtime args for that plugin
-    Map<String, Map<String, String>> runtimeArgs = new HashMap<>();
     MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
                                                          context.getLogicalStartTime(),
                                                          context, context.getNamespace());
@@ -204,10 +207,9 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
         StageSpec stageSpec = phaseSpec.getPhase().getStage(sourceName);
-        MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, mrMetrics, stageSpec,
+        MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, pipelineRuntime, stageSpec,
                                                                         connectorDatasets);
         batchSource.prepareRun(sourceContext);
-        runtimeArgs.put(sourceName, sourceContext.getRuntimeArguments());
         for (String inputAlias : sourceContext.getInputNames()) {
           inputAliasToStage.put(inputAlias, sourceName);
         }
@@ -232,9 +234,9 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
       try {
         BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
-        MapReduceBatchContext sinkContext = new MapReduceBatchContext(context, mrMetrics, stageInfo, connectorDatasets);
+        MapReduceBatchContext sinkContext = new MapReduceBatchContext(context, pipelineRuntime, stageInfo,
+                                                                      connectorDatasets);
         batchSink.prepareRun(sinkContext);
-        runtimeArgs.put(sinkName, sinkContext.getRuntimeArguments());
         finishers.add(batchSink, sinkContext);
         sinkOutputs.put(sinkName, new SinkOutput(sinkContext.getOutputNames(), stageInfo.getErrorDatasetName()));
       } catch (Exception e) {
@@ -261,6 +263,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
     job.setMapperClass(ETLMapper.class);
 
+    Admin admin = context.getAdmin();
     Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
                                                                    BatchJoiner.PLUGIN_TYPE);
     if (!reducers.isEmpty()) {
@@ -272,7 +275,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         if (!phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE).isEmpty()) {
           BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName, evaluator);
-          DefaultAggregatorContext aggregatorContext = new DefaultAggregatorContext(context, mrMetrics, stageInfo);
+          DefaultAggregatorContext aggregatorContext =
+            new DefaultAggregatorContext(pipelineRuntime, stageInfo, context, admin);
           aggregator.prepareRun(aggregatorContext);
           finishers.add(aggregator, aggregatorContext);
 
@@ -294,7 +298,7 @@ public class ETLMapReduce extends AbstractMapReduce {
           job.setMapOutputValueClass(getOutputValClass(reducerName, outputValClass));
         } else { // reducer type is joiner
           BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName, evaluator);
-          DefaultJoinerContext joinerContext = new DefaultJoinerContext(context, mrMetrics, stageInfo);
+          DefaultJoinerContext joinerContext = new DefaultJoinerContext(pipelineRuntime, stageInfo, context, admin);
           batchJoiner.prepareRun(joinerContext);
           finishers.add(batchJoiner, joinerContext);
 
@@ -328,7 +332,15 @@ public class ETLMapReduce extends AbstractMapReduce {
       job.setNumReduceTasks(0);
     }
 
-    hConf.set(RUNTIME_ARGS_KEY, GSON.toJson(runtimeArgs));
+    WorkflowToken token = context.getWorkflowToken();
+    if (token != null) {
+      for (Map.Entry<String, String> entry : pipelineRuntime.getArguments().getAddedArguments().entrySet()) {
+        token.put(entry.getKey(), entry.getValue());
+      }
+    }
+    // token is null when just the mapreduce job is run but not the entire workflow
+    // we still want things to work in that case.
+    hConf.set(RUNTIME_ARGS_KEY, GSON.toJson(pipelineRuntime.getArguments().asMap()));
   }
 
   private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {

@@ -17,12 +17,10 @@ package co.cask.cdap.etl.batch.customaction;
 
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.customaction.CustomActionContext;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.etl.api.action.ActionContext;
-import co.cask.cdap.etl.api.action.SettableArguments;
 import co.cask.cdap.etl.common.AbstractStageContext;
-import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 
@@ -35,20 +33,9 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
 
   private final CustomActionContext context;
 
-  public BasicActionContext(CustomActionContext context, Metrics metrics, StageSpec stageSpec,
-                            BasicArguments arguments) {
-    super(context, context, metrics, stageSpec, arguments);
+  public BasicActionContext(CustomActionContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
+    super(pipelineRuntime, stageSpec);
     this.context = context;
-  }
-
-  @Override
-  public long getLogicalStartTime() {
-    return context.getLogicalStartTime();
-  }
-
-  @Override
-  public SettableArguments getArguments() {
-    return arguments;
   }
 
   @Override
@@ -80,11 +67,6 @@ public class BasicActionContext extends AbstractStageContext implements ActionCo
   @Override
   public void deleteSecureData(String namespace, String name) throws Exception {
     context.getAdmin().deleteSecureData(namespace, name);
-  }
-
-  @Override
-  public String getNamespace() {
-    return context.getNamespace();
   }
 
 }

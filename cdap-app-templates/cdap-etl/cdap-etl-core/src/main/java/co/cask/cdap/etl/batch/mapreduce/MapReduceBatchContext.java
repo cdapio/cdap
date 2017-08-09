@@ -20,15 +20,13 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.batch.preview.NullOutputFormatProvider;
-import co.cask.cdap.etl.common.BasicArguments;
-import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.ExternalDatasets;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.spec.StageSpec;
@@ -44,43 +42,26 @@ import java.util.concurrent.Callable;
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
 public class MapReduceBatchContext extends AbstractBatchContext implements BatchSinkContext, BatchSourceContext {
+  private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   protected final MapReduceContext mrContext;
   private final boolean isPreviewEnabled;
   private final Set<String> outputNames;
   private final Set<String> inputNames;
-  private final Caller caller;
   private final Set<String> connectorDatasets;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec,
+  public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                Set<String> connectorDatasets) {
-    super(context, metrics, new DatasetContextLookupProvider(context), context.getLogicalStartTime(),
-          context.getAdmin(), stageSpec, new BasicArguments(context));
+    super(pipelineRuntime, stageSpec, context, context.getAdmin());
     this.mrContext = context;
-    this.caller = NoStageLoggingCaller.wrap(Caller.DEFAULT);
     this.outputNames = new HashSet<>();
     this.inputNames = new HashSet<>();
     this.isPreviewEnabled = context.getDataTracer(stageSpec.getName()).isEnabled();
     this.connectorDatasets = Collections.unmodifiableSet(connectorDatasets);
   }
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, StageSpec stageSpec) {
-    this(context, metrics, stageSpec, new HashSet<String>());
-  }
-
-  @Override
-  public <T> T getHadoopJob() {
-    return caller.callUnchecked(new Callable<T>() {
-      @Override
-      public T call() {
-        return mrContext.getHadoopJob();
-      }
-    });
-  }
-
-
   @Override
   public void setInput(final Input input) {
-    Input trackableInput = caller.callUnchecked(new Callable<Input>() {
+    Input trackableInput = CALLER.callUnchecked(new Callable<Input>() {
       @Override
       public Input call() throws Exception {
         Input trackableInput = ExternalDatasets.makeTrackable(mrContext.getAdmin(), suffixInput(input));
@@ -98,7 +79,7 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
 
   @Override
   public void addOutput(final String datasetName, final Map<String, String> arguments) {
-    String alias = caller.callUnchecked(new Callable<String>() {
+    String alias = CALLER.callUnchecked(new Callable<String>() {
       @Override
       public String call() throws Exception {
         Output output = suffixOutput(getOutput(Output.ofDataset(datasetName, arguments)));
@@ -111,7 +92,7 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
 
   @Override
   public void addOutput(final String outputName, final OutputFormatProvider outputFormatProvider) {
-    String alias = caller.callUnchecked(new Callable<String>() {
+    String alias = CALLER.callUnchecked(new Callable<String>() {
       @Override
       public String call() throws Exception {
         Output output = suffixOutput(getOutput(Output.of(outputName, outputFormatProvider)));
@@ -125,7 +106,7 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
   @Override
   public void addOutput(final Output output) {
     final Output actualOutput = suffixOutput(getOutput(output));
-    Output trackableOutput = caller.callUnchecked(new Callable<Output>() {
+    Output trackableOutput = CALLER.callUnchecked(new Callable<Output>() {
       @Override
       public Output call() throws Exception {
         Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(mrContext.getAdmin(),

@@ -28,7 +28,9 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.TrackedIterator;
+import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.JavaRDD;
@@ -64,10 +66,10 @@ public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, 
 
     String stageName = stageSpec.getName();
     AlertPublisher alertPublisher = pluginContext.newPluginInstance(stageName, evaluator);
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec, batchTime.milliseconds());
+
     AlertPublisherContext alertPublisherContext =
-      new DefaultAlertPublisherContext(sec.getPluginContext(), sec.getServiceDiscoverer(), sec.getMetrics(),
-                                       stageSpec, new BasicArguments(sec), sec.getMessagingContext(),
-                                       sec.getAdmin());
+      new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, sec.getMessagingContext(), sec.getAdmin());
     alertPublisher.initialize(alertPublisherContext);
 
     StageMetrics stageMetrics = new DefaultStageMetrics(sec.getMetrics(), stageName);

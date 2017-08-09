@@ -42,6 +42,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.mapreduce.MapReduceBatchContext;
 import co.cask.cdap.etl.common.DefaultPipelineConfigurer;
+import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.base.Preconditions;
@@ -193,7 +194,9 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
                                               new PluginSpec(BatchSource.PLUGIN_TYPE, sourceName,
                                                              context.getPluginProperties(PLUGIN_ID).getProperties(),
                                                              null)).build();
-      BatchSourceContext sourceContext = new MapReduceBatchContext(context, metrics, stageSpec);
+      PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
+      BatchSourceContext sourceContext = new MapReduceBatchContext(context, pipelineRuntime, stageSpec,
+                                                                   new HashSet<String>());
       batchSource.prepareRun(sourceContext);
       context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }
