@@ -23,7 +23,10 @@ import NamespaceStore from 'services/NamespaceStore';
 import {setActiveRulebook, getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import AddRulesEngineToPipelineModal from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu/AddRulesEngineToPipelineModal';
 import classnames from 'classnames';
+import T from 'i18n-react';
+
 require('./RulebookMenu.scss');
+const PREFIX = 'features.RulesEngine.RulebookMenu';
 
 export default class RulebookMenu extends Component {
   static propTypes = {
@@ -88,12 +91,12 @@ export default class RulebookMenu extends Component {
 
   menu = [
     {
-      label: 'Download',
+      label: T.translate(`${PREFIX}.download`),
       onClick: this.downloadRulebook,
       iconName: 'icon-download'
     },
     {
-      label: 'Create a Pipeline',
+      label: T.translate(`${PREFIX}.createPipeline`),
       onClick: this.toggleRulesEngineToPipelineModal,
       iconName: 'icon-pipelines',
       skipInPipelines: true
@@ -102,7 +105,7 @@ export default class RulebookMenu extends Component {
       label: 'divider'
     },
     {
-      label: 'Delete',
+      label: T.translate(`${PREFIX}.delete`),
       onClick: this.deleteWorkbook,
       iconName: 'icon-trash'
     }

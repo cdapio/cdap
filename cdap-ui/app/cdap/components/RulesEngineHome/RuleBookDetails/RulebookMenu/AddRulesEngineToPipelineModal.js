@@ -27,8 +27,10 @@ import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import MyRulesEngine from 'api/rulesengine';
 import classnames from 'classnames';
+import T from 'i18n-react';
 
 require('./AddRulesEngineToPipelineModal.scss');
+const PREFIX = 'features.RulesEngine.AddRulesEngineToPipelineModal';
 
 export default class AddRulesEngineToPipelineModal extends Component {
   static propTypes = {
@@ -157,11 +159,11 @@ export default class AddRulesEngineToPipelineModal extends Component {
         size="lg"
       >
         <ModalHeader>
-          <span>Add to Pipeline</span>
+          <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
         </ModalHeader>
         <ModalBody>
           <div className="message">
-            Choose the type of pipeline to create
+            {T.translate(`${PREFIX}.message`)}
           </div>
           <div className="action-buttons">
             <a
@@ -170,7 +172,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
               onClick={this.handleOnBatchUrlClick}
             >
               <i className="fa icon-ETLBatch"/>
-              <span>Batch Pipeline</span>
+              <span>{T.translate(`${PREFIX}.batchPipelineBtn`)}</span>
             </a>
             <a
               href={this.state.realtimeUrl}
@@ -180,7 +182,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
               onClick={this.handleOnRealtimeUrlClick}
             >
               <i className="fa icon-sparkstreaming"/>
-              <span>Realtime Pipeline</span>
+              <span>{T.translate(`${PREFIX}.realtimePipelineBtn`)}</span>
             </a>
           </div>
         </ModalBody>
