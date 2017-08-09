@@ -19,7 +19,7 @@ import RenderObjectAsTable from 'components/RenderObjectAsTable';
 import capitalize from 'lodash/capitalize';
 import classnames from 'classnames';
 
-require('./GenericDetails.scss');
+require('./Genericdetails.scss');
 
 export default function GenericDetails({details, className}) {
   delete details.name;
