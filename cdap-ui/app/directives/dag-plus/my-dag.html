@@ -108,7 +108,8 @@
                ng-class="{'wrangler': node.plugin.name === 'Wrangler'}">
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
-                ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
+                ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)"
+                ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
             <div ng-if="node.error">
               <div class="error-node-notification"
@@ -137,34 +138,21 @@
               <div class="node-metadata">
                 <div class="node-name" ng-bind="node.plugin.label || node.name | myEllipsis: 15"></div>
                 <div class="node-version"
-                      ng-class="{ 'hidden': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
                       ng-bind="node.plugin.artifact.version">
                 </div>
-                <button class="node-configure-btn"
-                        ng-class="{'btn-shown': DAGPlusPlusCtrl.showNodeMenu[node.name]}"
-                        ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
-                  <span class="node-configure-btn-label">
-                    <span ng-if="!DAGPlusPlusCtrl.isDisabled">
-                      Configure Properties
-                    </span>
-                    <span ng-if="DAGPlusPlusCtrl.isDisabled">
-                      View Properties
-                    </span>
-                  </span>
-                </button>
               </div>
             </div>
             <div
               ng-if="!DAGPlusPlusCtrl.showNodeMenu[node.name]"
               ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
               class="menu-icon menu-icon-node fa fa-bars"
-              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
+              ng-click="$event.stopPropagation(); !DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.toggleMenu(node.name)">
             </div>
             <div ng-if="DAGPlusPlusCtrl.showNodeMenu[node.name]"
                   class="node-popover-menu">
               <div
                 class="menu-icon fa fa-bars"
-                ng-click="DAGPlusPlusCtrl.toggleMenu(node.name)">
+                ng-click="$event.stopPropagation(); DAGPlusPlusCtrl.toggleMenu(node.name)">
               </div>
               <div class="menu-content">
                 <div class="menu-content-action menu-content-delete"
