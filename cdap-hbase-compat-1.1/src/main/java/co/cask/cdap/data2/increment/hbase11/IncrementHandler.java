@@ -150,6 +150,7 @@ public class IncrementHandler extends BaseRegionObserver {
     }
     long writeVersion = Bytes.toLong(wpBytes);
     Get get = new Get(increment.getRow());
+    get.setAttribute(HBaseTable.WRITE_POINTER, wpBytes);
     get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txBytes);
     for (Map.Entry<byte[], NavigableMap<byte[], Long>> entry : increment.getFamilyMapOfLongs().entrySet()) {
       byte[] family = entry.getKey();

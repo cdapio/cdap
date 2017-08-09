@@ -57,6 +57,7 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
@@ -87,8 +88,8 @@ public class HBaseTable extends BufferingTable {
   public static final String DELTA_WRITE = "d";
   public static final String WRITE_POINTER = "wp";
   public static final String TX_MAX_LIFETIME_MILLIS_KEY = "cdap.tx.max.lifetime.millis";
-
   public static final String SAFE_INCREMENTS = "dataset.table.safe.readless.increments";
+  public static final String TX_ENCODE_ONCE = "cdap.tx.encode.once";
 
   private final HBaseTableUtil tableUtil;
   private final HTable hTable;
@@ -104,6 +105,9 @@ public class HBaseTable extends BufferingTable {
 
   private final Map<String, String> arguments;
   private final Map<String, String> properties;
+
+  private byte[] encodedTx;
+  private boolean isTxEncodeOnce;
 
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
@@ -127,6 +131,7 @@ public class HBaseTable extends BufferingTable {
       cConf.getInt(TxConstants.Manager.CFG_TX_MAX_LIFETIME, TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME)));
     this.arguments = args;
     this.properties = spec.getProperties();
+    this.isTxEncodeOnce = Boolean.parseBoolean(spec.getProperty(TX_ENCODE_ONCE));
   }
 
   @Override
@@ -297,7 +302,7 @@ public class HBaseTable extends BufferingTable {
     builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
     if (transactional) {
       builder.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
-      builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+      builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
     }
     return builder;
   }
@@ -389,7 +394,8 @@ public class HBaseTable extends BufferingTable {
     }
 
     setFilterIfNeeded(hScan, scan.getFilter());
-    hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+    hScan.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
+    hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
 
     ResultScanner resultScanner = wrapResultScanner(hTable.getScanner(hScan.build()));
     return new HBaseScanner(resultScanner, columnFamily);
@@ -416,7 +422,7 @@ public class HBaseTable extends BufferingTable {
   /**
    * Creates an {@link Get} for the specified row and columns.
    *
-   * @param row the rowkey for the Get
+   * @param row     the rowkey for the Get
    * @param columns the columns to fetch. null means to retrieve all columns.
    * @throws IllegalArgumentException if columns has length 0.
    */
@@ -437,7 +443,8 @@ public class HBaseTable extends BufferingTable {
       if (tx == null) {
         get.setMaxVersions(1);
       } else {
-        get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+        get.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
+        get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
       }
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);
@@ -531,5 +538,21 @@ public class HBaseTable extends BufferingTable {
         };
       }
     };
+  }
+
+  private byte[] getEncodedTx() throws IOException {
+    if (!isTxEncodeOnce) {
+      return txCodec.encode(tx);
+    }
+    if (encodedTx == null) {
+      encodedTx = txCodec.encode(tx);
+    }
+    return encodedTx;
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    encodedTx = null;
+    super.startTx(tx);
   }
 }
