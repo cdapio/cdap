@@ -28,5 +28,6 @@ export const MyServiceProviderApi = {
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:serviceprovider/stats`),
   pollServicesList: apiCreator(dataSrc, 'GET', 'POLL', servicesbasepath),
   pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceidpath}/status`),
-  setProvisions: apiCreator(dataSrc, 'PUT', 'REQUEST', `${serviceidpath}/instances`)
+  setProvisions: apiCreator(dataSrc, 'PUT', 'REQUEST', `${serviceidpath}/instances`),
+  getInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceidpath}/instances`)
 };

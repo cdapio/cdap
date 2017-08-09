@@ -18,14 +18,25 @@ import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
 import {MyServiceProviderApi} from 'api/serviceproviders';
 const SYSTEMSERVICESACTIONS = {
-  SETSERVICES: 'SETSERVICES'
+  SETSERVICES: 'SETSERVICES',
+  SETERROR: 'SETERROR'
 };
 
-const initialSystemServices = {};
+const initialSystemServices = {
+  list: [],
+  __error: false
+};
 const services = (state = initialSystemServices, action = defaultAction) => {
   switch (action.type) {
     case SYSTEMSERVICESACTIONS.SETSERVICES:
-      return action.payload.services || state; // whattt??
+      return Object.assign({}, state, {
+        list: action.payload.services || [],
+        __error: false
+      });
+    case SYSTEMSERVICESACTIONS.SETERROR:
+      return Object.assign({}, state, {
+        __error: action.payload.error
+      });
     default:
       return state;
   }
@@ -36,7 +47,7 @@ const ServicesStore = createStore(
     services
   }),
   {
-    services: []
+    services: initialSystemServices
   },
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
 );
@@ -50,6 +61,10 @@ const pollSystemServices = () => {
         payload: {
           services
         }
+      }),
+      err => ServicesStore.dispatch({
+        type: SYSTEMSERVICESACTIONS.SETERROR,
+        payload: {error: err}
       })
     );
 };

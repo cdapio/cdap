@@ -103,7 +103,7 @@ const startServicePolling = () => {
   systemServiceSubscription = SystemServicesStore
     .subscribe(
       () => {
-        let {services} = SystemServicesStore.getState();
+        let {list: services} = SystemServicesStore.getState().services;
         services = services.filter(service => service.status === 'NOTOK');
         if (services.length) {
           LoadingIndicatorStore.dispatch({

@@ -21,7 +21,6 @@ require('./Alert.scss');
 export default class Alert extends Component {
   constructor(props) {
     super(props);
-    this.onAlertClose = this.onAlertClose.bind(this);
     this.state = {
       showAlert: false || props.showAlert,
       message: props.message,

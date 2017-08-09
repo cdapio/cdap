@@ -68,7 +68,7 @@ const tableHeaders = [
 ];
 export default class ServicesTable extends Component {
   state = {
-    services: SystemServicesStore.getState().services,
+    services: SystemServicesStore.getState().services.list,
     showAlert: false,
     alertType: null,
     alertMessage: null
@@ -142,35 +142,87 @@ export default class ServicesTable extends Component {
          |- If THAT didn't return within 10 seconds say the service is NOTOK
          |- If that returns render the service status
     - If it returns everything is just normal
+
+    The same goes for instances too. Except UI won't make any assumptions on instances if it never returns.
   */
 
   fetchServiceStatus = (serviceid) => {
     if (Object.keys(this.state.services).length) {
       return;
     }
-    let serviceTimeout = setTimeout(() => {
-      let services = {...this.state.services};
-      services[serviceid] = {
-        status: 'NOTOK'
-      };
-      this.setState({
-        services
-      });
-    }, WAITTIME_FOR_ALTERNATE_STATUS);
+
+    const setDefaultStatus = (serviceid) => {
+      let services = [...this.state.services];
+      let isServiceAlreadyExist = this.state.services.find(service => service.name === serviceid);
+      if (!isServiceAlreadyExist) {
+        services.push({
+          name: serviceid,
+          status: 'NOTOK'
+        });
+      } else {
+        services = services.map(service => {
+          if (service.name == serviceid) {
+            service.status = 'NOTOK';
+          }
+          return service;
+        });
+      }
+      this.setState({services});
+    };
+
+    const setDefaultInstance = (serviceid, {requested = '--', provisioned = '--'} = {}) => {
+      let services = [...this.state.services];
+      let isServiceAlreadyExist = this.state.services.find(service => service.name === serviceid);
+      if (!isServiceAlreadyExist) {
+        services.push({
+          name: serviceid,
+          requested,
+          provisioned
+        });
+      } else {
+        services = services.map(service => {
+          if (service.name === serviceid) {
+            service.requested = requested;
+            service.provisioned = provisioned;
+          }
+          return service;
+        });
+      }
+      this.setState({services});
+    };
+
+    let serviceTimeout = setTimeout(() => setDefaultStatus(serviceid), WAITTIME_FOR_ALTERNATE_STATUS);
+
     this.servicePolls.push(
       MyServiceProviderApi
         .pollServiceStatus({serviceid})
         .subscribe(
           (res) => {
             clearTimeout(serviceTimeout);
-            let services = {...this.state.services};
-            services[serviceid] = {
-              status: res.status
-            };
-            this.setState({services});
+            let services = [...this.state.services];
+            services = services.map(service => {
+              if (service.name == serviceid) {
+                service.status = res.staus;
+              }
+              return service;
+            });
+            this.setState(serviceid, {services});
+          },
+          () => {
+            setDefaultStatus(serviceid);
           }
         )
     );
+    MyServiceProviderApi
+      .getInstances({serviceid})
+      .subscribe(
+        res => {
+          setDefaultInstance(serviceid, res);
+        },
+        () => {
+          setDefaultInstance(serviceid);
+        }
+      );
   };
 
   // This is when backend does not return for /system/services call
@@ -182,7 +234,11 @@ export default class ServicesTable extends Component {
   componentDidMount() {
     let serviceStatusTimeout = setTimeout(this.fetchStatusFromIndividualServices, WAITTIME_FOR_ALTERNATE_STATUS);
     this.systemServicesSubscription = SystemServicesStore.subscribe(() => {
-      let {services} = SystemServicesStore.getState();
+      let {list:services, __error} = SystemServicesStore.getState().services;
+      if (__error) {
+        this.fetchStatusFromIndividualServices();
+        return;
+      }
       if (!isEqual(services, this.state.services)) {
         this.setState({
           services
