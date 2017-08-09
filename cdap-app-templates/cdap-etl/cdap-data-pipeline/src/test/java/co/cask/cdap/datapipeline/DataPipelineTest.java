@@ -70,6 +70,7 @@ import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.spark.Compat;
+import co.cask.cdap.format.RecordPutTransformer;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
@@ -1899,49 +1900,12 @@ public class DataPipelineTest extends HydratorTestBase {
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset("outputTable"));
   }
 
-  @Test
-  public void testRuntimeArguments() throws Exception {
-    testRuntimeArgs(Engine.MAPREDUCE);
-    testRuntimeArgs(Engine.SPARK);
-  }
-
-  private void testRuntimeArgs(Engine engine) throws Exception {
-    String sourceName = "runtimeArgInput-" + engine;
-    String sinkName = "runtimeArgOutput-" + engine;
-    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
-      .addStage(new ETLStage("action", MockAction.getPlugin("dumy", "val", "ue", "dwayne")))
-      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
-      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
-      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-      .addConnection("action", "source")
-      .addConnection("source", "filter")
-      .addConnection("filter", "sink")
-      .setEngine(engine)
+  private StructuredRecord createRecord(Schema schema, String person, String age, String gender) {
+    return StructuredRecord.builder(schema)
+      .set("person", person)
+      .set("age", age)
+      .set("gender", gender)
       .build();
-
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("RuntimeArgApp-" + engine);
-    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
-
-    // there should be only two programs - one workflow and one mapreduce/spark
-    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
-    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
-    StructuredRecord recordDwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
-
-    // write one record to each source
-    DataSetManager<Table> inputManager = getDataset(sourceName);
-    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordDwayne));
-
-    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
-
-    // check sink
-    DataSetManager<Table> sinkManager = getDataset(sinkName);
-    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
-    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
-    Assert.assertEquals(expected, actual);
   }
 
   @Test
@@ -1952,16 +1916,18 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("age", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("gender", Schema.of(Schema.Type.STRING))
     );
-    DatasetProperties datasetProperties = TableProperties.builder().setSchema(outSchema).build();
+
+    DatasetProperties datasetProperties = TableProperties.builder()
+      .setSchema(outSchema)
+      .setRowFieldName("person")
+      .build();
     addDatasetInstance(Table.class.getName(), "personTable", datasetProperties);
     DataSetManager<Table> lookupTableManager = getDataset("personTable");
     Table lookupTable = lookupTableManager.get();
-    lookupTable.put("samuel".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "12".getBytes(Charsets.UTF_8));
-    lookupTable.put("samuel".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "m".getBytes(Charsets.UTF_8));
-    lookupTable.put("bob".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "36".getBytes(Charsets.UTF_8));
-    lookupTable.put("bob".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "m".getBytes(Charsets.UTF_8));
-    lookupTable.put("jane".getBytes(Charsets.UTF_8), "age".getBytes(Charsets.UTF_8), "25".getBytes(Charsets.UTF_8));
-    lookupTable.put("jane".getBytes(Charsets.UTF_8), "gender".getBytes(Charsets.UTF_8), "f".getBytes(Charsets.UTF_8));
+    RecordPutTransformer recordPutTransformer = new RecordPutTransformer("person", outSchema);
+    lookupTable.put(recordPutTransformer.toPut(createRecord(outSchema, "samuel", "12", "m")));
+    lookupTable.put(recordPutTransformer.toPut(createRecord(outSchema, "bob", "36", "m")));
+    lookupTable.put(recordPutTransformer.toPut(createRecord(outSchema, "jane", "25", "f")));
     lookupTableManager.flush();
 
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
@@ -2018,6 +1984,51 @@ public class DataPipelineTest extends HydratorTestBase {
     getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
     // wait for won't throw an exception if the metric count is greater than expected
     Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
+  }
+
+  @Test
+  public void testRuntimeArguments() throws Exception {
+    testRuntimeArgs(Engine.MAPREDUCE);
+    testRuntimeArgs(Engine.SPARK);
+  }
+
+  private void testRuntimeArgs(Engine engine) throws Exception {
+    String sourceName = "runtimeArgInput-" + engine;
+    String sinkName = "runtimeArgOutput-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
+      .addStage(new ETLStage("action", MockAction.getPlugin("dumy", "val", "ue", "dwayne")))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("action", "source")
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("RuntimeArgApp-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordDwayne = StructuredRecord.builder(schema).set("name", "dwayne").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordDwayne));
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start();
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset(sinkName);
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   @Test

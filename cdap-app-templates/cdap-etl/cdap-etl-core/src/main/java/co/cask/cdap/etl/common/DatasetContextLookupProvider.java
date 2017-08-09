@@ -37,7 +37,7 @@ public class DatasetContextLookupProvider extends AbstractLookupProvider {
   }
 
   @Override
-  public <T, R> Lookup<T, R> provide(String table, Map<String, String> arguments) {
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return getLookup(table, context.getDataset(table, arguments), admin);
   }
 }

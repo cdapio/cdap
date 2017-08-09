@@ -31,8 +31,6 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
-import com.sun.xml.internal.rngom.parse.IllegalSchemaException;
-import org.apache.commons.lang.IllegalClassException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,14 +46,13 @@ import java.util.Map;
  * be used to determine where in the output StructuredRecord to place the value.
  *
  * @param <T> The type of object that will be returned for the lookup.
- * @param <R> The type of raw object that will be returned for the lookup.
  */
 @Plugin(type = Transform.PLUGIN_TYPE)
 @Name("Lookup")
-public class LookupTransform<T, R> extends Transform<StructuredRecord, StructuredRecord> {
+public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Config config;
-  private Lookup<T, R> lookup;
+  private Lookup<T> lookup;
 
   public LookupTransform(Config config) {
     this.config = config;
@@ -70,20 +67,21 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
-    R lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
-    if (lookedUpValue instanceof Result) {
-      if (!(lookedUpValueBytes instanceof Result)) {
-        throw new IllegalClassException(lookedUpValue.getClass(), lookedUpValueBytes);
-      }
-      if (!Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow())) {
-        throw new IllegalStateException("Row values are incorrect");
-      }
-    }
-    if (lookedUpValue instanceof String) {
-      if (!Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes)) {
-        throw new IllegalStateException("Values do not match between string and byte[]");
-      }
-    }
+//    R lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
+//    if (lookedUpValue instanceof Result) {
+//      if (!(lookedUpValueBytes instanceof Result)) {
+//        throw new IllegalStateException(String.format("Expected class %s, but actual class is %s.",
+//                                                      lookedUpValue.getClass(), lookedUpValueBytes.getClass()));
+//      }
+//      if (!Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow())) {
+//        throw new IllegalStateException("Row values are incorrect");
+//      }
+//    }
+//    if (lookedUpValue instanceof String) {
+//      if (!Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes)) {
+//        throw new IllegalStateException("Values do not match between string and byte[]");
+//      }
+//    }
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
     for (Schema.Field field : input.getSchema().getFields()) {
@@ -100,11 +98,11 @@ public class LookupTransform<T, R> extends Transform<StructuredRecord, Structure
       throw new IllegalArgumentException("Unexpected value type: " + lookedUpValue.getClass());
     }
     Schema outSchema = Schema.recordOf(input.getSchema().getRecordName(), outFields);
-    if (lookup.getSchema() != null) {
-      if (!lookup.getSchema().equals(outSchema)) {
-        throw new IllegalStateException("Output schema is incorrect");
-      }
-    }
+//    if (lookup.getSchema() != null) {
+//      if (!lookup.getSchema().equals(outSchema)) {
+//        throw new IllegalStateException("Output schema is incorrect");
+//      }
+//    }
     // copy all the values
     StructuredRecord.Builder outputBuilder = StructuredRecord.builder(outSchema);
     for (Schema.Field inField : input.getSchema().getFields()) {

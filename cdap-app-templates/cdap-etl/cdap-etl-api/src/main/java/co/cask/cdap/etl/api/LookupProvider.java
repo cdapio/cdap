@@ -26,8 +26,7 @@ public interface LookupProvider {
    * @param table the name of the {@link Lookup} table
    * @param arguments arguments for initializing the {@link Lookup} table
    * @param <T> the type of value returned by the {@link Lookup}
-   * @param <R> the raw type of value returned by the {@link Lookup}
    * @return a {@link Lookup} instance
    */
-  <T, R> Lookup<T, R> provide(String table, Map<String, String> arguments);
+  <T> Lookup<T> provide(String table, Map<String, String> arguments);
 }

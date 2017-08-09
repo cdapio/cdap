@@ -28,7 +28,7 @@ public class NoLookupProvider implements LookupProvider {
   public static final LookupProvider INSTANCE = new NoLookupProvider();
 
   @Override
-  public <T, R> Lookup<T, R> provide(String table, Map<String, String> arguments) {
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     throw new UnsupportedOperationException("Lookup is not supported in Spark pipelines.");
   }
 }

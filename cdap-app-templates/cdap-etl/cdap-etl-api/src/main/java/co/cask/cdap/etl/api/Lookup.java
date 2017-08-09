@@ -16,26 +16,15 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.data.schema.Schema;
-
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Exposes read-only lookup operations on datasets.
  *
  * @param <T> the type of object that will be returned for a lookup with String as the key
- * @param <R> the raw type of object that will be returned for lookups with byte[] as the key
  */
-public interface Lookup<T, R> {
-
-  /**
-   * @return Schema of the dataset, or null if no schema is stored in the dataset's properties
-   */
-  @Nullable
-  Schema getSchema();
+public interface Lookup<T> {
 
   /**
    * Performs a single lookup.
@@ -43,7 +32,7 @@ public interface Lookup<T, R> {
    * @param key the key to lookup
    * @return the value associated with the key
    */
-  R lookup(byte[] key);
+  T lookup(byte[] key);
 
   /**
    * Performs a batch lookup.
@@ -51,7 +40,15 @@ public interface Lookup<T, R> {
    * @param keys the keys to lookup
    * @return a map from key to value
    */
-  Map<byte[], R> lookup(byte[]... keys);
+  Map<byte[], T> lookup(byte[]... keys);
+
+  /**
+   * Performs a batch lookup.
+   *
+   * @param keys the keys to lookup
+   * @return a map from key to value
+   */
+//  Map<String, T> lookup(Set<byte[]> keys); // same erasure; clashes with lookup(Set<String> keys)
 
   /**
    * Performs a single lookup.

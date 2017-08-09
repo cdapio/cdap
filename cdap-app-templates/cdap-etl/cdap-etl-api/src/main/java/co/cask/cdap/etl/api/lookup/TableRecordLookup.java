@@ -17,11 +17,13 @@
 package co.cask.cdap.etl.api.lookup;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.api.Lookup;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.ArrayList;
@@ -34,14 +36,16 @@ import javax.annotation.Nullable;
 /**
  * {@link Lookup} implementation for {@link Table}.
  */
-public class TableLookup implements Lookup<Row> {
+public class TableRecordLookup implements Lookup<StructuredRecord> {
 
   private final Table table;
   private final Schema schema;
+  private final Function<Row, StructuredRecord> rowRecordTransformer;
 
-  public TableLookup(Table table, Schema schema) {
+  public TableRecordLookup(Table table, Schema schema, Function<Row, StructuredRecord> rowRecordTransformer) {
     this.table = table;
     this.schema = schema;
+    this.rowRecordTransformer = rowRecordTransformer;
   }
 
   /**
@@ -53,38 +57,42 @@ public class TableLookup implements Lookup<Row> {
   }
 
   @Override
-  public Row lookup(byte[] key) {
-    return table.get(key);
+  public StructuredRecord lookup(byte[] key) {
+    return toRecord(table.get(key));
   }
 
   @Override
-  public Map<byte[], Row> lookup(byte[]... keys) {
+  public Map<byte[], StructuredRecord> lookup(byte[]... keys) {
     List<Get> gets = new ArrayList<>();
     for (byte[] key : keys) {
       gets.add(new Get(key));
     }
     List<Row> rows = table.get(gets);
 
-    Map<byte[], Row> result = new HashMap<>(keys.length);
+    Map<byte[], StructuredRecord> result = new HashMap<>(keys.length);
     for (int i = 0; i < keys.length; i++) {
-      result.put(keys[i], rows.get(i));
+      result.put(keys[i], toRecord(rows.get(i)));
     }
     return result;
   }
 
+  private StructuredRecord toRecord(Row row) {
+    return rowRecordTransformer.apply(row);
+  }
+
   @Override
-  public Row lookup(String key) {
+  public StructuredRecord lookup(String key) {
     return lookup(Bytes.toBytes(key));
   }
 
   @Override
-  public Map<String, Row> lookup(String... keys) {
+  public Map<String, StructuredRecord> lookup(String... keys) {
     return lookup(ImmutableSet.copyOf(keys));
   }
 
   @Override
-  public Map<String, Row> lookup(Set<String> keys) {
-    Map<String, Row> results = new HashMap<>();
+  public Map<String, StructuredRecord> lookup(Set<String> keys) {
+    Map<String, StructuredRecord> results = new HashMap<>();
     for (String key : keys) {
       results.put(key, lookup(key));
     }
