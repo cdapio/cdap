@@ -22,7 +22,6 @@ import MyRulesEngine from 'api/rulesengine';
 import NamespaceStore from 'services/NamespaceStore';
 import {setActiveRulebook, getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import AddRulesEngineToPipelineModal from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu/AddRulesEngineToPipelineModal';
-import classnames from 'classnames';
 import T from 'i18n-react';
 
 require('./RulebookMenu.scss');
@@ -113,9 +112,6 @@ export default class RulebookMenu extends Component {
 
   render() {
     const renderMenuItem = (menu) => {
-      if (menu.label === 'divider') {
-        return (<hr />);
-      }
       let {label, iconName} = menu;
       return (
         <div>
@@ -143,12 +139,12 @@ export default class RulebookMenu extends Component {
           <DropdownMenu right>
             {
               menuItems.map((menu) => {
+                if (menu.label === 'divider') {
+                  return <hr />;
+                }
                 return (
                   <DropdownItem
                     title={menu.label}
-                    className={classnames({
-                      'divider': menu.label === 'divider'
-                    })}
                     onClick={menu.onClick}
                   >
                     {renderMenuItem(menu)}
