@@ -39,7 +39,7 @@ export default class NamespaceDropdown extends Component {
       openWizard: false,
       openPreferenceWizard: false,
       preferencesSavedMessage: false,
-      namespaceList: sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace),
+      namespaceList: sortBy(NamespaceStore.getState().namespaces, [this.lowerCaseNamespace]),
       currentNamespace: NamespaceStore.getState().selectedNamespace,
       defaultNamespace: localStorage.getItem('DefaultNamespace')
     };
@@ -50,7 +50,7 @@ export default class NamespaceDropdown extends Component {
       if (namespaces.indexOf(selectedNamespace) === -1) {
         this.setState({
           currentNamespace: '--',
-          namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
+          namespaceList : sortBy(NamespaceStore.getState().namespaces, [this.lowerCaseNamespace])
         });
       } else {
         // have to set this, because the Namespace store gets reset when we visit other apps
@@ -58,7 +58,7 @@ export default class NamespaceDropdown extends Component {
         localStorage.setItem('CurrentNamespace', selectedNamespace);
         this.setState({
           currentNamespace : NamespaceStore.getState().selectedNamespace,
-          namespaceList : sortBy(NamespaceStore.getState().namespaces, this.lowerCaseNamespace)
+          namespaceList : sortBy(NamespaceStore.getState().namespaces, [this.lowerCaseNamespace])
         });
       }
     });

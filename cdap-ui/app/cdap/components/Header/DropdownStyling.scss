@@ -1,0 +1,123 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '../../styles/variables.scss';
+
+$menu_font_color: white;
+$dropdown_bg_color: #333333;
+$dropdown_divider_bg_color: rgba(75, 75, 75, 1);
+
+@mixin dropdownstyling($min_width: 160px, $max_width: 210px) {
+  display: inline-block;
+  background: transparent;
+
+  &:hover {
+    background: transparent;
+  }
+
+  &.dropdown,
+  &.dropdown.open {
+    display: inline-block;
+    &:focus {
+      outline: none;
+      background: transparent;
+      color: $menu_font_color;
+    }
+    .btn {
+      background: transparent;
+      border: 0;
+      &:focus {
+        outline: none;
+        background: transparent;
+        color: $menu_font_color;
+      }
+    }
+  }
+  &.dropdown {
+    .dropdown-toggle {
+      &:focus {
+        outline: none;
+      }
+      &:active {
+        color: $menu_font_color;
+        background: transparent;
+      }
+      &:hover {
+        color: $cdap-light-orange;
+        background: transparent;
+      }
+      &.active {
+        &:hover,
+        &:focus,
+        &:active {
+          color: $cdap-orange;
+        }
+      }
+      &:after {
+        margin-left: 1rem;
+        display: inline-block;
+        width: 0;
+        height: 0;
+        vertical-align: middle;
+        content: "";
+        border-top: 0.3em solid;
+        border-right: 0.3em solid transparent;
+        border-left: 0.3em solid transparent;
+        border-width: 0.35em;
+      }
+      border: 0;
+      background: transparent;
+      padding: 0;
+      line-height: 50px;
+      display: block;
+      margin-right: 5px;
+    }
+    .dropdown-menu {
+      background: $dropdown_bg_color;
+      border-radius: 0;
+      min-width: $min_width;
+      max-width: $max_width;
+
+      .dropdown-item {
+        line-height: 1;
+        float: left;
+        width: 160px;
+        padding: 0;
+        margin-left: 0;
+
+        a {
+          padding: 10px 16px;
+          text-decoration: none;
+          background: transparent;
+        }
+        &:hover,
+        &:focus {
+          background: transparent;
+          outline: none;
+        }
+      }
+      .dropdown-divider {
+        background-color: $dropdown_divider_bg_color;
+      }
+    }
+    &.open {
+      .dropdown-menu {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+  }
+}
