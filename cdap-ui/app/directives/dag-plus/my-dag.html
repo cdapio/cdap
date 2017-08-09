@@ -95,7 +95,7 @@
 
 <div class="my-js-dag"
     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick, 'preview-mode': previewMode }"
-    ng-click="DAGPlusPlusCtrl.toggleNodeMenu(null); DAGPlusPlusCtrl.openDagMenu(false);">
+    ng-click="DAGPlusPlusCtrl.toggleNodeMenu(); DAGPlusPlusCtrl.openDagMenu(false);">
     <div id="diagram-container">
       <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
