@@ -17,6 +17,7 @@
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
+import isNil from 'lodash/isNil';
 
 const getRuleBooks = () => {
   let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -34,8 +35,7 @@ const getRuleBooks = () => {
         });
         if (rulebooks.activeRulebookId) {
           setActiveRulebook(rulebooks.activeRulebookId);
-        }
-        if (res.values.length) {
+        } else if (res.values.length) {
           setActiveRulebook(res.values[0].id);
         }
       }
@@ -49,7 +49,9 @@ const setActiveRulebook = (id) => {
       activeRulebook: id
     }
   });
-  getRulesForActiveRuleBook();
+  if (!isNil(id)) {
+    getRulesForActiveRuleBook();
+  }
 };
 
 
@@ -127,6 +129,23 @@ const resetError = () => {
   });
 };
 
+const resetStore = () => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.RESET
+  });
+};
+
+const setError = (err) => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.SETERROR,
+    payload: {
+      error: {
+        showError: true,
+        message: typeof err === 'string' ? err : err.response.message
+      }
+    }
+  });
+};
 
 export {
   getRuleBooks,
@@ -135,5 +154,7 @@ export {
   setActiveRulebook,
   createNewRuleBook,
   resetError,
-  resetCreateRuleBook
+  resetCreateRuleBook,
+  setError,
+  resetStore
 };

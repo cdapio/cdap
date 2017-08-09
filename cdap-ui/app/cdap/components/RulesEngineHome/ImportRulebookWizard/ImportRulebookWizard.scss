@@ -14,33 +14,16 @@
  * the License.
 */
 
-@import '../../../styles/variables.scss';
-
-.rules-tab {
-  padding: 20px;
-
-  input {
-    border-radius: 0;
+.rulebook-upload-wizard {
+  .step-content {
+    display: flex;
+    align-content: center;
+    flex-direction: column;
   }
-  > button {
-    margin: 10px 0;
-    color: $brand-primary;
-  }
-  .rules-container {
-    margin-top: 10px;
-    padding: 0 10px;
-  }
-  .rules-container > .row {
-    &:first-child {
-      font-weight: bolder;
-      &:hover {
-        background: transparent;
-      }
-    }
-  }
-  .svg-arrow-wrapper {
-    display: inline-block;
-    font-size: 15px;
-    line-height: 1;
+  .upload-step-container {
+    height: 100%;
+    width: 100%;
+    margin-bottom: 10px;
+    display: flex;
   }
 }

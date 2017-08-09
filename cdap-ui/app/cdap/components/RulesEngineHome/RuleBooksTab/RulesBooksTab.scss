@@ -39,13 +39,34 @@ $create_rulebook_btn_font_color: #cccccc;
         display: flex;
         flex-direction: column;
         align-items: center;
+        border: 0;
+        justify-content: center;
+        padding: 0;
+        margin-top: 0;
+        margin-bottom: 0;
+
+        &:only-child {
+          width: 100%;
+        }
 
         > div {
-          font-size: 10em;
-          line-height: 1;
-          margin-top: -15px;
-          font-weight: 100;
-          color: $create_rulebook_btn_font_color;
+          height: 50%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid $create_rulebook_btn_font_color;
+          width: 100%;
+          margin: 10px 0;
+          font-size: 2em;
+          svg.icon-import,
+          svg.icon-plus {
+            font-size: 1em;
+            margin-top: 10px;
+          }
+          strong {
+            font-size: initial;
+          }
         }
       }
     }

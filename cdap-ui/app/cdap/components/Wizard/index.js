@@ -27,6 +27,7 @@ import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
+import {objectQuery} from 'services/helpers';
 
 require('./Wizard.scss');
 
@@ -171,8 +172,16 @@ export default class Wizard extends Component {
         },
         (err) => {
           if (err) {
+            let message = err;
+            if (typeof err === 'object') {
+              // This is bad. There is no standard way to get error messages from backend.
+              message = objectQuery(err, 'response', 'message') || objectQuery(err, 'response');
+              if (!message) {
+                message = JSON.stringify(message, null, 2);
+              }
+            }
             this.setState({
-              error: err,
+              error: message,
               loading: false
             });
           }
