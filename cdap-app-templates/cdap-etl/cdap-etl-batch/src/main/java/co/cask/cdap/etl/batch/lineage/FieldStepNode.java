@@ -20,6 +20,9 @@ import co.cask.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
 
+/**
+ * A FieldStepNode represents one transformation step applied to a field of data
+ */
 public class FieldStepNode implements FieldLevelLineageStoreNode {
   private final ProgramRunId pipeline;
   private final String stage;

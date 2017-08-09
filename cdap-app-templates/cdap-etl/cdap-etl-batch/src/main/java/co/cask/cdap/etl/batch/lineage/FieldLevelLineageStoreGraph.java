@@ -28,6 +28,9 @@ import com.google.common.collect.Table;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A FieldLevelLineageStorageGraph is a graph of the field lineage for a pipeline run
+ */
 public final class FieldLevelLineageStoreGraph {
   private final ProgramRunId pipelineId;
   private final PipelinePhase pipeline;

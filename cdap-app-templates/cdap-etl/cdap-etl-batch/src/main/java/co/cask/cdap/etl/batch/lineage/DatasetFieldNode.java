@@ -20,6 +20,9 @@ import co.cask.cdap.proto.id.ProgramRunId;
 
 import java.util.Objects;
 
+/**
+ * A DatasetFieldNode links a field to the dataset it came from and/or is being written to in a pipeline run
+ */
 public class DatasetFieldNode implements FieldLevelLineageStoreNode {
   private final String dataset; // reference name
   private final ProgramRunId pipeline;
