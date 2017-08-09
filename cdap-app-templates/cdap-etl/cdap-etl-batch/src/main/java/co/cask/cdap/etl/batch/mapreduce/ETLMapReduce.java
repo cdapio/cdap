@@ -123,9 +123,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     setReducerResources(phaseSpec.getResources());
     setDriverResources(phaseSpec.getDriverResources());
 
-    Set<String> sources = phaseSpec.getPhase().getSources();
     // Planner should make sure this never happens
-    if (sources.isEmpty()) {
+    if (phaseSpec.getPhase().getSources().isEmpty()) {
       throw new IllegalArgumentException(String.format(
         "Pipeline phase '%s' must contain at least one source but it has no sources.", phaseSpec.getPhaseName()));
     }
