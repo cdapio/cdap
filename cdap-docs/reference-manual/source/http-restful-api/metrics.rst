@@ -321,6 +321,17 @@ These metrics are available for system services, in the system component context
      - Number of ``error``, ``info``, or ``warn`` log messages logged by a system service
        or system services
 
+.. list-table::
+   :header-rows: 1
+   :widths: 60 40
+
+      * - System Services Metric Processor Metric
+        - Description
+      * - ``metrics.<metric.processor.id>.process.count``
+        - Number of metrics processed by metric processor instance
+      * - ``metrics.<metric.processor.id>.process.delay.ms``
+        - Metrics processing delay in milliseconds. Difference between last metric's timestamp and current time
+
 These metrics are available for the CDAP transaction service:
 
 .. list-table::
