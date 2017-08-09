@@ -902,6 +902,36 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testWorkflowCondition() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, ConditionalWorkflowApp.class);
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("ConditionalWorkflow");
+    wfmanager.start(ImmutableMap.of("configurable.condition", "true"));
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return wfmanager.getHistory(ProgramRunStatus.COMPLETED).size() == 1;
+      }
+    }, 30, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    List<RunRecord> history = wfmanager.getHistory();
+    String pid = history.get(0).getPid();
+    WorkflowTokenNodeDetail tokenNodeDetail = wfmanager.getTokenAtNode(pid, "MyConfigurableCondition",
+                                                                       WorkflowToken.Scope.USER, null);
+    Map<String, String> expected = ImmutableMap.of("configurable.condition.initialize", "true",
+                                                   "configurable.condition.destroy", "true",
+                                                   "configurable.condition.apply", "true");
+    Assert.assertEquals(expected, tokenNodeDetail.getTokenDataAtNode());
+
+    tokenNodeDetail = wfmanager.getTokenAtNode(pid, "SimpleCondition", WorkflowToken.Scope.USER, null);
+    expected = ImmutableMap.of("simple.condition.initialize", "true");
+    Assert.assertEquals(expected, tokenNodeDetail.getTokenDataAtNode());
+
+    tokenNodeDetail = wfmanager.getTokenAtNode(pid, "action2", WorkflowToken.Scope.USER, null);
+    expected = ImmutableMap.of("action.name", "action2");
+    Assert.assertEquals(expected, tokenNodeDetail.getTokenDataAtNode());
+  }
+
+  @Test
   public void testBatchStreamUpload() throws Exception {
     StreamManager batchStream = getStreamManager("batchStream");
     batchStream.createStream();

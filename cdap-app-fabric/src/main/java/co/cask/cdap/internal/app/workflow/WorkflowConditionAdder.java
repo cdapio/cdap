@@ -16,7 +16,10 @@
 
 package co.cask.cdap.internal.app.workflow;
 
+import co.cask.cdap.api.Predicate;
+import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
+import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNode;
 
 import java.util.List;
@@ -27,12 +30,18 @@ import java.util.List;
 public interface WorkflowConditionAdder {
   /**
    * Adds a {@link WorkflowConditionNode} to the Workflow.
-   * @param conditionNodeName the name of the node representing the condition. We use simple name of the predicate
-   *                          class as the name of the condition node.
-   * @param predicateClassName the name of the predicate class associated with this {@link WorkflowConditionNode}
+   * @param predicate the predicate representing condition.
    * @param ifBranch the branch that is executed when the predicate evaluates to the true
    * @param elseBranch the branch that is executed when the predicate evaluates to the false
    */
-  void addWorkflowConditionNode(String conditionNodeName, String predicateClassName, List<WorkflowNode> ifBranch,
+  void addWorkflowConditionNode(Predicate<WorkflowContext> predicate, List<WorkflowNode> ifBranch,
                                 List<WorkflowNode> elseBranch);
+
+  /**
+   * Adds a {@link WorkflowConditionNode} to the Workflow.
+   * @param condition the condition in the Workflow
+   * @param ifBranch the branch that is executed when the predicate evaluates to the true
+   * @param elseBranch the branch that is executed when the predicate evaluates to the false
+   */
+  void addWorkflowConditionNode(Condition condition, List<WorkflowNode> ifBranch, List<WorkflowNode> elseBranch);
 }

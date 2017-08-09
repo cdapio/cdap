@@ -18,6 +18,7 @@ package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.customaction.CustomActionSpecification;
+import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.client.config.ClientConfig;
@@ -42,6 +43,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.ConditionSpecificationCodec;
 import co.cask.cdap.proto.codec.CustomActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -85,6 +87,7 @@ public class ProgramClient {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
     .registerTypeAdapter(CustomActionSpecification.class, new CustomActionSpecificationCodec())
+    .registerTypeAdapter(ConditionSpecification.class, new ConditionSpecificationCodec())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
   private static final Type BATCH_STATUS_RESPONSE_TYPE = new TypeToken<List<BatchProgramStatus>>() { }.getType();

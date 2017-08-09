@@ -102,6 +102,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -544,6 +545,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   public interface ThrowingRunnable {
     void run() throws Exception;
+  }
+
+  /**
+   * Run some code with the context class loader combined from the program class loader and the system class loader.
+   */
+  public <T> T executeChecked(final Callable<T> callable) throws Exception {
+    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    try {
+      return callable.call();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassloader);
+    }
   }
 
   /**

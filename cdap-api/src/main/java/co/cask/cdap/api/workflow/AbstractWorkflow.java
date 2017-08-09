@@ -147,6 +147,15 @@ public abstract class AbstractWorkflow extends AbstractPluginConfigurable<Workfl
   }
 
   /**
+   * Adds a condition to the {@link Workflow}.
+   * @param condition the {@link Condition} to be evaluated to determine which branch to take
+   * @return the {@link WorkflowConditionConfigurer} to configure the branches in the condition
+   */
+  protected final WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
+    return configurer.condition(condition);
+  }
+
+  /**
    * Adds a local dataset instance to the {@link Workflow}.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
