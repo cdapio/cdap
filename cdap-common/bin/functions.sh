@@ -403,34 +403,34 @@ cdap_set_classpath() {
 #   Any changes to this function must be compatible with the CSD's invocation
 #
 cdap_set_hbase() {
-  local readonly __compat __class=co.cask.cdap.data2.util.hbase.HBaseVersion
+  local readonly __compat __compatlib __class=co.cask.cdap.data2.util.hbase.HBaseVersion
   HBASE_VERSION=${HBASE_VERSION:-$("${JAVA}" -cp ${CLASSPATH} ${__class} 2>/dev/null)}
   case ${HBASE_VERSION} in
-    0.96*) __compat="${CDAP_HOME}"/hbase-compat-0.96/lib/* ;;
-    0.98*) __compat="${CDAP_HOME}"/hbase-compat-0.98/lib/* ;;
-    1.0-cdh5.5*|1.0-cdh5.6*) __compat="${CDAP_HOME}"/hbase-compat-1.0-cdh5.5.0/lib/* ;; # 5.5 and 5.6 are compatible
-    1.0-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.0-cdh/lib/* ;;
-    1.0*) __compat="${CDAP_HOME}"/hbase-compat-1.0/lib/* ;;
-    1.1*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;;
-    1.2-cdh*) __compat="${CDAP_HOME}"/hbase-compat-1.2-cdh5.7.0/lib/* ;; # 5.7 and 5.8 are compatible
-    1.2*) __compat="${CDAP_HOME}"/hbase-compat-1.1/lib/* ;; # 1.1 and 1.2 are compatible
+    0.96*) __compat=hbase-compat-0.96 ;;
+    0.98*) __compat=hbase-compat-0.98 ;;
+    1.0-cdh5.5*|1.0-cdh5.6*) __compat=hbase-compat-1.0-cdh5.5.0 ;; # 5.5 and 5.6 are compatible
+    1.0-cdh*) __compat=hbase-compat-1.0-cdh ;;
+    1.0*) __compat=hbase-compat-1.0 ;;
+    1.1*) __compat=hbase-compat-1.1 ;;
+    1.2-cdh*) __compat=hbase-compat-1.2-cdh5.7.0 ;; # 5.7 and 5.8 are compatible
+    1.2*) __compat=hbase-compat-1.1 ;; # 1.1 and 1.2 are compatible
     "") die "Unable to determine HBase version! Aborting." ;;
     *)
       if [[ $(cdap_get_conf "hbase.version.resolution.strategy" "${CDAP_CONF}"/cdap-site.xml auto.strict) == 'auto.latest' ]]; then
         local readonly __latest_hbase_compat
         if [[ ${HBASE_VERSION} =~ -cdh ]]; then
-          __latest_hbase_compat=hbase-compat-1.2-cdh5.7.0 # must be updated if a new CDH HBase version is added
+          __compat=hbase-compat-1.2-cdh5.7.0 # must be updated if a new CDH HBase version is added
         else
-          __latest_hbase_compat=hbase-compat-1.1 # must be updated if a new HBase version is added
+          __compat=hbase-compat-1.1 # must be updated if a new HBase version is added
         fi
-        __compat="${CDAP_HOME}"/${__latest_hbase_compat}/lib/*
-        echo "Using ${__latest_hbase_compat} for HBase version ${HBASE_VERSION} due to 'auto.latest' resolution strategy."
+        echo "Using ${__compat} for HBase version ${HBASE_VERSION} due to 'auto.latest' resolution strategy."
       else
         die "Unknown or unsupported HBase version found: ${HBASE_VERSION}"
       fi
       ;;
   esac
-  export CLASSPATH="${__compat}":${CLASSPATH}
+  __compatlib=$(find -L "${CDAP_HOME}"/${__compat}/lib -type f 2>/dev/null | sort | tr '\n' ':')
+  export CLASSPATH="${__compatlib}"${CLASSPATH}
   return 0
 }
 
