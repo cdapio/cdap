@@ -132,13 +132,13 @@ export default class AddRulesEngineToPipelineModal extends Component {
   componentWillReceiveProps(nextProps) {
     if (this.state.isOpen !== nextProps.isOpen) {
       this.setState({
-        isOpen: nextProps.isOpen
+        isOpen: nextProps.isOpen,
+        rulebookid: nextProps.rulebookid
       });
+      if (nextProps.isOpen) {
+        this.updateBatchAndRealtimeConfigs();
+      }
     }
-  }
-
-  componentDidMount() {
-    this.updateBatchAndRealtimeConfigs();
   }
 
   handleOnRealtimeUrlClick = () => {
