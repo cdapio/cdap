@@ -130,7 +130,7 @@ function updateNodeMetrics(pipelineConfig) {
     let metricsCount = Object.keys(run.nodesMetrics);
     let defaultMetrics = {};
     Object.keys(nodesMap).map(n => defaultMetrics[`user.${n}${type}`] = 0);
-    let nodesWithMetrics = run.nodeMetrics;
+    let nodesWithMetrics = run.nodesMetrics;
     if (!nodesCount.length || nodesCount.length!== metricsCount.length) {
       nodesWithMetrics = Object.assign({}, defaultMetrics, run.nodesMetrics);
     }
