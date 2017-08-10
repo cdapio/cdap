@@ -27,6 +27,7 @@ import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -179,7 +180,17 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     }
 
     public boolean isMetricsProcessorDelayEmitted() {
-      return systemMetricsMap.containsKey("metrics.0.process.delay.ms");
+      for (int i = 0; i < PARTITION_SIZE; i++) {
+        if (!systemMetricsMap.containsKey(
+          String.format(
+            "metrics.processor.0.topic.metrics%s.oldest.%s", i, Constants.MetricsProcessor.DELAY_METRIC_SUFFIX)) &&
+          !systemMetricsMap.containsKey(
+            String.format(
+              "metrics.processor.0.topic.metrics%s.latest.%s", i, Constants.MetricsProcessor.DELAY_METRIC_SUFFIX))) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override

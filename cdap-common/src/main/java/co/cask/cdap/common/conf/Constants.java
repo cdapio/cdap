@@ -740,6 +740,7 @@ public final class Constants {
     public static final String ADDRESS = "metrics.processor.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
+    public static final String DELAY_METRIC_SUFFIX = "delay.ms";
   }
 
   /**

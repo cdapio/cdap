@@ -85,7 +85,7 @@ public class DefaultPreviewManagerTest {
       new LoggingModules().getInMemoryModules(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsHandlerModule(),
-      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getCollectionServiceBindingModule(),
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),

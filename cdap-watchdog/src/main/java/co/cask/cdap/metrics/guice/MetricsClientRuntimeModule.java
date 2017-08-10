@@ -71,6 +71,19 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
     };
   }
 
+  public Module getCollectionServiceBindingModule() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        // skip the metric store metric dataset binding;
+        // this module is used when injector also uses MetricsHandlerModule
+        // MetricsHandler Module has the binding for the metric dataset and metric store
+        bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
+        expose(MetricsCollectionService.class);
+      }
+    };
+  }
+
   @Override
   public Module getDistributedModules() {
     return new DistributedMetricsClientModule();

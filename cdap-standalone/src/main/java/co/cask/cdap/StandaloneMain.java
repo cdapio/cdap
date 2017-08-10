@@ -472,7 +472,7 @@ public class StandaloneMain {
       new DataFabricModules(StandaloneMain.class.getName()).getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getStandaloneModules(),
-      new MetricsClientRuntimeModule().getStandaloneModules(),
+      new MetricsClientRuntimeModule().getCollectionServiceBindingModule(),
       new LoggingModules().getStandaloneModules(),
       new LogReaderRuntimeModules().getStandaloneModules(),
       new RouterModules().getStandaloneModules(),
