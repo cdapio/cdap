@@ -270,6 +270,7 @@ angular.module(PKG.name + '.commons')
       // FIXME: This directive should not be dependent on specific external component to render itself.
       // The left panel should default to expanded view and cleaning up the graph and fit to screen should happen in parallel.
       fitToScreenTimeout = $timeout(() => {
+        vm.cleanUpGraph();
         vm.fitToScreen();
       }, 500);
     }
