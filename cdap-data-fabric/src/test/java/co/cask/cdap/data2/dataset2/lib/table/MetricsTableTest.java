@@ -328,7 +328,7 @@ public abstract class MetricsTableTest {
     return map;
   }
 
-  private <T> SortedMap<byte[], T> mapOf(byte[] firstKey, T firstValue, byte[] secondKey, T secondValue) {
+  protected <T> SortedMap<byte[], T> mapOf(byte[] firstKey, T firstValue, byte[] secondKey, T secondValue) {
     SortedMap<byte[], T> map = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     map.put(firstKey, firstValue);
     map.put(secondKey, secondValue);

@@ -2079,7 +2079,13 @@
     </description>
   </property>
 
-
+  <property>
+    <name>metrics.hbase.max.scan.threads</name>
+    <value>96</value>
+    <description>
+      Maximum number of threads used for scanning HBase tables
+    </description>
+  </property>
 
   <!-- Monitor Handler Configuration -->
 

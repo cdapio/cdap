@@ -159,7 +159,7 @@ public class IncrementHandler extends BaseRegionObserver {
       }
     }
 
-    // note that in 0.96, there is no hook for increment after the rrow lock was obtained
+    // note that in 0.96, there is no hook for increment after the row lock was obtained
     // therefore we must acquire the row lock here
     HRegion.RowLock rowLock = region.getRowLock(increment.getRow());
     try {
