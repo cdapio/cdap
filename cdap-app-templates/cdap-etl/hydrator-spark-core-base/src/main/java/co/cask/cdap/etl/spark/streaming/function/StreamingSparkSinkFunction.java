@@ -56,6 +56,10 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
   @Override
   public Void call(JavaRDD<T> data, Time batchTime) throws Exception {
+    if (data.isEmpty()) {
+      return null;
+    }
+
     final long logicalStartTime = batchTime.milliseconds();
     MacroEvaluator evaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(),
                                                          sec.getRuntimeArguments(),
