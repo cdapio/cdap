@@ -22,11 +22,14 @@ import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Table;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A FieldLevelLineageStorageGraph is a graph of the field lineage for a pipeline run
@@ -56,10 +59,6 @@ public final class FieldLevelLineageStoreGraph {
     this.make();
   }
 
-  private int len(String stage, String field) {
-    return stages.get(stage).getLineage().get(field).size();
-  }
-
   private DatasetFieldNode create(String stage, String field) {
     DatasetFieldNode node = new DatasetFieldNode(stageToDataset.get(stage), pipelineId, stage, field);
     if (nodeRetriever.containsKey(node)) {
@@ -82,50 +81,84 @@ public final class FieldLevelLineageStoreGraph {
     }
   }
 
-  private void forwardLineage(FieldLevelLineageStoreNode prev, String stage, String field, int index) {
-    if (--index >= 0) {
-      FieldLevelLineage.BranchingTransformStepNode stepNode = stages.get(stage).getLineage().get(field).get(index);
-      if (stepNode.continueForward()) {
-        FieldStepNode node = create(stage, field, stepNode.getTransformStepNumber());
-        futureEdges.put(prev, node);
-        prev = node;
-        forwardLineage(prev, stage, field, index);
-      }
-      for (Map.Entry<String, Integer> entry : stepNode.getImpactedBranches().entrySet()) {
-        forwardLineage(prev, stage, entry.getKey(), entry.getValue());
-      }
-    } else {
-      //noinspection ConstantConditions
-      for (String nextStage : pipeline.getDag().getNodeOutputs(stage)) {
-        if (stages.containsKey(nextStage)) {
-          forwardLineage(prev, nextStage, field, len(nextStage, field));
-        } else if (pipeline.getSinks().contains(nextStage)) {
-          futureEdges.put(prev, create(nextStage, field));
-        }
-      }
-    }
+  private int len(String stage, String field) {
+    return stages.get(stage).getLineage().get(field).size();
   }
 
-  private void backwardLineage(FieldLevelLineageStoreNode prev, String stage, String field, int index, int size) {
-    if (++index < size) {
+  private Set<String> getPrevHelper(FieldLevelLineageStoreNode prev, String stage, String field) {
+    if (stages.containsKey(stage)) {
+      return ImmutableSet.of(stage);
+    }
+    if (pipeline.getSources().contains(stage)) {
+      pastEdges.put(prev, create(stage, field));
+      return ImmutableSet.of();
+    }
+    return getPrev(prev, stage, field);
+  }
+
+  private Set<String> getPrev(FieldLevelLineageStoreNode prev, String stage, String field) {
+    Set<String> returnVal = new HashSet<>();
+    //noinspection ConstantConditions
+    for (String nextStage : pipeline.getDag().getNodeInputs(stage)) {
+      returnVal.addAll(getPrevHelper(prev, nextStage, field));
+    }
+    return returnVal;
+  }
+
+  private Set<String> getNextHelper(FieldLevelLineageStoreNode prev, String stage, String field) {
+    if (stages.containsKey(stage)) {
+      return ImmutableSet.of(stage);
+    }
+    if (pipeline.getSinks().contains(stage)) {
+      futureEdges.put(prev, create(stage, field));
+      return ImmutableSet.of();
+    }
+    return getNext(prev, stage, field);
+  }
+
+  private Set<String> getNext(FieldLevelLineageStoreNode prev, String stage, String field) {
+    Set<String> returnVal = new HashSet<>();
+    //noinspection ConstantConditions
+    for (String nextStage : pipeline.getDag().getNodeOutputs(stage)) {
+      returnVal.addAll(getNextHelper(prev, nextStage, field));
+    }
+    return returnVal;
+  }
+
+  private void backwardLineage(FieldLevelLineageStoreNode prev, String stage, String field, int index) {
+    if (--index >= 0) {
       FieldLevelLineage.BranchingTransformStepNode stepNode = stages.get(stage).getLineage().get(field).get(index);
       if (stepNode.continueBackward()) {
         FieldStepNode node = create(stage, field, stepNode.getTransformStepNumber());
         pastEdges.put(prev, node);
         prev = node;
-        backwardLineage(prev, stage, field, index, size);
+        backwardLineage(prev, stage, field, index);
       }
       for (Map.Entry<String, Integer> entry : stepNode.getImpactingBranches().entrySet()) {
-        backwardLineage(prev, stage, entry.getKey(), entry.getValue(), len(stage, entry.getKey()));
+        backwardLineage(prev, stage, entry.getKey(), entry.getValue());
       }
     } else {
-      //noinspection ConstantConditions
-      for (String nextStage : pipeline.getDag().getNodeInputs(stage)) {
-        if (stages.containsKey(nextStage)) {
-          backwardLineage(prev, nextStage, field, -1, len(nextStage, field));
-        } else if (pipeline.getSources().contains(nextStage)) {
-          pastEdges.put(prev, create(nextStage, field));
-        }
+      for (String nextStage : getPrev(prev, stage, field)) {
+        backwardLineage(prev, nextStage, field, len(nextStage, field));
+      }
+    }
+  }
+
+  private void forwardLineage(FieldLevelLineageStoreNode prev, String stage, String field, int index, int size) {
+    if (++index < size) {
+      FieldLevelLineage.BranchingTransformStepNode stepNode = stages.get(stage).getLineage().get(field).get(index);
+      if (stepNode.continueForward()) {
+        FieldStepNode node = create(stage, field, stepNode.getTransformStepNumber());
+        futureEdges.put(prev, node);
+        prev = node;
+        forwardLineage(prev, stage, field, index, size);
+      }
+      for (Map.Entry<String, Integer> entry : stepNode.getImpactedBranches().entrySet()) {
+        forwardLineage(prev, stage, entry.getKey(), entry.getValue(), len(stage, entry.getKey()));
+      }
+    } else {
+      for (String nextStage : getNext(prev, stage, field)) {
+        forwardLineage(prev, nextStage, field, -1, len(nextStage, field));
       }
     }
   }
@@ -137,13 +170,19 @@ public final class FieldLevelLineageStoreGraph {
     for (String dataset : pipeline.getSources()) {
       //noinspection ConstantConditions
       for (String field : pipeline.getStage(dataset).getOutputs()) {
-        forwardLineage(create(dataset, field), dataset, field, 0);
+        DatasetFieldNode prev = create(dataset, field);
+        for (String stage : getNext(prev, dataset, field)) {
+          forwardLineage(prev, stage, field, 0, 0);
+        }
       }
     }
     for (String dataset : pipeline.getSinks()) {
       //noinspection ConstantConditions
       for (String field : pipeline.getStage(dataset).getInputs()) {
-        backwardLineage(create(dataset, field), dataset, field, 0, 0);
+        DatasetFieldNode prev = create(dataset, field);
+        for (String stage : getPrev(prev, dataset, field)) {
+          backwardLineage(prev, stage, field, 0);
+        }
       }
     }
   }

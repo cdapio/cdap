@@ -36,14 +36,17 @@ public class FieldStepNode implements FieldLevelLineageStoreNode {
     this.stepNumber = stepNumber;
   }
 
+  @Override
   public ProgramRunId getPipeline() {
     return this.pipeline;
   }
 
+  @Override
   public String getStage() {
     return this.stage;
   }
 
+  @Override
   public String getField() {
     return this.field;
   }

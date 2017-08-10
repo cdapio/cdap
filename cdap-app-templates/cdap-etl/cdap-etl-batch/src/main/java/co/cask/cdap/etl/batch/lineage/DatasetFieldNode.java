@@ -40,14 +40,17 @@ public class DatasetFieldNode implements FieldLevelLineageStoreNode {
     return this.dataset;
   }
 
+  @Override
   public ProgramRunId getPipeline() {
     return this.pipeline;
   }
 
+  @Override
   public String getStage() {
     return this.stage;
   }
 
+  @Override
   public String getField() {
     return this.field;
   }
