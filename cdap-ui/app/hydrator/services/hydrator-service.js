@@ -131,7 +131,7 @@ class HydratorPlusPlusHydratorService {
       namespace: this.$state.params.namespace,
       pipelineType: appType,
       version: artifactVersion || this.$rootScope.cdapVersion,
-      extensionType: node.type,
+      extensionType: node.type || node.plugin.type,
       pluginName: node.plugin.name,
       artifactVersion: node.plugin.artifact.version,
       artifactName: node.plugin.artifact.name,
