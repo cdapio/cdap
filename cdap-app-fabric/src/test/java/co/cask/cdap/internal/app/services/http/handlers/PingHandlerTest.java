@@ -33,8 +33,7 @@ public class PingHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testStatus() throws Exception {
-    HttpResponse response = doGet("/status");
+    HttpResponse response = doGet("/v3/system/services/appfabric/status");
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
-
 }

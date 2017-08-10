@@ -32,7 +32,11 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.HDFSTransactionStateStorageProvider;
 import co.cask.cdap.data.runtime.TransactionManagerProvider;
+import co.cask.cdap.data.runtime.main.transaction.TransactionHttpService;
+import co.cask.cdap.data.runtime.main.transaction.TransactionPingHandler;
 import co.cask.cdap.data2.audit.AuditModule;
+import co.cask.cdap.gateway.handlers.CommonHandlers;
+import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingClientModule;
@@ -44,12 +48,14 @@ import co.cask.cdap.security.impersonation.DefaultOwnerAdmin;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
+import co.cask.http.HttpHandler;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
+import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
@@ -93,6 +99,7 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
   @Override
   public void addServices(List<? super Service> services) {
     services.add(injector.getInstance(TransactionService.class));
+    services.add(injector.getInstance(TransactionHttpService.class));
   }
 
   static Injector createGuiceInjector(CConfiguration cConf, Configuration hConf, String txClientId) {
@@ -119,6 +126,11 @@ public class TransactionServiceTwillRunnable extends AbstractMasterTwillRunnable
           // TransactionService should never need to use UGIProvider. It is simply bound in HBaseQueueAdmin
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class).in(Scopes.SINGLETON);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+
+          // configure common handlers
+          Multibinder<HttpHandler> handlerBinder =
+            Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Service.TRANSACTION_HTTP));
+          handlerBinder.addBinding().to(TransactionPingHandler.class);
         }
       }
     );

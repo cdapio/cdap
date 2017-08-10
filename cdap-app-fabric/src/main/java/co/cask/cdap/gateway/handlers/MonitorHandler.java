@@ -166,30 +166,6 @@ public class MonitorHandler extends AbstractAppFabricHttpHandler {
     responder.sendJson(HttpResponseStatus.OK, result);
   }
 
-  @Path("/system/services/{service-name}/status")
-  @GET
-  public void monitor(HttpRequest request, HttpResponder responder,
-                      @PathParam("service-name") String serviceName) throws Exception {
-    if (!serviceManagementMap.containsKey(serviceName)) {
-      throw new NotFoundException(String.format("Invalid service name %s", serviceName));
-    }
-    MasterServiceManager masterServiceManager = serviceManagementMap.get(serviceName);
-    if (!masterServiceManager.isServiceEnabled()) {
-      throw new ForbiddenException(String.format("Service %s is not enabled", serviceName));
-    }
-    if (masterServiceManager.canCheckStatus() && masterServiceManager.isServiceAvailable()) {
-      JsonObject json = new JsonObject();
-      json.addProperty("status", STATUSOK);
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } else if (masterServiceManager.canCheckStatus()) {
-      JsonObject json = new JsonObject();
-      json.addProperty("status", STATUSNOTOK);
-      responder.sendJson(HttpResponseStatus.OK, json);
-    } else {
-      throw new BadRequestException("Operation not valid for this service");
-    }
-  }
-
   @Path("/system/services")
   @GET
   public void getServiceSpec(HttpRequest request, HttpResponder responder) throws Exception {
