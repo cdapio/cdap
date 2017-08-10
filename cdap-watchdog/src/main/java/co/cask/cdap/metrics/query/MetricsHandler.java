@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
@@ -108,5 +109,11 @@ public class MetricsHandler extends AbstractHttpHandler {
       LOG.error("Exception querying metrics ", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal error while querying for metrics");
     }
+  }
+
+  @GET
+  @Path("/processor/status")
+  public void processorStatus(HttpRequest request, HttpResponder responder) throws Exception {
+    responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.getMetricStore().getMetricsProcessorStats());
   }
 }
