@@ -188,6 +188,9 @@ class DAGPlusPlusNodesStore {
       if (!node.name) {
         node.name = node.label + '-' + this.uuid.v4();
       }
+      if (!node.type) {
+        node.type = node.plugin.type;
+      }
     });
     this.state.nodes = nodes;
     this.emitChange();

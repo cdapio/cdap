@@ -96,17 +96,18 @@ class HydratorPlusPlusCreateCanvasCtrl {
               let artifactVersion = HydratorPlusPlusConfigStore.getArtifact().version;
               return HydratorPlusPlusNodeService
                 .getPluginInfo(pluginNode, appType, sourceConn, artifactVersion)
-                .then((nodeWithInfo) => (
-                  {
+                .then((nodeWithInfo) => {
+                  let pluginType = nodeWithInfo.type || nodeWithInfo.plugin.type;
+                  return {
                     node: nodeWithInfo,
                     isValidPlugin: true,
                     type: appType,
-                    isSource: GLOBALS.pluginConvert[nodeWithInfo.plugin.type] === 'source',
-                    isSink: GLOBALS.pluginConvert[nodeWithInfo.plugin.type] === 'sink',
-                    isTransform: GLOBALS.pluginConvert[nodeWithInfo.plugin.type] === 'transform',
-                    isAction: GLOBALS.pluginConvert[nodeWithInfo.plugin.type] === 'action'
-                  }
-                ));
+                    isSource: GLOBALS.pluginConvert[pluginType] === 'source',
+                    isSink: GLOBALS.pluginConvert[pluginType] === 'sink',
+                    isTransform: GLOBALS.pluginConvert[pluginType] === 'transform',
+                    isAction: GLOBALS.pluginConvert[pluginType] === 'action'
+                  };
+                });
             }]
           }
         })

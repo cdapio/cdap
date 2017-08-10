@@ -26,7 +26,7 @@ class HydratorPlusPlusReferenceTabCtrl {
     if (!node.plugin) {
       this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
-      let key = `doc.${node.plugin.name}-${node.type}`;
+      let key = `doc.${node.plugin.name}-${node.type || node.plugin.type}`;
       this.HydratorPlusPlusPluginConfigFactory.fetchDocJson(
         this.myHelpers.objectQuery(node, 'plugin', 'artifact', 'name'),
         this.myHelpers.objectQuery(node, 'plugin', 'artifact', 'version'),
