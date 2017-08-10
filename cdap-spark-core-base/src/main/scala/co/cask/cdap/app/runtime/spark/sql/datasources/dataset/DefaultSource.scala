@@ -16,22 +16,39 @@
 
 package co.cask.cdap.app.runtime.spark.sql.datasources.dataset
 
-import java.lang.reflect.Type
-import javax.annotation.Nullable
-
-import co.cask.cdap.api.data.batch.{RecordScannable, RecordWritable}
+import co.cask.cdap.api.data.batch.RecordScannable
+import co.cask.cdap.api.data.batch.RecordWritable
 import co.cask.cdap.api.data.format.StructuredRecord
-import co.cask.cdap.api.data.schema.{Schema, UnsupportedTypeException}
-import co.cask.cdap.api.dataset.{Dataset, DatasetProperties, DatasetSpecification, InstanceNotFoundException}
+import co.cask.cdap.api.data.schema.Schema
+import co.cask.cdap.api.data.schema.UnsupportedTypeException
+import co.cask.cdap.api.dataset.Dataset
+import co.cask.cdap.api.dataset.DatasetProperties
+import co.cask.cdap.api.dataset.DatasetSpecification
+import co.cask.cdap.api.dataset.InstanceNotFoundException
 import co.cask.cdap.api.spark.sql.DataFrames
-import co.cask.cdap.app.runtime.spark.{SparkClassLoader, SparkRuntimeContext, SparkRuntimeContextProvider}
+import co.cask.cdap.app.runtime.spark.SparkClassLoader
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContext
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
 import co.cask.cdap.data2.metadata.lineage.AccessType
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator
-import co.cask.cdap.proto.id.{DatasetId, NamespaceId}
+import co.cask.cdap.proto.id.DatasetId
+import co.cask.cdap.proto.id.NamespaceId
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql._
-import org.apache.spark.sql.sources._
-import org.apache.spark.sql.types.{DataType, StructType}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.Encoders
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SaveMode
+import org.apache.spark.sql.sources.BaseRelation
+import org.apache.spark.sql.sources.CreatableRelationProvider
+import org.apache.spark.sql.sources.DataSourceRegister
+import org.apache.spark.sql.sources.RelationProvider
+import org.apache.spark.sql.sources.SchemaRelationProvider
+import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.StructType
+
+import java.lang.reflect.Type
+import javax.annotation.Nullable
 
 import scala.collection.JavaConversions._
 

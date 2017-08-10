@@ -19,7 +19,10 @@ package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
 import co.cask.cdap.proto.id.NamespaceId
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.sql.sources.{BaseRelation, DataSourceRegister, RelationProvider, SchemaRelationProvider}
+import org.apache.spark.sql.sources.BaseRelation
+import org.apache.spark.sql.sources.DataSourceRegister
+import org.apache.spark.sql.sources.RelationProvider
+import org.apache.spark.sql.sources.SchemaRelationProvider
 import org.apache.spark.sql.types.StructType
 
 /**

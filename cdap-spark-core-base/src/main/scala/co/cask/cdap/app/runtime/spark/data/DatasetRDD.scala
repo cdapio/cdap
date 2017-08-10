@@ -16,19 +16,24 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import java.net.URI
-
 import co.cask.cdap.api.data.DatasetInstantiationException
-import co.cask.cdap.api.data.batch.{BatchReadable, InputFormatProvider, Split}
+import co.cask.cdap.api.data.batch.BatchReadable
+import co.cask.cdap.api.data.batch.InputFormatProvider
+import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.app.runtime.spark.{DatasetCompute, SparkClassLoader}
+import co.cask.cdap.app.runtime.spark.DatasetCompute
+import co.cask.cdap.app.runtime.spark.SparkClassLoader
 import co.cask.cdap.common.conf.ConfigurationUtil
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.InputFormat
+import org.apache.spark.Partition
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
 import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Partition, SparkContext, TaskContext}
+
+import java.net.URI
 
 import scala.annotation.meta.param
 import scala.collection.JavaConversions._

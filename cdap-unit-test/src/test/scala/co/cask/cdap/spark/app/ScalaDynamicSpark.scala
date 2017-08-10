@@ -16,12 +16,15 @@
 
 package co.cask.cdap.spark.app
 
-import java.io.{ByteArrayOutputStream, File}
-import java.nio.file.Files
-
-import co.cask.cdap.api.spark.{AbstractExtendedSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.AbstractExtendedSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import com.google.common.io.BaseEncoding
 import org.apache.spark.SparkContext
+
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.nio.file.Files
 
 import scala.collection.JavaConversions._
 

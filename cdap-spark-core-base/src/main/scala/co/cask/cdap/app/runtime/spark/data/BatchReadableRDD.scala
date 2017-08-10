@@ -16,15 +16,15 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import java.net.URI
-
-import co.cask.cdap.api.data.batch.{BatchReadable, Split}
+import co.cask.cdap.api.data.batch.BatchReadable
+import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.dataset.Dataset
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 
+import java.net.URI
+
 import scala.annotation.meta.param
-import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
 
 /**

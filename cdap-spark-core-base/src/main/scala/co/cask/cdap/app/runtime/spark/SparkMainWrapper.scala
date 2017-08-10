@@ -16,12 +16,14 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.lang.reflect.{Method, Modifier}
-
 import co.cask.cdap.api.common.RuntimeArguments
-import co.cask.cdap.api.spark.{JavaSparkMain, SparkMain}
+import co.cask.cdap.api.spark.JavaSparkMain
+import co.cask.cdap.api.spark.SparkMain
 import org.apache.twill.common.Cancellable
 import org.slf4j.LoggerFactory
+
+import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 /**
   * The main class that get submitted to Spark for execution of Spark program in CDAP.

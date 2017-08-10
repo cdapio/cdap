@@ -16,12 +16,14 @@
 
 package co.cask.cdap.spark.app
 
-import java.util
-
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.util
 
 import scala.collection.JavaConversions._
 

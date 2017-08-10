@@ -16,17 +16,20 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import java.net.URI
-import java.util.concurrent.TimeUnit
-
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.dataset.Dataset
-import co.cask.cdap.app.runtime.spark.{SparkRuntimeContextProvider, SparkTransactionClient}
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContextProvider
+import co.cask.cdap.app.runtime.spark.SparkTransactionClient
 import co.cask.cdap.data2.metadata.lineage.AccessType
+import org.apache.spark.Partition
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{Partition, SparkContext, TaskContext}
 import org.apache.tephra.TransactionAware
+
+import java.net.URI
+import java.util.concurrent.TimeUnit
 
 import scala.annotation.meta.param
 import scala.collection.JavaConversions._

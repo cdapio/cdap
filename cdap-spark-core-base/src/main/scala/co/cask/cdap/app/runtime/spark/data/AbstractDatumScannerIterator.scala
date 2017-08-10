@@ -16,11 +16,12 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
+import co.cask.cdap.app.runtime.spark.data
+import org.apache.spark.TaskContext
+import org.apache.spark.TaskKilledException
+
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
-
-import co.cask.cdap.app.runtime.spark.data
-import org.apache.spark.{TaskContext, TaskKilledException}
 
 /**
   * An adapter class to branch a [[data.DatumScanner]] into an [[scala.Iterator]].

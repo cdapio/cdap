@@ -16,9 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.util
+import org.apache.spark.scheduler.SparkListener
+import org.apache.spark.scheduler.SparkListenerEvent
 
-import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
+import java.util
 
 import scala.collection.JavaConversions._
 

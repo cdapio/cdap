@@ -16,22 +16,31 @@
 
 package co.cask.cdap.app.runtime.spark.dynamic
 
-import java.io._
-import java.net.URL
-import java.util.jar.{JarEntry, JarOutputStream}
-
-import co.cask.cdap.api.spark.dynamic.{CompilationFailureException, SparkCompiler}
+import co.cask.cdap.api.spark.dynamic.CompilationFailureException
+import co.cask.cdap.api.spark.dynamic.SparkCompiler
+import co.cask.cdap.common.lang.ClassLoaders
+import co.cask.cdap.common.lang.CombineClassLoader
 import co.cask.cdap.common.lang.jar.BundleJarUtil
-import co.cask.cdap.common.lang.{ClassLoaders, CombineClassLoader}
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader
 import co.cask.cdap.internal.lang.CallerClassSecurityManager
 
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.URL
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
+
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import scala.reflect.internal.util.{BatchSourceFile, SourceFile}
+import scala.reflect.internal.util.BatchSourceFile
+import scala.reflect.internal.util.SourceFile
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interpreter.IMain
-import scala.tools.nsc.io.{AbstractFile, PlainFile}
+import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.io.PlainFile
 
 /**
   * Abstract common base for implementation [[co.cask.cdap.api.spark.dynamic.SparkCompiler]] for different

@@ -16,17 +16,18 @@
 
 package co.cask.cdap.api.spark
 
-import java.nio.charset.Charset
-
+import co.cask.cdap.api.Transactional
+import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.DatasetContext
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.{Transactional, TxRunnable}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.nio.charset.Charset
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag

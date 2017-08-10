@@ -16,10 +16,13 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
-
-import co.cask.cdap.api.data.batch.{Split, Splits}
+import co.cask.cdap.api.data.batch.Split
+import co.cask.cdap.api.data.batch.Splits
 import org.apache.spark.Partition
+
+import java.io.Externalizable
+import java.io.ObjectInput
+import java.io.ObjectOutput
 
 /**
   * Represents one [[org.apache.spark.Partition]] in [[org.apache.spark.rdd.RDD]], which

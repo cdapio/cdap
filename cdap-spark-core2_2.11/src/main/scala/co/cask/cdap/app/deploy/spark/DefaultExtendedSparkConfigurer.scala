@@ -16,14 +16,15 @@
 
 package co.cask.cdap.app.deploy.spark
 
-import java.net.URL
-
 import co.cask.cdap.api.spark.Spark
 import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkCompiler, URLAdder}
+import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkCompiler
+import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
 import co.cask.cdap.proto.Id
+
+import java.net.URL
 
 import scala.tools.nsc.Settings
 

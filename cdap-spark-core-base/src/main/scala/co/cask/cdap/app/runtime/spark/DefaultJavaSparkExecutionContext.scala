@@ -16,9 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.io.IOException
-import java.util
-
+import co.cask.cdap.api.Admin
+import co.cask.cdap.api.ServiceDiscoverer
+import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.app.ApplicationSpecification
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
@@ -27,18 +27,26 @@ import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.preview.DataTracer
-import co.cask.cdap.api.security.store.{SecureStore, SecureStoreData}
+import co.cask.cdap.api.security.store.SecureStore
+import co.cask.cdap.api.security.store.SecureStoreData
+import co.cask.cdap.api.spark.JavaSparkExecutionContext
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkSpecification
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.api.spark.{JavaSparkExecutionContext, SparkExecutionContext, SparkSpecification}
-import co.cask.cdap.api.stream.{GenericStreamEventData, StreamEventDecoder}
-import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
-import co.cask.cdap.api.{Admin, ServiceDiscoverer, TxRunnable}
+import co.cask.cdap.api.stream.GenericStreamEventData
+import co.cask.cdap.api.stream.StreamEventDecoder
+import co.cask.cdap.api.workflow.WorkflowInfo
+import co.cask.cdap.api.workflow.WorkflowToken
 import co.cask.cdap.data.stream.AbstractStreamInputFormat
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.LongWritable
-import org.apache.spark.api.java.{JavaPairRDD, JavaRDD}
+import org.apache.spark.api.java.JavaPairRDD
+import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.twill.api.RunId
+
+import java.io.IOException
+import java.util
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag

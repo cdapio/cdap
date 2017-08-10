@@ -16,9 +16,25 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.util
+import org.apache.spark.scheduler.SparkListener
+import org.apache.spark.scheduler.SparkListenerApplicationEnd
+import org.apache.spark.scheduler.SparkListenerApplicationStart
+import org.apache.spark.scheduler.SparkListenerBlockManagerAdded
+import org.apache.spark.scheduler.SparkListenerBlockManagerRemoved
+import org.apache.spark.scheduler.SparkListenerEnvironmentUpdate
+import org.apache.spark.scheduler.SparkListenerExecutorAdded
+import org.apache.spark.scheduler.SparkListenerExecutorMetricsUpdate
+import org.apache.spark.scheduler.SparkListenerExecutorRemoved
+import org.apache.spark.scheduler.SparkListenerJobEnd
+import org.apache.spark.scheduler.SparkListenerJobStart
+import org.apache.spark.scheduler.SparkListenerStageCompleted
+import org.apache.spark.scheduler.SparkListenerStageSubmitted
+import org.apache.spark.scheduler.SparkListenerTaskEnd
+import org.apache.spark.scheduler.SparkListenerTaskGettingResult
+import org.apache.spark.scheduler.SparkListenerTaskStart
+import org.apache.spark.scheduler.SparkListenerUnpersistRDD
 
-import org.apache.spark.scheduler._
+import java.util
 
 import scala.collection.JavaConversions._
 

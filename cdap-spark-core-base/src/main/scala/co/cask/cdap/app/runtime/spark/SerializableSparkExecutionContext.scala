@@ -16,8 +16,6 @@
 
 package co.cask.cdap.app.runtime.spark
 
-import java.io.{Externalizable, ObjectInput, ObjectOutput}
-
 import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
@@ -27,6 +25,10 @@ import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.io.Externalizable
+import java.io.ObjectInput
+import java.io.ObjectOutput
 
 import scala.reflect.ClassTag
 

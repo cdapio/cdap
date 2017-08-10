@@ -16,9 +16,9 @@
 
 package co.cask.cdap.app.runtime.spark.sql.datasources.dataset
 
-import java.util
-
-import co.cask.cdap.api.data.batch.{RecordScannable, Split, Splits}
+import co.cask.cdap.api.data.batch.RecordScannable
+import co.cask.cdap.api.data.batch.Split
+import co.cask.cdap.api.data.batch.Splits
 import co.cask.cdap.api.data.format.StructuredRecord
 import co.cask.cdap.api.data.schema.UnsupportedTypeException
 import co.cask.cdap.api.dataset.Dataset
@@ -27,9 +27,14 @@ import co.cask.cdap.app.runtime.spark.SparkClassLoader
 import co.cask.cdap.app.runtime.spark.data.RecordScannableRDD
 import co.cask.cdap.proto.id.DatasetId
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.sources.{BaseRelation, Filter, PrunedFilteredScan}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.sources.BaseRelation
+import org.apache.spark.sql.sources.Filter
+import org.apache.spark.sql.sources.PrunedFilteredScan
 import org.apache.spark.sql.types.StructType
-import org.apache.spark.sql.{Row, SQLContext}
+
+import java.util
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag

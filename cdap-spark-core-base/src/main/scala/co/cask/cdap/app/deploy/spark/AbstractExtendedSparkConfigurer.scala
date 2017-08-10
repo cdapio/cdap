@@ -16,8 +16,9 @@
 
 package co.cask.cdap.app.deploy.spark
 
+import co.cask.cdap.api.spark.ExtendedSparkConfigurer
+import co.cask.cdap.api.spark.Spark
 import co.cask.cdap.api.spark.dynamic.SparkCompiler
-import co.cask.cdap.api.spark.{ExtendedSparkConfigurer, Spark}
 import co.cask.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator
