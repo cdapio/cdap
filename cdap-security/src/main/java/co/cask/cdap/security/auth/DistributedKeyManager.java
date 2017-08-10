@@ -83,7 +83,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       LOG.warn("ZooKeeper ACL list is empty for keys!");
       acls = ZooDefs.Ids.OPEN_ACL_UNSAFE;
     }
-    LOG.info("ZooKeeper ACLs {} for keys", acls);
+    LOG.debug("ZooKeeper ACLs {} for keys", acls);
     this.keyCache = new SharedResourceCache<>(zookeeper, codec, "/keys", acls);
   }
 
@@ -99,7 +99,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       @Override
       public void leader() {
         leader.set(true);
-        LOG.info("Transitioned to leader");
+        LOG.debug("Transitioned to leader");
         if (currentKey == null) {
           rotateKey();
         }
@@ -108,7 +108,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
       @Override
       public void follower() {
         leader.set(false);
-        LOG.info("Transitioned to follower");
+        LOG.debug("Transitioned to follower");
       }
     });
     this.leaderElection.start();
@@ -144,7 +144,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyIdent : keyCache.getResources()) {
       // we can only remove keys that expired prior to the oldest non-expired token
       if (keyIdent.getExpiration() < (now - maxTokenExpiration)) {
-        LOG.info("Removing expired key: id={}, expiration={}", keyIdent.getKeyId(), keyIdent.getExpiration());
+        LOG.debug("Removing expired key: id={}, expiration={}", keyIdent.getKeyId(), keyIdent.getExpiration());
         keyCache.remove(Integer.toString(keyIdent.getKeyId()));
       }
     }
@@ -172,7 +172,7 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     for (KeyIdentifier keyEntry : keyCache.getResources()) {
       if (currentKey == null || keyEntry.getExpiration() > currentKey.getExpiration()) {
         currentKey = keyEntry;
-        LOG.info("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
+        LOG.debug("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
       }
     }
   }
@@ -182,13 +182,13 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
     LOG.debug("SharedResourceCache triggered update: leader={}, resource key={}", leader, name);
     if (currentKey == null || instance.getExpiration() > currentKey.getExpiration()) {
       currentKey = instance;
-      LOG.info("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
+      LOG.debug("Set current key: leader={}, key={}", leader, currentKey.getKeyId());
     }
   }
 
   @Override
   public void onResourceDelete(String name) {
-    LOG.info("Removed key: leader={}, key={}", leader, name);
+    LOG.debug("Removed key: leader={}, key={}", leader, name);
   }
 
   @Override
