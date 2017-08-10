@@ -85,9 +85,9 @@ public class ExploreRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-      Named exploreSeriveName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
+      Named exploreServiceName = Names.named(Constants.Service.EXPLORE_HTTP_USER_SERVICE);
       Multibinder<HttpHandler> handlerBinder =
-          Multibinder.newSetBinder(binder(), HttpHandler.class, exploreSeriveName);
+          Multibinder.newSetBinder(binder(), HttpHandler.class, exploreServiceName);
       handlerBinder.addBinding().to(NamespacedExploreQueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(ExploreQueryExecutorHttpHandler.class);
       handlerBinder.addBinding().to(NamespacedExploreMetadataHttpHandler.class);

@@ -46,10 +46,12 @@ public class MonitorClientTestRun extends ClientTestBase {
     List<SystemServiceMeta> services = monitorClient.listSystemServices();
     Assert.assertTrue(services.size() > 0);
 
-    String someService = services.get(0).getName();
-    String serviceStatus = monitorClient.getSystemServiceStatus(someService);
-    Assert.assertEquals("OK", serviceStatus);
+    // check that all the system services can have their status individually retrieved
+    for (SystemServiceMeta service : services) {
+      Assert.assertEquals("OK", monitorClient.getSystemServiceStatus(service.getName()));
+    }
 
+    String someService = services.get(0).getName();
     List<Containers.ContainerInfo> containers = monitorClient.getSystemServiceLiveInfo(someService).getContainers();
     Assert.assertNotNull(containers);
     Assert.assertTrue(containers.isEmpty());

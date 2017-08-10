@@ -40,6 +40,11 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     Constants.Service.EXPLORE_HTTP_USER_SERVICE);
   public static final RouteDestination STREAMS_SERVICE = new RouteDestination(Constants.Service.STREAMS);
   public static final RouteDestination PREVIEW_HTTP = new RouteDestination(Constants.Service.PREVIEW_HTTP);
+  public static final RouteDestination TRANSACTION = new RouteDestination(Constants.Service.TRANSACTION_HTTP);
+  public static final RouteDestination LOG_SAVER = new RouteDestination(Constants.Service.LOGSAVER);
+  public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(Constants.Service.METRICS_PROCESSOR);
+  public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
+  public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -155,6 +160,21 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return EXPLORE_HTTP_USER_SERVICE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("explore") && uriParts[2].equals("status")) {
       return EXPLORE_HTTP_USER_SERVICE;
+    } else if (matches(uriParts, "v3", "system", "services", null, "status")) {
+      switch (uriParts[3]) {
+        case Constants.Service.LOGSAVER: return LOG_SAVER;
+        case Constants.Service.TRANSACTION: return TRANSACTION;
+        case Constants.Service.METRICS_PROCESSOR: return METRICS_PROCESSOR;
+        case Constants.Service.METRICS: return METRICS;
+        case Constants.Service.APP_FABRIC_HTTP: return APP_FABRIC_HTTP;
+        case Constants.Service.STREAMS: return STREAMS_SERVICE;
+        case Constants.Service.DATASET_EXECUTOR: return DATASET_EXECUTOR;
+        case Constants.Service.REMOTE_SYSTEM_OPERATION: return DATASET_EXECUTOR;
+        case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
+        case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
+        case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
+        default: return null;
+      }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&
       (uriParts[6].equals("flows") || uriParts[6].equals("workers") || uriParts[6].equals("mapreduce"))) {
       // namespaced app fabric data operations:

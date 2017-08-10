@@ -43,13 +43,13 @@ import java.util.Map;
  */
 public class MonitorHandlerTest extends AppFabricTestBase {
 
-  protected HttpURLConnection openURL(String path, HttpMethod method) throws IOException, URISyntaxException {
+  private HttpURLConnection openURL(String path, HttpMethod method) throws IOException, URISyntaxException {
     HttpURLConnection urlConn = (HttpURLConnection) createURL(path).openConnection();
     urlConn.setRequestMethod(method.getName());
     return urlConn;
   }
 
-  protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
+  private URL createURL(String path) throws URISyntaxException, MalformedURLException {
     return getEndPoint(String.format("/v3/%s", path)).toURL();
   }
 

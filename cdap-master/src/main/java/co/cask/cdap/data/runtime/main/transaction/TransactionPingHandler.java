@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,42 +14,43 @@
  * the License.
  */
 
-package co.cask.cdap.gateway.handlers;
+package co.cask.cdap.data.runtime.main.transaction;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.http.AbstractHttpHandler;
+import co.cask.cdap.gateway.handlers.PingHandler;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonObject;
+import com.google.inject.Inject;
+import org.apache.tephra.TransactionSystemClient;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
 /**
- * Handles ping requests.
+ * Handles ping requests for Transaction service.
+ * Similar to PingHandler, but overriding the status endpoint, to also check transaction manager status.
  */
-public class PingHandler extends AbstractHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(PingHandler.class);
-  protected static final JsonObject OK_JSON;
+public class TransactionPingHandler extends PingHandler {
+  private static final JsonObject NOT_OK_JSON;
   static {
-    OK_JSON = new JsonObject();
-    OK_JSON.addProperty("status", Constants.Monitor.STATUS_OK);
+    NOT_OK_JSON = new JsonObject();
+    NOT_OK_JSON.addProperty("status", Constants.Monitor.STATUS_NOTOK);
   }
 
-  @Path("/ping")
-  @GET
-  public void ping(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder) {
-    LOG.trace("Ping request received");
-    responder.sendString(HttpResponseStatus.OK, "OK.\n");
+  private final TransactionSystemClient transactionSystemClient;
+
+  @Inject
+  public TransactionPingHandler(TransactionSystemClient transactionSystemClient) {
+    this.transactionSystemClient = transactionSystemClient;
   }
 
   @Path(Constants.Gateway.API_VERSION_3 + "/system/services/{service-name}/status")
   @GET
   public void status(HttpRequest request, HttpResponder responder) {
     // ignore the service-name, since we dont need it. its only used for routing
-    responder.sendJson(HttpResponseStatus.OK, OK_JSON);
+    responder.sendJson(HttpResponseStatus.OK,
+                       Constants.Monitor.STATUS_OK.equals(transactionSystemClient.status()) ? OK_JSON : NOT_OK_JSON);
   }
 }

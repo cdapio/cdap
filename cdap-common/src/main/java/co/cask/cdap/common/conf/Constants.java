@@ -91,6 +91,7 @@ public final class Constants {
     public static final String ACL = "acl";
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
+    public static final String TRANSACTION_HTTP = "transaction.http";
     public static final String METRICS = "metrics";
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
