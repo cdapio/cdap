@@ -262,7 +262,7 @@ public class TestBase {
       },
       // todo: do we need handler?
       new MetricsHandlerModule(),
-      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getCollectionServiceBindingModule(),
       new LoggingModules().getInMemoryModules(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new ExploreRuntimeModule().getInMemoryModules(),
