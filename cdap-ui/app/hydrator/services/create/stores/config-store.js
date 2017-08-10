@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusConfigStore {
-  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG){
+  constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG) {
     this.state = {};
     this.mySettings = mySettings;
     this.myHelpers = myHelpers;
@@ -173,7 +173,7 @@ class HydratorPlusPlusConfigStore {
             outputSchema.fields = outputSchema.fields.filter( field => !field.readonly);
           }
           node.plugin.properties[node.outputSchemaProperty] = JSON.stringify(outputSchema);
-        } catch(e) {}
+        } catch (e) {}
       }
       node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
 
@@ -384,7 +384,7 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setConfig(config, type) {
-    switch(type) {
+    switch (type) {
       case 'source':
         this.state.config.source = config;
         break;
@@ -595,7 +595,7 @@ class HydratorPlusPlusConfigStore {
       this.$q.all(listOfPromises)
         .then(
           () => {
-            if(!this.validateState()) {
+            if (!this.validateState()) {
               this.emitChange();
             }
             // Once the backend properties are fetched for all nodes, fetch their config jsons.
@@ -986,22 +986,15 @@ class HydratorPlusPlusConfigStore {
       }]);
       return;
     }
-    if(!this.getDraftId()) {
+    if (!this.getDraftId()) {
       this.setDraftId(this.uuid.v4());
       this.$stateParams.draftId = this.getDraftId();
       this.$state.go('hydrator.create', this.$stateParams, {notify: false});
     }
-    let config = this.getState();
-    if (config.__ui__.nodes.length === 0) {
-      config.__ui__.nodes = angular.copy(this.getStages());
-    }
-    // This is not to fall in the scenario where when the user saves a draft with a node selected.
-    // Next time they come to the draft and we still have the node selected but the bottom panel not updated.
-    config.__ui__.nodes = config.__ui__.nodes.map( node => {
-      delete node.selected;
-      delete node.error;
-      return node;
-    });
+    let config = this.getDisplayConfig();
+    config.__ui__ = {
+      draftId: this.getDraftId()
+    };
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
         draft => {
@@ -1011,13 +1004,13 @@ class HydratorPlusPlusConfigStore {
       ).length > 0;
     };
     let saveDraft = (config, draftsMap = {}) => {
-      draftsMap[config.__ui__.draftId] = config;
+      draftsMap[this.getDraftId()] = config;
       return draftsMap;
     };
     this.mySettings.get('hydratorDrafts', true)
       .then( (res = {isMigrated: true}) => {
         let draftsMap = res[this.$stateParams.namespace];
-        if(!checkForDuplicateDrafts(config, draftsMap)) {
+        if (!checkForDuplicateDrafts(config, draftsMap)) {
           res[this.$stateParams.namespace] = saveDraft(config, draftsMap);
         } else {
           throw 'A Draft with the same name already exist. Plesae rename your draft';
