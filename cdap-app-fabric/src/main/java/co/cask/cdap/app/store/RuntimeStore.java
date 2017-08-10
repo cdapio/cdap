@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,27 +32,19 @@ import javax.annotation.Nullable;
  * A store for runtime information of a {@link Program}.
  */
 public interface RuntimeStore {
-  /**
-   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
 
+  /**
+   * Logs start of program run.
+   *
    * @param id id of the program
    * @param pid run id
-   * @param startTime start timestamp in seconds
+   * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
    */
   void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
                 Map<String, String> runtimeArgs, Map<String, String> systemArgs);
-
-  /**
-   * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
-   *
-   * @param id id of the program
-   * @param pid run id
-   * @param twillRunId Twill run id
-   */
-  void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId);
 
   /**
    * Logs end of program run.

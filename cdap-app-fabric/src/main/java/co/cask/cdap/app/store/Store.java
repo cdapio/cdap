@@ -21,11 +21,13 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -65,26 +67,15 @@ public interface Store extends RuntimeStore {
                                                           ProgramNotFoundException;
 
   /**
-   * @see #setStartAndRun(ProgramId, String, long, long, Map, Map)
-   */
-  @VisibleForTesting
-  void setStartAndRun(ProgramId id, String pid, long startTime, long runTime);
-
-  /**
-   * Logs start and running of program run. This is a convenience method for testing, actual run starts should be
-   * recorded using {@link #setStart(ProgramId, String, long, String, Map, Map)} and
-   * {@link #setRunning(ProgramId, String, long, String)}.
+   * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
+   * {@link #setStart(ProgramId, String, long, String, Map, Map)}.
    *
-   * @param id program id
-   * @param pid run id
+   * @param id        Info about program
+   * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
-   * @param runTime run timestamp in seconds to mark the program running
-   * @param userArguments the user arguments to log
-   * @param systemArguments the system arguments to log
    */
   @VisibleForTesting
-  void setStartAndRun(ProgramId id, String pid, long startTime, long runTime,
-                      Map<String, String> userArguments, Map<String, String> systemArguments);
+  void setStart(ProgramId id, String pid, long startTime);
 
   /**
    * Compare and set operation that allow to compare and set expected and update status.
@@ -130,8 +121,7 @@ public interface Store extends RuntimeStore {
 
   /**
    * Fetches the run records for the particular status.
-   *
-   * @param status  status of the program to filter the records
+   * @param status  status of the program running/completed/failed or all
    * @param filter  predicate to be passed to filter the records
    * @return        map of logged runs
    */

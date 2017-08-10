@@ -15,11 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
-import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.app.program.Program;
+import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -34,7 +31,7 @@ import java.net.InetSocketAddress;
 /**
  *
  */
-final class WorkflowProgramController extends AbstractStateChangeProgramController {
+final class WorkflowProgramController extends AbstractProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowProgramController.class);
 
@@ -43,12 +40,10 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
   private final ServiceAnnouncer serviceAnnouncer;
   private Cancellable cancelAnnounce;
 
-  WorkflowProgramController(ProgramRunId programRunId, String twillRunId,
-                            ProgramStateWriter programStateWriter,
-                            WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer) {
-    super(programRunId, twillRunId, programStateWriter, null);
+  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
+    super(program.getId(), runId);
     this.driver = driver;
-    this.serviceName = getServiceName();
+    this.serviceName = getServiceName(program, runId);
     this.serviceAnnouncer = serviceAnnouncer;
     startListen(driver);
   }
@@ -102,7 +97,8 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
       public void failed(Service.State from, Throwable failure) {
         LOG.error("Workflow service '{}' failed.", serviceName, failure);
         if (cancelAnnounce != null) {
-          // cancelAnnounce could be null if there was an exception thrown before it enters the RUNNING state
+          // if there is an exception before workflow enters into the RUNNING state, cancelAnnounce will be null
+          // since it is initialized in the running method
           cancelAnnounce.cancel();
         }
         LOG.info("Service {} unregistered.", serviceName);
@@ -111,11 +107,8 @@ final class WorkflowProgramController extends AbstractStateChangeProgramControll
     }, Threads.SAME_THREAD_EXECUTOR);
   }
 
-  private String getServiceName() {
-    ProgramId programId = getProgramRunId().getParent();
-    RunId runId = getRunId();
+  private String getServiceName(Program program, RunId runId) {
     return String.format("workflow.%s.%s.%s.%s",
-                         programId.getNamespace(), programId.getApplication(), programId.getProgram(),
-                         runId.getId());
+                         program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
   }
 }

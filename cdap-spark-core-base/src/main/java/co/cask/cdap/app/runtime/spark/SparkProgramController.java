@@ -19,8 +19,6 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramController;
-import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -34,9 +32,8 @@ final class SparkProgramController extends ProgramControllerServiceAdapter imple
 
   private final SparkRuntimeContext context;
 
-  SparkProgramController(Service sparkRuntimeService, SparkRuntimeContext context,
-                         String twillRunId, ProgramStateWriter programStateWriter) {
-    super(sparkRuntimeService, context.getProgramRunId(), twillRunId, programStateWriter);
+  SparkProgramController(Service sparkRuntimeService, SparkRuntimeContext context) {
+    super(sparkRuntimeService, context.getProgram().getId(), context.getRunId());
     this.context = context;
   }
 

@@ -82,7 +82,7 @@ public class GetProgramRunsCommand extends AbstractCommand {
       .setRows(records, new RowMaker<RunRecord>() {
         @Override
         public List<?> makeRow(RunRecord object) {
-          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getRunTs(),
+          return Lists.newArrayList(object.getPid(), object.getStatus(), object.getStartTs(),
                                     object.getStatus().name().equals("RUNNING") ? "" : object.getStopTs());
         }
       }).build();
