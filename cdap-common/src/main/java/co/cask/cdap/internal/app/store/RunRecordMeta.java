@@ -36,21 +36,21 @@ public final class RunRecordMeta extends RunRecord {
   @SerializedName("systemargs")
   private final Map<String, String> systemArgs;
 
-  public RunRecordMeta(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, ProgramRunStatus status,
+  public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
                        @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
                        @Nullable String twillRunId) {
-    super(pid, startTs, runTs, stopTs, status, properties);
+    super(pid, startTs, stopTs, status, properties);
     this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
   }
 
   public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(started.getPid(), started.getStartTs(), started.getRunTs(), stopTs, status, started.getProperties(),
+    this(started.getPid(), started.getStartTs(), stopTs, status, started.getProperties(),
          started.getSystemArgs(), started.getTwillRunId());
   }
 
   public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties) {
-    this(existing.getPid(), existing.getStartTs(), existing.getRunTs(), existing.getStopTs(), existing.getStatus(),
+    this(existing.getPid(), existing.getStartTs(), existing.getStopTs(), existing.getStatus(),
          updatedProperties, existing.getSystemArgs(), existing.getTwillRunId());
   }
 
@@ -76,7 +76,6 @@ public final class RunRecordMeta extends RunRecord {
     RunRecordMeta that = (RunRecordMeta) o;
     return Objects.equal(this.getPid(), that.getPid()) &&
       Objects.equal(this.getStartTs(), that.getStartTs()) &&
-      Objects.equal(this.getRunTs(), that.getRunTs()) &&
       Objects.equal(this.getStopTs(), that.getStopTs()) &&
       Objects.equal(this.getStatus(), that.getStatus()) &&
       Objects.equal(this.getProperties(), that.getProperties()) &&
@@ -85,7 +84,7 @@ public final class RunRecordMeta extends RunRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getRunTs(), getStopTs(), getStatus(), getProperties());
+    return Objects.hashCode(twillRunId, getPid(), getStartTs(), getStopTs(), getStatus(), getProperties());
   }
 
   @Override
@@ -93,7 +92,6 @@ public final class RunRecordMeta extends RunRecord {
     return Objects.toStringHelper(this)
       .add("pid", getPid())
       .add("startTs", getStartTs())
-      .add("runTs", getRunTs())
       .add("stopTs", getStopTs())
       .add("status", getStatus())
       .add("twillrunid", twillRunId)

@@ -31,12 +31,8 @@ public class RunRecord {
   @SerializedName("runid")
   private final String pid;
 
-  @SerializedName("starting")
-  @Nullable
-  private final long startTs;
-
   @SerializedName("start")
-  private final Long runTs;
+  private final long startTs;
 
   @Nullable
   @SerializedName("end")
@@ -48,11 +44,10 @@ public class RunRecord {
   @SerializedName("properties")
   private final Map<String, String> properties;
 
-  public RunRecord(String pid, long startTs, @Nullable Long runTs, @Nullable Long stopTs, ProgramRunStatus status,
+  public RunRecord(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
                    @Nullable Map<String, String> properties) {
     this.pid = pid;
     this.startTs = startTs;
-    this.runTs = runTs;
     this.stopTs = stopTs;
     this.status = status;
     this.properties = properties == null ? Collections.<String, String>emptyMap() :
@@ -60,8 +55,8 @@ public class RunRecord {
   }
 
   public RunRecord(RunRecord otherRunRecord) {
-    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getRunTs(), otherRunRecord.getStopTs(),
-         otherRunRecord.getStatus(), otherRunRecord.getProperties());
+    this(otherRunRecord.getPid(), otherRunRecord.getStartTs(), otherRunRecord.getStopTs(), otherRunRecord.getStatus(),
+         otherRunRecord.getProperties());
   }
 
   public String getPid() {
@@ -70,11 +65,6 @@ public class RunRecord {
 
   public long getStartTs() {
     return startTs;
-  }
-
-  @Nullable
-  public Long getRunTs() {
-    return runTs;
   }
 
   @Nullable
@@ -103,7 +93,6 @@ public class RunRecord {
 
     return Objects.equals(this.pid, that.pid) &&
       Objects.equals(this.startTs, that.startTs) &&
-      Objects.equals(this.runTs, that.runTs) &&
       Objects.equals(this.stopTs, that.stopTs) &&
       Objects.equals(this.status, that.status) &&
       Objects.equals(this.properties, that.properties);
@@ -111,7 +100,7 @@ public class RunRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pid, startTs, runTs, stopTs, status, properties);
+    return Objects.hash(pid, startTs, stopTs, status, properties);
   }
 
   @Override
@@ -119,7 +108,6 @@ public class RunRecord {
     return "RunRecord{" +
       "pid='" + pid + '\'' +
       ", startTs=" + startTs +
-      ", runTs=" + runTs +
       ", stopTs=" + stopTs +
       ", status=" + status +
       ", properties=" + properties +

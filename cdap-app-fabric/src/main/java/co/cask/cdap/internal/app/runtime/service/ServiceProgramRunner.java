@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
-import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -40,12 +39,10 @@ import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -67,15 +64,14 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
   private final DefaultArtifactManager defaultArtifactManager;
-  private final ProgramStateWriter programStateWriter;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              @Named("programStateWriter") ProgramStateWriter programStateWriter,
                               SecureStore secureStore, SecureStoreManager secureStoreManager,
-                              MessagingService messagingService, DefaultArtifactManager defaultArtifactManager) {
+                              MessagingService messagingService,
+                              DefaultArtifactManager defaultArtifactManager) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -86,7 +82,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
     this.defaultArtifactManager = defaultArtifactManager;
-    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -98,7 +93,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
     RunId runId = ProgramRunners.getRunId(options);
-    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
@@ -140,8 +134,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId),
-                                                                         twillRunId, programStateWriter,
+
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                          spec.getName() + "-" + instanceId);
       component.start();
       return controller;
@@ -154,10 +148,9 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId, String twillRunId,
-                                    ProgramStateWriter programStateWriter,
-                                    String componentName) {
-      super(service, programRunId, twillRunId, programStateWriter, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId,
+                                    RunId runId, String componentName) {
+      super(service, programId, runId, componentName);
       this.service = service;
     }
 

@@ -53,7 +53,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +62,6 @@ import javax.annotation.Nullable;
 public class WorkflowTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowTest.class);
-  private static final int startDelaySecs = 1; // Time between persisting a program as STARTING and RUNNING
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -105,10 +103,8 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Starting");
-        long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        injector.getInstance(Store.class).setStartAndRun(controller.getProgramRunId().getParent(),
-                                                         controller.getProgramRunId().getRun(),
-                                                         nowSecs, nowSecs + startDelaySecs);
+        injector.getInstance(Store.class).setStart(controller.getProgramRunId().getParent(),
+                                                   controller.getProgramRunId().getRun(), System.currentTimeMillis());
       }
 
       @Override
@@ -216,10 +212,8 @@ public class WorkflowTest {
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Initializing");
-        long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        injector.getInstance(Store.class).setStartAndRun(controller.getProgramRunId().getParent(),
-                                                         controller.getProgramRunId().getRun(),
-                                                         nowSecs, nowSecs + startDelaySecs);
+        injector.getInstance(Store.class).setStart(controller.getProgramRunId().getParent(),
+                                                   controller.getProgramRunId().getRun(), System.currentTimeMillis());
       }
 
       @Override

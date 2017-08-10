@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,18 +88,14 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
   private final ArtifactRepository artifactRepository;
-  private final ProgramStateWriter programStateWriter;
 
-  protected AbstractProgramRuntimeService(CConfiguration cConf,
-                                          ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository,
-                                          ProgramStateWriter programStateWriter) {
+  protected AbstractProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                          ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
     this.artifactRepository = artifactRepository;
-    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -123,17 +119,10 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       // Create and run the program
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
-
-      // Publish the program's starting state
-      String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-      programStateWriter.start(programId.run(runId), options, twillRunId);
-
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
       monitorProgram(runtimeInfo, cleanUpTask);
       return runtimeInfo;
     } catch (Exception e) {
-      // Set the program state to an error when an exception is thrown
-      programStateWriter.error(programId.run(runId), e);
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);

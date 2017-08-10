@@ -141,7 +141,7 @@ public class MockLogReader implements LogReader {
     ProgramId workflowId = SOME_WORKFLOW_APP.workflow(SOME_WORKFLOW);
     long currentTime = TimeUnit.SECONDS.toMillis(10);
     RunId workflowRunId = RunIds.generate();
-    store.setStartAndRun(workflowId, workflowRunId.getId(), currentTime, currentTime + 1);
+    store.setStart(workflowId, workflowRunId.getId(), currentTime);
     runRecordMap.put(workflowId, store.getRun(workflowId, workflowRunId.getId()));
     WorkflowLoggingContext wfLoggingContext = new WorkflowLoggingContext(workflowId.getNamespace(),
                                                                          workflowId.getApplication(),
@@ -157,8 +157,8 @@ public class MockLogReader implements LogReader {
                                                      ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStartAndRun(mapReduceId, mapReduceRunId.getId(), currentTime, currentTime + 1,
-                         new HashMap<String, String>(), systemArgs);
+    store.setStart(mapReduceId, mapReduceRunId.getId(), currentTime, null, new HashMap<String, String>(),
+                   systemArgs);
 
     runRecordMap.put(mapReduceId, store.getRun(mapReduceId, mapReduceRunId.getId()));
     WorkflowProgramLoggingContext context = new WorkflowProgramLoggingContext(workflowId.getNamespace(),
@@ -177,8 +177,7 @@ public class MockLogReader implements LogReader {
                                  ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStartAndRun(sparkId, sparkRunId.getId(), currentTime, currentTime + 1,
-                         new HashMap<String, String>(), systemArgs);
+    store.setStart(sparkId, sparkRunId.getId(), currentTime, null, new HashMap<String, String>(), systemArgs);
     runRecordMap.put(sparkId, store.getRun(sparkId, sparkRunId.getId()));
     context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
                                                 workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
@@ -401,8 +400,8 @@ public class MockLogReader implements LogReader {
     long startTs = RunIds.getTime(runId, TimeUnit.SECONDS);
     if (programId != null) {
       //noinspection ConstantConditions
-      runRecordMap.put(programId, new RunRecord(runId.getId(), startTs, startTs + 1, stopTs, runStatus, null));
-      store.setStartAndRun(programId, runId.getId(), startTs, startTs + 1);
+      runRecordMap.put(programId, new RunRecord(runId.getId(), startTs, stopTs, runStatus, null));
+      store.setStart(programId, runId.getId(), startTs);
       if (stopTs != null) {
         store.setStop(programId, runId.getId(), stopTs, runStatus);
       }
