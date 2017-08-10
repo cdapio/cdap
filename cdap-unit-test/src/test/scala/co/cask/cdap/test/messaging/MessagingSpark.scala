@@ -16,15 +16,19 @@
 
 package co.cask.cdap.test.messaging
 
-import java.util.concurrent.{TimeUnit, TimeoutException}
-
 import co.cask.cdap.api.data.DatasetContext
-import co.cask.cdap.api.messaging.{Message, MessageFetcher}
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.messaging.Message
+import co.cask.cdap.api.messaging.MessageFetcher
+import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import com.google.common.base.Stopwatch
 import org.apache.spark.SparkContext
 import org.apache.tephra.TransactionFailureException
 import org.slf4j.LoggerFactory
+
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
   *

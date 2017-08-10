@@ -16,12 +16,13 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
-import java.net.URI
-
-import co.cask.cdap.api.data.batch.{RecordScannable, Split}
+import co.cask.cdap.api.data.batch.RecordScannable
+import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.dataset.Dataset
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
+
+import java.net.URI
 
 import scala.annotation.meta.param
 import scala.reflect.ClassTag
@@ -30,6 +31,7 @@ import scala.reflect.ClassTag
   * A [[org.apache.spark.rdd.RDD]] implementation that reads data
   * through [[co.cask.cdap.api.data.batch.RecordScannable]].
   */
+
 class RecordScannableRDD[R: ClassTag](@(transient @param) sc: SparkContext,
                                       namespace: String,
                                       datasetName: String,

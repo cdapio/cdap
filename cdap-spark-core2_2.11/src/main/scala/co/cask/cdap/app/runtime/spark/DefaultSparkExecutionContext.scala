@@ -15,14 +15,15 @@
  */
 
 package co.cask.cdap.app.runtime.spark
-import java.io.File
-import java.util
-
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
+import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
+import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
 import org.apache.hadoop.conf.Configuration
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+
+import java.io.File
+import java.util
 
 import scala.tools.nsc.Settings
 

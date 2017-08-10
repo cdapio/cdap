@@ -19,7 +19,8 @@ package co.cask.cdap.app.runtime.spark.dynamic
 import java.net.URL
 
 import scala.tools.nsc.Settings
-import scala.tools.nsc.interpreter.{IMain, ReplReporter}
+import scala.tools.nsc.interpreter.IMain
+import scala.tools.nsc.interpreter.ReplReporter
 import scala.tools.nsc.io.AbstractFile
 
 /**

@@ -18,7 +18,8 @@ package co.cask.cdap.api.spark.dynamic
 
 import co.cask.cdap.api.annotation.Beta
 
-import scala.reflect.{ClassTag, runtime}
+import scala.reflect.ClassTag
+import scala.reflect.runtime
 
 /**
   * An interpreter for running Spark code in Scala.

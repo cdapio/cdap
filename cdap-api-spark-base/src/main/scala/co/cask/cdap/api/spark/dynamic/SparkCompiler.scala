@@ -16,9 +16,11 @@
 
 package co.cask.cdap.api.spark.dynamic
 
-import java.io.{File, IOException, OutputStream}
-
 import co.cask.cdap.api.annotation.Beta
+
+import java.io.File
+import java.io.IOException
+import java.io.OutputStream
 
 import scala.tools.nsc.interpreter.IMain
 

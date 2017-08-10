@@ -16,7 +16,8 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.annotation.{Property, UseDataSet}
+import co.cask.cdap.api.annotation.Property
+import co.cask.cdap.api.annotation.UseDataSet
 import co.cask.cdap.api.app.AbstractApplication
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.customaction.AbstractCustomAction
@@ -25,7 +26,8 @@ import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
-import co.cask.cdap.api.{Config, ProgramStatus}
+import co.cask.cdap.api.Config
+import co.cask.cdap.api.ProgramStatus
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._

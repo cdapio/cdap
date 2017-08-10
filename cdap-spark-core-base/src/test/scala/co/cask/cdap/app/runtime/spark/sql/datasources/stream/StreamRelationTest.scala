@@ -16,8 +16,19 @@
 
 package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 
-import org.apache.spark.sql.sources._
-import org.junit.{Assert, Test}
+
+import org.apache.spark.sql.sources.And
+import org.apache.spark.sql.sources.EqualNullSafe
+import org.apache.spark.sql.sources.EqualTo
+import org.apache.spark.sql.sources.GreaterThan
+import org.apache.spark.sql.sources.GreaterThanOrEqual
+import org.apache.spark.sql.sources.In
+import org.apache.spark.sql.sources.LessThan
+import org.apache.spark.sql.sources.LessThanOrEqual
+import org.apache.spark.sql.sources.Not
+import org.apache.spark.sql.sources.Or
+import org.junit.Assert
+import org.junit.Test
 
 /**
   * Unit-test for [[StreamRelation]] functions without launch Spark SQL.

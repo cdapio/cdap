@@ -16,21 +16,23 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import com.google.common.reflect.TypeToken
+import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
+import org.apache.spark.scheduler.SparkListener
+import org.apache.spark.streaming.StreamingContext
+import org.slf4j.LoggerFactory
+
 import java.util
 import java.util.Properties
-import java.util.concurrent.{ConcurrentLinkedQueue, ExecutorService, TimeUnit}
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.TimeUnit
 import javax.annotation.Nullable
-
-import com.google.common.reflect.TypeToken
-import org.apache.spark.scheduler._
-import org.apache.spark.streaming.{StreamingContext, StreamingContextState}
-import org.apache.spark.{SparkConf, SparkContext}
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.ExecutionContext
 
 /**
   * A singleton for holding information used by the runtime system.

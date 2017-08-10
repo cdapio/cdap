@@ -16,9 +16,11 @@
 
 package co.cask.cdap.api.spark
 
-import java.io.IOException
-
-import co.cask.cdap.api._
+import co.cask.cdap.api.RuntimeContext
+import co.cask.cdap.api.ServiceDiscoverer
+import co.cask.cdap.api.TaskLocalizationContext
+import co.cask.cdap.api.Transactional
+import co.cask.cdap.api.TxRunnable
 import co.cask.cdap.api.annotation.Beta
 import co.cask.cdap.api.data.batch.Split
 import co.cask.cdap.api.data.format.FormatSpecification
@@ -29,10 +31,13 @@ import co.cask.cdap.api.plugin.PluginContext
 import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.api.workflow.{WorkflowInfo, WorkflowToken}
+import co.cask.cdap.api.workflow.WorkflowInfo
+import co.cask.cdap.api.workflow.WorkflowToken
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionFailureException
+
+import java.io.IOException
 
 import scala.reflect.ClassTag
 

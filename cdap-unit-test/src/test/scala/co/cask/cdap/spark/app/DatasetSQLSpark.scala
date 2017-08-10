@@ -16,7 +16,9 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 

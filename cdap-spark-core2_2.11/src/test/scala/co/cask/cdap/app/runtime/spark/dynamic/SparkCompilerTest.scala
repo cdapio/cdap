@@ -16,9 +16,10 @@
 
 package co.cask.cdap.app.runtime.spark.dynamic
 
-import java.net.URL
+import co.cask.cdap.api.spark.dynamic.SparkCompiler
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 
-import co.cask.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
+import java.net.URL
 
 import scala.tools.nsc.Settings
 

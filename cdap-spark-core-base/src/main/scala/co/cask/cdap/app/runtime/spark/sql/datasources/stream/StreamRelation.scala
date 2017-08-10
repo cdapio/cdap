@@ -17,18 +17,36 @@
 package co.cask.cdap.app.runtime.spark.sql.datasources.stream
 
 import co.cask.cdap.api.common.Bytes
-import co.cask.cdap.api.data.format.{FormatSpecification, StructuredRecord}
+import co.cask.cdap.api.data.format.FormatSpecification
+import co.cask.cdap.api.data.format.StructuredRecord
 import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.spark.sql.DataFrames
 import co.cask.cdap.api.stream.GenericStreamEventData
-import co.cask.cdap.app.runtime.spark.{SparkClassLoader, SparkRuntimeContext}
+import co.cask.cdap.app.runtime.spark.SparkClassLoader
+import co.cask.cdap.app.runtime.spark.SparkRuntimeContext
 import co.cask.cdap.format.RecordFormats
 import co.cask.cdap.proto.id.StreamId
 import com.google.common.annotations.VisibleForTesting
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.sources._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SQLContext}
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.sources.And
+import org.apache.spark.sql.sources.BaseRelation
+import org.apache.spark.sql.sources.EqualNullSafe
+import org.apache.spark.sql.sources.EqualTo
+import org.apache.spark.sql.sources.Filter
+import org.apache.spark.sql.sources.GreaterThan
+import org.apache.spark.sql.sources.GreaterThanOrEqual
+import org.apache.spark.sql.sources.In
+import org.apache.spark.sql.sources.LessThan
+import org.apache.spark.sql.sources.LessThanOrEqual
+import org.apache.spark.sql.sources.Not
+import org.apache.spark.sql.sources.Or
+import org.apache.spark.sql.sources.PrunedFilteredScan
+import org.apache.spark.sql.types.DataTypes
+import org.apache.spark.sql.types.MapType
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.types.StructType
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable

@@ -16,15 +16,18 @@
 
 package co.cask.cdap.app.runtime.spark
 
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+import co.cask.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
+import co.cask.cdap.app.runtime.spark.dynamic.URLAdder
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
+import org.apache.spark.executor.DataWriteMethod
+import org.apache.spark.executor.OutputMetrics
+import org.apache.spark.rdd.RDD
+
 import java.io.File
 import java.util
-
-import co.cask.cdap.api.spark.dynamic.SparkInterpreter
-import co.cask.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
-import org.apache.hadoop.conf.Configuration
-import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkContext, TaskContext}
 
 import scala.reflect.io.PlainFile
 import scala.tools.nsc.Settings

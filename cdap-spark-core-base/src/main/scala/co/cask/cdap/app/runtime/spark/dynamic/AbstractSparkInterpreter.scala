@@ -16,10 +16,15 @@
 
 package co.cask.cdap.app.runtime.spark.dynamic
 
-import co.cask.cdap.api.spark.dynamic.{BindingException, InterpretFailureException, SparkInterpreter}
+import co.cask.cdap.api.spark.dynamic.BindingException
+import co.cask.cdap.api.spark.dynamic.InterpretFailureException
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 
-import scala.reflect.{ClassTag, runtime}
-import scala.tools.nsc.interpreter.Results.{Error, Incomplete, Success}
+import scala.reflect.ClassTag
+import scala.reflect.runtime
+import scala.tools.nsc.interpreter.Results.Error
+import scala.tools.nsc.interpreter.Results.Incomplete
+import scala.tools.nsc.interpreter.Results.Success
 
 /**
   * A trait to provide implementation of [[co.cask.cdap.api.spark.dynamic.SparkInterpreter]] that uses

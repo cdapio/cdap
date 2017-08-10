@@ -16,10 +16,13 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.data.format.{FormatSpecification, StructuredRecord}
+import co.cask.cdap.api.data.format.FormatSpecification
+import co.cask.cdap.api.data.format.StructuredRecord
 import co.cask.cdap.api.data.schema.Schema
 import co.cask.cdap.api.data.schema.Schema.Field
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import co.cask.cdap.api.stream.GenericStreamEventData
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD

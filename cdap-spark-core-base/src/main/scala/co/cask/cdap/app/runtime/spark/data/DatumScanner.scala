@@ -16,11 +16,12 @@
 
 package co.cask.cdap.app.runtime.spark.data
 
+import co.cask.cdap.api.data.batch.RecordScanner
+import co.cask.cdap.api.data.batch.SplitReader
+import co.cask.cdap.app.runtime.spark.data
+
 import java.io.Closeable
 import javax.annotation.Nullable
-
-import co.cask.cdap.api.data.batch.{RecordScanner, SplitReader}
-import co.cask.cdap.app.runtime.spark.data
 
 /**
   * A Trait for unifying [[co.cask.cdap.api.data.batch.SplitReader]] and [[co.cask.cdap.api.data.batch.RecordScanner]].

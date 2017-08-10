@@ -15,11 +15,13 @@
  */
 
 package co.cask.cdap.app.runtime.spark.dynamic
+import co.cask.cdap.api.spark.dynamic.SparkCompiler
+import co.cask.cdap.api.spark.dynamic.SparkInterpreter
+
 import java.net.URL
 
-import co.cask.cdap.api.spark.dynamic.{SparkCompiler, SparkInterpreter}
-
-import scala.reflect.io.{PlainFile, VirtualDirectory}
+import scala.reflect.io.PlainFile
+import scala.reflect.io.VirtualDirectory
 import scala.tools.nsc.Settings
 
 /**
