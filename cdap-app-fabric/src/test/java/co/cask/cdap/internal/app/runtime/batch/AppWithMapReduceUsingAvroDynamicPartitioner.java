@@ -58,7 +58,7 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
 
   static final String OUTPUT_PARTITION_KEY = "output.partition.key";
 
-  static final String SCHEMA_STRING = Schema.recordOf(
+  private static final String SCHEMA_STRING = Schema.recordOf(
     "record",
     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("zip", Schema.of(Schema.Type.INT))).toString();
@@ -122,10 +122,17 @@ public class AppWithMapReduceUsingAvroDynamicPartitioner extends AbstractApplica
     @Override
     public void initialize() throws Exception {
       MapReduceContext context = getContext();
+      Map<String, String> runtimeArguments = context.getRuntimeArguments();
       context.addInput(Input.ofDataset(INPUT_DATASET));
 
       Map<String, String> outputDatasetArgs = new HashMap<>();
-      PartitionedFileSetArguments.setDynamicPartitioner(outputDatasetArgs, TimeAndZipPartitioner.class);
+      if (runtimeArguments.containsKey("partitionWriteOption")) {
+        PartitionedFileSetArguments.setDynamicPartitioner(outputDatasetArgs, TimeAndZipPartitioner.class,
+                                                          DynamicPartitioner.PartitionWriteOption.valueOf(
+                                                            runtimeArguments.get("partitionWriteOption")));
+      } else {
+        PartitionedFileSetArguments.setDynamicPartitioner(outputDatasetArgs, TimeAndZipPartitioner.class);
+      }
       PartitionedFileSetArguments.setOutputPartitionMetadata(outputDatasetArgs, METADATA);
       context.addOutput(Output.ofDataset(OUTPUT_DATASET, outputDatasetArgs));
 

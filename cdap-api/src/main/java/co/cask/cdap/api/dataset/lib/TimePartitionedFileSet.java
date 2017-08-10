@@ -18,6 +18,7 @@ package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;
@@ -62,23 +63,37 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * Note that existing entries can not be updated.
+   * If the metadata key already exists, it will be overwritten.
    *
    * @param time the partition time in milliseconds since the Epoch
-   *
-   * @throws DataSetException in case an attempt is made to update existing entries.
+   * @throws PartitionNotFoundException when a partition for the given time is not found
    */
   void addMetadata(long time, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition
-   * Note that existing entries can not be updated.
+   * If the metadata key already exists, it will be overwritten.
    *
    * @param time the partition time in milliseconds since the Epoch
-   *
-   * @throws DataSetException in case an attempt is made to update existing entries.
+   * @throws PartitionNotFoundException when a partition for the given time is not found
    */
   void addMetadata(long time, Map<String, String> metadata);
+
+  /**
+   * Removes a metadata entry for a particular time.
+   * If the metadata key does not exist, no error is thrown.
+   *
+   * @throws PartitionNotFoundException when a partition for the given time is not found
+   */
+  void removeMetadata(long time, String metadataKey);
+
+  /**
+   * Removes a set of metadata entries for a particular time.
+   * If any metadata key does not exist, no error is thrown.
+   *
+   * @throws PartitionNotFoundException when a partition for the given time is not found
+   */
+  void removeMetadata(long time, Set<String> metadataKeys);
 
   /**
    * Remove a partition for a given time.

@@ -16,17 +16,19 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
+import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionOutput;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetDataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.CreateFlag;
+import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocatedFileStatus;
@@ -39,17 +41,16 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.tephra.TransactionAware;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An OutputCommitter which creates partitions in a configured PartitionedFileSet dataset for all of the partitions
@@ -65,8 +66,8 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
   private final TaskAttemptContext taskContext;
   private final Path jobSpecificOutputPath;
 
-  private PartitionedFileSet outputDataset;
-  private Set<String> relativePaths;
+  private PartitionedFileSetDataset outputDataset;
+  private Map<String, PartitionKey> partitionsToAdd;
 
   // Note that the outputPath passed in is treated as a temporary directory.
   // The commitJob method moves the files from within this directory to an parent (final) directory.
@@ -85,10 +86,11 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
 
     String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
     outputDataset = taskContext.getDataset(outputDatasetName);
+    DynamicPartitioner.PartitionWriteOption partitionWriteOption = DynamicPartitioner.PartitionWriteOption.valueOf(
+      configuration.get(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_WRITE_OPTION));
     Partitioning partitioning = outputDataset.getPartitioning();
 
-    Set<PartitionKey> partitionsToAdd = new HashSet<>();
-    relativePaths = new HashSet<>();
+    partitionsToAdd = new HashMap<>();
     // Go over all files in the temporary directory and keep track of partitions to add for them
     FileStatus[] allCommittedTaskPaths = getAllCommittedTaskPaths(context);
     for (FileStatus committedTaskPath : allCommittedTaskPaths) {
@@ -109,24 +111,38 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
         // relativeDir = "../key1/key2"
         // fileName = "part-m-00000"
         String relativeDir = relativePath.substring(0, lastPathSepIdx);
-        String fileName = relativePath.substring(lastPathSepIdx + 1);
 
         Path finalDir = new Path(FileOutputFormat.getOutputPath(context), relativeDir);
-        if (fs.exists(finalDir)) {
-          throw new FileAlreadyExistsException("Final output path " + finalDir + " already exists");
+        if (partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE) {
+          if (fs.exists(finalDir)) {
+            throw new FileAlreadyExistsException("Final output path already exists: " + finalDir);
+          }
         }
         PartitionKey partitionKey = getPartitionKey(partitioning, relativeDir);
-        partitionsToAdd.add(partitionKey);
-        relativePaths.add(relativeDir);
+        partitionsToAdd.put(relativeDir, partitionKey);
+      }
+    }
+
+    // need to remove any existing partitions, before moving temporary content to final output
+    if (partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_OVERWRITE) {
+      for (Map.Entry<String, PartitionKey> entry : partitionsToAdd.entrySet()) {
+        if (outputDataset.getPartition(entry.getValue()) != null) {
+          // this allows reinstating the existing files if there's a rollback.
+          // alternative is to simply remove the files within the partition's location
+          // upside to that is easily avoiding explore operations. one downside is that metadata is not removed then
+          outputDataset.dropPartition(entry.getValue());
+        }
       }
     }
 
     // We need to copy to the parent of the FileOutputFormat's outputDir, since we added a _temporary_jobId suffix to
     // the original outputDir.
     Path finalOutput = FileOutputFormat.getOutputPath(context);
-    FileSystem fs = finalOutput.getFileSystem(configuration);
-    for (FileStatus stat : getAllCommittedTaskPaths(context)) {
-      mergePaths(fs, stat, finalOutput);
+    FileContext fc = FileContext.getFileContext(configuration);
+    // the finalOutput path doesn't have scheme or authority (but 'from' does)
+    finalOutput = fc.makeQualified(finalOutput);
+    for (FileStatus from : getAllCommittedTaskPaths(context)) {
+      mergePaths(fc, from, finalOutput);
     }
 
 
@@ -135,11 +151,10 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       ConfigurationUtil.getNamedConfigurations(this.taskContext.getConfiguration(),
                                                PartitionedFileSetArguments.OUTPUT_PARTITION_METADATA_PREFIX);
 
+    boolean allowAppend = partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND;
     // create all the necessary partitions
-    for (PartitionKey partitionKey : partitionsToAdd) {
-      PartitionOutput partitionOutput = outputDataset.getPartitionOutput(partitionKey);
-      partitionOutput.setMetadata(metadata);
-      partitionOutput.addPartition();
+    for (Map.Entry<String, PartitionKey> entry : partitionsToAdd.entrySet()) {
+      outputDataset.addPartition(entry.getValue(), entry.getKey(), metadata, true, allowAppend);
     }
 
     // close the TaskContext, which flushes dataset operations
@@ -150,17 +165,26 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       throw new IOException(e);
     }
 
-    // delete the job-specific _temporary folder and create a _done file in the o/p folder
+    // delete the job-specific _temporary folder
     cleanupJob(context);
 
     // mark all the final output paths with a _SUCCESS file, if configured to do so (default = true)
     if (configuration.getBoolean(SUCCESSFUL_JOB_OUTPUT_DIR_MARKER, true)) {
-      for (String relativePath : relativePaths) {
+      for (String relativePath : partitionsToAdd.keySet()) {
         Path pathToMark = new Path(finalOutput, relativePath);
-        Path markerPath = new Path(pathToMark, SUCCEEDED_FILE_NAME);
-        fs.createNewFile(markerPath);
+
+        createOrUpdate(fc, new Path(pathToMark, SUCCEEDED_FILE_NAME));
+        // also create a _SUCCESS-<RunId>, if allowing append
+        if (allowAppend) {
+          createOrUpdate(fc, new Path(pathToMark, SUCCEEDED_FILE_NAME + "-" + taskContext.getProgramRunId().getRun()));
+        }
       }
     }
+  }
+
+  private void createOrUpdate(FileContext fc, Path markerPath) throws IOException {
+    // Similar to FileSystem#createNewFile(Path)
+    fc.create(markerPath, EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND)).close();
   }
 
   private PartitionKey getPartitionKey(Partitioning partitioning, String relativePath) {
@@ -196,14 +220,14 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
     if (outputDataset != null) {
       try {
         try {
-          ((TransactionAware) outputDataset).rollbackTx();
+          outputDataset.rollbackTx();
         } catch (Throwable t) {
           LOG.warn("Attempt to rollback partitions failed", t);
         }
 
         // if this is non-null, then at least some paths have been created. We need to remove them
-        if (relativePaths != null) {
-          for (String pathToDelete : relativePaths) {
+        if (partitionsToAdd != null) {
+          for (String pathToDelete : partitionsToAdd.keySet()) {
             Location locationToDelete = outputDataset.getEmbeddedFileSet().getLocation(pathToDelete);
             try {
               if (locationToDelete.exists()) {
@@ -218,53 +242,57 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       } finally {
         // clear this so that we only attempt rollback once in case it gets called multiple times
         outputDataset = null;
-        relativePaths = null;
+        partitionsToAdd = null;
       }
     }
     super.abortJob(context, state);
   }
 
-// Copied from superclass to enable usage of it, because our 'from' and 'to' locations are different.
+  // Based off method from FileOutputCommitter: mergePaths(FileSystem fs, final FileStatus from, final Path to);
+  // It has been modified to handle the case of two DynamicPartitioner MR creating (while allowing append) the output
+  // directory for a Partition. If both find that the partition directory does not exist at the same time, then the
+  // second one that does the rename from the 'from' directory to the 'to' directory would have actually resulted
+  // in moving the 'from' directory INTO the 'to' directory, since it was created by the first MR.
   /**
    * Merge two paths together.  Anything in from will be moved into to, if there
    * are any name conflicts while merging the files or directories in from win.
-   * @param fs the File System to use
+   * @param fc the FileContext to use
    * @param from the path data is coming from.
    * @param to the path data is going to.
    * @throws IOException on any error
    */
-  private void mergePaths(FileSystem fs, final FileStatus from, final Path to) throws IOException {
+  private void mergePaths(FileContext fc, final FileStatus from, final Path to) throws IOException {
     if (from.isFile()) {
-      if (fs.exists(to)) {
-        if (!fs.delete(to, true)) {
+      if (fc.util().exists(to)) {
+        if (!fc.delete(to, true)) {
           throw new IOException("Failed to delete " + to);
         }
       }
 
-      if (!fs.rename(from.getPath(), to)) {
-        throw new IOException("Failed to rename " + from + " to " + to);
-      }
+      fc.rename(from.getPath(), to);
     } else if (from.isDirectory()) {
-      if (fs.exists(to)) {
-        FileStatus toStat = fs.getFileStatus(to);
-        if (!toStat.isDirectory()) {
-          if (!fs.delete(to, true)) {
-            throw new IOException("Failed to delete " + to);
-          }
-          if (!fs.rename(from.getPath(), to)) {
-            throw new IOException("Failed to rename " + from + " to " + to);
-          }
-        } else {
-          //It is a directory so merge everything in the directories
-          for (FileStatus subFrom: fs.listStatus(from.getPath())) {
-            Path subTo = new Path(to, subFrom.getPath().getName());
-            mergePaths(fs, subFrom, subTo);
-          }
-        }
-      } else {
+      if (!fc.util().exists(to)) {
         //it does not exist just rename
-        if (!fs.rename(from.getPath(), to)) {
-          throw new IOException("Failed to rename " + from + " to " + to);
+        try {
+          fc.rename(from.getPath(), to);
+          return;
+        } catch (FileAlreadyExistsException e) {
+          // This race condition can happen if two MR (DynamicPartitioner) are appending to partitions, and both
+          // see the output partition directory as nonexistent, and so both attempt a rename
+          // If that happens, simply move the files as below.
+        }
+      }
+      FileStatus toStat = fc.getFileStatus(to);
+      if (!toStat.isDirectory()) {
+        if (!fc.delete(to, true)) {
+          throw new IOException("Failed to delete " + to);
+        }
+        fc.rename(from.getPath(), to);
+      } else {
+        //It is a directory so merge everything in the directories
+        for (FileStatus subFrom : fc.util().listStatus(from.getPath())) {
+          Path subTo = new Path(to, subFrom.getPath().getName());
+          mergePaths(fc, subFrom, subTo);
         }
       }
     }

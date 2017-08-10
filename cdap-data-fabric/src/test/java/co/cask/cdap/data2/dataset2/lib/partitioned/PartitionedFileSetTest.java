@@ -520,6 +520,9 @@ public class PartitionedFileSetTest {
         PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
         Assert.assertNotNull(partitionDetail);
         long creationTime = partitionDetail.getMetadata().getCreationTime();
+        long lastModificationTime = partitionDetail.getMetadata().lastModificationTime();
+        // lastModificationTime time should be equal to creationTime for a partition that has not been appended to
+        Assert.assertEquals(creationTime, lastModificationTime);
         Assert.assertTrue(creationTime >= beforeTime && creationTime <= afterTime);
       }
     });
@@ -560,11 +563,11 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         PartitionOutput partitionOutput = dataset.getPartitionOutput(PARTITION_KEY);
-        ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1");
+        ImmutableMap<String, String> originalEntries = ImmutableMap.of("key1", "value1", "key2", "value2");
         partitionOutput.setMetadata(originalEntries);
         partitionOutput.addPartition();
 
-        ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key2", "value2");
+        ImmutableMap<String, String> updatedMetadata = ImmutableMap.of("key3", "value3");
         dataset.addMetadata(PARTITION_KEY, updatedMetadata);
 
         PartitionDetail partitionDetail = dataset.getPartition(PARTITION_KEY);
@@ -575,21 +578,29 @@ public class PartitionedFileSetTest {
         combinedEntries.putAll(updatedMetadata);
         Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
 
-        // adding an entry, for a key that already exists will throw an Exception
-        try {
-          dataset.addMetadata(PARTITION_KEY, "key2", "value3");
-          Assert.fail("Expected not to be able to update an existing metadata entry");
-        } catch (DataSetException expected) {
-        }
+        // adding an entry, for a key that already exists will overwrite the previous value
+        dataset.addMetadata(PARTITION_KEY, "key3", "value4");
 
-        PartitionKey nonexistentPartitionKey = PartitionKey.builder()
-          .addIntField("i", 42)
-          .addLongField("l", 17L)
-          .addStringField("s", "nonexistent")
-          .build();
+        partitionDetail = dataset.getPartition(PARTITION_KEY);
+        Assert.assertNotNull(partitionDetail);
+        Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value4"),
+                            partitionDetail.getMetadata().asMap());
+
+        // possible to remove multiple metadata entries; if a key doesn't exist, no error is thrown
+        dataset.removeMetadata(PARTITION_KEY, ImmutableSet.of("key2", "key3", "key4"));
+
+        // key2 and key3 were removed
+        partitionDetail = dataset.getPartition(PARTITION_KEY);
+        Assert.assertNotNull(partitionDetail);
+        Assert.assertEquals(ImmutableMap.of("key1", "value1"), partitionDetail.getMetadata().asMap());
 
         try {
           // adding an entry, for a key that already exists will throw an Exception
+          PartitionKey nonexistentPartitionKey = PartitionKey.builder()
+            .addIntField("i", 42)
+            .addLongField("l", 17L)
+            .addStringField("s", "nonexistent")
+            .build();
           dataset.addMetadata(nonexistentPartitionKey, "key2", "value3");
           Assert.fail("Expected not to be able to add metadata for a nonexistent partition");
         } catch (DataSetException expected) {

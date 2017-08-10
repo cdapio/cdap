@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.partitioned;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -43,36 +44,54 @@ import java.io.IOException;
  */
 abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> {
 
-  private TaskAttemptContext job;
-  private String outputName;
-  private Partitioning partitioning;
-  private FileOutputFormat<K, V> fileOutputFormat;
+  private final PartitionedFileSet outputDataset;
+  private final DynamicPartitioner.PartitionWriteOption partitionWriteOption;
+  private final TaskAttemptContext job;
+  private final String outputName;
+  private final Partitioning partitioning;
+  private final FileOutputFormat<K, V> fileOutputFormat;
 
   @SuppressWarnings("unchecked")
-  DynamicPartitioner<K, V> dynamicPartitioner;
-  BasicMapReduceTaskContext<K, V> taskContext;
+  final DynamicPartitioner<K, V> dynamicPartitioner;
+  final BasicMapReduceTaskContext<K, V> taskContext;
 
   DynamicPartitionerWriterWrapper(TaskAttemptContext job) {
     this.job = job;
-    this.outputName = DynamicPartitioningOutputFormat.getOutputName(job);
 
     Configuration configuration = job.getConfiguration();
     Class<? extends DynamicPartitioner> partitionerClass = configuration
       .getClass(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_CLASS_NAME, null, DynamicPartitioner.class);
     this.dynamicPartitioner = new InstantiatorFactory(false).get(TypeToken.of(partitionerClass)).create();
+    this.partitionWriteOption =
+      DynamicPartitioner.PartitionWriteOption.valueOf(
+        configuration.get(PartitionedFileSetArguments.DYNAMIC_PARTITIONER_WRITE_OPTION));
 
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
     this.taskContext = classLoader.getTaskContextProvider().get(job);
 
+    // name the output file 'part-<RunId>-m-00000' instead of 'part-m-00000'
+    String outputName = DynamicPartitioningOutputFormat.getOutputName(job);
+    if (partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND) {
+      outputName = outputName + "-" + taskContext.getProgramRunId().getRun();
+    }
+    this.outputName = outputName;
+
     String outputDatasetName = configuration.get(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET);
-    PartitionedFileSet outputDataset = taskContext.getDataset(outputDatasetName);
+    this.outputDataset = taskContext.getDataset(outputDatasetName);
     this.partitioning = outputDataset.getPartitioning();
 
     this.dynamicPartitioner.initialize(taskContext);
+    this.fileOutputFormat = createFileOutputFormat(job);
   }
 
   // returns a TaskAttemptContext whose configuration will reflect the specified partitionKey's path as the output path
   TaskAttemptContext getKeySpecificContext(PartitionKey partitionKey) throws IOException {
+    if (partitionWriteOption == DynamicPartitioner.PartitionWriteOption.CREATE) {
+      if (outputDataset.getPartition(partitionKey) != null) {
+        // TODO: throw PartitionAlreadyExists exception? (include dataset name also?)
+        throw new DataSetException("Partition already exists: " + partitionKey);
+      }
+    }
     String relativePath = PartitionedFileSetDataset.getOutputPath(partitionKey, partitioning);
     String finalPath = relativePath + "/" + outputName;
     return getTaskAttemptContext(job, finalPath);
@@ -83,7 +102,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
    * @throws IOException
    */
   RecordWriter<K, V> getBaseRecordWriter(TaskAttemptContext job) throws IOException, InterruptedException {
-    return getFileOutputFormat(job).getRecordWriter(job);
+    return fileOutputFormat.getRecordWriter(job);
   }
 
   // returns a TaskAttemptContext whose configuration will reflect the specified newOutputName as the output path
@@ -93,7 +112,7 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     DynamicPartitioningOutputFormat.setOutputName(job, newOutputName);
     // CDAP-4806 We must set this parameter in addition to calling FileOutputFormat#setOutputName, because
     // AvroKeyOutputFormat/AvroKeyValueOutputFormat use a different parameter for the output name than FileOutputFormat.
-    if (isAvroOutputFormat(getFileOutputFormat(context))) {
+    if (isAvroOutputFormat(fileOutputFormat)) {
       job.getConfiguration().set("avro.mo.config.namedOutput", newOutputName);
     }
 
@@ -104,16 +123,13 @@ abstract class DynamicPartitionerWriterWrapper<K, V> extends RecordWriter<K, V> 
     return new TaskAttemptContextImpl(job.getConfiguration(), context.getTaskAttemptID());
   }
 
-  private FileOutputFormat<K, V> getFileOutputFormat(TaskAttemptContext job) {
-    if (fileOutputFormat == null) {
-      Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
-        .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
+  private FileOutputFormat<K, V> createFileOutputFormat(TaskAttemptContext job) {
+    Class<? extends FileOutputFormat> delegateOutputFormat = job.getConfiguration()
+      .getClass(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME, null, FileOutputFormat.class);
 
-      @SuppressWarnings("unchecked")
-      FileOutputFormat<K, V> fileOutputFormat =
-        ReflectionUtils.newInstance(delegateOutputFormat, job.getConfiguration());
-      this.fileOutputFormat = fileOutputFormat;
-    }
+    @SuppressWarnings("unchecked")
+    FileOutputFormat<K, V> fileOutputFormat =
+      ReflectionUtils.newInstance(delegateOutputFormat, job.getConfiguration());
     return fileOutputFormat;
   }
 

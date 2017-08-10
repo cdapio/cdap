@@ -59,7 +59,8 @@ public class MultiInputFormat<K, V> extends InputFormat<K, V> {
       ConfigurationUtil.setAll(mapperInput.getInputFormatConfiguration(), confCopy);
 
       Class<?> inputFormatClass = confCopy.getClassByNameOrNull(mapperInput.getInputFormatClassName());
-      Preconditions.checkNotNull(inputFormatClass, "Class could not be found: ", mapperInput.getInputFormatClassName());
+      Preconditions.checkNotNull(inputFormatClass,
+                                 "Class could not be found: %s", mapperInput.getInputFormatClassName());
 
       InputFormat<K, V> inputFormat = (InputFormat) ReflectionUtils.newInstance(inputFormatClass, confCopy);
       //some input format need a jobId to getSplits

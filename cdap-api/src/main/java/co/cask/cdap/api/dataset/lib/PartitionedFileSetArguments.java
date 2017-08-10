@@ -41,6 +41,7 @@ public class PartitionedFileSetArguments {
   public static final String OUTPUT_PARTITION_KEY_PREFIX = "output.partition.key.";
   public static final String OUTPUT_PARTITION_METADATA_PREFIX = "output.partition.metadata.";
   public static final String DYNAMIC_PARTITIONER_CLASS_NAME = "output.dynamic.partitioner.class.name";
+  public static final String DYNAMIC_PARTITIONER_WRITE_OPTION = "output.dynamic.partitioner.write.option";
   public static final String DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY = "output.dynamic.partitioner.allow.concurrency";
   public static final String INPUT_PARTITION_FILTER = "input.partition.filter";
   public static final String INPUT_PARTITION_LIST = "input.partition.list";
@@ -221,6 +222,7 @@ public class PartitionedFileSetArguments {
 
   /**
    * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
+   * By default, {@link DynamicPartitioner.PartitionWriteOption.NEW_ONLY} will be used.
    *
    * @param arguments the runtime arguments for a partitioned dataset
    * @param dynamicPartitionerClass the class to set
@@ -236,10 +238,38 @@ public class PartitionedFileSetArguments {
    * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
    *
    * @param arguments the runtime arguments for a partitioned dataset
+   * @param dynamicPartitionerClass the class to set
+   * @param partitionWriteOption options for the output partitions
+   * @param <K> type of key
+   * @param <V> type of value
+   */
+  public static <K, V> void setDynamicPartitioner(Map<String, String> arguments,
+                                                  Class<? extends DynamicPartitioner<K, V>> dynamicPartitionerClass,
+                                                  DynamicPartitioner.PartitionWriteOption partitionWriteOption) {
+    setDynamicPartitioner(arguments, dynamicPartitionerClass.getName(), partitionWriteOption);
+  }
+
+  /**
+   * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
    * @param dynamicPartitionerClassName the name of the class to set
    */
   public static void setDynamicPartitioner(Map<String, String> arguments, String dynamicPartitionerClassName) {
+    setDynamicPartitioner(arguments, dynamicPartitionerClassName, DynamicPartitioner.PartitionWriteOption.CREATE);
+  }
+
+  /**
+   * Sets a DynamicPartitioner class to be used during the output of a PartitionedFileSet.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param dynamicPartitionerClassName the name of the class to set
+   * @param partitionWriteOption options for the output partitions
+   */
+  public static void setDynamicPartitioner(Map<String, String> arguments, String dynamicPartitionerClassName,
+                                           DynamicPartitioner.PartitionWriteOption partitionWriteOption) {
     arguments.put(DYNAMIC_PARTITIONER_CLASS_NAME, dynamicPartitionerClassName);
+    arguments.put(DYNAMIC_PARTITIONER_WRITE_OPTION, partitionWriteOption.name());
   }
 
   /**
@@ -250,6 +280,19 @@ public class PartitionedFileSetArguments {
    */
   public static String getDynamicPartitioner(Map<String, String> arguments) {
     return arguments.get(DYNAMIC_PARTITIONER_CLASS_NAME);
+  }
+
+  /**
+   * Return the DynamicPartitioner.PartitionWriteOption class that was previously assigned onto runtime arguments.
+   *
+   * @param args the runtime arguments to get the class from
+   * @return name of the DynamicPartitioner.PartitionWriteOption class
+   */
+  public static DynamicPartitioner.PartitionWriteOption getDynamicPartitionerWriteOption(Map<String, String> args) {
+    ensureDynamicPartitionerConfigured(args);
+    // if DynamicPartitioner is configured, we always also configure the following option, so we can safely call
+    // Enum#valueOf(String)
+    return DynamicPartitioner.PartitionWriteOption.valueOf(args.get(DYNAMIC_PARTITIONER_WRITE_OPTION));
   }
 
   /**
@@ -264,10 +307,7 @@ public class PartitionedFileSetArguments {
    * @param allowConcurrency whether to allow multiple partition writers concurrently
    */
   public static void setDynamicPartitionerConcurrency(Map<String, String> arguments, boolean allowConcurrency) {
-    if (getDynamicPartitioner(arguments) == null) {
-      throw new IllegalArgumentException("Cannot define a setting of DynamicPartitioner, without first setting " +
-                                           "a DynamicPartitioner.");
-    }
+    ensureDynamicPartitionerConfigured(arguments);
     arguments.put(DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY, Boolean.toString(allowConcurrency));
   }
 
@@ -278,15 +318,19 @@ public class PartitionedFileSetArguments {
    * @return whether concurrent writers are allowed in the case of DynamicPartitioner.
    */
   public static boolean isDynamicPartitionerConcurrencyAllowed(Map<String, String> arguments) {
-    if (getDynamicPartitioner(arguments) == null) {
-      throw new IllegalArgumentException("Cannot retrieve a setting of DynamicPartitioner, without first setting " +
-                                           "a DynamicPartitioner.");
-    }
+    ensureDynamicPartitionerConfigured(arguments);
     String concurrencyAllowed = arguments.get(DYNAMIC_PARTITIONER_ALLOW_CONCURRENCY);
     if (concurrencyAllowed == null) {
     // default to true
       return true;
     }
     return Boolean.valueOf(concurrencyAllowed);
+  }
+
+  private static void ensureDynamicPartitionerConfigured(Map<String, String> args) {
+    if (getDynamicPartitioner(args) == null) {
+      throw new IllegalArgumentException("Cannot get or set a setting of DynamicPartitioner, without first setting " +
+                                           "a DynamicPartitioner.");
+    }
   }
 }
