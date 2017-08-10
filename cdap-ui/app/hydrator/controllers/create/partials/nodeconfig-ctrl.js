@@ -208,7 +208,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         artifactName,
         artifactVersion,
         artifactScope,
-        `widgets.${this.state.node.plugin.name}-${this.state.node.type}`
+        `widgets.${this.state.node.plugin.name}-${this.state.node.plugin.type}`
       )
         .then(
           (res) => {

@@ -64,6 +64,21 @@ angular.module(PKG.name + '.feature.hydrator')
           resolve: {
             rConfig: function($stateParams, mySettings, $q, myHelpers, $window, $rootScope, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
+              if ($stateParams.data) {
+                // This is being used while cloning a published a pipeline.
+                let isVersionInRange = HydratorPlusPlusHydratorService
+                  .isVersionInRange({
+                    supportedVersion: $rootScope.cdapVersion,
+                    versionRange: $stateParams.data.artifact.version
+                  });
+                if (isVersionInRange) {
+                  $stateParams.data.artifact.version = $rootScope.cdapVersion;
+                } else {
+                  defer.resolve(false);
+                }
+                defer.resolve($stateParams.data);
+                return defer.promise;
+              }
               if ($stateParams.draftId) {
                 mySettings.get('hydratorDrafts', true)
                   .then(function(res) {
@@ -94,19 +109,6 @@ angular.module(PKG.name + '.feature.hydrator')
                 } catch (e) {
                   defer.resolve(false);
                 }
-              } else if ($stateParams.data) {
-                // This is being used while cloning a published a pipeline.
-                let isVersionInRange = HydratorPlusPlusHydratorService
-                  .isVersionInRange({
-                    supportedVersion: $rootScope.cdapVersion,
-                    versionRange: $stateParams.data.artifact.version
-                  });
-                if (isVersionInRange) {
-                  $stateParams.data.artifact.version = $rootScope.cdapVersion;
-                } else {
-                  defer.resolve(false);
-                }
-                defer.resolve($stateParams.data);
               } else if ($stateParams.workspaceId) {
                 // This is being used by dataprep to pipelines transition
                 try {
