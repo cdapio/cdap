@@ -46,7 +46,7 @@ import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
-import co.cask.cdap.etl.batch.lineage.FieldLevelLineageStoreGraph;
+import co.cask.cdap.etl.batch.lineage.FieldLevelLineageGraph;
 import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
@@ -287,9 +287,8 @@ public class ETLMapReduce extends AbstractMapReduce {
                                        ProgramType.MAPREDUCE, context.getSpecification().getName(),
                                        context.getRunId().getId());
 
-    FieldLevelLineageStoreGraph graph = new FieldLevelLineageStoreGraph(id, phase, transformFieldLevelLineages,
-                                                                        phaseSpec.getConnectorDatasets());
-
+    FieldLevelLineageGraph graph = (new FieldLevelLineageGraph.Builder(id, phase, transformFieldLevelLineages,
+                                                                   phaseSpec.getConnectorDatasets())).build();
     // Store somehow??
 
     Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
