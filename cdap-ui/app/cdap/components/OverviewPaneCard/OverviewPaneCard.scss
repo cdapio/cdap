@@ -14,18 +14,19 @@
  * the License.
  */
 @import '../../styles/variables.scss';
-$grey-theme-color:  #e3e3e3;
+$grey-theme-color: #e3e3e3;
 $white-color: #ffffff;
+$container_shadow_color: dimgrey;
 $overview-pane-border-radius: 6px;
 
 .overview-pane-card {
 
-  margin: 20px 0 0 20px;
-  display: inline-block;
-  min-width: 190px;
   height: 80px;
-  box-shadow: 0 10px 15px -5px rgba(0, 0, 0, 0.4);
-  border-radius: $overview-pane-border-radius;
+  border-radius: 6px;
+  box-shadow: 1px 1px 5px $container_shadow_color;
+  min-width: 200px;
+  max-width: 200px;
+  margin: 10px;
 
   .overview-pane-card-header {
     background-color: $cdap-orange;

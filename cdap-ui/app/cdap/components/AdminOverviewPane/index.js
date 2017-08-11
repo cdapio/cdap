@@ -1,5 +1,5 @@
-/*
- * Copyright © 2016 Cask Data, Inc.
+  /*
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,51 +20,48 @@ import OverviewPaneCard from '../OverviewPaneCard/index.js';
 var shortid = require('shortid');
 import T from 'i18n-react';
 import classnames from 'classnames';
+import LoadingSVG from 'components/LoadingSVG';
 
 const propTypes = {
   isLoading: PropTypes.bool,
-  services: PropTypes.oneOfType([
-    PropTypes.arrayOf(
-      PropTypes.shape({
-        name : PropTypes.string,
-        version: PropTypes.string,
-        url: PropTypes.string,
-        logs: PropTypes.string
-      })
-    ),
-    PropTypes.string
-  ])
+  platforms: PropTypes.object
 };
 
-function AdminOverviewPane({services}) {
-  let cards;
-  let isEmpty = services.length === 1 && services[0].name === 'CDAP';
-  cards = services
-    .filter(service => service.name !== 'CDAP')
-    .map((service) => {
-      if (service.name !== 'CDAP') {
-        return (
-          <OverviewPaneCard
-            key={shortid.generate()}
-            name={service.name}
-            version={service.version}
-            url={service.url}
-            logs={service.logs}
-          />
-        );
-      }
+function AdminOverviewPane({platforms, isLoading}) {
+  let cards = Object.keys(platforms)
+    .filter(platform => platforms[platform].name !== 'CDAP')
+    .map((platform) => {
+      platform = platforms[platform];
+      return (
+        <OverviewPaneCard
+          key={shortid.generate()}
+          name={platform.name}
+          version={platform.version}
+          url={platform.url}
+          logs={platform.logs}
+        />
+      );
     });
+
+  const renderContents = () => {
+    if (isLoading) {
+      return (
+        <LoadingSVG />
+      );
+    }
+
+    if (!cards.length) {
+      return (<h3>{T.translate('features.Administration.Component-Overview.emptyMessage')}</h3>);
+    }
+
+    return cards;
+  };
 
   return (
     <div className="overview-pane">
       <span>{T.translate('features.Administration.Component-Overview.label')}</span>
       <div className={classnames('overview-pane-container', {'empty-container': !cards.length})}>
-      {
-        isEmpty ?
-          <h3>{T.translate('features.Administration.Component-Overview.emptyMessage')}</h3>
-        :
-          cards
-      }
+        { renderContents() }
       </div>
     </div>
   );

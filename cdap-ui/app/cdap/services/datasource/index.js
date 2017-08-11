@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,7 @@ export default class Datasource {
       generatedResource.headers['Content-Type'] = resource.contentType;
     }
     if (!resource.url) {
-      resource.url = this.constructUrl(resource);
+      resource.url = Datasource.constructUrl(resource);
     }
 
     generatedResource.url = this.buildUrl(resource.url, resource.params);
@@ -112,7 +112,7 @@ export default class Datasource {
     }
 
     if (!resource.url) {
-      resource.url = this.constructUrl(resource);
+      resource.url = Datasource.constructUrl(resource);
     }
 
     generatedResource.url = this.buildUrl(resource.url, resource.params);
@@ -181,7 +181,7 @@ export default class Datasource {
     this.bindings = {};
   }
 
-  constructUrl(resource) {
+  static constructUrl = (resource) => {
 
     let url;
 
@@ -200,7 +200,7 @@ export default class Datasource {
     }
 
     return url;
-  }
+  };
 
   buildUrl(url, params = {}) {
     if (!params) {

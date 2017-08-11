@@ -1,0 +1,123 @@
+/*
+* Copyright © 2017 Cask Data, Inc.
+*
+* Licensed under the Apache License, Version 2.0 (the "License"); you may not
+* use this file except in compliance with the License. You may obtain a copy of
+* the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+* License for the specific language governing permissions and limitations under
+* the License.
+*/
+
+@import '../../PipelineSummary/StickyTableHeader.scss';
+@import '../../../styles/variables.scss';
+
+$table_cell_border_color: gray;
+$table_background_color: transparent;
+$table_border_color: lightgray;
+$instance_bg_color: #cccccc;
+$instance_bg_hover_color: white;
+$height_of_header: 35px;
+$height_of_conent: 415px;
+$table_row_hover_bg_color: #f5f5f5;
+
+.services-table {
+  background: $cdap-white;
+  padding: 25px;
+  font-weight: 500;
+  height: $height_of_conent;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid $table_border_color;
+
+  .table-sm td,
+  .table-sm th {
+    border-bottom: 2px solid $table_border_color;
+  }
+
+  .table-sm tbody tr {
+    &:last-child {
+      td {
+        border-bottom: 0;
+      }
+    }
+  }
+
+  @include stickyheader(10%, 30%, 20%, 20%, 20%, $bgColor: $table_background_color);
+
+  .table-container {
+    height: 100%;
+    width: 100%;
+
+    > .table.table-sm {
+      tr th {
+        border-top: 0;
+        span {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .table-scroll {
+      height: calc(100% - #{$height_of_header});
+      width: 100%;
+      .table {
+        thead tr th {
+          &:not(:first-child) {
+            padding-left: 0;
+          }
+        }
+      }
+    }
+    .table,
+    .table-sm {
+      width: 100%;
+      tbody {
+        tr {
+          cursor: pointer;
+          &:hover {
+            background: $table_row_hover_bg_color;
+          }
+          td {
+            a,
+            a:hover {
+              text-decoration: none;
+              border-bottom: 0;
+            }
+          }
+        }
+      }
+    }
+    tr {
+      td {
+        .status-circle {
+          font-size: 15px;
+        }
+        .request-instances {
+          input {
+            width: 50%;
+            padding-top: 0;
+            padding-bottom: 0;
+            line-height: 1;
+            display: inline-block;
+          }
+          .requested-instances-holder {
+            padding: 1px 5px 3px;
+            &:hover {
+              border: 1px solid $instance_bg_color;
+              background: $instance_bg_hover_color;
+            }
+          }
+        }
+      }
+    }
+  }
+
+}

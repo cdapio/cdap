@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, myAlertOnValium) {
+  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe) {
     return {
       restrict: 'EA',
       scope: true,
@@ -28,45 +28,7 @@ angular.module(PKG.name + '.commons')
           scope: $scope,
           windowClass: 'custom-loading-modal'
         }, modal, isBackendDown = false;
-        var genericServiceErrorMsg = 'CDAP Services are not available';
-        var genericSubtitle = 'Trying to connect...';
         var hideLoadingTimeout = null;
-
-        EventPipe.on('backendDown', function(message, subtitle, userCloseEnabled) {
-          if (!isBackendDown) {
-            if (modal) {
-              modal.close();
-            }
-            isBackendDown = true;
-            $scope.message = message || genericServiceErrorMsg;
-            $scope.subtitle = subtitle || genericSubtitle;
-            if (!userCloseEnabled) {
-              modalObj.keyboard = false;
-            } else {
-              modalObj.keyboard = true;
-            }
-            modal = $uibModal.open(modalObj);
-            modal.result.finally(function() {
-              $state.go('overview', {reload: true});
-            });
-          } else {
-            $scope.message = message || genericServiceErrorMsg;
-            $scope.subtitle = subtitle || genericSubtitle;
-          }
-        }.bind($scope));
-
-        EventPipe.on('backendUp', function(message) {
-          if (isBackendDown) {
-            modal.close();
-            modal = null;
-            isBackendDown = false;
-
-            myAlertOnValium.show({
-              type: 'success',
-              content: message ? message : 'Services are online'
-            });
-          }
-        }.bind($scope));
 
         EventPipe.on('hideLoadingIcon', function() {
           // Just making it smooth instead of being too 'speedy'
@@ -84,7 +46,7 @@ angular.module(PKG.name + '.commons')
 
         // Should use this hide when we are just loading a state
         EventPipe.on('hideLoadingIcon.immediate', function() {
-          if (modal){
+          if (modal) {
             // This is needed if the loading icon is shown and closed even before opened.
             // EventPipe will execute the listener immediately when the event is emitted,
             // however $alert which internally used $modal opens up only during next tick.
@@ -98,7 +60,7 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('showLoadingIcon', function(message, userCloseEnabled) {
-          if(!modal && !isBackendDown) {
+          if (!modal && !isBackendDown) {
             $scope.message = message || 'Loading...';
             if (!userCloseEnabled) {
               modalObj.keyboard = false;
