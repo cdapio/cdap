@@ -63,8 +63,8 @@ public class DatasetFieldId extends FieldEntityId implements ParentedId<DatasetI
     }
     DatasetFieldId that = (DatasetFieldId) o;
     return Objects.equals(this.namespace, that.namespace) &&
-        Objects.equals(this.dataset, that.dataset) &&
-        Objects.equals(this.field, that.field);
+      Objects.equals(this.dataset, that.dataset) &&
+      Objects.equals(this.field, that.field);
   }
 
   @Override
