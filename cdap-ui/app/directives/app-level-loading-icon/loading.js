@@ -14,61 +14,78 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
-  .directive('loadingIcon', function(myLoadingService, $uibModal, $timeout, EventPipe, $state, myAlertOnValium) {
+angular
+  .module(PKG.name + ".commons")
+  .directive("loadingIcon", function(
+    myLoadingService,
+    $uibModal,
+    $timeout,
+    EventPipe,
+    $state,
+    myAlertOnValium
+  ) {
     return {
-      restrict: 'EA',
+      restrict: "EA",
       scope: true,
-      template: '<div></div>',
+      template: "<div></div>",
       controller: function($scope) {
         var modalObj = {
-          templateUrl: 'app-level-loading-icon/loading.html',
-          backdrop: 'static',
-          keyboard: true,
-          scope: $scope,
-          windowClass: 'custom-loading-modal'
-        }, modal, isBackendDown = false;
-        var genericServiceErrorMsg = 'CDAP Services are not available';
-        var genericSubtitle = 'Trying to connect...';
+            templateUrl: "app-level-loading-icon/loading.html",
+            backdrop: "static",
+            keyboard: true,
+            scope: $scope,
+            windowClass: "custom-loading-modal"
+          },
+          modal;
+        var genericServiceErrorMsg = "CDAP Services are not available";
+        var genericSubtitle = "Trying to connect...";
         var hideLoadingTimeout = null;
+        $scope.adminUrl = '';
 
-        EventPipe.on('backendDown', function(message, subtitle) {
-          if (!isBackendDown) {
-            if (modal) {
-              modal.close();
+        EventPipe.on(
+          "backendDown",
+          function(message, subtitle) {
+            if (!$scope.backendDown) {
+              if (modal) {
+                modal.close();
+              }
+              $scope.message = message || genericServiceErrorMsg;
+              $scope.subtitle = subtitle || genericSubtitle;
+              $scope.backendDown = true;
+              $scope.adminUrl = window.location.protocol + '//' + window.location.host + '/cdap/administration';
+              modal = $uibModal.open(modalObj);
+              modal.result.finally(function() {
+                $state.go("overview", { reload: true });
+              });
+            } else {
+              $scope.message = message || genericServiceErrorMsg;
+              $scope.subtitle = subtitle || genericSubtitle;
             }
-            isBackendDown = true;
-            $scope.message = message || genericServiceErrorMsg;
-            $scope.subtitle = subtitle || genericSubtitle;
-            modal = $uibModal.open(modalObj);
-            modal.result.finally(function() {
-              $state.go('overview', {reload: true});
-            });
-          } else {
-            $scope.message = message || genericServiceErrorMsg;
-            $scope.subtitle = subtitle || genericSubtitle;
-          }
-        }.bind($scope));
+          }.bind($scope)
+        );
 
-        EventPipe.on('backendUp', function(message) {
-          if (isBackendDown) {
-            modal.close();
-            modal = null;
-            isBackendDown = false;
+        EventPipe.on(
+          "backendUp",
+          function(message) {
+            if ($scope.backendDown) {
+              modal.close();
+              modal = null;
+              $scope.backendDown = false;
 
-            myAlertOnValium.show({
-              type: 'success',
-              content: message ? message : 'Services are online'
-            });
-          }
-        }.bind($scope));
+              myAlertOnValium.show({
+                type: "success",
+                content: message ? message : "Services are online"
+              });
+            }
+          }.bind($scope)
+        );
 
-        EventPipe.on('hideLoadingIcon', function() {
+        EventPipe.on("hideLoadingIcon", function() {
           // Just making it smooth instead of being too 'speedy'
 
           $timeout.cancel(hideLoadingTimeout);
           hideLoadingTimeout = $timeout(function() {
-            if (!isBackendDown) {
+            if (!$scope.backendDown) {
               if (modal && !modal.$state) {
                 modal.close();
               }
@@ -78,8 +95,8 @@ angular.module(PKG.name + '.commons')
         });
 
         // Should use this hide when we are just loading a state
-        EventPipe.on('hideLoadingIcon.immediate', function() {
-          if (modal){
+        EventPipe.on("hideLoadingIcon.immediate", function() {
+          if (modal) {
             // This is needed if the loading icon is shown and closed even before opened.
             // EventPipe will execute the listener immediately when the event is emitted,
             // however $alert which internally used $modal opens up only during next tick.
@@ -92,12 +109,15 @@ angular.module(PKG.name + '.commons')
           }
         });
 
-        EventPipe.on('showLoadingIcon', function(message) {
-          if(!modal && !isBackendDown) {
-            $scope.message = message || '';
-            modal = $uibModal.open(modalObj);
-          }
-        }.bind($scope));
+        EventPipe.on(
+          "showLoadingIcon",
+          function(message) {
+            if (!modal && !$scope.backendDown) {
+              $scope.message = message || "";
+              modal = $uibModal.open(modalObj);
+            }
+          }.bind($scope)
+        );
       }
     };
   });

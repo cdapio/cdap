@@ -18,4 +18,8 @@
   <span class="icon-fist"></span>
   <h2> {{message}} </h2>
   <h4>{{subtitle}}</h4>
+  <div class="subtitle" ng-if="backendDown">
+    <strong>You can try to: </strong>
+    <a href="{{adminUrl}}">View System Services Dashboard </a>
+  </div>
 </div>
