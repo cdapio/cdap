@@ -82,11 +82,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>co.cask.wrangler</groupId>
-      <artifactId>wrangler-api</artifactId>
-      <version>${wrangler.version}</version>
-    </dependency>
-    <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>

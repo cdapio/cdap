@@ -181,7 +181,8 @@ public class DefaultArtifactManager {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       BundleJarUtil.unJar(location, unpackedDir);
       DirectoryClassLoader directoryClassLoader =
-        new DirectoryClassLoader(unpackedDir, parentClassLoader == null ? bootstrapClassLoader : parentClassLoader);
+        new DirectoryClassLoader(unpackedDir,
+                                 parentClassLoader == null ? bootstrapClassLoader : parentClassLoader, "lib");
       return new CloseableClassLoader(directoryClassLoader, new ClassLoaderCleanup(directoryClassLoader, unpackedDir));
     } else {
       throw new IOException(String.format("Exception while getting artifacts list %s",

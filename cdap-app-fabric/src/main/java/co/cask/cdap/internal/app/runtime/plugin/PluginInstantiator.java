@@ -29,10 +29,12 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.internal.lang.CallerClassSecurityManager;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Fields;
 import co.cask.cdap.internal.lang.Reflections;
@@ -61,9 +63,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -354,10 +358,27 @@ public class PluginInstantiator implements Closeable {
 
     @Override
     public ClassLoader load(ArtifactId artifactId) throws Exception {
+      LOG.info("Create classloader for {}", artifactId);
+
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(artifactId));
       BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir);
-      return new PluginClassLoader(unpackedDir, parentClassLoader);
+
+      // Grabs all export packages classloaders along the call chain so that it'll be used as one of the parent of the
+      // PluginClassLoader that we are creating
+      List<ClassLoader> exportPackagesClassLoaders = new ArrayList<>();
+
+      for (Class<?> cls : CallerClassSecurityManager.getCallerClasses()) {
+        LOG.info("Call cls: {}", cls.getName());
+        ClassLoader cl = cls.getClassLoader();
+        if (cl instanceof PluginClassLoader) {
+          exportPackagesClassLoaders.add(((PluginClassLoader) cl).getExportPackagesClassLoader());
+        }
+      }
+      LOG.info("export package cl: {}", exportPackagesClassLoaders);
+      return new PluginClassLoader(unpackedDir,
+                                   exportPackagesClassLoaders.isEmpty() ? parentClassLoader :
+                                     new CombineClassLoader(parentClassLoader, exportPackagesClassLoaders));
     }
   }
 
