@@ -18,7 +18,7 @@ import React, {Component, PropTypes} from 'react';
 import { TabContent, TabPane, Nav, NavItem, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import T from 'i18n-react';
-import GenericDetails from 'components/Administration/PlatformsDetails/GenericDetails';
+import GenericDetails from 'components/Administration/PlatformsDetails/Genericdetails';
 import LoadingSVG from 'components/LoadingSVG';
 
 const ADMINPREFIX = 'features.Administration.Component-Overview.headers';
