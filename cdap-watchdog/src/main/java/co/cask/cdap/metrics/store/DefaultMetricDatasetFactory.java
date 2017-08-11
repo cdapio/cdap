@@ -121,9 +121,13 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public MetricsTable getOrCreateResolutionMetricsTable(String v2TableName, String v3TableName,
                                                          TableProperties.Builder props) {
     try {
-      // metrics tables are in the system namespace
-      DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-      MetricsTable v2Table = dsFramework.getDataset(v2TableId, null, null);
+      MetricsTable v2Table = null;
+      // TODO: By default do not allow reading from v2 tables. Remove this check once CDAP-12306 is fixed
+      if (cConf.getBoolean(Constants.Metrics.METRICS_V2_TABLE_SCAN_ENABLED)) {
+        // metrics tables are in the system namespace
+        DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
+        v2Table = dsFramework.getDataset(v2TableId, null, null);
+      }
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
                 GSON.toJson(getV3MetricsTableSplits(Constants.Metrics.METRICS_HBASE_SPLITS)));
