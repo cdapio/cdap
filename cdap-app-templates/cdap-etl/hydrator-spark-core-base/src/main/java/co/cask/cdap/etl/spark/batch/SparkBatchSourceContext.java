@@ -17,7 +17,10 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
@@ -28,14 +31,19 @@ import java.util.UUID;
 
 /**
  * Default implementation of {@link BatchSourceContext} for spark contexts.
+ *
+ * @param <T> execution context
  */
-public class SparkBatchSourceContext extends AbstractBatchContext implements BatchSourceContext {
+public class SparkBatchSourceContext<T> extends AbstractBatchContext
+  implements BatchSourceContext, StageSubmitter<T> {
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
+  private final SparkClientContext sparkContext;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
                                  PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
+    this.sparkContext = sparkContext;
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
@@ -54,5 +62,25 @@ public class SparkBatchSourceContext extends AbstractBatchContext implements Bat
   private Input suffixInput(Input input) {
     String suffixedAlias = String.format("%s-%s", input.getAlias(), UUID.randomUUID());
     return input.alias(suffixedAlias);
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return sparkContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return sparkContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return sparkContext.getMessageFetcher();
+  }
+
+  @Override
+  public T getContext() {
+    return (T) this;
   }
 }

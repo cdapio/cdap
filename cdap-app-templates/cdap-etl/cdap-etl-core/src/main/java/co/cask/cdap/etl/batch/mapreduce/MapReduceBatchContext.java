@@ -20,6 +20,9 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.etl.api.StageSubmitter;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -40,8 +43,11 @@ import java.util.concurrent.Callable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
+ *
+ * @param <T> execution context
  */
-public class MapReduceBatchContext extends AbstractBatchContext implements BatchSinkContext, BatchSourceContext {
+public class MapReduceBatchContext<T> extends AbstractBatchContext
+  implements BatchSinkContext, BatchSourceContext, StageSubmitter<T> {
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
   protected final MapReduceContext mrContext;
   private final boolean isPreviewEnabled;
@@ -162,5 +168,26 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
       return Output.of(output.getName(), new NullOutputFormatProvider());
     }
     return output;
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    // TODO: use caller?
+    return mrContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return mrContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return mrContext.getMessageFetcher();
+  }
+
+  @Override
+  public T getContext() {
+    return (T) this;
   }
 }
