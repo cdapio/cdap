@@ -95,6 +95,11 @@ my-dag-plus {
       height: 80px;
       width: 200px;
 
+      // Setting default node color
+      color: @transform-plugins-color;
+      left: 30vw;
+      .border-color-hover();
+
       .node {
         position: relative;
         background-color: white;
@@ -269,28 +274,14 @@ my-dag-plus {
         color: @source-plugins-color;
         left: 10vw;
         .border-color-hover();
-
       }
-      &:not(.realtimesource),
-      &:not(.batchsource),
-      &:not(.streamingsource),
-      &:not(.realtimesink),
-      &:not(.batchsink),
-      &:not(.sparksink),
-      &:not(.action),
-      &:not(.sparkprogram),
-      &:not(.alertpublisher) {
-        color: @transform-plugins-color;
+
+      &.errortransform {
+        color: @error-transform;
         left: 30vw;
         .border-color-hover();
-
-        &.errortransform {
-          color: @error-transform;
-          left: 30vw;
-          .border-color-hover();
-        }
-
       }
+
       &.realtimesink,
       &.batchsink,
       &.alertpublisher,

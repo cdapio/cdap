@@ -46,19 +46,17 @@ class HydratorPlusPlusStudioCtrl {
       }
       HydratorPlusPlusConfigActions.initializeConfigStore(rConfig);
       let configJson = rConfig;
-      if (!rConfig.__ui__ || (!rConfig.__ui__.nodes && !rConfig.__ui__.connections)) {
-        configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig, true);
-        configJson['__ui__'] = {
-          nodes: configJson.nodes.map( (node) => {
-            node.properties = node.plugin.properties;
-            node.label = node.plugin.label;
-            return node;
-          })
-        };
-        configJson.config = {
-          connections : configJson.connections
-        };
-      }
+      configJson = HydratorPlusPlusHydratorService.getNodesAndConnectionsFromConfig(rConfig, true);
+      configJson['__ui__'] = Object.assign({}, rConfig.__ui__, {
+        nodes: configJson.nodes.map( (node) => {
+          node.properties = node.plugin.properties;
+          node.label = node.plugin.label;
+          return node;
+        })
+      });
+      configJson.config = {
+        connections : configJson.connections
+      };
 
       DAGPlusPlusNodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
     } else {
