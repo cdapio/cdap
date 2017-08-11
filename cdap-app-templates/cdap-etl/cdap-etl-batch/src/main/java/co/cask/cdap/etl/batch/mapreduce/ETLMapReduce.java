@@ -30,6 +30,7 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.AlertPublisher;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
@@ -203,15 +204,15 @@ public class ETLMapReduce extends AbstractMapReduce {
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, mrMetrics, phaseSpec);
 
     Map<String, String> inputAliasToStage = new HashMap<>();
-    for (String sourceName : phaseSpec.getPhase().getSources()) {
+    for (String sourceName : phase.getSources()) {
       try {
         BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
         StageSpec stageSpec = phaseSpec.getPhase().getStage(sourceName);
         MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, pipelineRuntime, stageSpec,
                                                                         connectorDatasets);
         batchSource.prepareRun(sourceContext);
-        for (String inputAlias : sourceContext.getInputNames()) {
-          inputAliasToStage.put(inputAlias, sourceName);
+        for (Object inputAlias : sourceContext.getInputNames()) {
+          inputAliasToStage.put((String) inputAlias, sourceName);
         }
         finishers.add(batchSource, sourceContext);
       } catch (Exception e) {
@@ -223,6 +224,14 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
     }
     hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
+
+    for (StageSpec transformInfo : phase.getStagesOfType(Transform.PLUGIN_TYPE)) {
+      Transform transform = pluginInstantiator.newPluginInstance(transformInfo.getName(), evaluator);
+      StageSubmitterContext transformContext =
+        new MapReduceBatchContext(context, pipelineRuntime, transformInfo, connectorDatasets);
+      transform.prepareRun(transformContext);
+      finishers.add(transform, transformContext);
+    }
 
     Map<String, SinkOutput> sinkOutputs = new HashMap<>();
     for (StageSpec stageInfo :
