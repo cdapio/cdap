@@ -18,6 +18,15 @@
 # Install CDAP for Google Cloud Dataproc
 #
 
+# Only install on master nodes
+ROLE=$(/usr/share/google/get_metadata_value attributes/dataproc-role)
+
+if [[ "${ROLE}" == 'Master' ]]; then
+  continue
+else
+  exit 0
+fi
+
 # CDAP config
 # The git branch to clone
 CDAP_BRANCH='release/4.2'
