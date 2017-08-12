@@ -1,0 +1,38 @@
+{
+  "cdap": {
+    "cdap_site": {
+      "dashboard.bind.port": "11011",
+      "dataset.executor.container.memory.mb": "1536",
+      "explore.enabled": "{{EXPLORE_ENABLED}}",
+      "explore.executor.container.memory.mb": "2048",
+      "http.client.read.timeout.ms": "120000",
+      "kafka.server.log.dirs": "/var/cdap/kafka-logs",
+      "log.saver.container.memory.mb": "1536",
+      "master.service.memory.mb": "1536",
+      "metrics.memory.mb": "1536",
+      "metrics.processor.memory.mb": "1536",
+      "router.bind.port": "11015",
+      "stream.container.memory.mb": "1536",
+      "twill.java.reserved.memory.mb": "350",
+      "zookeeper.quorum": "{{ZK_QUORUM}}"
+    },
+    "fs_superuser": "root",
+    "kafka": {
+      "init_actions": [ "enable" ]
+    },
+    "master": {
+      "init_actions": [ "enable" ]
+    },
+    "router": {
+      "init_actions": [ "enable" ]
+    },
+    "security": {
+      "init_actions": [ "enable" ]
+    },
+    "skip_prerequisites": "true",
+    "ui": {
+      "init_actions": [ "enable" ]
+    },
+    "version": "{{CDAP_VERSION}}"
+  }
+}
