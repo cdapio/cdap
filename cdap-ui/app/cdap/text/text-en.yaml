@@ -1226,9 +1226,21 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
-      recordsInTitle: "Records In - Run #{runNumber}"
-      recordsOutTitle: "Records out - Run #{runNumber}"
+      processTimeTable:
+        avgProcessTime: Average Processing Time
+        minProcessTime: Min Process Time (one record)
+        maxProcessTime: Max Process Time (one record)
+        recordInPerSec: Records In per second
+        recordOutPerSec: Records Out per second
+        stddevProcessTime: Standard Deviation
+      recordsInTitle: Records In
+      recordsOutTitle: Records out
+      recordsErrorTitle: Records Error # Error Records??
+      runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
+      totalRecordsIn: Total Records In
+      totalRecordsOut: Total Records Out
+      totalRecordsError: Total Errors
     runsHistoryGraph:
       hint:
         duration: Duration
