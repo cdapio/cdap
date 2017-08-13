@@ -15,7 +15,7 @@
 */
 
 import React, {PropTypes} from 'react';
-import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries} from 'react-vis';
+import {XYPlot, AreaSeries, makeVisFlexible, XAxis, YAxis, HorizontalGridLines, LineSeries, DiscreteColorLegend} from 'react-vis';
 import {getYAxisProps} from 'components/PipelineSummary/RunsGraphHelpers';
 
 const RECORDS_IN_COLOR = '#58B7F6';
@@ -25,14 +25,80 @@ const metricTypeToColorMap = {
   'recordsout': RECORDS_OUT_COLOR
 };
 
+function renderAreaChart(data, metricType) {
+  if (!Array.isArray(data) && typeof data === 'object') {
+    return Object
+      .keys(data)
+      .map(key => {
+        return (
+          <AreaSeries
+            curve="curveLinear"
+            color={data[key].color || metricTypeToColorMap[metricType]}
+            stroke={data[key].color || metricTypeToColorMap[metricType]}
+            data={data[key].data}
+            opacity={0.5}
+          />
+        );
+      });
+  }
+  return (
+    <AreaSeries
+      curve="curveLinear"
+      color={metricTypeToColorMap[metricType]}
+      stroke={metricTypeToColorMap[metricType]}
+      data={data}
+      opacity={0.5}
+    />
+  );
+}
+
+function renderLineChart(data, metricType) {
+  if (!Array.isArray(data) && typeof data === 'object') {
+    return Object
+      .keys(data)
+      .map(key => {
+        return (
+          <LineSeries
+            color={data[key].color || metricTypeToColorMap[metricType]}
+            data={data[key].data}
+            strokeWidth={4}
+          />
+        );
+      });
+  }
+  return (
+    <LineSeries
+      color={metricTypeToColorMap[metricType]}
+      data={data}
+      strokeWidth={4}
+    />
+  );
+}
+
 export default function NodeMetricsGraph({data, xAxisTitle, yAxisTitle, metricType}) {
-  if (!data.length) {
+  if (Array.isArray(data) && !data.length) {
     return null;
   }
   let xDomain = [0, 10];
   let {tickFormat, yDomain} = getYAxisProps(data);
-  if (data.length > 10) {
+  var color_legend = [];
+  if (Array.isArray(data) && data.length > 10) {
     xDomain[1] = data.length;
+    color_legend = [{
+      title: data.label,
+      color: data.color
+    }];
+  } else if (!Array.isArray(data) && typeof data === 'object') {
+    let firstKey = Object.keys(data)[0];
+    xDomain[1] = data[firstKey].data.length; // might not be right.
+    Object
+      .keys(data)
+      .forEach(d => {
+        color_legend.push({
+          title: data[d].label,
+          color: data[d].color
+        });
+      });
   }
   let FPlot = makeVisFlexible(XYPlot);
   return (
@@ -48,21 +114,16 @@ export default function NodeMetricsGraph({data, xAxisTitle, yAxisTitle, metricTy
         <XAxis />
         <YAxis tickFormat={tickFormat} />
         <HorizontalGridLines />
-        <AreaSeries
-          curve="curveLinear"
-          color={metricTypeToColorMap[metricType]}
-          stroke={metricTypeToColorMap[metricType]}
-          data={data}
-          opacity={0.5}
-        />
-        <LineSeries
-          color={metricTypeToColorMap[metricType]}
-          data={data}
-          strokeWidth={4}
-        />
+        {renderAreaChart(data, metricType)}
+        {renderLineChart(data, metricType)}
         <div className="x-axis-title">{xAxisTitle}</div>
         <div className="y-axis-title">{yAxisTitle}</div>
       </FPlot>
+      <DiscreteColorLegend
+        style={{position: 'absolute', left: '40px', top: '0px'}}
+        orientation="horizontal"
+        items={color_legend}
+      />
     </div>
   );
 }

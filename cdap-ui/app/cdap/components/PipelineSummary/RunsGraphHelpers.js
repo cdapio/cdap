@@ -74,6 +74,16 @@ export function getYDomain(data = {}) {
 }
 
 export function getYAxisProps(data) {
+  let formattedData = cloneDeep(data);
+  if (!Array.isArray(data) && typeof data === 'object') {
+    formattedData = [];
+    Object
+      .keys(data)
+      .forEach(d => {
+        formattedData = formattedData.concat(data[d].data);
+      });
+    data = formattedData;
+  }
   let props = {
     tickTotals: 10,
     yDomain: getYDomain(data),

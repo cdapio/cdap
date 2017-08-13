@@ -25,9 +25,30 @@ require('./PipelineNodeMetricsGraph.scss');
 import findIndex from 'lodash/findIndex';
 import {getGapFilledAccumulatedData} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
 
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
-
+const RECORDS_IN_PATH_COLOR = '#97A0BA';
+const RECORDS_ERROR_PATH_COLOR = '#A40403';
+const RECORDS_OUT_PATH_COLOR = '#58B7F6';
+const REGEXTOLABELLIST = [
+  {
+    id: 'processmintime',
+    regex: /user.*.time.min$/
+  },
+  {
+    id: 'processmaxtime',
+    regex: /user.*.time.max$/
+  },
+  {
+    id: 'processavgtime',
+    regex: /user.*.time.avg$/
+  },
+  {
+    id: 'processstddevtime',
+    regex: /user.*.time.stddev$/
+  }
+];
 export default class PipelineNodeMetricsGraph extends Component {
 
   static propTypes = {
@@ -49,6 +70,8 @@ export default class PipelineNodeMetricsGraph extends Component {
   state = {
     recordsInData: [],
     recordsOutData: [],
+    recordsErrorData: [],
+    processTimeMetrics: {},
     resolution: 'hours',
     aggregate: false,
     loading: true
@@ -74,38 +97,36 @@ export default class PipelineNodeMetricsGraph extends Component {
     let resolution = this.getResolution(data.resolution);
     let recordsInRegex = new RegExp(/user.*.records.in/);
     let recordsOutRegex = new RegExp(/user.*.records.out/);
-    let totalRecordsIn = 0, totalRecordsOut = 0;
+    let recordsErrorRegex = new RegExp(/user.*.records.error/);
     let recordsInData = data.series.find(d => recordsInRegex.test (d.metricName)) || [];
     let recordsOutData = data.series.find(d => recordsOutRegex.test(d.metricName)) || [];
-    if (Array.isArray(recordsInData.data)) {
-      recordsInData = recordsInData.data.map((d) => {
-        totalRecordsIn += d.value;
-        return {
-          x: d.time,
-          y: totalRecordsIn
-        };
-      });
-      recordsInData = getGapFilledAccumulatedData(recordsInData).map((data, i) => ({
-        x: i,
-        y: data.y
-      }));
-    }
-    if (Array.isArray(recordsOutData.data)) {
-      recordsOutData = recordsOutData.data.map((d) => {
-        totalRecordsOut += d.value;
-        return {
-          x: d.time,
-          y: totalRecordsOut
-        };
-      });
-      recordsOutData = getGapFilledAccumulatedData(recordsOutData).map((data, i) => ({
-        x: i,
-        y: data.y
-      }));
-    }
+    let recordsErrorData = data.series.find(d => recordsErrorRegex.test(d.metricName)) || [];
+    const formatData = (records) => {
+      let totalRecords = 0;
+      let formattedRecords = [];
+      if (Array.isArray(records.data)) {
+        formattedRecords = records.data.map((d) => {
+          totalRecords += d.value;
+          return {
+            x: d.time,
+            y: totalRecords
+          };
+        });
+        formattedRecords = getGapFilledAccumulatedData(formattedRecords).map((data, i) => ({
+          x: i,
+          y: data.y
+        }));
+      }
+      return formattedRecords;
+    };
+    recordsOutData = formatData(recordsOutData);
+    recordsInData = formatData(recordsInData);
+    recordsErrorData = formatData(recordsErrorData);
+
     this.setState({
       recordsInData,
       recordsOutData,
+      recordsErrorData,
       resolution
     });
   }
@@ -113,6 +134,7 @@ export default class PipelineNodeMetricsGraph extends Component {
   getRecordsInOut({qid: data}) {
     let recordsInRegex = new RegExp(/user.*.records.in/);
     let recordsOutRegex = new RegExp(/user.*.records.out/);
+    let recordsErrorRegex = new RegExp(/user.*.records.error/);
     if (!data.series.length) {
       return {
         recordsInData: null,
@@ -121,16 +143,95 @@ export default class PipelineNodeMetricsGraph extends Component {
     }
     let recordsInData = data.series.find(d => recordsInRegex.test (d.metricName)) || {};
     let recordsOutData = data.series.find(d => recordsOutRegex.test(d.metricName)) || {};
+    let recordsErrorData = data.series.find(d => recordsErrorRegex.test(d.metricName)) || {};
     recordsInData = (recordsInData.data || []).length ? recordsInData.data[0].value : 0;
     recordsOutData = (recordsOutData.data || []).length ? recordsOutData.data[0].value : 0;
+    recordsErrorData = (recordsErrorData.data || []).length ? recordsErrorData.data[0].value : 0;
 
     return {
       recordsInData,
-      recordsOutData
+      recordsOutData,
+      recordsErrorData
     };
   }
 
+  getOutputRecordsForCharting() {
+    return {
+      'recordsOut': {
+        data: this.state.recordsOutData,
+        label: T.translate(`${PREFIX}.recordsOutTitle`),
+        color: RECORDS_IN_PATH_COLOR
+      },
+      'recordsError': {
+        data: this.state.recordsErrorData,
+        label: T.translate(`${PREFIX}.recordsErrorTitle`),
+        color: RECORDS_ERROR_PATH_COLOR
+      }
+    };
+  }
+
+  getInputRecordsForCharting () {
+    return {
+      'recordsIn': {
+        data: this.state.recordsInData,
+        label: T.translate(`${PREFIX}.recordsInTitle`),
+        color: RECORDS_OUT_PATH_COLOR
+      }
+    };
+  }
+
+  fetchProcessTimeMetrics = () => {
+    let processTimeRegex = new RegExp(/user.*.time.avg$|user.*.time.max$|user.*.time.min$|user.*.time.stddev|user.*.records.in|user.*.records.out|user.*.records.error/);
+    let processTimeMetrics = this.props.metrics.filter(metric => processTimeRegex.test(metric));
+    let {namespace, app, programType, programId, runRecord} = this.props.runContext;
+    let postBody = {
+      qid: {
+        metrics: processTimeMetrics,
+        tags: {
+          namespace,
+          app,
+          [programType]: programId,
+          run: runRecord.runid
+        },
+        timeRange: {
+          aggregate: true
+        }
+      }
+    };
+    MyMetricApi
+      .query(null, postBody)
+      .subscribe(
+        (res) => {
+          let data = res.qid.series;
+          let recordsOut, recordsIn, recordsError;
+          let processTimeMetrics = {};
+          data.forEach(d => {
+            let metricName;
+            REGEXTOLABELLIST.forEach(metricObj => {
+              if (metricObj.regex.test(d.metricName)) {
+                metricName = metricObj.id;
+              } else if (d.metricName.match(/user.*records.in/)) {
+                recordsIn = d.data[0].value;
+              } else if (d.metricName.match(/user.*records.out/)) {
+                recordsOut = d.data[0].value;
+              } else if (d.metricName.match(/user.*.records.error/)) {
+                recordsError = d.data[0].value;
+              }
+            });
+            processTimeMetrics[metricName] = d.data[0].value;
+          });
+          this.setState({
+            processTimeMetrics,
+            totalRecordsIn: recordsIn,
+            totalRecordsOut: recordsOut,
+            totalRecordsError: recordsError
+          });
+        }
+      );
+  };
+
   fetchData = () => {
+    this.fetchProcessTimeMetrics();
     let {namespace, app, programType, programId, runRecord} = this.props.runContext;
     let postBody = {
       qid: {
@@ -184,7 +285,7 @@ export default class PipelineNodeMetricsGraph extends Component {
   };
 
   renderChart = (data, type) => {
-    if (!data.length) {
+    if (Array.isArray(data) && !data.length) {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
     return (
@@ -202,12 +303,57 @@ export default class PipelineNodeMetricsGraph extends Component {
       return <EmptyMessageContainer message={T.translate(`${PREFIX}.nodata`)} />;
     }
 
+    if (!Array.isArray(data) && typeof data === 'object') {
+      return (
+        <div className="node-metrics-single-datapoint">
+          {
+            Object.keys(data).map(key => {
+              return (
+                <span>
+                  <small>{data[key].label}</small>
+                  <span>{data[key].data}</span>
+                </span>
+              );
+            })
+          }
+        </div>
+      );
+    }
     return (
       <div className="node-metrics-single-datapoint">
         {data}
       </div>
     );
   }
+  renderProcesstimeTable = () => {
+    return (
+      <div className="process-time-table-container">
+        <table className="table table-sm">
+          <thead>
+            <tr>
+              <th>{T.translate(`${PREFIX}.processTimeTable.recordInPerSec`)}</th>
+              <th>{T.translate(`${PREFIX}.processTimeTable.recordOutPerSec`)}</th>
+              <th>{T.translate(`${PREFIX}.processTimeTable.minProcessTime`)}</th>
+              <th>{T.translate(`${PREFIX}.processTimeTable.maxProcessTime`)}</th>
+              <th>{T.translate(`${PREFIX}.processTimeTable.stddevProcessTime`)}</th>
+              <th>{T.translate(`${PREFIX}.processTimeTable.avgProcessTime`)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td></td>
+              <td></td>
+              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[0].id]}</td>
+              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[1].id]}</td>
+              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[2].id]}</td>
+              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[3].id]}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   renderMetrics(data, type) {
     if (this.state.aggregate) {
       return this.renderSingleMetric(data);
@@ -220,6 +366,39 @@ export default class PipelineNodeMetricsGraph extends Component {
     );
   }
   renderContent() {
+    return (
+      <div className="node-metrics-container">
+        <div ref={ref => this.containerRef = ref}>
+          <div className="title-container graph-title">
+            <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`)} </div>
+            <div>
+              <strong>
+                {T.translate(`${PREFIX}.totalRecordsIn`)}: {this.state.totalRecordsIn}
+              </strong>
+            </div>
+          </div>
+          {this.renderMetrics(this.getInputRecordsForCharting(), 'recordsin')}
+        </div>
+        <div>
+          <div className="title-container graph-title">
+            <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
+            <div className="total-records">
+              <strong>
+                <span>
+                  {T.translate(`${PREFIX}.totalRecordsOut`)}: {this.state.totalRecordsOut}
+                </span>
+                <span className="error-records-count">
+                  {T.translate(`${PREFIX}.totalRecordsError`)}: {this.state.totalRecordsError || 0}
+                </span>
+              </strong>
+            </div>
+          </div>
+          {this.renderMetrics(this.getOutputRecordsForCharting(), 'recordsout')}
+        </div>
+      </div>
+    );
+  }
+  render() {
     if (this.state.loading) {
       return (
         <LoadingSVGCentered />
@@ -227,26 +406,20 @@ export default class PipelineNodeMetricsGraph extends Component {
     }
     let runNumber = findIndex([...this.props.runContext.runs].reverse(), {runid: this.props.runContext.runRecord.runid}) + 1;
     return (
-      <div className="node-metrics-container">
-        <div ref={ref => this.containerRef = ref}>
-          <div className="title-container">
-            <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`, {runNumber})} </div>
-          </div>
-          {this.renderMetrics(this.state.recordsInData, 'recordsin')}
-        </div>
-        <div>
-          <div className="title-container">
-            <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`, {runNumber})} </div>
-          </div>
-          {this.renderMetrics(this.state.recordsOutData, 'recordsout')}
-        </div>
-      </div>
-    );
-  }
-  render() {
-    return (
       <div className="pipeline-node-metrics-graph">
+        <div className="title-container">
+          <div className="title">
+            {
+              T.translate(`${PREFIX}.runOfTitle`, {
+                runNumber,
+                totalRun: this.props.runContext.runs.length
+              })
+            }
+          </div>
+          <CopyableRunID runid={this.props.runContext.runRecord.runid} />
+        </div>
         {this.renderContent()}
+        {this.renderProcesstimeTable()}
       </div>
     );
   }
