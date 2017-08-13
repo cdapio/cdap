@@ -33,14 +33,11 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Injector;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link ConcurrencyConstraint}.
@@ -75,18 +72,20 @@ public class ConcurrencyConstraintTest {
 
     // add a run for the schedule
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    store.setStart(WORKFLOW_ID, pid1, System.currentTimeMillis(), null, EMPTY_MAP, systemArgs);
+    store.setStartAndRun(WORKFLOW_ID, pid1, System.currentTimeMillis(), System.currentTimeMillis() + 1,
+                         EMPTY_MAP, systemArgs);
     assertSatisfied(true, concurrencyConstraint.check(schedule, constraintContext));
 
     // add a run for the program from a different schedule. Since there are now 2 running instances of the
     // workflow (regardless of the schedule name), the constraint is not met
     systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, "not" + schedule.getName());
-    store.setStart(WORKFLOW_ID, pid2, System.currentTimeMillis(), null, EMPTY_MAP, systemArgs);
+    store.setStartAndRun(WORKFLOW_ID, pid2, System.currentTimeMillis(), System.currentTimeMillis() + 1,
+                         EMPTY_MAP, systemArgs);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // add a run for the program that wasn't from a schedule
     // there are now three concurrent runs, so the constraint will not be met
-    store.setStart(WORKFLOW_ID, pid3, System.currentTimeMillis(), null, EMPTY_MAP, EMPTY_MAP);
+    store.setStartAndRun(WORKFLOW_ID, pid3, System.currentTimeMillis(), System.currentTimeMillis() + 1);
     assertSatisfied(false, concurrencyConstraint.check(schedule, constraintContext));
 
     // stop the first program; constraint will not be satisfied as there are still 2 running
