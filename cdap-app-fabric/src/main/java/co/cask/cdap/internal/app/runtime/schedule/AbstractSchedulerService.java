@@ -147,10 +147,13 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
   }
 
   private boolean callTimeScheduler(ProgramSchedule schedule) {
+    // A composite trigger may contain a TimeTrigger
     return schedule.getTrigger() instanceof TimeTrigger || schedule.getTrigger() instanceof AbstractCompositeTrigger;
   }
 
   private boolean callStreamSizeScheduler(ProgramSchedule schedule) {
+    // A composite trigger won't contain a StreamSizeTrigger since StreamSizeTrigger is no longer supported
+    // in the new API introduced by 4.3
     return schedule.getTrigger() instanceof StreamSizeTrigger;
   }
 

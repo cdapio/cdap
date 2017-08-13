@@ -22,9 +22,9 @@ import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 /**
  * A Trigger builder that builds a {@link OrTrigger}.
  */
-public class OrTriggerBuilder extends CompositeTriggerBuilder implements TriggerBuilder {
+public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
 
-  public OrTriggerBuilder(Trigger[] triggers) {
+  public OrTriggerBuilder(Trigger... triggers) {
     super(triggers);
   }
 

@@ -21,7 +21,7 @@ import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
 /**
- * A factory for getting
+ * A factory for getting a specific type of {@link Trigger}
  */
 public interface TriggerFactory {
 

@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,35 +37,6 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
 
   public AbstractCompositeTrigger(Type type, Trigger... triggers) {
     super(type, triggers);
-    initializeUnitTriggers();
-  }
-
-  public void initializeUnitTriggers() {
-    unitTriggers = new HashMap<>();
-    for (Trigger trigger : triggers) {
-      // Add current non-composite trigger to the corresponding set in the map
-      Type triggerType = ((ProtoTrigger) trigger).getType();
-      if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
-        // If the current trigger is a composite trigger, add all of its unit triggers to
-        for (Map.Entry<Type, Set<Trigger>> entry :
-          ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
-            .getUnitTriggers().entrySet()) {
-          Set<Trigger> triggerList = unitTriggers.get(entry.getKey());
-          if (triggerList == null) {
-            unitTriggers.put(entry.getKey(), entry.getValue());
-            continue;
-          }
-          triggerList.addAll(entry.getValue());
-        }
-      } else {
-        Set<Trigger> triggerList = unitTriggers.get(triggerType);
-        if (triggerList == null) {
-          triggerList = new HashSet<>();
-          unitTriggers.put(triggerType, triggerList);
-        }
-        triggerList.add(trigger);
-      }
-    }
   }
 
   @Override
@@ -74,13 +46,45 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
     for (Trigger trigger : triggers) {
       triggerKeys.addAll(((SatisfiableTrigger) trigger).getTriggerKeys());
     }
-    return new ArrayList<>(triggerKeys);
+    return ImmutableList.copyOf(triggerKeys);
   }
 
   /**
    * Get all triggers which are not composite trigger in this trigger.
    */
   public Map<Type, Set<Trigger>> getUnitTriggers() {
+    if (unitTriggers == null) {
+      initializeUnitTriggers();
+    }
     return unitTriggers;
+  }
+
+  private void initializeUnitTriggers() {
+    unitTriggers = new HashMap<>();
+    for (Trigger trigger : triggers) {
+      // Add current non-composite trigger to the corresponding set in the map
+      Type triggerType = ((ProtoTrigger) trigger).getType();
+      if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
+        // If the current trigger is a composite trigger, add each of its unit triggers to the set according to type
+        for (Map.Entry<Type, Set<Trigger>> entry :
+          ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
+            .getUnitTriggers().entrySet()) {
+          Set<Trigger> triggerSet = unitTriggers.get(entry.getKey());
+          if (triggerSet == null) {
+            unitTriggers.put(entry.getKey(), entry.getValue());
+            continue;
+          }
+          triggerSet.addAll(entry.getValue());
+        }
+      } else {
+        // If the current trigger is a non-composite trigger, add it to the set according to its type
+        Set<Trigger> triggerSet = unitTriggers.get(triggerType);
+        if (triggerSet == null) {
+          triggerSet = new HashSet<>();
+          unitTriggers.put(triggerType, triggerSet);
+        }
+        triggerSet.add(trigger);
+      }
+    }
   }
 }

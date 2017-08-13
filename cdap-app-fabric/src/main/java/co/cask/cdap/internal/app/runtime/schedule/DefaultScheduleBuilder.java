@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.schedule.ConstraintProgramScheduleBuilder;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
@@ -53,18 +54,18 @@ import java.util.concurrent.TimeUnit;
 public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder {
 
   private final String name;
-  private final NamespaceId namespace;
+  private final TriggerFactory triggerFactory;
   private final String programName;
   private final List<ProtoConstraint> constraints;
   private String description;
   private Map<String, String> properties;
   private long timeoutMillis = Schedulers.JOB_QUEUE_TIMEOUT_MILLIS;
 
-  public DefaultScheduleBuilder(String name, NamespaceId namespace, String programName) {
+  public DefaultScheduleBuilder(String name, String programName, TriggerFactory triggerFactory) {
     this.name = name;
     this.description = "";
-    this.namespace = namespace;
     this.programName = programName;
+    this.triggerFactory = triggerFactory;
     this.properties = new HashMap<>();
     this.constraints = new ArrayList<>();
   }
@@ -126,7 +127,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   @Override
   public ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new PartitionTrigger(namespace.dataset(datasetName), numPartitions),
+                                    triggerFactory.onPartitions(datasetName, numPartitions),
                                     constraints, timeoutMillis);
   }
 
@@ -134,7 +135,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   public ScheduleCreationSpec triggerOnPartitions(String datasetNamespace, String datasetName,
                                                   int numPartitions) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new PartitionTrigger(new DatasetId(datasetNamespace, datasetName), numPartitions),
+                                    triggerFactory.onPartitions(datasetNamespace, datasetName, numPartitions),
                                     constraints, timeoutMillis);
   }
 
@@ -143,11 +144,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
                                                      String appVersion, ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(
-                                      new ApplicationId(programNamespace, application, appVersion)
-                                        .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()),
-                                                 program),
-                                      programStatuses),
+                                    triggerFactory.onProgramStatus(programNamespace, application, appVersion,
+                                                                   programType, program, programStatuses),
                                     constraints, timeoutMillis);
   }
 
@@ -156,10 +154,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
                                                      ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(
-                                      new ApplicationId(programNamespace, application)
-                                        .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()), program),
-                                      programStatuses),
+                                    triggerFactory.onProgramStatus(programNamespace, application,
+                                                                   programType, program, programStatuses),
                                     constraints, timeoutMillis);
   }
 
@@ -167,11 +163,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   public ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
     return new ScheduleCreationSpec(name, description, programName, properties,
-                                    new ProgramStatusTrigger(
-                                      new ProgramId(namespace.getNamespace(), application,
-                                                    co.cask.cdap.proto.ProgramType.valueOf(programType.name()),
-                                                    program),
-                                      programStatuses),
+                                    triggerFactory.onProgramStatus(application, programType, program, programStatuses),
                                     constraints, timeoutMillis);
   }
 
@@ -179,8 +171,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
     return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
-                                       new ProgramStatusTriggerBuilder(programType.name(), program,
-                                                                       programStatuses));
+                                       (TriggerBuilder) triggerFactory.onProgramStatus(programType, program,
+                                                                                       programStatuses));
   }
 
   @Override

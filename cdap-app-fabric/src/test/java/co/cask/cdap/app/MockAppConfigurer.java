@@ -36,6 +36,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.proto.id.NamespaceId;
 
@@ -115,14 +116,15 @@ public final class MockAppConfigurer implements ApplicationConfigurer {
 
   @Override
   public TriggerFactory getTriggerFactory() {
-    return null;
+    // the result of this won't actually be used, but the returned object will have its methods called
+    return new DefaultTriggerFactory(NamespaceId.DEFAULT);
   }
 
   @Override
   public ScheduleBuilder buildSchedule(String scheduleName, ProgramType programType,
                                        String workflowName) {
     // the result of this won't actually be used, but the returned object will have its methods called
-    return new DefaultScheduleBuilder(scheduleName, NamespaceId.DEFAULT, workflowName);
+    return new DefaultScheduleBuilder(scheduleName, workflowName, getTriggerFactory());
   }
 
   @Nullable

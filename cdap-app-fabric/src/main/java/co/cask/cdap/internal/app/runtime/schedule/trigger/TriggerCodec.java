@@ -45,14 +45,4 @@ public class TriggerCodec extends ProtoTriggerCodec {
   public TriggerCodec() {
     super(TYPE_TO_INTERNAL_TRIGGER);
   }
-
-  @Override
-  public Trigger deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-    throws JsonParseException {
-    Trigger trigger = super.deserialize(json, typeOfT, context);
-    if (trigger instanceof AbstractCompositeTrigger) {
-      ((AbstractCompositeTrigger) trigger).initializeUnitTriggers();
-    }
-    return trigger;
-  }
 }

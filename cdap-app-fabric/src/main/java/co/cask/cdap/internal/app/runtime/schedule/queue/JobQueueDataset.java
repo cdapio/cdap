@@ -175,9 +175,10 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   }
 
   private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
-    if (trigger instanceof TimeTrigger || trigger instanceof StreamSizeTrigger) {
-      // TimeTrigger/StreamSizeTrigger is satisfied as soon as the Notification arrive, due to how the Notification
-      // is initially created
+    if (trigger instanceof TimeTrigger) {
+      // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created.
+      // This is for backward compatibility, since TimeTrigger#isSatisfied looks for the filed
+      // cron expression in notification, which does not exist in notifications from pre-4.3 version
       return true;
     }
     return ((SatisfiableTrigger) trigger).isSatisfied(notifications);

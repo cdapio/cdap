@@ -17,14 +17,13 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 
 /**
  * A Trigger builder that builds a {@link AndTrigger}.
  */
-public class AndTriggerBuilder extends CompositeTriggerBuilder implements TriggerBuilder {
+public class AndTriggerBuilder extends AbstractCompositeTriggerBuilder {
 
-  public AndTriggerBuilder(Trigger[] triggers) {
+  public AndTriggerBuilder(Trigger... triggers) {
     super(triggers);
   }
 

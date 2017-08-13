@@ -264,7 +264,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
         "Cannot schedule program %s of type %s: Only workflows can be scheduled",
         programName, schedulableProgramType));
     }
-    return new DefaultScheduleBuilder(scheduleName, deployNamespace.toEntityId(), programName);
+    return new DefaultScheduleBuilder(scheduleName, programName, triggerFactory);
   }
 
   /**
