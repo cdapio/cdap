@@ -131,9 +131,11 @@ angular.module(PKG.name + '.feature.hydrator')
       return obj;
     }
     this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
+    this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
 
     this.HydratorPlusPlusDetailMetricsStore.registerOnChangeListener(function () {
       this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
+      this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
     }.bind(this));
 
     HydratorPlusPlusDetailRunsStore.registerOnChangeListener(() => {
