@@ -60,6 +60,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     ];
 
     this.metricsContext = rNodeMetricsContext;
+    this.isMetricsEnabled = this.$scope.isDisabled && (Array(rNodeMetricsContext.runs) && rNodeMetricsContext.runs.length);
     if (this.metricsContext) {
       this.nodeMetrics = [
         `user.${this.state.node.name}.records.in`,
