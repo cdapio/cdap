@@ -28,13 +28,17 @@ angular.module(PKG.name + '.feature.hydrator')
     this.setDefaults = function() {
       this.state = {
         metrics: [],
-        metricsTabActive: false
+        metricsTabActive: false,
+        logs: {}
       };
       this.emitChange();
     };
     this.setDefaults();
     this.getMetrics = function() {
       return this.state.metrics;
+    };
+    this.getLogsMetrics = function() {
+      return this.state.logs;
     };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
@@ -47,11 +51,16 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setState = function(metrics) {
       var metricObj = {};
+      var systemLogMetrics = [
+        'system.app.log.error',
+        'system.app.log.warn'
+      ];
+      var logsMetrics = {};
       angular.forEach(metrics.series, function (metric) {
         var split = metric.metricName.split('.');
         var key = split[1];
 
-        if (!metricObj[key]) {
+        if (key !== 'app' && !metricObj[key]) {
           metricObj[key] = {
             nodeName: split[1]
           };
@@ -63,6 +72,8 @@ angular.module(PKG.name + '.feature.hydrator')
           metricObj[key].recordsOut = metric.data[0].value;
         } else if (metric.metricName.indexOf(split[1] + '.records.error') !== -1) {
           metricObj[key].recordsError = metric.data[0].value;
+        } else if (systemLogMetrics.indexOf(metric.metricName) !== -1) {
+          logsMetrics[metric.metricName] = metric.data[0].value;
         }
 
       });
@@ -71,6 +82,7 @@ angular.module(PKG.name + '.feature.hydrator')
       angular.forEach(metricObj, function (val) {
         metricsArr.push(val);
       });
+      this.state.logs = logsMetrics;
 
       this.state.metrics = metricsArr;
       this.emitChange();

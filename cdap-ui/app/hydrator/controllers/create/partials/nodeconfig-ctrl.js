@@ -61,7 +61,16 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.metricsContext = rNodeMetricsContext;
     if (this.metricsContext) {
-      this.nodeMetrics = [`user.${this.state.node.name}.records.in`, `user.${this.state.node.name}.records.out`];
+      this.nodeMetrics = [
+        `user.${this.state.node.name}.records.in`,
+        `user.${this.state.node.name}.records.out`,
+        `user.${this.state.node.name}.records.error`,
+        `user.${this.state.node.name}.process.time.total`,
+        `user.${this.state.node.name}.process.time.avg`,
+        `user.${this.state.node.name}.process.time.max`,
+        `user.${this.state.node.name}.process.time.min`,
+        `user.${this.state.node.name}.process.time.stddev`
+      ];
     } else {
       this.nodeMetrics = [];
     }
