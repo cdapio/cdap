@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.ServiceManager;
@@ -58,6 +59,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
 
     // Start the service
     ServiceManager serviceManager = appManager.getServiceManager(FileUploadApp.SERVICE_NAME).start();
+    serviceManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     try {
       // Upload URL is "base/upload/pfs/[partition_value], which the partition value is a long
       URI serviceURI = serviceManager.getServiceURL(10, TimeUnit.SECONDS).toURI();
@@ -115,6 +117,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
 
     } finally {
       serviceManager.stop();
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     }
   }
 

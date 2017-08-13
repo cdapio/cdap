@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -77,10 +78,11 @@ import static com.google.common.base.Predicates.and;
 /**
  * Store for application metadata
  */
-public class AppMetadataStore extends MetadataStoreDataset {
+public class AppMetadataStore extends MetadataStoreDataset implements TopicMessageIdStore {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
@@ -90,6 +92,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_MESSAGE = "msg";
 
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
@@ -282,6 +285,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       write(key, new RunRecordMeta(record, properties));
     }
   }
+
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
@@ -925,6 +929,22 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
     keyBuilder.add(key);
     write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+  }
+
+  @Nullable
+  @Override
+  public String retrieveSubscriberState(String topic) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    byte[] rawBytes = get(keyBuilder.build(), BYTE_TYPE);
+    return (rawBytes == null) ? null : Bytes.toString(rawBytes);
+  }
+
+  @Override
+  public void persistSubscriberState(String topic, String messageId) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    write(keyBuilder.build(), Bytes.toBytes(messageId));
   }
 
   private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,

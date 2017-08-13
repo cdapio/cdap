@@ -40,6 +40,7 @@ import co.cask.cdap.internal.app.preview.DefaultDataTracerFactory;
 import co.cask.cdap.internal.app.preview.DefaultPreviewRunner;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.preview.DefaultPreviewStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;

@@ -73,6 +73,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
