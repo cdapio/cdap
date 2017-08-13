@@ -203,7 +203,7 @@ public class DefaultStore implements Store {
           long now = System.currentTimeMillis();
           long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
           switch (newStatus) {
-            case RUNNING:
+            case STARTING:
               Map<String, String> runtimeArgs = GSON.fromJson(target.getProperties().get("runtimeArgs"),
                                                               STRING_MAP_TYPE);
               Map<String, String> systemArgs = GSON.fromJson(target.getProperties().get("systemArgs"),
@@ -215,6 +215,9 @@ public class DefaultStore implements Store {
                 systemArgs = EMPTY_STRING_MAP;
               }
               mds.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), runtimeArgs, systemArgs);
+              break;
+            case RUNNING:
+              mds.recordProgramRunning(id, pid, nowSecs, target.getTwillRunId());
               break;
             case SUSPENDED:
               mds.recordProgramSuspend(id, pid);
@@ -250,8 +253,25 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setStart(ProgramId id, String pid, long startTime) {
-    setStart(id, pid, startTime, null, EMPTY_STRING_MAP, EMPTY_STRING_MAP);
+  public void setRunning(final ProgramId id, final String pid, final long runTime, final String twillRunId) {
+    Transactions.executeUnchecked(transactional, new TxRunnable() {
+      @Override
+      public void run(DatasetContext context) throws Exception {
+        getAppMetadataStore(context).recordProgramRunning(id, pid, runTime, twillRunId);
+      }
+    });
+  }
+
+  @Override
+  public void setStartAndRun(ProgramId id, String pid, long startTime, long runTime) {
+    setStartAndRun(id, pid, startTime, runTime, EMPTY_STRING_MAP, EMPTY_STRING_MAP);
+  }
+
+  @Override
+  public void setStartAndRun(ProgramId id, String pid, long startTime, long runTime,
+                             Map<String, String> userArguments, Map<String, String> systemArguments) {
+    setStart(id, pid, startTime, null, userArguments, systemArguments);
+    setRunning(id, pid, runTime, null);
   }
 
   @Override

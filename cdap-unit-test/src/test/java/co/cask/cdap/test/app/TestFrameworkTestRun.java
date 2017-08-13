@@ -260,7 +260,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     countService.start();
-    Assert.assertTrue(countService.isRunning());
+    countService.waitForStatus(true);
     Assert.assertEquals(2, countService.getProvisionedInstances());
 
     // requesting with ProgramRunStatus.KILLED returns empty list
@@ -1023,6 +1023,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     centralServiceManager.stop();
     centralServiceManager.waitForStatus(false);
+    centralServiceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   /**
@@ -1989,6 +1990,8 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     callServicePut(serviceManager.getServiceURL(), "key1", "value1");
     String response = callServiceGet(serviceManager.getServiceURL(), "key1");
     Assert.assertEquals("value1", new Gson().fromJson(response, String.class));
+    serviceManager.stop();
+    serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
   }
 
   @Category(XSlowTests.class)

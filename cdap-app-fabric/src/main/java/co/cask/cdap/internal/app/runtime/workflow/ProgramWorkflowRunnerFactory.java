@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.ProgramType;
 import org.slf4j.Logger;
@@ -48,15 +49,18 @@ final class ProgramWorkflowRunnerFactory {
   private final ProgramRunnerFactory programRunnerFactory;
   private final Program workflowProgram;
   private final ProgramOptions workflowProgramOptions;
+  private final ProgramStateWriter programStateWriter;
 
   ProgramWorkflowRunnerFactory(CConfiguration cConf, WorkflowSpecification workflowSpec,
                                ProgramRunnerFactory programRunnerFactory,
-                               Program workflowProgram, ProgramOptions workflowProgramOptions) {
+                               Program workflowProgram, ProgramOptions workflowProgramOptions,
+                               ProgramStateWriter programStateWriter) {
     this.cConf = cConf;
     this.workflowSpec = workflowSpec;
     this.programRunnerFactory = programRunnerFactory;
     this.workflowProgram = workflowProgram;
     this.workflowProgramOptions = workflowProgramOptions;
+    this.programStateWriter = programStateWriter;
   }
 
   /**
@@ -75,10 +79,12 @@ final class ProgramWorkflowRunnerFactory {
       switch (SchedulableProgramType.valueOf(actionSpec.getProperties().get(ProgramWorkflowAction.PROGRAM_TYPE))) {
         case MAPREDUCE:
           return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE);
+                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.MAPREDUCE,
+                                                  programStateWriter);
         case SPARK:
           return new DefaultProgramWorkflowRunner(cConf, workflowProgram, workflowProgramOptions, programRunnerFactory,
-                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK);
+                                                  workflowSpec, token, nodeId, nodeStates, ProgramType.SPARK,
+                                                  programStateWriter);
         default:
           LOG.debug("No workflow program runner found for this program");
       }

@@ -59,6 +59,7 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     ProgramId flowId = new ProgramId(Id.Namespace.DEFAULT.getId(), "test_app", ProgramType.FLOW, "test_flow");
     long stopTime = System.currentTimeMillis() / 2000;
     long startTime = stopTime - 20;
+    long runningTime = stopTime - 15;
     String pid = RunIds.generate(startTime * 1000).getId();
     // to test null serialization (setStart can take in nullable)
     String twillRunId = null;
@@ -66,22 +67,31 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     Map<String, String> properties = ImmutableMap.of("runtimeArgs", GSON.toJson(runtimeArgs));
     Map<String, String> systemArgs = ImmutableMap.of("a", "b");
     RunRecordMeta initialRunRecord =
-      new RunRecordMeta(pid, startTime, null, ProgramRunStatus.RUNNING, properties, systemArgs, twillRunId);
+      new RunRecordMeta(pid, startTime, null, null, ProgramRunStatus.STARTING,
+                        properties, systemArgs, twillRunId);
 
     runtimeStore.setStart(flowId, pid, startTime, twillRunId, runtimeArgs, systemArgs);
     RunRecordMeta runMeta = store.getRun(flowId, pid);
     Assert.assertEquals(initialRunRecord, runMeta);
 
+    RunRecordMeta runningRunRecord =
+      new RunRecordMeta(pid, startTime, runningTime, null, ProgramRunStatus.RUNNING,
+                        properties, systemArgs, twillRunId);
+    runtimeStore.setRunning(flowId, pid, runningTime, null);
+    Assert.assertEquals(runningRunRecord, store.getRun(flowId, pid));
+
     runtimeStore.setSuspend(flowId, pid);
-    Assert.assertEquals(new RunRecordMeta(initialRunRecord, null, ProgramRunStatus.SUSPENDED),
-                        store.getRun(flowId, pid));
+    RunRecordMeta suspendRunRecord =
+      new RunRecordMeta(pid, startTime, runningTime, null, ProgramRunStatus.SUSPENDED,
+                        properties, systemArgs, twillRunId);
+    Assert.assertEquals(suspendRunRecord, store.getRun(flowId, pid));
 
     runtimeStore.setResume(flowId, pid);
-    Assert.assertEquals(initialRunRecord, store.getRun(flowId, pid));
+    Assert.assertEquals(runningRunRecord, store.getRun(flowId, pid));
 
     runtimeStore.setStop(flowId, pid, stopTime, ProgramRunStatus.COMPLETED);
     RunRecordMeta runRecordMeta = store.getRun(flowId, pid);
-    RunRecordMeta finalRunRecord = new RunRecordMeta(initialRunRecord, stopTime, ProgramRunStatus.COMPLETED);
+    RunRecordMeta finalRunRecord = new RunRecordMeta(runningRunRecord, stopTime, ProgramRunStatus.COMPLETED);
     Assert.assertEquals(finalRunRecord, runRecordMeta);
   }
 
@@ -91,16 +101,25 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
       new ProgramId(Id.Namespace.DEFAULT.getId(), "test_app", ProgramType.WORKFLOW, "test_workflow");
     long stopTime = System.currentTimeMillis() / 1000;
     long startTime = stopTime - 20;
+    long runningTime = stopTime - 15;
     String pid = RunIds.generate(startTime * 1000).getId();
     String twillRunId = "twill_run_id";
     Map<String, String> runtimeArgs = ImmutableMap.of();
     Map<String, String> properties = ImmutableMap.of("runtimeArgs", GSON.toJson(runtimeArgs));
     Map<String, String> systemArgs = ImmutableMap.of();
     RunRecordMeta initialRunRecord =
-      new RunRecordMeta(pid, startTime, null, ProgramRunStatus.RUNNING, properties, systemArgs, twillRunId);
+      new RunRecordMeta(pid, startTime, null, null, ProgramRunStatus.STARTING,
+                        properties, systemArgs, twillRunId);
 
     runtimeStore.setStart(workflowId, pid, startTime, twillRunId, runtimeArgs, systemArgs);
     Assert.assertEquals(initialRunRecord, store.getRun(workflowId, pid));
+
+    RunRecordMeta runningRunRecord =
+            new RunRecordMeta(pid, startTime, runningTime, null, ProgramRunStatus.RUNNING,
+                              properties, systemArgs, twillRunId);
+
+    runtimeStore.setRunning(workflowId, pid, runningTime, twillRunId);
+    Assert.assertEquals(runningRunRecord, store.getRun(workflowId, pid));
 
     ProgramId mapreduceId =
       new ProgramId(workflowId.getNamespace(), workflowId.getApplication(), ProgramType.MAPREDUCE, "test_mr");
@@ -111,6 +130,7 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
                                                        ProgramOptionConstants.WORKFLOW_NAME, workflowId.getProgram(),
                                                        ProgramOptionConstants.WORKFLOW_RUN_ID, pid);
     runtimeStore.setStart(mapreduceId, mapreducePid, startTime, twillRunId, runtimeArgs, mrSystemArgs);
+    runtimeStore.setRunning(mapreduceId, mapreducePid, runningTime, twillRunId);
 
     BasicThrowable failureCause =
       new BasicThrowable(new IllegalArgumentException("failure", new RuntimeException("oops")));
@@ -121,7 +141,8 @@ public class RemoteRuntimeStoreTest extends AppFabricTestBase {
     RunRecordMeta completedWorkflowRecord = store.getRun(workflowId, pid);
     // we're not comparing properties, since runtime (such as starting/stopping inner programs) modifies it
     Assert.assertEquals(pid, completedWorkflowRecord.getPid());
-    Assert.assertEquals(initialRunRecord.getStartTs(), completedWorkflowRecord.getStartTs());
+    Assert.assertEquals(runningRunRecord.getStartTs(), completedWorkflowRecord.getStartTs());
+    Assert.assertEquals(runningRunRecord.getRunTs(), completedWorkflowRecord.getRunTs());
     Assert.assertEquals((Long) stopTime, completedWorkflowRecord.getStopTs());
     Assert.assertEquals(ProgramRunStatus.FAILED, completedWorkflowRecord.getStatus());
     Assert.assertEquals(twillRunId, completedWorkflowRecord.getTwillRunId());

@@ -15,9 +15,12 @@
  */
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.app.runtime.ProgramStateWriter;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -31,7 +34,7 @@ import java.util.Collection;
 /**
  * A {@link co.cask.cdap.app.runtime.ProgramController} for controlling a running flowlet.
  */
-final class FlowletProgramController extends AbstractProgramController {
+final class FlowletProgramController extends AbstractStateChangeProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(FlowletProgramController.class);
 
@@ -43,11 +46,12 @@ final class FlowletProgramController extends AbstractProgramController {
   /**
    * Constructs an instance. The instance must be constructed before the flowlet driver starts.
    */
-  FlowletProgramController(ProgramId programId, String flowletName,
+  FlowletProgramController(ProgramRunId programRunId, String twillRunId, String flowletName,
                            BasicFlowletContext flowletContext, FlowletRuntimeService driver,
                            Collection<ProducerSupplier> producerSuppliers,
-                           Collection<ConsumerSupplier<?>> consumerSuppliers) {
-    super(programId, flowletContext.getRunId(), flowletName);
+                           Collection<ConsumerSupplier<?>> consumerSuppliers,
+                           ProgramStateWriter programStateWriter) {
+    super(programRunId, twillRunId, programStateWriter, flowletName);
     this.flowletContext = flowletContext;
     this.driver = driver;
     this.producerSuppliers = producerSuppliers;

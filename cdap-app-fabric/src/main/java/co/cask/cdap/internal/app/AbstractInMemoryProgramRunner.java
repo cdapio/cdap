@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,11 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
-import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
@@ -56,10 +57,12 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractInMemoryProgramRunner.class);
 
   private final String host;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
-  protected AbstractInMemoryProgramRunner(CConfiguration cConf) {
+  protected AbstractInMemoryProgramRunner(CConfiguration cConf, ProgramStateWriter programStateWriter) {
     this.host = cConf.get(Constants.Service.MASTER_SERVICES_BIND_ADDRESS);
+    this.programStateWriter = programStateWriter;
   }
 
   /**
@@ -84,7 +87,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
         components.put(program.getName(), instanceId, controller);
       }
 
-      return new InMemoryProgramController(components, program, options, runId);
+      return new InMemoryProgramController(components, program, runId, options, programStateWriter);
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
@@ -119,7 +122,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
   /**
    * ProgramController to manage multiple in-memory instances of a Program.
    */
-  private final class InMemoryProgramController extends AbstractProgramController {
+  private final class InMemoryProgramController extends AbstractStateChangeProgramController {
     private final Table<String, Integer, ProgramController> components;
     private final Program program;
     private final ProgramOptions options;
@@ -128,8 +131,9 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, ProgramOptions options, RunId runId) {
-      super(program.getId(), runId);
+                              Program program, RunId runId, ProgramOptions options,
+                              ProgramStateWriter programStateWriter) {
+      super(program.getId().run(runId), null, programStateWriter, null);
       this.program = program;
       this.components = components;
       this.options = options;
