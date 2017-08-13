@@ -69,12 +69,12 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
         for (Map.Entry<Type, Set<Trigger>> entry :
           ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
             .getUnitTriggers().entrySet()) {
-          Set<Trigger> triggerSet = unitTriggers.get(entry.getKey());
-          if (triggerSet == null) {
-            unitTriggers.put(entry.getKey(), entry.getValue());
-            continue;
+          Set<Trigger> innerUnitTriggerSet = unitTriggers.get(entry.getKey());
+          if (innerUnitTriggerSet == null) {
+            innerUnitTriggerSet = new HashSet<>();
+            unitTriggers.put(entry.getKey(), innerUnitTriggerSet);
           }
-          triggerSet.addAll(entry.getValue());
+          innerUnitTriggerSet.addAll(entry.getValue());
         }
       } else {
         // If the current trigger is a non-composite trigger, add it to the set according to its type
