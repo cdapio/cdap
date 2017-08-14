@@ -22,7 +22,7 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -49,8 +49,8 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
   }
 
   @Override
-  public List<String> getTriggerKeys() {
-    ImmutableList.Builder<String> triggerKeysBuilder = ImmutableList.builder();
+  public Set<String> getTriggerKeys() {
+    ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
     String programIdString = programId.toString();
     for (ProgramStatus status : programStatuses) {
       triggerKeysBuilder.add(programIdString +  "." + status.toString().toLowerCase());

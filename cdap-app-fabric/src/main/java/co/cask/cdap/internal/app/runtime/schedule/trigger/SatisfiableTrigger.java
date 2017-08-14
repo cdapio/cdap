@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A trigger that must be satisfied before a schedule checks constraints.
@@ -39,7 +40,7 @@ public interface SatisfiableTrigger extends Trigger {
    * Get all trigger keys which will be used to index the schedule containing this trigger, so that we can
    * do reverse lookup to get the schedule when events relevant to the trigger are received.
    *
-   * @return list of trigger keys as {@link String}. The list will be never be null.
+   * @return a set of trigger keys as {@link String}. The list will be never be null.
    */
-  List<String> getTriggerKeys();
+  Set<String> getTriggerKeys();
 }

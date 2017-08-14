@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.trigger;
+package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
 
@@ -31,5 +31,5 @@ public interface TriggerBuilder extends Trigger {
    * @param applicationVersion the deployed application version
    * @return a Trigger
    */
-  Trigger build(String namespace, String applicationName, String applicationVersion);
+  SatisfiableTrigger build(String namespace, String applicationName, String applicationVersion);
 }

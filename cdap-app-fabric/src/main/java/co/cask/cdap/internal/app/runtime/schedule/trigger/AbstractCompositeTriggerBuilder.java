@@ -17,25 +17,24 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 
 /**
  * A Trigger builder that builds a {@link AbstractCompositeTrigger}
  */
-public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder{
+public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder {
   protected final Trigger[] triggers;
 
   protected AbstractCompositeTriggerBuilder(Trigger... triggers) {
     this.triggers = triggers;
   }
 
-  protected Trigger[] getBuiltTriggers(String namespace, String applicationName, String applicationVersion) {
+  protected SatisfiableTrigger[] getBuiltTriggers(String namespace, String applicationName, String applicationVersion) {
     int numTriggers = triggers.length;
-    Trigger[] builtTriggers = new Trigger[numTriggers];
+    SatisfiableTrigger[] builtTriggers = new SatisfiableTrigger[numTriggers];
     for (int i = 0; i < numTriggers; i++) {
       Trigger trigger = triggers[i];
       builtTriggers[i] = trigger instanceof TriggerBuilder ?
-        ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion) : trigger;
+        ((TriggerBuilder) trigger).build(namespace, applicationName, applicationVersion) : (SatisfiableTrigger) trigger;
     }
     return builtTriggers;
   }

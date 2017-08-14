@@ -107,50 +107,50 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   @Override
   public void addProgramSchedule(ProgramSchedule schedule) throws AlreadyExistsException, SchedulerException {
-    if (callTimeScheduler(schedule)) {
+    if (containsTimeTrigger(schedule)) {
       timeScheduler.addProgramSchedule(schedule);
     }
-    if (callStreamSizeScheduler(schedule)) {
+    if (containsStreamSizeTrigger(schedule)) {
       streamSizeScheduler.addProgramSchedule(schedule);
     }
   }
 
   @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    if (callTimeScheduler(schedule)) {
+    if (containsTimeTrigger(schedule)) {
       timeScheduler.deleteProgramSchedule(schedule);
     }
-    if (callStreamSizeScheduler(schedule)) {
+    if (containsStreamSizeTrigger(schedule)) {
       streamSizeScheduler.deleteProgramSchedule(schedule);
     }
   }
 
   @Override
   public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    if (callTimeScheduler(schedule)) {
+    if (containsTimeTrigger(schedule)) {
       timeScheduler.suspendProgramSchedule(schedule);
     }
-    if (callStreamSizeScheduler(schedule)) {
+    if (containsStreamSizeTrigger(schedule)) {
       streamSizeScheduler.suspendProgramSchedule(schedule);
     }
   }
 
   @Override
   public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
-    if (callTimeScheduler(schedule)) {
+    if (containsTimeTrigger(schedule)) {
       timeScheduler.resumeProgramSchedule(schedule);
     }
-    if (callStreamSizeScheduler(schedule)) {
+    if (containsStreamSizeTrigger(schedule)) {
       streamSizeScheduler.resumeProgramSchedule(schedule);
     }
   }
 
-  private boolean callTimeScheduler(ProgramSchedule schedule) {
+  private boolean containsTimeTrigger(ProgramSchedule schedule) {
     // A composite trigger may contain a TimeTrigger
     return schedule.getTrigger() instanceof TimeTrigger || schedule.getTrigger() instanceof AbstractCompositeTrigger;
   }
 
-  private boolean callStreamSizeScheduler(ProgramSchedule schedule) {
+  private boolean containsStreamSizeTrigger(ProgramSchedule schedule) {
     // A composite trigger won't contain a StreamSizeTrigger since StreamSizeTrigger is no longer supported
     // in the new API introduced by 4.3
     return schedule.getTrigger() instanceof StreamSizeTrigger;

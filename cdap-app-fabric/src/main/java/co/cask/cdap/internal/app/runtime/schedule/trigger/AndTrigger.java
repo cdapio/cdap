@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
@@ -26,14 +25,14 @@ import java.util.List;
  */
 public class AndTrigger extends AbstractCompositeTrigger implements SatisfiableTrigger {
 
-  public AndTrigger(Trigger... triggers) {
+  public AndTrigger(SatisfiableTrigger... triggers) {
     super(Type.AND, triggers);
   }
 
   @Override
   public boolean isSatisfied(List<Notification> notifications) {
-    for (Trigger trigger : triggers) {
-      if (!((SatisfiableTrigger) trigger).isSatisfied(notifications)) {
+    for (SatisfiableTrigger trigger : satisfiableTriggers) {
+      if (!(trigger).isSatisfied(notifications)) {
         return false;
       }
     }

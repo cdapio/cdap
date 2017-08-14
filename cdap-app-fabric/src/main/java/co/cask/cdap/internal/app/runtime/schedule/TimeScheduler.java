@@ -23,6 +23,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProtoTrigger;
@@ -399,12 +400,12 @@ public final class TimeScheduler implements Scheduler {
     Map<String, TriggerKey> cronTriggerKeyMap = new HashMap<>();
     // Get a set of TimeTrigger if the schedule's trigger is a composite trigger
     if (trigger instanceof AbstractCompositeTrigger) {
-      Set<co.cask.cdap.api.schedule.Trigger> triggerSet =
+      Set<SatisfiableTrigger> triggerSet =
         ((AbstractCompositeTrigger) trigger).getUnitTriggers().get(ProtoTrigger.Type.TIME);
       if (triggerSet == null) {
         return ImmutableMap.of();
       }
-      for (co.cask.cdap.api.schedule.Trigger timeTrigger : triggerSet) {
+      for (SatisfiableTrigger timeTrigger : triggerSet) {
         String cron = ((TimeTrigger) timeTrigger).getCronExpression();
         String triggerName = AbstractSchedulerService.getTriggerName(program, programType, schedule.getName(), cron);
         cronTriggerKeyMap.put(cron, triggerKeyForName(triggerName));

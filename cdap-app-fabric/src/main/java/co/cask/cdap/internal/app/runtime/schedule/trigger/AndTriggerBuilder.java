@@ -28,7 +28,7 @@ public class AndTriggerBuilder extends AbstractCompositeTriggerBuilder {
   }
 
   @Override
-  public Trigger build(String namespace, String applicationName, String applicationVersion) {
+  public AndTrigger build(String namespace, String applicationName, String applicationVersion) {
     return new AndTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
   }
 }

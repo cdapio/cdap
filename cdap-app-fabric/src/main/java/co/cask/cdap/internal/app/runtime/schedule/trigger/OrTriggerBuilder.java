@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 
 /**
  * A Trigger builder that builds a {@link OrTrigger}.
@@ -29,7 +28,7 @@ public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
   }
 
   @Override
-  public Trigger build(String namespace, String applicationName, String applicationVersion) {
+  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
     return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
   }
 }

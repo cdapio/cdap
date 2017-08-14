@@ -21,9 +21,10 @@ import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.DatasetId;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when a certain number of partitions are added to a PartitionedFileSet.
@@ -54,7 +55,7 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
   }
 
   @Override
-  public List<String> getTriggerKeys() {
-    return ImmutableList.of(Schedulers.triggerKeyForPartition(dataset));
+  public Set<String> getTriggerKeys() {
+    return ImmutableSet.of(Schedulers.triggerKeyForPartition(dataset));
   }
 }

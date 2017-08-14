@@ -20,12 +20,13 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A Trigger that schedules a ProgramSchedule, based upon a particular cron expression.
@@ -60,7 +61,7 @@ public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Satisfiable
   }
 
   @Override
-  public List<String> getTriggerKeys() {
-    return ImmutableList.of();
+  public Set<String> getTriggerKeys() {
+    return ImmutableSet.of();
   }
 }

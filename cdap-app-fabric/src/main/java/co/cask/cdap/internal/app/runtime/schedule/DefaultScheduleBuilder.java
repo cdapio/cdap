@@ -27,10 +27,9 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.ProtoConstraint;
 import com.google.common.collect.ImmutableMap;
 
@@ -113,7 +112,7 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
 
   @Override
   public ScheduleCreationSpec triggerByTime(String cronExpression) {
-    return new ScheduleCreationSpec(name, description, programName, properties, new TimeTrigger(cronExpression),
+    return new ScheduleCreationSpec(name, description, programName, properties, triggerFactory.byTime(cronExpression),
                                     constraints, timeoutMillis);
   }
 
