@@ -83,9 +83,6 @@ public class TriggerCodecTest {
     }
   }
 
-  // TODO: [CDAP-12233] ProtoTrigger and its subclasses no longer match in JSON because of additional fields
-  // in its subclasses. Temporarily ignored until we decide whether this test is still needed
-  @Ignore
   @Test
   public void testTriggerCodec() {
     ProtoTrigger.PartitionTrigger protoPartition = new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4);
@@ -96,10 +93,8 @@ public class TriggerCodecTest {
     TimeTrigger timeTrigger = new TimeTrigger("* * * * *");
     testSerDeserYieldsTrigger(protoTime, timeTrigger);
 
-    ProtoTrigger.StreamSizeTrigger protoStreamSize =
-      new ProtoTrigger.StreamSizeTrigger(new StreamId("test", "str"), 1000);
-    StreamSizeTrigger streamSizeTrigger = new StreamSizeTrigger(new StreamId("test", "str"), 1000);
-    testSerDeserYieldsTrigger(protoStreamSize, streamSizeTrigger);
+    testSerDeserYieldsTrigger(new ProtoTrigger.StreamSizeTrigger(new StreamId("test", "str"), 1000),
+                              new StreamSizeTrigger(new StreamId("test", "str"), 1000));
 
     ProtoTrigger.ProgramStatusTrigger protoProgramStatus =
       new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
@@ -110,10 +105,9 @@ public class TriggerCodecTest {
     testSerDeserYieldsTrigger(protoProgramStatus, programStatusTrigger);
 
     ProtoTrigger.OrTrigger protoOr =
-      new ProtoTrigger.OrTrigger(protoPartition, new ProtoTrigger.AndTrigger(protoTime, protoStreamSize),
-                                 protoProgramStatus);
+      new ProtoTrigger.OrTrigger(protoPartition, new ProtoTrigger.AndTrigger(protoTime, protoProgramStatus));
     OrTrigger orTrigger =
-      new OrTrigger(partitionTrigger, new AndTrigger(timeTrigger, streamSizeTrigger), programStatusTrigger);
+      new OrTrigger(partitionTrigger, new AndTrigger(timeTrigger, programStatusTrigger));
     testSerDeserYieldsTrigger(protoOr, orTrigger);
 
     ProtoTrigger.AndTrigger protoAnd =

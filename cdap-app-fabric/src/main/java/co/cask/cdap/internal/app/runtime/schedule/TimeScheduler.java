@@ -167,7 +167,10 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public void deleteProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
-      for (TriggerKey triggerKey : getGroupedTriggerKeys(schedule)) {
+      Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
+      // Must assert all trigger keys exist before processing each trigger key
+      assertTriggerKeysExist(triggerKeys);
+      for (TriggerKey triggerKey : triggerKeys) {
         Trigger trigger = getTrigger(triggerKey, schedule.getProgramId(), schedule.getName());
         scheduler.unscheduleJob(trigger.getKey());
 
@@ -184,7 +187,10 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public void suspendProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
-      for (TriggerKey triggerKey : getGroupedTriggerKeys(schedule)) {
+      Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
+      // Must assert all trigger keys exist before processing each trigger key
+      assertTriggerKeysExist(triggerKeys);
+      for (TriggerKey triggerKey : triggerKeys) {
         scheduler.pauseTrigger(triggerKey);
       }
     } catch (org.quartz.SchedulerException e) {
@@ -195,7 +201,10 @@ public final class TimeScheduler implements Scheduler {
   @Override
   public void resumeProgramSchedule(ProgramSchedule schedule) throws NotFoundException, SchedulerException {
     try {
-      for (TriggerKey triggerKey : getGroupedTriggerKeys(schedule)) {
+      Collection<TriggerKey> triggerKeys = getGroupedTriggerKeys(schedule);
+      // Must assert all trigger keys exist before processing each trigger key
+      assertTriggerKeysExist(triggerKeys);
+      for (TriggerKey triggerKey : triggerKeys) {
         if (triggerKey.getGroup().equals(PAUSED_NEW_TRIGGERS_GROUP)) {
           Trigger neverScheduledTrigger = scheduler.getTrigger(triggerKey);
           TriggerBuilder<? extends Trigger> triggerBuilder = neverScheduledTrigger.getTriggerBuilder();
@@ -224,6 +233,18 @@ public final class TimeScheduler implements Scheduler {
     if (scheduler.checkExists(triggerKey)) {
       throw new ObjectAlreadyExistsException("Unable to store Trigger with name " + triggerKey.getName() +
                                                "because one already exists with this identification.");
+    }
+  }
+
+  /**
+   * Asserts all the given trigger keys exist
+   */
+  private void assertTriggerKeysExist(Collection<TriggerKey> triggerKeys)
+    throws SchedulerException, org.quartz.SchedulerException {
+    for (TriggerKey triggerKey : triggerKeys) {
+      if (!scheduler.checkExists(triggerKey)) {
+        throw new SchedulerException("Trigger with name '" + triggerKey.getName() + "' doesnot exist");
+      }
     }
   }
 

@@ -17,9 +17,11 @@
 package co.cask.cdap.scheduler;
 
 import co.cask.cdap.AppWithFrequentScheduledWorkflows;
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxCallable;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
@@ -50,10 +52,12 @@ import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -103,7 +107,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final ScheduleId TSCHED11_ID = APP1_ID.schedule("tsched11");
   private static final DatasetId DS1_ID = NS_ID.dataset("pfs1");
   private static final DatasetId DS2_ID = NS_ID.dataset("pfs2");
-  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows");
+  private static final ApplicationId APP_ID = NamespaceId.DEFAULT.app("AppWithFrequentScheduledWorkflows", VERSION1);
   private static final ProgramId WORKFLOW_1 = APP_ID.program(ProgramType.WORKFLOW,
                                                              AppWithFrequentScheduledWorkflows.SOME_WORKFLOW);
   private static final ProgramId WORKFLOW_2 = APP_ID.program(ProgramType.WORKFLOW,
@@ -254,7 +258,12 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     dataEventTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
     store = getInjector().getInstance(Store.class);
 
-    deploy(AppWithFrequentScheduledWorkflows.class);
+    // Deploy the app with version
+    Id.Artifact appArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appwithschedules", VERSION1);
+    addAppArtifact(appArtifactId, AppWithFrequentScheduledWorkflows.class);
+    AppRequest<? extends Config> appRequest = new AppRequest<>(
+      new ArtifactSummary(appArtifactId.getName(), appArtifactId.getVersion().getVersion()));
+    deploy(APP_ID, appRequest);
 
     // Resume the schedule because schedules are initialized as paused
     enableSchedule(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1);

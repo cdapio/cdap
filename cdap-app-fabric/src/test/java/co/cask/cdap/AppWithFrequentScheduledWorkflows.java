@@ -37,8 +37,6 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
   public static final String SCHEDULED_WORKFLOW_2 = "ScheduledWorkflow2";
   public static final String COMPOSITE_WORKFLOW = "CompositeWorkflow";
 
-
-
   @Override
   public void configure() {
     setName(NAME);

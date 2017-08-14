@@ -50,6 +50,11 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
 
   @Override
   public List<String> getTriggerKeys() {
-    return ImmutableList.of(programId.toString());
+    ImmutableList.Builder<String> triggerKeysBuilder = ImmutableList.builder();
+    String programIdString = programId.toString();
+    for (ProgramStatus status : programStatuses) {
+      triggerKeysBuilder.add(programIdString +  "." + status.toString().toLowerCase());
+    }
+    return triggerKeysBuilder.build();
   }
 }
