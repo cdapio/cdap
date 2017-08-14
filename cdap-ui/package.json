@@ -39,6 +39,7 @@
     "bower": "1.7.2",
     "browser-sync": "2.18.8",
     "browser-sync-webpack-plugin": "1.1.4",
+    "case-sensitive-paths-webpack-plugin": "2.1.1",
     "concurrently": "3.1.0",
     "copy-webpack-plugin": "https://registry.npmjs.org/copy-webpack-plugin/-/copy-webpack-plugin-3.0.1.tgz",
     "css-loader": "0.23.1",
