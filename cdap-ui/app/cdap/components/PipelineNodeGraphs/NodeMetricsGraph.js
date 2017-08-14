@@ -36,7 +36,7 @@ function renderAreaChart(data, metricType) {
             color={data[key].color || metricTypeToColorMap[metricType]}
             stroke={data[key].color || metricTypeToColorMap[metricType]}
             data={data[key].data}
-            opacity={0.5}
+            opacity={0.2}
           />
         );
       });

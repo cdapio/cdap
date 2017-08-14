@@ -154,12 +154,14 @@ body.theme-cdap.state-hydrator {
         border: 0;
         >thead tr th {
           padding: 10px;
+          padding-left: 0;
           white-space: normal;
           border: 0;
           vertical-align: top;
         }
         > tbody tr td {
           border: 0;
+          padding-left: 0;
           border-top: 1px solid $table_header_border;
         }
       }

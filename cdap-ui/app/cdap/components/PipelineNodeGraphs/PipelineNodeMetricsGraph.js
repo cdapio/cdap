@@ -26,6 +26,7 @@ import findIndex from 'lodash/findIndex';
 import {getGapFilledAccumulatedData} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableRunID from 'components/PipelineSummary/CopyableRunID';
+import {humanReadableDuration} from 'services/helpers';
 
 const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
 const RECORDS_IN_PATH_COLOR = '#97A0BA';
@@ -343,10 +344,10 @@ export default class PipelineNodeMetricsGraph extends Component {
             <tr>
               <td></td>
               <td></td>
-              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[0].id]}</td>
-              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[1].id]}</td>
-              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[2].id]}</td>
-              <td>{this.state.processTimeMetrics[REGEXTOLABELLIST[3].id]}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000))}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id] / 1000))}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id] / 1000))}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[3].id] / 1000))}</td>
             </tr>
           </tbody>
         </table>
