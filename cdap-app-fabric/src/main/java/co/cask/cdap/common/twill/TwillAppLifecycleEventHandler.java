@@ -155,6 +155,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
   @Override
   public void containerLaunched(String runnableName, int instanceId, String containerId) {
+    super.containerLaunched(runnableName, instanceId, containerId);
+
     if (!launchedContainer.compareAndSet(false, true)) {
       return;
     }
@@ -188,15 +190,17 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       return;
     }
 
+    String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
+                                        containerId, instanceId, exitStatus);
+    LOG.error(errorMessage);
+
     switch(programRunId.getType()) {
       case WORKFLOW:
       case SPARK:
       case MAPREDUCE:
         // For workflow, mapreduce, and spark, if there is an error, record the error state
         if (stoppedContainer.compareAndSet(false, true)) {
-          programStateWriter.error(programRunId,
-                                   new Exception(String.format("Container {}, instance {} stopped with exit status {}",
-                                                               containerId, instanceId, exitStatus)));
+          programStateWriter.error(programRunId, new RuntimeException(errorMessage));
         }
         break;
       default:
