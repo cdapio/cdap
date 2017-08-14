@@ -41,6 +41,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('loadingIndicator', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingIndicator);
+  })
   .directive('pipelineTriggersSidebars', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineTriggersSidebars);
   });
