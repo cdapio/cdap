@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,15 +18,19 @@ package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.workflow.Condition;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowConditionConfigurer;
 
 /**
- * Implementation of {@link WorkflowProgramAdder} which adds node to the Workflow trunk.
+ * Implementation of the {@link WorkflowProgramAdder} which adds nodes to the Condition whose parent is Workflow trunk.
+ * @param <T> type of the current configurer
  */
-public class TrunkProgramAdder implements WorkflowProgramAdder {
-  private final WorkflowConfigurer configurer;
+public class ConditionToTrunkAdder<T extends WorkflowConditionConfigurer> implements WorkflowProgramAdder {
 
-  public TrunkProgramAdder(WorkflowConfigurer configurer) {
+  private final WorkflowProgramAdder parent;
+  private final T configurer;
+
+  public ConditionToTrunkAdder(WorkflowProgramAdder parent, T configurer) {
+    this.parent = parent;
     this.configurer = configurer;
   }
 
@@ -47,31 +51,33 @@ public class TrunkProgramAdder implements WorkflowProgramAdder {
 
   @Override
   public WorkflowProgramAdder condition(Condition condition) {
-    return new ConditionToTrunkAdder<>(this, configurer.condition(condition));
+    return new ConditionToConditionAdder<>(this, configurer.condition(condition));
   }
 
   @Override
   public WorkflowProgramAdder otherwise() {
-    throw new UnsupportedOperationException("Operation not supported.");
-  }
-
-  @Override
-  public WorkflowProgramAdder end() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    configurer.otherwise();
+    return this;
   }
 
   @Override
   public WorkflowProgramAdder fork() {
-    return new ForkToTrunkAdder<>(this, configurer.fork());
+    return new ForkToConditionAdder<>(this, configurer.fork());
   }
 
   @Override
   public WorkflowProgramAdder also() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    throw new UnsupportedOperationException("Operation not supported on the Condition.");
   }
 
   @Override
   public WorkflowProgramAdder join() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    throw new UnsupportedOperationException("Operation not supported on the Condition.");
+  }
+
+  @Override
+  public WorkflowProgramAdder end() {
+    configurer.end();
+    return parent;
   }
 }

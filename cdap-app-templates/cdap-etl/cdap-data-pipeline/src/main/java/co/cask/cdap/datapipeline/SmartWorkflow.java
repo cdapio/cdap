@@ -26,9 +26,7 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
 import co.cask.cdap.api.workflow.WorkflowContext;
-import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.AlertPublisherContext;
@@ -167,25 +165,21 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
     plan = planner.plan(spec);
 
+    WorkflowProgramAdder programAdder = new TrunkProgramAdder(getConfigurer());
     // single phase, just add the program directly
     if (plan.getPhases().size() == 1) {
-      addProgram(plan.getPhases().keySet().iterator().next(), new TrunkProgramAdder(getConfigurer()));
+      addProgram(plan.getPhases().keySet().iterator().next(), programAdder);
       return;
     }
 
     // Dag classes don't allow a 'dag' without connections
     if (plan.getPhaseConnections().isEmpty()) {
 
-      WorkflowProgramAdder programAdder;
-      // multiple phases, do a fork then join
-      WorkflowForkConfigurer forkConfigurer = getConfigurer().fork();
-      programAdder = new BranchProgramAdder(forkConfigurer);
+      WorkflowProgramAdder fork = programAdder.fork();
       for (String phaseName : plan.getPhases().keySet()) {
-        addProgram(phaseName, programAdder);
+        addProgram(phaseName, fork);
       }
-      if (forkConfigurer != null) {
-        forkConfigurer.join();
-      }
+      fork.join();
       return;
     }
 
@@ -246,7 +240,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     String start = dag.getSources().iterator().next();
-    addPrograms(start, getConfigurer());
+    addPrograms(start, programAdder);
   }
 
   @Override
@@ -341,8 +335,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
   }
 
-  private void addPrograms(String node, WorkflowConfigurer configurer) {
-    addProgram(node, new TrunkProgramAdder(configurer));
+  private void addPrograms(String node, WorkflowProgramAdder programAdder) {
+    addProgram(node, programAdder);
 
     Set<String> outputs = dag.getNodeOutputs(node);
     if (outputs.isEmpty()) {
@@ -351,28 +345,28 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     // if this is a fork
     if (outputs.size() > 1) {
-      WorkflowForkConfigurer<? extends WorkflowConfigurer> forkConfigurer = configurer.fork();
+      WorkflowProgramAdder fork = programAdder.fork();
       for (String output : outputs) {
         // need to make sure we don't call also() if this is the final branch
-        if (!addBranchPrograms(output, forkConfigurer)) {
-          forkConfigurer = forkConfigurer.also();
+        if (!addBranchPrograms(output, fork)) {
+          fork = fork.also();
         }
       }
     } else {
-      addPrograms(outputs.iterator().next(), configurer);
+      addPrograms(outputs.iterator().next(), programAdder);
 
     }
   }
 
   // returns whether this is the final branch of the fork
-  private boolean addBranchPrograms(String node, WorkflowForkConfigurer<? extends WorkflowConfigurer> forkConfigurer) {
+  private boolean addBranchPrograms(String node, WorkflowProgramAdder programAdder) {
     // if this is a join node
     Set<String> inputs = dag.getNodeInputs(node);
     if (dag.getNodeInputs(node).size() > 1) {
       // if we've reached the join from the final branch of the fork
       if (dag.visit(node) == inputs.size()) {
         // join the fork and continue on
-        addPrograms(node, forkConfigurer.join());
+        addPrograms(node, programAdder.join());
         return true;
       } else {
         return false;
@@ -380,8 +374,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     // a flattened control dag guarantees that if this is not a join node, there is exactly one output
-    addProgram(node, new BranchProgramAdder(forkConfigurer));
-    return addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), forkConfigurer);
+    addProgram(node, programAdder);
+    return addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), programAdder);
   }
 
   private void addProgram(String phaseName, WorkflowProgramAdder programAdder) {
