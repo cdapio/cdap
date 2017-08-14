@@ -20,14 +20,12 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.common.Constants;
 import com.google.common.base.Stopwatch;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Times how long it takes to call a callable, and emits it as a metric.
+ * An operation timer that emits metrics.
  */
-public class TimingCaller extends Caller {
-  private final Caller delegate;
+public class MetricsOperationTimer implements OperationTimer {
   private final StageMetrics stageMetrics;
   private final Stopwatch stopwatch;
   private long minTime;
@@ -36,30 +34,36 @@ public class TimingCaller extends Caller {
   private double mean;
   private double m2;
 
-  private TimingCaller(Caller delegate, StageMetrics stageMetrics) {
-    this.delegate = delegate;
+  public MetricsOperationTimer(StageMetrics stageMetrics) {
     this.stageMetrics = stageMetrics;
     this.stopwatch = new Stopwatch();
-    this.minTime = Long.MAX_VALUE;
-    this.maxTime = Long.MIN_VALUE;
-    this.numValues = 0;
-    this.mean = 0d;
-    this.m2 = 0d;
   }
 
-  @Override
-  public <T> T call(Callable<T> callable, CallArgs args) throws Exception {
-    if (!args.shouldTrackTime()) {
-      return delegate.call(callable, args);
-    }
-
+  /**
+   * Starts the stopwatch.
+   *
+   * @throws IllegalStateException if the stopwatch is already running.
+   */
+  public void start() {
     stopwatch.start();
-    try {
-      return delegate.call(callable, args);
-    } finally {
-      emitTimeMetrics(stopwatch.elapsedTime(TimeUnit.MICROSECONDS));
-      stopwatch.reset();
-    }
+  }
+
+  /**
+   * Stops the stopwatch. Future reads will return the fixed duration that had
+   * elapsed up to this point.
+   *
+   * @throws IllegalStateException if the stopwatch is already stopped.
+   */
+  public void stop() {
+    stopwatch.stop();
+  }
+
+  /**
+   * Resets the stopwatch and updates the timing metrics.
+   */
+  public void reset() {
+    emitTimeMetrics(stopwatch.elapsedTime(TimeUnit.MICROSECONDS));
+    stopwatch.reset();
   }
 
   private void emitTimeMetrics(long micros) {
@@ -84,9 +88,5 @@ public class TimingCaller extends Caller {
 
     stageMetrics.gauge(Constants.Metrics.AVG_TIME, (long) mean);
     stageMetrics.gauge(Constants.Metrics.STD_DEV_TIME, (long) stddev);
-  }
-
-  public static Caller wrap(Caller delegate, StageMetrics stageMetrics) {
-    return new TimingCaller(delegate, stageMetrics);
   }
 }

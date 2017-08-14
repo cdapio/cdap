@@ -22,6 +22,8 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.ErrorTransform;
+import co.cask.cdap.etl.api.SplitterTransform;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
@@ -74,22 +76,27 @@ public class PipelinePluginContext implements PluginContext {
 
   private Object wrapPlugin(String pluginId, Object plugin) {
     Caller caller = getCaller(pluginId);
+    StageMetrics stageMetrics = new DefaultStageMetrics(metrics, pluginId);
+    OperationTimer operationTimer =
+      processTimingEnabled ? new MetricsOperationTimer(stageMetrics) : NoOpOperationTimer.INSTANCE;
     if (plugin instanceof Action) {
       return new WrappedAction((Action) plugin, caller);
     } else if (plugin instanceof BatchSource) {
-      return new WrappedBatchSource<>((BatchSource) plugin, caller);
+      return new WrappedBatchSource<>((BatchSource) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchSink) {
-      return new WrappedBatchSink<>((BatchSink) plugin, caller);
+      return new WrappedBatchSink<>((BatchSink) plugin, caller, operationTimer);
     } else if (plugin instanceof ErrorTransform) {
-      return new WrappedErrorTransform<>((ErrorTransform) plugin, caller);
+      return new WrappedErrorTransform<>((ErrorTransform) plugin, caller, operationTimer);
     } else if (plugin instanceof Transform) {
-      return new WrappedTransform<>((Transform) plugin, caller);
+      return new WrappedTransform<>((Transform) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchAggregator) {
-      return new WrappedBatchAggregator<>((BatchAggregator) plugin, caller);
+      return new WrappedBatchAggregator<>((BatchAggregator) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchJoiner) {
-      return new WrappedBatchJoiner<>((BatchJoiner) plugin, caller);
+      return new WrappedBatchJoiner<>((BatchJoiner) plugin, caller, operationTimer);
     } else if (plugin instanceof PostAction) {
       return new WrappedPostAction((PostAction) plugin, caller);
+    } else if (plugin instanceof SplitterTransform) {
+      return new WrappedSplitterTransform<>((SplitterTransform) plugin, caller, operationTimer);
     }
 
     return wrapUnknownPlugin(pluginId, plugin, caller);
@@ -97,9 +104,6 @@ public class PipelinePluginContext implements PluginContext {
 
   public Caller getCaller(String pluginId) {
     Caller caller = Caller.DEFAULT;
-    if (processTimingEnabled) {
-      caller = TimingCaller.wrap(caller, new DefaultStageMetrics(metrics, pluginId));
-    }
     if (stageLoggingEnabled) {
       caller = StageLoggingCaller.wrap(caller, pluginId);
     }

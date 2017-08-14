@@ -37,10 +37,13 @@ import java.util.concurrent.Callable;
 public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> {
   private final BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
-  public WrappedBatchJoiner(BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner, Caller caller) {
+  public WrappedBatchJoiner(BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner, Caller caller,
+                            OperationTimer operationTimer) {
     this.joiner = joiner;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -102,12 +105,17 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
 
   @Override
   public JOIN_KEY joinOn(final String stageName, final INPUT_RECORD inputRecord) throws Exception {
-    return caller.call(new Callable<JOIN_KEY>() {
-      @Override
-      public JOIN_KEY call() throws Exception {
-        return joiner.joinOn(stageName, inputRecord);
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      return caller.call(new Callable<JOIN_KEY>() {
+        @Override
+        public JOIN_KEY call() throws Exception {
+          return joiner.joinOn(stageName, inputRecord);
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 
   @Override
@@ -122,11 +130,16 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
 
   @Override
   public OUT merge(final JOIN_KEY joinKey, final Iterable<JoinElement<INPUT_RECORD>> joinResult) throws Exception {
-    return caller.call(new Callable<OUT>() {
-      @Override
-      public OUT call() throws Exception {
-        return joiner.merge(joinKey, joinResult);
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      return caller.call(new Callable<OUT>() {
+        @Override
+        public OUT call() throws Exception {
+          return joiner.merge(joinKey, joinResult);
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 }
