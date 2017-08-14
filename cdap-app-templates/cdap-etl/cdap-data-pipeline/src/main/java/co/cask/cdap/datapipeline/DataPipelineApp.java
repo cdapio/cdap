@@ -60,7 +60,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   @Override
   public void configure() {
     ETLBatchConfig config = getConfig();
-    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION ));
+    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
 
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
       getConfigurer(),
