@@ -40,7 +40,7 @@ public interface SatisfiableTrigger extends Trigger {
    * Get all trigger keys which will be used to index the schedule containing this trigger, so that we can
    * do reverse lookup to get the schedule when events relevant to the trigger are received.
    *
-   * @return a set of trigger keys as {@link String}. The list will be never be null.
+   * @return a set of trigger keys as {@link String}. The set will be never be null.
    */
   Set<String> getTriggerKeys();
 }
