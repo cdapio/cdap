@@ -122,7 +122,6 @@ my-dag-plus {
     .box {
       position: absolute;
       cursor: move;
-      left: 100px;
       top: 150px;
       padding: 0;
       height: @node-box-height;
@@ -133,7 +132,6 @@ my-dag-plus {
       // Setting default node color
       color: @transform-plugins-color;
       left: 30vw;
-      .border-color-hover();
 
       .node {
         position: relative;
@@ -341,13 +339,11 @@ my-dag-plus {
       &.batchsource {
         color: @source-plugins-color;
         left: 10vw;
-        .border-color-hover();
       }
 
       &.errortransform {
         color: @error-transform;
         left: 30vw;
-        .border-color-hover();
       }
 
       &.realtimesink,
