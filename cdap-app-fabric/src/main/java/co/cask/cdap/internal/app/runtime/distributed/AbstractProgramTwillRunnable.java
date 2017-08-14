@@ -406,7 +406,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
     arguments.putAll(configs);
 
-    return new SimpleProgramOptions(original.getProgramId(), new BasicArguments(arguments),
+    // Use the name passed in by the constructor as the program name to construct the ProgramId
+    ProgramId originalProgramId = original.getProgramId();
+    ProgramId runnableProgramId = originalProgramId.getParent().program(originalProgramId.getType(), name);
+    return new SimpleProgramOptions(runnableProgramId, new BasicArguments(arguments),
                                     resolveScope(original.getUserArguments()), original.isDebug());
   }
 
