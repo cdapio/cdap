@@ -27,18 +27,11 @@ import co.cask.cdap.internal.app.runtime.schedule.constraint.DelayConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.LastRunConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.TimeRangeConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTriggerBuilder;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.ProtoConstraint;
-import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.DatasetId;
-import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.ArrayList;

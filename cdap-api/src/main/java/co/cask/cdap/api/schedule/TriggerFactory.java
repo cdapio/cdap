@@ -30,7 +30,7 @@ public interface TriggerFactory {
   Trigger and(Trigger... triggers);
 
   /**
-   * Create a schedule which is triggered based upon the given cron expression.
+   * Creates a schedule which is triggered based upon the given cron expression.
    *
    * @param cronExpression the cron expression to specify the time to trigger the schedule
    * @return a {@link ScheduleCreationSpec}
@@ -38,7 +38,7 @@ public interface TriggerFactory {
   Trigger byTime(String cronExpression);
 
   /**
-   * Create a schedule which is triggered whenever at least a certain number of new partitions
+   * Creates a schedule which is triggered whenever at least a certain number of new partitions
    * are added to a certain dataset in the same namespace as the app.
    *
    * @param datasetName the name of the dataset in the same namespace of the app
@@ -48,7 +48,7 @@ public interface TriggerFactory {
   Trigger onPartitions(String datasetName, int numPartitions);
 
   /**
-   * Create a schedule which is triggered whenever at least a certain number of new partitions
+   * Creates a schedule which is triggered whenever at least a certain number of new partitions
    * are added to a certain dataset in the specified namespace.
    *
    * @param datasetNamespace the namespace where the dataset is defined
@@ -59,7 +59,7 @@ public interface TriggerFactory {
   Trigger onPartitions(String datasetNamespace, String datasetName, int numPartitions);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace, application, and
+   * Creates a schedule which is triggered when the given program in the given namespace, application, and
    * application version transitions to any one of the given program statuses.
    *
    * @param programNamespace the namespace where this program is defined
@@ -76,7 +76,7 @@ public interface TriggerFactory {
                           ProgramStatus... programStatuses);
 
   /**
-   * Create a schedule which is triggered when the given program in the given namespace
+   * Creates a schedule which is triggered when the given program in the given namespace
    * and application with default version transitions to any one of the given program statuses.
    *
    * @see #onProgramStatus(String, String, String, ProgramType, String, ProgramStatus...)

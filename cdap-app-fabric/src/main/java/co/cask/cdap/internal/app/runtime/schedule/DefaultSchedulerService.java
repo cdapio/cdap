@@ -59,7 +59,7 @@ public class DefaultSchedulerService {
       Trigger trigger = context.getTrigger();
       String key = trigger.getKey().getName();
       String[] parts = key.split(":");
-      // Simple time trigger has 6 parts but time trigger in composite trigger has 7 with an extra cron expression part
+      // Time trigger has 6 parts but time trigger in composite trigger has 7 with an extra cron expression part
       Preconditions.checkArgument(parts.length == 6 || parts.length == 7,
                                   String.format("Trigger's key name %s has %d parts instead of 6 or 7",
                                                 key, parts.length));

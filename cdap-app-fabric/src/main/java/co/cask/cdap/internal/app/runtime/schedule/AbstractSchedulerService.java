@@ -32,7 +32,6 @@ import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.StreamId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.slf4j.Logger;
@@ -197,12 +196,6 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   public static String scheduleIdFor(ProgramId program, SchedulableProgramType programType, String scheduleName) {
     return String.format("%s:%s", programIdFor(program, programType), scheduleName);
-  }
-
-  public static String getTaskName(ProgramId program, SchedulableProgramType programType, String scheduleName,
-                                   StreamId streamId, int triggerMB) {
-    return String.format("%s:%s:%s:%d", programIdFor(program, programType), scheduleName,
-                         streamId.toString(), triggerMB);
   }
 
   public static String getTriggerName(ProgramId program, SchedulableProgramType programType, String scheduleName,
