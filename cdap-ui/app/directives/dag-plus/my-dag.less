@@ -19,15 +19,35 @@
 @import "../../styles/themes/cdap/mixins.less";
 @import "./color-constants.less";
 
-.border-color-hover() {
-  border: 1px solid currentColor;
+@node-box-width: 200px;
+@node-box-height: 87px;
+@node-box-height-big: 100px;
+@endpoint-circle-radius: 7px;
+
+.increase-border-height-width(@currentHeight) {
+  @current-border-width: 2px;
+  @new-border-width: 3px;
+  border-width: @new-border-width;
+
+  margin: -(@new-border-width - @current-border-width);
+  width: @node-box-width + (@new-border-width - @current-border-width) * 2;
+  height: @currentHeight + (@new-border-width - @current-border-width) * 2;
+}
+
+.border-color-hover(@currentHeight) {
+  border: 2px solid currentColor;
 
   &:hover {
-    border-width: 2px;
-    margin: -1px;
-    width: 202px;
-    height: 82px;
+    .increase-border-height-width(@currentHeight);
     cursor: pointer;
+  }
+
+  &.drag-hover {
+    .increase-border-height-width(@currentHeight);
+
+    .node {
+      background-color: @configure-btn-bg-hover-color;
+    }
   }
 }
 
@@ -56,7 +76,7 @@ my-dag-plus {
       }
     }
     .box .node {
-      box-shadow: 0 -1px 0 6px @preview-outline-color;
+      box-shadow: 0 0 0 2px @preview-outline-color;
     }
   }
 
@@ -82,7 +102,20 @@ my-dag-plus {
 
       .border-radius(4px);
       .box {
-        cursor: pointer;
+        height: @node-box-height-big;
+        .border-color-hover(@node-box-height-big);
+
+        .node {
+          cursor: initial;
+
+          .endpoint-circle {
+            top: 41px;
+          }
+        }
+      }
+
+      .jsplumb-connector {
+        cursor: initial;
       }
     }
 
@@ -92,8 +125,10 @@ my-dag-plus {
       left: 100px;
       top: 150px;
       padding: 0;
-      height: 80px;
-      width: 200px;
+      height: @node-box-height;
+      width: @node-box-width;
+      z-index: 2;
+      .border-color-hover(@node-box-height);
 
       // Setting default node color
       color: @transform-plugins-color;
@@ -110,14 +145,63 @@ my-dag-plus {
         .transition(background-color 50ms linear);
         .transition(color 50ms linear);
         background-clip: border-box;
+        z-index: 1;
 
-        .fa.fa-close {
-          cursor: pointer;
-          font-size: 13px;
+        .endpoint-circle {
+          width: @endpoint-circle-radius * 2;
+          height: @endpoint-circle-radius * 2;
+          background-color: @endpoint-circle-bg-color;
+          border-radius: 100%;
           position: absolute;
-          right: 28px;
-          .opacity(0);
-          .transition(opacity 0.2s ease);
+          right: -@endpoint-circle-radius;
+          top: 35px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          &:before {
+            content: '';
+            position: absolute;
+            left: 100%;
+            width: 5px;
+            border-bottom: 2px solid @endpoint-connection-hover-stroke-color;
+            display: none;
+          }
+
+          &:after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top: @endpoint-circle-radius solid transparent;
+            border-bottom: @endpoint-circle-radius solid transparent;
+            border-left: @endpoint-circle-radius solid @endpoint-connection-hover-stroke-color;
+            transform: translateX(12px);
+            display: none;
+          }
+
+          .endpoint-caret {
+            width: 0;
+            height: 0;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+            border-left: @endpoint-circle-radius solid @endpoint-caret-bg-color;
+            transform: translateX(1px);
+          }
+
+          &:hover {
+            &:not(.disabled) {
+              background-color: @endpoint-connection-hover-stroke-color;
+
+              &:before,
+              &:after {
+                display: block;
+              }
+
+              .endpoint-caret {
+                visibility: hidden;
+              }
+            }
+          }
         }
 
         .node-info {
@@ -150,57 +234,39 @@ my-dag-plus {
           }
         }
 
-        .menu-icon {
-          font-size: 16px;
-          color: @hamburger-menu-color;
+        .node-metrics {
+          position: absolute;
+          bottom: 26px;
+
+          /* 24px = left & right padding of node content (12px x 2) */
+          width: ~"-moz-calc(100% - 24px)";
+          width: ~"-webkit-calc(100% - 24px)";
+          width: ~"calc(100% - 24px)";
         }
 
-        .menu-icon-node {
+        .node-actions {
+          display: flex;
           position: absolute;
+          width: 100%;
           bottom: 0;
-          right: 0;
-          padding-bottom: inherit;
-          padding-right: inherit;
-          transform: translateY(3px);
+          padding-bottom: 10px;
+          padding-right: 12px;
+          align-items: center;
 
-          &.fa.fa-bars {
-            &.disabled {
-              cursor: not-allowed;
-            }
+          .menu-icon-node {
+            padding-right: 12px;
+            margin-left: auto;
 
-            &:not(.disabled) {
-              &:hover {
-                color: @hamburger-hover-color;
+            &.fa.fa-bars {
+              &.disabled {
+                cursor: not-allowed;
               }
-            }
-          }
-        }
 
-        .node-popover-menu {
-          width: 85px;
-          border: 1px solid black;
-          position: absolute;
-          background-color: white;
-          right: -53px;
-          top: 47px;
-          z-index: 1000;
-
-          .menu-icon {
-            color: @hamburger-hover-color;
-            padding: 5px;
-          }
-
-          .menu-content {
-            padding: 10px;
-
-            .menu-content-action {
-              &:hover {
-                background-color: @node-menu-action-bg-color;
+              &:not(.disabled) {
+                &:hover {
+                  color: @hamburger-hover-color;
+                }
               }
-            }
-
-            .menu-content-delete {
-              color: @node-menu-delete-color;
             }
           }
         }
@@ -219,9 +285,9 @@ my-dag-plus {
         }
 
         .node-configure-btn {
-          font-size: 11px;
+          font-size: 13px;
           border: 1px solid currentColor;
-          padding: 3px;
+          padding: 3px 7px;
           background-color: white;
           border-radius: 5px;
           display: none;
@@ -249,10 +315,6 @@ my-dag-plus {
 
         &:hover,
         &:focus {
-          .fa.fa-close {
-            .opacity(1);
-          }
-
           .node-version {
             display: none;
           }
@@ -268,6 +330,12 @@ my-dag-plus {
           }
         }
       }
+
+      .menu-icon {
+        font-size: 16px;
+        color: @hamburger-menu-color;
+      }
+
       &.realtimesource,
       &.streamingsource,
       &.batchsource {
@@ -288,14 +356,12 @@ my-dag-plus {
       &.sparksink {
         color: @sink-plugins-color;
         left: 50vw;
-        .border-color-hover();
       }
 
       &.action,
       &.sparkprogram {
         left: 10vw;
         top: 30vw;
-        .border-color-hover();
       }
 
       &.action {
@@ -305,6 +371,54 @@ my-dag-plus {
       &.sparkprogram {
         color: @spark-plugins-color;
       }
+    }
+
+    .dag-popover-menu,
+    .node-popover-menu {
+      width: 85px;
+      border: 1px solid black;
+      background-color: white;
+      z-index: 1000;
+
+      .menu-icon {
+        color: @hamburger-hover-color;
+        padding: 5px;
+      }
+
+      .menu-content {
+        padding: 5px 10px;
+        color: @configure-btn-label-color;
+
+        .menu-content-action {
+          &:hover {
+            background-color: @node-menu-action-bg-color;
+          }
+
+          &.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+          }
+
+          &.menu-content-delete {
+            cursor: pointer;
+            color: @node-menu-delete-color;
+          }
+        }
+
+        hr {
+          margin: 5px 0;
+        }
+      }
+    }
+
+    .node-popover-menu {
+      position: absolute;
+      right: -55px;
+      top: 53px;
+    }
+
+    .dag-popover-menu {
+      position: fixed;
     }
 
     .comment-box {
@@ -370,56 +484,36 @@ my-dag-plus {
       position: absolute;
     }
 
-    .jsplumb-endpoint {
-      svg {
-        overflow: visible;
+    svg.jsplumb-dragging {
+      path {
+        stroke: @endpoint-connection-hover-stroke-color;
+        stroke-width: 2;
       }
-      rect {
-        fill: white;
-        stroke-width: 3px;
-      }
-      circle {
-        fill: white;
-        r: 4px;
-        stroke-width: 4px;
-      }
-      &-anchor-sourceAnchor {
-        circle,
-        rect {
-          stroke: @source-plugins-color;
-        }
-      }
-      &-anchor-transformAnchor {
-        circle {
-          stroke: @transform-plugins-color;
-        }
 
-        &.error-anchor {
-          circle {
-            stroke: @error-transform;
-          }
-        }
-
-      }
-      &-anchor-sinkAnchor {
-        circle,
-        rect {
-          stroke: @sink-plugins-color;
-        }
-      }
-      &-anchor-actionAnchor {
-        rect {
-          stroke: @action-plugins-color;
-        }
-
-        &.sparkprogram-anchor {
-          rect { stroke: @spark-plugins-color; }
-        }
+      path:last-child {
+        fill: @endpoint-connection-hover-stroke-color;
       }
     }
 
-    .jsplumb-connector path:last-child {
-      stroke-width: 0;
+    .jsplumb-endpoint {
+      z-index: 1;
+
+      svg * {
+        fill: transparent;
+        stroke: transparent;
+      }
+    }
+
+    .jsplumb-connector {
+      cursor: pointer;
+
+      path:last-child {
+        stroke-width: 0;
+      }
+    }
+
+    .jsplumb-dragging {
+      z-index: 2;
     }
 
     /* metrics overlay */

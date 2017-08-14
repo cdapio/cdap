@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusDetailMetricsStore) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -38,6 +38,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
     this.LogViewerStore = LogViewerStore;
+    this.HydratorPlusPlusDetailMetricsStore = HydratorPlusPlusDetailMetricsStore;
     this.setDefaults(rPlugin);
     this.tabs = [
       {
@@ -76,7 +77,12 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.fetchPreview();
     }
 
-    this.activeTab = this.isPreviewMode && !rPlugin.isAction ? 2 : 1;
+    this.activeTab = 1;
+    if (this.isPreviewMode && !rPlugin.isAction) {
+      this.activeTab = 2;
+    } else if (this.HydratorPlusPlusDetailMetricsStore.state.metricsTabActive) {
+      this.activeTab = 4;
+    }
 
     this.$scope.$on('modal.closing', () => {
       this.updateNodeStateIfDirty();
