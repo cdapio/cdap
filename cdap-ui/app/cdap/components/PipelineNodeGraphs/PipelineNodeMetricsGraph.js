@@ -65,13 +65,17 @@ export default class PipelineNodeMetricsGraph extends Component {
       programType: PropTypes.string,
       programId: PropTypes.string
     }),
-    metrics: PropTypes.arrayOf(PropTypes.string)
+    metrics: PropTypes.arrayOf(PropTypes.string),
+    plugin: PropTypes.object
   };
 
   state = {
     recordsInData: [],
     recordsOutData: [],
     recordsErrorData: [],
+    totalRecordsIn: null,
+    totalRecordsOut: null,
+    totalRecordsError: null,
     processTimeMetrics: {},
     resolution: 'hours',
     aggregate: false,
@@ -312,7 +316,7 @@ export default class PipelineNodeMetricsGraph extends Component {
               return (
                 <span>
                   <small>{data[key].label}</small>
-                  <span>{data[key].data}</span>
+                  <span>{isNil(data[key].data) ? T.translate('commons.notAvailable') : data[key].data}</span>
                 </span>
               );
             })
@@ -338,8 +342,8 @@ export default class PipelineNodeMetricsGraph extends Component {
           recordsOut = this.state.processTimeMetrics[metric];
         }
       });
-    let processRate = parseFloat(recordsOut / totalProcessingTime, 10).toFixed(3);
-    let avgProcessingTIme = parseFloat(1 / processRate, 10).toFixed(2);
+    let processRate = isNil(recordsOut) || isNil(totalProcessingTime) ? '--' : parseFloat(recordsOut / totalProcessingTime, 10).toFixed(3);
+    let avgProcessingTime = isNil(processRate) || processRate === '--' ? '--' : parseFloat(1 / processRate, 10).toFixed(2);
 
     return (
       <div className="process-time-table-container">
@@ -356,10 +360,10 @@ export default class PipelineNodeMetricsGraph extends Component {
           <tbody>
             <tr>
               <td>{processRate}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000))}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id] / 1000))}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id] / 1000))}</td>
-              <td>{avgProcessingTIme}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000)) || '--'}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id] / 1000)) || '--'}</td>
+              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id] / 1000)) || '--'}</td>
+              <td>{avgProcessingTime}</td>
             </tr>
           </tbody>
         </table>
@@ -378,36 +382,55 @@ export default class PipelineNodeMetricsGraph extends Component {
       </div>
     );
   }
+
   renderContent() {
     return (
       <div className="node-metrics-container">
-        <div ref={ref => this.containerRef = ref}>
-          <div className="title-container graph-title">
-            <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`)} </div>
+        {
+          ['batchsource', 'batchsource'].indexOf(this.props.plugin.type) !== -1 ?
+            null
+          :
             <div>
-              <strong>
-                {T.translate(`${PREFIX}.totalRecordsIn`)}: {this.state.totalRecordsIn}
-              </strong>
+              <div className="title-container graph-title">
+                <div className="title"> {T.translate(`${PREFIX}.recordsInTitle`)}</div>
+                <div>
+                  <strong>
+                    {
+                      T.translate(`${PREFIX}.totalRecordsIn`, {
+                        totalRecordsIn: this.state.totalRecordsIn || T.translate('commons.notAvailable')
+                      })
+                    }
+                  </strong>
+                </div>
+              </div>
+              {this.renderMetrics(this.getInputRecordsForCharting(), 'recordsin')}
             </div>
-          </div>
-          {this.renderMetrics(this.getInputRecordsForCharting(), 'recordsin')}
-        </div>
-        <div>
-          <div className="title-container graph-title">
-            <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
-            <div className="total-records">
-              <strong>
-                <span>
-                  {T.translate(`${PREFIX}.totalRecordsOut`)}: {this.state.totalRecordsOut}
-                </span>
-                <span className="error-records-count">
-                  {T.translate(`${PREFIX}.totalRecordsError`)}: {this.state.totalRecordsError || 0}
-                </span>
-              </strong>
+        }
+        {
+          ['batchsink', 'realtimesink'].indexOf(this.props.plugin.type) !== -1 ?
+            null
+          :
+            <div>
+              <div className="title-container graph-title">
+                <div className="title"> {T.translate(`${PREFIX}.recordsOutTitle`)} </div>
+                <div className="total-records">
+                  <strong>
+                    <span>
+                      {
+                        T.translate(`${PREFIX}.totalRecordsOut`, {
+                          totalRecordsOut: this.state.totalRecordsOut || T.translate('commons.notAvailable')
+                        })
+                      }
+                    </span>
+                    <span className="error-records-count">
+                      {T.translate(`${PREFIX}.totalRecordsError`)}: {this.state.totalRecordsError || 0}
+                    </span>
+                  </strong>
+                </div>
+              </div>
+              {this.renderMetrics(this.getOutputRecordsForCharting(), 'recordsout')}
             </div>
-          </div>
-          {this.renderMetrics(this.getOutputRecordsForCharting(), 'recordsout')}
-        </div>
+        }
       </div>
     );
   }

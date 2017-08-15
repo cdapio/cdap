@@ -64,6 +64,10 @@ $error_records_label_color: #A40403;
       padding: 10px;
       border: 1px solid $graph_container_border_color;
 
+      &:only-child {
+        flex: 1;
+      }
+
       .graph-container {
         height: calc(100% - 50px);
         .graph-plot-container {

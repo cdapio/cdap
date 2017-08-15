@@ -82,6 +82,7 @@ commons:
     valuePlaceholder: value
   market: Cask Market
   nameLabel: Name
+  notAvailable: 'N/A'
   please: Please
   resource-center: Add Entity
   schemaLabel: Schema
@@ -1238,8 +1239,8 @@ features:
       recordsErrorTitle: Records Error # Error Records??
       runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
-      totalRecordsIn: Total Records In
-      totalRecordsOut: Total Records Out
+      totalRecordsIn: "Total Records In: {totalRecordsIn}"
+      totalRecordsOut: "Total Records Out: {totalRecordsOut}"
       totalRecordsError: Total Errors
     runsHistoryGraph:
       hint:
