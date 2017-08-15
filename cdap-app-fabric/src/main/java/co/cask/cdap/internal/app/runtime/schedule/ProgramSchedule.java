@@ -131,7 +131,8 @@ public class ProgramSchedule {
   public ScheduleDetail toScheduleDetail() {
     ScheduleProgramInfo programInfo =
       new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
-    return new ScheduleDetail(scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints,
+    return new ScheduleDetail(programId.getNamespace(), programId.getApplication(), programId.getVersion(),
+                              scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints,
                               timeoutMillis);
   }
 }

@@ -20,7 +20,9 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import com.google.common.collect.ImmutableList;
@@ -61,16 +63,19 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testObjectContainingTrigger() {
-    ScheduleDetail sched1 = new ScheduleDetail("sched1", "one partition schedule",
-                                                 new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
-                                                 ImmutableMap.of("prop3", "abc"),
-                                                 new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                                 ImmutableList.<Constraint>of(), null);
-    ScheduleDetail sched2 = new ScheduleDetail("schedone", "one time schedule",
-                                                 new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of(), null);
+    ApplicationId testApp = NamespaceId.DEFAULT.app("testApp");
+    ScheduleDetail sched1 = new ScheduleDetail(testApp.getNamespace(), testApp.getApplication(), testApp.getVersion(),
+                                               "sched1", "one partition schedule",
+                                               new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
+                                               ImmutableMap.of("prop3", "abc"),
+                                               new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
+                                               ImmutableList.<Constraint>of(), null);
+    ScheduleDetail sched2 = new ScheduleDetail(testApp.getNamespace(), testApp.getApplication(), testApp.getVersion(),
+                                               "schedone", "one time schedule",
+                                               new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
+                                               ImmutableMap.of("prop", "all"),
+                                               new ProtoTrigger.TimeTrigger("* * * 1 1"),
+                                               ImmutableList.<Constraint>of(), null);
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(sched1), ScheduleDetail.class));
     Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(sched2), ScheduleDetail.class));
   }

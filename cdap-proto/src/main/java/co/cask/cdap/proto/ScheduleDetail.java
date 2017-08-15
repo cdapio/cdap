@@ -40,6 +40,9 @@ import javax.annotation.Nullable;
  */
 public class ScheduleDetail {
 
+  private final String namespace;
+  private final String application;
+  private final String applicationVersion;
   private final String name;
   private final String description;
   private final ScheduleProgramInfo program;
@@ -48,13 +51,13 @@ public class ScheduleDetail {
   private final List<? extends Constraint> constraints;
   private final Long timeoutMillis;
 
-  public ScheduleDetail(@Nullable String name,
-                        @Nullable String description,
-                        @Nullable ScheduleProgramInfo program,
-                        @Nullable Map<String, String> properties,
-                        @Nullable Trigger trigger,
-                        @Nullable List<? extends Constraint> constraints,
-                        @Nullable Long timeoutMillis) {
+  public ScheduleDetail(@Nullable String namespace, @Nullable String application, @Nullable String applicationVersion,
+                        @Nullable String name, @Nullable String description, @Nullable ScheduleProgramInfo program,
+                        @Nullable Map<String, String> properties, @Nullable Trigger trigger,
+                        @Nullable List<? extends Constraint> constraints, @Nullable Long timeoutMillis) {
+    this.namespace = namespace;
+    this.application = application;
+    this.applicationVersion = applicationVersion;
     this.name = name;
     this.description = description;
     this.program = program;
@@ -62,6 +65,18 @@ public class ScheduleDetail {
     this.trigger = trigger;
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
+  }
+
+  public String getNamespace() {
+    return namespace;
+  }
+
+  public String getApplication() {
+    return application;
+  }
+
+  public String getApplicationVersion() {
+    return applicationVersion;
   }
 
   @Nullable
@@ -109,6 +124,9 @@ public class ScheduleDetail {
     }
     ScheduleDetail that = (ScheduleDetail) o;
     return Objects.equals(name, that.name) &&
+      Objects.equals(namespace, that.namespace) &&
+      Objects.equals(application, that.application) &&
+      Objects.equals(applicationVersion, that.applicationVersion) &&
       Objects.equals(description, that.description) &&
       Objects.equals(program, that.program) &&
       Objects.equals(properties, that.properties) &&
@@ -119,13 +137,17 @@ public class ScheduleDetail {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, program, properties, trigger, constraints, timeoutMillis);
+    return Objects.hash(namespace, application, applicationVersion,
+                        name, description, program, properties, trigger, constraints, timeoutMillis);
   }
 
   @Override
   public String toString() {
     return "ScheduleDetail{" +
-      "name='" + name + '\'' +
+      "namespace='" + namespace + '\'' +
+      ", application='" + application + '\'' +
+      ", applicationVersion='" + applicationVersion + '\'' +
+      ", name='" + name + '\'' +
       ", description='" + description + '\'' +
       ", program=" + program +
       ", properties=" + properties +

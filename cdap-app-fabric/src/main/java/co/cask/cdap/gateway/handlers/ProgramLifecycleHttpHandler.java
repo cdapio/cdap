@@ -898,7 +898,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         @Override
         public ScheduleDetail apply(@Nullable JsonElement input) {
           ScheduleUpdateDetail updateDetail = GSON.fromJson(input, ScheduleUpdateDetail.class);
-          return toScheduleDetail(updateDetail, existingSchedule);
+          return toScheduleDetail(existingSchedule.getProgramId().getParent(), updateDetail, existingSchedule);
         }
       });
     ProgramSchedule updatedSchedule = combineForUpdate(scheduleDetail, existingSchedule);
@@ -964,14 +964,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       trigger = new StreamSizeTrigger(streamId, streamSchedule.getDataTriggerMB());
     }
     List<Constraint> runConstraints = toConstraints(scheduleSpec.getSchedule().getRunConstraints());
-    return new ScheduleDetail(scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
+    return new ScheduleDetail(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
+                              scheduleSpec.getSchedule().getName(), scheduleSpec.getSchedule().getDescription(),
                               scheduleSpec.getProgram(), scheduleSpec.getProperties(), trigger, runConstraints, null);
   }
 
-  private ScheduleDetail toScheduleDetail(ScheduleUpdateDetail updateDetail, ProgramSchedule existing) {
+  private ScheduleDetail toScheduleDetail(ApplicationId appId, ScheduleUpdateDetail updateDetail,
+                                          ProgramSchedule existing) {
     ScheduleUpdateDetail.Schedule scheduleUpdate = updateDetail.getSchedule();
     if (scheduleUpdate == null) {
-      return new ScheduleDetail(null, null, null, updateDetail.getProperties(), null, null, null);
+      return new ScheduleDetail(null, null, null, null, null, null, updateDetail.getProperties(), null, null, null);
     }
     Trigger trigger = null;
     if (scheduleUpdate.getCronExpression() != null
@@ -1003,8 +1005,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                       updateDetail, existing.getTrigger().getClass()));
     }
     List<Constraint> constraints = toConstraints(scheduleUpdate.getRunConstraints());
-    return new ScheduleDetail(null, scheduleUpdate.getDescription(), null,
-                              updateDetail.getProperties(), trigger, constraints, null);
+    return new ScheduleDetail(appId.getNamespace(), appId.getApplication(), appId.getVersion(), null,
+                              scheduleUpdate.getDescription(), null, updateDetail.getProperties(),
+                              trigger, constraints, null);
   }
 
   private List<Constraint> toConstraints(RunConstraints runConstraints) {

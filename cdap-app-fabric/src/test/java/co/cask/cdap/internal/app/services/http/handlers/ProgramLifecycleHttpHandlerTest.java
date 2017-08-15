@@ -1204,7 +1204,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule2.getTrigger());
 
     String newSchedule = "newTimeSchedule";
-    testAddSchedule(newSchedule);
+    testAddSchedule(appV2Id, newSchedule);
     testDeleteSchedule(appV2Id, newSchedule);
     testUpdateSchedule(appV2Id);
   }
@@ -1296,7 +1296,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(2, actualSchedules.size());
   }
 
-  private void testAddSchedule(String scheduleName) throws Exception {
+  private void testAddSchedule(ApplicationId appV2, String scheduleName) throws Exception {
     TimeSchedule timeSchedule = (TimeSchedule) Schedules.builder(scheduleName)
       .setDescription("Something")
       .createTimeSchedule("0 * * * ?");
@@ -1305,7 +1305,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                               AppWithSchedule.WORKFLOW_NAME);
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
-    ScheduleDetail detail = new ScheduleDetail(scheduleName, specification.getSchedule().getDescription(),
+    ScheduleDetail detail = new ScheduleDetail(appV2.getNamespace(), appV2.getApplication(), appV2.getVersion(),
+                                               scheduleName, specification.getSchedule().getDescription(),
                                                specification.getProgram(), specification.getProperties(),
                                                new TimeTrigger(timeSchedule.getCronEntry()),
                                                Collections.<Constraint>emptyList(),
@@ -1321,6 +1322,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // adding a schedule to invalid type of program type should fail
     ScheduleDetail invalidScheduleDetail = new ScheduleDetail(
+      appV2.getNamespace(), appV2.getApplication(), appV2.getVersion(),
       scheduleName, "Something", new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, AppWithSchedule.MAPREDUCE),
       properties, timeTrigger, ImmutableList.<Constraint>of(), TimeUnit.MINUTES.toMillis(1));
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, invalidScheduleDetail);
@@ -1376,7 +1378,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
-    ScheduleDetail detail2 = new ScheduleDetail(null, "Something 2", programInfo, properties,
+    ScheduleDetail detail2 = new ScheduleDetail(appV2.getNamespace(), appV2.getApplication(), appV2.getVersion(),
+                                                null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
                                                 Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6));
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
@@ -1436,6 +1439,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleUpdateDetail invalidUpdateDetail = new ScheduleUpdateDetail("updatedDescription", null, null, "streamName",
                                                                         null, ImmutableMap.<String, String>of());
     ScheduleDetail validScheduleDetail = new ScheduleDetail(
+      appV2Id.getNamespace(), appV2Id.getApplication(), appV2Id.getVersion(),
       AppWithSchedule.SCHEDULE, "updatedDescription", null, ImmutableMap.<String, String>of(),
       new StreamSizeTrigger(new NamespaceId(TEST_NAMESPACE1).stream(AppWithSchedule.STREAM), 10),
       ImmutableList.<Constraint>of(new ConcurrencyConstraint(5)), null);
@@ -1484,7 +1488,9 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals("0/15 * * * * ?", ((TimeTrigger) schedule.getTrigger()).getCronExpression());
 
     // try to update the schedule again but this time with property as null. It should retain the old properties
-    ScheduleDetail scheduleDetail = new ScheduleDetail(AppWithSchedule.SCHEDULE, "updatedDescription", null, null,
+    ScheduleDetail scheduleDetail = new ScheduleDetail(appV2Id.getNamespace(), appV2Id.getApplication(),
+                                                       appV2Id.getVersion(),
+                                                       AppWithSchedule.SCHEDULE, "updatedDescription", null, null,
                                                        new TimeTrigger("0 4 * * *"), null, null);
     response = updateSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, AppWithSchedule.SCHEDULE, scheduleDetail);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
