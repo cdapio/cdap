@@ -185,7 +185,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          basicWorkflowToken, program, programOptions, cConf,
                                                          metricsCollectionService, this.datasetFramework, txClient,
                                                          discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                         secureStore, secureStoreManager, messagingService);
+                                                         secureStore, secureStoreManager, messagingService, null);
 
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(), workflowRunId.getRun());
@@ -490,7 +490,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                   cConf, metricsCollectionService, datasetFramework,
                                                                   txClient, discoveryServiceClient, nodeStates,
                                                                   pluginInstantiator, secureStore, secureStoreManager,
-                                                                  messagingService);
+                                                                  messagingService, node.getConditionSpecification());
     final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(
@@ -667,7 +667,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, token,
                                     program, programOptions, cConf, metricsCollectionService,
                                     datasetFramework, txClient, discoveryServiceClient, nodeStates,
-                                    pluginInstantiator, secureStore, secureStoreManager, messagingService);
+                                    pluginInstantiator, secureStore, secureStoreManager, messagingService, null);
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {

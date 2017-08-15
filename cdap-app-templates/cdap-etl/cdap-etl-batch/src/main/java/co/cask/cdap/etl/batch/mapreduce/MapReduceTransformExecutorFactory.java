@@ -282,7 +282,9 @@ public class MapReduceTransformExecutorFactory<T> {
         // a key, but not 'agg5.connector' so we need to lookup the original stage from the connector's plugin spec
         String originalOutputName = Constants.CONNECTOR_TYPE.equals(outputStageType) ?
           outputStageSpec.getPlugin().getProperties().get(Constants.CONNECTOR_ORIGINAL_NAME) : outputStageName;
-        String port = outputPorts.get(originalOutputName).getPort();
+
+        String port = outputPorts.containsKey(originalOutputName) ? outputPorts.get(originalOutputName).getPort()
+          : null;
         if (port != null) {
           emitterBuilder.addOutputConsumer(outputPipeStage, port);
         } else {
