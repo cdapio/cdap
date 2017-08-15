@@ -68,12 +68,14 @@ export default class AddRulesEngineToPipelineModal extends Component {
           let yareArtifact = artifacts.filter(artifact => artifact.name === 'yare-plugins');
           let batchHighestArtifact, realtimeHighestArtifact;
           if (batchArtifacts.length > 1) {
-            batchHighestArtifact = findHighestVersion(batchArtifacts.map(artifact => artifact.version), true);
+            let highestBatchArtifactVersion = findHighestVersion(batchArtifacts.map(artifact => artifact.version), true);
+            batchHighestArtifact = batchArtifacts.find(bArtifact => bArtifact.version === highestBatchArtifactVersion);
           } else {
             batchHighestArtifact = batchArtifacts[0];
           }
           if (realtimeArtifacts.length > 1) {
-            realtimeHighestArtifact = findHighestVersion(realtimeArtifacts.map(artifact => artifact.version), true);
+            let highestRealtimeArtifactVersion = findHighestVersion(realtimeArtifacts.map(artifact => artifact.version), true);
+            realtimeHighestArtifact = realtimeArtifacts.find(rArtifact => rArtifact.version === highestRealtimeArtifactVersion);
           } else {
             realtimeHighestArtifact = realtimeArtifacts[0];
           }
