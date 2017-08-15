@@ -117,8 +117,8 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter) {
     LOG.info("### start: {}", Bytes.toHexString(start));
     LOG.info("### stop: {}", Bytes.toHexString(stop));
+    Scanner v3Scan = v3HBaseTable.scan(start, stop, filter);
     Scanner v2Scan = v2HBaseTable.scan(start, stop, filter);
-    Scanner v3Scan = v3HBaseTable.scan(start, null, filter);
     return new CombinedMetricsScanner(v2Scan, v3Scan);
   }
 

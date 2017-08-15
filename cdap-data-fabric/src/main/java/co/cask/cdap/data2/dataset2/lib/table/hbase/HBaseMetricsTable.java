@@ -306,7 +306,6 @@ public class HBaseMetricsTable implements MetricsTable {
                       @Nullable FuzzyRowFilter filter) {
     ScanBuilder scanBuilder = tableUtil.buildScan();
     configureRangeScan(scanBuilder, startRow, stopRow, filter);
-    scanBuilder.setSmall(true);
     try {
       ResultScanner resultScanner = getScanner(scanBuilder);
       return new HBaseScanner(resultScanner, columnFamily, rowKeyDistributor);
