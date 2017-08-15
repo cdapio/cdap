@@ -158,15 +158,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     try {
       CommandLine cmdLine = parseArgs(context.getApplicationArguments());
+      ClassLoader classLoader = getClass().getClassLoader();
 
       // Loads configurations
       hConf = new Configuration();
       hConf.clear();
-      hConf.addResource(new File(cmdLine.getOptionValue(RunnableOptions.HADOOP_CONF_FILE)).toURI().toURL());
+      hConf.addResource(classLoader.getResource(cmdLine.getOptionValue(RunnableOptions.HADOOP_CONF_FILE)));
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create(new File(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
+      cConf = CConfiguration.create();
+      cConf.clear();
+      cConf.addResource(classLoader.getResource(cmdLine.getOptionValue(RunnableOptions.CDAP_CONF_FILE)));
 
       programOpts = createProgramOptions(cmdLine, context, context.getSpecification().getConfigs());
 
@@ -403,7 +406,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     arguments.put(ProgramOptionConstants.HOST, context.getHost().getCanonicalHostName());
     arguments.putAll(configs);
 
-    return new SimpleProgramOptions(context.getSpecification().getName(), new BasicArguments(arguments),
+    // Use the name passed in by the constructor as the program name to construct the ProgramId
+    ProgramId originalProgramId = original.getProgramId();
+    ProgramId runnableProgramId = originalProgramId.getParent().program(originalProgramId.getType(), name);
+    return new SimpleProgramOptions(runnableProgramId, new BasicArguments(arguments),
                                     resolveScope(original.getUserArguments()), original.isDebug());
   }
 

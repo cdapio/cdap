@@ -25,7 +25,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
+import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
@@ -89,8 +89,8 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner {
   }
 
   @Override
-  protected EventHandler createEventHandler(CConfiguration cConf) {
-    return new AbortOnTimeoutEventHandler(
-      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true);
+  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
+    return new TwillAppLifecycleEventHandler(
+      cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE), true, options);
   }
 }
