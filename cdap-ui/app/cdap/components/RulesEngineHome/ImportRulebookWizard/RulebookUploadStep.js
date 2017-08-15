@@ -27,23 +27,22 @@ const mapStateToFileDnDProps = (state) => {
 const mapDispatchToDndProps = (dispatch) => {
   return {
     onDropHandler: (e) => {
-      if (e[0]) {
-        var reader = new FileReader();
-        var filename = e[0].name;
-        reader.readAsText(e[0], 'UTF-8');
-        reader.onload = function (evt) {
-          var data = evt.target.result;
-          dispatch({
-            type: IMPORTRULEBOOKACTIONS.UPLOADFILE,
-            payload: {
-              file: {
-                contents: data,
-                name: filename
-              }
+      if (!e[0]) { return; }
+      var reader = new FileReader();
+      var filename = e[0].name;
+      reader.readAsText(e[0], 'UTF-8');
+      reader.onload = function (evt) {
+        var data = evt.target.result;
+        dispatch({
+          type: IMPORTRULEBOOKACTIONS.UPLOADFILE,
+          payload: {
+            file: {
+              contents: data,
+              name: filename
             }
-          });
-        };
-      }
+          }
+        });
+      };
     }
   };
 };
