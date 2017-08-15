@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
 // though not marked nullable, fields can be null since these objects are created through gson deserialization
 @SuppressWarnings("ConstantConditions")
 public class ETLConfig extends Config implements UpgradeableConfig {
+  private final String description;
   private final Set<ETLStage> stages;
   private final Set<Connection> connections;
   private final Resources resources;
@@ -59,6 +60,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
                       Resources resources, Resources driverResources, Resources clientResources,
                       boolean stageLoggingEnabled, boolean processTimingEnabled,
                       int numOfRecordsPreview, Map<String, String> properties) {
+    this.description = null;
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
@@ -72,6 +74,11 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.source = null;
     this.sinks = new ArrayList<>();
     this.transforms = new ArrayList<>();
+  }
+
+  @Nullable
+  public String getDescription() {
+    return description;
   }
 
   public Set<ETLStage> getStages() {
@@ -170,7 +177,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
     ETLConfig that = (ETLConfig) o;
 
-    return Objects.equals(stages, that.stages) &&
+    return Objects.equals(description, that.description) &&
+      Objects.equals(stages, that.stages) &&
       Objects.equals(connections, that.connections) &&
       Objects.equals(getResources(), that.getResources()) &&
       Objects.equals(getDriverResources(), that.getDriverResources()) &&
@@ -183,7 +191,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(stages, connections, getResources(), getDriverResources(), getClientResources(),
+    return Objects.hash(description, stages, connections, getResources(), getDriverResources(), getClientResources(),
                         isStageLoggingEnabled(), isProcessTimingEnabled(), getNumOfRecordsPreview(), getProperties());
   }
 
@@ -200,7 +208,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   @Override
   public String toString() {
     return "ETLConfig{" +
-      "stages=" + stages +
+      "description='" + description + '\'' +
+      ", stages=" + stages +
       ", connections=" + connections +
       ", resources=" + resources +
       ", driverResources=" + driverResources +

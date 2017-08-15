@@ -58,9 +58,7 @@ public class InMemoryServiceProgramRunner extends AbstractInMemoryProgramRunner 
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
     Preconditions.checkNotNull(serviceSpec, "Missing ServiceSpecification for %s", program.getName());
 
-    //RunId for the service
-    RunId runId = RunIds.generate();
-    return startAll(program, options, runId, serviceSpec.getInstances());
+    return startAll(program, options, serviceSpec.getInstances());
   }
 
   @Override

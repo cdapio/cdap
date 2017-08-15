@@ -49,6 +49,11 @@ public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore 
   }
 
   @Override
+  public void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId) {
+    executeRequest("setRunning", id, pid, runTime, twillRunId);
+  }
+
+  @Override
   public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
     // delegates on client side; so corresponding method is not required to be implemented on server side
     setStop(id, pid, endTime, runStatus, null);

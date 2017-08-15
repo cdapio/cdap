@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -151,7 +151,7 @@ angular
           // If we use $resource'y way then we need to make some changes to
           // the data we get for $resource.
           config.$isResource = true;
-          switch(config.options.type) {
+          switch (config.options.type) {
             case 'POLL':
               promise = myDataSrc.poll(config);
               break;
@@ -252,7 +252,7 @@ angular
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
 
     EventPipe.on(MYSOCKET_EVENT.message, function (data) {
-      if(data.statusCode > 399 && !data.resource.suppressErrors) {
+      if (data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
           content: data.response || 'Server had an issue, please try refreshing the page',
@@ -265,7 +265,7 @@ angular
       // more value than the pop showing that the FE is waiting
       // for system to come back up. Most of the issues are with
       // connect, other than that pass everything else to user.
-      if(data.warning && data.error.syscall !== 'connect') {
+      if (data.warning && data.error.syscall !== 'connect') {
         myAlert({
           content: data.warning,
           type: 'warning'
@@ -304,14 +304,14 @@ angular
     }
 
     $scope.$on(CASK_THEME_EVENT.changed, function (event, newClassName) {
-      if(!event.defaultPrevented) {
+      if (!event.defaultPrevented) {
         $scope.bodyClass = $scope.bodyClass.replace(activeThemeClass, newClassName);
         activeThemeClass = newClassName;
       }
     });
     $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
       var classes = [];
-      if(toState.data && toState.data.bodyClass) {
+      if (toState.data && toState.data.bodyClass) {
         classes = [toState.data.bodyClass];
       }
       else {
@@ -321,7 +321,7 @@ angular
           classes.push('state-' + parts.slice(0,count).join('-'));
         }
       }
-      if(toState.name !== fromState.name && myAlertOnValium.isAnAlertOpened()) {
+      if (toState.name !== fromState.name && myAlertOnValium.isAnAlertOpened()) {
         myAlertOnValium.destroy();
       }
       classes.push(activeThemeClass);

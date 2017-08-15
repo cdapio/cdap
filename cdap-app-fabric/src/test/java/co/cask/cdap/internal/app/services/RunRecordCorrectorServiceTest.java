@@ -108,7 +108,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     // Use the store manipulate state to be RUNNING
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs);
+    store.setStartAndRun(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs, nowSecs + 1);
 
     // Now check again via Store to assume data store is wrong.
     RunRecord runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());

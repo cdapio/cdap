@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,11 +19,15 @@ import {apiCreator} from '../../services/resource-helper';
 
 let dataSrc = DataSourceConfigurer.getInstance();
 let basepath = '/system/serviceproviders';
+let servicesbasepath = '/system/services';
+let serviceidpath = `${servicesbasepath}/:serviceid`;
 
 export const MyServiceProviderApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   pollList: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:serviceprovider/stats`),
-  getServicesList: apiCreator(dataSrc, 'GET', 'REQUEST', '/system/services'),
-  setProvisions: apiCreator(dataSrc, 'PUT', 'REQUEST', '/system/services/:serviceid/instances')
+  pollServicesList: apiCreator(dataSrc, 'GET', 'POLL', servicesbasepath),
+  pollServiceStatus: apiCreator(dataSrc, 'GET', 'POLL', `${serviceidpath}/status`),
+  setProvisions: apiCreator(dataSrc, 'PUT', 'REQUEST', `${serviceidpath}/instances`),
+  getInstances: apiCreator(dataSrc, 'GET', 'REQUEST', `${serviceidpath}/instances`)
 };

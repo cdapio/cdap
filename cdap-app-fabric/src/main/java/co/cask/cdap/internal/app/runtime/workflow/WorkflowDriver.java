@@ -47,6 +47,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -156,7 +157,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                  DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                  TransactionSystemClient txClient, RuntimeStore runtimeStore, CConfiguration cConf,
                  @Nullable PluginInstantiator pluginInstantiator, SecureStore secureStore,
-                 SecureStoreManager secureStoreManager, MessagingService messagingService) {
+                 SecureStoreManager secureStoreManager, MessagingService messagingService,
+                 ProgramStateWriter programStateWriter) {
     this.program = program;
     this.programOptions = options;
     this.hostname = hostname;
@@ -169,7 +171,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.txClient = txClient;
     this.runtimeStore = runtimeStore;
     this.workflowProgramRunnerFactory = new ProgramWorkflowRunnerFactory(cConf, workflowSpec, programRunnerFactory,
-                                                                         program, options);
+                                                                         program, options, programStateWriter);
 
     this.workflowRunId = program.getId().run(ProgramRunners.getRunId(options));
     this.datasetFramework = new NameMappedDatasetFramework(datasetFramework,
@@ -419,7 +421,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                          workflowRunId.getRun(), node.getNodeId(),
                                                          (BasicWorkflowToken) token);
       ProgramOptions actionOptions =
-         new SimpleProgramOptions(programOptions.getName(),
+         new SimpleProgramOptions(programOptions.getProgramId(),
                                   programOptions.getArguments(),
                                   new BasicArguments(RuntimeArguments.extractScope(
                                     ACTION_SCOPE, node.getNodeId(), programOptions.getUserArguments().asMap())));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,7 @@ public class ProgramControllerTest {
       // Creates a controller for a guava service do nothing in start/stop.
       // The short time in start creates a chance to have out-of-order init() and alive() call if there is a race.
       Service service = new TestService(0, 0);
-      ProgramController controller = new ProgramControllerServiceAdapter(service, programId, RunIds.generate());
+      ProgramController controller = new ProgramControllerServiceAdapter(service, programId.run(RunIds.generate()));
       ListenableFuture<Service.State> startCompletion = service.start();
 
       controller.addListener(new AbstractListener() {

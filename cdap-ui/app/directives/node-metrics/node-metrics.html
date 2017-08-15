@@ -1,0 +1,39 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="metrics-content">
+  <a class="node-metrics-labels"
+    ng-click="onClick($event, node)">
+    <span class="metric-records-out">
+      <span ng-if="node.type.indexOf('sink') === -1">
+        <span class="metric-records-out-label">Out</span>
+        <span ng-bind="metricsData[node.name].recordsOut || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
+        </span>
+      </span>
+      <span ng-if="node.type.indexOf('sink') !== -1">
+        <span class="metric-records-out-label">In</span>
+        <span ng-bind="metricsData[node.name].recordsIn || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
+        </span>
+      </span>
+    </span>
+    <span>/</span>
+    <span class="metric-errors">
+      <span class="metric-errors-label">Error</span>
+      <span ng-bind="metricsData[node.name].recordsError || '0' | myLeadingEllipsis: 13:8 | myNumberWithEllipsis">
+      </span>
+    </span>
+  </a>
+</div>

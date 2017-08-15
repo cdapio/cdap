@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2017 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -16,19 +16,21 @@
 
 <!DOCTYPE html>
 <html lang="en" ng-app="cdap-ui">
+
 <head>
-    <!-- FIXME: Need to have a better way to show title for each page -->
-    <title></title>
+  <!-- FIXME: Need to have a better way to show title for each page -->
+  <title></title>
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="Cask Data Application Platform">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <base href="/pipelines/" ></base>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Cask Data Application Platform">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <base href="/pipelines/"></base>
 
-    <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
-    <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
+  <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
+  <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
+
 <body ng-class="bodyClass" ng-controller="BodyCtrl" ng-keyup="onSearch($event)">
   <my-global-navbar></my-global-navbar>
   <main class="container" id="app-container">
@@ -37,6 +39,9 @@
 
   <div class="alerts" id="alerts"></div>
   <loading-icon></loading-icon>
+  <loading-indicator></loading-indicator>
+  <status-alert-message></status-alert-message>
+
   <footer>
     <div class="container">
       <div class="row text-muted" ng-cloak>
@@ -58,4 +63,5 @@
   <script type="text/javascript" src="/assets/bundle/common.es6.js"></script>
   <script type="text/javascript" src="/assets/bundle/tpl.js"></script>
 </body>
+
 </html>

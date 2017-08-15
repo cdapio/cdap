@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,12 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
@@ -47,13 +47,12 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   private final Service service;
   private final CountDownLatch serviceStoppedLatch;
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId) {
-    this(service, programId, runId, null);
+  public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId) {
+    this(service, programRunId, null);
   }
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId,
-                                         RunId runId, @Nullable String componentName) {
-    super(programId, runId, componentName);
+  public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId, @Nullable String componentName) {
+    super(programRunId, componentName);
     this.service = service;
     this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);

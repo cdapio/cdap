@@ -33,10 +33,9 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggerLogHandler;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
-import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
+import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.common.utils.DirUtils;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
@@ -138,8 +137,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     this.impersonator = impersonator;
   }
 
-  protected EventHandler createEventHandler(CConfiguration cConf) {
-    return new AbortOnTimeoutEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE));
+  protected EventHandler createEventHandler(CConfiguration cConf, ProgramOptions options) {
+    return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
+                                             options);
   }
 
   /**
@@ -212,13 +212,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
-      // Copy config files to local temp, and ask Twill to localize it to container.
-      // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
-      // Twill will manage the cleanup of those files in HDFS.
-      localizeResources.put(HADOOP_CONF_FILE_NAME,
-                            new LocalizeResource(saveHConf(hConf, File.createTempFile("hConf", ".xml", tempDir))));
-      localizeResources.put(CDAP_CONF_FILE_NAME,
-                            new LocalizeResource(saveCConf(cConf, File.createTempFile("cConf", ".xml", tempDir))));
+      // Save the configuration to files
+      final File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
+      final File cConfFile = saveCConf(cConf, new File(tempDir, CDAP_CONF_FILE_NAME));
 
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
@@ -247,9 +243,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  launchConfig.getRunnables(),
                                                                                  launchConfig.getLaunchOrder(),
                                                                                  localizeResources,
-                                                                                 createEventHandler(cConf));
+                                                                                 createEventHandler(cConf, options));
 
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+
+          // Add the configuration to container classpath
+          twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
 
           for (Map.Entry<String, RunnableResource> entry : launchConfig.getRunnables().entrySet()) {
             String runnable = entry.getKey();
@@ -470,7 +469,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
     newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
     newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
-    return new SimpleProgramOptions(options.getName(), new BasicArguments(newSystemArgs),
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
 

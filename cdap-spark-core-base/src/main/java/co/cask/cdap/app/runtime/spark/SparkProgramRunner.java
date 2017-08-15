@@ -31,14 +31,10 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.spark.submit.DistributedSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.LocalSparkSubmitter;
 import co.cask.cdap.app.runtime.spark.submit.SparkSubmitter;
-import co.cask.cdap.app.store.RuntimeStore;
-import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data.ProgramContextAware;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -50,14 +46,11 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
@@ -71,7 +64,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,7 +91,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final StreamAdmin streamAdmin;
-  private final RuntimeStore runtimeStore;
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -111,7 +102,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                      TransactionSystemClient txClient, DatasetFramework datasetFramework,
                      MetricsCollectionService metricsCollectionService,
                      DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin,
-                     RuntimeStore runtimeStore, SecureStore secureStore, SecureStoreManager secureStoreManager,
+                     SecureStore secureStore, SecureStoreManager secureStoreManager,
                      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                      MessagingService messagingService) {
     super(cConf);
@@ -123,7 +114,6 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
     this.streamAdmin = streamAdmin;
-    this.runtimeStore = runtimeStore;
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -196,10 +186,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       Service sparkRuntimeService = new SparkRuntimeService(cConf, spark, getPluginArchive(options),
                                                             runtimeContext, submitter);
 
-      sparkRuntimeService.addListener(
-        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(),
-                                     closeables, runtimeStore),
-        Threads.SAME_THREAD_EXECUTOR);
+      sparkRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
       ProgramController controller = new SparkProgramController(sparkRuntimeService, runtimeContext);
 
       LOG.debug("Starting Spark Job. Context: {}", runtimeContext);
@@ -210,7 +197,7 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
       }
       return controller;
     } catch (Throwable t) {
-      closeAll(closeables);
+      closeAllQuietly(closeables);
       throw Throwables.propagate(t);
     }
   }
@@ -244,85 +231,11 @@ final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
     t.start();
   }
 
-  private void closeAll(Iterable<Closeable> closeables) {
-    for (Closeable closeable : closeables) {
-      Closeables.closeQuietly(closeable);
-    }
-  }
-
   @Nullable
   private File getPluginArchive(ProgramOptions options) {
     if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
       return null;
     }
     return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
-  }
-
-  /**
-   * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
-   */
-  private Service.Listener createRuntimeServiceListener(final ProgramId programId, final RunId runId,
-                                                        final Arguments arguments, final Arguments userArgs,
-                                                        final Iterable<Closeable> closeables,
-                                                        final RuntimeStore runtimeStore) {
-
-    final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
-
-    return new ServiceListenerAdapter() {
-      @Override
-      public void starting() {
-        //Get start time from RunId
-        long startTimeInSeconds = RunIds.getTime(runId, TimeUnit.SECONDS);
-        if (startTimeInSeconds == -1) {
-          // If RunId is not time-based, use current time as start time
-          startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        }
-
-        final long finalStartTimeInSeconds = startTimeInSeconds;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStart(programId, runId.getId(), finalStartTimeInSeconds, twillRunId,
-                                  userArgs.asMap(), arguments.asMap());
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-
-      @Override
-      public void terminated(Service.State from) {
-        closeAll(closeables);
-        ProgramRunStatus runStatus = ProgramController.State.COMPLETED.getRunStatus();
-        if (from == Service.State.STOPPING) {
-          // Service was killed
-          runStatus = ProgramController.State.KILLED.getRunStatus();
-        }
-
-        final ProgramRunStatus finalRunStatus = runStatus;
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), finalRunStatus);
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-
-      @Override
-      public void failed(Service.State from, @Nullable final Throwable failure) {
-        closeAll(closeables);
-
-        Retries.supplyWithRetries(new Supplier<Void>() {
-          @Override
-          public Void get() {
-            runtimeStore.setStop(programId, runId.getId(),
-                                 TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                                 ProgramController.State.ERROR.getRunStatus(), new BasicThrowable(failure));
-            return null;
-          }
-        }, RetryStrategies.fixDelay(Constants.Retry.RUN_RECORD_UPDATE_RETRY_DELAY_SECS, TimeUnit.SECONDS));
-      }
-    };
   }
 }

@@ -50,12 +50,12 @@ export default class SortableTable extends Component {
   getDefaultSortedHeader() {
     let defaultHeader = '';
     for (let i = 0; i < this.props.tableHeaders.length; i++) {
-      if (this.props.tableHeaders[i].property) {
+      if (this.props.tableHeaders[i].defaultSortby) {
         defaultHeader = this.props.tableHeaders[i].property;
         break;
       }
     }
-    return defaultHeader;
+    return defaultHeader || this.props.tableHeaders[0].property;
   }
 
   sortBy(header) {
@@ -137,7 +137,8 @@ SortableTable.propTypes = {
   tableHeaders: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string,
-      property: PropTypes.string
+      property: PropTypes.string,
+      defaultSortby: PropTypes.bool
     })
   ),
   renderTableBody: PropTypes.func,

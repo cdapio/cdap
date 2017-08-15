@@ -39,16 +39,18 @@ import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+
+import java.io.Closeable;
+import java.util.Collections;
 
 /**
  * A {@link ProgramRunner} that runs an HTTP Server inside a Service.
@@ -122,20 +124,10 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           messagingService, defaultArtifactManager);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
-      component.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void terminated(Service.State from) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+      component.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),
+                                                         Threads.SAME_THREAD_EXECUTOR);
 
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId),
                                                                          spec.getName() + "-" + instanceId);
       component.start();
       return controller;
@@ -148,9 +140,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramId programId,
-                                    RunId runId, String componentName) {
-      super(service, programId, runId, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId, String componentName) {
+      super(service, programRunId, componentName);
       this.service = service;
     }
 

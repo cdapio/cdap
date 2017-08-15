@@ -39,15 +39,17 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.internal.ServiceListenerAdapter;
+
+import java.io.Closeable;
+import java.util.Collections;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
@@ -127,19 +129,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
       // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
-      worker.addListener(new ServiceListenerAdapter() {
-        @Override
-        public void terminated(Service.State from) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
+      worker.addListener(createRuntimeServiceListener(Collections.singleton((Closeable) pluginInstantiator)),
+                         Threads.SAME_THREAD_EXECUTOR);
 
-        @Override
-        public void failed(Service.State from, Throwable failure) {
-          Closeables.closeQuietly(pluginInstantiator);
-        }
-      }, Threads.SAME_THREAD_EXECUTOR);
-
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId),
                                                                         workerSpec.getName() + "-" + instanceId);
       worker.start();
       return controller;
@@ -152,8 +145,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String componentName) {
-      super(workerDriver, programId, runId, componentName);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramRunId programRunId, String componentName) {
+      super(workerDriver, programRunId, componentName);
       this.workerDriver = workerDriver;
     }
 

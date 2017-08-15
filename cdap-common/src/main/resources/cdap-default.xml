@@ -2087,6 +2087,14 @@
     </description>
   </property>
 
+  <property>
+    <name>metrics.v2.table.scan.enabled</name>
+    <value>false</value>
+    <description>
+      Enable or disable scanning v2 metrics tables. By default set to false.
+    </description>
+  </property>
+
   <!-- Monitor Handler Configuration -->
 
   <property>

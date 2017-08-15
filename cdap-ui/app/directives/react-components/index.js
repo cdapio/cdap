@@ -32,4 +32,10 @@ angular.module(PKG.name + '.commons')
   })
   .directive('pipelineNodeMetricsGraph', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineNodeMetricsGraph);
+  })
+  .directive('statusAlertMessage', function(reactDirective) {
+    return reactDirective(window.CaskCommon.StatusAlertMessage);
+  })
+  .directive('loadingIndicator', function(reactDirective) {
+    return reactDirective(window.CaskCommon.LoadingIndicator);
   });

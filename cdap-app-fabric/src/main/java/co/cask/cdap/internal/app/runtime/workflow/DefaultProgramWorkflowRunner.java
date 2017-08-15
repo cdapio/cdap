@@ -27,6 +27,7 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.runtime.WorkflowTokenProvider;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -42,6 +43,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
+import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 
 import java.io.Closeable;
@@ -69,11 +71,12 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
   private final ProgramRunnerFactory programRunnerFactory;
   private final WorkflowToken token;
   private final ProgramType programType;
+  private final ProgramStateWriter programStateWriter;
 
   DefaultProgramWorkflowRunner(CConfiguration cConf, Program workflowProgram, ProgramOptions workflowProgramOptions,
                                ProgramRunnerFactory programRunnerFactory, WorkflowSpecification workflowSpec,
                                WorkflowToken token, String nodeId, Map<String, WorkflowNodeState> nodeStates,
-                               ProgramType programType) {
+                               ProgramType programType, ProgramStateWriter programStateWriter) {
     this.cConf = cConf;
     this.workflowProgram = workflowProgram;
     this.workflowProgramOptions = workflowProgramOptions;
@@ -83,6 +86,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     this.nodeId = nodeId;
     this.nodeStates = nodeStates;
     this.programType = programType;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -120,7 +124,7 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
     systemArgumentsMap.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(token));
 
     final ProgramOptions options = new SimpleProgramOptions(
-      program.getName(),
+      program.getId(),
       new BasicArguments(Collections.unmodifiableMap(systemArgumentsMap)),
       new BasicArguments(RuntimeArguments.extractScope(program.getType().getScope(), name,
                                                        workflowProgramOptions.getUserArguments().asMap()))
@@ -140,12 +144,19 @@ final class DefaultProgramWorkflowRunner implements ProgramWorkflowRunner {
 
   private void runAndWait(ProgramRunner programRunner, Program program, ProgramOptions options) throws Exception {
     Closeable closeable = createCloseable(programRunner, program);
+
+    // Publish the program's starting state
+    RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
+    programStateWriter.start(program.getId().run(runId), options, twillRunId);
+
     ProgramController controller;
     try {
       controller = programRunner.run(program, options);
     } catch (Throwable t) {
       // If there is any exception when running the program, close the program to release resources.
       // Otherwise it will be released when the execution completed.
+      programStateWriter.error(program.getId().run(runId), t);
       Closeables.closeQuietly(closeable);
       throw t;
     }

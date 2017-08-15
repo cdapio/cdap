@@ -15,8 +15,9 @@
  */
 package co.cask.cdap.internal.app.runtime.workflow;
 
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
@@ -40,10 +41,10 @@ final class WorkflowProgramController extends AbstractProgramController {
   private final ServiceAnnouncer serviceAnnouncer;
   private Cancellable cancelAnnounce;
 
-  WorkflowProgramController(Program program, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer, RunId runId) {
-    super(program.getId(), runId);
+  WorkflowProgramController(ProgramRunId programRunId, WorkflowDriver driver, ServiceAnnouncer serviceAnnouncer) {
+    super(programRunId);
     this.driver = driver;
-    this.serviceName = getServiceName(program, runId);
+    this.serviceName = getServiceName();
     this.serviceAnnouncer = serviceAnnouncer;
     startListen(driver);
   }
@@ -82,7 +83,11 @@ final class WorkflowProgramController extends AbstractProgramController {
       @Override
       public void terminated(Service.State from) {
         LOG.debug("Workflow service terminated from {}. Un-registering service {}.", from, serviceName);
-        cancelAnnounce.cancel();
+        if (cancelAnnounce != null) {
+          // If the workflow is stopped before entering the STARTING state, cancelAnnounce will be null
+          // since it is initialized in the running method
+          cancelAnnounce.cancel();
+        }
         LOG.debug("Service {} unregistered.", serviceName);
         if (getState() != State.STOPPING) {
           // service completed itself.
@@ -107,8 +112,11 @@ final class WorkflowProgramController extends AbstractProgramController {
     }, Threads.SAME_THREAD_EXECUTOR);
   }
 
-  private String getServiceName(Program program, RunId runId) {
+  private String getServiceName() {
+    ProgramId programId = getProgramRunId().getParent();
+    RunId runId = getRunId();
     return String.format("workflow.%s.%s.%s.%s",
-                         program.getNamespaceId(), program.getApplicationId(), program.getName(), runId.getId());
+                         programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+                         runId.getId());
   }
 }

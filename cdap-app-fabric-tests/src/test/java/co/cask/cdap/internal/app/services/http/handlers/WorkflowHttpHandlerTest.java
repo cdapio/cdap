@@ -22,6 +22,7 @@ import co.cask.cdap.AppWithWorkflow;
 import co.cask.cdap.ConcurrentWorkflowApp;
 import co.cask.cdap.ConditionalWorkflowApp;
 import co.cask.cdap.PauseResumeWorklowApp;
+import co.cask.cdap.SleepingWorkflowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithLocalDatasets;
@@ -56,6 +57,7 @@ import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -431,7 +433,29 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 404);
 
     resumeWorkflow(programId, runId, 404);
+  }
 
+  @Category(XSlowTests.class)
+  @Test
+  public void testKillSuspendedWorkflow() throws Exception {
+    HttpResponse response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    WorkflowId workflow = new WorkflowId(TEST_NAMESPACE2, "SleepWorkflowApp", "SleepWorkflow");
+
+    // Start the workflow
+    startProgram(workflow, 200);
+    waitState(workflow, ProgramStatus.RUNNING.name());
+
+    String runId = getRunIdOfRunningProgram(workflow.toId());
+    suspendWorkflow(workflow.toId(), runId, 200);
+
+    // Workflow status should be SUSPENDED
+    waitState(workflow, ProgramStatus.STOPPED.name());
+
+    stopProgram(workflow.toId(), runId, 200);
+    waitState(workflow, ProgramStatus.STOPPED.name());
+    verifyProgramRuns(workflow.toId(), ProgramRunStatus.KILLED.name(), 0);
   }
 
   @Category(XSlowTests.class)
@@ -473,7 +497,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(run1DoneFile.createNewFile());
     Assert.assertTrue(run2DoneFile.createNewFile());
 
-    waitState(programId, ProgramStatus.STOPPED.name());
+    verifyProgramRuns(programId, "completed", 1);
     // delete the application
     deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
   }

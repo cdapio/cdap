@@ -185,7 +185,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     BasicFlowletContext flowletContext = null;
     try {
       // Extract and verify parameters
-      String flowletName = options.getName();
+      String flowletName = options.getProgramId().getProgram();
 
       int instanceId = Integer.parseInt(options.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID, "-1"));
       Preconditions.checkArgument(instanceId >= 0, "Missing instance Id");
@@ -277,7 +277,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                              createCallback(flowlet, flowletDef.getFlowletSpec()),
                                                              dataFabricFacade, serviceHook);
 
-      FlowletProgramController controller = new FlowletProgramController(program.getId(), flowletName,
+      FlowletProgramController controller = new FlowletProgramController(flowletName,
                                                                          flowletContext, driver,
                                                                          queueProducerSupplierBuilder.build(),
                                                                          consumerSuppliers);

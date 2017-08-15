@@ -53,10 +53,12 @@ public final class Programs {
   public static Program create(CConfiguration cConf, @Nullable ProgramRunner programRunner,
                                ProgramDescriptor programDescriptor,
                                Location programJarLocation, File unpackedDir) throws IOException {
-    ClassLoader parentClassLoader;
+    ClassLoader parentClassLoader = null;
     if (programRunner instanceof ProgramClassLoaderProvider) {
       parentClassLoader = ((ProgramClassLoaderProvider) programRunner).createProgramClassLoaderParent();
-    } else {
+    }
+
+    if (parentClassLoader == null) {
       parentClassLoader = FilterClassLoader.create(Programs.class.getClassLoader());
     }
 

@@ -120,7 +120,7 @@ public class WebappProgramRunner implements ProgramRunner {
         cancellables.add(discoveryService.register(ResolvingDiscoverable.of(new Discoverable(sname, address))));
       }
 
-      return new WebappProgramController(program.getId(), runId, httpService, new Cancellable() {
+      return new WebappProgramController(program.getId().run(runId), httpService, new Cancellable() {
         @Override
         public void cancel() {
           for (Cancellable cancellable : cancellables) {

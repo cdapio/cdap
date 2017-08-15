@@ -27,7 +27,9 @@ public abstract class AbstractListener implements ProgramController.Listener {
 
   @Override
   public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-    if (currentState == ProgramController.State.COMPLETED) {
+    if (currentState == ProgramController.State.ALIVE) {
+      alive();
+    } else if (currentState == ProgramController.State.COMPLETED) {
       completed();
     } else if (currentState == ProgramController.State.ERROR) {
       error(cause);

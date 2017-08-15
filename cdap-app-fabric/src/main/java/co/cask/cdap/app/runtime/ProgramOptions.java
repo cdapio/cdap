@@ -16,15 +16,17 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.proto.id.ProgramId;
+
 /**
  * Represents options for a program execution.
  */
 public interface ProgramOptions {
 
   /**
-   * Returns the name of the program.
+   * Returns the unique identifier for a program.
    */
-  String getName();
+  ProgramId getProgramId();
 
   /**
    * Returns the system arguments. It is for storing arguments used by the runtime system.

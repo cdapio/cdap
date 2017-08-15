@@ -35,7 +35,6 @@ import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
 import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
@@ -78,8 +77,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   public FactTable getOrCreateFactTable(int resolution) {
     String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                        Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
-    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                         Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
+
     int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
     TableProperties.Builder props = TableProperties.builder();
@@ -93,7 +91,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
 
-    MetricsTable table = getOrCreateResolutionMetricsTable(v2TableName, v3TableName, props);
+    MetricsTable table = getOrCreateResolutionMetricsTable(v3TableName, props, resolution);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));
   }
 
@@ -104,7 +102,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return new MetricsConsumerMetaTable(table);
   }
 
-  private MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
+  protected MetricsTable getOrCreateMetricsTable(String tableName, DatasetProperties props) {
     // metrics tables are in the system namespace
     DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(tableName);
     MetricsTable table = null;
@@ -117,13 +115,19 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return table;
   }
 
-  @VisibleForTesting
-  public MetricsTable getOrCreateResolutionMetricsTable(String v2TableName, String v3TableName,
-                                                         TableProperties.Builder props) {
+  protected MetricsTable getOrCreateResolutionMetricsTable(String v3TableName, TableProperties.Builder props,
+                                                           int resolution) {
     try {
-      // metrics tables are in the system namespace
-      DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-      MetricsTable v2Table = dsFramework.getDataset(v2TableId, null, null);
+      MetricsTable v2Table = null;
+
+      // TODO: By default do not allow reading from v2 tables. Remove this check once CDAP-12306 is fixed
+      if (cConf.getBoolean(Constants.Metrics.METRICS_V2_TABLE_SCAN_ENABLED)) {
+        String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                       Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
+        // metrics tables are in the system namespace
+        DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
+        v2Table = dsFramework.getDataset(v2TableId, null, null);
+      }
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
                 GSON.toJson(getV3MetricsTableSplits(Constants.Metrics.METRICS_HBASE_SPLITS)));

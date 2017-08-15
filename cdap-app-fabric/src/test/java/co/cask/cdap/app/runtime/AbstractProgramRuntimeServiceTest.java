@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,10 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -35,12 +37,16 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactMeta;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramLiveInfo;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
@@ -80,9 +86,8 @@ public class AbstractProgramRuntimeServiceTest {
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     final Program program = createDummyProgram();
-
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, new NoOpProgramStateWriter()) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -134,7 +139,7 @@ public class AbstractProgramRuntimeServiceTest {
     Service service = new TestService();
     ProgramId programId = NamespaceId.DEFAULT.app("dummyApp").program(ProgramType.WORKER, "dummy");
     RunId runId = RunIds.generate();
-    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId, runId);
+    ProgramRuntimeService.RuntimeInfo extraInfo = createRuntimeInfo(service, programId.run(runId));
     service.startAndWait();
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
@@ -156,7 +161,7 @@ public class AbstractProgramRuntimeServiceTest {
 
     final Program program = createDummyProgram();
     final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null) {
+      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, new NoOpProgramStateWriter()) {
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
         return new ProgramLiveInfo(programId, "runtime") { };
@@ -201,7 +206,7 @@ public class AbstractProgramRuntimeServiceTest {
 
         for (String scope : scopes) {
           ProgramOptions programOptions = new SimpleProgramOptions(
-            program.getName(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
+            program.getId(), new BasicArguments(Collections.singletonMap(Constants.CLUSTER_NAME, clusterName)),
             new BasicArguments(Collections.singletonMap(scope + "size", Integer.toString(scope.length()))));
 
           final ProgramController controller = runtimeService.run(descriptor, programOptions).getController();
@@ -244,11 +249,12 @@ public class AbstractProgramRuntimeServiceTest {
         return new ProgramRunner() {
           @Override
           public ProgramController run(Program program, ProgramOptions options) {
-            argumentsMap.put(program.getId(), options.getUserArguments());
+            ProgramId programId = program.getId();
+            argumentsMap.put(programId, options.getUserArguments());
 
             Service service = new FastService();
-            ProgramController controller = new ProgramControllerServiceAdapter(service, program.getId(),
-                                                                               RunIds.generate());
+            ProgramController controller = new ProgramControllerServiceAdapter(service,
+                                                                               programId.run(RunIds.generate()));
             service.start();
             return controller;
           }
@@ -317,9 +323,9 @@ public class AbstractProgramRuntimeServiceTest {
   }
 
   private ProgramRuntimeService.RuntimeInfo createRuntimeInfo(Service service,
-                                                              final ProgramId programId, RunId runId) {
+                                                              final ProgramRunId programRunId) {
     final ProgramControllerServiceAdapter controller =
-      new ProgramControllerServiceAdapter(service, programId, runId);
+      new ProgramControllerServiceAdapter(service, programRunId);
     return new ProgramRuntimeService.RuntimeInfo() {
       @Override
       public ProgramController getController() {
@@ -328,12 +334,12 @@ public class AbstractProgramRuntimeServiceTest {
 
       @Override
       public ProgramType getType() {
-        return programId.getType();
+        return programRunId.getType();
       }
 
       @Override
       public ProgramId getProgramId() {
-        return programId;
+        return programRunId.getParent();
       }
 
       @Nullable
@@ -382,7 +388,7 @@ public class AbstractProgramRuntimeServiceTest {
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository);
+      super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter());
       this.extraInfo = extraInfo;
     }
 

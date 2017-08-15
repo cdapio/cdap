@@ -167,14 +167,14 @@ public class DistributedProgramRunnerTxTimeoutTest {
   }
 
   private static ProgramOptions createOptions(Program program, int timeout) {
-    return new SimpleProgramOptions(program.getId().getProgram(),
+    return new SimpleProgramOptions(program.getId(),
                                     new BasicArguments(Collections.<String, String>emptyMap()),
                                     new BasicArguments(Collections.singletonMap(SystemArguments.TRANSACTION_TIMEOUT,
                                                                                 String.valueOf(timeout))));
   }
 
   private static ProgramOptions createOptions(Program program, int timeout, String scope, String name) {
-    return new SimpleProgramOptions(program.getId().getProgram(),
+    return new SimpleProgramOptions(program.getId(),
                                     new BasicArguments(Collections.<String, String>emptyMap()),
                                     new BasicArguments(Collections.singletonMap(
                                       RuntimeArguments.addScope(scope, name, SystemArguments.TRANSACTION_TIMEOUT),

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.codec;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -38,18 +39,18 @@ public class ProgramOptionsCodec implements JsonSerializer<ProgramOptions>, Json
   public ProgramOptions deserialize(JsonElement json, Type typeOfT,
                                     JsonDeserializationContext context) throws JsonParseException {
     JsonObject jsonObj = json.getAsJsonObject();
-    String name = jsonObj.get("name").getAsString();
+    ProgramId programId = context.deserialize(jsonObj.get("programId"), ProgramId.class);
     Arguments arguments = context.deserialize(jsonObj.get("arguments"), Arguments.class);
     Arguments userArguments = context.deserialize(jsonObj.get("userArguments"), Arguments.class);
     boolean debug = jsonObj.get("debug").getAsBoolean();
 
-    return new SimpleProgramOptions(name, arguments, userArguments, debug);
+    return new SimpleProgramOptions(programId, arguments, userArguments, debug);
   }
 
   @Override
   public JsonElement serialize(ProgramOptions src, Type typeOfSrc, JsonSerializationContext context) {
     JsonObject json = new JsonObject();
-    json.addProperty("name", src.getName());
+    json.add("programId", context.serialize(src.getProgramId(), ProgramId.class));
     json.add("arguments", context.serialize(src.getArguments(), Arguments.class));
     json.add("userArguments", context.serialize(src.getUserArguments(), Arguments.class));
     json.addProperty("debug", src.isDebug());

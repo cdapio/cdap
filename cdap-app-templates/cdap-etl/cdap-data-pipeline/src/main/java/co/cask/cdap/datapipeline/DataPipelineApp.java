@@ -38,6 +38,7 @@ import co.cask.cdap.etl.batch.BatchPipelineSpecGenerator;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.spec.PipelineSpecGenerator;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
@@ -59,7 +60,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   @Override
   public void configure() {
     ETLBatchConfig config = getConfig();
-    setDescription(DEFAULT_DESCRIPTION);
+    setDescription(Objects.firstNonNull(config.getDescription(), DEFAULT_DESCRIPTION));
 
     PipelineSpecGenerator<ETLBatchConfig, BatchPipelineSpec> specGenerator = new BatchPipelineSpecGenerator(
       getConfigurer(),

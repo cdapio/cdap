@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
@@ -71,20 +72,19 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
    * Starts all instances of a Program component.
    * @param program The program to run
    * @param options options for the program
-   * @param runId The runId
    * @param numInstances number of component instances to start
    */
-  protected final ProgramController startAll(Program program, ProgramOptions options, RunId runId, int numInstances) {
+  protected final ProgramController startAll(Program program, ProgramOptions options, int numInstances) {
+    RunId runId = ProgramRunners.getRunId(options);
     Table<String, Integer, ProgramController> components = HashBasedTable.create();
     try {
       for (int instanceId = 0; instanceId < numInstances; instanceId++) {
-        ProgramOptions componentOptions = createComponentOptions(program.getName(), instanceId,
-                                                                 numInstances, runId, options);
+        ProgramOptions componentOptions = createComponentOptions(instanceId, numInstances, runId, options);
         ProgramController controller = createProgramRunner().run(program, componentOptions);
         components.put(program.getName(), instanceId, controller);
       }
 
-      return new InMemoryProgramController(components, program, options, runId);
+      return new InMemoryProgramController(components, program, options);
     } catch (Throwable t) {
       LOG.error("Failed to start all program instances", t);
       try {
@@ -105,7 +105,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     }
   }
 
-  private ProgramOptions createComponentOptions(String name, int instanceId, int instances, RunId runId,
+  private ProgramOptions createComponentOptions(int instanceId, int instances, RunId runId,
                                                 ProgramOptions options) {
     Map<String, String> systemOptions = Maps.newHashMap();
     systemOptions.putAll(options.getArguments().asMap());
@@ -113,7 +113,9 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     systemOptions.put(ProgramOptionConstants.INSTANCES, Integer.toString(instances));
     systemOptions.put(ProgramOptionConstants.RUN_ID, runId.getId());
     systemOptions.put(ProgramOptionConstants.HOST, host);
-    return new SimpleProgramOptions(name, new BasicArguments(systemOptions), options.getUserArguments());
+
+    return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(systemOptions),
+                                    options.getUserArguments());
   }
 
   /**
@@ -128,8 +130,8 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
     private volatile Throwable errorCause;
 
     InMemoryProgramController(Table<String, Integer, ProgramController> components,
-                              Program program, ProgramOptions options, RunId runId) {
-      super(program.getId(), runId);
+                              Program program, ProgramOptions options) {
+      super(program.getId().run(ProgramRunners.getRunId(options)));
       this.program = program;
       this.components = components;
       this.options = options;
@@ -248,7 +250,7 @@ public abstract class AbstractInMemoryProgramRunner implements ProgramRunner {
 
       // create more runnable instances, if necessary.
       for (int instanceId = liveCount; instanceId < newCount; instanceId++) {
-        ProgramOptions programOptions = createComponentOptions(runnableName, instanceId, newCount, getRunId(), options);
+        ProgramOptions programOptions = createComponentOptions(instanceId, newCount, getRunId(), options);
         ProgramController controller = createProgramRunner().run(program, programOptions);
         components.put(runnableName, instanceId, controller);
       }

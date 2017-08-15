@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.flow;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
@@ -43,11 +44,11 @@ final class FlowletProgramController extends AbstractProgramController {
   /**
    * Constructs an instance. The instance must be constructed before the flowlet driver starts.
    */
-  FlowletProgramController(ProgramId programId, String flowletName,
+  FlowletProgramController(String flowletName,
                            BasicFlowletContext flowletContext, FlowletRuntimeService driver,
                            Collection<ProducerSupplier> producerSuppliers,
                            Collection<ConsumerSupplier<?>> consumerSuppliers) {
-    super(programId, flowletContext.getRunId(), flowletName);
+    super(flowletContext.getProgramRunId(), flowletName);
     this.flowletContext = flowletContext;
     this.driver = driver;
     this.producerSuppliers = producerSuppliers;
