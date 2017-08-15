@@ -25,7 +25,7 @@ import {RuleBookCountWrapper, RulesCountWrapper} from 'components/RulesEngineHom
 import T from 'i18n-react';
 import { DragDropContext } from 'react-dnd';
 import HTML5Backend from 'react-dnd-html5-backend';
-import RulesEngineStore from 'components/RulesEngineHome/RulesEngineStore';
+import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 
 require('./RulesEngineWrapper.scss');
 const PREFIX = 'features.RulesEngine.Home';
@@ -40,9 +40,23 @@ class RulesEngineWrapper extends Component {
     activeTab: '1',
   };
 
+  componentDidMount() {
+    RulesEngineStore.subscribe(() => {
+      let {rulebooks} = RulesEngineStore.getState();
+      if (rulebooks.activeTab && rulebooks.activeTab !== this.state.activeTab) {
+        this.setState({
+          activeTab: rulebooks.activeTab
+        });
+      }
+    });
+  }
+
   toggleTab = (activeTab) => {
-    this.setState({
-      activeTab
+    RulesEngineStore.dispatch({
+      type: RULESENGINEACTIONS.SETACTIVETAB,
+      payload: {
+        activeTab
+      }
     });
   };
 

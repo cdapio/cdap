@@ -23,8 +23,10 @@ $create-rule-btn-color: #0099ff;
     border-radius: 0;
   }
   > button {
-    margin: 15px 0;
-    color: $create-rule-btn-color;
+    &.btn.btn-secondary {
+      margin: 15px 0;
+      color: $create-rule-btn-color;
+    }
   }
   .rules-container {
     margin-top: 10px;

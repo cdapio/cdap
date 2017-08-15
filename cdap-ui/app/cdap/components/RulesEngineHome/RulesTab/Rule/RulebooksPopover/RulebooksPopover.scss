@@ -17,6 +17,7 @@
 $submenu_color: #cccccc;
 $disabled_menu_hover_bg_color: gray;
 $submenu_bg_color: white;
+$add_button_color: #0099ff;
 
 .rule-book-popover {
   position: relative;
@@ -24,6 +25,7 @@ $submenu_bg_color: white;
 
   .btn.btn-secondary {
     border-radius: 0;
+    color: $add_button_color;
   }
 
   .sub-menu {

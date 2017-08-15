@@ -45,26 +45,8 @@ $header-bg-color: #f5f5f5;
     align-items: center;
   }
   .rule-book-name-header {
-    height: 100px;
-    background-color: $header-bg-color;
-    margin: -40px -40px 0 -40px;
-    padding: 40px 40px 0 40px;
-    display: flex;
-    justify-content: space-between;
-
     .rule-book-name-version {
       line-height: 1;
-    }
-
-    .rule-book-name {
-      font-size: 18px;
-    }
-
-    .rule-book-version {
-      font-size: 11px;
-      margin-top: 2px;
-      font-weight: bold;
-      color: $rule-book-metadata-color;
     }
 
     .btn {
@@ -86,16 +68,6 @@ $header-bg-color: #f5f5f5;
     }
   }
 
-  .rule-book-metadata,
-  .rule-book-description {
-    font-size: 14px;
-    color: $rule-book-metadata-color;
-  }
-
-  .rule-book-metadata {
-    margin: 10px 0 20px;
-  }
-
   .rules-container {
     min-height: 300px;
     padding: 10px;
@@ -106,9 +78,25 @@ $header-bg-color: #f5f5f5;
 }
 
 .rule-book-create {
-  padding: 30px;
+  padding: 40px;
 
   .create-metadata-container {
+    .rule-book-name-header {
+      display: block;
+
+      .rule-book-name {
+        margin: -10px 0 0 0;
+      }
+
+      .rule-book-version {
+        margin-left: 5px;
+      }
+    }
+
+    .rule-book-description {
+      margin-bottom: 15px;
+    }
+
     .form-control {
       margin: 10px 0;
     }
@@ -125,4 +113,34 @@ $header-bg-color: #f5f5f5;
       }
     }
   }
+}
+
+.rule-book-name-header {
+  height: 100px;
+  background-color: $header-bg-color;
+  margin: -40px -40px 0 -40px;
+  padding: 40px 40px 0 40px;
+  display: flex;
+  justify-content: space-between;
+
+  .rule-book-name {
+    font-size: 18px;
+  }
+
+  .rule-book-version {
+    font-size: 11px;
+    margin-top: 2px;
+    font-weight: bold;
+    color: $rule-book-metadata-color;
+  }
+}
+
+.rule-book-metadata,
+.rule-book-description {
+  font-size: 14px;
+  color: $rule-book-metadata-color;
+}
+
+.rule-book-metadata {
+  margin: 10px 0 20px;
 }
