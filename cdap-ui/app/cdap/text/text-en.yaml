@@ -1344,7 +1344,8 @@ features:
         today: Today
     CreateRulebook:
       admin: Admin
-      createBtnLabel: Create
+      createBtnLabel: Create Rulebook
+      createBtnNext: "Next: Add Rules"
       created: Created
       descriptionplaceholder: Add description
       nameplaceholder: Add name
@@ -1353,7 +1354,7 @@ features:
     Home:
       pageTitle: Rules Management
       Tabs:
-        rbTitle: Rules Books
+        rbTitle: RuleBooks
         rulesTitle: Rules
     ImportRulebook:
       description: Upload your Rulebook file
@@ -1367,9 +1368,10 @@ features:
     RulebookDetails:
       addone: to add one
       applyBtnLabel: Apply
-      lastupdated: Last Updated on
+      lastmodified: Modified on
       norulebooks: No Rulebooks added
       owner: Owner # ?Again should we reuse?
+      version: Version {version}
     RulebookMenu:
       createPipeline: Create a Pipeline
       delete: Delete
@@ -1390,17 +1392,18 @@ features:
       enableBtnLabel: Enable Rules Engine
       title: Welcome to Rules Engine Management
     RulesList:
-      dropContainerText: Add a rule by drag and drop from the rule list on the left
+      dropContainerText: Add a rule by dragging and dropping from the rules list on the left
       rulesLabel: Rules
     RulebookRule:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
       importrulebook: Import a Rulebook
+      searchLabel: Select a Rulebook
       searchplaceholder: Search Rulebook by name, owner or description
     RulesTab:
       createRuleBtn: Create a New Rule
-      lastUpdated: Last Updated
+      date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
   SchemaEditor:

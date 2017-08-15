@@ -104,7 +104,7 @@ export default class RulesTab extends Component {
             {T.translate(`commons.nameLabel`)}
           </Col>
           <Col xs="5">
-            {T.translate(`${PREFIX}.lastUpdated`)}
+            {T.translate(`${PREFIX}.date`)}
           </Col>
         </Row>
         {

@@ -17,7 +17,6 @@
 import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import T from 'i18n-react';
 
@@ -97,19 +96,17 @@ export default class CreateRulebook extends Component {
           </textarea>
           <div className="button-container">
             <Button
-              color="primary"
+              color="secondary"
               onClick={this.createRulebook}
               disabled={isEmpty(this.state.name)}
             >
               {T.translate(`${PREFIX}.createBtnLabel`)}
             </Button>
+            <span className="create-next">
+              {T.translate(`${PREFIX}.createBtnNext`)}
+            </span>
           </div>
         </div>
-         <RulesList
-          rules={this.state.rules}
-          onRuleAdd={this.onRulesAdd}
-          onRemove={this.onRemove}
-        />
       </div>
     );
   }

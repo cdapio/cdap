@@ -14,6 +14,8 @@
  * the License.
 */
 
+$icon-color: #999999;
+
 .rule-book-menu {
   display: inline-block;
   vertical-align: top;
@@ -24,6 +26,8 @@
       display: flex;
       font-size: 24px;
       align-items: flex-end;
+      background-color: transparent;
+      color: $icon-color;
 
       &:focus,
       &:hover,
@@ -35,8 +39,7 @@
         box-shadow: none;
       }
       .icon-caret-down {
-        font-size: 12px;
-        margin-bottom: 2px;
+        font-size: 18px;
       }
     }
     .dropdown-menu {
