@@ -19,6 +19,7 @@ package co.cask.cdap.api.workflow;
  * Represents the runtime status of the node in {@link Workflow}.
  */
 public enum NodeStatus {
+  STARTING,
   RUNNING,
   COMPLETED,
   FAILED,

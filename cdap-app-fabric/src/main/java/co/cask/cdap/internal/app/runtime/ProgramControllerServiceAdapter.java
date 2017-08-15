@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,12 +17,14 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.app.runtime.ProgramOptions;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.Loggers;
-import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.internal.app.program.AbstractStateChangeProgramController;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Service;
-import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ import javax.annotation.Nullable;
  * there may be race conditions if the thread that stops the controller is different than the thread
  * that runs the service. Any Service that extends AbstractService meets this criteria.
  */
-public class ProgramControllerServiceAdapter extends AbstractProgramController {
+public class ProgramControllerServiceAdapter extends AbstractStateChangeProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramControllerServiceAdapter.class);
   private static final Logger USERLOG = Loggers.mdcWrapper(LOG, Constants.Logging.EVENT_TYPE_TAG,
@@ -47,13 +49,15 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   private final Service service;
   private final CountDownLatch serviceStoppedLatch;
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId, RunId runId) {
-    this(service, programId, runId, null);
+  public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId, String twillRunId,
+                                         ProgramStateWriter programStateWriter) {
+    this(service, programRunId, twillRunId, programStateWriter, null);
   }
 
-  public ProgramControllerServiceAdapter(Service service, ProgramId programId,
-                                         RunId runId, @Nullable String componentName) {
-    super(programId, runId, componentName);
+  public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId, String twillRunId,
+                                         ProgramStateWriter programStateWriter,
+                                         @Nullable String componentName) {
+    super(programRunId, twillRunId, programStateWriter, componentName);
     this.service = service;
     this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);

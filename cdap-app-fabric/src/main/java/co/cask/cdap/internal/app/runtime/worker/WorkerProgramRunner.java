@@ -26,6 +26,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.ProgramContextAware;
@@ -39,10 +40,12 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Preconditions;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
@@ -63,13 +66,15 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final SecureStore secureStore;
   private final SecureStoreManager secureStoreManager;
   private final MessagingService messagingService;
+  private final ProgramStateWriter programStateWriter;
 
   @Inject
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory,
                              SecureStore secureStore, SecureStoreManager secureStoreManager,
-                             MessagingService messagingService) {
+                             MessagingService messagingService,
+                             @Named("programStateWriter") ProgramStateWriter programStateWriter) {
     super(cConf);
     this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
@@ -80,6 +85,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.secureStore = secureStore;
     this.secureStoreManager = secureStoreManager;
     this.messagingService = messagingService;
+    this.programStateWriter = programStateWriter;
   }
 
   @Override
@@ -94,6 +100,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     Preconditions.checkArgument(instanceCount > 0, "Invalid or missing instance count");
 
     RunId runId = ProgramRunners.getRunId(options);
+    String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
 
     ProgramType programType = program.getType();
     Preconditions.checkNotNull(programType, "Missing processor type.");
@@ -139,7 +146,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId),
+                                                                        twillRunId, programStateWriter,
                                                                         workerSpec.getName() + "-" + instanceId);
       worker.start();
       return controller;
@@ -152,8 +160,10 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramId programId, RunId runId, String componentName) {
-      super(workerDriver, programId, runId, componentName);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramRunId programRunId,
+                                   String twillRunId, ProgramStateWriter programStateWriter,
+                                   String componentName) {
+      super(workerDriver, programRunId, twillRunId, programStateWriter, componentName);
       this.workerDriver = workerDriver;
     }
 

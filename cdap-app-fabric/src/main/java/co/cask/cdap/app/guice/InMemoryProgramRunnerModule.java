@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,12 @@
 package co.cask.cdap.app.guice;
 
 import co.cask.cdap.api.data.stream.StreamWriter;
+import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeProvider;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.stream.DefaultStreamWriter;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
@@ -39,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.webapp.WebappProgramRunner;
 import co.cask.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import co.cask.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
 import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
@@ -47,6 +50,7 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -86,6 +90,16 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // For Binding queue stuff
     bind(QueueReaderFactory.class).in(Scopes.SINGLETON);
+
+    // Bind ProgramStateWriter
+    bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+    // For programs with multiple instances, disable the program state writer on the instances so that the higher
+    // controller can record the program state based on all of the instances
+    // TODO when CDAP-12179 is resolved, the ProgramStateWriter will be in the InMemoryProgramRunner, so there
+    // will be no special case
+    bind(ProgramStateWriter.class)
+      .annotatedWith(Names.named("programStateWriter"))
+      .to(NoOpProgramStateWriter.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
