@@ -207,6 +207,20 @@ public interface Store extends RuntimeStore {
   Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds);
 
   /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
+   * @param namespaceId the namespace id to match against
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId);
+
+  /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
+   * @param applicationId the application id to match against
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId);
+
+  /**
    * Fetches the run record for particular run of a program.
    *
    * @param id        id of the program

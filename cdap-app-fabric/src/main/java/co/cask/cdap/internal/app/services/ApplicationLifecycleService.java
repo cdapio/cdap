@@ -501,26 +501,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   public void removeAll(final NamespaceId namespaceId) throws Exception {
     List<ApplicationSpecification> allSpecs = new ArrayList<>(
       store.getAllApplications(namespaceId));
-    final String namespace = namespaceId.getNamespace();
-    //Check if any program associated with this namespace is running
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getNamespace().equals(namespace);
-                         }
-                       });
 
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getApplication() +
-                            ": " + runtimeInfo.getProgramId().getProgram());
-    }
-
+    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
     if (!runningPrograms.isEmpty()) {
+      Set<String> activePrograms = new HashSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+        activePrograms.add(runningProgram.getKey().getApplication() + ": " + runningProgram.getKey().getProgram());
+      }
+
       String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
+        .join(activePrograms);
       throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
@@ -561,25 +551,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
    */
   private void ensureNoRunningPrograms(final ApplicationId appId) throws CannotBeDeletedException {
-    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getRuns(ProgramRunStatus.RUNNING, null);
-    Map<ProgramRunId, RunRecordMeta> startingPrograms = store.getRuns(ProgramRunStatus.STARTING, null);
+    // Check the store for active runs in the given application id.
+    Map<ProgramRunId, RunRecordMeta> activeProgramRuns = store.getActiveRuns(appId);
 
-    // Get the keys of the two Maps
-    Collection<ProgramRunId> runningProgramRuns = new HashSet<>(runningPrograms.keySet());
-    runningProgramRuns.addAll(startingPrograms.keySet());
+    if (!activeProgramRuns.isEmpty()) {
+      Set<String> activePrograms = new HashSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : activeProgramRuns.entrySet()) {
+        activePrograms.add(runningProgram.getKey().getProgram());
+      }
 
-    // Filter out the running program that are in the given appId
-    Collection<ProgramRunId> runningProgramsInSameApp = Collections2.filter(runningProgramRuns,
-                                                         new com.google.common.base.Predicate<ProgramRunId>() {
-                                                           @Override
-                                                           public boolean apply(ProgramRunId input) {
-                                                             return input.getParent().getParent().equals(appId);
-                                                           }
-                                                         });
-
-    if (!runningProgramsInSameApp.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
-        .join(runningProgramsInSameApp);
+        .join(activePrograms);
       throw new CannotBeDeletedException(appId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }

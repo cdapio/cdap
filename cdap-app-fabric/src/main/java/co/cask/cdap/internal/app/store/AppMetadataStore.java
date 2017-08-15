@@ -495,6 +495,32 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     return getRuns(programRunIds, Integer.MAX_VALUE);
   }
 
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
+    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                            Integer.MAX_VALUE, timePredicate));
+
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, namespaceId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    return activeRuns;
+  }
+
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
+    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+    MDSKey key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTING, applicationId).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                              Integer.MAX_VALUE, timePredicate));
+
+    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTED, applicationId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, applicationId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    return activeRuns;
+  }
+
   private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
     Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
     resultMap.putAll(getActiveRuns(programRunIds, limit));
@@ -627,13 +653,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
   private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(@Nullable ProgramId programId, String recordType,
                                                               final long startTime, final long endTime, int limit,
                                                               Predicate<RunRecordMeta> filter) {
-    Predicate<RunRecordMeta> valuePredicate = andPredicate(new Predicate<RunRecordMeta>() {
-
-      @Override
-      public boolean apply(RunRecordMeta input) {
-        return input.getStartTs() >= startTime && input.getStartTs() < endTime;
-      }
-    }, filter);
+    Predicate<RunRecordMeta> valuePredicate = andPredicate(getTimeRangePredicate(startTime, endTime), filter);
 
     if (programId == null || !programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       MDSKey key = getProgramKeyBuilder(recordType, programId).build();
@@ -763,6 +783,15 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
       @Override
       public boolean apply(RunRecordMeta record) {
         return record.getStatus().equals(state.getRunStatus());
+      }
+    };
+  }
+
+  private Predicate<RunRecordMeta> getTimeRangePredicate(final long startTime, final long endTime) {
+    return new Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta record) {
+        return record.getStartTs() >= startTime && record.getStartTs() < endTime;
       }
     };
   }
