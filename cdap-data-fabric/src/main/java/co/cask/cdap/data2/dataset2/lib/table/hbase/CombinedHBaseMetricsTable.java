@@ -16,9 +16,12 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,6 +46,7 @@ import javax.annotation.Nullable;
  *
  */
 public class CombinedHBaseMetricsTable implements MetricsTable {
+  private static final Logger LOG = LoggerFactory.getLogger(CombinedHBaseMetricsTable.class);
   private final MetricsTable v2HBaseTable;
   private final MetricsTable v3HBaseTable;
 
@@ -111,8 +115,10 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter) {
-    Scanner v2Scan = v2HBaseTable.scan(start, stop, filter);
+    LOG.info("### start: {}", Bytes.toHexString(start));
+    LOG.info("### stop: {}", Bytes.toHexString(stop));
     Scanner v3Scan = v3HBaseTable.scan(start, stop, filter);
+    Scanner v2Scan = v2HBaseTable.scan(start, stop, filter);
     return new CombinedMetricsScanner(v2Scan, v3Scan);
   }
 
