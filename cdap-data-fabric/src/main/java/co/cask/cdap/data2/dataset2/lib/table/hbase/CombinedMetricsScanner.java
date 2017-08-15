@@ -44,8 +44,8 @@ public class CombinedMetricsScanner implements Scanner {
     this.v3TableNextRow = v3TableScanner.next();
   }
 
-  @Nullable
   @Override
+  @Nullable
   public Row next() {
     // both the scanners are exhausted, so return null
     if (v2TableNextRow == null && v3TableNextRow == null) {

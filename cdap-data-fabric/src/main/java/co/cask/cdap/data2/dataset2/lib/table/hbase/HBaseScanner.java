@@ -51,6 +51,7 @@ public class HBaseScanner implements Scanner {
   }
 
   @Override
+  @Nullable
   public Row next() {
     if (scanner == null) {
       return null;
@@ -69,6 +70,7 @@ public class HBaseScanner implements Scanner {
           if (rowKeyDistributor == null) {
             return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap);
           }
+
           return new co.cask.cdap.api.dataset.table.Result(result.getRow(), rowMap) {
             @Override
             public byte[] getRow() {

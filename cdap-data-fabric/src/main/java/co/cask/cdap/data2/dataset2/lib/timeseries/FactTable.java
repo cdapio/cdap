@@ -211,6 +211,9 @@ public final class FactTable implements Closeable {
                 timeSeriesTable, scan, toPrettyLog(startRow), toPrettyLog(endRow), fuzzyRowFilter);
     }
 
+    LOG.info("####### FactTable start: {}", Bytes.toHexString(startRow));
+    LOG.info("####### FactTable stop: {}", Bytes.toHexString(endRow));
+
     return timeSeriesTable.scan(startRow, endRow, fuzzyRowFilter);
   }
 

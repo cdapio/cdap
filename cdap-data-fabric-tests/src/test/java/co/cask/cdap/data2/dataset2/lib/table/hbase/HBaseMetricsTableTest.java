@@ -274,6 +274,12 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     Assert.assertEquals(7L, Bytes.toLong(column.getValue()));
   }
 
+  @Test
+  public void test() throws Exception {
+    String foo = "I am ";
+    System.out.println(org.apache.hadoop.hbase.util.Bytes.toHex(foo.getBytes()));
+  }
+
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     // add v3 so that all the tests are performed for v3 table

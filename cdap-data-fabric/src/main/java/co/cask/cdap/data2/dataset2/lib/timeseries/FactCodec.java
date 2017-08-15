@@ -329,7 +329,7 @@ public class FactCodec {
     int idSize = entityTable.getIdSize();
     while (idSize != 0) {
       idSize--;
-      // 0xff is the biggest byte value (according to lexographical bytes comparator we use)
+      // 0xff is the biggest byte value (according to lexicographical bytes comparator we use)
       destination[offset + idSize] = stopKey ? (byte) 0xff : 0;
     }
 
