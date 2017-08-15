@@ -75,8 +75,7 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
 
   @Override
   public void waitForStopped(final ProgramId programId) throws Exception {
-    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
-    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
+    // Ensure that there are no pending run records before moving on to the next test.
     Tasks.waitFor(false, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {

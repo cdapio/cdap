@@ -143,7 +143,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 3, 10);
+      assertProgramStopped(programClient, service);
       appClient.delete(app);
     }
   }

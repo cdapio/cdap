@@ -65,7 +65,6 @@ public abstract class SchedulerTestBase {
   private static Scheduler scheduler;
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
-  private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static ProgramRuntimeService runtimeService;
   protected static MetricStore metricStore;
   protected static Injector injector;
@@ -110,8 +109,6 @@ public abstract class SchedulerTestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
     runtimeService = injector.getInstance(ProgramRuntimeService.class);
-    programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
-    programNotificationSubscriberService.startAndWait();
   }
 
   @Test
@@ -181,7 +178,6 @@ public abstract class SchedulerTestBase {
   @AfterClass
   public static void tearDown() throws Exception {
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-    programNotificationSubscriberService.stopAndWait();
   }
 
   /**

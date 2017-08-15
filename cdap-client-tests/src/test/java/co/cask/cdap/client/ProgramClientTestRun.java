@@ -192,7 +192,7 @@ public class ProgramClientTestRun extends ClientTestBase {
 
       LOG.info("Stopping flow");
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1, 10);
+      assertProgramStopped(programClient, flow);
 
       testWorkflowCommand(app.workflow(FakeWorkflow.NAME));
 
@@ -200,7 +200,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       programClient.start(flow, true);
       assertProgramRunning(programClient, flow);
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 2, 10);
+      assertProgramStopped(programClient, flow);
     } finally {
       try {
         appClient.delete(app);
@@ -245,7 +245,6 @@ public class ProgramClientTestRun extends ClientTestBase {
     Assert.assertTrue(doneFile.createNewFile());
 
     assertProgramStopped(programClient, workflow);
-    assertProgramRuns(programClient, workflow, ProgramRunStatus.COMPLETED, 1, 10);
     LOG.info("Workflow stopped");
   }
 }

@@ -341,7 +341,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     startProgram(programId, 200);
 
     // Workflow should be running
-    verifyProgramRuns(programId, ProgramRunStatus.RUNNING);
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Get runid for the running Workflow
     String runId = getRunIdOfRunningProgram(programId);
@@ -379,7 +379,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 200);
 
     // Workflow should be running
-    verifyProgramRuns(programId, ProgramRunStatus.RUNNING);
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Resume on already running Workflow should give conflict
     resumeWorkflow(programId, runId, 409);
@@ -451,7 +451,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     waitState(workflow, ProgramStatus.STOPPED.name());
 
     stopProgram(workflow.toId(), runId, 200);
-    waitState(workflow.toId(), ProgramStatus.STOPPED.name());
+    waitState(workflow, ProgramStatus.STOPPED.name());
     verifyProgramRuns(workflow.toId(), ProgramRunStatus.KILLED, 0);
   }
 

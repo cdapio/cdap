@@ -231,7 +231,6 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     AppMetadataStore getAppMetadataStore(DatasetContext context) {
       // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
-
       try {
         Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
                                                       Table.class.getName(), DatasetProperties.EMPTY);

@@ -26,7 +26,6 @@ public interface TopicMessageIdStore {
    * Gets the messageId that was previously set for a given topic.
    *
    * @param topic the topic to lookup the last message id
-   *
    * @return the messageId, or null if no messageId was previously associated with the given topic
    */
   @Nullable
