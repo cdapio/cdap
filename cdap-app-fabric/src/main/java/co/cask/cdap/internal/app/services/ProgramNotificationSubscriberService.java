@@ -25,7 +25,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
@@ -117,7 +116,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     @Override
     public void processNotification(final DatasetContext context, Notification notification)
       throws IOException, DatasetManagementException {
-
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRunIdString = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
