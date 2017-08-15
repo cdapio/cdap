@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test;
 
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -25,6 +26,8 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A base implementation of {@link ApplicationManager}.
@@ -68,5 +71,17 @@ public abstract class AbstractApplicationManager implements ApplicationManager {
   @Override
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
     return getHistory(programId.toEntityId(), status);
+  }
+
+  @Override
+  public void waitForStopped(final ProgramId programId) throws Exception {
+    // TODO CDAP-12182 This is a workaround to ensure that there are no pending run records before moving on to the next
+    // test. This should be removed once stopping a program on CDAP waits for the run record to be persisted.
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return isRunning(programId);
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }

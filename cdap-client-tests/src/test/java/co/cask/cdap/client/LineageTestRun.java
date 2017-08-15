@@ -27,6 +27,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
 import co.cask.cdap.data2.metadata.lineage.Relation;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -345,7 +346,6 @@ public class LineageTestRun extends MetadataTestBase {
   private RunId runAndWait(final ProgramId program) throws Exception {
     LOG.info("Starting program {}", program);
     programClient.start(program);
-    assertProgramRunning(programClient, program);
     return getRunId(program);
   }
 
@@ -354,7 +354,7 @@ public class LineageTestRun extends MetadataTestBase {
       LOG.info("Stopping program {}", program);
       programClient.stop(program);
     }
-    assertProgramRuns(programClient, program, ProgramRunStatus.RUNNING, 0);
+    programClient.waitForStatus(program, ProgramStatus.STOPPED, 15, TimeUnit.SECONDS);
     LOG.info("Program {} has stopped", program);
   }
 

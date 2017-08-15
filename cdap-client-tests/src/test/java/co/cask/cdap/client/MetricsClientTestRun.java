@@ -99,7 +99,7 @@ public class MetricsClientTestRun extends ClientTestBase {
       Assert.assertTrue(metrics.contains(Constants.Metrics.Name.Flow.FLOWLET_INPUT));
     } finally {
       programClient.stop(flow);
-      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1);
+      assertProgramRuns(programClient, flow, ProgramRunStatus.KILLED, 1, 10);
       appClient.delete(app);
     }
   }

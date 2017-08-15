@@ -170,28 +170,23 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec, ProgramId programId)
     throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
 
-    if (runtimeInfo == null) {
-      if (programId.getType() != ProgramType.WEBAPP) {
-        //Runtime info not found. Check to see if the program exists.
-        ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
-        if (spec == null) {
-          // program doesn't exist
-          throw new NotFoundException(programId);
-        }
-
-        if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
-          !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
-          // MapReduce program exists and running as a part of Workflow
-          return ProgramStatus.RUNNING;
-        }
-        return ProgramStatus.STOPPED;
-      }
+    if (programId.getType() == ProgramType.WEBAPP) {
       throw new IllegalStateException("Webapp status is not supported");
     }
 
-    return runtimeInfo.getController().getState().getProgramStatus();
+    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
+    if (spec == null) {
+      // program doesn't exist
+      throw new NotFoundException(programId);
+    }
+
+    // A program is running if there are any RUNNING or STARTING run records
+    boolean runningRunRecords = !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty();
+    if (runningRunRecords || !store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+      return ProgramStatus.RUNNING;
+    }
+    return ProgramStatus.STOPPED;
   }
 
   /**

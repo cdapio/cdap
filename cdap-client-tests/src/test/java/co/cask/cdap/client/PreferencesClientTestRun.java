@@ -109,7 +109,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1);
+      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 1, 10);
 
       long minStartTime = System.currentTimeMillis();
       client.deleteInstancePreferences();
@@ -127,7 +127,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
       programClient.stop(service);
       assertProgramStopped(programClient, service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 2);
+      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 2, 10);
 
       propMap.clear();
       minStartTime = System.currentTimeMillis();
@@ -143,7 +143,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
       assertEquals(propMap, responseMap);
     } finally {
       programClient.stop(service);
-      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 3);
+      assertProgramRuns(programClient, service, ProgramRunStatus.KILLED, 3, 10);
       appClient.delete(app);
     }
   }

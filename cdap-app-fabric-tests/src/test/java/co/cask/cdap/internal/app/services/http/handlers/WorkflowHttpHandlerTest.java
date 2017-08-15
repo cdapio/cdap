@@ -732,23 +732,23 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     setAndTestRuntimeArgs(programId.toId(), runtimeArguments);
 
     // Start the workflow
-    startProgram(programId.toId());
-    waitState(programId.toId(), ProgramStatus.RUNNING.name());
+    startProgram(programId, 200);
 
     // Wait until we have a run record
-    verifyProgramRuns(programId.toId(), ProgramRunStatus.RUNNING);
-    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId.toId(), ProgramRunStatus.RUNNING);
+    verifyProgramRuns(programId, ProgramRunStatus.RUNNING);
+    List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, ProgramRunStatus.ALL);
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
-    Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, WorkflowAppWithScopedParameters.APP_NAME,
-                                              ProgramType.MAPREDUCE, WorkflowAppWithScopedParameters.ONE_MR);
-    waitState(mr1ProgramId, ProgramStatus.RUNNING.name());
-    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, ProgramRunStatus.RUNNING);
+    ProgramId mr1ProgramId = Ids.namespace(TEST_NAMESPACE2).app(WorkflowAppWithScopedParameters.APP_NAME)
+      .mr(WorkflowAppWithScopedParameters.ONE_MR);
+
+    verifyProgramRuns(mr1ProgramId, ProgramRunStatus.RUNNING);
+    List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, ProgramRunStatus.ALL);
 
     String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
                                              "Please stop the Workflow.",
-                                           new Id.Run(mr1ProgramId, oneMRHistoryRuns.get(0).getPid()), workflowRunId);
-    stopProgram(mr1ProgramId, oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
+                                           mr1ProgramId.run(oneMRHistoryRuns.get(0).getPid()), workflowRunId);
+    stopProgram(mr1ProgramId.toId(), oneMRHistoryRuns.get(0).getPid(), 400, expectedMessage);
 
     verifyProgramRuns(programId.toId(), ProgramRunStatus.COMPLETED);
 
