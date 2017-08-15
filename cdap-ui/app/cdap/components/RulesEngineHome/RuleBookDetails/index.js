@@ -181,7 +181,7 @@ export default class RuleBookDetails extends Component {
                   {
                     this.state.onApplying ? <LoadingSVG /> : null
                   }
-                  <span>Apply</span>
+                  <span>{T.translate(`${PREFIX}.applyBtnLabel`)}</span>
                 </button>
               :
                 null

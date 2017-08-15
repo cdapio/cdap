@@ -1366,6 +1366,7 @@ features:
       version: Version
     RulebookDetails:
       addone: to add one
+      applyBtnLabel: Apply
       lastupdated: Last Updated on
       norulebooks: No Rulebooks added
       owner: Owner # ?Again should we reuse?

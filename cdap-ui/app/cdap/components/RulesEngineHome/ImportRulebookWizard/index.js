@@ -31,7 +31,7 @@ const PREFIX = 'features.RulesEngine.ImportRulebook';
 export default class ImportRulebookWizard extends Component {
 
   static propTypes = {
-    isOpen: PropTypes.book,
+    isOpen: PropTypes.bool,
     onClose: PropTypes.func
   };
 
@@ -52,16 +52,17 @@ export default class ImportRulebookWizard extends Component {
     this.setState({
       file
     });
-  }
+  };
 
   toggleWizard = () => {
     this.setState({
-      isOpen: !this.state.showWizard
+      isOpen: !this.state.isOpen
+    }, () => {
+      if (!this.state.isOpen && this.props.onClose) {
+        this.props.onClose();
+      }
     });
-    if (this.props.onClose) {
-      this.props.onClose();
-    }
-  }
+  };
 
   onSubmit = () => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
@@ -93,7 +94,7 @@ export default class ImportRulebookWizard extends Component {
           });
         }
       );
-  }
+  };
 
   render() {
     return (
@@ -106,9 +107,9 @@ export default class ImportRulebookWizard extends Component {
         <Wizard
           wizardConfig={ImportRulebookWizardConfig}
           store={ImportRulebookStore}
-          onSubmit={this.onSubmit.bind(this)}
-          onClose={this.toggleWizard.bind(this)
-        }/>
+          onSubmit={this.onSubmit}
+          onClose={this.toggleWizard}
+        />
       </WizardModal>
     );
   }

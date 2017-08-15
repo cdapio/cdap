@@ -52,13 +52,13 @@ export default class AddRulesEngineToPipelineModal extends Component {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     MyArtifactApi
       .list({namespace})
-      .combineLatest([
+      .combineLatest(
         MyRulesEngine
           .getRulebook({
             namespace,
             rulebookid: this.props.rulebookid
           })
-      ])
+      )
       .subscribe(
         (res) => {
           let artifacts = res[0];
@@ -171,7 +171,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
               href={this.state.batchUrl}
               onClick={this.handleOnBatchUrlClick}
             >
-              <i className="fa icon-ETLBatch"/>
+              <i className="fa icon-ETLBatch" />
               <span>{T.translate(`${PREFIX}.batchPipelineBtn`)}</span>
             </a>
             <a
@@ -181,7 +181,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
               })}
               onClick={this.handleOnRealtimeUrlClick}
             >
-              <i className="fa icon-sparkstreaming"/>
+              <i className="fa icon-sparkstreaming" />
               <span>{T.translate(`${PREFIX}.realtimePipelineBtn`)}</span>
             </a>
           </div>
