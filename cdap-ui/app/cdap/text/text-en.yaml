@@ -86,6 +86,8 @@ commons:
   please: Please
   resource-center: Add Entity
   schemaLabel: Schema
+  secondsShortLabel: secs
+  milliSecondsShortLabel: msecs
   then: Then
   tracker: Cask Tracker
   stream: Stream

@@ -331,20 +331,33 @@ export default class PipelineNodeMetricsGraph extends Component {
     );
   }
   renderProcesstimeTable = () => {
-    let totalProcessingTime, recordsOut;
+    let totalProcessingTime, validRecords;
     Object
       .keys(this.state.processTimeMetrics)
       .forEach(metric => {
         if (metric.match(/user.*.process.time.total/)) {
-          totalProcessingTime = this.state.processTimeMetrics[metric];
+          totalProcessingTime = this.state.processTimeMetrics[metric] / 1000000;
+        }
+        if (['batchsource', 'realtimesource'].indexOf(this.props.plugin.type) !== -1 && metric.match(/user.*.records.in/)) {
+          validRecords = this.state.processTimeMetrics[metric];
+          return;
+        }
+        if (['batchsink', 'realtimesink'].indexOf(this.props.plugin.type) !== -1 && metric.match(/user.*.records.out/)) {
+          validRecords = this.state.processTimeMetrics[metric];
+          return;
         }
         if (metric.match(/user.*.records.out/)) {
-          recordsOut = this.state.processTimeMetrics[metric];
+          validRecords = this.state.processTimeMetrics[metric];
         }
       });
-    let processRate = isNil(recordsOut) || isNil(totalProcessingTime) ? '--' : parseFloat(recordsOut / totalProcessingTime, 10).toFixed(3);
-    let avgProcessingTime = isNil(processRate) || processRate === '--' ? '--' : parseFloat(1 / processRate, 10).toFixed(2);
-
+    let processRate = isNil(validRecords) || isNil(totalProcessingTime) ? '--' : parseFloat(validRecords / totalProcessingTime, 10).toFixed(3);
+    let avgProcessingTime = isNil(processRate) || processRate === '--' ? '--' : ((1 / processRate) * 1000000); // Because total processing time is in seconds
+    const renderMicroSeconds = (time) => {
+      if (time < 1000) {
+        return `${parseFloat(time / 1000, 10).toFixed(2)} ${T.translate('commons.milliSecondsShortLabel')}`;
+      }
+      return humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000000)) || '--';
+    };
     return (
       <div className="process-time-table-container">
         <table className="table table-sm">
@@ -360,10 +373,10 @@ export default class PipelineNodeMetricsGraph extends Component {
           <tbody>
             <tr>
               <td>{processRate}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000)) || '--'}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id] / 1000)) || '--'}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id] / 1000)) || '--'}</td>
-              <td>{avgProcessingTime}</td>
+              <td>{renderMicroSeconds(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id])}</td>
+              <td>{renderMicroSeconds(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id])}</td>
+              <td>{renderMicroSeconds(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id])}</td>
+              <td>{renderMicroSeconds(avgProcessingTime)}</td>
             </tr>
           </tbody>
         </table>
