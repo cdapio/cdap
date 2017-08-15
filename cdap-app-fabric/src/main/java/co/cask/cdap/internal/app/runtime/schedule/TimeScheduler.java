@@ -244,7 +244,7 @@ public final class TimeScheduler implements Scheduler {
     throws SchedulerException, org.quartz.SchedulerException {
     for (TriggerKey triggerKey : triggerKeys) {
       if (!scheduler.checkExists(triggerKey)) {
-        throw new SchedulerException("Trigger with name '" + triggerKey.getName() + "' doesnot exist");
+        throw new SchedulerException("Trigger with name '" + triggerKey.getName() + "' does not exist");
       }
     }
   }

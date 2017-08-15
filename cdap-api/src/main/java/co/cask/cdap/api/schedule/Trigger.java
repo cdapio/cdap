@@ -17,7 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 /**
- * The mechanism by which a ProgramSchedule is scheduled.
+ * A condition must be satisfied in order to trigger a schedule.
  */
 public interface Trigger {
 }

@@ -17,6 +17,7 @@
 package co.cask.cdap.api.schedule;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.internal.schedule.ScheduleCreationSpec;
 
@@ -188,9 +189,11 @@ public interface ScheduleBuilder {
                                               ProgramStatus... programStatuses);
 
   /**
-   * Creates a schedule with a given {@link Trigger}
+   * Creates a schedule which is triggered when the given {@link Trigger} is satisfied
    *
-   * @param trigger the trigger to be contained in the schedule
+   * @param trigger the {@link Trigger} to be satisfied to trigger the schedule. {@link Trigger} can be created
+   *                by calling methods from {@link TriggerFactory} obatined from
+   *                {@link AbstractApplication#getTriggerFactory()}
    * @return a {@link ScheduleCreationSpec}
    */
   ScheduleCreationSpec triggerOn(Trigger trigger);
