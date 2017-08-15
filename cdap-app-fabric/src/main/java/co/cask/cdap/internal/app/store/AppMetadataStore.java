@@ -29,6 +29,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
@@ -77,10 +78,11 @@ import static com.google.common.base.Predicates.and;
 /**
  * Store for application metadata
  */
-public class AppMetadataStore extends MetadataStoreDataset {
+public class AppMetadataStore extends MetadataStoreDataset implements TopicMessageIdStore {
   private static final Logger LOG = LoggerFactory.getLogger(AppMetadataStore.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type BYTE_TYPE = new TypeToken<byte[]>() { }.getType();
   private static final String TYPE_APP_META = "appMeta";
   private static final String TYPE_STREAM = "stream";
   private static final String TYPE_RUN_RECORD_STARTING = "runRecordStarting";
@@ -90,6 +92,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private static final String TYPE_WORKFLOW_NODE_STATE = "wns";
   private static final String TYPE_WORKFLOW_TOKEN = "wft";
   private static final String TYPE_NAMESPACE = "namespace";
+  private static final String TYPE_MESSAGE = "msg";
 
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
@@ -282,6 +285,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       write(key, new RunRecordMeta(record, properties));
     }
   }
+
   public void recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
                                  Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey.Builder builder = getProgramKeyBuilder(TYPE_RUN_RECORD_STARTING, programId);
@@ -491,6 +495,33 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return getRuns(programRunIds, Integer.MAX_VALUE);
   }
 
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
+    // TODO CDAP-12361 should consolidate these methods and get rid of duplicate / unnecessary methods.
+    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+    MDSKey key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTING, namespaceId).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                            Integer.MAX_VALUE, timePredicate));
+
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_STARTED, namespaceId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    key = getNamespaceKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, namespaceId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    return activeRuns;
+  }
+
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
+    Predicate<RunRecordMeta> timePredicate = getTimeRangePredicate(0, Long.MAX_VALUE);
+    MDSKey key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTING, applicationId).build();
+    Map<ProgramRunId, RunRecordMeta> activeRuns = getProgramRunIdMap(listKV(key, null, RunRecordMeta.class,
+                                                                              Integer.MAX_VALUE, timePredicate));
+
+    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_STARTED, applicationId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    key = getApplicationKeyBuilder(TYPE_RUN_RECORD_SUSPENDED, applicationId).build();
+    activeRuns.putAll(getProgramRunIdMap(listKV(key, null, RunRecordMeta.class, Integer.MAX_VALUE, timePredicate)));
+    return activeRuns;
+  }
+
   private Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds, int limit) {
     Map<ProgramRunId, RunRecordMeta> resultMap = new LinkedHashMap<>();
     resultMap.putAll(getActiveRuns(programRunIds, limit));
@@ -623,13 +654,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   private Map<ProgramRunId, RunRecordMeta> getNonCompleteRuns(@Nullable ProgramId programId, String recordType,
                                                               final long startTime, final long endTime, int limit,
                                                               Predicate<RunRecordMeta> filter) {
-    Predicate<RunRecordMeta> valuePredicate = andPredicate(new Predicate<RunRecordMeta>() {
-
-      @Override
-      public boolean apply(RunRecordMeta input) {
-        return input.getStartTs() >= startTime && input.getStartTs() < endTime;
-      }
-    }, filter);
+    Predicate<RunRecordMeta> valuePredicate = andPredicate(getTimeRangePredicate(startTime, endTime), filter);
 
     if (programId == null || !programId.getVersion().equals(ApplicationId.DEFAULT_VERSION)) {
       MDSKey key = getProgramKeyBuilder(recordType, programId).build();
@@ -759,6 +784,15 @@ public class AppMetadataStore extends MetadataStoreDataset {
       @Override
       public boolean apply(RunRecordMeta record) {
         return record.getStatus().equals(state.getRunStatus());
+      }
+    };
+  }
+
+  private Predicate<RunRecordMeta> getTimeRangePredicate(final long startTime, final long endTime) {
+    return new Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta record) {
+        return record.getStartTs() >= startTime && record.getStartTs() < endTime;
       }
     };
   }
@@ -925,6 +959,22 @@ public class AppMetadataStore extends MetadataStoreDataset {
     MDSKey.Builder keyBuilder = new MDSKey.Builder();
     keyBuilder.add(key);
     write(keyBuilder.build(), ProjectInfo.getVersion().toString());
+  }
+
+  @Nullable
+  @Override
+  public String retrieveSubscriberState(String topic) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    byte[] rawBytes = get(keyBuilder.build(), BYTE_TYPE);
+    return (rawBytes == null) ? null : Bytes.toString(rawBytes);
+  }
+
+  @Override
+  public void persistSubscriberState(String topic, String messageId) {
+    MDSKey.Builder keyBuilder = new MDSKey.Builder().add(TYPE_MESSAGE)
+      .add(topic);
+    write(keyBuilder.build(), Bytes.toBytes(messageId));
   }
 
   private Iterable<RunId> getRunningInRangeForStatus(String statusKey, final long startTimeInSecs,

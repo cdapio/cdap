@@ -91,6 +91,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -418,11 +419,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     ApplicationManager appManager = deployApplication(appId, createRequest);
     ServiceManager serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
+    serviceManager.waitForStatus(true);
 
     URL serviceURL = serviceManager.getServiceURL();
     Gson gson = new Gson();
     Assert.assertEquals("tV1", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
     serviceManager.stop();
+    serviceManager.waitForStatus(false);
 
     appId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), "AppV1", "version2");
     createRequest = new AppRequest<>(
@@ -431,6 +434,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     appManager = deployApplication(appId, createRequest);
     serviceManager = appManager.getServiceManager(ConfigTestApp.SERVICE_NAME);
     serviceManager.start();
+    serviceManager.waitForStatus(true);
 
     serviceURL = serviceManager.getServiceURL();
     Assert.assertEquals("tV2", gson.fromJson(callServiceGet(serviceURL, "ping"), String.class));
@@ -443,6 +447,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     String datasetName = conf == null ? ConfigTestApp.DEFAULT_TABLE : conf.getTableName();
 
     FlowManager flowManager = appManager.getFlowManager(ConfigTestApp.FLOW_NAME).start();
+    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 1, 10, TimeUnit.SECONDS);
     StreamManager streamManager = getStreamManager(streamName);
     streamManager.send("abcd");
     streamManager.send("xyz");
@@ -806,12 +811,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   @Category(XSlowTests.class)
   @Test
+  @Ignore
   public void testDeployWorkflowApp() throws Exception {
+    // Add test back when CDAP-12350 is resolved
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithSchedule.class);
-    final WorkflowManager wfmanager = applicationManager.getWorkflowManager("SampleWorkflow");
+    final WorkflowManager wfmanager = applicationManager.getWorkflowManager(AppWithSchedule.WORKFLOW_NAME);
     List<ScheduleDetail> schedules = wfmanager.getProgramSchedules();
-    Assert.assertEquals(1, schedules.size());
-    String scheduleName = schedules.get(0).getName();
+    Assert.assertEquals(2, schedules.size());
+    String scheduleName = schedules.get(1).getName();
     Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
@@ -826,14 +833,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        return wfmanager.getHistory().size() > initialRuns;
+        return wfmanager.getHistory().size() > 0;
       }
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
 
     wfmanager.getSchedule(scheduleName).suspend();
     waitForScheduleState(scheduleName, wfmanager, ProgramScheduleStatus.SUSPENDED);
 
-    TimeUnit.SECONDS.sleep(3); // Sleep for three seconds to make sure scheduled workflows are pending to run
     // All runs should be completed
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
@@ -845,7 +851,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         }
         return true;
       }
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
 
     List<RunRecord> history = wfmanager.getHistory();
     int workflowRuns = history.size();
@@ -868,7 +874,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       public Boolean call() throws Exception {
         return wfmanager.getHistory().size() > workflowRunsAfterSuspend;
       }
-    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
 
     // Check scheduled state
     Assert.assertEquals("SCHEDULED", wfmanager.getSchedule(scheduleName).status(200));
@@ -889,8 +895,18 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     workflowToken = wfmanager.getToken(pid, null, null);
     Assert.assertEquals(2, workflowToken.getTokenData().size());
 
-    // Wait until workflow finishes execution
-    waitForWorkflowStatus(wfmanager, ProgramRunStatus.COMPLETED);
+    // Wait for all workflow runs to finish execution, in case more than one run happened with an enabled schedule
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        for (RunRecord record : wfmanager.getHistory()) {
+          if (record.getStatus() != ProgramRunStatus.COMPLETED) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 15, TimeUnit.SECONDS);
 
     // Verify workflow token after workflow completion
     WorkflowTokenNodeDetail workflowTokenAtNode =
@@ -997,10 +1013,10 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     centralServiceManager.waitForStatus(true);
 
     WorkerManager pingingWorker = applicationManager.getWorkerManager(AppUsingGetServiceURL.PINGING_WORKER).start();
-    pingingWorker.waitForStatus(true);
 
     // Test service's getServiceURL
     ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingGetServiceURL.FORWARDING).start();
+    serviceManager.waitForStatus(true);
     String result = callServiceGet(serviceManager.getServiceURL(), "ping");
     String decodedResult = new Gson().fromJson(result, String.class);
     // Verify that the service was able to hit the CentralService and retrieve the answer.
@@ -2032,6 +2048,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     WorkerManager workerManager = appManager.getWorkerManager(ConcurrentRunTestApp.TestWorker.class.getSimpleName());
     workerManager.start();
     // Start another time should fail as worker doesn't support concurrent run.
+    workerManager.waitForStatus(true);
     try {
       workerManager.start();
       Assert.fail("Expected failure to start worker");

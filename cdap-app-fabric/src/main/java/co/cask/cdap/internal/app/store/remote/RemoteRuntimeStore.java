@@ -20,16 +20,10 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.internal.remote.RemoteOpsClient;
-import co.cask.cdap.proto.BasicThrowable;
-import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
-import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-
-import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of RuntimeStore, which uses an HTTP Client to execute the actual store operations in a remote
@@ -40,39 +34,6 @@ public class RemoteRuntimeStore extends RemoteOpsClient implements RuntimeStore 
   @Inject
   RemoteRuntimeStore(DiscoveryServiceClient discoveryClient) {
     super(discoveryClient, Constants.Service.REMOTE_SYSTEM_OPERATION);
-  }
-
-  @Override
-  public void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
-                       Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
-    executeRequest("setStart", id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
-  }
-
-  @Override
-  public void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId) {
-    executeRequest("setRunning", id, pid, runTime, twillRunId);
-  }
-
-  @Override
-  public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus) {
-    // delegates on client side; so corresponding method is not required to be implemented on server side
-    setStop(id, pid, endTime, runStatus, null);
-  }
-
-  @Override
-  public void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
-                      @Nullable BasicThrowable failureCause) {
-    executeRequest("setStop", id, pid, endTime, runStatus, failureCause);
-  }
-
-  @Override
-  public void setSuspend(ProgramId id, String pid) {
-    executeRequest("setSuspend", id, pid);
-  }
-
-  @Override
-  public void setResume(ProgramId id, String pid) {
-    executeRequest("setResume", id, pid);
   }
 
   @Override

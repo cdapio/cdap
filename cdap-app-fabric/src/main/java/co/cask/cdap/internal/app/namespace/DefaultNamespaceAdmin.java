@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.namespace;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.NamespaceCannotBeCreatedException;
@@ -81,13 +82,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private static final Pattern NAMESPACE_PATTERN = Pattern.compile("[a-zA-Z0-9_]+");
 
   private final NamespaceStore nsStore;
+  private final Store store;
   private final DatasetFramework dsFramework;
 
   // Cannot have direct dependency on the following three resources
   // Otherwise there would be circular dependency
   // Use Provider to abstract out
   private final Provider<NamespaceResourceDeleter> resourceDeleter;
-  private final Provider<ProgramRuntimeService> runtimeService;
   private final Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
@@ -97,17 +98,17 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
   @Inject
   DefaultNamespaceAdmin(NamespaceStore nsStore,
+                        Store store,
                         DatasetFramework dsFramework,
                         Provider<NamespaceResourceDeleter> resourceDeleter,
-                        Provider<ProgramRuntimeService> runtimeService,
                         Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
                         CConfiguration cConf,
                         Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
                         AuthenticationContext authenticationContext) {
     this.resourceDeleter = resourceDeleter;
     this.nsStore = nsStore;
+    this.store = store;
     this.dsFramework = dsFramework;
-    this.runtimeService = runtimeService;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
@@ -455,15 +456,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   }
 
   private boolean checkProgramsRunning(final NamespaceId namespaceId) {
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.get().listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo info) {
-                           return info.getProgramId().getNamespaceId().equals(namespaceId);
-                         }
-                       });
-    return !Iterables.isEmpty(runtimeInfos);
+    return !store.getActiveRuns(namespaceId).isEmpty();
   }
 
   private InstanceId createInstanceId(CConfiguration cConf) {

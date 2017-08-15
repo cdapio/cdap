@@ -45,6 +45,7 @@ import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.StreamProperties;
@@ -171,6 +172,7 @@ public class CLIMainTest extends CLITestBase {
 
   @AfterClass
   public static void tearDownClass() throws Exception {
+    programClient.stopAll(NamespaceId.DEFAULT);
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
     testCommandOutputContains(cli, String.format("delete app %s version %s", FakeApp.NAME, V1_SNAPSHOT),
                               "Successfully deleted app");
@@ -459,18 +461,19 @@ public class CLIMainTest extends CLITestBase {
     try {
       // Test service commands with no optional version argument
       testCommandOutputContains(cli, "start service " + serviceName, "Successfully started service");
+      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
       testCommandOutputContains(cli, "get endpoints service " + serviceName, "POST");
       testCommandOutputContains(cli, "get endpoints service " + serviceName, "/echo");
       testCommandOutputContains(cli, "check service availability " + serviceName, "Service is available");
       testCommandOutputContains(cli, "call service " + serviceName
         + " POST /echo body \"testBody\"", ":testBody");
       testCommandOutputContains(cli, "stop service " + serviceName, "Successfully stopped service");
-      assertProgramStatus(programClient, service, "STOPPED");
+      assertProgramStatus(programClient, service, ProgramStatus.STOPPED.name());
       // Test service commands with version argument when two versions of the service are running
       testCommandOutputContains(cli, "start service " + serviceArgument, "Successfully started service");
       testCommandOutputContains(cli, "start service " + serviceV1Argument, "Successfully started service");
-      assertProgramStatus(programClient, service, "RUNNING");
-      assertProgramStatus(programClient, serviceV1, "RUNNING");
+      assertProgramStatus(programClient, service, ProgramStatus.RUNNING.name());
+      assertProgramStatus(programClient, serviceV1, ProgramStatus.RUNNING.name());
       testCommandOutputContains(cli, "get endpoints service " + serviceArgument, "POST");
       testCommandOutputContains(cli, "get endpoints service " + serviceV1Argument, "POST");
       testCommandOutputContains(cli, "get endpoints service " + serviceArgument, "/echo");

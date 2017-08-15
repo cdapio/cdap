@@ -22,6 +22,7 @@ import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.UsageHandler;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -78,17 +79,11 @@ public class UsageHandlerTestRun extends ClientTestBase {
   }
 
   private void startProgram(ProgramId programId) throws Exception {
-    new ProgramClient(getClientConfig()).start(programId);
+    getProgramClient().start(programId);
   }
 
-  private void waitState(final ProgramId programId, ProgramStatus status) throws Exception {
-    final ProgramClient programclient = new ProgramClient(getClientConfig());
-    Tasks.waitFor(status, new Callable<ProgramStatus>() {
-      @Override
-      public ProgramStatus call() throws Exception {
-        return ProgramStatus.valueOf(programclient.getStatus(programId));
-      }
-    }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+  private ProgramClient getProgramClient() {
+    return new ProgramClient(getClientConfig());
   }
 
   @Test
@@ -143,9 +138,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
 
     try {
       startProgram(program);
-      // Wait for the worker to run and then stop.
-      waitState(program, ProgramStatus.RUNNING);
-      waitState(program, ProgramStatus.STOPPED);
+      // Wait for the worker to complete
+      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
@@ -184,8 +178,8 @@ public class UsageHandlerTestRun extends ClientTestBase {
     // now that we only support dynamic dataset instantiation in initialize (and not in configure as before),
     // we must run the mapreduce program to register its usage
     startProgram(program);
-    waitState(program, ProgramStatus.STOPPED);
-
+    assertProgramRunning(getProgramClient(), program);
+    assertProgramStopped(getProgramClient(), program);
     try {
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
@@ -225,7 +219,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       // the program will run and stop by itself.
       startProgram(program);
-      waitState(program, ProgramStatus.STOPPED);
+      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));
@@ -250,7 +244,7 @@ public class UsageHandlerTestRun extends ClientTestBase {
     try {
       // the program will run and stop by itself.
       startProgram(program);
-      waitState(program, ProgramStatus.STOPPED);
+      assertProgramRuns(getProgramClient(), program, ProgramRunStatus.COMPLETED, 1, 20);
 
       Assert.assertTrue(getAppStreamUsage(app).contains(stream));
       Assert.assertTrue(getProgramStreamUsage(program).contains(stream));

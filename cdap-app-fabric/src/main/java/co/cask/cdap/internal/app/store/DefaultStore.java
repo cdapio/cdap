@@ -455,6 +455,26 @@ public class DefaultStore implements Store {
     });
   }
 
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(final NamespaceId namespaceId) {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+      @Override
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getActiveRuns(namespaceId);
+      }
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(final ApplicationId applicationId) {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+      @Override
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getActiveRuns(applicationId);
+      }
+    });
+  }
+
   /**
    * Returns run record for a given run.
    *

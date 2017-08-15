@@ -645,14 +645,8 @@ public class AuthorizationTest extends TestBase {
 
     // alice should be able to start and stop programs in the app she deployed since she has execute privilege
     dummyAppManager.startProgram(serviceId.toId());
-
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
     ServiceManager greetingService = dummyAppManager.getServiceManager(serviceId.getProgram());
+    greetingService.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
     // alice should be able to set instances for the program
     greetingService.setInstances(2);
     Assert.assertEquals(2, greetingService.getProvisionedInstances());
@@ -662,12 +656,7 @@ public class AuthorizationTest extends TestBase {
     // Alice should be able to get runtime arguments as she has ADMIN on it
     Assert.assertEquals(args, greetingService.getRuntimeArgs());
     dummyAppManager.stopProgram(serviceId.toId());
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return dummyAppManager.isRunning(serviceId.toId());
-      }
-    }, 5, TimeUnit.SECONDS);
+    greetingService.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
     // Bob should not be able to start programs in dummy app because he does not have privileges on it
     SecurityRequestContext.setUserId(BOB.getName());
     try {
@@ -776,17 +765,13 @@ public class AuthorizationTest extends TestBase {
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in system namespace
     flowManager.start(args);
     // wait for flow to be running
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return flowManager.isRunning();
-      }
-    }, 120, TimeUnit.SECONDS);
+    flowManager.waitForStatus(true, 12, 10);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForStatus(false);
 
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
 
@@ -823,17 +808,13 @@ public class AuthorizationTest extends TestBase {
     // is not accessible to BOB.
     flowManager.start(args);
     // wait for flow to be running
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return flowManager.isRunning();
-      }
-    }, 120, TimeUnit.SECONDS);
+    flowManager.waitForStatus(true, 12, 10);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
+    flowManager.waitForStatus(false);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -846,9 +827,11 @@ public class AuthorizationTest extends TestBase {
 
     // running the flow now should pass and write data in another namespace successfully
     flowManager.start(args);
+    flowManager.waitForStatus(true);
     flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
     flowManager.stop();
 
+    waitForStoppedPrograms(flowManager);
     // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
     // to write we will not see any data
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -860,6 +843,7 @@ public class AuthorizationTest extends TestBase {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
       Assert.assertArrayEquals(key, results.read(key));
     }
+
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
 
@@ -1062,7 +1046,7 @@ public class AuthorizationTest extends TestBase {
 
     final WorkflowManager workflowManager =
       appManager.getWorkflowManager(AppWithSchedule.SampleWorkflow.class.getSimpleName());
-    ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.SCHEDULE_NAME);
+    ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.EVERY_HOUR_SCHEDULE);
 
     // switch to BOB
     SecurityRequestContext.setUserId(BOB.getName());
@@ -1111,16 +1095,10 @@ public class AuthorizationTest extends TestBase {
     scheduleManager.resume();
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
     
-    // wait for workflow to start
-    workflowManager.waitForStatus(true);
-
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
     Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
-    // stop all the runs of the workflow so that the current namespace can be deleted after the test
-    workflowManager.stop();
-    workflowManager.waitForStatus(false, 5, 10);
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
   }
@@ -1247,9 +1225,10 @@ public class AuthorizationTest extends TestBase {
 
     // switch back to BOB and run spark again. this should work
     SecurityRequestContext.setUserId(BOB.getName());
-
     sparkManager.start(args);
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
+
+    waitForStoppedPrograms(sparkManager);
 
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1419,12 +1398,7 @@ public class AuthorizationTest extends TestBase {
       }
     }, 5, TimeUnit.MINUTES, "Not all program runs have failed status. Expected all run status to be failed");
 
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return programManager.isRunning();
-      }
-    }, 60, TimeUnit.SECONDS);
+    programManager.waitForStatus(false);
   }
 
 
@@ -1465,5 +1439,22 @@ public class AuthorizationTest extends TestBase {
       grantAndAssertSuccess(privilege.getKey(), principal, privilege.getValue());
       cleanUpEntities.add(privilege.getKey());
     }
+  }
+
+  private void waitForStoppedPrograms(final ProgramManager programManager) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        List<RunRecord> runs = programManager.getHistory();
+        for (RunRecord meta : runs) {
+          if (meta.getStatus() == ProgramRunStatus.STARTING ||
+            meta.getStatus() == ProgramRunStatus.RUNNING ||
+            meta.getStatus() == ProgramRunStatus.RESUMING) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }
