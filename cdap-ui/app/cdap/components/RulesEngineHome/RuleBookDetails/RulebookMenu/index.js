@@ -69,7 +69,7 @@ export default class RulebookMenu extends Component {
           var blob = new Blob([rulebook]);
           this.setState({
             downloadUrl: URL.createObjectURL(blob),
-            downloadFileName: this.props.rulebookid
+            downloadFileName: `${this.props.rulebookid}.rbk`
           }, () => {
             this.anchorLink.click();
             this.setState({
