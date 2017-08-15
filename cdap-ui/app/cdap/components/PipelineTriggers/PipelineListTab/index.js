@@ -110,6 +110,7 @@ function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, exp
                       isExpanded={expandedPipeline === pipeline.name}
                       onToggle={toggleExpandPipeline}
                       pipelineInfo={pipeline}
+                      selectedNamespace={selectedNamespace}
                     />
                   );
                 })
