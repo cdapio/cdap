@@ -44,9 +44,11 @@ export function changeNamespace(namespace) {
   });
 }
 
-export function enableSchedule(pipelineTrigger, activePipeline, config) {
+export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespace, config) {
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let scheduleName = `${activePipeline}.${namespace}.${pipelineTrigger.id}.${pipelineTrigger.namespace}`;
+  let scheduleName = `${activePipeline}.${namespace}.${pipelineTrigger.id}.${selectedNamespace}`;
+
+  console.log('pipelineTrigger', pipelineTrigger);
 
   let requestObj = {
     name: scheduleName,
@@ -58,7 +60,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, config) {
     properties: {},
     trigger: {
       programId: {
-        namespace: pipelineTrigger.namespace,
+        namespace: selectedNamespace,
         application: pipelineTrigger.id,
         version: pipelineTrigger.version,
         type: 'WORKFLOW',

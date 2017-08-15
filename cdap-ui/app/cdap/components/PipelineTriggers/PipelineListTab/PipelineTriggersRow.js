@@ -57,14 +57,15 @@ export default class PipelineTriggersRow extends Component {
       config.eventTriggers.push('FAILED');
     }
 
-    enableSchedule(this.props.pipelineInfo, this.pipelineName, config);
+    enableSchedule(this.props.pipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
   }
 
   render() {
     let {
       onToggle,
       pipelineRow,
-      pipelineInfo
+      pipelineInfo,
+      selectedNamespace
     } = this.props;
 
     if (!this.props.isExpanded) {
@@ -105,7 +106,7 @@ export default class PipelineTriggersRow extends Component {
           <span>
             {pipelineInfo.description}
           </span>
-          <a href={`/pipelines/ns/${pipelineInfo.namespace}/view/${pipelineRow}`}>
+          <a href={`/pipelines/ns/${selectedNamespace}/view/${pipelineRow}`}>
             {T.translate(`${TRIGGER_PREFIX}.viewPipeline`)}
           </a>
         </div>
@@ -158,6 +159,7 @@ PipelineTriggersRow.propTypes = {
   isExpanded: PropTypes.bool,
   onToggle: PropTypes.func,
   pipelineRow: PropTypes.string,
-  pipelineInfo: PropTypes.object
+  pipelineInfo: PropTypes.object,
+  selectedNamespace: PropTypes.string
 };
 
