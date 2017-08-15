@@ -437,7 +437,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
   @Category(XSlowTests.class)
   @Test
-
   public void testKillSuspendedWorkflow() throws Exception {
     HttpResponse response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
@@ -446,13 +445,16 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(workflow, 200);
-    waitState(workflow.toId(), ProgramStatus.RUNNING.name());
+    waitState(workflow, ProgramStatus.RUNNING.name());
 
     String runId = getRunIdOfRunningProgram(workflow.toId());
     suspendWorkflow(workflow.toId(), runId, 200);
 
+    // Workflow status should be SUSPENDED
+    waitState(workflow, ProgramStatus.STOPPED.name());
+
     stopProgram(workflow.toId(), runId, 200);
-    waitState(workflow.toId(), ProgramStatus.STOPPED.name());
+    waitState(workflow, ProgramStatus.STOPPED.name());
     verifyProgramRuns(workflow.toId(), ProgramRunStatus.KILLED.name(), 0);
   }
 

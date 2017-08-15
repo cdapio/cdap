@@ -304,9 +304,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
                            workflowStartTimeSecs + startDelaySecs);
 
       // MR job starts 2 seconds after workflow started
-      RunId mapreduceRunid = RunIds.generate(currentTimeMillis
-                                             + TimeUnit.SECONDS.toMillis(2)
-                                             - TimeUnit.SECONDS.toMillis(startDelaySecs));
+      RunId mapreduceRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(2));
       Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID,
                                                        mapreduceProgram.getProgram(),
                                                        ProgramOptionConstants.WORKFLOW_NAME,
@@ -338,9 +336,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
       systemArgs = ImmutableMap.of(ProgramOptionConstants.WORKFLOW_NODE_ID, sparkProgram.getProgram(),
                                    ProgramOptionConstants.WORKFLOW_NAME, workflowProgram.getProgram(),
                                    ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
-      RunId sparkRunid = RunIds.generate(currentTimeMillis
-                                         + TimeUnit.SECONDS.toMillis(20)
-                                         - TimeUnit.SECONDS.toMillis(startDelaySecs));
+      RunId sparkRunid = RunIds.generate(currentTimeMillis + TimeUnit.SECONDS.toMillis(20));
       workflowStartTimeSecs = RunIds.getTime(sparkRunid, TimeUnit.SECONDS);
       store.setStartAndRun(sparkProgram, sparkRunid.getId(), workflowStartTimeSecs,
                            workflowStartTimeSecs + startDelaySecs, ImmutableMap.<String, String>of(), systemArgs);

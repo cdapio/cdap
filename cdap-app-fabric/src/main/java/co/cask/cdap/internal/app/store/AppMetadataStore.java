@@ -351,7 +351,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     // Delete the old run record
     deleteAll(key);
 
-    // Build the key for TYPE_RUN_RECORD_STARTED
+    // Build the key for TYPE_RUN_RECORD_STARTING
     key = keyBuilder.add(pid).build();
     // The existing record's properties already contains the workflowRunId
     RunRecordMeta meta = new RunRecordMeta(pid, existing.getStartTs(), runTs, null, ProgramRunStatus.RUNNING,
