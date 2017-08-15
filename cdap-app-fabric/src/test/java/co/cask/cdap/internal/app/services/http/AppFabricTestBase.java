@@ -22,7 +22,6 @@ import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.client.DatasetClient;
 import co.cask.cdap.client.StreamClient;

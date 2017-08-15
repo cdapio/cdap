@@ -181,7 +181,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(dummyMR1, 404);
     Assert.assertEquals(STOPPED, getProgramStatus(dummyMR2));
 
-    // start map-reduce and verify runs
+    // start map-reduce and verify status
     startProgram(dummyMR2);
     waitState(dummyMR2, RUNNING);
 
@@ -353,8 +353,6 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(sleepWorkflow2, 200);
     startProgram(sleepWorkflow1, 200);
     startProgram(sleepWorkflow2, 200);
-    verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING, 1);
-    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
@@ -618,7 +616,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
+    waitState(wordcountFlow1, RUNNING);
 
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -726,7 +724,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
+    waitState(wordcountFlow1, RUNNING);
 
     response = doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
       "'runnableId': 'StreamSource'}]");
@@ -737,7 +735,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(service2);
-    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
+    waitState(service2, RUNNING);
 
     response = doPost(instancesUrl2, "[{'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService'," +
       " 'runnableId':'NoOpService'}]");
@@ -936,7 +934,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
-    verifyProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
+    waitState(wordcountFlow1, RUNNING);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                            WORDCOUNT_FLOW_NAME);
@@ -1103,7 +1101,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       }
     }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
+    waitState(service2, RUNNING);
 
     // verify instances
     try {

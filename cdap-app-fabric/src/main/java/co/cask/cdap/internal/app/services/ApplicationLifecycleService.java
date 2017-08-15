@@ -55,10 +55,12 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -69,6 +71,7 @@ import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.Scheduler;
@@ -81,7 +84,9 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -556,24 +561,25 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws CannotBeDeletedException : the application cannot be deleted because of running programs
    */
   private void ensureNoRunningPrograms(final ApplicationId appId) throws CannotBeDeletedException {
-    //Check if all are stopped.
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getParent().equals(appId);
-                         }
-                       });
+    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getRuns(ProgramRunStatus.RUNNING, null);
+    Map<ProgramRunId, RunRecordMeta> startingPrograms = store.getRuns(ProgramRunStatus.STARTING, null);
 
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
-    }
+    // Get the keys of the two Maps
+    Collection<ProgramRunId> runningProgramRuns = new HashSet<>(runningPrograms.keySet());
+    runningProgramRuns.addAll(startingPrograms.keySet());
 
-    if (!runningPrograms.isEmpty()) {
+    // Filter out the running program that are in the given appId
+    Collection<ProgramRunId> runningProgramsInSameApp = Collections2.filter(runningProgramRuns,
+                                                         new com.google.common.base.Predicate<ProgramRunId>() {
+                                                           @Override
+                                                           public boolean apply(ProgramRunId input) {
+                                                             return input.getParent().getParent().equals(appId);
+                                                           }
+                                                         });
+
+    if (!runningProgramsInSameApp.isEmpty()) {
       String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
+        .join(runningProgramsInSameApp);
       throw new CannotBeDeletedException(appId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
