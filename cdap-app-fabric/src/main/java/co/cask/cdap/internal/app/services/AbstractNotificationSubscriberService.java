@@ -156,6 +156,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
         try (CloseableIterator<Message> iterator = messagingContext.getMessageFetcher()
                                                                    .fetch(NamespaceId.SYSTEM.getNamespace(), topic,
                                                                           100, messageId)) {
+          System.out.println("GOT MESSAGE ON TOPIC " + topic);
           LOG.trace("Fetch with messageId = {}", messageId);
           while (iterator.hasNext() && !stopping) {
             Message message = iterator.next();
