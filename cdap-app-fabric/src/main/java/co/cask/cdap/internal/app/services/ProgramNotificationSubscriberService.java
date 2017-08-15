@@ -157,7 +157,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
-
+      System.out.println("PERSIST PROGRAM RUN " + programRunIdString + " STATUS " + programRunStatus);
       switch(programRunStatus) {
         case STARTING:
           long startTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.START_TIME);

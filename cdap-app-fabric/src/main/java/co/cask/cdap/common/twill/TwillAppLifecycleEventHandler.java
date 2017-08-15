@@ -28,6 +28,7 @@ import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
@@ -126,7 +127,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           new ZKClientModule(),
           new KafkaClientModule(),
           new DiscoveryRuntimeModule().getDistributedModules(),
-          new MessagingServerRuntimeModule().getDistributedModules(),
+          new MessagingClientModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
