@@ -90,7 +90,7 @@ export default function NodeMetricsGraph({data, xAxisTitle, yAxisTitle, metricTy
     }];
   } else if (!Array.isArray(data) && typeof data === 'object') {
     let firstKey = Object.keys(data)[0];
-    xDomain[1] = data[firstKey].data.length; // might not be right.
+    xDomain[1] = data[firstKey].data.length;
     Object
       .keys(data)
       .forEach(d => {

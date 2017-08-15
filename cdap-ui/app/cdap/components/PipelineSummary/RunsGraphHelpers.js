@@ -167,7 +167,7 @@ export function getDuration(time) {
   return moment.duration(time, 'seconds').humanize();
 }
 
-export function getGapFilledAccumulatedData(data) {
+export function getGapFilledAccumulatedData(data, numOfDataPoints) {
   let {x:minx, y:miny} = data[0];
   let maxx = data[data.length - 1].x;
   let numberOfEntries = maxx - minx;
@@ -182,5 +182,16 @@ export function getGapFilledAccumulatedData(data) {
       y: lasty
     };
   });
+  if (finalData.length < numOfDataPoints) {
+    let diff = numOfDataPoints - finalData.length;
+    let lastDataPoint = finalData[finalData.length - 1];
+    for (var i = 0; i < diff; i++) {
+      let currDataPoint = {
+        x: lastDataPoint.x + i,
+        y: lastDataPoint.y
+      };
+      finalData.push(currDataPoint);
+    }
+  }
   return finalData;
 }

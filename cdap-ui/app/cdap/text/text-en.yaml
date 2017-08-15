@@ -1243,7 +1243,7 @@ features:
       seconds: Seconds
       totalRecordsIn: "Total Records In: {totalRecordsIn}"
       totalRecordsOut: "Total Records Out: {totalRecordsOut}"
-      totalRecordsError: Total Errors
+      totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:
         duration: Duration

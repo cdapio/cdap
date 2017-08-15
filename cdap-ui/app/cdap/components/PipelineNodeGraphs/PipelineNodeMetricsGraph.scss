@@ -116,7 +116,7 @@ $error_records_label_color: #A40403;
         }
       }
       .node-metrics-single-datapoint {
-        font-size: 8em;
+        font-size: 4em;
         height: calc(100% - 50px);
         display: flex;
         flex-direction: column;
@@ -128,7 +128,8 @@ $error_records_label_color: #A40403;
           align-items: center;
 
           small {
-            font-size: 13px;
+            font-size: 14px;
+            margin-bottom: 10px;
           }
           span {
             line-height: 1;
