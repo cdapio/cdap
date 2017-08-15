@@ -21,6 +21,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,6 +38,8 @@ import java.util.concurrent.Future;
  * Interface for client-side scanning the data written with keys distribution
  */
 public class DistributedScanner implements ResultScanner {
+  private static final Logger LOG = LoggerFactory.getLogger(DistributedScanner.class);
+
   private final AbstractRowKeyDistributor keyDistributor;
   private final ResultScanner[] scanners;
   private final List<Result>[] nextOfScanners;
@@ -44,6 +48,7 @@ public class DistributedScanner implements ResultScanner {
   private final ExecutorService scansExecutor;
 
   private Result next = null;
+  private final String tableName;
 
   @SuppressWarnings("unchecked")
   private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
@@ -58,6 +63,22 @@ public class DistributedScanner implements ResultScanner {
     for (int i = 0; i < this.nextOfScanners.length; i++) {
       this.nextOfScanners[i] = new ArrayList<>();
     }
+    tableName = "empty";
+  }
+
+  private DistributedScanner(AbstractRowKeyDistributor keyDistributor,
+                             ResultScanner[] scanners,
+                             int caching,
+                             ExecutorService scansExecutor, String tableName) throws IOException {
+    this.keyDistributor = keyDistributor;
+    this.scanners = scanners;
+    this.caching = caching;
+    this.scansExecutor = scansExecutor;
+    this.nextOfScanners = new List[scanners.length];
+    for (int i = 0; i < this.nextOfScanners.length; i++) {
+      this.nextOfScanners[i] = new ArrayList<>();
+    }
+    this.tableName = tableName;
   }
 
   private boolean hasNext() throws IOException {
@@ -122,7 +143,7 @@ public class DistributedScanner implements ResultScanner {
       caching = hTable.getConfiguration().getInt("hbase.client.scanner.caching", 1);
     }
 
-    return new DistributedScanner(keyDistributor, rss, caching, scansExecutor);
+    return new DistributedScanner(keyDistributor, rss, caching, scansExecutor, hTable.getName().getNameAsString());
   }
 
   private Result nextInternal() throws IOException {
@@ -131,6 +152,7 @@ public class DistributedScanner implements ResultScanner {
 
     // advancing scanners if needed in multi-threaded way
     Future[] advanceFutures = new Future[scanners.length];
+
     for (int i = 0; i < nextOfScanners.length; i++) {
       if (nextOfScanners[i] == null) {
         // result scanner is exhausted, don't advance it any more
@@ -161,14 +183,17 @@ public class DistributedScanner implements ResultScanner {
         Result[] results = advanceFuture.get();
         if (results.length == 0) {
           // marking result scanner as exhausted
+          LOG.info("######## Result length is null for table {}", tableName);
           nextOfScanners[i] = null;
         } else {
           nextOfScanners[i].addAll(Arrays.asList(results));
         }
       } catch (InterruptedException e) {
+        LOG.info("######### Scan was interrupted for table {}", tableName);
         Thread.currentThread().interrupt();
         throw new IOException("Scan thread interrupted", e);
       } catch (ExecutionException e) {
+        LOG.info("######### Scan execution exception for table {}", tableName);
         Throwables.propagateIfPossible(e.getCause(), IOException.class);
         throw Throwables.propagate(e.getCause());
       }
@@ -191,8 +216,11 @@ public class DistributedScanner implements ResultScanner {
 
     if (indexOfScannerToUse >= 0) {
       nextOfScanners[indexOfScannerToUse].remove(0);
+    } else {
+      LOG.info("###### indexOfScannerToUse does not have anything {}", tableName);
     }
 
+    LOG.info("##### returning result {} for table {}", result, tableName);
     return result;
   }
 

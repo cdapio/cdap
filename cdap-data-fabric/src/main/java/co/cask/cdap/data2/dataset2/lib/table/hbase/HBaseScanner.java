@@ -22,8 +22,6 @@ import co.cask.cdap.hbase.wd.AbstractRowKeyDistributor;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -33,7 +31,6 @@ import javax.annotation.Nullable;
  * Implements Scanner on top of HBase resultSetScanner.
  */
 public class HBaseScanner implements Scanner {
-  private static final Logger LOG = LoggerFactory.getLogger(HBaseScanner.class);
 
   private final ResultScanner scanner;
   private final byte[] columnFamily;

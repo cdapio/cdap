@@ -282,8 +282,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
   @Override
   protected MetricsTable getTable(String name) throws Exception {
-    // add v3 so that all the tests are performed for v3 table
-    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name + "v3");
+    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name);
     DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true).build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null);
