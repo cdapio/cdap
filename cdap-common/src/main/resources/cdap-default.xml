@@ -516,6 +516,15 @@
   </property>
 
   <property>
+    <name>program.status.event.topic</name>
+    <value>programstatusevent</value>
+    <description>
+      Topic name for publishing program status events from program runners to the messaging system
+    </description>
+  </property>
+
+
+  <property>
     <name>workflow.token.max.size.mb</name>
     <value>30</value>
     <description>
@@ -1715,7 +1724,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic},${program.status.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2318,6 +2327,47 @@
     <value>exponential.backoff</value>
     <description>
       The type of retry policy for MapReduce programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>program.message.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>program.message.retry.policy.max.delay.ms</name>
+    <value>3000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>program.message.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>program.message.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>program.message.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>

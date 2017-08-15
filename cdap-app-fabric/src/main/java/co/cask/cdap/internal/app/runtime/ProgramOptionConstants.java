@@ -27,6 +27,12 @@ public final class ProgramOptionConstants {
 
   public static final String TWILL_RUN_ID = "twillRunId";
 
+  public static final String PROGRAM_ID = "programId";
+
+  public static final String PROGRAM_STATUS = "programStatus";
+
+  public static final String PROGRAM_RUN_ID = "programRunId";
+
   public static final String INSTANCE_ID = "instanceId";
 
   public static final String INSTANCES = "instances";
@@ -34,6 +40,10 @@ public final class ProgramOptionConstants {
   public static final String HOST = "host";
 
   public static final String LOGICAL_START_TIME = "logical.start.time";
+
+  public static final String START_TIME = "start.time";
+
+  public static final String END_TIME = "end.time";
 
   public static final String RETRY_COUNT = "retryCount";
 
@@ -66,6 +76,8 @@ public final class ProgramOptionConstants {
   public static final String SYSTEM_OVERRIDES = "systemOverrides";
 
   public static final String USER_OVERRIDES = "userOverrides";
+
+  public static final String PROGRAM_ERROR = "programError";
 
   /**
    * Option to a local file path of a directory containing plugins artifacts.
