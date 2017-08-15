@@ -78,6 +78,9 @@ public abstract class AbstractRowKeyDistributor implements Parametrizable {
     Scan[] scans = new Scan[intervals.length];
     for (int i = 0; i < intervals.length; i++) {
       scans[i] = new Scan(original);
+      if (scans[i].getFilter() != null) {
+        scans[i].setSmall(true);
+      }
       scans[i].setStartRow(intervals[i].getFirst());
       scans[i].setStopRow(intervals[i].getSecond());
     }
