@@ -202,7 +202,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String runId = historyRuns.get(0).getPid();
     stopProgram(dummyMR2, runId, 200);
 
-    assertProgramRuns(dummyMR2.toEntityId(), ProgramRunStatus.RUNNING, 0);
+    assertRunHistory(dummyMR2, ProgramRunStatus.RUNNING, 0, 20, TimeUnit.SECONDS);
 
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
