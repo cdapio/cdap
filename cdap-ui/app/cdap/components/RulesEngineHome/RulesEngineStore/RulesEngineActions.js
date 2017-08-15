@@ -19,7 +19,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import MyRulesEngineApi from 'api/rulesengine';
 import isNil from 'lodash/isNil';
 
-const getRuleBooks = (openRulesTab=false) => {
+const getRuleBooks = () => {
   let {selectedNamespace: namespace} = NamespaceStore.getState();
   MyRulesEngineApi.getRulebooks({
     namespace
@@ -33,14 +33,6 @@ const getRuleBooks = (openRulesTab=false) => {
             rulebooks: res.values
           }
         });
-        if (openRulesTab) {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETACTIVETAB,
-            payload: {
-              activeTab: '2'
-            }
-          });
-        }
         if (rulebooks.activeRulebookId) {
           setActiveRulebook(rulebooks.activeRulebookId);
         } else if (res.values.length) {
@@ -115,11 +107,22 @@ const createNewRuleBook = (config) => {
   MyRulesEngineApi
     .createRulebook(urlParams, postBody,headers)
     .subscribe(
-      () => {
+      (res) => {
         resetCreateRuleBook();
-        getRuleBooks(true);
+        setActiveRulebook(res.values[0]);
+        getRuleBooks();
+        setActiveTab('2'); // 2 being the index of the Rules tab
       }
     );
+};
+
+const setActiveTab = (activeTab) => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.SETACTIVETAB,
+    payload: {
+      activeTab
+    }
+  });
 };
 
 const resetCreateRuleBook = () => {
