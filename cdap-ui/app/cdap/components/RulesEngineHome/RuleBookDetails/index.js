@@ -169,7 +169,14 @@ export default class RuleBookDetails extends Component {
     return (
       <div className="rule-book-details">
         <div className="rule-book-name-header">
-          <h3>{rulebookDetails.id}</h3>
+          <div className="rule-book-name-version">
+            <strong className="rule-book-name">
+              {rulebookDetails.id}
+            </strong>
+            <p className="rule-book-version">
+              {T.translate(`${PREFIX}.version`, {version: rulebookDetails.version})}
+            </p>
+          </div>
           <div>
             {
               integration.embedded ?
@@ -194,15 +201,15 @@ export default class RuleBookDetails extends Component {
         </div>
         <div className="rule-book-metadata">
           <div>
-            <span> {T.translate(`${PREFIX}.owner`)}: </span>
+            <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
             <span> {rulebookDetails.user}</span>
           </div>
           <div>
-            <span>{T.translate(`${PREFIX}.lastupdated`)}: </span>
+            <strong>{T.translate(`${PREFIX}.lastmodified`)}: </strong>
             <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
           </div>
         </div>
-        <p>
+        <p className="rule-book-description">
           {rulebookDetails.description}
         </p>
         <RulesList
