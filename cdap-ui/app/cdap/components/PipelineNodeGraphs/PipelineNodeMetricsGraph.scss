@@ -47,7 +47,9 @@ $error_records_label_color: #A40403;
     }
     .title {
       font-size: 18px;
-      font-weight: 500;
+    }
+    > div:not(.title) {
+      font-size: 14px;
     }
   }
   .node-metrics-container {
@@ -91,6 +93,9 @@ $error_records_label_color: #A40403;
             .rv-discrete-color-legend-item.horizontal {
               display: inline-block;
               margin: 0 40px 0 0;
+              .rv-discrete-color-legend-item__title {
+                font-size: 14px;
+              }
               .rv-discrete-color-legend-item__color {
                 display: inline-block;
                 vertical-align: bottom;
@@ -155,9 +160,9 @@ body.theme-cdap.state-hydrator {
         >thead tr th {
           padding: 10px;
           padding-left: 0;
-          white-space: normal;
-          border: 0;
-          vertical-align: top;
+          font-size: 18px;
+          font-weight: normal;
+          max-width: 180px;
         }
         > tbody tr td {
           border: 0;

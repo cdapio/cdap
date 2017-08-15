@@ -182,12 +182,12 @@ export default class PipelineNodeMetricsGraph extends Component {
   }
 
   fetchProcessTimeMetrics = () => {
-    let processTimeRegex = new RegExp(/user.*.time.avg$|user.*.time.max$|user.*.time.min$|user.*.time.stddev|user.*.records.in|user.*.records.out|user.*.records.error/);
-    let processTimeMetrics = this.props.metrics.filter(metric => processTimeRegex.test(metric));
+    // let processTimeRegex = new RegExp(/user.*.time.avg$|user.*.time.max$|user.*.time.min$|user.*.time.stddev|user.*.records.in|user.*.records.out|user.*.records.error/);
+    // let processTimeMetrics = this.props.metrics.filter(metric => processTimeRegex.test(metric));
     let {namespace, app, programType, programId, runRecord} = this.props.runContext;
     let postBody = {
       qid: {
-        metrics: processTimeMetrics,
+        metrics: this.props.metrics,
         tags: {
           namespace,
           app,
@@ -207,7 +207,7 @@ export default class PipelineNodeMetricsGraph extends Component {
           let recordsOut, recordsIn, recordsError;
           let processTimeMetrics = {};
           data.forEach(d => {
-            let metricName;
+            let metricName = d.metricName;
             REGEXTOLABELLIST.forEach(metricObj => {
               if (metricObj.regex.test(d.metricName)) {
                 metricName = metricObj.id;
@@ -327,12 +327,25 @@ export default class PipelineNodeMetricsGraph extends Component {
     );
   }
   renderProcesstimeTable = () => {
+    let totalProcessingTime, recordsOut;
+    Object
+      .keys(this.state.processTimeMetrics)
+      .forEach(metric => {
+        if (metric.match(/user.*.process.time.total/)) {
+          totalProcessingTime = this.state.processTimeMetrics[metric];
+        }
+        if (metric.match(/user.*.records.out/)) {
+          recordsOut = this.state.processTimeMetrics[metric];
+        }
+      });
+    let processRate = parseFloat(recordsOut / totalProcessingTime, 10).toFixed(3);
+    let avgProcessingTIme = parseFloat(1 / processRate, 10).toFixed(2);
+
     return (
       <div className="process-time-table-container">
         <table className="table table-sm">
           <thead>
             <tr>
-              <th>{T.translate(`${PREFIX}.processTimeTable.recordInPerSec`)}</th>
               <th>{T.translate(`${PREFIX}.processTimeTable.recordOutPerSec`)}</th>
               <th>{T.translate(`${PREFIX}.processTimeTable.minProcessTime`)}</th>
               <th>{T.translate(`${PREFIX}.processTimeTable.maxProcessTime`)}</th>
@@ -342,12 +355,11 @@ export default class PipelineNodeMetricsGraph extends Component {
           </thead>
           <tbody>
             <tr>
-              <td></td>
-              <td></td>
+              <td>{processRate}</td>
               <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[0].id] / 1000))}</td>
               <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[1].id] / 1000))}</td>
               <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[2].id] / 1000))}</td>
-              <td>{humanReadableDuration(Math.ceil(this.state.processTimeMetrics[REGEXTOLABELLIST[3].id] / 1000))}</td>
+              <td>{avgProcessingTIme}</td>
             </tr>
           </tbody>
         </table>
