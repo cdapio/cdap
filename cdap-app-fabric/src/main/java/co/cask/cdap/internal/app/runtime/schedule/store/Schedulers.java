@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
@@ -45,6 +46,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.gson.reflect.TypeToken;
 import joptsimple.internal.Strings;
@@ -58,6 +60,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -79,6 +82,15 @@ public class Schedulers {
 
   public static String triggerKeyForPartition(DatasetId datasetId) {
     return "partition:" + datasetId.getNamespace() + '.' + datasetId.getDataset();
+  }
+
+  public static Set<String> triggerKeysForProgramStatus(ProgramId programId, Set<ProgramStatus> programStatuses) {
+    ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
+    String programIdString = programId.toString();
+    for (ProgramStatus status : programStatuses) {
+      triggerKeysBuilder.add(programIdString +  "." + status.toString().toLowerCase());
+    }
+    return triggerKeysBuilder.build();
   }
 
   public static JobQueueDataset getJobQueue(DatasetContext context, DatasetFramework dsFramework) {

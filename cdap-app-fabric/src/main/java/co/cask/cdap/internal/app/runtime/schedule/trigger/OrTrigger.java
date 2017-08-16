@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
 
   @Override
   public boolean isSatisfied(List<Notification> notifications) {
-    for (SatisfiableTrigger trigger : satisfiableTriggers) {
-      if (trigger.isSatisfied(notifications)) {
+    for (Trigger trigger : triggers) {
+      if (((SatisfiableTrigger) trigger).isSatisfied(notifications)) {
         return true;
       }
     }

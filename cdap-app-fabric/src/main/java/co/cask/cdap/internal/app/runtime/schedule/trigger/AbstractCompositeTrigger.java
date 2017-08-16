@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.ProtoTrigger;
 import com.google.common.collect.ImmutableSet;
 
@@ -31,19 +32,17 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   implements SatisfiableTrigger {
   // A map of non-composite trigger type and set of triggers of the same type
   private Map<Type, Set<SatisfiableTrigger>> unitTriggers;
-  protected final SatisfiableTrigger[] satisfiableTriggers;
 
   public AbstractCompositeTrigger(Type type, SatisfiableTrigger... triggers) {
     super(type, triggers);
-    satisfiableTriggers = triggers;
   }
 
   @Override
   public Set<String> getTriggerKeys() {
     // Only keep unique trigger keys in the set
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
-    for (SatisfiableTrigger trigger : satisfiableTriggers) {
-      triggerKeysBuilder.addAll(trigger.getTriggerKeys());
+    for (Trigger trigger : triggers) {
+      triggerKeysBuilder.addAll(((SatisfiableTrigger) trigger).getTriggerKeys());
     }
     return triggerKeysBuilder.build();
   }
@@ -60,7 +59,7 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
 
   private void initializeUnitTriggers() {
     unitTriggers = new HashMap<>();
-    for (SatisfiableTrigger trigger : satisfiableTriggers) {
+    for (Trigger trigger : triggers) {
       // Add current non-composite trigger to the corresponding set in the map
       Type triggerType = ((ProtoTrigger) trigger).getType();
       if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
@@ -82,7 +81,7 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
           triggerSet = new HashSet<>();
           unitTriggers.put(triggerType, triggerSet);
         }
-        triggerSet.add(trigger);
+        triggerSet.add((SatisfiableTrigger) trigger);
       }
     }
   }

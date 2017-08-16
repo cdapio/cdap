@@ -18,11 +18,11 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -50,11 +50,6 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
 
   @Override
   public Set<String> getTriggerKeys() {
-    ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
-    String programIdString = programId.toString();
-    for (ProgramStatus status : programStatuses) {
-      triggerKeysBuilder.add(programIdString +  "." + status.toString().toLowerCase());
-    }
-    return triggerKeysBuilder.build();
+    return Schedulers.triggerKeysForProgramStatus(programId, programStatuses);
   }
 }

@@ -644,9 +644,10 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       : new ApplicationId(triggerNamespaceId, triggerAppName, triggerAppVersion);
     final ProgramId triggerProgramId = appId.program(ProgramType.valueOfCategoryName(triggerProgramType),
                                                      triggerProgramName);
-    Collection<ProgramScheduleRecord> schedules = programScheduler.findSchedules(triggerProgramId.toString());
+    programScheduler.findSchedules(triggerProgramId.toString());
+    Set<ProgramScheduleRecord> schedules = new HashSet<>();
+    final Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
     if (triggerProgramStatuses != null) {
-      final Set<co.cask.cdap.api.ProgramStatus> queryProgramStatuses = new HashSet<>();
       try {
         for (String status : triggerProgramStatuses.split(",")) {
           queryProgramStatuses.add(co.cask.cdap.api.ProgramStatus.valueOf(status));
@@ -656,15 +657,14 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                       "valid ProgramStatus names such as COMPLETED, FAILED, KILLED.",
                                                     triggerProgramStatuses), e);
       }
-      Iterator<ProgramScheduleRecord> iterator = schedules.iterator();
-      while (iterator.hasNext()) {
-        // Remove the schedule if none of its triggering program statuses is in the query program statuses set
-        Set<co.cask.cdap.api.ProgramStatus> triggerProgramStatusesSet =
-          ((ProgramStatusTrigger) iterator.next().getSchedule().getTrigger()).getProgramStatuses();
-        if (Sets.intersection(triggerProgramStatusesSet, queryProgramStatuses).isEmpty()) {
-          iterator.remove();
-        }
+    } else {
+      // Query for schedules with all the statuses if no query status is specified
+      for (co.cask.cdap.api.ProgramStatus status: co.cask.cdap.api.ProgramStatus.values()) {
+        queryProgramStatuses.add(status);
       }
+    }
+    for (String triggerKey : Schedulers.triggerKeysForProgramStatus(triggerProgramId, queryProgramStatuses)) {
+      schedules.addAll(programScheduler.findSchedules(triggerKey));
     }
     List<ScheduleDetail> details = Schedulers.toScheduleDetails(schedules);
     if (asScheduleSpec) {

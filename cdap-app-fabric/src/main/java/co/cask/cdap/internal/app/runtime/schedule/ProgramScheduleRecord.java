@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import com.google.common.base.Objects;
+
 /**
  * Represents all information for a schedule in the schedule store.
  */
@@ -34,5 +36,26 @@ public class ProgramScheduleRecord {
 
   public ProgramScheduleMeta getMeta() {
     return meta;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ProgramScheduleRecord that = (ProgramScheduleRecord) o;
+
+    return Objects.equal(this.schedule, that.schedule) &&
+      Objects.equal(this.meta, that.meta);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(schedule, meta);
   }
 }
