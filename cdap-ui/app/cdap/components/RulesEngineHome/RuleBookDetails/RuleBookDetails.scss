@@ -14,8 +14,10 @@
  * the License.
 */
 
-@import '../RulesEngineHome.scss';
+@import '../RulesEngineWrapper.scss';
 @import '../../../styles/variables.scss';
+
+$loading_bar_color: white;
 
 .rule-book-details {
   padding: $tab_header_height;
@@ -40,8 +42,28 @@
     justify-content: center;
     align-items: center;
   }
-  h3 {
-    font-weight: bolder;
+  .rule-book-name-header {
+    display: flex;
+    justify-content: space-between;
+
+    .btn {
+      height: 35px;
+      padding-top: 0;
+      padding-bottom: 0;
+
+      .loading-bar {
+        height: 18px;
+        vertical-align: top;
+        rect {
+          fill: $loading_bar_color;
+        }
+      }
+    }
+    h3 {
+      font-weight: bolder;
+      margin: 0;
+      line-height: 1;
+    }
   }
   .rule-book-metadata {
     font-size: 14px;

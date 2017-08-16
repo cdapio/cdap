@@ -57,9 +57,11 @@ export default class RulesTab extends Component {
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rules} = RulesEngineStore.getState();
-      this.setState({
-        rules: rules.list
-      });
+      if (Array.isArray(rules.list)) {
+        this.setState({
+          rules: rules.list
+        });
+      }
     });
   }
 
@@ -96,7 +98,7 @@ export default class RulesTab extends Component {
     }
 
     return (
-      <div className="container">
+      <div className="rules-container">
         <Row>
           <Col xs="7">
             {T.translate(`commons.nameLabel`)}
