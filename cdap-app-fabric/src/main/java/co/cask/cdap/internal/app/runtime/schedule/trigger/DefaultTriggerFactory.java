@@ -25,6 +25,8 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.Map;
+
 /**
  * The default implementation of {@link TriggerFactory}
  */
@@ -70,6 +72,15 @@ public class DefaultTriggerFactory implements TriggerFactory {
   }
 
   @Override
+  public Trigger onProgramStatus(String programNamespace, String application, String appVersion,
+                                 ProgramType programType, String program, Map<String, String> runtimeArgs,
+                                 ProgramStatus... programStatuses) {
+     return new ProgramStatusTrigger(new ApplicationId(programNamespace, application, appVersion)
+                                       .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()), program),
+                                     runtimeArgs, programStatuses);
+  }
+
+  @Override
   public Trigger onProgramStatus(String programNamespace, String application, ProgramType programType,
                                  String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTrigger(new ApplicationId(programNamespace, application)
@@ -88,5 +99,11 @@ public class DefaultTriggerFactory implements TriggerFactory {
   @Override
   public Trigger onProgramStatus(ProgramType programType, String program, ProgramStatus... programStatuses) {
     return new ProgramStatusTriggerBuilder(programType.name(), program, programStatuses);
+  }
+
+  @Override
+  public Trigger onProgramStatus(ProgramType programType, String program, Map<String, String> runtimeArgs,
+                                 ProgramStatus... programStatuses) {
+    return new ProgramStatusTriggerBuilder(programType.name(), program, runtimeArgs, programStatuses);
   }
 }

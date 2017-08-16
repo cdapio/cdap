@@ -170,7 +170,8 @@ public interface ScheduleBuilder {
    * @param appVersion the version of the application
    * @param programType the type of the program, as supported by the system
    * @param program the name of the program
-   * @param runtimeArgs
+   * @param runtimeArgs the map with triggering program's runtime argument names as keys and the corresponding
+   *                    runtime arguments to be overridden in the triggered program as values
    * @param programStatuses the set of statuses to trigger the schedule. The schedule will be triggered if the status of
    *                        the specific program transitioned to one of these statuses.
    * @return a {@link ScheduleCreationSpec}
@@ -204,6 +205,15 @@ public interface ScheduleBuilder {
    * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
    */
   ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
+                                              ProgramStatus... programStatuses);
+
+  /**
+   * Creates a schedule which is triggered when the given program in the same namespace, application,
+   * and application version transitions to any one of the given program statuses.
+   *
+   * @see #triggerOnProgramStatus(String, String, ProgramType, String, ProgramStatus...)
+   */
+  ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program, Map<String, String> runtimeArgs,
                                               ProgramStatus... programStatuses);
 
   /**

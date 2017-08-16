@@ -27,6 +27,7 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.id.ProgramId;
@@ -81,12 +82,19 @@ public final class ScheduleTaskRunner {
     // notificationProperties is present only in jobs containing schedules with TimeTrigger and StreamSizeTrigger.
     // Since both triggers are satisfied by the first notification, there can be only one notification in in the job
     Map<String, String> notificationProperties = job.getNotifications().get(0).getProperties();
-    userArgs.putAll(schedule.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
+    userArgs.putAll(schedule.getProperties());
     String userOverridesString = notificationProperties.get(ProgramOptionConstants.USER_OVERRIDES);
-    if (userOverridesString != null) {
+    if (userOverridesString != null && job.getSchedule().getTrigger() instanceof ProgramStatusTrigger) {
+      Map<String, String> runtimeArgsRedirectMap =
+        ((ProgramStatusTrigger) job.getSchedule().getTrigger()).getRuntimeArgsMap();
       Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
-      userArgs.putAll(userOverrides);
+      for (Map.Entry<String, String> entry : userOverrides.entrySet()) {
+        String triggeringPipelineRuntimeArgName = entry.getKey();
+        if (runtimeArgsRedirectMap.containsKey(triggeringPipelineRuntimeArgName)) {
+          userArgs.put(runtimeArgsRedirectMap.get(triggeringPipelineRuntimeArgName), entry.getValue());
+        }
+      }
     }
 
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));

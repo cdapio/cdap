@@ -21,6 +21,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,9 @@ public class AppWithMultipleSchedules extends AbstractApplication {
   public static final String ANOTHER_WORKFLOW = "AnotherWorkflow";
   public static final String TRIGGERED_WORKFLOW = "TriggeredWorkflow";
   public static final String WORKFLOW_COMPLETED_SCHEDULE = "WorkflowCompletedSchedule";
+  public static final String TRIGGERING_ARGUMENT_NAME = "triggering.argument.name";
+  public static final String CURRENT_ARGUMENT_NAME = "current.argument.name";
+
 
   @Override
   public void configure() {
@@ -56,7 +60,9 @@ public class AppWithMultipleSchedules extends AbstractApplication {
                .triggerOnProgramStatus(ProgramType.WORKFLOW, SOME_WORKFLOW,
                                        ProgramStatus.COMPLETED, ProgramStatus.FAILED));
     schedule(buildSchedule(WORKFLOW_COMPLETED_SCHEDULE, ProgramType.WORKFLOW, TRIGGERED_WORKFLOW)
-               .triggerOnProgramStatus(ProgramType.WORKFLOW, ANOTHER_WORKFLOW, ProgramStatus.COMPLETED));
+               .triggerOnProgramStatus(ProgramType.WORKFLOW, ANOTHER_WORKFLOW,
+                                       ImmutableMap.of(TRIGGERING_ARGUMENT_NAME, CURRENT_ARGUMENT_NAME),
+                                       ProgramStatus.COMPLETED));
   }
 
   /**

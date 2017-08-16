@@ -141,10 +141,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
                                                      String appVersion, ProgramType programType, String program,
                                                      Map<String, String> runtimeArgs,
                                                      ProgramStatus... programStatuses) {
-    return triggerOn(new ProgramStatusTrigger(new ApplicationId(programNamespace, application, appVersion)
-                                                .program(co.cask.cdap.proto.ProgramType.valueOf(programType.name()),
-                                                         program),
-                                              runtimeArgs, programStatuses));
+    return triggerOn(triggerFactory.onProgramStatus(programNamespace, application, appVersion,
+                                                    programType, program, runtimeArgs, programStatuses));
   }
 
   @Override
@@ -165,6 +163,12 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
   public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
     return triggerOn(triggerFactory.onProgramStatus(programType, program, programStatuses));
+  }
+
+  @Override
+  public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
+                                                     Map<String, String> runtimeArgs, ProgramStatus... programStatuses) {
+    return triggerOn(triggerFactory.onProgramStatus(programType, program, runtimeArgs, programStatuses));
   }
 
   @Override

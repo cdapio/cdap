@@ -21,8 +21,10 @@ import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.EnumSet;
+import java.util.Map;
 
 /**
  * A Trigger builder that builds a {@link ProgramStatusTrigger}.
@@ -31,10 +33,17 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   private final ProgramType programType;
   private final String programName;
   private final EnumSet<ProgramStatus> programStatuses;
+  private final Map<String, String> runtimeArgs;
 
   public ProgramStatusTriggerBuilder(String programType, String programName, ProgramStatus... programStatuses) {
+    this(programType, programName, ImmutableMap.<String, String>of(), programStatuses);
+  }
+
+  public ProgramStatusTriggerBuilder(String programType, String programName, Map<String, String> runtimeArgs,
+                                     ProgramStatus... programStatuses) {
     this.programType = ProgramType.valueOf(programType);
     this.programName = programName;
+    this.runtimeArgs = runtimeArgs;
 
     // User can not specify any program statuses, or specify null, which is an array of length 1 containing null
     if (programStatuses.length == 0 || (programStatuses.length == 1 && programStatuses[0] == null)) {
@@ -48,6 +57,6 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
     // Inherit environment attributes from the deployed application
     ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(programType,
                                                                                                     programName);
-    return new ProgramStatusTrigger(programId, programStatuses);
+    return new ProgramStatusTrigger(programId, programStatuses, runtimeArgs);
   }
 }

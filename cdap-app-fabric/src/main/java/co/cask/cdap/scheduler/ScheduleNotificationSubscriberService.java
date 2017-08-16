@@ -46,6 +46,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
@@ -147,7 +148,14 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
                  properties);
         return;
       }
-      ScheduleId scheduleId = ScheduleId.fromString(scheduleIdString);
+      ScheduleId scheduleId;
+      try {
+        scheduleId = GSON.fromJson(scheduleIdString, ScheduleId.class);
+      } catch (JsonSyntaxException e) {
+        // If the notification is from pre-4.3 version, scheduleId is not in JSON format,
+        // parse it with fromString method
+        scheduleId = ScheduleId.fromString(scheduleIdString);
+      }
       ProgramScheduleRecord record;
       try {
         record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
@@ -243,16 +251,12 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
 
       for (ProgramScheduleRecord schedule : enabledSchedules) {
-        // Copy over the user runtime arguments
-        String prefix = schedule.getSchedule().getProgramId().getNamespace() + "." +
-                        schedule.getSchedule().getProgramId().getApplication();
-
         Map<String, String> triggeringProgramRunProperties =
           GSON.fromJson(triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
                         MAP_STRING_STRING_TYPE);
         Map<String, String> triggeredProgramRunProperties = new HashMap<>();
         for (Map.Entry<String, String> entry : triggeringProgramRunProperties.entrySet()) {
-          triggeredProgramRunProperties.put(prefix + "." + entry.getKey(), entry.getValue());
+          triggeredProgramRunProperties.put(entry.getKey(), entry.getValue());
         }
 
         Map<String, String> triggeredProgramProperties = new HashMap<>();
@@ -269,6 +273,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
           BasicWorkflowToken userWorkflowToken = new BasicWorkflowToken(
             cConf.getInt(Constants.AppFabric.WORKFLOW_TOKEN_MAX_SIZE_MB));
           userWorkflowToken.setCurrentNode(programId.getProgram());
+
+          String prefix = schedule.getSchedule().getProgramId().getNamespace() + "." +
+            schedule.getSchedule().getProgramId().getApplication();
 
           for (Map.Entry<String, List<NodeValue>> entry : userValues.entrySet()) {
             for (NodeValue nodeValue : entry.getValue()) {

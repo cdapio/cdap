@@ -395,10 +395,10 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Enable the schedule
     scheduler.enableSchedule(APP_MULT_ID.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
 
-    String dummyUserKey = "dummy.user.argument.key";
     String dummyUserValue = "dummy.user.argument.value";
     // Start a program that writes to the workflow token with some user arguments
-    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
+    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(AppWithMultipleSchedules.TRIGGERING_ARGUMENT_NAME,
+                                                   dummyUserValue), 200);
 
     // Wait for a completed run record
     assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
@@ -416,9 +416,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Map<String, String> userOverrides = GSON.fromJson(latestRun.getProperties()
                                                         .get(ProgramOptionConstants.RUNTIME_ARGS),
                                                       STRING_STRING_MAP);
-    Assert.assertEquals(dummyUserValue, userOverrides.get(ANOTHER_WORKFLOW.getNamespace() + "." +
-                                                          ANOTHER_WORKFLOW.getApplication() + "." +
-                                                          dummyUserKey));
+    Assert.assertEquals(dummyUserValue, userOverrides.get(AppWithMultipleSchedules.CURRENT_ARGUMENT_NAME));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
