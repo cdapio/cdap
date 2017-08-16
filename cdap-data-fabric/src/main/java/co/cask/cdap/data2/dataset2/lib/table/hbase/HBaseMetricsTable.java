@@ -338,7 +338,7 @@ public class HBaseMetricsTable implements MetricsTable {
         if (rowKeyDistributor != null) {
           fuzzyPairs.addAll(rowKeyDistributor.getDistributedFilterPairs(pair));
         } else {
-          // Make a copy of filter pair because the key and mask will get modified in HBase FuzzyRowFilter
+          // Make a copy of filter pair because the key and mask will get modified in HBase FuzzyRowFilter.
           fuzzyPairs.add(Pair.newPair(Arrays.copyOf(pair.getFirst(), pair.getFirst().length),
                                       Arrays.copyOf(pair.getSecond(), pair.getSecond().length)));
         }
