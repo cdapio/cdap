@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.authorization;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
@@ -111,9 +112,16 @@ public class AuthorizationUtil {
    * @throws UnauthorizedException if the principal does not have any privilege in the action set on the entity
    */
   public static void ensureAccess(EntityId entityId, AuthorizationEnforcer authorizationEnforcer,
-                            Principal principal) throws Exception {
+                                  Principal principal) throws Exception {
     if (authorizationEnforcer.isVisible(Collections.singleton(entityId), principal).isEmpty()) {
       throw new UnauthorizedException(principal, entityId);
     }
+  }
+
+  /**
+   * Checks if authorization is enabled
+   */
+  public static boolean isSecurityAuthorizationEnabled(CConfiguration cConf) {
+    return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(Constants.Security.Authorization.ENABLED);
   }
 }

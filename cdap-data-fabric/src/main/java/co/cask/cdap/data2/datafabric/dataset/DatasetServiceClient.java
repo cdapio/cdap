@@ -34,6 +34,7 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.common.http.HttpMethod;
@@ -90,7 +91,7 @@ class DatasetServiceClient {
     this.authenticationContext = authenticationContext;
     String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     try {
-      if (securityEnabled && kerberosEnabled) {
+      if (AuthorizationUtil.isSecurityAuthorizationEnabled(cConf)) {
         this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
       } else {
         this.masterShortUserName = null;

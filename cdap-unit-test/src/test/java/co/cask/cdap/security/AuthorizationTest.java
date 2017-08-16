@@ -1110,11 +1110,6 @@ public class AuthorizationTest extends TestBase {
     // try to resume the schedule. This should pass and workflow should run
     scheduleManager.resume();
     Assert.assertEquals(ProgramScheduleStatus.SCHEDULED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
-
-    // todo: remove grant after https://issues.cask.co/browse/CDAP-12147 is fixed
-    grantAndAssertSuccess(workflowID, new Principal(UserGroupInformation.getLoginUser().getShortUserName(),
-                                                    Principal.PrincipalType.USER),
-                          EnumSet.of(Action.EXECUTE));
     
     // wait for workflow to start
     workflowManager.waitForStatus(true);
