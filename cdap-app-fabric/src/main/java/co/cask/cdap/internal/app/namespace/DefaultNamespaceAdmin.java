@@ -66,7 +66,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -484,12 +483,5 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
-  }
-
-  private void ensureAccess(NamespaceId namespaceId) throws Exception {
-    if (authorizationEnforcer.isVisible(Collections.singleton(namespaceId),
-                                        authenticationContext.getPrincipal()).isEmpty()) {
-      throw new UnauthorizedException(authenticationContext.getPrincipal(), namespaceId);
-    }
   }
 }
