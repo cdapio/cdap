@@ -16,7 +16,6 @@
 
 $rule_row_bg_color: white;
 $rule_row_border_color: #cccccc;
-$rule_expanded_bg_color: #eeeeee;
 $dsv_editor_input_border_color: rgba(0, 0, 0, 0.15);
 $drag_bars_color: gray;
 
@@ -39,12 +38,8 @@ $drag_bars_color: gray;
     }
 
     &.expanded {
-      background: $rule_expanded_bg_color;
+      background: $rule_row_bg_color;
       font-weight: bold;
-
-      &:hover {
-        background: $rule_expanded_bg_color;
-      }
 
       form {
         padding: 20px 0;
