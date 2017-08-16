@@ -143,11 +143,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   @Override
-  public String toString() {
-    return String.format("name=%s, %s", spec.getName(), super.toString());
-  }
-
-  @Override
   public <K, V> void write(String namedOutput, K key, V value) throws IOException, InterruptedException {
     if (multipleOutputs == null) {
       throw new IOException("MultipleOutputs has not been initialized.");

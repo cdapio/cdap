@@ -98,20 +98,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
     throws IOException, InterruptedException {
     // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
     if (committer == null) {
-      // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
-      // same order as outputs were added. This makes multi-output a little more predictable (and testable).
-      Map<String, OutputCommitter> committers = new LinkedHashMap<>();
-      for (String name : MultipleOutputs.getNamedOutputsList(context)) {
-        Class<? extends OutputFormat> namedOutputFormatClass =
-          MultipleOutputs.getNamedOutputFormatClass(context, name);
-
-        TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
-
-        OutputFormat<K, V> outputFormat =
-          ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
-        committers.put(name, outputFormat.getOutputCommitter(namedContext));
-      }
-      committer = new MainOutputCommitter(committers);
+      committer = new MainOutputCommitter(context);
     }
 
     return committer;

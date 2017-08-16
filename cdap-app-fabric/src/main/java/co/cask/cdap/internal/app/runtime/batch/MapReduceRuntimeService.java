@@ -171,12 +171,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final BasicMapReduceContext context;
   private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
-  private final TransactionSystemClient txClient;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   private Job job;
-  private Transaction transaction;
   private Runnable cleanupTask;
 
   // this will remain false until the job completes and we set it to job.isSuccessful()
@@ -189,9 +187,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
-                          BasicMapReduceContext context,
-                          Location programJarLocation, NamespacedLocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          BasicMapReduceContext context, Location programJarLocation,
+                          NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
     this.cConf = cConf;
@@ -201,7 +198,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.programJarLocation = programJarLocation;
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
-    this.txClient = new RetryingLongTransactionSystemClient(txClient, context.getRetryStrategy());
     this.context = context;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -338,27 +334,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
-      // We start long-running tx to be used by mapreduce job tasks.
-      Transaction tx = txClient.startLong();
-      try {
-        // We remember tx, so that we can re-use it in mapreduce tasks
-        CConfiguration cConfCopy = CConfiguration.copy(cConf);
-        if (hbaseDDLExecutorDirectory != null) {
-          cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
-        }
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
-
-        // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-        job.submit();
-        // log after the job.submit(), because the jobId is not assigned before then
-        LOG.debug("Submitted MapReduce Job: {}.", context);
-
-        this.job = job;
-        this.transaction = tx;
-      } catch (Throwable t) {
-        Transactions.invalidateQuietly(txClient, tx);
-        throw t;
+      CConfiguration cConfCopy = CConfiguration.copy(cConf);
+      if (hbaseDDLExecutorDirectory != null) {
+        cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
       }
+      contextConfig.set(context, cConfCopy, programJar.toURI(), localizedUserResources);
+
+      // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+      job.submit();
+      // log after the job.submit(), because the jobId is not assigned before then
+      LOG.info("Submitted MapReduce Job: {}.", context);
+
+      this.job = job;
     } catch (LinkageError e) {
       // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
       // of the user program is missing dependencies (CDAP-2543)
@@ -424,43 +411,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    String failureInfo = job.getStatus().getFailureInfo();
-
     try {
-      if (success) {
-        LOG.debug("Committing MapReduce Job transaction: {}", context);
-
-        // "Commit" the data event topic by publishing an empty message.
-        // Need to do it with the raw MessagingService.
-        context.getMessagingService().publish(
-          StoreRequestBuilder
-            .of(NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC)))
-            .setTransaction(transaction.getWritePointer())
-            .build()
-        );
-
-        // committing long running tx: no need to commit datasets, as they were committed in external processes
-        // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
-        // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-        if (!txClient.commit(transaction)) {
-          LOG.warn("MapReduce Job transaction failed to commit");
-          throw new TransactionFailureException("Failed to commit transaction for MapReduce " + context.toString());
-        }
-      } else {
-        // invalids long running tx. All writes done by MR cannot be undone at this point.
-        txClient.invalidate(transaction.getWritePointer());
-      }
-    } catch (Throwable t) {
-      success = false;
-      throw t;
+      String failureInfo = job.getStatus().getFailureInfo();
+      destroy(failureInfo);
     } finally {
-      // whatever happens we want to call this
-      try {
-        destroy(failureInfo);
-      } finally {
-        context.close();
-        cleanupTask.run();
-      }
+      context.close();
+      cleanupTask.run();
     }
   }
 

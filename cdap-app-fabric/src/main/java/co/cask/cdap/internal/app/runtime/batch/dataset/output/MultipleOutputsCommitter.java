@@ -16,12 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
+import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
+import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -29,16 +33,41 @@ import java.util.Map;
  */
 public class MultipleOutputsCommitter extends OutputCommitter {
 
-  private final Map<String, OutputCommitter> committers;
+  private Map<String, OutputCommitter> committers;
+  protected final TaskAttemptContext taskAttemptContext;
 
-  public MultipleOutputsCommitter(Map<String, OutputCommitter> committers) {
-    // do not copy the committers map to preserve its order: committers are called in the order the outputs were added
-    this.committers = committers;
+  public MultipleOutputsCommitter(TaskAttemptContext taskAttemptContext) {
+    this.taskAttemptContext = taskAttemptContext;
+  }
+
+  // TODO explain why it cant happen in ctor (must be after setupJob)
+  // TODO: validate that setupJob is called before any setupTask
+  private Map<String, OutputCommitter> getCommitters() {
+    if (committers == null) {
+      try {
+        // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
+        // same order as outputs were added. This makes multi-output a little more predictable (and testable).
+        committers = new LinkedHashMap<>();
+        for (String name : MultipleOutputs.getNamedOutputsList(taskAttemptContext)) {
+          Class<? extends OutputFormat> namedOutputFormatClass =
+            MultipleOutputs.getNamedOutputFormatClass(taskAttemptContext, name);
+
+          TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(taskAttemptContext, name);
+
+          OutputFormat outputFormat =
+            ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+          committers.put(name, outputFormat.getOutputCommitter(namedContext));
+        }
+      } catch (IOException | InterruptedException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+    return committers;
   }
 
   @Override
   public void setupJob(JobContext jobContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
       committer.getValue().setupJob(namedJobContext);
     }
@@ -46,7 +75,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void setupTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
       committer.getValue().setupTask(namedTaskContext);
     }
@@ -55,7 +84,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   @Override
   public boolean needsTaskCommit(TaskAttemptContext taskContext) throws IOException {
     // needs task commit if any delegates need task commit
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
       if (committer.getValue().needsTaskCommit(namedTaskContext)) {
         return true;
@@ -66,7 +95,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void commitTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
       if (committer.getValue().needsTaskCommit(namedTaskContext)) {
         committer.getValue().commitTask(namedTaskContext);
@@ -76,7 +105,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void abortTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
       committer.getValue().abortTask(namedTaskContext);
     }
@@ -84,7 +113,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void commitJob(JobContext jobContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
       committer.getValue().commitJob(namedJobContext);
     }
@@ -92,7 +121,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       JobContext namedJobContext = MultipleOutputs.getNamedJobContext(jobContext, committer.getKey());
       committer.getValue().abortJob(namedJobContext, state);
     }
@@ -101,7 +130,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
   @Override
   public boolean isRecoverySupported() {
     // recovery is supported if it is supported on all delegates
-    for (OutputCommitter committer : committers.values()) {
+    for (OutputCommitter committer : getCommitters().values()) {
       if (!committer.isRecoverySupported()) {
         return false;
       }
@@ -111,7 +140,7 @@ public class MultipleOutputsCommitter extends OutputCommitter {
 
   @Override
   public void recoverTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> committer : committers.entrySet()) {
+    for (Map.Entry<String, OutputCommitter> committer : getCommitters().entrySet()) {
       TaskAttemptContext namedTaskContext = MultipleOutputs.getNamedTaskContext(taskContext, committer.getKey());
       committer.getValue().recoverTask(namedTaskContext);
     }
