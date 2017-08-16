@@ -303,7 +303,7 @@ public class AppFabricClient {
                                getNamespacePath(namespace), app, workflow);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     try {
-      workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow, null, null);
+      workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow, null, null, null);
     } catch (BadRequestException e) {
       // cannot happen
       throw Throwables.propagate(e);

@@ -99,6 +99,16 @@ public class NoOpScheduler implements Scheduler {
   }
 
   @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
+    return null;
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
+    return null;
+  }
+
+  @Override
   public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
     return null;
   }

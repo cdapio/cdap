@@ -47,6 +47,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -895,6 +896,14 @@ public abstract class AppFabricTestBase {
   protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
                                                                ProgramStatus... programStatuses)
     throws Exception {
+
+    return listSchedulesByTriggerProgram(namespace, programId, null, programStatuses);
+  }
+
+  protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
+                                                               @Nullable ProgramScheduleStatus scheduleStatus,
+                                                               ProgramStatus... programStatuses)
+    throws Exception {
     String schedulesUrl = String.format("schedules/trigger-type/program-status?trigger-namespace-id=%s" +
                                           "&trigger-app-name=%s&trigger-app-version=%s" +
                                           "&trigger-program-type=%s&trigger-program-name=%s", programId.getNamespace(),
@@ -910,6 +919,9 @@ public abstract class AppFabricTestBase {
                                                    }
                                                  });
       schedulesUrl = schedulesUrl + "&trigger-program-statuses=" + Joiner.on(",").join(statusNames);
+    }
+    if (scheduleStatus != null) {
+      schedulesUrl = schedulesUrl + "&schedule-status=" + scheduleStatus;
     }
     return doGetSchedules(namespace, schedulesUrl);
   }
@@ -938,6 +950,13 @@ public abstract class AppFabricTestBase {
                                               String workflowName, ProtoTrigger.Type type) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules?trigger-type=%s",
                                         appName, appVersion, workflowName, type.getCategoryName());
+    return doGetSchedules(namespace, schedulesUrl);
+  }
+
+  protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
+                                              String workflowName, ProgramScheduleStatus status) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules?schedule-status=%s",
+                                        appName, appVersion, workflowName, status.name());
     return doGetSchedules(namespace, schedulesUrl);
   }
 

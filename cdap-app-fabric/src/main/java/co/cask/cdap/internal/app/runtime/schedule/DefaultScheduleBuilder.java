@@ -167,7 +167,8 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
-                                                     Map<String, String> runtimeArgs, ProgramStatus... programStatuses) {
+                                                     Map<String, String> runtimeArgs,
+                                                     ProgramStatus... programStatuses) {
     return triggerOn(triggerFactory.onProgramStatus(programType, program, runtimeArgs, programStatuses));
   }
 

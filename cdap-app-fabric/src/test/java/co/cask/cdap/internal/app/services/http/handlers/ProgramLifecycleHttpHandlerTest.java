@@ -48,6 +48,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
@@ -1039,6 +1040,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                              ProgramStatus.KILLED);
     Assert.assertEquals(3, triggeredSchedules1.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules1);
+
+    List<ScheduleDetail> filteredSchedules =
+      listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SCHEDULED,
+                                    ProgramStatus.COMPLETED, ProgramStatus.FAILED, ProgramStatus.KILLED);
+    // No schedule is enabled yet
+    Assert.assertEquals(0, filteredSchedules.size());
+    filteredSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SUSPENDED,
+                                                      ProgramStatus.COMPLETED,
+                                                      ProgramStatus.FAILED,
+                                                      ProgramStatus.KILLED);
+    // All schedules are suspended
+    Assert.assertEquals(3, filteredSchedules.size());
+
     // Schedules triggered by SOME_WORKFLOW's completed status
     List<ScheduleDetail> triggeredByCompletedSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
                                                                                        ProgramStatus.COMPLETED);
