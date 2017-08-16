@@ -206,7 +206,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
 
-      ProgramStatus programStatus = null;
+      ProgramStatus programStatus;
       try {
         programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
       } catch (IllegalArgumentException e) {
@@ -278,7 +278,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
           triggeredProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
         }
 
-        // TODO send triggering program metadata? encode in system args, extract in AbstractContext as a readable format?
+        // TODO send triggering program metadata? encode in system args, extract in AbstractContext
         Notification triggeredProgramNotification = new Notification(Notification.Type.PROGRAM_STATUS,
                                                                      triggeredProgramProperties);
         getJobQueue(context).addNotification(schedule, triggeredProgramNotification);

@@ -374,7 +374,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     String dummyUserValue = "dummy.user.argument.value";
     // Start a program that writes to the workflow token with some user arguments
     startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
-    waitForCompleteRuns(1, ANOTHER_WORKFLOW);
 
     // Wait for a completed run record
     assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
@@ -385,11 +384,16 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // The triggered workflow should contain the workflow token sent from the notification of the triggering program
     Assert.assertEquals(Value.of(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_VALUE),
-                        runToken.get(AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_KEY));
+                        runToken.get(ANOTHER_WORKFLOW.getNamespace() + "." +
+                                     ANOTHER_WORKFLOW.getApplication() + "." +
+                                     AppWithMultipleSchedules.DummyWorkflowTokenAction.DUMMY_KEY));
 
-    Map<String, String> userOverrides = GSON.fromJson(latestRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
+    Map<String, String> userOverrides = GSON.fromJson(latestRun.getProperties()
+                                                        .get(ProgramOptionConstants.RUNTIME_ARGS),
                                                       STRING_STRING_MAP);
-    Assert.assertEquals(dummyUserValue, userOverrides.get(dummyUserKey));
+    Assert.assertEquals(dummyUserValue, userOverrides.get(ANOTHER_WORKFLOW.getNamespace() + "." +
+                                                          ANOTHER_WORKFLOW.getApplication() + "." +
+                                                          dummyUserKey));
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
