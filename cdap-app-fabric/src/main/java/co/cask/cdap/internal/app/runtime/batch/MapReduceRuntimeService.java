@@ -875,17 +875,21 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     if (outputsMap.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
-    } else if (outputsMap.size() == 1) {
-      // If only one output is configured through the context, then set it as the root OutputFormat
-      ProvidedOutput output = outputsMap.values().iterator().next();
-      ConfigurationUtil.setAll(output.getOutputFormatConfiguration(), job.getConfiguration());
-      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, output.getOutputFormatClassName());
-      return;
     }
-    // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
-    // as the root output format in this case to disallow writing directly on the context
-    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job, UnsupportedOutputFormat.class.getName(),
-                                                         new HashMap<String, String>());
+    OutputFormatProvider rootOutputFormatProvider;
+    if (outputsMap.size() == 1) {
+      // If only one output is configured through the context, then set it as the root OutputFormat
+      rootOutputFormatProvider = outputsMap.values().iterator().next().getOutputFormatProvider();
+    } else {
+      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
+      // as the root output format in this case to disallow writing directly on the context
+      rootOutputFormatProvider =
+        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), new HashMap<String, String>());
+    }
+
+    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job,
+                                                         rootOutputFormatProvider.getOutputFormatClassName(),
+                                                         rootOutputFormatProvider.getOutputFormatConfiguration());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
     for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {

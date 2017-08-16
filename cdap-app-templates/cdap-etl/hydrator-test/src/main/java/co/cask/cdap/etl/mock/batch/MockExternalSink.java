@@ -29,6 +29,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
+import co.cask.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
@@ -74,17 +75,9 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
 
   @Override
   public void prepareRun(BatchSinkContext context) throws Exception {
-    OutputFormatProvider outputFormatProvider = new OutputFormatProvider() {
-      @Override
-      public String getOutputFormatClassName() {
-        return TextOutputFormat.class.getCanonicalName();
-      }
-
-      @Override
-      public Map<String, String> getOutputFormatConfiguration() {
-        return ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName);
-      }
-    };
+    OutputFormatProvider outputFormatProvider =
+      new BasicOutputFormatProvider(TextOutputFormat.class.getCanonicalName(),
+                                    ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName));
 
     if (config.name != null) {
       Output output = Output.of(config.name, outputFormatProvider);
