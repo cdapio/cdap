@@ -491,11 +491,19 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Remove all the applications inside the given {@link Id.Namespace}
    *
-   * @param namespaceId the {@link Id.Namespace} under which all application should be deleted
+   * @param namespaceId the {@link NamespaceId} under which all application should be deleted
    * @throws Exception
    */
   public void removeAll(final NamespaceId namespaceId) throws Exception {
     Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
+    Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
+    for (ApplicationSpecification appSpec : allSpecs) {
+      ApplicationId applicationId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
+      authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+      apps.put(applicationId, appSpec);
+    }
+
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
       for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
@@ -508,14 +516,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
-    List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
-    //All Apps are STOPPED, delete them
-    Set<ApplicationId> appIds = new HashSet<>();
-    for (ApplicationSpecification appSpec : allSpecs) {
-      appIds.add(namespaceId.app(appSpec.getName(), appSpec.getAppVersion()));
-    }
-    for (ApplicationId appId : appIds) {
-      removeApplication(appId);
+
+    // All Apps are STOPPED, delete them
+    for (ApplicationId appId : apps.keySet()) {
+      removeAppInternal(appId, apps.get(appId));
     }
   }
 
@@ -526,17 +530,30 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeApplication(final ApplicationId appId) throws Exception {
+    // enforce ADMIN privileges on the app
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     ensureNoRunningPrograms(appId);
     ApplicationSpecification spec = store.getApplication(appId);
     if (spec == null) {
       throw new NotFoundException(appId.toId());
     }
+
+    removeAppInternal(appId, spec);
+  }
+
+  /**
+   * Remove application by the appId and appSpec, note that this method does not have any auth check
+   *
+   * @param applicationId the {@link ApplicationId} of the application to be removed
+   * @param appSpec the {@link ApplicationSpecification} of the application to be removed
+   */
+  private void removeAppInternal(ApplicationId applicationId, ApplicationSpecification appSpec) throws Exception {
     // if the application has only one version, do full deletion, else only delete the specified version
-    if (store.getAllAppVersions(appId).size() == 1) {
-      deleteApp(appId, spec);
+    if (store.getAllAppVersions(applicationId).size() == 1) {
+      deleteApp(applicationId, appSpec);
       return;
     }
-    deleteAppVersion(appId, spec);
+    deleteAppVersion(applicationId, appSpec);
   }
 
   /**
@@ -683,8 +700,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     Id.Application idApplication = appId.toId();
-    // enforce ADMIN privileges on the app
-    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
 
     //Delete the schedules
     scheduler.deleteSchedules(appId);
@@ -753,8 +768,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
-    // enforce ADMIN privileges on the app
-    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     //Delete the schedules
     scheduler.deleteSchedules(appId);
     store.removeApplication(appId);

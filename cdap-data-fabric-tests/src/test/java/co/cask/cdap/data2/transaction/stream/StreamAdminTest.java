@@ -404,8 +404,25 @@ public abstract class StreamAdminTest {
       Assert.assertNotEquals(0, getStreamSize(stream));
     }
 
-    streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
+    // revoke ADMIN from one of the streams and grant READ on the stream to make sure USER is not able to delete but
+    // able to list
+    revokeAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.READ));
+    // the drop all should fail since USER does not have ADMIN on one of the streams in the namespace
+    try {
+      streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
+    // all streams should exist
+    Assert.assertEquals(fooStreams.size(), streamAdmin.listStreams(FOO_NAMESPACE).size());
+
+    // grant ADMIN again and this time drop all should succeed
+    grantAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.ADMIN));
+    revokeAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.READ));
+    streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
     // All of the streams within the default namespace should no longer exist
     for (StreamId defaultStream : fooStreams) {
       Assert.assertFalse(streamAdmin.exists(defaultStream));

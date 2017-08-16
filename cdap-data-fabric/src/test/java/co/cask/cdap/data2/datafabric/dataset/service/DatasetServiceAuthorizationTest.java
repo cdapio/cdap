@@ -154,10 +154,15 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.EXECUTE));
     grantAndAssertSuccess(dsId2, ALICE, ImmutableSet.of(Action.EXECUTE));
 
-    // Alice should only be able to delete datasets that she is the ADMIN
-    dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
-    // alice should now see instances that she can't delete, but have some privileges.
-    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2),
+    // Alice should not be able to delete any datasets since she does not have ADMIN on all datasets in the namespace
+    try {
+      dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertTrue(e.getMessage().contains("is not authorized to perform actions"));
+    }
+    // alice should still be able to see all dataset instances
+    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
 
     // should get an authorization error if alice tries to delete datasets that she does not have permissions on
@@ -168,20 +173,35 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       }
     }, String.format("Alice should not be able to delete instance %s since she does not have privileges", dsId1));
     grantAndAssertSuccess(dsId1, ALICE, ImmutableSet.of(Action.ADMIN));
-    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2),
+    Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
     // since Alice now is ADMIN for dsId1, she should be able to delete it
     dsFramework.deleteInstance(dsId1);
 
-    // Now Alice only see dsId2 from list.
-    Assert.assertEquals(ImmutableSet.of(dsId2),
+    // Now Alice only see dsId2 and dsId from list.
+    Assert.assertEquals(ImmutableSet.of(dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
 
-    // Bob should still see 1 instance
+    // Bob should be able to see dsId and dsId2
     SecurityRequestContext.setUserId(BOB.getName());
-    Assert.assertEquals(ImmutableSet.of(dsId2),
+    Assert.assertEquals(ImmutableSet.of(dsId2, dsId),
                         summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
     dsFramework.deleteInstance(dsId2);
+
+    SecurityRequestContext.setUserId(ALICE.getName());
+    dsFramework.deleteInstance(dsId);
+
+    grantAndAssertSuccess(dsId2, ALICE, EnumSet.of(Action.ADMIN));
+    // add add the instance again
+    dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), dsId1, DatasetProperties.EMPTY);
+    dsFramework.addInstance(Table.class.getName(), dsId2, DatasetProperties.EMPTY);
+
+    Assert.assertEquals(ImmutableSet.of(dsId, dsId1, dsId2),
+                        summaryToDatasetIdSet(dsFramework.getInstances(NamespaceId.DEFAULT)));
+    // should be successful since ALICE has ADMIN on all datasets
+    dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
+    Assert.assertTrue(dsFramework.getInstances(NamespaceId.DEFAULT).isEmpty());
   }
 
   @Test

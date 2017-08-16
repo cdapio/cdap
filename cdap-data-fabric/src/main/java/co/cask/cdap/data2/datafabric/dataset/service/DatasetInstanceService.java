@@ -66,6 +66,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -375,23 +376,21 @@ public class DatasetInstanceService {
    * @throws Exception if it fails to delete dataset
    * @return the set of {@link DatasetId} that get deleted
    */
-  Set<DatasetId> dropAll(NamespaceId namespaceId) throws Exception {
+  void dropAll(NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
     Principal principal = authenticationContext.getPrincipal();
 
-    Set<DatasetId> datasets = new HashSet<>();
+    Map<DatasetId, DatasetSpecification> datasets = new HashMap<>();
     for (DatasetSpecification spec : instanceManager.getAll(namespaceId)) {
-      try {
-        DatasetId datasetId = namespaceId.dataset(spec.getName());
-        authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
-        dropDataset(datasetId, spec);
-        datasets.add(datasetId);
-      } catch (UnauthorizedException e) {
-        // It's ok to be not authorized. Just skip the deletion.
-      }
+      DatasetId datasetId = namespaceId.dataset(spec.getName());
+      authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+      datasets.put(datasetId, spec);
     }
 
-    return datasets;
+    // auth check passed, we can start deleting the datasets
+    for (DatasetId datasetId : datasets.keySet()) {
+      dropDataset(datasetId, datasets.get(datasetId));
+    }
   }
 
   /**
