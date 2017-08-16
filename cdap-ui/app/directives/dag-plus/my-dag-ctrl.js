@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, HydratorPlusPlusDetailMetricsActions, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers) {
 
     var vm = this;
 
@@ -42,6 +42,8 @@ angular.module(PKG.name + '.commons')
     var endpointClicked = false;
     var connectionDropped = false;
     var dagMenu;
+
+    this.pluginsMap = {};
 
     vm.scale = 1.0;
 
@@ -862,9 +864,44 @@ angular.module(PKG.name + '.commons')
       }
     };
 
+
+    // CUSTOM ICONS CONTROL
+    function generatePluginMapKey(node) {
+      let plugin = node.plugin;
+      let type = node.type || plugin.type;
+
+      return `${plugin.name}-${type}-${plugin.artifact.name}-${plugin.artifact.version}-${plugin.artifact.scope}`;
+    }
+
+    vm.shouldShowCustomIcon = (node) => {
+      let key = generatePluginMapKey(node);
+
+      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+
+      return ['inline', 'link'].indexOf(iconSourceType) !== -1;
+    };
+
+    vm.getCustomIconSrc = (node) => {
+      let key = generatePluginMapKey(node);
+      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+
+      if (iconSourceType === 'inline') {
+        return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'data');
+      }
+
+      return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'url');
+    };
+
+
+    let subAvailablePlugins = AvailablePluginsStore.subscribe(() => {
+      this.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
+    });
+
     $scope.$on('$destroy', function () {
       DAGPlusPlusNodesActionsFactory.resetNodesAndConnections();
       DAGPlusPlusNodesStore.reset();
+
+      subAvailablePlugins();
 
       angular.element($window).off('resize', vm.instance.repaintEverything);
 

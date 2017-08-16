@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions, $stateParams) {
+  .controller('HydratorPlusPlusDetailCtrl', function(HydratorPlusPlusDetailRunsStore, rPipelineDetail, HydratorPlusPlusDetailActions, $scope, HydratorPlusPlusDetailNonRunsStore, HydratorPlusPlusDetailMetricsActions, $stateParams, PipelineAvailablePluginsActions) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
     HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
@@ -27,6 +27,9 @@ angular.module(PKG.name + '.feature.hydrator')
     var params = HydratorPlusPlusDetailRunsStore.getParams();
     params.scope = $scope;
     var currentRunId;
+    this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
+
+    this.PipelineAvailablePluginsActions.fetchPluginsForDetails($stateParams.namespace, rPipelineDetail.config.stages);
 
     HydratorPlusPlusDetailRunsStore.registerOnChangeListener(function () {
 

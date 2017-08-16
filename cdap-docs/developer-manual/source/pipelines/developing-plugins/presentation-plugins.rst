@@ -53,6 +53,14 @@ Each configuration group consists of a list of the :ref:`individual properties
     "metadata": {
       ...
     },
+    "displayName": "Plugin Display Name",
+    "icon": {
+      "type": "builtin|link|inline",
+      "arguments": {
+         "url": "http://localhost/myicon.png",
+         "data": "data:image/png;base64,..."
+      }
+    },
     "configuration-groups": [
       {"label": "Group 1",
         "properties": [
@@ -96,6 +104,41 @@ Current version: |plugins-spec-version|. For example:
     },
     ...
   }
+
+.. _plugins-presentation-display-name:
+
+Display Name
+------------
+The ``displayName`` field specifies the name of the plugin as it is displayed on the CDAP UI. A display name can be
+different from the plugin name, and is not guaranteed to be unique. A display name can contain whitespace. If not
+specified, the plugin name is used as the display name.
+
+.. _plugins-presentation-icon:
+
+Icon
+----
+The ``icon`` field allows users to specify custom icons for their plugins. Users can specify icons for their plugins in
+three different ways, depending on the value of the ``type`` field contained inside the ``icon`` field:
+
+- ``builtin``:
+The icon type ``builtin`` indicates that the icon for the plugin is defined in CDAP, and is not specified in the
+plugin's widget JSON file. This is the default icon type, if an icon is not specified. If such an icon is not found,
+the CDAP UI will use a default icon type.
+- ``link``
+The icon type ``link`` indicates that the icon for the plugin should be fetched from a URL specified in the
+``arguments`` map. When the type of icon is ``link``, the user is expected to provide a link to the icon image in a
+``url`` attribute inside the ``arguments`` map.
+- ``inline``
+The icon type ``inline`` indicates that the icon for the plugin should be decoded from a base64 encoded image specified
+in the ``arguments`` map. When the type of icon is ``inline``, the user is expected to provide a base64 encoded image
+in a ``data`` attribute inside the ``arguments`` map.
+
+.. _plugins-presentation-icon-image-specification:
+
+**Icon Image Specification**
+- The image used for an icon for a CDAP plugin should be in PNG format (http://www.libpng.org/pub/png/).
+- The size of the image should be 50 X 50 pixels.
+- The image background should be transparent.
 
 .. _plugins-presentation-configuration-groups:
 

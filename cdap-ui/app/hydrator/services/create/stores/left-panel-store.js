@@ -96,7 +96,8 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
     let plugin = pluginToArtifactArrayMap[pluginName][0];
     return Object.assign({}, plugin, getExtraProperties(plugin, extension), {
       artifact: getArtifact(pluginToArtifactArrayMap, plugin),
-      allArtifacts: getAllArtifacts(pluginToArtifactArrayMap, plugin, extension)
+      allArtifacts: getAllArtifacts(pluginToArtifactArrayMap, plugin, extension),
+      pluginMapKey: `${plugin.name}-${plugin.type}-${plugin.artifact.name}-${plugin.artifact.version}-${plugin.artifact.scope}`
     });
   });
 };
@@ -122,6 +123,7 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
     case leftpanelactions.PLUGINS_FETCH:
       stateCopy = Object.assign({}, state);
       const { extension, plugins } = action.payload;
+
       const pluginToArtifactArrayMap = getPluginToArtifactMap(plugins);
       const pluginsWithAddedInfo = getPluginsWithAddedInfo(plugins, pluginToArtifactArrayMap, extension);
 
@@ -133,6 +135,12 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
         .concat((state.pluginTypes[extension] || []));
 
       stateCopy.pluginTypes = Object.assign({}, state.pluginTypes, stateCopy.pluginTypes);
+      return Object.assign({}, state, stateCopy);
+
+    case leftpanelactions.FETCH_ALL_PLUGINS:
+      stateCopy = Object.assign({}, state);
+
+      stateCopy.pluginTypes = Object.assign({}, action.payload.pluginTypes);
       return Object.assign({}, state, stateCopy);
 
     case leftpanelactions.PLUGIN_TEMPLATE_FETCH:
@@ -208,6 +216,11 @@ var extensions = (state = getInitialState().extensions, action = {}) => {
         ...state,
         ...action.payload.extensions.filter(uiSupportedExtension)
       ];
+    case leftpanelactions.FETCH_ALL_PLUGINS:
+      return [
+        ...state,
+        ...action.payload.extensions
+      ];
     case leftpanelactions.RESET:
         return getInitialState().extensions;
     default:
@@ -242,6 +255,7 @@ LeftPanelStore.$inject = ['LEFTPANELSTORE_ACTIONS', 'Redux', 'ReduxThunk', 'GLOB
 angular.module(`${PKG.name}.feature.hydrator`)
   .constant('LEFTPANELSTORE_ACTIONS', {
     'PLUGINS_FETCH': 'PLUGINS_FETCH',
+    'FETCH_ALL_PLUGINS': 'FETCH_ALL_PLUGINS',
     'PLUGIN_TEMPLATE_FETCH': 'PLUGIN_TEMPLATE_FETCH',
     'PLUGINS_DEFAULT_VERSION_FETCH': 'PLUGINS_DEFAULT_VERSION_FETCH',
 
