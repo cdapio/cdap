@@ -121,4 +121,20 @@ $rulebook_content_bg_color: white;
     }
   }
 
+  @media (min-width: 1001px) and (max-width: 1800px) {
+    .rule-books-container {
+      .rule-book {
+        width: calc(50% - 20px);
+      }
+    }
+  }
+
+  @media (min-width: 1801px) {
+    .rule-books-container {
+      .rule-book {
+        width: calc(33% - 20px);
+      }
+    }
+  }
+
 }
