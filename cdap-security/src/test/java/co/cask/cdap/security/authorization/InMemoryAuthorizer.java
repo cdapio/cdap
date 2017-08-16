@@ -87,7 +87,7 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
       }
     }
     if (!allowedForRoles.containsAll(actions)) {
-      throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity, true);
+      throw new UnauthorizedException(principal, Sets.difference(actions, allowed), entity);
     }
   }
 
