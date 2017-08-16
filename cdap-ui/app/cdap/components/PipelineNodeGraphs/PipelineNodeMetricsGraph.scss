@@ -16,7 +16,7 @@
 
 $graph_container_border_color: lightgray;
 $table_header_border: #c9ccd6;
-$error_records_label_color: #A40403;
+$error_records_label_color: #a40403;
 
 .pipeline-node-metrics-graph {
   height: 100%;
@@ -162,7 +162,7 @@ body.theme-cdap.state-hydrator {
     .process-time-table-container {
       > .table {
         border: 0;
-        >thead tr th {
+        > thead tr th {
           padding: 10px;
           padding-left: 0;
           font-weight: normal;
