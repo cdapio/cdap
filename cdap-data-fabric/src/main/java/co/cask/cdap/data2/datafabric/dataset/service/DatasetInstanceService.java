@@ -67,10 +67,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -162,9 +160,11 @@ public class DatasetInstanceService {
    *  have any privileges on the #instance
    */
   DatasetMeta get(final DatasetId instance, List<? extends EntityId> owners) throws Exception {
-    // ensure user has correct privileges before getting the meta
-    AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.of(Action.ADMIN, Action.READ, Action.WRITE),
-                                         authorizationEnforcer, authenticationContext.getPrincipal());
+    // ensure user has correct privileges before getting the meta if the dataset is not a system dataset
+    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+      AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.of(Action.ADMIN, Action.READ, Action.WRITE),
+                                           authorizationEnforcer, authenticationContext.getPrincipal());
+    }
     // Application Deployment first makes a call to the dataset service to check if the instance already exists with
     // a different type. To make sure that that call responds with the right exceptions if necessary, first fetch the
     // meta from the cache and throw appropriate exceptions if necessary.
@@ -223,7 +223,9 @@ public class DatasetInstanceService {
    */
   Map<String, String> getOriginalProperties(DatasetId instance) throws Exception {
     // Only return the properties if authorization succeeds
-    AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, authenticationContext.getPrincipal());
+    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+      AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, authenticationContext.getPrincipal());
+    }
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
@@ -257,10 +259,12 @@ public class DatasetInstanceService {
       String namespacePrincipal = ownerAdmin.getOwnerPrincipal(namespace);
       principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
     }
-    if (principalId != null) {
-      authorizationEnforcer.enforce(principalId, principal, Action.ADMIN);
+    if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
+      if (principalId != null) {
+        authorizationEnforcer.enforce(principalId, principal, Action.ADMIN);
+      }
+      authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
     }
-    authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
 
     ensureNamespaceExists(namespace);
 
@@ -269,8 +273,9 @@ public class DatasetInstanceService {
       throw new DatasetAlreadyExistsException(datasetId);
     }
 
-    // for creation, we need enforcement for dataset type
-    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(), false);
+    // for creation, we need enforcement for dataset type for user dataset, but bypass for system datasets
+    DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName(),
+                                           DatasetsUtil.isSystemDatasetInUserNamespace(datasetId));
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
@@ -321,7 +326,9 @@ public class DatasetInstanceService {
    */
   void update(DatasetId instance, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(instance.getParent());
-    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+      authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
     DatasetSpecification existing = instanceManager.get(instance);
     if (existing == null) {
       throw new DatasetNotFoundException(instance);
@@ -358,7 +365,9 @@ public class DatasetInstanceService {
    *  have {@link Action#ADMIN} privileges on the #instance
    */
   void drop(DatasetId instance) throws Exception {
-    authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+    if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+      authorizationEnforcer.enforce(instance, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
     ensureNamespaceExists(instance.getParent());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
@@ -383,7 +392,9 @@ public class DatasetInstanceService {
     Map<DatasetId, DatasetSpecification> datasets = new HashMap<>();
     for (DatasetSpecification spec : instanceManager.getAll(namespaceId)) {
       DatasetId datasetId = namespaceId.dataset(spec.getName());
-      authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+      if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
+        authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+      }
       datasets.put(datasetId, spec);
     }
 
@@ -418,12 +429,16 @@ public class DatasetInstanceService {
     Principal principal = authenticationContext.getPrincipal();
     switch (method) {
       case "exists":
-        // ensure the user has some privilege on the dataset instance
-        AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, principal);
+        // ensure the user has some privilege on the dataset instance if it is not system dataset
+        if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+          AuthorizationUtil.ensureAccess(instance, authorizationEnforcer, principal);
+        }
         result = opExecutorClient.exists(instance);
         break;
       case "truncate":
-        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
+        if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+          authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
+        }
         if (instanceManager.get(instance) == null) {
           throw new DatasetNotFoundException(instance);
         }
@@ -431,7 +446,9 @@ public class DatasetInstanceService {
         publishAudit(instance, AuditType.TRUNCATE);
         break;
       case "upgrade":
-        authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
+        if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
+          authorizationEnforcer.enforce(instance, principal, Action.ADMIN);
+        }
         if (instanceManager.get(instance) == null) {
           throw new DatasetNotFoundException(instance);
         }
