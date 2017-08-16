@@ -28,8 +28,6 @@ import co.cask.cdap.internal.app.deploy.Specifications;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.pipeline.StageContext;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.security.auth.context.AuthenticationTestContext;
-import co.cask.cdap.security.spi.authorization.NoOpAuthorizer;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -60,7 +58,7 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new ToyApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
-    ProgramGenerationStage pgmStage = new ProgramGenerationStage(new NoOpAuthorizer(), new AuthenticationTestContext());
+    ProgramGenerationStage pgmStage = new ProgramGenerationStage();
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("ToyApp", "1.0"), appArchive,
                                                DefaultId.APPLICATION, newSpec, null,

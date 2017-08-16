@@ -84,7 +84,9 @@ public class AuthorizationCLITest extends CLITestBase {
 
     private static String[] getAuthConfigs(File tmpDir) throws IOException {
       LocationFactory locationFactory = new LocalLocationFactory(tmpDir);
-      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);
+      File file = new File(AppJarHelper.createDeploymentJar(locationFactory,
+                                                            InMemoryAuthorizer.AuthorizableEntityId.class).toURI());
+      Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, file);
       return new String[] {
         // We want to enable security, but bypass it for only testing authorization commands
         Constants.Security.ENABLED, "true",

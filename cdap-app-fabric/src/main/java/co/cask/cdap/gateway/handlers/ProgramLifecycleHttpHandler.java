@@ -23,7 +23,6 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -100,7 +99,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -441,8 +439,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
 
     ProgramId program = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    ProgramSpecification specification = lifecycleService.getProgramSpecification(program);
-    if (specification == null) {
+    if (!lifecycleService.programExists(program)) {
       throw new NotFoundException(program);
     }
     getRuns(responder, program, status, start, end, resultLimit);
@@ -498,8 +495,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-name") String appName,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ProgramId(namespaceId, appName, programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
@@ -531,8 +527,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-name") String appName,
                                     @PathParam("app-version") String appVersion,
                                     @PathParam("program-type") String type,
-                                    @PathParam("program-name") String programName) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+                                    @PathParam("program-name") String programName) throws Exception {
     ProgramType programType = getProgramType(type);
     ProgramId programId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
     getProgramIdRuntimeArgs(programId, responder);
@@ -555,8 +550,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     saveProgramIdRuntimeArgs(programId, request, responder);
   }
 
-  private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder) throws BadRequestException,
-    NotImplementedException, NotFoundException, UnauthorizedException {
+  private void getProgramIdRuntimeArgs(ProgramId programId, HttpResponder responder) throws Exception {
     ProgramType programType = programId.getType();
     if (programType == null || programType == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
@@ -849,7 +843,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     String programName = scheduleFromRequest.getProgram().getProgramName();
     ProgramId programId = applicationId.program(programType, programName);
 
-    if (lifecycleService.getProgramSpecification(programId) == null) {
+    if (!lifecycleService.programExists(programId)) {
       throw new NotFoundException(programId);
     }
 
@@ -1477,7 +1471,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("app-id") String appId,
                                  @PathParam("worker-id") String workerId) throws Exception {
     try {
-      int count = store.getWorkerInstances(validateAndGetNamespace(namespaceId).app(appId).worker(workerId));
+      ProgramId workderId = validateAndGetNamespace(namespaceId).app(appId).worker(workerId);
+      if (!lifecycleService.programExists(workderId)) {
+        throw new NotFoundException(workderId);
+      }
+      int count = store.getWorkerInstances(workderId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1522,9 +1520,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void getFlowletInstances(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId, @PathParam("flow-id") String flowId,
-                                  @PathParam("flowlet-id") String flowletId) {
+                                  @PathParam("flowlet-id") String flowletId) throws Exception {
     try {
-      int count = store.getFlowletInstances(new ProgramId(namespaceId, appId, ProgramType.FLOW, flowId), flowletId);
+      ProgramId flow = validateAndGetNamespace(namespaceId).app(appId).flow(flowId);
+      if (!lifecycleService.programExists(flow)) {
+       throw new NotFoundException(flow);
+      }
+      int count = store.getFlowletInstances(flow, flowletId);
       responder.sendJson(HttpResponseStatus.OK, new Instances(count));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
@@ -1690,19 +1692,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                   @PathParam("app-id") String appId,
                                   @PathParam("service-id") String serviceId) throws Exception {
     try {
-      ProgramId programId = new ProgramId(namespaceId, appId, ProgramType.SERVICE, serviceId);
-      if (!store.programExists(programId)) {
-        responder.sendString(HttpResponseStatus.NOT_FOUND, "Service not found");
-        return;
+      ProgramId programId = validateAndGetNamespace(namespaceId).app(appId).service(serviceId);
+      if (!lifecycleService.programExists(programId)) {
+        throw new NotFoundException(programId);
       }
 
-      ServiceSpecification specification = (ServiceSpecification) lifecycleService.getProgramSpecification(programId);
-      if (specification == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-        return;
-      }
-
-      int instances = specification.getInstances();
+      int instances = store.getServiceInstances(programId);
       responder.sendJson(HttpResponseStatus.OK,
                          new ServiceInstances(instances, getInstanceCount(programId, serviceId)));
     } catch (SecurityException e) {

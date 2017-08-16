@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -65,18 +66,6 @@ public abstract class AbstractAuthorizer implements Authorizer {
 
   @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, EnumSet.allOf(Action.class));
-          return true;
-        } catch (UnauthorizedException e) {
-          return false;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    };
+    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
   }
 }

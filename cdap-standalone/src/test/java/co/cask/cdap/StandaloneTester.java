@@ -130,7 +130,7 @@ public class StandaloneTester extends ExternalResource {
     ArtifactRepository artifactRepository = standaloneMain.getInjector().getInstance(ArtifactRepository.class);
 
     ArtifactId artifactId = NamespaceId.SYSTEM.artifact(name, version.getVersion());
-    artifactRepository.addArtifact(artifactId.toId(), artifactFile, parentArtifacts);
+    artifactRepository.addArtifact(artifactId.toId(), artifactFile, parentArtifacts, null);
   }
 
   private String getLocalHostname() {

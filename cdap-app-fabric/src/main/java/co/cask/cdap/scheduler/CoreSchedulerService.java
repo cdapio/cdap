@@ -61,6 +61,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -160,7 +161,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private void migrateSchedules(final NamespaceQueryAdmin namespaceQueryAdmin, final Store appMetaStore)
     throws Exception {
 
-    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
+    List<NamespaceMeta> namespaceMetas = new ArrayList<>(namespaceQueryAdmin.list());
     ProgramScheduleStoreDataset.MigrationStatus migrationStatus =
       execute(new StoreTxRunnable<ProgramScheduleStoreDataset.MigrationStatus, RuntimeException>() {
         @Override

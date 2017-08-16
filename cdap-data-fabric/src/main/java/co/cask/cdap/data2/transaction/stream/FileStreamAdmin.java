@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data2.transaction.stream;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.stream.StreamSpecification;
@@ -59,19 +58,18 @@ import co.cask.cdap.proto.id.StreamViewId;
 import co.cask.cdap.proto.notification.NotificationFeedInfo;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.CharStreams;
@@ -120,7 +118,6 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ViewAdmin viewAdmin;
   private final MetadataStore metadataStore;
   private final Impersonator impersonator;
-  private final PrivilegesManager privilegesManager;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
@@ -141,13 +138,11 @@ public class FileStreamAdmin implements StreamAdmin {
                          MetadataStore metadataStore,
                          ViewAdmin viewAdmin,
                          Impersonator impersonator,
-                         PrivilegesManager privilegesManager,
                          AuthenticationContext authenticationContext,
                          AuthorizationEnforcer authorizationEnforcer) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
     this.notificationFeedManager = notificationFeedManager;
-    this.privilegesManager = privilegesManager;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.stateStoreFactory = stateStoreFactory;
@@ -178,8 +173,6 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public void dropAllInNamespace(final NamespaceId namespace) throws Exception {
-    // To delete all streams in a namespace, one should have admin privileges on that namespace
-    ensureAccess(namespace, Action.ADMIN);
     Iterable<Location> locations = impersonator.doAs(namespace, new Callable<Iterable<Location>>() {
       @Override
       public Iterable<Location> call() throws Exception {
@@ -192,18 +185,28 @@ public class FileStreamAdmin implements StreamAdmin {
       }
     });
 
-    for (final Location location : locations) {
-      doDrop(namespace.stream(StreamUtils.getStreamNameFromLocation(location)), location);
+    boolean shouldDeleteStateTable = true;
+    for (Location location : locations) {
+      try {
+        StreamId streamId = namespace.stream(StreamUtils.getStreamNameFromLocation(location));
+        ensureAccess(streamId, Action.ADMIN);
+        doDrop(streamId, location);
+      } catch (UnauthorizedException e) {
+        shouldDeleteStateTable = false;
+        // It's ok to be not authorized. Just skip the deletion.
+      }
     }
 
-    // Also drop the state table
-    impersonator.doAs(namespace, new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        stateStoreFactory.dropAllInNamespace(namespace);
-        return null;
-      }
-    });
+    // Also drop the state table if all the streams are deleted
+    if (shouldDeleteStateTable) {
+      impersonator.doAs(namespace, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          stateStoreFactory.dropAllInNamespace(namespace);
+          return null;
+        }
+      });
+    }
   }
 
   @Override
@@ -286,15 +289,15 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public List<StreamSpecification> listStreams(final NamespaceId namespaceId) throws Exception {
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(authenticationContext.getPrincipal());
     List<StreamSpecification> streamSpecifications = streamMetaStore.listStreams(namespaceId);
-    return Lists.newArrayList(Iterables.filter(streamSpecifications,
-                                               new com.google.common.base.Predicate<StreamSpecification>() {
-      @Override
-      public boolean apply(StreamSpecification spec) {
-        return filter.apply(namespaceId.stream(spec.getName()));
-      }
-    }));
+    return AuthorizationUtil.isVisible(streamSpecifications, authorizationEnforcer,
+                                       authenticationContext.getPrincipal(),
+                                       new Function<StreamSpecification, EntityId>() {
+                                         @Override
+                                         public EntityId apply(StreamSpecification input) {
+                                           return namespaceId.stream(input.getName());
+                                         }
+                                       }, null);
   }
 
   @Override
@@ -331,8 +334,9 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamProperties getProperties(StreamId streamId) throws Exception {
-    // User should have any access on the stream to read its properties
-    ensureAccess(streamId);
+    // User should have READ or ADMIN to read stream properties
+    AuthorizationUtil.ensureOnePrivilege(streamId, EnumSet.of(Action.ADMIN, Action.READ), authorizationEnforcer,
+                                         authenticationContext.getPrincipal());
     // get the principal which will be used for impersonation to display as owner
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);
     StreamConfig config = getConfig(streamId);
@@ -385,6 +389,7 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public boolean exists(final StreamId streamId) throws Exception {
+    AuthorizationUtil.ensureAccess(streamId, authorizationEnforcer, authenticationContext.getPrincipal());
     try {
       boolean metaExists = streamMetaStore.streamExists(streamId);
       if (!metaExists) {
@@ -411,9 +416,6 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   @Nullable
   public StreamConfig create(final StreamId streamId, @Nullable final Properties props) throws Exception {
-    // User should have write access to the namespace
-    NamespaceId streamNamespace = streamId.getParent();
-    ensureAccess(streamNamespace, Action.WRITE);
 
     final Properties properties = (props == null) ? new Properties() : props;
     String specifiedOwnerPrincipal = properties.containsKey(Constants.Security.PRINCIPAL) ?
@@ -425,38 +427,35 @@ public class FileStreamAdmin implements StreamAdmin {
       // stream create is an idempotent operation as of now so just return null and don't do anything
       return null;
     }
-    // revoke privileges to make sure there is no orphaned privileges as the stream doesn't exist its safe to do so
-    try {
-      privilegesManager.revoke(streamId);
-    } catch (Exception e) {
-      // if failed to revoke privileges for some reason there might be left over privilees which will get enforced now
-      // just warn but do not fail the stream creation itself.
-      LOG.warn("Failed to delete privileges for a new {} being created. If the authorization store had some " +
-                 "orphaned privileges for {} they will be enforced. ");
+
+    // need to enforce on the principal id if impersonation is involved
+    KerberosPrincipalId principalId =
+      specifiedOwnerPrincipal == null ? null : new KerberosPrincipalId(specifiedOwnerPrincipal);
+    if (!streamId.getNamespaceId().equals(NamespaceId.SYSTEM) && principalId == null) {
+      // if stream owner is not present, get the namespace impersonation principal
+      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(streamId.getNamespaceId());
+      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
     }
+    if (principalId != null) {
+      authorizationEnforcer.enforce(principalId, authenticationContext.getPrincipal(), Action.ADMIN);
+    }
+    ensureAccess(streamId, Action.ADMIN);
+
     // if the stream didn't exist then add the owner information
     if (specifiedOwnerPrincipal != null) {
       ownerAdmin.add(streamId, new KerberosPrincipalId(specifiedOwnerPrincipal));
     }
     try {
-      // Grant All access to the stream created to the User
-      privilegesManager.grant(streamId, authenticationContext.getPrincipal(), EnumSet.allOf(Action.class));
-      try {
-        final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
-          @Override
-          public Location call() throws Exception {
-            assertNamespaceHomeExists(streamId.getParent());
-            Location streamLocation = getStreamLocation(streamId);
-            Locations.mkdirsIfNotExists(streamLocation);
-            return streamLocation;
-          }
-        });
-        return createStream(streamId, properties, streamLocation);
-      } catch (Exception e) {
-        // clean up privileges
-        privilegesManager.revoke(streamId);
-        throw e;
-      }
+      final Location streamLocation = impersonator.doAs(streamId, new Callable<Location>() {
+        @Override
+        public Location call() throws Exception {
+          assertNamespaceHomeExists(streamId.getParent());
+          Location streamLocation = getStreamLocation(streamId);
+          Locations.mkdirsIfNotExists(streamLocation);
+          return streamLocation;
+        }
+      });
+      return createStream(streamId, properties, streamLocation);
     } catch (Exception e) {
       // there was a problem creating the stream so delete owner information
       ownerAdmin.delete(streamId); // safe to call even if entry doesn't exists
@@ -724,8 +723,6 @@ public class FileStreamAdmin implements StreamAdmin {
           streamMetaStore.removeStream(streamId);
           ownerAdmin.delete(streamId);
           metadataStore.removeMetadata(streamId);
-          // revoke all privileges on the stream
-          privilegesManager.revoke(streamId);
           publishAudit(streamId, AuditType.DELETE);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -857,13 +854,5 @@ public class FileStreamAdmin implements StreamAdmin {
   private <T extends EntityId> void ensureAccess(T entityId, Action action) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
     authorizationEnforcer.enforce(entityId, principal, action);
-  }
-
-  private <T extends EntityId> void ensureAccess(T entityId) throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    if (!filter.apply(entityId)) {
-      throw new UnauthorizedException(principal, entityId);
-    }
   }
 }

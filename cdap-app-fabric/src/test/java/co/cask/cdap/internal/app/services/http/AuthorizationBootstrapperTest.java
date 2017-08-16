@@ -49,11 +49,13 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
+import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -102,6 +104,7 @@ public class AuthorizationBootstrapperTest {
   private static DiscoveryServiceClient discoveryServiceClient;
   private static InstanceId instanceId;
   private static AuthorizationEnforcer authorizationEnforcer;
+  private static AuthorizerInstantiator authorizerInstantiator;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -134,6 +137,7 @@ public class AuthorizationBootstrapperTest {
     artifactRepository = injector.getInstance(ArtifactRepository.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
     authorizationEnforcer = injector.getInstance(AuthorizationEnforcer.class);
+    authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
   }
 
   @Test
@@ -142,13 +146,13 @@ public class AuthorizationBootstrapperTest {
       UserGroupInformation.getLoginUser().getShortUserName(), Principal.PrincipalType.USER
     );
     // initial state: no privileges for system or admin users
-    Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
-    Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
-    Assert.assertFalse(systemUserFilter.apply(instanceId));
-    Assert.assertFalse(adminUserFilter.apply(NamespaceId.DEFAULT));
+    Assert.assertTrue(authorizationEnforcer.isVisible(Collections.singleton(instanceId), systemUser).isEmpty());
+    Assert.assertTrue(authorizationEnforcer.isVisible(Collections.singleton(NamespaceId.DEFAULT),
+                                                       ADMIN_USER).isEmpty());
 
     // bypass the check for system namespace
-    Assert.assertTrue(systemUserFilter.apply(NamespaceId.SYSTEM));
+    Assert.assertFalse(authorizationEnforcer.isVisible(Collections.singleton(NamespaceId.SYSTEM),
+                                                       systemUser).isEmpty());
     try {
       authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
     } catch (Exception e) {
@@ -160,10 +164,8 @@ public class AuthorizationBootstrapperTest {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        Predicate<EntityId> systemUserFilter = authorizationEnforcer.createFilter(systemUser);
-        Predicate<EntityId> adminUserFilter = authorizationEnforcer.createFilter(ADMIN_USER);
-        return systemUserFilter.apply(instanceId) && systemUserFilter.apply(NamespaceId.SYSTEM) &&
-          adminUserFilter.apply(NamespaceId.DEFAULT);
+        return authorizationEnforcer.isVisible(Sets.newHashSet(instanceId, NamespaceId.SYSTEM), systemUser).size() == 2
+          && !authorizationEnforcer.isVisible(Collections.singleton(NamespaceId.DEFAULT), ADMIN_USER).isEmpty();
       }
     }, 10, TimeUnit.SECONDS);
 
@@ -206,10 +208,10 @@ public class AuthorizationBootstrapperTest {
       dsFramework, NamespaceId.SYSTEM.dataset("system-dataset"), Table.class.getName(), DatasetProperties.EMPTY,
       Collections.<String, String>emptyMap());
     Assert.assertNotNull(systemDataset);
-    // as part of bootstrapping, admin users were also granted admin privileges on the CDAP instance, so they can
-    // create namespaces
+    NamespaceMeta succcessMeta = new NamespaceMeta.Builder().setName("success").build();
+    authorizerInstantiator.get().grant(succcessMeta.getNamespaceId(), ADMIN_USER, EnumSet.of(Action.ADMIN));
     SecurityRequestContext.setUserId(ADMIN_USER.getName());
-    namespaceAdmin.create(new NamespaceMeta.Builder().setName("success").build());
+    namespaceAdmin.create(succcessMeta);
     SecurityRequestContext.setUserId("bob");
     try {
       namespaceAdmin.create(new NamespaceMeta.Builder().setName("failure").build());

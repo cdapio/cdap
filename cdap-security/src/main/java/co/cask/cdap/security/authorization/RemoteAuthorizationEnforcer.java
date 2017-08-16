@@ -25,21 +25,25 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.proto.security.VisibilityRequest;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Map;
@@ -58,6 +62,7 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
+  private static final Type SET_ENTITY_TYPE = new TypeToken<Set<EntityId>>() { }.getType();
 
   private final RemoteClient remoteClient;
   private final boolean cacheEnabled;
@@ -102,8 +107,9 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-    // TODO: needs to be implemented
-    throw new UnsupportedOperationException("This method needs to be implemented!");
+    Preconditions.checkNotNull(entityIds, "entityIds cannot be null");
+    // TODO: figure out how to cache the result
+    return checkVisibility(new VisibilityRequest(principal, entityIds));
   }
 
   private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
@@ -111,6 +117,13 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
       .withBody(GSON.toJson(authorizationPrivilege))
       .build();
     return HttpURLConnection.HTTP_OK == remoteClient.execute(request).getResponseCode();
+  }
+
+  private Set<? extends EntityId> checkVisibility(VisibilityRequest visibilityRequest) throws IOException {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isVisible")
+      .withBody(GSON.toJson(visibilityRequest))
+      .build();
+    return GSON.fromJson(remoteClient.execute(request).getResponseBodyAsString(), SET_ENTITY_TYPE);
   }
 
   @VisibleForTesting

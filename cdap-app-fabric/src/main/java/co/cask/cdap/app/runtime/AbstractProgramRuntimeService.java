@@ -87,19 +87,19 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ArtifactRepository artifactRepository;
   private final ProgramStateWriter programStateWriter;
+  private final ArtifactRepository noAuthArtifactRepository;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository artifactRepository,
+                                          ArtifactRepository noAuthArtifactRepository,
                                           ProgramStateWriter programStateWriter) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
-    this.artifactRepository = artifactRepository;
     this.programStateWriter = programStateWriter;
+    this.noAuthArtifactRepository = noAuthArtifactRepository;
   }
 
   @Override
@@ -141,7 +141,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return artifactRepository.getArtifact(artifactId.toId());
+    return noAuthArtifactRepository.getArtifact(artifactId.toId());
   }
 
   /**
@@ -243,7 +243,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, artifactRepository.getArtifact(artifactId.toId()), destFile);
+        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(artifactId.toId()), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }

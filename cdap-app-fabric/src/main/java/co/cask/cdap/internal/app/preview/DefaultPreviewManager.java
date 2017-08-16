@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.preview;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.security.store.SecureStore;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.preview.PreviewManager;
 import co.cask.cdap.app.preview.PreviewRequest;
@@ -45,6 +46,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.AppFabricDatasetModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -71,8 +73,10 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.discovery.DiscoveryService;
@@ -233,6 +237,10 @@ public class DefaultPreviewManager implements PreviewManager {
           MapBinder<String, DatasetModule> datasetModuleBinder = MapBinder.newMapBinder(
             binder(), String.class, DatasetModule.class, Constants.Dataset.Manager.DefaultDatasetModules.class);
           datasetModuleBinder.addBinding("app-fabric").toInstance(new AppFabricDatasetModule());
+          bind(ArtifactRepository.class)
+            .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+            .to(DefaultArtifactRepository.class)
+            .in(Scopes.SINGLETON);
         }
 
         @Provides

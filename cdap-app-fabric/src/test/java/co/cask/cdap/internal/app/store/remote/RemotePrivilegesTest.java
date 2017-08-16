@@ -120,7 +120,7 @@ public class RemotePrivilegesTest {
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
-    authorizationEnforcer.enforce(APP, ALICE, EnumSet.allOf(Action.class));
+    authorizationEnforcer.enforce(APP, ALICE, Collections.singleton(Action.ADMIN));
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.revoke(NS, ALICE, EnumSet.allOf(Action.class));
