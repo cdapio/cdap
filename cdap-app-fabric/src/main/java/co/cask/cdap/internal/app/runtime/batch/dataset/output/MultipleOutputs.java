@@ -124,7 +124,7 @@ public class MultipleOutputs implements Closeable {
    * @param outputConfigs     configurations for the output
    */
   @SuppressWarnings("unchecked")
-  public static void addNamedOutput(Job job, String namedOutput, String outputFormatClass,
+  public static void addNamedOutput(JobContext job, String namedOutput, String outputFormatClass,
                                     Class<?> keyClass, Class<?> valueClass, Map<String, String> outputConfigs) {
     assertValidName(namedOutput);
     checkNamedOutputName(namedOutput, getNamedOutputsList(job), false);

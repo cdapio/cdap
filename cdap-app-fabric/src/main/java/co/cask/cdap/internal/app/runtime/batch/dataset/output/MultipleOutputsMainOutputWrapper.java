@@ -72,7 +72,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
    * @param outputFormatClass the class to set as the root OutputFormat for the job
    * @param outputConfig the configuration to set for the specified OutputFormat
    */
-  public static void setRootOutputFormat(Job job,  String outputFormatClass, Map<String, String> outputConfig) {
+  public static void setRootOutputFormat(JobContext job,  String outputFormatClass, Map<String, String> outputConfig) {
     job.getConfiguration().set(ROOT_OUTPUT_FORMAT, outputFormatClass);
 
     for (Map.Entry<String, String> confEntry : outputConfig.entrySet()) {
@@ -100,7 +100,6 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
     if (committer == null) {
       committer = new MainOutputCommitter(context);
     }
-
     return committer;
   }
 }

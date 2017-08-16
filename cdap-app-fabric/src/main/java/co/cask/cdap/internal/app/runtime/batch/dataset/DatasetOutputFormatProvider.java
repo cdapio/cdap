@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.ConfigurationUtil;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceBatchWritableOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 
 import java.util.Map;
@@ -36,13 +37,12 @@ public class DatasetOutputFormatProvider implements OutputFormatProvider, Datase
   private final Dataset dataset;
 
   public DatasetOutputFormatProvider(String namespace, String datasetName,
-                                     Map<String, String> datasetArgs, Dataset dataset,
-                                     Class<? extends AbstractBatchWritableOutputFormat> batchWritableOutputFormat) {
+                                     Map<String, String> datasetArgs, Dataset dataset) {
     if (dataset instanceof OutputFormatProvider) {
       this.outputFormatClassName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
       this.configuration = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
     } else if (dataset instanceof BatchWritable) {
-      this.outputFormatClassName = batchWritableOutputFormat.getName();
+      this.outputFormatClassName = MapReduceBatchWritableOutputFormat.class.getName();
       this.configuration = createDatasetConfiguration(namespace, datasetName, datasetArgs);
     } else {
       throw new IllegalArgumentException("Dataset '" + dataset +

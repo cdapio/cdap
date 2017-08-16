@@ -84,7 +84,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   // key is input name, value is the MapperInput (configuration info) for that input
   private final Map<String, MapperInput> inputs;
-  private final Map<String, ProvidedOutput> outputs;
+  private final Map<String, Output> outputs;
 
   private Job job;
   private Resources mapperResources;
@@ -219,41 +219,14 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  private void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+  @Override
+  public void addOutput(Output output) {
+    String alias = output.getAlias();
     if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    this.outputs.put(alias, new ProvidedOutput(alias, outputFormatProvider));
-  }
-
-  @Override
-  public void addOutput(Output output) {
-    if (output instanceof Output.DatasetOutput) {
-      Output.DatasetOutput datasetOutput = ((Output.DatasetOutput) output);
-      String datasetNamespace = datasetOutput.getNamespace();
-      if (datasetNamespace == null) {
-        datasetNamespace = getNamespace();
-      }
-      String datasetName = output.getName();
-      Map<String, String> arguments = ((Output.DatasetOutput) output).getArguments();
-
-      // we can delay the instantiation of the Dataset to later, but for now, we still have to maintain backwards
-      // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
-      // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
-      // this dataset instantiation
-      DatasetOutputFormatProvider outputFormatProvider =
-        new DatasetOutputFormatProvider(datasetNamespace, datasetName, arguments,
-                                        getDataset(datasetNamespace, datasetName, arguments, AccessType.WRITE),
-                                        MapReduceBatchWritableOutputFormat.class);
-      addOutput(output.getAlias(), outputFormatProvider);
-
-    } else if (output instanceof Output.OutputFormatProviderOutput) {
-      addOutput(output.getAlias(), ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider());
-    } else {
-      // shouldn't happen unless user defines their own Output class
-      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
-                                                       output.getName(), output.getClass().getCanonicalName()));
-    }
+    // TODO: ensure ordering when serialized/deserialized
+    this.outputs.put(alias, output);
   }
 
   /**
@@ -266,7 +239,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   /**
    * @return a map from output name to provided output for the MapReduce job
    */
-  Map<String, ProvidedOutput> getOutputs() {
+  Map<String, Output> getOutputs() {
     // LinkedHashMap() will preserve the order of the outputs
     return new LinkedHashMap<>(outputs);
   }
