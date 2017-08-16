@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
+import co.cask.cdap.internal.app.runtime.batch.MainOutputCommitter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -110,7 +111,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
           ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
         committers.put(name, outputFormat.getOutputCommitter(namedContext));
       }
-      committer = new MultipleOutputsCommitter(committers);
+      committer = new MainOutputCommitter(committers);
     }
 
     return committer;
