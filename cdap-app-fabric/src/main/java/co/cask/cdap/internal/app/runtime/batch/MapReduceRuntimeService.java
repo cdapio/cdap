@@ -24,7 +24,6 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -35,7 +34,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -46,7 +44,6 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -64,10 +61,8 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -91,6 +86,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -100,10 +96,8 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -134,7 +128,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -148,7 +141,7 @@ import javax.annotation.Nullable;
  * Service start -> Performs job setup, initialize and submit job
  * Service run -> Poll for job completion
  * Service triggerStop -> kill job
- * Service stop -> Commit/abort transaction, destroy, cleanup
+ * Service stop -> destroy, cleanup
  */
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
@@ -171,12 +164,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final BasicMapReduceContext context;
   private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
-  private final TransactionSystemClient txClient;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   private Job job;
-  private Transaction transaction;
   private Runnable cleanupTask;
 
   // this will remain false until the job completes and we set it to job.isSuccessful()
@@ -189,9 +180,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
-                          BasicMapReduceContext context,
-                          Location programJarLocation, NamespacedLocationFactory locationFactory,
-                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
+                          BasicMapReduceContext context, Location programJarLocation,
+                          NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
     this.cConf = cConf;
@@ -201,7 +191,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.programJarLocation = programJarLocation;
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
-    this.txClient = new RetryingLongTransactionSystemClient(txClient, context.getRetryStrategy());
     this.context = context;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -338,27 +327,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
-      // We start long-running tx to be used by mapreduce job tasks.
-      Transaction tx = txClient.startLong();
-      try {
-        // We remember tx, so that we can re-use it in mapreduce tasks
-        CConfiguration cConfCopy = CConfiguration.copy(cConf);
-        if (hbaseDDLExecutorDirectory != null) {
-          cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
-        }
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
-
-        // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-        job.submit();
-        // log after the job.submit(), because the jobId is not assigned before then
-        LOG.debug("Submitted MapReduce Job: {}.", context);
-
-        this.job = job;
-        this.transaction = tx;
-      } catch (Throwable t) {
-        Transactions.invalidateQuietly(txClient, tx);
-        throw t;
+      CConfiguration cConfCopy = CConfiguration.copy(cConf);
+      if (hbaseDDLExecutorDirectory != null) {
+        cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
       }
+      contextConfig.set(context, cConfCopy, programJar.toURI(), localizedUserResources);
+
+      // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+      job.submit();
+      // log after the job.submit(), because the jobId is not assigned before then
+      LOG.info("Submitted MapReduce Job: {}.", context);
+
+      this.job = job;
     } catch (LinkageError e) {
       // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
       // of the user program is missing dependencies (CDAP-2543)
@@ -424,43 +404,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() throws Exception {
-    String failureInfo = job.getStatus().getFailureInfo();
-
     try {
-      if (success) {
-        LOG.debug("Committing MapReduce Job transaction: {}", context);
-
-        // "Commit" the data event topic by publishing an empty message.
-        // Need to do it with the raw MessagingService.
-        context.getMessagingService().publish(
-          StoreRequestBuilder
-            .of(NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC)))
-            .setTransaction(transaction.getWritePointer())
-            .build()
-        );
-
-        // committing long running tx: no need to commit datasets, as they were committed in external processes
-        // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
-        // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-        if (!txClient.commit(transaction)) {
-          LOG.warn("MapReduce Job transaction failed to commit");
-          throw new TransactionFailureException("Failed to commit transaction for MapReduce " + context.toString());
-        }
-      } else {
-        // invalids long running tx. All writes done by MR cannot be undone at this point.
-        txClient.invalidate(transaction.getWritePointer());
-      }
-    } catch (Throwable t) {
-      success = false;
-      throw t;
+      String failureInfo = job.getStatus().getFailureInfo();
+      destroy(failureInfo);
     } finally {
-      // whatever happens we want to call this
-      try {
-        destroy(failureInfo);
-      } finally {
-        context.close();
-        cleanupTask.run();
-      }
+      context.close();
+      cleanupTask.run();
     }
   }
 
@@ -626,34 +575,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     context.setState(new ProgramState(ProgramStatus.RUNNING, null));
   }
 
-  /**
-   * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
-   * If any axception is thrown by the output committer, sets the failure cause to that exception.
-   * @param outputName the name of the output
-   * @param outputFormatProvider the output format provider to commit
-   */
-  private void commitOutput(String outputName, OutputFormatProvider outputFormatProvider,
-                            AtomicReference<Exception> failureCause) {
-    if (outputFormatProvider instanceof DatasetOutputCommitter) {
-      try {
-        if (success) {
-          ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
-        } else {
-          ((DatasetOutputCommitter) outputFormatProvider).onFailure();
-        }
-      } catch (Throwable t) {
-        LOG.error(String.format("Error from %s method of output dataset %s.",
-                                success ? "onSuccess" : "onFailure", outputName), t);
-        success = false;
-        if (failureCause.get() != null) {
-          failureCause.get().addSuppressed(t);
-        } else {
-          failureCause.set(t instanceof Exception ? (Exception) t : new RuntimeException(t));
-        }
-      }
-    }
-  }
-
   private ProgramState getProgramState(boolean success, String failureInfo) {
     if (stopRequested) {
       // Program explicitly stopped, return KILLED state
@@ -671,53 +592,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
   private void destroy(final String failureInfo) throws Exception {
-
-    // if any exception happens during output committing, we want the MapReduce to fail.
-    // for that to happen it is not sufficient to set the status to failed, we have to throw an exception,
-    // otherwise the shutdown completes successfully and the completed() callback is called.
-    // thus: remember the exception and throw it at the end.
-    final AtomicReference<Exception> failureCause = new AtomicReference<>();
-
-    // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
-    try {
-      context.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctxt) throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-          try {
-            for (Map.Entry<String, ProvidedOutput> output : context.getOutputs().entrySet()) {
-              boolean wasSuccess = success;
-              commitOutput(output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
-              if (wasSuccess && !success) {
-                // mapreduce was successful but this output committer failed: call onFailure() for all committers
-                for (ProvidedOutput toFail : context.getOutputs().values()) {
-                  commitOutput(toFail.getAlias(), toFail.getOutputFormatProvider(), failureCause);
-                }
-                break;
-              }
-            }
-            // if there was a failure, we must throw an exception to fail the transaction
-            // this will roll back all the outputs and also make sure that postCommit() is not called
-            // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
-            Exception cause = failureCause.get();
-            if (cause != null) {
-              failureCause.set(null);
-              throw cause;
-            }
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
-        }
-      });
-    } catch (TransactionFailureException e) {
-      LOG.error("Transaction failure when committing dataset outputs", e);
-      if (failureCause.get() != null) {
-        failureCause.get().addSuppressed(e);
-      } else {
-        failureCause.set(e);
-      }
-    }
-
     context.setState(getProgramState(success, failureInfo));
 
     final TransactionControl txControl = mapReduce instanceof ProgramLifecycle
@@ -741,11 +615,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         e = e.getCause();
       }
       LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
-    }
-
-    // this is needed to make the run fail if there was an exception. See comment at beginning of this method
-    if (failureCause.get() != null) {
-      throw failureCause.get();
     }
   }
 
@@ -868,29 +737,33 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Sets the configurations used for outputs.
    */
-  private void setOutputsIfNeeded(Job job) {
-    Map<String, ProvidedOutput> outputsMap = context.getOutputs();
+  private void setOutputsIfNeeded(Job job) throws ClassNotFoundException {
+    List<ProvidedOutput> outputsMap = context.getOutputs();
     fixOutputPermissions(job, outputsMap);
-    LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
+    LOG.debug("Using as output for MapReduce Job: {}", outputsMap);
+    OutputFormatProvider rootOutputFormatProvider;
     if (outputsMap.isEmpty()) {
-      // user is not going through our APIs to add output; leave the job's output format to user
-      return;
+      // user is not going through our APIs to add output; propagate the job's output format
+      rootOutputFormatProvider =
+        new BasicOutputFormatProvider(job.getOutputFormatClass().getName(), Collections.<String, String>emptyMap());
     } else if (outputsMap.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
-      ProvidedOutput output = outputsMap.values().iterator().next();
-      ConfigurationUtil.setAll(output.getOutputFormatConfiguration(), job.getConfiguration());
-      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, output.getOutputFormatClassName());
-      return;
+      rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
+    } else {
+      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
+      // as the root output format in this case to disallow writing directly on the context.
+      // the OutputCommitter is effectively a no-op, as it runs as the RootOutputCommitter in MultipleOutputsCommitter
+      rootOutputFormatProvider =
+        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), Collections.<String, String>emptyMap());
     }
-    // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
-    // as the root output format in this case to disallow writing directly on the context
-    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job, UnsupportedOutputFormat.class.getName(),
-                                                         new HashMap<String, String>());
+
+    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job,
+                                                         rootOutputFormatProvider.getOutputFormatClassName(),
+                                                         rootOutputFormatProvider.getOutputFormatConfiguration());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {
-      ProvidedOutput output = entry.getValue();
-      String outputName = output.getAlias();
+    for (ProvidedOutput output : outputsMap) {
+      String outputName = output.getOutput().getAlias();
       String outputFormatClassName = output.getOutputFormatClassName();
       Map<String, String> outputConfig = output.getOutputFormatConfiguration();
       MultipleOutputs.addNamedOutput(job, outputName, outputFormatClassName,
@@ -899,14 +772,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  private void fixOutputPermissions(Job job, Map<String, ProvidedOutput> outputs) {
+  private void fixOutputPermissions(JobContext job, List<ProvidedOutput> outputs) {
     Configuration jobconf = job.getConfiguration();
     Set<String> outputsWithUmask = new HashSet<>();
     Set<String> outputUmasks = new HashSet<>();
-    for (Map.Entry<String, ProvidedOutput> entry : outputs.entrySet()) {
-      String umask = entry.getValue().getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
+    for (ProvidedOutput entry : outputs) {
+      String umask = entry.getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
       if (umask != null) {
-        outputsWithUmask.add(entry.getKey());
+        outputsWithUmask.add(entry.getOutput().getAlias());
         outputUmasks.add(umask);
       }
     }
@@ -940,16 +813,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // fix all output configurations that have a umask by removing that property from their configs
     if (mustFixUmasks) {
-      for (String outputName : outputsWithUmask) {
-        ProvidedOutput output = outputs.get(outputName);
-        Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
-        outputConfig.remove(HADOOP_UMASK_PROPERTY);
-        outputs.put(outputName, new ProvidedOutput(output.getAlias(), output.getOutputFormatProvider(),
-                                                   output.getOutputFormatClassName(), outputConfig));
+      for (int i = 0; i < outputs.size(); i++) {
+        ProvidedOutput output = outputs.get(i);
+        if (outputsWithUmask.contains(output.getOutput().getAlias())) {
+          Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
+          outputConfig.remove(HADOOP_UMASK_PROPERTY);
+          outputs.set(i, new ProvidedOutput(output.getOutput(), output.getOutputFormatProvider(),
+                                            output.getOutputFormatClassName(), outputConfig));
+        }
       }
     }
   }
-
 
   /**
    * Returns the input value type of the MR job based on the job Mapper/Reducer type.

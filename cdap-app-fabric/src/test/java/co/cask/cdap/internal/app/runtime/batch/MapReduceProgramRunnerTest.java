@@ -620,8 +620,8 @@ public class MapReduceProgramRunnerTest extends MapReduceRunnerTestBase {
     testFailureInInit("false", app, AppWithMapReduce.ExplicitFaiiingMR.class, ImmutableMap.of("failOutput", "true"));
   }
 
-  public void testFailureInInit(final String expected, ApplicationWithPrograms app,
-                                Class<?> programClass, Map<String, String> args) throws Exception {
+  private void testFailureInInit(final String expected, ApplicationWithPrograms app,
+                                 Class<?> programClass, Map<String, String> args) throws Exception {
     // We want to verify that when a mapreduce fails during initialize(), especially
     // if an input or output format provider fails to produce its configuration, the
     // writes by that initialize() method are rolled back. (Background: prior to

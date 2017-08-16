@@ -17,26 +17,30 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.tephra.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +50,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -61,6 +67,7 @@ public final class MapReduceContextConfig {
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
   private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
+  private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output.DatasetOutput>>() { }.getType();
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.mapreduce.program.id";
@@ -68,9 +75,9 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "cdap.mapreduce.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "cdap.mapreduce.cconf";
-  private static final String HCONF_ATTR_NEW_TX = "cdap.mapreduce.newtx";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.mapreduce.program.options";
+  private static final String HCONF_ATTR_OUTPUTS = "cdap.mapreduce.outputs";
 
   private final Configuration hConf;
 
@@ -87,11 +94,10 @@ public final class MapReduceContextConfig {
    *
    * @param context the context for the MapReduce program
    * @param conf the CDAP configuration
-   * @param tx the long transaction created for the MapReduce program
    * @param programJarURI The URI of the program JAR
    * @param localizedUserResources the localized resources for the MapReduce program
    */
-  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
+  public void set(BasicMapReduceContext context, CConfiguration conf, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setProgramOptions(context.getProgramOptions());
     setProgramId(context.getProgram().getId());
@@ -100,8 +106,27 @@ public final class MapReduceContextConfig {
     setPlugins(context.getApplicationSpecification().getPlugins());
     setProgramJarURI(programJarURI);
     setConf(conf);
-    setTx(tx);
     setLocalizedResources(localizedUserResources);
+    setOutputs(context.getOutputs());
+  }
+
+  private void setOutputs(List<ProvidedOutput> providedOutputs) {
+    // we only need to serialize the original Output objects, not the entire ProvidedOutput
+    List<Output.DatasetOutput> datasetOutputs = new ArrayList<>();
+    for (ProvidedOutput providedOutput : providedOutputs) {
+      Output output = providedOutput.getOutput();
+      if (output instanceof Output.DatasetOutput) {
+        datasetOutputs.add((Output.DatasetOutput) output);
+      }
+    }
+    hConf.set(HCONF_ATTR_OUTPUTS, GSON.toJson(datasetOutputs));
+  }
+
+  /**
+   * @return the list of DatasetOutputs configured for this MapReduce job.
+   */
+  public List<Output.DatasetOutput> getOutputs() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_OUTPUTS), OUTPUT_LIST_TYPE);
   }
 
   private void setProgramId(ProgramId programId) {
@@ -226,16 +251,5 @@ public final class MapReduceContextConfig {
     String conf = hConf.getRaw(HCONF_ATTR_CCONF);
     Preconditions.checkArgument(conf != null, "No CConfiguration available");
     return CConfiguration.create(new ByteArrayInputStream(conf.getBytes(Charsets.UTF_8)));
-  }
-
-  private void setTx(Transaction tx) {
-    hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
-  }
-
-  /**
-   * Returns the {@link Transaction} information stored inside the job {@link Configuration}.
-   */
-  public Transaction getTx() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
   }
 }

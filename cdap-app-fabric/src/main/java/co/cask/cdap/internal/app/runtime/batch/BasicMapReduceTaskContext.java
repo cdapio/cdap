@@ -70,6 +70,8 @@ import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -91,6 +93,8 @@ import javax.annotation.Nullable;
  */
 public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(BasicMapReduceTaskContext.class);
 
   private final CConfiguration cConf;
   private final MapReduceSpecification spec;
@@ -140,11 +144,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     initializeTransactionAwares();
-  }
-
-  @Override
-  public String toString() {
-    return String.format("name=%s, %s", spec.getName(), super.toString());
   }
 
   @Override
@@ -376,6 +375,21 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   public void flushOperations() throws Exception {
     for (TransactionAware txAware : txAwares) {
       txAware.commitTx();
+    }
+  }
+
+  /**
+   * Calls postTxCommit on all the transaction-aware datasets participating in this context.
+   * If any Throwable is encountered, it is suppressed and logged.
+   */
+  public void postTxCommit() throws Exception {
+    for (TransactionAware txAware : txAwares) {
+      try {
+        txAware.postTxCommit();
+      } catch (Throwable t) {
+        LOG.error("Unable to perform post-commit in transaction-aware '{}' for transaction {}.",
+                  txAware.getTransactionAwareName(), transaction.getTransactionId(), t);
+      }
     }
   }
 
