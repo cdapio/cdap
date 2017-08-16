@@ -27,7 +27,7 @@ import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/R
 import shortid from 'shortid';
 import {preventPropagation} from 'services/helpers';
 import RulebooksPopover from 'components/RulesEngineHome/RulesTab/Rule/RulebooksPopover';
-import {getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {getRuleBooks, setError} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import { DragSource } from 'react-dnd';
 import T from 'i18n-react';
 
@@ -149,17 +149,7 @@ class Rule extends Component {
         () => {
           getRuleBooks();
         },
-        (err) => {
-          RulesEngineStore.dispatch({
-            type: RULESENGINEACTIONS.SETERROR,
-            payload: {
-              error: {
-                showError: true,
-                message: typeof err === 'string' ? err : err.response.message
-              }
-            }
-          });
-        }
+        setError
       );
   }
 
@@ -227,7 +217,7 @@ class Rule extends Component {
             {this.props.rule.id}
           </Col>
           <Col xs="5">
-            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
+            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY')}
           </Col>
           <Col xs="1">
             <IconSVG name="icon-bars" />

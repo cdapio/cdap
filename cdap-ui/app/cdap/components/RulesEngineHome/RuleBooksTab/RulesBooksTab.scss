@@ -15,9 +15,34 @@
 */
 
 $create_rulebook_btn_font_color: #cccccc;
+$rulebook_search_label_color: #333333;
+$rulebook_search_label_color_hover: #f5f5f5;
+$rulebook_icon_color: #999999;
+$rulebook_content_bg_color: white;
 
 .rule-books-tab {
-  padding: 20px;
+  padding: 20px 30px;
+
+  .rule-books-search-label {
+    color: $rulebook_search_label_color;
+    font-size: 16px;
+  }
+
+  .rule-books-search-group {
+    margin-top: 8px;
+
+    .input-group-addon {
+      background-color: $rulebook_content_bg_color;
+
+      .icon-search {
+        color: $create_rulebook_btn_font_color;
+      }
+    }
+
+    input {
+      height: 35px;
+    }
+  }
 
   input {
     border-radius: 0;
@@ -26,26 +51,54 @@ $create_rulebook_btn_font_color: #cccccc;
   .rule-books-container {
     display: flex;
     flex-wrap: wrap;
-    padding: 10px;
-    // Stretch the parent by 20px on right and left as children have 10px margin
-    // between them and its always 2 column layout
-    margin-left: -20px;
-    margin-right: -20px;
+    justify-content: space-between;
 
     .rule-book {
-      width: calc(50% - 20px);
+      margin: 15px 0 0;
+      height: 204px;
+      width: 180px;
 
       &.center {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        border: 0;
+        justify-content: center;
+        padding: 0;
+        background-color: initial;
+
+        &:only-child {
+          width: 100%;
+        }
 
         > div {
-          font-size: 10em;
-          line-height: 1;
-          margin-top: -15px;
-          font-weight: 100;
-          color: $create_rulebook_btn_font_color;
+          min-height: 98px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          border: 1px dashed $create_rulebook_btn_font_color;
+          width: 100%;
+          font-size: 2em;
+          background-color: $rulebook_content_bg_color;
+
+          &:first-child {
+            margin-bottom: 8px;
+          }
+
+          &:hover {
+            background-color: $rulebook_search_label_color_hover;
+          }
+
+          svg.icon-import,
+          svg.icon-plus {
+            font-size: 1em;
+            margin-top: 10px;
+            color: $rulebook_icon_color;
+          }
+          strong {
+            font-size: 13px;
+            color: $rulebook_search_label_color;
+          }
         }
       }
     }

@@ -16,8 +16,12 @@
 
 $tab_header_height: 40px;
 $leftpanel_border_color: #cccccc;
+$leftpanel_bg_color: #f5f5f5;
+$active_tab_color: #333333;
+$nonactive_tab_bg_color: #bbbbbb;
+$nonactive_tab_color: white;
 
-.rules-engine-home {
+.rules-engine-wrapper {
   display: flex;
   width: 100%;
   height: calc(100vh - 104px);
@@ -29,7 +33,7 @@ $leftpanel_border_color: #cccccc;
   .left-panel {
     width: 30%;
     border-right: 1px solid $leftpanel_border_color;
-    min-width: 450px;
+    min-width: 470px;
 
     @media (max-width: 1000px) {
       min-width: 300px;
@@ -62,11 +66,19 @@ $leftpanel_border_color: #cccccc;
         height: 100%;
         display: flex;
         align-items: center;
+        background-color: $nonactive_tab_bg_color;
+        color: $nonactive_tab_color;
+
+        &.active {
+          background-color: $leftpanel_bg_color;
+          color: $active-tab-color;
+        }
       }
     }
   }
   .tab-content {
     height: calc(100% - #{$tab_header_height}); // height of tab header
+    background-color: $leftpanel_bg_color;
   }
   .tab-pane,
   .tab-pane > div {

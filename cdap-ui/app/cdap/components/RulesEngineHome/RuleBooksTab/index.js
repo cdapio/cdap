@@ -16,13 +16,15 @@
 
 import React, {Component} from 'react';
 import RuleBook from 'components/RulesEngineHome/RuleBook';
-import {Input} from 'reactstrap';
+import {Input, InputGroup, InputGroupAddon} from 'reactstrap';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
 import isNil from 'lodash/isNil';
 import LoadingSVG from 'components/LoadingSVG';
 import classnames from 'classnames';
+import IconSVG from 'components/IconSVG';
+import ImportRulebookWizard from 'components/RulesEngineHome/ImportRulebookWizard';
 import T from 'i18n-react';
 
 require('./RulesBooksTab.scss');
@@ -32,15 +34,18 @@ const PREFIX = 'features.RulesEngine.RulebooksTab';
 export default class RuleBooksTab extends Component {
   state = {
     searchStr: '',
+    isOpenImportWizard: false,
     rulebooks: RulesEngineStore.getState().rulebooks.list
   };
 
   componentDidMount() {
     RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
-      this.setState({
-        rulebooks: rulebooks.list
-      });
+      if (Array.isArray(rulebooks.list)) {
+        this.setState({
+          rulebooks: rulebooks.list
+        });
+      }
     });
   }
 
@@ -48,7 +53,7 @@ export default class RuleBooksTab extends Component {
     this.setState({
       searchStr: e.target.value
     });
-  }
+  };
 
   createNewRuleBook = () => {
     RulesEngineStore.dispatch({
@@ -56,6 +61,12 @@ export default class RuleBooksTab extends Component {
       payload:{
         isCreate: true
       }
+    });
+  };
+
+  toggleImportWizard = () => {
+    this.setState({
+      isOpenImportWizard: !this.state.isOpenImportWizard
     });
   };
 
@@ -103,21 +114,34 @@ export default class RuleBooksTab extends Component {
   render() {
     return (
       <div className="rule-books-tab">
-        <Input
-          placeholder={T.translate(`${PREFIX}.searchplaceholder`)}
-          value={this.state.searchStr}
-          onChange={this.updateSearchStr}
-        />
+        <span className="rule-books-search-label">
+          {T.translate(`${PREFIX}.searchLabel`)}
+        </span>
+        <InputGroup className="rule-books-search-group">
+          <InputGroupAddon>
+            <IconSVG name="icon-search" />
+          </InputGroupAddon>
+          <Input
+            placeholder={T.translate(`${PREFIX}.searchplaceholder`)}
+            value={this.state.searchStr}
+            onChange={this.updateSearchStr}
+          />
+        </InputGroup>
         <div className={classnames("rule-books-container", {
           'loading': isNil(this.state.rulebooks)
         })}>
-          <div
-            className="rule-book center"
-            onClick={this.createNewRuleBook}
-          >
-            <strong> {T.translate(`${PREFIX}.createrulebook`)} </strong>
-            <div>
-              +
+          <div className="rule-book center">
+            <div onClick={this.createNewRuleBook}>
+              <strong> {T.translate(`${PREFIX}.createrulebook`)} </strong>
+              <IconSVG name="icon-plus" />
+            </div>
+            <div onClick={this.toggleImportWizard}>
+              <strong> {T.translate(`${PREFIX}.importrulebook`)} </strong>
+              <IconSVG name="icon-import" />
+              <ImportRulebookWizard
+                isOpen={this.state.isOpenImportWizard}
+                onClose={this.toggleImportWizard}
+              />
             </div>
           </div>
           {this.renderRulebooks()}

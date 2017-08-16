@@ -14,35 +14,15 @@
  * the License.
 */
 
-$create-rule-btn-color: #0099ff;
-
-.rules-tab {
-  padding: 20px;
-
-  input {
-    border-radius: 0;
-  }
-  > button {
-    &.btn.btn-secondary {
-      margin: 15px 0;
-      color: $create-rule-btn-color;
-    }
-  }
-  .rules-container {
-    margin-top: 10px;
-    padding: 0 10px;
-  }
-  .rules-container > .row {
-    &:first-child {
-      font-weight: bolder;
-      &:hover {
-        background: transparent;
+angular.module(PKG.name + '.commons')
+  .controller('RulesEngineModalController', function(rPlugin, $uibModalInstance) {
+    // FIXME: UI doesn't have a rulebookid when navigating into rulesengine from pipelines.
+    this.$uibModalInstance = $uibModalInstance;
+    this.node = rPlugin;
+    this.onApply = (rulebook) => {
+      if (rulebook) {
+        this.node.properties.rulebook = rulebook;
       }
-    }
-  }
-  .svg-arrow-wrapper {
-    display: inline-block;
-    font-size: 15px;
-    line-height: 1;
-  }
-}
+      this.$uibModalInstance.close();
+    };
+  });

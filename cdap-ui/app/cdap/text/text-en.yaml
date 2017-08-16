@@ -1368,6 +1368,11 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
   RulesEngine:
+    AddRulesEngineToPipelineModal:
+      batchPipelineBtn: Batch Pipeline
+      message: Choose the type of pipeline to create
+      modalTitle: Add to Pipeline
+      realtimePipelineBtn: Realtime Pipeline
     CreateRule:
       form:
         actionplaceholder: Action
@@ -1379,28 +1384,40 @@ features:
         today: Today
     CreateRulebook:
       admin: Admin
-      createBtnLabel: Create
+      createBtnLabel: Create Rulebook
+      createBtnNext: "Next: Add Rules"
       created: Created
       descriptionplaceholder: Add description
-      nameplaceholder: Add name
+      nameplaceholder: Start by Naming this Rulebook
+      now: Now
       owner: Owner
-      today: Created Today
+      version: Version {version}
     Home:
       pageTitle: Rules Management
       Tabs:
-        rbTitle: Rules Books
+        rbTitle: RuleBooks
         rulesTitle: Rules
+    ImportRulebook:
+      description: Upload your Rulebook file
+      footertitle: Failed to Upload Rulebook
+      shorttitle: Import Rulebook
+      title: Upload Rulebook
     Rulebook:
       owner: Owner
       rules: Rules
-      version: Version
     RulebookDetails:
       addone: to add one
-      lastupdated: Last Updated on
+      applyBtnLabel: Apply
+      lastmodified: Modified on
       norulebooks: No Rulebooks added
       owner: Owner # ?Again should we reuse?
+      version: Version {version}
+    RulebookMenu:
+      createPipeline: Create a Pipeline
+      delete: Delete
+      download: Download
     RulebooksPopover:
-      addToRulebookbtn: Add to RuleBook
+      addToRulebookbtn: Add to RuleBook >
       norulesbooks: No Rulebooks found
     RulesEngineServiceControl:
       benefits:
@@ -1415,16 +1432,18 @@ features:
       enableBtnLabel: Enable Rules Engine
       title: Welcome to Rules Engine Management
     RulesList:
-      dropContainerText: Add a rule by drag and drop from the rule list on the left
+      dropContainerText: Add a rule by dragging and dropping from the Rules tab
       rulesLabel: Rules
     RulebookRule:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
+      importrulebook: Import a Rulebook
+      searchLabel: Select a Rulebook
       searchplaceholder: Search Rulebook by name, owner or description
     RulesTab:
       createRuleBtn: Create a New Rule
-      lastUpdated: Last Updated
+      date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
   SchemaEditor:
