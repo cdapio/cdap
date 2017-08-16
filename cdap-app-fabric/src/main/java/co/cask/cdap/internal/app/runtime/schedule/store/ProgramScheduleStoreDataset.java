@@ -62,6 +62,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -524,7 +525,7 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
    * For now, we do not support composite trigger, but in the future this is where the triggers need to be
    * extracted from composite triggers. Hence the return type of this method is a list.
    */
-  private static List<String> extractTriggerKeys(ProgramSchedule schedule) {
+  private static Set<String> extractTriggerKeys(ProgramSchedule schedule) {
     return ((SatisfiableTrigger) schedule.getTrigger()).getTriggerKeys();
   }
 
