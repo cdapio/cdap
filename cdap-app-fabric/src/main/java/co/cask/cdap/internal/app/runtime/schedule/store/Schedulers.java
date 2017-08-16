@@ -170,7 +170,7 @@ public class Schedulers {
       @Nullable
       @Override
       public ScheduleDetail apply(@Nullable ProgramScheduleRecord input) {
-        return input == null ? null : input.getSchedule().toScheduleDetail();
+        return input == null ? null : input.toScheduleDetail();
       }
     });
   }
