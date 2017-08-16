@@ -43,6 +43,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.collect.Collections2;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -51,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 public class ScheduleNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
@@ -241,12 +244,21 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
       for (ProgramScheduleRecord schedule : enabledSchedules) {
         // Copy over the user runtime arguments
-        // TODO renaming done in a constraint?
+        String prefix = schedule.getSchedule().getProgramId().getNamespace() + "." +
+                        schedule.getSchedule().getProgramId().getApplication();
+
+        Map<String, String> triggeringProgramRunProperties =
+          GSON.fromJson(triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS),
+                        MAP_STRING_STRING_TYPE);
+        Map<String, String> triggeredProgramRunProperties = new HashMap<>();
+        for (Map.Entry<String, String> entry : triggeringProgramRunProperties.entrySet()) {
+          triggeredProgramRunProperties.put(prefix + "." + entry.getKey(), entry.getValue());
+        }
+
         Map<String, String> triggeredProgramProperties = new HashMap<>();
         triggeredProgramProperties.put(ProgramOptionConstants.USER_OVERRIDES,
-                                       triggeringProgramRun.getProperties().get(ProgramOptionConstants.RUNTIME_ARGS));
+                                       GSON.toJson(triggeredProgramRunProperties));
 
-        // TODO do we not copy over the workflow token?
         // If the triggered program is a workflow, send the notification that contains just the USER workflow token
         if (schedule.getSchedule().getProgramId().getType() == ProgramType.WORKFLOW &&
           programId.getType() == ProgramType.WORKFLOW) {
@@ -260,7 +272,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
           for (Map.Entry<String, List<NodeValue>> entry : userValues.entrySet()) {
             for (NodeValue nodeValue : entry.getValue()) {
-              userWorkflowToken.put(entry.getKey(), nodeValue.getValue());
+              userWorkflowToken.put(prefix + "." + entry.getKey(), nodeValue.getValue());
             }
           }
           triggeredProgramProperties.put(ProgramOptionConstants.WORKFLOW_TOKEN, GSON.toJson(userWorkflowToken));
