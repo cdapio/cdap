@@ -82,9 +82,12 @@ commons:
     valuePlaceholder: value
   market: Cask Market
   nameLabel: Name
+  notAvailable: 'N/A'
   please: Please
   resource-center: Add Entity
   schemaLabel: Schema
+  secondsShortLabel: secs
+  milliSecondsShortLabel: msecs
   then: Then
   tracker: Cask Tracker
   stream: Stream
@@ -1226,9 +1229,21 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
-      recordsInTitle: "Records In - Run #{runNumber}"
-      recordsOutTitle: "Records out - Run #{runNumber}"
+      processTimeTable:
+        avgProcessTime: Average Processing Time
+        minProcessTime: Min Process Time (one record)
+        maxProcessTime: Max Process Time (one record)
+        recordInPerSec: Records In per second
+        recordOutPerSec: Records Out per second
+        stddevProcessTime: Standard Deviation
+      recordsInTitle: Records In
+      recordsOutTitle: Records out
+      recordsErrorTitle: Records Error # Error Records??
+      runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
+      totalRecordsIn: "Total Records In: {totalRecordsIn}"
+      totalRecordsOut: "Total Records Out: {totalRecordsOut}"
+      totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:
         duration: Duration
