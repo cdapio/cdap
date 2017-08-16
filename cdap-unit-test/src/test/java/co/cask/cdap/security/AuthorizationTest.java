@@ -830,8 +830,8 @@ public class AuthorizationTest extends TestBase {
     flowManager.waitForStatus(true);
     flowManager.getFlowletMetrics("saver").waitForProcessed(10, 30, TimeUnit.SECONDS);
     flowManager.stop();
-    flowManager.waitForStatus(false);
 
+    waitForStoppedPrograms(flowManager);
     // switch back to alice and verify the data its fine now to verify the run record here because if the flow failed
     // to write we will not see any data
     SecurityRequestContext.setUserId(ALICE.getName());
@@ -1233,6 +1233,8 @@ public class AuthorizationTest extends TestBase {
     sparkManager.start(args);
     sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 120, TimeUnit.SECONDS);
 
+    waitForStoppedPrograms(sparkManager);
+
     // Verify the results as alice
     SecurityRequestContext.setUserId(ALICE.getName());
     verifyDummyData(outputDatasetNSMeta.getNamespaceId(), "output");
@@ -1442,5 +1444,21 @@ public class AuthorizationTest extends TestBase {
       grantAndAssertSuccess(privilege.getKey(), principal, privilege.getValue());
       cleanUpEntities.add(privilege.getKey());
     }
+  }
+
+  private void waitForStoppedPrograms(final ProgramManager programManager) throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        List<RunRecord> runs = programManager.getHistory();
+        for (RunRecord meta : runs) {
+          if (meta.getStatus() == ProgramRunStatus.STARTING ||
+            meta.getStatus() == ProgramRunStatus.RUNNING) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }, 10, TimeUnit.SECONDS);
   }
 }
