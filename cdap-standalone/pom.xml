@@ -611,26 +611,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-pipelines</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-batch-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-pipelines-spark1_2.10</id>
                 <phase>prepare-package</phase>
                 <goals>
