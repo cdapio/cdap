@@ -182,7 +182,7 @@
 
   <property>
     <name>twill.java.heap.memory.ratio</name>
-    <value>0.7</value>
+    <value>0.6</value>
     <description>
       The minimum ratio of heap to non-heap memory for Apache Twill container
     </description>
