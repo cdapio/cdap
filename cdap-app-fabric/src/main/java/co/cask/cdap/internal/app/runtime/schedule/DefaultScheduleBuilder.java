@@ -112,59 +112,46 @@ public class DefaultScheduleBuilder implements ConstraintProgramScheduleBuilder 
 
   @Override
   public ScheduleCreationSpec triggerByTime(String cronExpression) {
-    return new ScheduleCreationSpec(name, description, programName, properties, triggerFactory.byTime(cronExpression),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.byTime(cronExpression));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnPartitions(String datasetName, int numPartitions) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    triggerFactory.onPartitions(datasetName, numPartitions),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.onPartitions(datasetName, numPartitions));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnPartitions(String datasetNamespace, String datasetName,
                                                   int numPartitions) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    triggerFactory.onPartitions(datasetNamespace, datasetName, numPartitions),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.onPartitions(datasetNamespace, datasetName, numPartitions));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
                                                      String appVersion, ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    triggerFactory.onProgramStatus(programNamespace, application, appVersion,
-                                                                   programType, program, programStatuses),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.onProgramStatus(programNamespace, application, appVersion,
+                                                    programType, program, programStatuses));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(String programNamespace, String application,
                                                      ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    triggerFactory.onProgramStatus(programNamespace, application,
-                                                                   programType, program, programStatuses),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.onProgramStatus(programNamespace, application,
+                                                    programType, program, programStatuses));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(String application, ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
-    return new ScheduleCreationSpec(name, description, programName, properties,
-                                    triggerFactory.onProgramStatus(application, programType, program, programStatuses),
-                                    constraints, timeoutMillis);
+    return triggerOn(triggerFactory.onProgramStatus(application, programType, program, programStatuses));
   }
 
   @Override
   public ScheduleCreationSpec triggerOnProgramStatus(ProgramType programType, String program,
                                                      ProgramStatus... programStatuses) {
-    return new ScheduleCreationBuilder(name, description, programName, properties, constraints, timeoutMillis,
-                                       (TriggerBuilder) triggerFactory.onProgramStatus(programType, program,
-                                                                                       programStatuses));
+    return triggerOn(triggerFactory.onProgramStatus(programType, program, programStatuses));
   }
 
   @Override
