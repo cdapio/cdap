@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -286,6 +287,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(409, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
     stopProgram(program);
+    waitState(program, ProgramStatus.STOPPED.name());
     // delete should work now
     assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
