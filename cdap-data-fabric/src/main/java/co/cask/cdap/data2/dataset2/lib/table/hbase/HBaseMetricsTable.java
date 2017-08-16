@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -337,7 +338,9 @@ public class HBaseMetricsTable implements MetricsTable {
         if (rowKeyDistributor != null) {
           fuzzyPairs.addAll(rowKeyDistributor.getDistributedFilterPairs(pair));
         } else {
-          fuzzyPairs.add(Pair.newPair(pair.getFirst(), pair.getSecond()));
+          // Make a copy of filter pair because the key and mask will get modified in HBase FuzzyRowFilter
+          fuzzyPairs.add(Pair.newPair(Arrays.copyOf(pair.getFirst(), pair.getFirst().length),
+                                      Arrays.copyOf(pair.getSecond(), pair.getSecond().length)));
         }
       }
       scan.setFilter(new org.apache.hadoop.hbase.filter.FuzzyRowFilter(fuzzyPairs));
