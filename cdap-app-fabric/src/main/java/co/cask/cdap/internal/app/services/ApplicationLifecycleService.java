@@ -499,9 +499,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(final NamespaceId namespaceId) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(namespaceId));
-
     Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
@@ -514,6 +511,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
     //All Apps are STOPPED, delete them
     Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : allSpecs) {

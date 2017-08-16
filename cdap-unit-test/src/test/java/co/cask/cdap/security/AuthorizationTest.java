@@ -746,8 +746,6 @@ public class AuthorizationTest extends TestBase {
 
     testSystemDatasetAccessFromFlowlet(flowManager);
     testCrossNSDatasetAccessFromFlowlet(flowManager);
-
-    waitForStoppedPrograms(flowManager);
   }
 
   private void testSystemDatasetAccessFromFlowlet(final FlowManager flowManager) throws Exception {
@@ -767,18 +765,13 @@ public class AuthorizationTest extends TestBase {
     // But trying to run a flow as BOB will fail since this flow writes to a dataset in system namespace
     flowManager.start(args);
     // wait for flow to be running
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return flowManager.isRunning();
-      }
-    }, 120, TimeUnit.SECONDS);
+    flowManager.waitForStatus(true, 12, 10);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // system namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
-    flowManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
+    flowManager.waitForStatus(false);
 
     assertDatasetIsEmpty(NamespaceId.SYSTEM, "store");
 
@@ -815,18 +808,13 @@ public class AuthorizationTest extends TestBase {
     // is not accessible to BOB.
     flowManager.start(args);
     // wait for flow to be running
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return flowManager.isRunning();
-      }
-    }, 120, TimeUnit.SECONDS);
+    flowManager.waitForStatus(true, 12, 10);
 
     // The above will be a runtime failure after the flow start since it will not be able to use the dataset in the
     // another namespace. Since the failure will lead to no metrics being emitted we cannot actually check it tried
     // processing or not. So stop the flow and check that the output dataset is empty
     flowManager.stop();
-    flowManager.waitForRuns(ProgramRunStatus.RUNNING, 0, 10, TimeUnit.SECONDS);
+    flowManager.waitForStatus(false);
     SecurityRequestContext.setUserId(ALICE.getName());
 
     assertDatasetIsEmpty(outputDatasetNS.getNamespaceId(), "store");
@@ -855,9 +843,6 @@ public class AuthorizationTest extends TestBase {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
       Assert.assertArrayEquals(key, results.read(key));
     }
-
-    flowManager.stop();
-    flowManager.waitForStatus(false);
 
     getNamespaceAdmin().delete(outputDatasetNS.getNamespaceId());
   }
@@ -1040,8 +1025,6 @@ public class AuthorizationTest extends TestBase {
 
     testCrossNSSystemDatasetAccessWithAuthSpark(sparkManager);
     testCrossNSDatasetAccessWithAuthSpark(sparkManager);
-
-    waitForStoppedPrograms(sparkManager);
   }
 
   @Test
@@ -1418,12 +1401,7 @@ public class AuthorizationTest extends TestBase {
       }
     }, 5, TimeUnit.MINUTES, "Not all program runs have failed status. Expected all run status to be failed");
 
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return programManager.isRunning();
-      }
-    }, 60, TimeUnit.SECONDS);
+    programManager.waitForStatus(false);
   }
 
 
@@ -1464,21 +1442,5 @@ public class AuthorizationTest extends TestBase {
       grantAndAssertSuccess(privilege.getKey(), principal, privilege.getValue());
       cleanUpEntities.add(privilege.getKey());
     }
-  }
-
-  private void waitForStoppedPrograms(final ProgramManager programManager) throws Exception {
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        List<RunRecord> runs = programManager.getHistory();
-        for (RunRecord meta : runs) {
-          if (meta.getStatus() == ProgramRunStatus.STARTING ||
-              meta.getStatus() == ProgramRunStatus.RUNNING) {
-            return false;
-          }
-        }
-        return true;
-      }
-    }, 10, TimeUnit.SECONDS);
   }
 }
