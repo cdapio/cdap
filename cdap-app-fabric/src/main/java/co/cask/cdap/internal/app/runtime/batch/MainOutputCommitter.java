@@ -25,8 +25,12 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
@@ -72,7 +76,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private TransactionSystemClient txClient;
   private Transaction transaction;
   private MessagingService messagingService;
-  private MapReduceContextConfig contextConfig;
   private BasicMapReduceTaskContext taskContext;
 
   private Map<String, ProvidedOutput> outputs;
@@ -95,10 +98,28 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 //    BasicMapReduceContext vs BasicMapReduceTaskContext
     Injector injector = taskContextProvider.getInjector();
     messagingService = injector.getInstance(MessagingService.class);
+
     cConf = injector.getInstance(CConfiguration.class);
-    txClient = injector.getInstance(TransactionSystemClient.class);
-    contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
-    transaction = contextConfig.getTx();
+    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
+
+    MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
+    RetryStrategy retryStrategy =
+      SystemArguments.getRetryStrategy(contextConfig.getProgramOptions().getUserArguments().asMap(),
+                                                                       contextConfig.getProgramId().getType(),
+                                                                       cConf);
+    this.txClient = new RetryingLongTransactionSystemClient(txClient, retryStrategy);
+
+    // We start long-running tx to be used by mapreduce job tasks.
+    Transaction tx = txClient.startLong();
+    try {
+      // We remember tx, so that we can re-use it in mapreduce tasks
+      new MapReduceContextConfig(configuration).setTx(tx);
+      new MapReduceContextConfig(taskAttemptContext.getConfiguration()).setTx(tx);
+      this.transaction = tx;
+    } catch (Throwable t) {
+      Transactions.invalidateQuietly(txClient, tx);
+      throw t;
+    }
 
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
     taskContext = taskContextProvider.get(taskAttemptContext);
@@ -279,7 +300,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private void doShutdown(JobContext jobContext) throws IOException {
     try {
       try {
-        shutdown();
+        shutdown(jobContext);
       } finally {
         commitDatasets(jobContext);
       }
@@ -289,9 +310,9 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     }
   }
 
-  private void shutdown() throws Exception {
+  private void shutdown(JobContext jobContext) throws Exception {
     if (success) {
-      LOG.debug("Committing MapReduce Job transaction: {}", toString(contextConfig));
+      LOG.debug("Committing MapReduce Job transaction: {}", toString(jobContext));
 
       // "Commit" the data event topic by publishing an empty message.
       // Need to do it with the raw MessagingService.
@@ -307,7 +328,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
       if (!txClient.commit(transaction)) {
         LOG.warn("MapReduce Job transaction failed to commit");
-        throw new TransactionFailureException("Failed to commit transaction for MapReduce " + toString(contextConfig));
+        throw new TransactionFailureException("Failed to commit transaction for MapReduce " + toString(jobContext));
       }
     } else {
       // invalids long running tx. All writes done by MR cannot be undone at this point.
@@ -316,7 +337,8 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   }
 
   // TODO: rename?
-  public String toString(MapReduceContextConfig contextConfig) {
+  private String toString(JobContext jobContext) {
+    MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
     ProgramId programId = contextConfig.getProgramId();
     ProgramRunId runId = programId.run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
     return String.format("namespaceId=%s, applicationId=%s, program=%s, runid=%s",
