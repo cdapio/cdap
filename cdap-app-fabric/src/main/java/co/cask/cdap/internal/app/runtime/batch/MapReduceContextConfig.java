@@ -87,10 +87,11 @@ public final class MapReduceContextConfig {
    *
    * @param context the context for the MapReduce program
    * @param conf the CDAP configuration
+   * @param tx the long transaction created for the MapReduce program
    * @param programJarURI The URI of the program JAR
    * @param localizedUserResources the localized resources for the MapReduce program
    */
-  public void set(BasicMapReduceContext context, CConfiguration conf, URI programJarURI,
+  public void set(BasicMapReduceContext context, CConfiguration conf, Transaction tx, URI programJarURI,
                   Map<String, String> localizedUserResources) {
     setProgramOptions(context.getProgramOptions());
     setProgramId(context.getProgram().getId());
@@ -99,6 +100,7 @@ public final class MapReduceContextConfig {
     setPlugins(context.getApplicationSpecification().getPlugins());
     setProgramJarURI(programJarURI);
     setConf(conf);
+    setTx(tx);
     setLocalizedResources(localizedUserResources);
   }
 
@@ -226,7 +228,7 @@ public final class MapReduceContextConfig {
     return CConfiguration.create(new ByteArrayInputStream(conf.getBytes(Charsets.UTF_8)));
   }
 
-  void setTx(Transaction tx) {
+  private void setTx(Transaction tx) {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 

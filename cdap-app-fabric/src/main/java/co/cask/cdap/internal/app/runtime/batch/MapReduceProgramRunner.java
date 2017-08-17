@@ -188,7 +188,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,
-                                                                    streamAdmin, authorizationEnforcer,
+                                                                    streamAdmin, txSystemClient, authorizationEnforcer,
                                                                     authenticationContext);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 

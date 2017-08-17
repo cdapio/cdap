@@ -173,10 +173,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final BasicMapReduceContext context;
   private final NamespacedLocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
+  private final TransactionSystemClient txClient;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
 
   private Job job;
+  private Transaction transaction;
   private Runnable cleanupTask;
 
   // this will remain false until the job completes and we set it to job.isSuccessful()
@@ -189,8 +191,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
-                          BasicMapReduceContext context, Location programJarLocation,
-                          NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
+                          BasicMapReduceContext context,
+                          Location programJarLocation, NamespacedLocationFactory locationFactory,
+                          StreamAdmin streamAdmin, TransactionSystemClient txClient,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
     this.cConf = cConf;
@@ -200,6 +203,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.programJarLocation = programJarLocation;
     this.locationFactory = locationFactory;
     this.streamAdmin = streamAdmin;
+    this.txClient = new RetryingLongTransactionSystemClient(txClient, context.getRetryStrategy());
     this.context = context;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
@@ -336,18 +340,26 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       MapReduceContextConfig contextConfig = new MapReduceContextConfig(mapredConf);
-      CConfiguration cConfCopy = CConfiguration.copy(cConf);
-      if (hbaseDDLExecutorDirectory != null) {
-        cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
+      // We start long-running tx to be used by mapreduce job tasks.
+      Transaction tx = txClient.startLong();
+      try {
+        CConfiguration cConfCopy = CConfiguration.copy(cConf);
+        if (hbaseDDLExecutorDirectory != null) {
+          cConfCopy.set(Constants.HBaseDDLExecutor.EXTENSIONS_DIR, hbaseDDLExecutorDirectory);
+        }
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
+
+        // submits job and returns immediately. Shouldn't need to set context ClassLoader.
+        job.submit();
+        // log after the job.submit(), because the jobId is not assigned before then
+        LOG.info("Submitted MapReduce Job: {}.", context);
+
+        this.job = job;
+        this.transaction = tx;
+      } catch (Throwable t) {
+        Transactions.invalidateQuietly(txClient, tx);
+        throw t;
       }
-      contextConfig.set(context, cConfCopy, programJar.toURI(), localizedUserResources);
-
-      // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-      job.submit();
-      // log after the job.submit(), because the jobId is not assigned before then
-      LOG.info("Submitted MapReduce Job: {}.", context);
-
-      this.job = job;
     } catch (LinkageError e) {
       // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
       // of the user program is missing dependencies (CDAP-2543)
