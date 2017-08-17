@@ -32,8 +32,9 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     let transform = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['transform']; });
     let sink = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['sink']; });
     let analytics = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['analytics']; });
-
     let errorHandlers = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['errortransform']; });
+    let conditions = pluginsMap.filter( p => { return p.name === GLOBALS.pluginLabels['condition']; });
+
     if (source.length) {
       orderedTypes.push(source[0]);
     }
@@ -51,6 +52,9 @@ function HydratorPlusPlusOrderingFactory(GLOBALS) {
     }
     if (errorHandlers.length) {
       orderedTypes.push(errorHandlers[0]);
+    }
+    if (conditions.length) {
+      orderedTypes.push(conditions[0]);
     }
 
     // Doing this so that the SidePanel does not lose the reference of the original

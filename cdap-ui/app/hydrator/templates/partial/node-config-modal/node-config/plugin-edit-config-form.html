@@ -24,7 +24,8 @@
   </div>
 </div>
 
-<div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
+<div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator' &&
+HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Conditional'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
@@ -41,6 +42,16 @@
 <div class="validator-plugin" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-validator-transform.html'"></div>
+  </div>
+</div>
+
+<div class="config-table action-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name === 'Conditional'">
+  <div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
+      </div>
+    </div>
   </div>
 </div>
 

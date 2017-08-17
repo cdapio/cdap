@@ -35,7 +35,7 @@ angular.module(PKG.name+'.commons')
           metricsTimeout = $timeout(function () {
             let nodeElem = document.getElementById(key);
             let nodeMetricsElem = nodeElem.querySelector(`.metrics-content`);
-            if (nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
+            if (nodeMetricsElem && nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
               let recordsOutLabelElem = nodeMetricsElem.querySelector('.metric-records-out-label');
               if (recordsOutLabelElem) {
                 recordsOutLabelElem.parentNode.removeChild(recordsOutLabelElem);

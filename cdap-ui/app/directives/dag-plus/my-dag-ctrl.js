@@ -42,6 +42,7 @@ angular.module(PKG.name + '.commons')
     var endpointClicked = false;
     var connectionDropped = false;
     var dagMenu;
+    let conditionNodes = [];
 
     this.pluginsMap = {};
 
@@ -260,23 +261,63 @@ angular.module(PKG.name + '.commons')
 
     function initNodes() {
       angular.forEach($scope.nodes, function (node) {
-        let sourceObj = {
-          isSource: true,
-          filter: function(event) {
-            // we need this variable because when the user clicks on the endpoint circle, multiple
-            // 'mousedown' events are fired
-            if (event.target.className === 'endpoint-circle' && !endpointClicked) {
-              endpointClicked = true;
-            }
+        if (node.type !== 'condition') {
+          let sourceObj = {
+            isSource: true,
+            filter: function(event) {
+              // we need this variable because when the user clicks on the endpoint circle, multiple
+              // 'mousedown' events are fired
+              if (event.target.className.indexOf('endpoint-circle') !== -1 && !endpointClicked) {
+                endpointClicked = true;
+              }
 
-            return event.target.className === 'endpoint-circle';
-          },
-          connectionType: 'basic'
-        };
-        if (vm.isDisabled) {
-          sourceObj.enabled = false;
+              return event.target.className.indexOf('endpoint-circle') !== -1;
+            },
+            connectionType: 'basic'
+          };
+          if (vm.isDisabled) {
+            sourceObj.enabled = false;
+          }
+
+          vm.instance.makeSource(node.name, sourceObj);
+
+        } else {
+          if (conditionNodes.indexOf(node.name) !== -1) {
+            return;
+          }
+          let newTrueEndpoint = vm.instance.addEndpoint(node.name, {
+            anchor: 'Right',
+            cssClass: 'condition-endpoint condition-endpoint-true',
+            isSource: true,
+            maxConnections: -1,
+            endpoint: 'Dot',
+            uuid: 'True' + node.name,
+            connectorStyle: vm.conditionTrueConnectionStyle,
+            overlays: [
+              [ 'Label', { label: 'Yes', id: 'yesLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+            ]
+          });
+          newTrueEndpoint.hideOverlay('yesLabel');
+
+          let newFalseEndpoint = vm.instance.addEndpoint(node.name, {
+            anchor: 'Bottom',
+            cssClass: 'condition-endpoint condition-endpoint-false',
+            isSource: true,
+            maxConnections: -1,
+            endpoint: 'Dot',
+            uuid: 'False' + node.name,
+            connectorStyle: vm.conditionFalseConnectionStyle,
+            overlays: [
+              [ 'Label', { label: 'No', id: 'noLabel', location: [0.5, -0.55], cssClass: 'condition-label' } ]
+            ]
+          });
+          newFalseEndpoint.hideOverlay('noLabel');
+
+          addListenersForEndpoint(newTrueEndpoint, 'right', node.name, 'yesLabel');
+          addListenersForEndpoint(newFalseEndpoint, 'bottom', node.name, 'noLabel');
+
+          conditionNodes.push(node.name);
         }
-        vm.instance.makeSource(node.name, sourceObj);
 
         vm.instance.makeTarget(node.name, {
           isTarget: true,
@@ -296,12 +337,23 @@ angular.module(PKG.name + '.commons')
           return;
         }
 
-        var connObj = {
+        let connObj = {
           source: conn.from,
           target: conn.to
         };
 
-        vm.instance.connect(connObj);
+        if (conn.hasOwnProperty('condition')) {
+          if (conn.condition) {
+            connObj.source = vm.instance.getEndpoint('True' + conn.from);
+          } else {
+            connObj.source = vm.instance.getEndpoint('False' + conn.from);
+          }
+        }
+
+        let newConn = vm.instance.connect(connObj);
+        if (targetNode.type === 'condition' || sourceNode.type === 'action' || targetNode.type === 'action') {
+          newConn.setType('dashed');
+        }
       });
     }
 
@@ -316,10 +368,18 @@ angular.module(PKG.name + '.commons')
     }
 
     function addConnection(newConnObj) {
-      $scope.connections.push({
+      let connection = {
         from: newConnObj.sourceId,
         to: newConnObj.targetId
-      });
+      };
+      if (newConnObj.sourceEndpoint.canvas.classList.contains('condition-endpoint')) {
+        if (newConnObj.sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
+          connection.condition = true;
+        } else {
+          connection.condition = false;
+        }
+      }
+      $scope.connections.push(connection);
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     }
 
@@ -359,54 +419,92 @@ angular.module(PKG.name + '.commons')
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
     };
 
-    function toggleConnections(seletectedObj) {
-      // is endpoint
-      if (seletectedObj.endpoint) {
-        if (seletectedObj.connections && seletectedObj.connections.length > 0) {
-          let connectionsToToggle = vm.instance.getConnections({
-            source: seletectedObj.connections[0].sourceId
-          });
-
-          let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
-
-          // This is to toggle all connections coming from an endpoint.
-          // If zero, one or more (but not all) of the connections are already selected,
-          // then just select the remaining ones. Else if they're all selected,
-          // then unselect them.
-
-          if (notYetSelectedConnections.length !== 0) {
-            notYetSelectedConnections.forEach(connection => {
-              selectedConnections.push(connection);
-              connection.getConnector().canvas.addEventListener('contextmenu', openContextMenu);
-              connection.setType('selected');
-            });
-          } else {
-            connectionsToToggle.forEach(connection => {
-              selectedConnections.splice(selectedConnections.indexOf(connection), 1);
-              removeContextMenuEventListener(connection);
-              connection.setType('basic');
-            });
-          }
-        }
+    function toggleConnections(selectedObj) {
+      if (vm.isDisabled) { return; }
 
       // is connection
-      } else {
-        if (vm.isDisabled) { return; }
-
-        if (selectedConnections.indexOf(seletectedObj) === -1) {
-          selectedConnections.push(seletectedObj);
-          seletectedObj.getConnector().canvas.addEventListener('contextmenu', openContextMenu);
-        } else {
-          selectedConnections.splice(selectedConnections.indexOf(seletectedObj), 1);
-          removeContextMenuEventListener(seletectedObj);
-        }
-        seletectedObj.toggleType('selected');
-
+      if (selectedObj.sourceId && selectedObj.targetId) {
+        toggleConnection(selectedObj);
+        return;
       }
+
+      // else is endpoint
+      if (selectedObj.connections && selectedObj.connections.length > 0) {
+        if (selectedObj.isTarget) {
+          toggleConnection(selectedObj.connections[0]);
+          return;
+        }
+
+        let connectionsToToggle;
+
+        // If it's an endpoint on a condition node, then only toggle connections
+        // from that endpoint. For other nodes, toggle all the connections of the
+        // source that this endpoint belongs to
+
+        if (selectedObj.endpoint.canvas.classList.contains('condition-endpoint')) {
+          connectionsToToggle = selectedObj.connections;
+        } else {
+            connectionsToToggle = vm.instance.getConnections({
+            source: selectedObj.connections[0].sourceId
+          });
+        }
+
+        let notYetSelectedConnections = _.difference(connectionsToToggle, selectedConnections);
+
+        // This is to toggle all connections coming from an endpoint.
+        // If zero, one or more (but not all) of the connections are already selected,
+        // then just select the remaining ones. Else if they're all selected,
+        // then unselect them.
+
+        if (notYetSelectedConnections.length !== 0) {
+          notYetSelectedConnections.forEach(connection => {
+            selectedConnections.push(connection);
+            connection.connector.canvas.addEventListener('contextmenu', openContextMenu);
+            connection.addType('selected');
+          });
+        } else {
+          connectionsToToggle.forEach(connection => {
+            selectedConnections.splice(selectedConnections.indexOf(connection), 1);
+            removeContextMenuEventListener(connection);
+            connection.removeType('selected');
+          });
+        }
+      }
+    }
+
+    function toggleConnection(connObj) {
+      if (selectedConnections.indexOf(connObj) === -1) {
+        selectedConnections.push(connObj);
+        connObj.connector.canvas.addEventListener('contextmenu', openContextMenu);
+      } else {
+        selectedConnections.splice(selectedConnections.indexOf(connObj), 1);
+        removeContextMenuEventListener(connObj);
+      }
+      connObj.toggleType('selected');
     }
 
     function onStartDetach() {
       connectionDropped = false;
+    }
+
+    function addListenersForEndpoint(endpoint, location, nodeId, labelId) {
+      let nodeDomElCircle = document.querySelector(`#${nodeId} .endpoint-circle-${location}`);
+
+      endpoint.canvas.addEventListener('mouseover', function() {
+        if (!nodeDomElCircle.classList.contains('hover')) {
+          nodeDomElCircle.classList.add('hover');
+        }
+        endpoint.showOverlay(labelId);
+      });
+      endpoint.canvas.addEventListener('mouseout', function() {
+        if (nodeDomElCircle.classList.contains('hover')) {
+          nodeDomElCircle.classList.remove('hover');
+        }
+        endpoint.hideOverlay(labelId);
+      });
+      endpoint.canvas.addEventListener('mousedown', function() {
+        endpointClicked = true;
+      });
     }
 
     function checkIfConnectionExistsOrValid(connObj) {
@@ -425,23 +523,41 @@ angular.module(PKG.name + '.commons')
       }
 
       // else check if the connection is valid
-      var fromNode = connObj.sourceId,
-          toNode = connObj.targetId;
-
-      angular.forEach($scope.nodes, function (node) {
-        if (node.name === fromNode) {
-          fromNode = node;
-        } else if (node.name === toNode) {
-          toNode = node;
-        }
-      });
+      var sourceNode = $scope.nodes.find( node => node.name === connObj.sourceId);
+      var targetNode = $scope.nodes.find( node => node.name === connObj.targetId);
 
       var valid = true;
 
-      NonStorePipelineErrorFactory.connectionIsValid(fromNode, toNode, function(invalidConnection) {
+      NonStorePipelineErrorFactory.connectionIsValid(sourceNode, targetNode, function(invalidConnection) {
         if (invalidConnection) { valid = false; }
       });
       connectionDropped = true;
+
+      // If valid, then modifies the look of the connection before showing it
+      if (valid) {
+        if (sourceNode.type === 'action' || targetNode.type === 'action') {
+          connObj.connection.setType('dashed');
+        } else if (sourceNode.type !== 'condition' && targetNode.type !== 'condition') {
+          connObj.connection.setType('basic solid');
+        } else {
+          if (sourceNode.type === 'condition') {
+            if (connObj.connection.endpoints && connObj.connection.endpoints.length > 0) {
+              let sourceEndpoint = connObj.dropEndpoint;
+              if (sourceEndpoint.canvas.classList.contains('condition-endpoint-true')) {
+                connObj.connection.setType('conditionTrue');
+              } else if (sourceEndpoint.canvas.classList.contains('condition-endpoint-false')) {
+                connObj.connection.setType('conditionFalse');
+              }
+            }
+          } else {
+            connObj.connection.setType('basic');
+          }
+          if (targetNode.type === 'condition') {
+            connObj.connection.addType('dashed');
+          }
+        }
+      }
+
       return valid;
     }
 
@@ -459,18 +575,19 @@ angular.module(PKG.name + '.commons')
 
       resetTimeout = $timeout(function () {
         vm.instance.reset();
+        conditionNodes = [];
 
         $scope.nodes = DAGPlusPlusNodesStore.getNodes();
         $scope.connections = DAGPlusPlusNodesStore.getConnections();
         vm.undoStates = DAGPlusPlusNodesStore.getUndoStates();
         vm.redoStates = DAGPlusPlusNodesStore.getRedoStates();
+        makeNodesDraggable();
         initNodes();
         addConnections();
         angular.forEach(selectedConnections, function(selectedConnObj) {
           removeContextMenuEventListener(selectedConnObj);
         });
         selectedConnections = [];
-        makeNodesDraggable();
         vm.instance.bind('connection', addConnection);
         vm.instance.bind('connectionMoved', moveConnection);
         vm.instance.bind('connectionDetached', removeConnection);
@@ -491,34 +608,34 @@ angular.module(PKG.name + '.commons')
     }
 
     function makeNodesDraggable() {
+      if (vm.isDisabled) { return; }
+
       var nodes = document.querySelectorAll('.box');
 
-      if (!vm.isDisabled) {
-        vm.instance.draggable(nodes, {
-          start: function (drag) {
-            let currentCoOrdinates = {
-              x: drag.e.clientX,
-              y: drag.e.clientY,
-            };
-            if (currentCoOrdinates.x === localX && currentCoOrdinates.y === localY) {
-              return;
-            }
-            localX = currentCoOrdinates.x;
-            localY = currentCoOrdinates.y;
-
-            dragged = true;
-          },
-          stop: function (dragEndEvent) {
-            var config = {
-              _uiPosition: {
-                top: dragEndEvent.el.style.top,
-                left: dragEndEvent.el.style.left
-              }
-            };
-            DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+      vm.instance.draggable(nodes, {
+        start: function (drag) {
+          let currentCoordinates = {
+            x: drag.e.clientX,
+            y: drag.e.clientY,
+          };
+          if (currentCoordinates.x === localX && currentCoordinates.y === localY) {
+            return;
           }
-        });
-      }
+          localX = currentCoordinates.x;
+          localY = currentCoordinates.y;
+
+          dragged = true;
+        },
+        stop: function (dragEndEvent) {
+          var config = {
+            _uiPosition: {
+              top: dragEndEvent.el.style.top,
+              left: dragEndEvent.el.style.left
+            }
+          };
+          DAGPlusPlusNodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+        }
+      });
     }
 
     function makeCommentsDraggable() {
@@ -564,7 +681,7 @@ angular.module(PKG.name + '.commons')
     }
 
     vm.selectEndpoint = function(event, node) {
-      if (event.target.className === 'endpoint-circle') {
+      if (event.target.className.indexOf('endpoint-circle') !== -1) {
         let sourceElem = node.name;
         let endpoints = vm.instance.getEndpoints(sourceElem);
         if (endpoints) {
@@ -591,16 +708,24 @@ angular.module(PKG.name + '.commons')
     }
 
     function removeContextMenuEventListener(connection) {
-      connection.getConnector().canvas.removeEventListener('contextmenu', openContextMenu);
+      connection.connector.canvas.removeEventListener('contextmenu', openContextMenu);
     }
 
     jsPlumb.ready(function() {
-      var dagSettings = DAGPlusPlusFactory.getSettings().default;
-      var dagSelectedConnectionStyle = DAGPlusPlusFactory.getSettings().selectedConnectionStyle;
+      var dagSettings = DAGPlusPlusFactory.getSettings();
+      var dagSettingsDefault = dagSettings.default;
+      var {defaultConnectionStyle, selectedConnectionStyle, dashedConnectionStyle, solidConnectionStyle} = dagSettings;
+      vm.conditionTrueConnectionStyle = dagSettings.conditionTrueConnectionStyle;
+      vm.conditionFalseConnectionStyle = dagSettings.conditionFalseConnectionStyle;
 
       jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance(dagSettings);
-      vm.instance.registerConnectionType('selected', dagSelectedConnectionStyle);
+      vm.instance = jsPlumb.getInstance(dagSettingsDefault);
+      vm.instance.registerConnectionType('basic', defaultConnectionStyle);
+      vm.instance.registerConnectionType('selected', selectedConnectionStyle);
+      vm.instance.registerConnectionType('dashed', dashedConnectionStyle);
+      vm.instance.registerConnectionType('solid', solidConnectionStyle);
+      vm.instance.registerConnectionType('conditionTrue', vm.conditionTrueConnectionStyle);
+      vm.instance.registerConnectionType('conditionFalse', vm.conditionFalseConnectionStyle);
 
       init();
 
@@ -627,8 +752,8 @@ angular.module(PKG.name + '.commons')
             $timeout.cancel(nodesTimeout);
           }
           nodesTimeout = $timeout(function () {
-            initNodes();
             makeNodesDraggable();
+            initNodes();
           });
         }
       }, true);
@@ -684,6 +809,32 @@ angular.module(PKG.name + '.commons')
 
     vm.cleanUpGraph = function () {
       if ($scope.nodes.length === 0) { return; }
+
+      // If graph has a condition node, then have to make sure/rearrange connections from that
+      // node so that the 'true' connection always comes before the 'false' one, otherweise
+      // the algorithm will mess up
+      if (conditionNodes.length > 0) {
+        let swappedConnections = false;
+
+        angular.forEach(conditionNodes, (conditionNode) => {
+          let trueConnIndex = _.findIndex($scope.connections, (conn) => {
+            return conn.from === conditionNode && conn.condition === true;
+          });
+          let falseConnIndex = _.findIndex($scope.connections, (conn) => {
+            return conn.from === conditionNode && conn.condition === false;
+          });
+
+          if (trueConnIndex === -1 || falseConnIndex === -1 || trueConnIndex === falseConnIndex - 1) { return; }
+
+          let falseConn = $scope.connections.splice(falseConnIndex, 1)[0];
+          $scope.connections.splice(trueConnIndex + 1, 0, falseConn);
+          swappedConnections = true;
+        });
+
+        if (swappedConnections) {
+          DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
+        }
+      }
 
       var graphNodes = DAGPlusPlusFactory.getGraphLayout($scope.nodes, $scope.connections, separation)._nodes;
       angular.forEach($scope.nodes, function (node) {
