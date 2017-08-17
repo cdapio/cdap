@@ -42,7 +42,6 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.ImpersonationUtils;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -121,7 +120,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     });
     String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
     try {
-      if (SecurityUtil.isKerberosEnabled(cConf)) {
+      if (AuthorizationUtil.isSecurityAuthorizationEnabled(cConf)) {
         this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
       } else {
         this.masterShortUserName = null;

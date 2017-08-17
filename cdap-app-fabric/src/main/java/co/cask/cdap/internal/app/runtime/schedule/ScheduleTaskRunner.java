@@ -118,7 +118,7 @@ public final class ScheduleTaskRunner {
       if (nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf)) {
         SecurityRequestContext.setUserId(new KerberosName(nsPrincipal).getServiceName());
       }
-      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.startInternal(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
                                        e, false);

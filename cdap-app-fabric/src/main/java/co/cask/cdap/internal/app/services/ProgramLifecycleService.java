@@ -254,6 +254,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
     throws Exception {
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     if (isConcurrentRunsInSameAppForbidden(programId.getType()) && isRunningInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
@@ -268,7 +269,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
       userArgs.putAll(overrides);
     }
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = start(programId, sysArgs, userArgs, debug);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = startInternal(programId, sysArgs, userArgs, debug);
     if (runtimeInfo == null) {
       throw new IOException(String.format("Failed to start program %s", programId));
     }
@@ -277,6 +278,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   /**
    * Start a Program.
+   *
+   * Note that this method can only be called through internal service, it does not have auth check for starting the
+   * program.
    *
    * @param programId  the {@link ProgramId program} to start
    * @param systemArgs system arguments
@@ -289,9 +293,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
-                                                 final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+  public ProgramRuntimeService.RuntimeInfo startInternal(final ProgramId programId,
+                                                         final Map<String, String> systemArgs,
+                                                         final Map<String, String> userArgs,
+                                                         boolean debug) throws Exception {
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
