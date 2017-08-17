@@ -52,7 +52,7 @@ public class BasicSparkExecutionPluginContext extends AbstractTransformContext i
   public BasicSparkExecutionPluginContext(JavaSparkExecutionContext sec, JavaSparkContext jsc,
                                           DatasetContext datasetContext, PipelineRuntime pipelineRuntime,
                                           StageSpec stageSpec) {
-    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext));
+    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext, sec.getAdmin()));
     this.sec = sec;
     this.jsc = jsc;
     this.datasetContext = datasetContext;

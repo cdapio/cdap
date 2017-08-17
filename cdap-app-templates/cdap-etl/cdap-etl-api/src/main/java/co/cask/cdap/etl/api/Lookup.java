@@ -22,9 +22,34 @@ import java.util.Set;
 /**
  * Exposes read-only lookup operations on datasets.
  *
- * @param <T> the type of object that will be returned for a lookup
+ * @param <T> the type of object that will be returned for a lookup with String as the key
  */
 public interface Lookup<T> {
+
+  /**
+   * Performs a single lookup.
+   *
+   * @param key the key to lookup
+   * @return the value associated with the key
+   */
+  T lookup(byte[] key);
+
+  /**
+   * Performs a batch lookup.
+   *
+   * @param keys the keys to lookup
+   * @return a map from key to value
+   */
+  Map<byte[], T> lookup(byte[]... keys);
+
+  /**
+   * Performs a batch lookup.
+   *
+   * @param keys the keys to lookup
+   * @return a map from key to value
+   */
+//  Map<String, T> lookup(Set<byte[]> keys); // same erasure; clashes with lookup(Set<String> keys)
+
   /**
    * Performs a single lookup.
    *

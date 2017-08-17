@@ -50,6 +50,12 @@
       <artifactId>cdap-proto</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>co.cask.cdap</groupId>
+      <artifactId>cdap-formats</artifactId>
+      <!--<artifactId>cdap-common</artifactId>-->
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

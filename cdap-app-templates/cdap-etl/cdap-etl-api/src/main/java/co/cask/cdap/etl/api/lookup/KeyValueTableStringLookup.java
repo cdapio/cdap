@@ -13,49 +13,58 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package co.cask.cdap.etl.api.lookup;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.etl.api.Lookup;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * {@link Lookup} implementation for {@link KeyValueTable}.
  */
-public class KeyValueTableLookup extends BaseKeyValueTableLookup<byte[]> {
+public class KeyValueTableStringLookup extends BaseKeyValueTableLookup<String> {
 
   private final KeyValueTable table;
 
-  public KeyValueTableLookup(KeyValueTable table) {
+  public KeyValueTableStringLookup(KeyValueTable table) {
     this.table = table;
   }
 
   @Override
-  public byte[] lookup(byte[] key) {
-    return table.read(key);
+  public String lookup(byte[] key) {
+    return Bytes.toString(table.read(key));
   }
 
   @Override
-  public Map<byte[], byte[]> lookup(byte[]... keys) {
-    return table.readAll(keys);
+  public Map<byte[], String> lookup(byte[]... keys) {
+    return fromBytesButLeavingKeysAsBytes(table.readAll(keys));
   }
 
   @Override
-  public byte[] lookup(String key) {
-    return table.read(key);
+  public String lookup(String key) {
+    return Bytes.toString(table.read(key));
   }
 
   @Override
-  public Map<String, byte[]> lookup(String... keys) {
+  public Map<String, String> lookup(String... keys) {
     return lookup(ImmutableSet.copyOf(keys));
   }
 
   @Override
-  public Map<String, byte[]> lookup(Set<String> keys) {
-    return fromBytes(table.readAll(toBytes(keys)), false);
+  public Map<String, String> lookup(Set<String> keys) {
+    return fromBytes(table.readAll(toBytes(keys)), true);
+  }
+
+  private Map<byte[], String> fromBytesButLeavingKeysAsBytes(Map<byte[], byte[]> bytes) {
+    Map<byte[], String> result = new HashMap<>();
+    for (Map.Entry<byte[], byte[]> entry : bytes.entrySet()) {
+      result.put(entry.getKey(), Bytes.toString(entry.getValue()));
+    }
+    return result;
   }
 }

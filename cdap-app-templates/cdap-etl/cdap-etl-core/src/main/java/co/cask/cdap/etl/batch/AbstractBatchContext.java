@@ -43,7 +43,7 @@ public abstract class AbstractBatchContext extends AbstractTransformContext impl
 
   protected AbstractBatchContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                  DatasetContext datasetContext, Admin admin) {
-    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext));
+    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(datasetContext, admin));
     this.datasetContext = datasetContext;
     this.admin = admin;
   }

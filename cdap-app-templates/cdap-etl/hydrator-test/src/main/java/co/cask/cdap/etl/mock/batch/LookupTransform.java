@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.table.Result;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -32,6 +33,7 @@ import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +67,21 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     T lookedUpValue = lookup.lookup((String) input.get(config.lookupKey));
+//    R lookedUpValueBytes = lookup.lookup(((String) input.get(config.lookupKey)).getBytes());
+//    if (lookedUpValue instanceof Result) {
+//      if (!(lookedUpValueBytes instanceof Result)) {
+//        throw new IllegalStateException(String.format("Expected class %s, but actual class is %s.",
+//                                                      lookedUpValue.getClass(), lookedUpValueBytes.getClass()));
+//      }
+//      if (!Arrays.equals(((Result) lookedUpValue).getRow(), (((Result) lookedUpValueBytes)).getRow())) {
+//        throw new IllegalStateException("Row values are incorrect");
+//      }
+//    }
+//    if (lookedUpValue instanceof String) {
+//      if (!Arrays.equals(((String) lookedUpValue).getBytes(), (byte[]) lookedUpValueBytes)) {
+//        throw new IllegalStateException("Values do not match between string and byte[]");
+//      }
+//    }
     // for the output schema, copy all the input fields, and add the 'destinationField'
     List<Schema.Field> outFields = new ArrayList<>();
     for (Schema.Field field : input.getSchema().getFields()) {
@@ -81,7 +98,11 @@ public class LookupTransform<T> extends Transform<StructuredRecord, StructuredRe
       throw new IllegalArgumentException("Unexpected value type: " + lookedUpValue.getClass());
     }
     Schema outSchema = Schema.recordOf(input.getSchema().getRecordName(), outFields);
-
+//    if (lookup.getSchema() != null) {
+//      if (!lookup.getSchema().equals(outSchema)) {
+//        throw new IllegalStateException("Output schema is incorrect");
+//      }
+//    }
     // copy all the values
     StructuredRecord.Builder outputBuilder = StructuredRecord.builder(outSchema);
     for (Schema.Field inField : input.getSchema().getFields()) {

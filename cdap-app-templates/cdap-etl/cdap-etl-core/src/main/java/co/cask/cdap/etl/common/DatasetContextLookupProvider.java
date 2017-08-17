@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.Lookup;
 
@@ -28,13 +29,15 @@ import java.util.Map;
 public class DatasetContextLookupProvider extends AbstractLookupProvider {
 
   private final DatasetContext context;
+  private final Admin admin;
 
-  public DatasetContextLookupProvider(DatasetContext context) {
+  public DatasetContextLookupProvider(DatasetContext context, Admin admin) {
     this.context = context;
+    this.admin = admin;
   }
 
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
-    return getLookup(table, context.getDataset(table, arguments));
+    return getLookup(table, context.getDataset(table, arguments), admin);
   }
 }

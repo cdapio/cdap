@@ -43,7 +43,7 @@ public class MapReduceRuntimeContext extends AbstractTransformContext
   private final MapReduceTaskContext context;
 
   public MapReduceRuntimeContext(MapReduceTaskContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
-    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(context));
+    super(pipelineRuntime, stageSpec, new DatasetContextLookupProvider(context, context.getAdmin()));
     this.context = context;
   }
 
