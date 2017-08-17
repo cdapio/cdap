@@ -57,6 +57,9 @@ import co.cask.cdap.etl.common.TypeChecker;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
+import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -273,6 +276,16 @@ public class ETLMapReduce extends AbstractMapReduce {
     job.setMapperClass(ETLMapper.class);
 
     Admin admin = context.getAdmin();
+    ProgramRunId id = new ProgramRunId(new ApplicationId(context.getNamespace(),
+                                                         context.getApplicationSpecification().getName(),
+                                                         context.getApplicationSpecification().getAppVersion()),
+                                       ProgramType.MAPREDUCE, context.getSpecification().getName(),
+                                       context.getRunId().getId());
+
+    // FieldLevelLineageGraph graph = (new FieldLevelLineageGraph.Builder(id, phase, transformFieldLevelLineages,
+    //                                                               phaseSpec.getConnectorDatasets())).build();
+    // Store somehow??
+
     Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
                                                                    BatchJoiner.PLUGIN_TYPE);
     if (!reducers.isEmpty()) {
