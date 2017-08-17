@@ -14,10 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.schedule.trigger;
+package co.cask.cdap.internal.app.runtime.schedule.trigger;
+
+import co.cask.cdap.api.schedule.Trigger;
 
 /**
- * The mechanism by which a ProgramSchedule is scheduled.
+ * A builder to create a Trigger object.
  */
-public interface Trigger {
+public interface TriggerBuilder extends Trigger {
+
+  /**
+   * Builds a Trigger given the deployed namespace, application, and application version.
+   *
+   * @param namespace the namespace
+   * @param applicationName the deployed application name
+   * @param applicationVersion the deployed application version
+   * @return a Trigger
+   */
+  SatisfiableTrigger build(String namespace, String applicationName, String applicationVersion);
 }

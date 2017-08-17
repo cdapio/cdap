@@ -18,32 +18,21 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.schedule.trigger.TriggerBuilder;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
-import com.google.common.base.Objects;
 
 import java.util.EnumSet;
-import javax.annotation.Nullable;
 
 /**
- * A Trigger builder that builds a ProgramStatusTrigger.
+ * A Trigger builder that builds a {@link ProgramStatusTrigger}.
  */
 public class ProgramStatusTriggerBuilder implements TriggerBuilder {
-  private final String programNamespace;
-  private final String programApplication;
-  private final String programApplicationVersion;
   private final ProgramType programType;
   private final String programName;
   private final EnumSet<ProgramStatus> programStatuses;
 
-  public ProgramStatusTriggerBuilder(@Nullable String programNamespace, @Nullable String programApplication,
-                                     @Nullable String programApplicationVersion, String programType,
-                                     String programName, ProgramStatus... programStatuses) {
-    this.programNamespace = programNamespace;
-    this.programApplication = programApplication;
-    this.programApplicationVersion = programApplicationVersion;
+  public ProgramStatusTriggerBuilder(String programType, String programName, ProgramStatus... programStatuses) {
     this.programType = ProgramType.valueOf(programType);
     this.programName = programName;
 
@@ -57,11 +46,8 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   @Override
   public ProgramStatusTrigger build(String namespace, String applicationName, String applicationVersion) {
     // Inherit environment attributes from the deployed application
-    ProgramId programId = new ApplicationId(
-                            Objects.firstNonNull(programNamespace, namespace),
-                            Objects.firstNonNull(programApplication, applicationName),
-                            Objects.firstNonNull(programApplicationVersion, applicationVersion)).program(programType,
-                                                                                                         programName);
+    ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(programType,
+                                                                                                    programName);
     return new ProgramStatusTrigger(programId, programStatuses);
   }
 }

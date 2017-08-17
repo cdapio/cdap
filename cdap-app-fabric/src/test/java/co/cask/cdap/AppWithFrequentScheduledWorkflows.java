@@ -16,8 +16,10 @@
 
 package co.cask.cdap;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.ProgramType;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 
 public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
@@ -30,9 +32,10 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
   public static final String DATASET_NAME2 = "AnotherDataset";
   public static final String TEN_SECOND_SCHEDULE_1 = "TenSecSchedule1";
   public static final String TEN_SECOND_SCHEDULE_2 = "TenSecSchedule2";
+  public static final String COMPOSITE_SCHEDULE = "CompositeSchedule";
   public static final String SCHEDULED_WORKFLOW_1 = "ScheduledWorkflow1";
   public static final String SCHEDULED_WORKFLOW_2 = "ScheduledWorkflow2";
-
+  public static final String COMPOSITE_WORKFLOW = "CompositeWorkflow";
 
   @Override
   public void configure() {
@@ -42,6 +45,7 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     addWorkflow(new DummyWorkflow(ANOTHER_WORKFLOW));
     addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_1));
     addWorkflow(new DummyWorkflow(SCHEDULED_WORKFLOW_2));
+    addWorkflow(new DummyWorkflow(COMPOSITE_WORKFLOW));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_1, ProgramType.WORKFLOW, SOME_WORKFLOW)
                .triggerOnPartitions(DATASET_NAME1, 1));
     schedule(buildSchedule(DATASET_PARTITION_SCHEDULE_2, ProgramType.WORKFLOW, ANOTHER_WORKFLOW)
@@ -52,6 +56,19 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
     // Schedule the workflow to run in every ten seconds
     schedule(buildSchedule(TEN_SECOND_SCHEDULE_2, ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_2)
                .triggerByTime("*/10 * * * * ?"));
+    // OrTrigger with only PartitionTrigger to be triggered
+    Trigger orTrigger1 =
+      getTriggerFactory().or(getTriggerFactory().onPartitions(DATASET_NAME2, 3),
+                             getTriggerFactory().onProgramStatus(ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1,
+                                                                 ProgramStatus.KILLED)
+      );
+    // OrTrigger with only TimeTrigger to be triggered
+    Trigger orTrigger2 =
+      getTriggerFactory().or(getTriggerFactory().byTime("*/9 * * * * ?"),
+                             getTriggerFactory().onProgramStatus(ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1,
+                                                                 ProgramStatus.KILLED));
+    schedule(buildSchedule(COMPOSITE_SCHEDULE, ProgramType.WORKFLOW, COMPOSITE_WORKFLOW)
+               .triggerOn(getTriggerFactory().and(orTrigger1, orTrigger2)));
   }
 
   /**

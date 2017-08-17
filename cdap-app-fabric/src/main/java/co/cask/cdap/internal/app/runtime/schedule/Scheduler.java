@@ -104,59 +104,6 @@ public interface Scheduler {
     throws SchedulerException;
 
   /**
-   * Suspends a schedule. Sub-sequent schedules will not trigger for the job. If the schedule is already suspended,
-   * this method will not do anything.
-   *
-   * @param program the program for which schedule needs to be suspended
-   * @param programType the type of the program
-   * @param scheduleName the name of the schedule
-   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
-   *                           belongs to does not exist.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void suspendSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException;
-
-  /**
-   * Resume given schedule. If the schedule is already active, this method will not do anything.
-   * The time schedules between suspend and resume calls will not be re-run - the scheduled job will trigger
-   * from the next possible runtime. For data schedules based on size, the execution will be triggered only once,
-   * even if the data requirement has been met multiple times.
-   *
-   * @param program the program for which schedule needs to be resumed
-   * @param programType the type of the program
-   * @param scheduleName the name of the schedule
-   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
-   *                           belongs to does not exist.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void resumeSchedule(ProgramId program, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException;
-
-  /**
-   * Deletes the schedule.
-   * Deletes the associated Job if no other schedules exist for that job.
-   *
-   * @param scheduleName the name of the schedule
-   * @throws NotFoundException if the {@code scheduleName} could not be found, or if the application the {@code program}
-   *                           belongs to does not exist.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void deleteSchedule(ProgramId programId, SchedulableProgramType programType, String scheduleName)
-    throws NotFoundException, SchedulerException;
-
-  /**
-   * Delete all schedules associated with the given Program.
-   * Also deletes the associated job.
-   *
-   * @param programId Id of program that needs to be run.
-   * @param programType type of program that needs to be run.
-   * @throws SchedulerException on unforeseen error.
-   */
-  void deleteSchedules(ProgramId programId, SchedulableProgramType programType)
-    throws SchedulerException;
-
-  /**
    * Get state of a particular schedule.
    *
    * @param program the program for which the state of the schedule is queried

@@ -22,6 +22,7 @@ import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
+import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -49,6 +50,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   implements Application<T> {
   private ApplicationContext context;
   private ApplicationConfigurer configurer;
+  private TriggerFactory triggerFactory;
 
   /**
    * Override this method to declare and configure the application.
@@ -59,7 +61,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
   public final void configure(ApplicationConfigurer configurer, ApplicationContext<T> context) {
     this.context = context;
     this.configurer = configurer;
-
+    this.triggerFactory = configurer.getTriggerFactory();
     configure();
   }
 
@@ -197,5 +199,14 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    */
   protected void schedule(ScheduleCreationSpec scheduleCreationSpec) {
     configurer.schedule(scheduleCreationSpec);
+  }
+
+  /**
+   * Get a TriggerFactory to get triggers.
+   *
+   * @return The {@link TriggerFactory} used to get triggers
+   */
+  protected TriggerFactory getTriggerFactory() {
+    return triggerFactory;
   }
 }

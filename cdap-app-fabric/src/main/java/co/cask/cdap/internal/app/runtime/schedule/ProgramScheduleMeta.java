@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import com.google.common.base.Objects;
+
 /**
  * Meta data about a program schedule, including its current status and last-updated timestamp.
  */
@@ -35,5 +37,26 @@ public class ProgramScheduleMeta {
 
   public long getLastUpdated() {
     return lastUpdated;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ProgramScheduleMeta that = (ProgramScheduleMeta) o;
+
+    return Objects.equal(this.lastUpdated, that.lastUpdated) &&
+      Objects.equal(this.status, that.status);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(status, lastUpdated);
   }
 }
