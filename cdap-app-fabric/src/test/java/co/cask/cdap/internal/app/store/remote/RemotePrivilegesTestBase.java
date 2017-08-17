@@ -25,10 +25,12 @@ import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -36,15 +38,16 @@ import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -52,7 +55,6 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Attributes;
@@ -62,30 +64,31 @@ import java.util.jar.Manifest;
  * Tests for remote implementations of {@link AuthorizationEnforcer} and {@link PrivilegesManager}.
  * These are in app-fabric, because we need to start app-fabric in these tests.
  */
-public class RemotePrivilegesTest {
+@SuppressWarnings("WeakerAccess")
+public abstract class RemotePrivilegesTestBase {
   @ClassRule
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
-  private static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
-  private static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
-  private static final NamespaceId NS = new NamespaceId("ns");
-  private static final ApplicationId APP = NS.app("app");
-  private static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
+  protected static final Principal ALICE = new Principal("alice", Principal.PrincipalType.USER);
+  protected static final Principal BOB = new Principal("bob", Principal.PrincipalType.USER);
+  protected static final Principal CAROL = new Principal("carol", Principal.PrincipalType.USER);
+  protected static final NamespaceId NS = new NamespaceId("ns");
+  protected static final ApplicationId APP = NS.app("app");
+  protected static final ProgramId PROGRAM = APP.program(ProgramType.FLOW, "flo");
   private static final int CACHE_TIMEOUT = 3;
 
-  private static AuthorizationEnforcer authorizationEnforcer;
-  private static PrivilegesManager privilegesManager;
+  protected static AuthorizationEnforcer authorizationEnforcer;
+  protected static PrivilegesManager privilegesManager;
+  protected static CConfiguration cConf = CConfiguration.create();
+
   private static DiscoveryServiceClient discoveryService;
   private static AppFabricServer appFabricServer;
 
-  @BeforeClass
-  public static void setup() throws IOException, InterruptedException {
-    CConfiguration cConf = CConfiguration.create();
+  protected static void setup() throws IOException, InterruptedException {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMPORARY_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.Security.ENABLED, true);
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
-    cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 10000);
     cConf.setInt(Constants.Security.Authorization.CACHE_TTL_SECS, CACHE_TIMEOUT);
     // this is needed since now DefaultAuthorizationEnforcer expects this non-null
     cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
@@ -107,6 +110,11 @@ public class RemotePrivilegesTest {
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(discoveryService.discover(name));
     Preconditions.checkNotNull(endpointStrategy.pick(5, TimeUnit.SECONDS),
                                "%s service is not up after 5 seconds", name);
+  }
+
+  @After
+  public void after() throws Exception {
+    ((RemoteAuthorizationEnforcer) authorizationEnforcer).clearCache();
   }
 
   @Test
@@ -131,44 +139,67 @@ public class RemotePrivilegesTest {
 
   @Test
   public void testAuthorizationEnforcer() throws Exception {
-    int currentCount = ((RemoteAuthorizationEnforcer) authorizationEnforcer).cacheAsMap().size();
     privilegesManager.grant(NS, ALICE, EnumSet.allOf(Action.class));
     privilegesManager.grant(APP, ALICE, Collections.singleton(Action.ADMIN));
     privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
-    Map<AuthorizationPrivilege, Boolean> authorizationPrivilegeBooleanMap =
-      ((RemoteAuthorizationEnforcer) authorizationEnforcer).cacheAsMap();
-    // 4 For EnumSet.allOf(Action.class) and one each for the next 2
-    Assert.assertEquals(currentCount + 6, authorizationPrivilegeBooleanMap.size());
-    Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
-    Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.READ)));
-    Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
-    Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.EXECUTE)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(BOB, NS, Action.READ)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(BOB, NS, Action.WRITE)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(BOB, NS, Action.EXECUTE)));
-    privilegesManager.grant(NS, BOB, Collections.singleton(Action.ADMIN));
-    authorizationEnforcer.enforce(NS, BOB, Action.ADMIN);
-    Assert.assertTrue(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(BOB, NS, Action.ADMIN)));
-    TimeUnit.SECONDS.sleep(CACHE_TIMEOUT);
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.ADMIN)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.READ)));
-    Assert.assertFalse(authorizationPrivilegeBooleanMap.containsKey(
-      new AuthorizationPrivilege(ALICE, NS, Action.WRITE)));
+
+    privilegesManager.revoke(PROGRAM);
+    privilegesManager.revoke(APP);
+    privilegesManager.revoke(NS);
+  }
+
+  @Test
+  public void testVisibility() throws Exception {
+    ApplicationId app1 = NS.app("app1");
+    ProgramId program1 = app1.program(ProgramType.SERVICE, "service1");
+
+    ApplicationId app2 = NS.app("app2");
+    ProgramId program2 = app2.program(ProgramType.MAPREDUCE, "service2");
+
+    DatasetId ds = NS.dataset("ds");
+    DatasetId ds1 = NS.dataset("ds1");
+    DatasetId ds2 = NS.dataset("ds2");
+
+    StreamId stream = NS.stream("stream");
+    StreamId stream1 = NS.stream("stream1");
+    StreamId stream2 = NS.stream("stream2");
+
+    // Grant privileges on non-numbered entities to ALICE
+    privilegesManager.grant(PROGRAM, ALICE, Collections.singleton(Action.EXECUTE));
+    privilegesManager.grant(ds, ALICE, EnumSet.of(Action.READ, Action.WRITE));
+    privilegesManager.grant(stream, ALICE, EnumSet.of(Action.READ));
+
+    // Grant privileges on entities ending with 2 to BOB
+    privilegesManager.grant(program2, BOB, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(ds2, BOB, EnumSet.of(Action.READ, Action.WRITE));
+    privilegesManager.grant(stream2, BOB, EnumSet.allOf(Action.class));
+
+    Set<? extends EntityId> allEntities = ImmutableSet.of(NS,
+                                                          APP, PROGRAM, ds, stream,
+                                                          app1, program1, ds1, stream1,
+                                                          app2, program2, ds2, stream2);
+
+    Assert.assertEquals(ImmutableSet.of(NS, APP, PROGRAM, ds, stream),
+                        authorizationEnforcer.isVisible(allEntities, ALICE));
+
+    Assert.assertEquals(ImmutableSet.of(NS, app2, program2, ds2, stream2),
+                        authorizationEnforcer.isVisible(allEntities, BOB));
+
+    Assert.assertEquals(ImmutableSet.of(),
+                        authorizationEnforcer.isVisible(allEntities, CAROL));
+
+    Assert.assertEquals(ImmutableSet.of(),
+                        authorizationEnforcer.isVisible(ImmutableSet.<EntityId>of(), ALICE));
+
+    Assert.assertEquals(ImmutableSet.of(ds, APP),
+                        authorizationEnforcer.isVisible(ImmutableSet.of(ds, APP), ALICE));
+
+    for (EntityId entityId : allEntities) {
+      privilegesManager.revoke(entityId);
+    }
   }
 
   @AfterClass
