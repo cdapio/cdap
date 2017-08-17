@@ -22,6 +22,7 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleBuilder;
+import co.cask.cdap.api.schedule.TriggerFactory;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.worker.Worker;
@@ -122,4 +123,11 @@ public interface ApplicationConfigurer extends PluginConfigurer {
    * @param scheduleCreationSpec defines the schedule.
    */
   void schedule(ScheduleCreationSpec scheduleCreationSpec);
+
+  /**
+   * Get a TriggerFactory to get triggers.
+   *
+   * @return The {@link TriggerFactory} used to get triggers
+   */
+  TriggerFactory getTriggerFactory();
 }

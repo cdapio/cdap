@@ -17,9 +17,9 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
@@ -39,15 +39,21 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testTriggerCodec() {
-    testTriggerCodec(new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4));
+    ProtoTrigger.PartitionTrigger partitionTrigger =
+      new ProtoTrigger.PartitionTrigger(new DatasetId("test", "myds"), 4);
+    testTriggerCodec(partitionTrigger);
 
-    testTriggerCodec(new ProtoTrigger.TimeTrigger("* * * * *"));
+    ProtoTrigger.TimeTrigger timeTrigger = new ProtoTrigger.TimeTrigger("* * * * *");
+    testTriggerCodec(timeTrigger);
 
     testTriggerCodec(new ProtoTrigger.StreamSizeTrigger(new StreamId("x", "y"), 17));
 
-    testTriggerCodec(new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp",
-                                                    ProgramType.FLOW, "myprog"),
-                                                    ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED)));
+    ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
+      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.FLOW, "myprog"),
+                                            ImmutableSet.of(co.cask.cdap.api.ProgramStatus.FAILED));
+    testTriggerCodec(ProtoTrigger.or(ProtoTrigger.and(partitionTrigger,
+                                                      programStatusTrigger.or(timeTrigger, programStatusTrigger)),
+                                     timeTrigger, programStatusTrigger));
   }
 
   private void testTriggerCodec(ProtoTrigger trigger) {

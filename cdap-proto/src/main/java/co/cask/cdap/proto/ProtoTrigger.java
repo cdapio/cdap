@@ -17,11 +17,12 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.internal.schedule.trigger.Trigger;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -40,7 +41,9 @@ public abstract class ProtoTrigger implements Trigger {
     TIME("time"),
     PARTITION("partition"),
     STREAM_SIZE("stream-size"),
-    PROGRAM_STATUS("program-status");
+    PROGRAM_STATUS("program-status"),
+    AND("and", true),
+    OR("or", true);
 
     private static final Map<String, Type> CATEGORY_MAP;
 
@@ -52,9 +55,15 @@ public abstract class ProtoTrigger implements Trigger {
     }
 
     private final String categoryName;
+    private final boolean isComposite;
 
     Type(String categoryName) {
+      this(categoryName, false);
+    }
+
+    Type(String categoryName, boolean isComposite) {
       this.categoryName = categoryName;
+      this.isComposite = isComposite;
     }
 
     public String getCategoryName() {
@@ -67,6 +76,13 @@ public abstract class ProtoTrigger implements Trigger {
         throw new IllegalArgumentException("Unknown category name " + categoryName);
       }
       return type;
+    }
+
+    /**
+     * Whether the type trigger is a composite, i.e. a trigger that can contains multiple triggers internally.
+     */
+    public boolean isComposite() {
+      return isComposite;
     }
   }
 
@@ -171,6 +187,92 @@ public abstract class ProtoTrigger implements Trigger {
     @Override
     public String toString() {
       return String.format("PartitionTrigger(%s, %d partitions)", getDataset(), getNumPartitions());
+    }
+  }
+
+  /**
+   * Abstract base class for composite trigger in REST requests/responses.
+   */
+  public abstract static class AbstractCompositeTrigger extends ProtoTrigger {
+    protected final Trigger[] triggers;
+
+    public AbstractCompositeTrigger(Type type, Trigger... triggers) {
+      super(type);
+      this.triggers = triggers;
+      validate();
+    }
+
+    public Trigger[] getTriggers() {
+      return triggers;
+    }
+
+    @Override
+    public void validate() {
+      if (!getType().isComposite()) {
+        throw new IllegalArgumentException("Trigger type " + getType().name() + " is not a composite trigger.");
+      }
+      Trigger[] internalTriggers = getTriggers();
+      ProtoTrigger.validateNotNull(internalTriggers, "internal trigger");
+      if (internalTriggers.length == 0) {
+        throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
+                                                           "of type %s cannot be empty.", getType().name()));
+      }
+      for (Trigger trigger : internalTriggers) {
+        if (trigger == null) {
+          throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
+                                                             "of type %s cannot contain null.", getType().name()));
+        }
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      AbstractCompositeTrigger that = (AbstractCompositeTrigger) o;
+      return Arrays.equals(triggers, that.triggers);
+    }
+
+    @Override
+    public int hashCode() {
+      return Arrays.hashCode(triggers);
+    }
+  }
+
+  /**
+   * Shorthand helper method to create an instance of {@link AndTrigger}
+   */
+  public static AndTrigger and(Trigger... triggers) {
+    return new AndTrigger(triggers);
+  }
+
+  /**
+   * Shorthand helper method to create an instance of {@link OrTrigger}
+   */
+  public static OrTrigger or(Trigger... triggers) {
+    return new OrTrigger(triggers);
+  }
+
+  /**
+   * Represents an AND trigger in REST requests/responses.
+   */
+  public static class AndTrigger extends AbstractCompositeTrigger {
+    public AndTrigger(Trigger... triggers) {
+      super(Type.AND, triggers);
+    }
+  }
+
+  /**
+   * Represents an OR trigger in REST requests/responses.
+   */
+  public static class OrTrigger extends AbstractCompositeTrigger {
+    public OrTrigger(Trigger... triggers) {
+      super(Type.OR, triggers);
     }
   }
 
