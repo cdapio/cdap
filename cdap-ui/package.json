@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "autoprefixer": "6.5.0",
-    "babel-core": "https://registry.npmjs.org/babel-core/-/babel-core-6.9.1.tgz",
+    "babel-core": "6.26.0",
     "babel-eslint": "6.1.2",
     "babel-jest": "16.0.0",
     "babel-loader": "6.2.5",
