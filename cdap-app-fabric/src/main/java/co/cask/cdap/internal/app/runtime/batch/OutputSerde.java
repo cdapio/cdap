@@ -17,6 +17,12 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -24,7 +30,9 @@ import org.apache.hadoop.conf.Configuration;
 
 import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by alianwar on 8/16/17.
@@ -40,5 +48,36 @@ public class OutputSerde {
   public static List<Output> getOutputs(Configuration conf) {
     String s = conf.get("cdap.outputs");
     return GSON.fromJson(s, OUTPUT_LIST_TYPE);
+  }
+
+  public static Map<String, ProvidedOutput> transform(Collection<Output> outputs, AbstractContext abstractContext) {
+    Map<String, ProvidedOutput> outputMap = new LinkedHashMap<>(outputs.size());
+    for (Output output : outputs) {
+      // TODO: remove alias from ProvidedOutput class?
+      outputMap.put(output.getAlias(), new ProvidedOutput(output.getAlias(), transform(output, abstractContext)));
+    }
+    return outputMap;
+  }
+
+
+  private static OutputFormatProvider transform(Output output, AbstractContext abstractContext) {
+    if (output instanceof Output.DatasetOutput) {
+      Output.DatasetOutput datasetOutput = (Output.DatasetOutput) output;
+      String datasetNamespace = datasetOutput.getNamespace();
+      if (datasetNamespace == null) {
+        datasetNamespace = abstractContext.getNamespace();
+      }
+      String datasetName = output.getName();
+      Map<String, String> args = datasetOutput.getArguments();
+      Dataset dataset = abstractContext.getDataset(datasetNamespace, datasetName, args, AccessType.WRITE);
+      return new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
+
+    } else if (output instanceof Output.OutputFormatProviderOutput) {
+      return ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
+    } else {
+      // shouldn't happen unless user defines their own Output class
+      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
+                                                       output.getName(), output.getClass().getCanonicalName()));
+    }
   }
 }

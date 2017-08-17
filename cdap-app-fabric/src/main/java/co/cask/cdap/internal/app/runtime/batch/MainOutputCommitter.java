@@ -29,6 +29,7 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
+import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
@@ -125,79 +126,15 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     taskContext = taskContextProvider.get(taskAttemptContext);
 
 
-    List<Output> outputs = OutputSerde.getOutputs(configuration);
-    Map<String, ProvidedOutput> outputMap = new LinkedHashMap<>(outputs.size());
-    for (Output output : outputs) {
-      // TODO: remove alias from ProvidedOutput class?
-      outputMap.put(output.getAlias(), new ProvidedOutput(output.getAlias(), transform(output)));
-    }
-    fixOutputPermissions(jobContext, outputMap);
-    this.outputs = outputMap;
+    this.outputs = OutputSerde.transform(OutputSerde.getOutputs(configuration), taskContext);
 
-    setOutputsIfNeeded(jobContext);
     // need this in local mode
-    // TODO: do we need to fix output permissions into taskAttemptContext?
-    setOutputsIfNeeded(taskAttemptContext);
+//    setOutputsIfNeeded(jobContext);
+//    setOutputsIfNeeded(taskAttemptContext);
 
 
     super.setupJob(jobContext);
   }
-
-
-  private OutputFormatProvider transform(Output output) {
-    if (output instanceof Output.DatasetOutput) {
-      Output.DatasetOutput datasetOutput = (Output.DatasetOutput) output;
-      String datasetNamespace = datasetOutput.getNamespace();
-      if (datasetNamespace == null) {
-        datasetNamespace = taskContext.getNamespace();
-      }
-      String datasetName = output.getName();
-      Map<String, String> args = datasetOutput.getArguments();
-      Dataset dataset = taskContext.getDataset(datasetNamespace, datasetName, args, AccessType.WRITE);
-      return new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
-
-    } else if (output instanceof Output.OutputFormatProviderOutput) {
-      return ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
-    } else {
-      // shouldn't happen unless user defines their own Output class
-      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
-                                                       output.getName(), output.getClass().getCanonicalName()));
-    }
-  }
-
-  private void setOutputsIfNeeded(JobContext jobContext) {
-    Map<String, ProvidedOutput> outputMap = getOutputs();
-    if (outputMap.isEmpty()) {
-      // user is not going through our APIs to add output; leave the job's output format to user
-      return;
-    }
-    OutputFormatProvider rootOutputFormatProvider;
-    if (outputMap.size() == 1) {
-      // If only one output is configured through the context, then set it as the root OutputFormat
-      rootOutputFormatProvider = outputMap.values().iterator().next().getOutputFormatProvider();
-    } else {
-      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
-      // as the root output format in this case to disallow writing directly on the context
-      rootOutputFormatProvider =
-        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), new HashMap<String, String>());
-    }
-
-    MultipleOutputsMainOutputWrapper.setRootOutputFormat(jobContext,
-                                                         rootOutputFormatProvider.getOutputFormatClassName(),
-                                                         rootOutputFormatProvider.getOutputFormatConfiguration());
-
-    for (Map.Entry<String, ProvidedOutput> entry : outputMap.entrySet()) {
-      ProvidedOutput output = entry.getValue();
-      String outputName = output.getAlias();
-      String outputFormatClassName = output.getOutputFormatClassName();
-      Map<String, String> outputConfig = output.getOutputFormatConfiguration();
-      MultipleOutputs.addNamedOutput(jobContext, outputName, outputFormatClassName,
-                                     jobContext.getOutputKeyClass(), jobContext.getOutputValueClass(), outputConfig);
-
-    }
-  }
-
-
 
   /**
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
@@ -223,59 +160,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
         } else {
           failureCause.set(t instanceof Exception ? (Exception) t : new RuntimeException(t));
         }
-      }
-    }
-  }
-
-  private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
-
-  private void fixOutputPermissions(JobContext job, Map<String, ProvidedOutput> outputs) {
-    Configuration jobconf = job.getConfiguration();
-    Set<String> outputsWithUmask = new HashSet<>();
-    Set<String> outputUmasks = new HashSet<>();
-    for (Map.Entry<String, ProvidedOutput> entry : outputs.entrySet()) {
-      String umask = entry.getValue().getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
-      if (umask != null) {
-        outputsWithUmask.add(entry.getKey());
-        outputUmasks.add(umask);
-      }
-    }
-    boolean allOutputsHaveUmask = outputsWithUmask.size() == outputs.size();
-    boolean allOutputsAgree = outputUmasks.size() == 1;
-    boolean jobConfHasUmask = MapReduceRuntimeService.isProgrammaticConfig(jobconf, HADOOP_UMASK_PROPERTY);
-    String jobConfUmask = jobconf.get(HADOOP_UMASK_PROPERTY);
-
-    boolean mustFixUmasks = false;
-    if (jobConfHasUmask) {
-      // case 1: job conf has a programmatic umask. It prevails.
-      mustFixUmasks = !outputsWithUmask.isEmpty();
-      if (mustFixUmasks) {
-        LOG.info("Overriding permissions of outputs {} because a umask of {} was set programmatically in the job " +
-                   "configuration.", outputsWithUmask, jobConfUmask);
-      }
-    } else if (allOutputsHaveUmask && allOutputsAgree) {
-      // case 2: no programmatic umask in job conf, all outputs want the same umask: set it in job conf
-      String umaskToUse = outputUmasks.iterator().next();
-      jobconf.set(HADOOP_UMASK_PROPERTY, umaskToUse);
-      LOG.debug("Setting umask of {} in job configuration because all outputs {} agree on it.",
-                umaskToUse, outputsWithUmask);
-    } else {
-      // case 3: some outputs configure a umask, but not all of them, or not all the same: use job conf default
-      mustFixUmasks = !outputsWithUmask.isEmpty();
-      if (mustFixUmasks) {
-        LOG.warn("Overriding permissions of outputs {} because they configure different permissions. Falling back " +
-                   "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
-      }
-    }
-
-    // fix all output configurations that have a umask by removing that property from their configs
-    if (mustFixUmasks) {
-      for (String outputName : outputsWithUmask) {
-        ProvidedOutput output = outputs.get(outputName);
-        Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
-        outputConfig.remove(HADOOP_UMASK_PROPERTY);
-        outputs.put(outputName, new ProvidedOutput(output.getAlias(), output.getOutputFormatProvider(),
-                                                   output.getOutputFormatClassName(), outputConfig));
       }
     }
   }

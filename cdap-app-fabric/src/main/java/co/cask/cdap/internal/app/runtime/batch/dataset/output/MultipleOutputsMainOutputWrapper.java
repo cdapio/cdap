@@ -19,12 +19,12 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 import co.cask.cdap.internal.app.runtime.batch.MainOutputCommitter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.InvalidJobConfException;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
@@ -70,7 +70,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
    * @param outputFormatClass the class to set as the root OutputFormat for the job
    * @param outputConfig the configuration to set for the specified OutputFormat
    */
-  public static void setRootOutputFormat(JobContext job,  String outputFormatClass, Map<String, String> outputConfig) {
+  public static void setRootOutputFormat(Job job, String outputFormatClass, Map<String, String> outputConfig) {
     job.getConfiguration().set(ROOT_OUTPUT_FORMAT, outputFormatClass);
 
     for (Map.Entry<String, String> confEntry : outputConfig.entrySet()) {
@@ -85,7 +85,7 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
       Configuration conf = context.getConfiguration();
       @SuppressWarnings("unchecked")
       Class<? extends OutputFormat<K, V>> c =
-        (Class<? extends OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT, null, FileOutputFormat.class);
+        (Class<? extends OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT, null, OutputFormat.class);
       if (c == null) {
         throw new InvalidJobConfException("The job configuration does not contain required property: "
                                             + ROOT_OUTPUT_FORMAT);

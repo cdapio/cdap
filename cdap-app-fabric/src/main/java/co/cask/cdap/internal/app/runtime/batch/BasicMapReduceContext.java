@@ -22,7 +22,6 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -39,9 +38,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -131,6 +128,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
+  // TODO: remove unused?
   public TransactionContext getTransactionContext() throws TransactionFailureException {
     return getDatasetCache().newTransactionContext();
   }

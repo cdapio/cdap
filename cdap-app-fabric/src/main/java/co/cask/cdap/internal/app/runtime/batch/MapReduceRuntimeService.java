@@ -94,6 +94,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -156,6 +157,7 @@ import javax.annotation.Nullable;
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceRuntimeService.class);
+  private static final String HADOOP_UMASK_PROPERTY = FsPermission.UMASK_LABEL; // fs.permissions.umask-mode
 
   /**
    * Do not remove: we need this variable for loading MRClientSecurityInfo class required for communicating with
@@ -747,8 +749,13 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Sets the configurations used for outputs.
    */
   private void setOutputsIfNeeded(Job job) {
-    Map<String, Output> outputsMap = context.getOutputs();
-//    fixOutputPermissions(job, outputsMap);
+    Map<String, Output> outputMap = context.getOutputs();
+
+    // set the outputs to conf, for access by MainOutputCommitter
+    OutputSerde.setOutputs(job.getConfiguration(), outputMap.values());
+
+    Map<String, ProvidedOutput> outputsMap = OutputSerde.transform(outputMap.values(), context);
+    fixOutputPermissions(job, outputsMap);
     LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
     // TODO: we actually still need to start tx, so maybe this isn't valid
     // We probably need to set the job's output format class as the root output format class...
@@ -757,9 +764,82 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       return;
     }
 
+    OutputFormatProvider rootOutputFormatProvider;
+    if (outputsMap.size() == 1) {
+      // If only one output is configured through the context, then set it as the root OutputFormat
+      rootOutputFormatProvider = outputsMap.values().iterator().next().getOutputFormatProvider();
+    } else {
+      // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
+      // as the root output format in this case to disallow writing directly on the context
+      rootOutputFormatProvider =
+        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), new HashMap<String, String>());
+    }
+
+    MultipleOutputsMainOutputWrapper.setRootOutputFormat(job,
+                                                         rootOutputFormatProvider.getOutputFormatClassName(),
+                                                         rootOutputFormatProvider.getOutputFormatConfiguration());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    OutputSerde.setOutputs(job.getConfiguration(), outputsMap.values());
+    for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {
+      ProvidedOutput output = entry.getValue();
+      String outputName = output.getAlias();
+      String outputFormatClassName = output.getOutputFormatClassName();
+      Map<String, String> outputConfig = output.getOutputFormatConfiguration();
+      MultipleOutputs.addNamedOutput(job, outputName, outputFormatClassName,
+                                     job.getOutputKeyClass(), job.getOutputValueClass(), outputConfig);
+
+    }
+  }
+
+  private void fixOutputPermissions(JobContext job, Map<String, ProvidedOutput> outputs) {
+    Configuration jobconf = job.getConfiguration();
+    Set<String> outputsWithUmask = new HashSet<>();
+    Set<String> outputUmasks = new HashSet<>();
+    for (Map.Entry<String, ProvidedOutput> entry : outputs.entrySet()) {
+      String umask = entry.getValue().getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
+      if (umask != null) {
+        outputsWithUmask.add(entry.getKey());
+        outputUmasks.add(umask);
+      }
+    }
+    boolean allOutputsHaveUmask = outputsWithUmask.size() == outputs.size();
+    boolean allOutputsAgree = outputUmasks.size() == 1;
+    boolean jobConfHasUmask = isProgrammaticConfig(jobconf, HADOOP_UMASK_PROPERTY);
+    String jobConfUmask = jobconf.get(HADOOP_UMASK_PROPERTY);
+
+    boolean mustFixUmasks = false;
+    if (jobConfHasUmask) {
+      // case 1: job conf has a programmatic umask. It prevails.
+      mustFixUmasks = !outputsWithUmask.isEmpty();
+      if (mustFixUmasks) {
+        LOG.info("Overriding permissions of outputs {} because a umask of {} was set programmatically in the job " +
+                   "configuration.", outputsWithUmask, jobConfUmask);
+      }
+    } else if (allOutputsHaveUmask && allOutputsAgree) {
+      // case 2: no programmatic umask in job conf, all outputs want the same umask: set it in job conf
+      String umaskToUse = outputUmasks.iterator().next();
+      jobconf.set(HADOOP_UMASK_PROPERTY, umaskToUse);
+      LOG.debug("Setting umask of {} in job configuration because all outputs {} agree on it.",
+                umaskToUse, outputsWithUmask);
+    } else {
+      // case 3: some outputs configure a umask, but not all of them, or not all the same: use job conf default
+      mustFixUmasks = !outputsWithUmask.isEmpty();
+      if (mustFixUmasks) {
+        LOG.warn("Overriding permissions of outputs {} because they configure different permissions. Falling back " +
+                   "to default umask of {} in job configuration.", outputsWithUmask, jobConfUmask);
+      }
+    }
+
+    // fix all output configurations that have a umask by removing that property from their configs
+    if (mustFixUmasks) {
+      for (String outputName : outputsWithUmask) {
+        ProvidedOutput output = outputs.get(outputName);
+        Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
+        outputConfig.remove(HADOOP_UMASK_PROPERTY);
+        outputs.put(outputName, new ProvidedOutput(output.getAlias(), output.getOutputFormatProvider(),
+                                                   output.getOutputFormatClassName(), outputConfig));
+      }
+    }
   }
 
   /**
@@ -1034,8 +1114,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    *
    * See {@link Configuration#getPropertySources(String)}.
    */
-  // TODO: move?
-  static boolean isProgrammaticConfig(Configuration conf, String name) {
+  private boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
     return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0]).matches();
   }
