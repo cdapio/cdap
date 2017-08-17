@@ -18,7 +18,7 @@ package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.internal.app.runtime.batch.MainOutputCommitter;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapred.InvalidJobConfException;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -28,7 +28,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -39,7 +38,6 @@ import java.util.Map;
  * @param <V> Type of value
  */
 public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
-
   private static final String ROOT_OUTPUT_FORMAT =
     MultipleOutputsMainOutputWrapper.class.getCanonicalName() + ".rootOutputFormat";
   private OutputFormat<K, V> innerFormat;
@@ -82,12 +80,16 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
 
   // the root OutputFormat is used only for writing, not for checking output specs or committing of the output
   // because the root is also in the delegates, which check the output spec and commit the output.
-  private OutputFormat<K, V> getRootOutputFormat(JobContext context) {
+  private OutputFormat<K, V> getRootOutputFormat(JobContext context) throws InvalidJobConfException {
     if (innerFormat == null) {
       Configuration conf = context.getConfiguration();
       @SuppressWarnings("unchecked")
-      Class<OutputFormat<K, V>> c = (Class<OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT,
-                                                                              FileOutputFormat.class);
+      Class<? extends OutputFormat<K, V>> c =
+        (Class<? extends OutputFormat<K, V>>) conf.getClass(ROOT_OUTPUT_FORMAT, null, FileOutputFormat.class);
+      if (c == null) {
+        throw new InvalidJobConfException("The job configuration does not contain required property: "
+                                            + ROOT_OUTPUT_FORMAT);
+      }
       innerFormat = ReflectionUtils.newInstance(c, conf);
     }
     return innerFormat;
