@@ -27,8 +27,11 @@ import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Properties;
@@ -42,6 +45,9 @@ import javax.annotation.Nullable;
  * Tests for {@link AuthorizerInstantiator}.
  */
 public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
   public void testAuthenticationDisabled() throws IOException {
@@ -167,10 +173,30 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
 
   @Test
   public void testAuthorizerExtension() throws IOException, ClassNotFoundException {
-    Manifest manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAuthorizer.class.getName());
-    Location externalAuthJar = AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAuthorizer.class,
-                                                                manifest);
+    Location externalAuthJar = createValidAuthExtensionJar();
+    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
+
+    // Create a temporary file.
+    final File tempFile = TEMP_FOLDER.newFile("conf-file.xml");
+
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH, tempFile.getParent());
+
+    try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
+      // should be able to load the ExternalAuthorizer class via the AuthorizerInstantiatorService
+      Authorizer externalAuthorizer1 = instantiator.get();
+
+      ClassLoader authorizerClassLoader = externalAuthorizer1.getClass().getClassLoader();
+
+      // should be able to load the ExternalAuthorizer class via the AuthorizerClassLoader
+      authorizerClassLoader.loadClass(ValidExternalAuthorizer.class.getName());
+      Assert.assertNotNull(authorizerClassLoader.getResource("conf-file.xml"));
+    }
+  }
+
+  @Test
+  public void testAuthorizerExtensionExtraClasspath() throws IOException, ClassNotFoundException {
+    Location externalAuthJar = createValidAuthExtensionJar();
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, externalAuthJar.toString());
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "config.path",
@@ -228,6 +254,13 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
       jarOutput.closeEntry();
     }
     return externalAuthJar;
+  }
+
+  private Location createValidAuthExtensionJar() throws IOException {
+    Manifest manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, ValidExternalAuthorizer.class.getName());
+    return AppJarHelper.createDeploymentJar(locationFactory, ValidExternalAuthorizer.class,
+                                            manifest);
   }
 
   public static final class ExceptionInInitialize extends NoOpAuthorizer {

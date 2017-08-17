@@ -46,6 +46,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipException;
+import javax.annotation.Nullable;
 
 /**
  * Class to instantiate {@link Authorizer} extensions. Authorization extensions are instantiated using a
@@ -62,7 +63,8 @@ import java.util.zip.ZipException;
  *   {@link Constants.Security.Authorization#EXTENSION_JAR_PATH} in cdap-site.xml</li>
  *   <li>The instantiator reads a fully qualified class name specified as the {@link Attributes.Name#MAIN_CLASS}
  *   attribute in the extension jar's manifest file. This class must implement {@link Authorizer} and have a default
- *   constructor.</li>
+ *   constructor. If the extension depends on external jars or configuration files it is possible to provide them
+ *   through {@link Constants.Security.Authorization#EXTENSION_EXTRA_CLASSPATH}</li>
  *   <li>During {@link #get}, the instantiator creates an instance of the {@link Authorizer}
  *   class and also calls its {@link Authorizer#initialize(AuthorizationContext)} method with an
  *   {@link AuthorizationContext} created using a {@link AuthorizationContextFactory} by providing it a
@@ -122,6 +124,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     }
     // Authorization is enabled, so continue with startup now
     String authorizerExtensionJarPath = cConf.get(Constants.Security.Authorization.EXTENSION_JAR_PATH);
+    String authorizerExtraClasspath = cConf.get(Constants.Security.Authorization.EXTENSION_EXTRA_CLASSPATH);
     if (Strings.isNullOrEmpty(authorizerExtensionJarPath)) {
       throw new IllegalArgumentException(
         String.format("Authorizer extension jar path not found in configuration. Please set %s in cdap-site.xml to " +
@@ -134,7 +137,7 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
       File absoluteTmpFile = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
       tmpDir = DirUtils.createTempDir(absoluteTmpFile);
-      authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar);
+      authorizerClassLoader = createAuthorizerClassLoader(authorizerExtensionJar, authorizerExtraClasspath);
       authorizer = createAndInitializeAuthorizerInstance(authorizerExtensionJar);
     } catch (Exception e) {
       Throwables.propagate(e);
@@ -193,12 +196,13 @@ public class AuthorizerInstantiator implements Closeable, Supplier<Authorizer> {
     return extensionProperties;
   }
 
-  private AuthorizerClassLoader createAuthorizerClassLoader(File authorizerExtensionJar)
+  private AuthorizerClassLoader createAuthorizerClassLoader(File authorizerExtensionJar,
+                                                            @Nullable String authorizerExtraClasspath)
     throws IOException, InvalidAuthorizerException {
     LOG.info("Creating authorization extension using jar {}.", authorizerExtensionJar);
     try {
       BundleJarUtil.unJar(Locations.toLocation(authorizerExtensionJar), tmpDir);
-      return new AuthorizerClassLoader(tmpDir);
+      return new AuthorizerClassLoader(tmpDir, authorizerExtraClasspath);
     } catch (ZipException e) {
       throw new InvalidAuthorizerException(
         String.format("Authorization extension jar %s specified as %s must be a jar file.", authorizerExtensionJar,
