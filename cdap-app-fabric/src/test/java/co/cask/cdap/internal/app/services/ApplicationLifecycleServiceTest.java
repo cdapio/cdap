@@ -19,8 +19,9 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.AppWithProgramsUsingGuava;
 import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.api.Config;
+import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.common.ArtifactNotFoundException;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
 import co.cask.cdap.common.test.AppJarHelper;
@@ -32,12 +33,12 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.Files;
 import org.apache.http.HttpResponse;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -66,24 +67,23 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
+  private static File wordCountAppJar;
 
   @BeforeClass
   public static void setup() throws Exception {
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    wordCountAppJar = buildAppArtifact(WordCountApp.class, WORDCOUNT_APP_NAME);
   }
 
   // test that the call to deploy an artifact and application in a single step will delete the artifact
   // if the application could not be created
   @Test(expected = ArtifactNotFoundException.class)
   public void testDeployArtifactAndApplicationCleansUpArtifactOnFailure() throws Exception {
+    NamespaceId.DEFAULT.artifact("missing-mr", "1.0.0-SNAPSHOT");
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "missing-mr", "1.0.0-SNAPSHOT");
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
-    File appJarFile = new File(tmpFolder.newFolder(),
-                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
-    appJar.delete();
+    File appJarFile = buildAppArtifact(MissingMapReduceWorkflowApp.class, "missing-mr");
 
     try {
       applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId, appJarFile, null,
@@ -104,10 +104,22 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
   @Test
   public void testAppDeletionMultipleNS() throws Exception {
+    artifactRepository.addArtifact(
+      NamespaceId.DEFAULT.artifact(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT").toId(), wordCountAppJar);
+    artifactRepository.addArtifact(
+      TEST_NAMESPACE_META1.getNamespaceId().artifact(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT").toId(), wordCountAppJar);
 
     // deploy same app in two namespaces
-    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
-    deploy(WordCountApp.class);
+    HttpResponse response = deploy(
+      TEST_NAMESPACE_META1.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
+    response = deploy(
+      NamespaceId.DEFAULT.app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
+
     ProgramId wordcountFlow1 = new ProgramId(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW,
                                              WORDCOUNT_FLOW_NAME);
     ApplicationId defaultNSAppId = new ApplicationId(NamespaceId.DEFAULT.getNamespace(), WORDCOUNT_APP_NAME);
@@ -135,22 +147,35 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
    */
   @Test
   public void testOwner() throws Exception {
+    // Create a namespace and deploy the artifact
+    NamespaceMeta namespaceMeta =
+      new NamespaceMeta.Builder().setName("testOwner").build();
+    createNamespace(GSON.toJson(namespaceMeta), namespaceMeta.getName());
+
+    artifactRepository.addArtifact(
+      namespaceMeta.getNamespaceId().artifact(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT").toId(), wordCountAppJar);
+
+    // Deploy the app with a owner
     String ownerPrincipal = "alice/somehost.net@somekdc.net";
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                                   ownerPrincipal);
+    HttpResponse response = deploy(
+      namespaceMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null, ownerPrincipal));
+
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // trying to redeploy the same app as a different owner should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                      "bob/somehost.net@somekdc.net");
+    response = deploy(
+      namespaceMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null,
+                             "bob/somehost.net@somekdc.net"));
     Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
                         response.getStatusLine().getStatusCode());
 
     // although trying to re-deploy the app with same owner should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1,
-                      ownerPrincipal);
+    response = deploy(
+      namespaceMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null, ownerPrincipal));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-
   }
 
   @Test
@@ -162,24 +187,33 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
       new NamespaceMeta.Builder().setName("impNs").setPrincipal(nsPrincipal).setKeytabURI(nsKeytabURI).build();
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
 
+    // Deploy the artifact to the namespace first
+    artifactRepository.addArtifact(
+      impNsMeta.getNamespaceId().artifact(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT").toId(), wordCountAppJar);
+
     // deploy an app without owner
-    HttpResponse response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
+    HttpResponse response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // try to redeploy with some owner different than namespace principal it should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
-    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
-                        response.getStatusLine().getStatusCode());
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null,
+                             "bob/somehost.net@somekdc.net"));
+    Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(), response.getStatusLine().getStatusCode());
 
     // although trying to re-deploy the app with namespace principal should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      nsPrincipal);
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
-                        response.getStatusLine().getStatusCode());
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null, nsPrincipal));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // re-deploy without any owner should also work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName());
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT")));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         response.getStatusLine().getStatusCode());
 
@@ -191,20 +225,30 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     // create an impersonated ns again
     createNamespace(GSON.toJson(impNsMeta), impNsMeta.getName());
 
+    // Redeploy the artifact to the namespace again
+    artifactRepository.addArtifact(
+      impNsMeta.getNamespaceId().artifact(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT").toId(), wordCountAppJar);
+
     // deploy an app with an owner
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null,
+                             "bob/somehost.net@somekdc.net"));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
     // re-deploy with namespace principal should fail
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      impNsMeta.getConfig().getPrincipal());
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null,
+                             nsPrincipal));
     Assert.assertEquals(HttpResponseStatus.FORBIDDEN.getCode(),
                         response.getStatusLine().getStatusCode());
 
     // although redeploy with same app principal should work
-    response = deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, impNsMeta.getName(),
-                      "bob/somehost.net@somekdc.net");
+    response = deploy(
+      impNsMeta.getNamespaceId().app(WORDCOUNT_APP_NAME),
+      new AppRequest<Config>(new ArtifactSummary(WORDCOUNT_APP_NAME, "1.0.0-SNAPSHOT"), null,
+                             "bob/somehost.net@somekdc.net"));
     Assert.assertEquals(HttpResponseStatus.OK.getCode(),
                         response.getStatusLine().getStatusCode());
   }
@@ -216,7 +260,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     Location appJar = createDeploymentJar(locationFactory, AppWithProgramsUsingGuava.class);
     File appJarFile = new File(tmpFolder.newFolder(),
                                String.format("%s-%s.jar", artifactId.getArtifact(), artifactId.getVersion()));
-    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    Locations.linkOrCopy(appJar, appJarFile);
     appJar.delete();
 
     applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId.toId(), appJarFile,
@@ -263,8 +307,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
   // creates an application jar for the given application class, but excludes classes that begin with 'com.google.'
   // similar to AppJarHelper#createDeploymentJar
-  public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz,
-                                             File... bundleEmbeddedJars) throws IOException {
+  private static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz,
+                                              File... bundleEmbeddedJars) throws IOException {
     return AppJarHelper.createDeploymentJar(locationFactory, clz, new Manifest(), new ClassAcceptor() {
       final Set<String> visibleResources = ProgramResources.getVisibleResources();
 
