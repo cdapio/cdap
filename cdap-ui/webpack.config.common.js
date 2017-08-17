@@ -15,8 +15,10 @@
  */
 var webpack = require('webpack');
 var mode = process.env.NODE_ENV;
+var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 var plugins = [
+  new CaseSensitivePathsPlugin(),
   new webpack.optimize.DedupePlugin(),
   new webpack.optimize.CommonsChunkPlugin("common-lib", "common-lib.js", Infinity),
   // by default minify it.
