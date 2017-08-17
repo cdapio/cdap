@@ -38,6 +38,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
@@ -126,7 +127,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
                                        Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
         // metrics tables are in the system namespace
         DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-        v2Table = dsFramework.getDataset(v2TableId, null, null);
+        v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.<String, String>of(), null);
       }
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
