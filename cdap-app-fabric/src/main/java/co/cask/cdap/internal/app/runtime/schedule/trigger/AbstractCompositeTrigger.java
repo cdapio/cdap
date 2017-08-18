@@ -17,11 +17,15 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.proto.ProtoTrigger;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,5 +88,19 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
         triggerSet.add((SatisfiableTrigger) trigger);
       }
     }
+  }
+
+  /**
+   * @return An immutable list of trigger info's of all the unit triggers in this composite trigger
+   */
+  public List<TriggerInfo> getUnitTriggerInfosAddRuntimeArgs(TriggerInfoContext context, Map<String, String> sysArgs,
+                                                             Map<String, String> userArgs) {
+    ImmutableList.Builder<TriggerInfo> unitTriggerInfos = ImmutableList.builder();
+    for (Set<SatisfiableTrigger> triggeSet : getUnitTriggers().values()) {
+      for (SatisfiableTrigger trigger : triggeSet) {
+        unitTriggerInfos.addAll(trigger.getTriggerInfosAddArgumentOverrides(context, sysArgs, userArgs));
+      }
+    }
+    return unitTriggerInfos.build();
   }
 }

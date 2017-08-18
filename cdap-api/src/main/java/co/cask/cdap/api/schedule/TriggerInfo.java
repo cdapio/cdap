@@ -14,21 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
-
-import co.cask.cdap.api.schedule.Trigger;
+package co.cask.cdap.api.schedule;
 
 /**
- * A Trigger builder that builds a {@link OrTrigger}.
+ * Base class for the trigger information to be passed to the triggered program.
  */
-public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
+public abstract class TriggerInfo {
+  private final Trigger.Type type;
 
-  public OrTriggerBuilder(Trigger... triggers) {
-    super(Type.OR, triggers);
+  public TriggerInfo(Trigger.Type type) {
+    this.type = type;
   }
 
-  @Override
-  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
-    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
+  /**
+   * @return The type of the trigger.
+   */
+  public Trigger.Type getType() {
+    return type;
   }
 }

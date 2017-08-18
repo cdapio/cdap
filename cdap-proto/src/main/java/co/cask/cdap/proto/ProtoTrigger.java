@@ -23,8 +23,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -34,64 +32,13 @@ import javax.annotation.Nullable;
  */
 public abstract class ProtoTrigger implements Trigger {
 
-  /**
-   * Represents all known trigger types in REST requests/responses.
-   */
-  public enum Type {
-    TIME("time"),
-    PARTITION("partition"),
-    STREAM_SIZE("stream-size"),
-    PROGRAM_STATUS("program-status"),
-    AND("and", true),
-    OR("or", true);
-
-    private static final Map<String, Type> CATEGORY_MAP;
-
-    static {
-      CATEGORY_MAP = new HashMap<>();
-      for (Type type : Type.values()) {
-        CATEGORY_MAP.put(type.getCategoryName(), type);
-      }
-    }
-
-    private final String categoryName;
-    private final boolean isComposite;
-
-    Type(String categoryName) {
-      this(categoryName, false);
-    }
-
-    Type(String categoryName, boolean isComposite) {
-      this.categoryName = categoryName;
-      this.isComposite = isComposite;
-    }
-
-    public String getCategoryName() {
-      return categoryName;
-    }
-
-    public static Type valueOfCategoryName(String categoryName) {
-      Type type = CATEGORY_MAP.get(categoryName);
-      if (type == null) {
-        throw new IllegalArgumentException("Unknown category name " + categoryName);
-      }
-      return type;
-    }
-
-    /**
-     * Whether the type trigger is a composite, i.e. a trigger that can contains multiple triggers internally.
-     */
-    public boolean isComposite() {
-      return isComposite;
-    }
-  }
-
   private final Type type;
 
   private ProtoTrigger(Type type) {
     this.type = type;
   }
 
+  @Override
   public Type getType() {
     return type;
   }
@@ -208,7 +155,7 @@ public abstract class ProtoTrigger implements Trigger {
 
     @Override
     public void validate() {
-      if (!getType().isComposite()) {
+      if (!getType().equals(Type.AND) && !getType().equals(Type.OR)) {
         throw new IllegalArgumentException("Trigger type " + getType().name() + " is not a composite trigger.");
       }
       Trigger[] internalTriggers = getTriggers();

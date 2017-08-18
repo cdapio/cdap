@@ -18,15 +18,22 @@ package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.app.ApplicationConfigurer;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
+import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
+import co.cask.cdap.api.workflow.Value;
 import co.cask.cdap.api.workflow.WorkflowContext;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.AlertPublisherContext;
@@ -73,16 +80,20 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -93,11 +104,17 @@ import javax.annotation.Nullable;
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
+  public static final String TRIGGERING_PROPERTIES_MAPPING = "triggeringPropertiesMapping";
+
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(TriggeringPipelinePropertyId.class, new TriggeringPipelinePropertyIdCodec())
+    .create();
+  private static final Type STRING_STRING_MAP =
+    new TypeToken<Map<String, String>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -254,11 +271,103 @@ public class SmartWorkflow extends AbstractWorkflow {
     addPrograms(start, programAdder);
   }
 
+  private Map<String, String> getNewRuntimeArgsFromScheduleInfo(TriggeringScheduleInfo scheduleInfo,
+                                                                Map<String, String>
+                                                                  propertiesMap) {
+    List<TriggerInfo> triggerInfoList = scheduleInfo.getTriggerInfos();
+    List<ProgramStatusTriggerInfo> programStatusTriggerInfos = new ArrayList<>();
+    for (TriggerInfo info : triggerInfoList) {
+      if (info instanceof ProgramStatusTriggerInfo) {
+        programStatusTriggerInfos.add((ProgramStatusTriggerInfo) info);
+      }
+    }
+    Map<String, String> newRuntimeArgs = new HashMap<>();
+    // If no ProgramStatusTriggerInfo, no need of override the existing runtimeArgs
+    if (programStatusTriggerInfos.size() == 0) {
+      return newRuntimeArgs;
+    }
+    // Get the value of every triggering pipeline property and put it to newRuntimeArgs if it's not null
+    for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
+      TriggeringPipelinePropertyId triggeringPropertyId =
+        GSON.fromJson(entry.getKey(), TriggeringPipelinePropertyId.class);
+      addTriggeringPipelineProperties(programStatusTriggerInfos, newRuntimeArgs,
+                                      triggeringPropertyId, entry.getValue());
+    }
+    return newRuntimeArgs;
+  }
+
+  private void addTriggeringPipelineProperties(List<ProgramStatusTriggerInfo> programStatusTriggerInfos,
+                                               Map<String, String> runtimeArgs,
+                                               TriggeringPipelinePropertyId propertyId, String currentKey) {
+    for (ProgramStatusTriggerInfo triggerInfo : programStatusTriggerInfos) {
+      if (propertyId.getNamespace().equals(triggerInfo.getNamespace()) &&
+        propertyId.getPipelineName().equals(triggerInfo.getApplicationSpecification().getName())) {
+        addProperty(propertyId, triggerInfo, runtimeArgs, currentKey);
+      }
+    }
+  }
+
+  private void addProperty(TriggeringPipelinePropertyId propertyId, ProgramStatusTriggerInfo triggerInfo,
+                           Map<String, String> runtimeArgs, String currentKey) {
+    String value;
+    switch (propertyId.getType()) {
+      case RUNTIME_ARG:
+        Map<String, String> triggerRuntimeArgs = triggerInfo.getRuntimeArguments();
+        if (triggerRuntimeArgs == null) {
+          return;
+        }
+        value = triggerRuntimeArgs.get(((TriggeringPipelineRuntimeArgId) propertyId).getRuntimeArgumentKey());
+        break;
+      case PLUGIN_PROPERTY:
+        ApplicationSpecification appSpec = triggerInfo.getApplicationSpecification();
+        TriggeringPipelinePluginPropertyId pluginPropertyId = (TriggeringPipelinePluginPropertyId) propertyId;
+        Plugin plugin = appSpec.getPlugins().get(pluginPropertyId.getPluginName());
+        if (plugin == null) {
+          return;
+        }
+        value = plugin.getProperties().getProperties().get(pluginPropertyId.getPropertyKey());
+        break;
+      case TOKEN:
+        WorkflowToken token = triggerInfo.getWorkflowToken();
+        if (token == null) {
+          return;
+        }
+        TriggeringPipelineTokenId tokenId = (TriggeringPipelineTokenId) propertyId;
+        Value tokenValue = token.get(tokenId.getTokenKey(), tokenId.getNodeName());
+        if (tokenValue == null) {
+          return;
+        }
+        value = tokenValue.toString();
+        break;
+      default:
+        // Should never reach here since deserialization should have failed before reaching here
+        LOG.warn("No matching property in the triggering pipeline for type '{}'", propertyId.getType());
+        return;
+    }
+    if (value != null) {
+      // Put the triggering pipeline property value to the runtime argument with the key in current pipeline
+      runtimeArgs.put(currentKey, value);
+    }
+  }
+
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
+    Map<String, String> combinedRuntimeArgs = new HashMap<>(context.getRuntimeArguments());
+    TriggeringScheduleInfo scheduleInfo = context.getTriggeringScheduleInfo();
+    if (scheduleInfo != null) {
+      String propertiesMappingString = scheduleInfo.getProperties().get(TRIGGERING_PROPERTIES_MAPPING);
+      if (propertiesMappingString != null) {
+        Map<String, String> propertiesMap = GSON.fromJson(propertiesMappingString, STRING_STRING_MAP);
+        Map<String, String> newRuntimeArgs = getNewRuntimeArgsFromScheduleInfo(scheduleInfo, propertiesMap);
+        for (Map.Entry<String, String> entry : newRuntimeArgs.entrySet()) {
+          combinedRuntimeArgs.put(entry.getKey(), entry.getValue());
+          context.getToken().put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
 
-    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(combinedRuntimeArgs);
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
                        context.getApplicationSpecification().getName(),
                        UserGroupInformation.getCurrentUser().getShortUserName(),
@@ -269,10 +378,11 @@ public class SmartWorkflow extends AbstractWorkflow {
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
     stageSpecs = new HashMap<>();
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
-    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
+
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
                                                             spec.isStageLoggingEnabled(),
                                                             spec.isProcessTimingEnabled());

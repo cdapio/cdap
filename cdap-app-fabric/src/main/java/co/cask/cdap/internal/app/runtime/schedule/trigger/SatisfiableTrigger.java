@@ -17,9 +17,11 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,4 +45,18 @@ public interface SatisfiableTrigger extends Trigger {
    * @return a set of trigger keys as {@link String}. The set will be never be null.
    */
   Set<String> getTriggerKeys();
+
+  /**
+   * Get the {@link TriggerInfo} constructed from this trigger with the given context.
+   *
+   * @param context the {@link TriggerInfoContext} that provides necessary information to build the {@link TriggerInfo}
+   * @param sysArgs system runtime arguments to override with appropriate notification properties
+   * @param userArgs user runtime arguments to override with appropriate notification properties
+   * @return An immutable list of {@link TriggerInfo}'s of this trigger. If the trigger is not
+   *         composite trigger, the list only contains one trigger info for this trigger.
+   *         If the trigger is a composite trigger, the list will contain all the satisfied non-composite triggers
+   *         in the composite trigger.
+   */
+  List<TriggerInfo> getTriggerInfosAddArgumentOverrides(TriggerInfoContext context, Map<String, String> sysArgs,
+                                                        Map<String, String> userArgs);
 }

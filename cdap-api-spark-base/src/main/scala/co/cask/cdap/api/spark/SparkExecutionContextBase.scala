@@ -28,6 +28,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent
 import co.cask.cdap.api.messaging.MessagingContext
 import co.cask.cdap.api.metrics.Metrics
 import co.cask.cdap.api.plugin.PluginContext
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 import co.cask.cdap.api.security.store.SecureStore
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import co.cask.cdap.api.stream.GenericStreamEventData
@@ -36,7 +37,6 @@ import co.cask.cdap.api.workflow.WorkflowToken
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.tephra.TransactionFailureException
-
 import java.io.IOException
 
 import scala.reflect.ClassTag
@@ -292,4 +292,12 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
     */
   @throws(classOf[IOException])
   def createInterpreter(): SparkInterpreter
+
+  /**
+    * Get the information of the schedule that launches this Spark program, if there is any.
+    *
+    * @return a instance of [[Some]] containing [[TriggeringScheduleInfo]] of the schedule that launches this
+    *         Spark program. Return [[None]] if the program is not launched by a schedule
+    */
+  def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo]
 }

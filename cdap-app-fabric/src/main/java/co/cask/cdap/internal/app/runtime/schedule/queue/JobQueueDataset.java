@@ -182,9 +182,11 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
 
   private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
     if (trigger instanceof TimeTrigger) {
-      // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created.
-      // This is for backward compatibility, since TimeTrigger#isSatisfied looks for the filed
-      // cron expression in notification, which does not exist in notifications from pre-4.3 version
+      // TimeTrigger#isSatisfied looks for the field cron expression in notifications to distinguish TIME notifications
+      // for different TimeTrigger's in composite triggers. No need to check for cron expression field in notification
+      // if the only trigger in the schedule is a TimeTrigger. This also keeps the compatibility with notifications from
+      // pre-4.3 version, since cron expression field in TIME notification is introduced in 4.3
+      // together with composite trigger.
       return true;
     }
     return ((SatisfiableTrigger) trigger).isSatisfied(notifications);

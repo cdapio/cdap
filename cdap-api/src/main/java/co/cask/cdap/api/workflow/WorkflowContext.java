@@ -18,6 +18,7 @@ package co.cask.cdap.api.workflow;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.SchedulableProgramContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.Beta;
@@ -32,7 +33,7 @@ import java.util.Map;
  * Represents the runtime context of a {@link Workflow}. This context is also
  * available to {@link WorkflowAction} and {@link Condition}.
  */
-public interface WorkflowContext extends RuntimeContext, Transactional, MessagingContext,
+public interface WorkflowContext extends SchedulableProgramContext, RuntimeContext, Transactional, MessagingContext,
   ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
 
   WorkflowSpecification getWorkflowSpecification();
