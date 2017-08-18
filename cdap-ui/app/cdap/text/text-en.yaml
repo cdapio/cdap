@@ -1042,8 +1042,8 @@ features:
     contactadmin: Contact System Administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
-    servicesDown: We deteced a few system services are down
-    serviceDown: We detect that {serviceName} is down
+    servicesDown: A few system services are down
+    serviceDown: The system service {serviceName} is down
     systemDashboard: View System Services Dashboard
     tryMessage: 'You can try to: '
 
