@@ -17,20 +17,24 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -45,7 +49,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -58,8 +64,10 @@ public final class MapReduceContextConfig {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .registerTypeAdapter(Output.class, new OutputCodec())
     .create();
   private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
+  private static final Type OUTPUT_LIST_TYPE = new com.google.gson.reflect.TypeToken<List<Output>>() { }.getType();
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.mapreduce.program.id";
@@ -69,6 +77,7 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_CCONF = "cdap.mapreduce.cconf";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.mapreduce.program.options";
+  private static final String HCONF_ATTR_OUTPUTS = "cdap.mapreduce.outputs";
 
   private final Configuration hConf;
 
@@ -98,6 +107,26 @@ public final class MapReduceContextConfig {
     setProgramJarURI(programJarURI);
     setConf(conf);
     setLocalizedResources(localizedUserResources);
+    setOutputs(context.getOutputs());
+  }
+
+  private void setOutputs(List<ProvidedOutput> providedOutputs) {
+    // we only need to serialize the original Output objects, not the entire ProvidedOutput
+    List<Output> outputs = Lists.transform(providedOutputs, new Function<ProvidedOutput, Output>() {
+      @Nullable
+      @Override
+      public Output apply(ProvidedOutput providedOutput) {
+        return providedOutput.getOutput();
+      }
+    });
+    hConf.set(HCONF_ATTR_OUTPUTS, GSON.toJson(outputs, OUTPUT_LIST_TYPE));
+  }
+
+  /**
+   * @return the list of Outputs configured for this MapReduce job.
+   */
+  public List<Output> getOutputs() {
+    return GSON.fromJson(hConf.get(HCONF_ATTR_OUTPUTS), OUTPUT_LIST_TYPE);
   }
 
   private void setProgramId(ProgramId programId) {

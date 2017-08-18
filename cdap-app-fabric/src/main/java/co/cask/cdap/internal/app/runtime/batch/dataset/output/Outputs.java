@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.batch;
+package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -22,45 +22,40 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import org.apache.hadoop.conf.Configuration;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * Created by alianwar on 8/16/17.
+ * Utility class to help deal with Outputs.
  */
-public class OutputSerde {
-  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Output.class, new OutputCodec()).create();
-  private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output>>() { }.getType();
+public final class Outputs {
+  private Outputs() { }
 
-  public static void setOutputs(Configuration conf, Collection<Output> outputs) {
-    conf.set("cdap.outputs", GSON.toJson(outputs, OUTPUT_LIST_TYPE));
+  /**
+   * Transforms a list of {@link Output}s to {@link ProvidedOutput}.
+   */
+  public static List<ProvidedOutput> transform(List<Output> outputs, final AbstractContext abstractContext) {
+    return Lists.transform(outputs, new Function<Output, ProvidedOutput>() {
+      @Nullable
+      @Override
+      public ProvidedOutput apply(Output output) {
+        return transform(output, abstractContext);
+      }
+    });
   }
 
-  public static List<Output> getOutputs(Configuration conf) {
-    String s = conf.get("cdap.outputs");
-    return GSON.fromJson(s, OUTPUT_LIST_TYPE);
+  /**
+   * Transforms a {@link Output}s to {@link ProvidedOutput}.
+   */
+  public static ProvidedOutput transform(Output output, AbstractContext abstractContext) {
+    return new ProvidedOutput(output, toOutputFormatProvider(output, abstractContext));
   }
 
-  public static Map<String, ProvidedOutput> transform(Collection<Output> outputs, AbstractContext abstractContext) {
-    Map<String, ProvidedOutput> outputMap = new LinkedHashMap<>(outputs.size());
-    for (Output output : outputs) {
-      // TODO: remove alias from ProvidedOutput class?
-      outputMap.put(output.getAlias(), new ProvidedOutput(output.getAlias(), transform(output, abstractContext)));
-    }
-    return outputMap;
-  }
-
-
-  private static OutputFormatProvider transform(Output output, AbstractContext abstractContext) {
+  private static OutputFormatProvider toOutputFormatProvider(Output output, AbstractContext abstractContext) {
     if (output instanceof Output.DatasetOutput) {
       Output.DatasetOutput datasetOutput = (Output.DatasetOutput) output;
       String datasetNamespace = datasetOutput.getNamespace();

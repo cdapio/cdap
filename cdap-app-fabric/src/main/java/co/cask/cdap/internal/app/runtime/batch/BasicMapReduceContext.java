@@ -39,6 +39,8 @@ import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -61,9 +63,11 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -81,7 +85,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
 
   // key is input name, value is the MapperInput (configuration info) for that input
   private final Map<String, MapperInput> inputs;
-  private final Map<String, Output> outputs;
+  private final Map<String, ProvidedOutput> outputs;
 
   private Job job;
   private Resources mapperResources;
@@ -223,8 +227,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    // TODO: ensure ordering when serialized/deserialized
-    this.outputs.put(alias, output);
+    this.outputs.put(alias, Outputs.transform(output, this));
   }
 
   /**
@@ -237,9 +240,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   /**
    * @return a map from output name to provided output for the MapReduce job
    */
-  Map<String, Output> getOutputs() {
-    // LinkedHashMap() will preserve the order of the outputs
-    return new LinkedHashMap<>(outputs);
+  List<ProvidedOutput> getOutputs() {
+    return new ArrayList<>(outputs.values());
   }
 
   @Override

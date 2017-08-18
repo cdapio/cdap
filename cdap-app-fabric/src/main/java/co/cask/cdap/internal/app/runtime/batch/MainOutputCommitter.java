@@ -29,6 +29,7 @@ import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsCommitter;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -57,8 +58,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,7 +72,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private Transaction transaction;
   private BasicMapReduceTaskContext taskContext;
 
-  private Map<String, ProvidedOutput> outputs;
+  private List<ProvidedOutput> outputs;
   private boolean success;
 
   public MainOutputCommitter(TaskAttemptContext taskAttemptContext) {
@@ -81,13 +81,9 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   @Override
   public void setupJob(JobContext jobContext) throws IOException {
-    // Similarly, is the abortJob called on the same object?
-    // Similarly, is it ok to have a separate tx for each job attempt?
-
     Configuration configuration = jobContext.getConfiguration();
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
     MapReduceTaskContextProvider taskContextProvider = classLoader.getTaskContextProvider();
-//    BasicMapReduceContext vs BasicMapReduceTaskContext
     Injector injector = taskContextProvider.getInjector();
 
     cConf = injector.getInstance(CConfiguration.class);
@@ -120,8 +116,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
     taskContext = taskContextProvider.get(taskAttemptContext);
-
-    this.outputs = OutputSerde.transform(OutputSerde.getOutputs(configuration), taskContext);
+    this.outputs = Outputs.transform(contextConfig.getOutputs(), taskContext);
 
     super.setupJob(jobContext);
   }
@@ -137,11 +132,10 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   /**
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
    * If any exception is thrown by the output committer, sets the failure cause to that exception.
-   * @param outputName the name of the output
-   * @param outputFormatProvider the output format provider to commit
+   * @param output configured ProvidedOutput
    */
-  private void commitOutput(String outputName, OutputFormatProvider outputFormatProvider,
-                            AtomicReference<Exception> failureCause) {
+  private void commitOutput(ProvidedOutput output, AtomicReference<Exception> failureCause) {
+    OutputFormatProvider outputFormatProvider = output.getOutputFormatProvider();
     if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
         if (success) {
@@ -151,7 +145,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
         }
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
-                                success ? "onSuccess" : "onFailure", outputName), t);
+                                success ? "onSuccess" : "onFailure", output.getOutput().getAlias()), t);
         success = false;
         if (failureCause.get() != null) {
           failureCause.get().addSuppressed(t);
@@ -232,56 +226,55 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
                          programId.getNamespace(), programId.getApplication(), programId.getProgram(), runId.getRun());
   }
 
-  private Map<String, ProvidedOutput> getOutputs() {
+  private List<ProvidedOutput> getOutputs() {
     return Preconditions.checkNotNull(outputs);
   }
 
-    private void commitDatasets(final JobContext jobContext) throws Exception {
-      final AtomicReference<Exception> failureCause = new AtomicReference<>();
+  private void commitDatasets(final JobContext jobContext) throws Exception {
+    final AtomicReference<Exception> failureCause = new AtomicReference<>();
 
-      // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
-      try {
-        taskContext.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext ctxt) throws Exception {
-            ClassLoader oldClassLoader =
-              ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
-            try {
-              for (Map.Entry<String, ProvidedOutput> output : getOutputs().entrySet()) {
-                boolean wasSuccess = success;
-                commitOutput(output.getKey(), output.getValue().getOutputFormatProvider(), failureCause);
-                if (wasSuccess && !success) {
-                  // mapreduce was successful but this output committer failed: call onFailure() for all committers
-                  for (ProvidedOutput toFail : getOutputs().values()) {
-                    commitOutput(toFail.getAlias(), toFail.getOutputFormatProvider(), failureCause);
-                  }
-                  break;
+    try {
+      taskContext.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext ctxt) throws Exception {
+          ClassLoader oldClassLoader =
+            ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
+          try {
+            for (ProvidedOutput output : getOutputs()) {
+              boolean wasSuccess = success;
+              commitOutput(output, failureCause);
+              if (wasSuccess && !success) {
+                // mapreduce was successful but this output committer failed: call onFailure() for all committers
+                for (ProvidedOutput toFail : getOutputs()) {
+                  commitOutput(output, failureCause);
                 }
+                break;
               }
-              // if there was a failure, we must throw an exception to fail the transaction
-              // this will roll back all the outputs and also make sure that postCommit() is not called
-              // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
-              Exception cause = failureCause.get();
-              if (cause != null) {
-                failureCause.set(null);
-                throw cause;
-              }
-            } finally {
-              ClassLoaders.setContextClassLoader(oldClassLoader);
             }
+            // if there was a failure, we must throw an exception to fail the transaction
+            // this will roll back all the outputs and also make sure that postCommit() is not called
+            // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
+            Exception cause = failureCause.get();
+            if (cause != null) {
+              failureCause.set(null);
+              throw cause;
+            }
+          } finally {
+            ClassLoaders.setContextClassLoader(oldClassLoader);
           }
-        });
-      } catch (TransactionFailureException e) {
-        LOG.error("Transaction failure when committing dataset outputs", e);
-        if (failureCause.get() != null) {
-          failureCause.get().addSuppressed(e);
-        } else {
-          failureCause.set(e);
         }
-      }
-
+      });
+    } catch (TransactionFailureException e) {
+      LOG.error("Transaction failure when committing dataset outputs", e);
       if (failureCause.get() != null) {
-        throw failureCause.get();
+        failureCause.get().addSuppressed(e);
+      } else {
+        failureCause.set(e);
       }
     }
+
+    if (failureCause.get() != null) {
+      throw failureCause.get();
+    }
+  }
 }

@@ -24,7 +24,6 @@ import co.cask.cdap.api.Transactionals;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -36,7 +35,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.CConfigurationUtil;
-import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -47,7 +45,6 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -58,6 +55,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
@@ -65,10 +63,8 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.batch.stream.MapReduceStreamInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
@@ -86,8 +82,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
@@ -104,10 +98,8 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -138,7 +130,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -749,15 +740,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Sets the configurations used for outputs.
    */
   private void setOutputsIfNeeded(Job job) {
-    Map<String, Output> outputMap = context.getOutputs();
-
-    // set the outputs to conf, for access by MainOutputCommitter
-    OutputSerde.setOutputs(job.getConfiguration(), outputMap.values());
-
-    Map<String, ProvidedOutput> outputsMap = OutputSerde.transform(outputMap.values(), context);
+    List<ProvidedOutput> outputsMap = context.getOutputs();
     fixOutputPermissions(job, outputsMap);
-    LOG.debug("Using as output for MapReduce Job: {}", outputsMap.keySet());
-    // TODO: we actually still need to start tx, so maybe this isn't valid
+    LOG.debug("Using as output for MapReduce Job: {}", outputsMap);
     // We probably need to set the job's output format class as the root output format class...
     if (outputsMap.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
@@ -767,7 +752,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     OutputFormatProvider rootOutputFormatProvider;
     if (outputsMap.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
-      rootOutputFormatProvider = outputsMap.values().iterator().next().getOutputFormatProvider();
+      rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
     } else {
       // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
       // as the root output format in this case to disallow writing directly on the context
@@ -780,9 +765,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                                          rootOutputFormatProvider.getOutputFormatConfiguration());
     job.setOutputFormatClass(MultipleOutputsMainOutputWrapper.class);
 
-    for (Map.Entry<String, ProvidedOutput> entry : outputsMap.entrySet()) {
-      ProvidedOutput output = entry.getValue();
-      String outputName = output.getAlias();
+    for (ProvidedOutput output : outputsMap) {
+      String outputName = output.getOutput().getAlias();
       String outputFormatClassName = output.getOutputFormatClassName();
       Map<String, String> outputConfig = output.getOutputFormatConfiguration();
       MultipleOutputs.addNamedOutput(job, outputName, outputFormatClassName,
@@ -791,14 +775,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  private void fixOutputPermissions(JobContext job, Map<String, ProvidedOutput> outputs) {
+  private void fixOutputPermissions(JobContext job, List<ProvidedOutput> outputs) {
     Configuration jobconf = job.getConfiguration();
     Set<String> outputsWithUmask = new HashSet<>();
     Set<String> outputUmasks = new HashSet<>();
-    for (Map.Entry<String, ProvidedOutput> entry : outputs.entrySet()) {
-      String umask = entry.getValue().getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
+    for (ProvidedOutput entry : outputs) {
+      String umask = entry.getOutputFormatConfiguration().get(HADOOP_UMASK_PROPERTY);
       if (umask != null) {
-        outputsWithUmask.add(entry.getKey());
+        outputsWithUmask.add(entry.getOutput().getAlias());
         outputUmasks.add(umask);
       }
     }
@@ -832,12 +816,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     // fix all output configurations that have a umask by removing that property from their configs
     if (mustFixUmasks) {
-      for (String outputName : outputsWithUmask) {
-        ProvidedOutput output = outputs.get(outputName);
-        Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
-        outputConfig.remove(HADOOP_UMASK_PROPERTY);
-        outputs.put(outputName, new ProvidedOutput(output.getAlias(), output.getOutputFormatProvider(),
-                                                   output.getOutputFormatClassName(), outputConfig));
+      for (int i = 0; i < outputs.size(); i++) {
+        ProvidedOutput output = outputs.get(i);
+        if (outputsWithUmask.contains(output.getOutput().getAlias())) {
+          Map<String, String> outputConfig = new HashMap<>(output.getOutputFormatConfiguration());
+          outputConfig.remove(HADOOP_UMASK_PROPERTY);
+          outputs.set(i, new ProvidedOutput(output.getOutput(), output.getOutputFormatProvider(),
+                                            output.getOutputFormatClassName(), outputConfig));
+        }
       }
     }
   }
