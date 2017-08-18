@@ -30,21 +30,22 @@ import javax.annotation.Nullable;
 @Beta
 public class AuthorizationRequest {
 
-  private final EntityId entity;
+  private final Authorizable authorizable;
   private final Principal principal;
   private final Set<Action> actions;
 
-  protected AuthorizationRequest(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) {
-    if (entity == null) {
-      throw new IllegalArgumentException("entity is required");
+  protected AuthorizationRequest(Authorizable authorizable, @Nullable Principal principal,
+                                 @Nullable Set<Action> actions) {
+    if (authorizable == null) {
+      throw new IllegalArgumentException("Authorizable is required");
     }
-    this.entity = entity;
+    this.authorizable = authorizable;
     this.principal = principal;
     this.actions = (actions != null) ? Collections.unmodifiableSet(new LinkedHashSet<>(actions)) : null;
   }
 
-  public EntityId getEntity() {
-    return entity;
+  public Authorizable getAuthorizable() {
+    return authorizable;
   }
 
   @Nullable

@@ -124,7 +124,6 @@ public class ClientConfig {
    * @throws MalformedURLException
    * @deprecated since 4.0.0. Please use {@link #resolveNamespacedURLV3(NamespaceId, String)} instead
    */
-  @Deprecated
   public URL resolveNamespacedURLV3(Id.Namespace namespace, String path) throws MalformedURLException {
     return resolveNamespacedURLV3(namespace.toEntityId(), path);
   }

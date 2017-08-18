@@ -63,7 +63,7 @@ import javax.annotation.Nullable;
 public abstract class EntityId implements IdCompatible {
 
   public static final String IDSTRING_TYPE_SEPARATOR = ":";
-  private static final String IDSTRING_PART_SEPARATOR = ".";
+  public static final String IDSTRING_PART_SEPARATOR = ".";
   public static final Pattern IDSTRING_PART_SEPARATOR_PATTERN = Pattern.compile("\\.");
 
   // Allow hyphens for other ids.

@@ -44,6 +44,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -195,7 +196,8 @@ public class AuthorizationTest extends TestBase {
       // expected
     }
     createAuthNamespace();
-    Assert.assertEquals(AUTH_NAMESPACE_META, namespaceAdmin.list().get(0));
+    System.out.println("#### " + namespaceAdmin.list().size());
+    Assert.assertTrue(namespaceAdmin.list().contains(AUTH_NAMESPACE_META));
     namespaceAdmin.get(AUTH_NAMESPACE);
     // revoke privileges
     revokeAndAssertSuccess(AUTH_NAMESPACE);
@@ -1387,7 +1389,7 @@ public class AuthorizationTest extends TestBase {
     Predicate<Privilege> entityFilter = new Predicate<Privilege>() {
       @Override
       public boolean apply(Privilege input) {
-        return entityId.equals(input.getEntity());
+        return Authorizable.fromEntityId(entityId).equals(input.getAuthorizable());
       }
     };
     Assert.assertTrue(Sets.filter(authorizer.listPrivileges(principal), entityFilter).isEmpty());

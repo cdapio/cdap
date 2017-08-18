@@ -109,8 +109,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
     // enforce that the user granting access has admin privileges on the entity
-    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
-    privilegesManager.grant(request.getEntity(), request.getPrincipal(), actions);
+//    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
+    privilegesManager.grant(request.getAuthorizable(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -126,12 +126,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     verifyAuthRequest(request);
 
     // enforce that the user revoking access has admin privileges on the entity
-    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
+//    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
     if (request.getPrincipal() == null && request.getActions() == null) {
-      privilegesManager.revoke(request.getEntity());
+      privilegesManager.revoke(request.getAuthorizable());
     } else {
       Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      privilegesManager.revoke(request.getEntity(), request.getPrincipal(), actions);
+      privilegesManager.revoke(request.getAuthorizable(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -235,8 +235,8 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     if (request == null) {
       throw new BadRequestException("Missing request body");
     }
-    EntityId entity = request.getEntity();
-    entityExistenceVerifier.ensureExists(entity);
+//    EntityId entity = request.getEntity();
+//    entityExistenceVerifier.ensureExists(entity);
   }
 
   private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
@@ -246,7 +246,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
     logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
     if (request != null) {
-      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(),
+      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getAuthorizable(),
                                             request.getActions()));
     }
     logEntry.setResponseCode(responseStatus.getCode());

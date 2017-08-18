@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.GrantRequest;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
@@ -100,8 +101,13 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
+    grant(Authorizable.fromEntityId(entity), principal, actions);
+  }
 
-    GrantRequest grantRequest = new GrantRequest(entity, principal, actions);
+  @Override
+  public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws IOException,
+    UnauthorizedException, UnauthenticatedException, NotFoundException, FeatureDisabledException {
+    GrantRequest grantRequest = new GrantRequest(authorizable, principal, actions);
 
     URL url = config.resolveURLV3(AUTHORIZATION_BASE + "/privileges/grant");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(grantRequest)).build();
@@ -111,13 +117,25 @@ public class AuthorizationClient extends AbstractAuthorizer {
   @Override
   public void revoke(EntityId entity) throws IOException, UnauthenticatedException, FeatureDisabledException,
     UnauthorizedException, NotFoundException {
-    revoke(entity, null, null);
+    revoke(Authorizable.fromEntityId(entity), null, null);
+
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable) throws Exception {
+    revoke(authorizable, null, null);
   }
 
   @Override
   public void revoke(EntityId entity, @Nullable Principal principal, @Nullable Set<Action> actions) throws IOException,
     UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
-    revoke(new RevokeRequest(entity, principal, actions));
+    revoke(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws IOException,
+    UnauthenticatedException, FeatureDisabledException, UnauthorizedException, NotFoundException {
+    revoke(new RevokeRequest(authorizable, principal, actions));
   }
 
   @Override

@@ -381,13 +381,6 @@ public class AuthorizationHandlerTest {
     String oldUser = getCurrentUser();
     setCurrentUser(alice.getName());
     try {
-      try {
-        client.grant(ns1, bob, EnumSet.allOf(Action.class));
-        Assert.fail(String.format("alice should not be able to grant privileges to bob on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns1));
-      } catch (UnauthorizedException expected) {
-        // expected
-      }
       setCurrentUser(oldUser);
       // admin should be able to grant since he is a super user
       client.grant(ns1, alice, ImmutableSet.of(Action.ADMIN));
@@ -397,41 +390,29 @@ public class AuthorizationHandlerTest {
       // revoke alice's permissions as admin
       setCurrentUser(oldUser);
       client.revoke(ns1);
-      // revoking bob's privileges as alice should fail
-      setCurrentUser(alice.getName());
-      try {
-        client.revoke(ns1, bob, EnumSet.allOf(Action.class));
-        Assert.fail(String.format("alice should not be able to revoke bob's privileges on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns1));
-      } catch (UnauthorizedException expected) {
-        // expected
-      }
-      // grant alice privileges as admin again
-      setCurrentUser(oldUser);
-      client.grant(ns1, alice, EnumSet.allOf(Action.class));
-      // Now alice should be able to revoke bob's privileges
-      setCurrentUser(alice.getName());
-      client.revoke(ns1, bob, EnumSet.allOf(Action.class));
     } finally {
       setCurrentUser(oldUser);
     }
   }
 
-  @Test(expected = NotFoundException.class)
-  public void testGrantOnNonExistingEntity()
-    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+  @Test
+  public void testGrantOnNonExistingEntity() throws Exception {
+    // should be able to grant on non existing entities
     client.grant(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+    verifyAuthSuccess(Ids.namespace("ns3"), admin, Action.ADMIN);
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void testRevokeOnNonExistingEntity()
     throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    // revoke on non exiting entities should work fine
     client.revoke(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void testRevokeAllOnNonExistingEntity()
     throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    // revoke on non existing entities should work fine
     client.revoke(Ids.namespace("ns3"));
   }
 

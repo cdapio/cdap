@@ -18,6 +18,7 @@ package co.cask.cdap.security.spi.authorization;
 
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 
@@ -33,8 +34,20 @@ public interface PrivilegesManager {
    * @param entity the {@link EntityId} to whom {@link Action actions} are to be granted
    * @param principal the {@link Principal} that performs the actions. This could be a user, or role
    * @param actions the set of {@link Action actions} to grant.
+   * @deprecated As of release 4.3.0, replaced by {@link #grant(Authorizable, Principal, Set)}
    */
+  @Deprecated
   void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
+
+  /**
+   * Grants a {@link Principal} authorization to perform a set of {@link Action actions} on an {@link EntityId}.
+   * Note: this grant is used to support wildcard privilege management
+   *
+   * @param authorizable the {@link Authorizable} to whom {@link Action actions} are to be granted
+   * @param principal the {@link Principal} that performs the actions. This could be a user, or role
+   * @param actions the set of {@link Action actions} to grant.
+   */
+  void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
 
   /**
    * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
@@ -43,16 +56,39 @@ public interface PrivilegesManager {
    * @param entity the {@link EntityId} whose {@link Action actions} are to be revoked
    * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
    * @param actions the set of {@link Action actions} to revoke
+   * @deprecated As of release 4.3.0, replaced by {@link #revoke(Authorizable, Principal, Set)}
    */
+  @Deprecated
   void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
+
+  /**
+   * Revokes a {@link Principal principal's} authorization to perform a set of {@link Action actions} on
+   * an {@link EntityId}.
+   * Note: this revoke is used to support wildcard privilege management.
+   *
+   * @param authorizable the {@link Authorizable} whose {@link Action actions} are to be revoked
+   * @param principal the {@link Principal} that performs the actions. This could be a user, group or role
+   * @param actions the set of {@link Action actions} to revoke
+   */
+  void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception;
 
   /**
    * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
    * {@link EntityId}.
    *
    * @param entity the {@link EntityId} on which all {@link Action actions} are to be revoked
+   * @deprecated As of release 4.3.0, replaced by {@link #revoke(Authorizable)}
    */
+  @Deprecated
   void revoke(EntityId entity) throws Exception;
+
+  /**
+   * Revokes all {@link Principal principals'} authorization to perform any {@link Action} on the given
+   * {@link EntityId}.
+   *
+   * @param authorizable the {@link Authorizable} on which all {@link Action actions} are to be revoked
+   */
+  void revoke(Authorizable authorizable) throws Exception;
 
   /**
    * Returns all the {@link Privilege} for the specified {@link Principal}.

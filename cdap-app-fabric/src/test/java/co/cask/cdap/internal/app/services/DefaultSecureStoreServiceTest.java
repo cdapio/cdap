@@ -31,6 +31,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
@@ -194,7 +195,7 @@ public class DefaultSecureStoreServiceTest {
     Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
       @Override
       public boolean apply(Privilege input) {
-        return input.getEntity().equals(secureKeyId1);
+        return input.getAuthorizable().equals(Authorizable.fromEntityId(secureKeyId1));
       }
     };
   }
