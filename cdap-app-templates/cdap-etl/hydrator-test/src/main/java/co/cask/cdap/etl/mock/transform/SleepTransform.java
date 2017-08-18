@@ -19,13 +19,16 @@ package co.cask.cdap.etl.mock.transform;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
@@ -53,6 +56,16 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
     }
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     stageConfigurer.setOutputSchema(stageConfigurer.getInputSchema());
+  }
+
+  @Override
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    try {
+      context.createTopic("sleepTopic");
+    } catch (TopicAlreadyExistsException e) {
+      // ok
+    }
+    context.getMessagePublisher().publish(context.getNamespace(), "sleepTopic", Long.toString(config.millis));
   }
 
   @Override

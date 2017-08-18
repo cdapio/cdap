@@ -17,25 +17,35 @@
 package co.cask.cdap.etl.spark.batch;
 
 import co.cask.cdap.api.data.batch.Input;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.api.spark.SparkClientContext;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.AbstractBatchContext;
 import co.cask.cdap.etl.common.ExternalDatasets;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spec.StageSpec;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Default implementation of {@link BatchSourceContext} for spark contexts.
  */
-public class SparkBatchSourceContext extends AbstractBatchContext implements BatchSourceContext {
+public class SparkBatchSourceContext extends AbstractBatchContext
+  implements BatchSourceContext, StageSubmitterContext {
   private final SparkBatchSourceFactory sourceFactory;
   private final boolean isPreviewEnabled;
+  private final SparkClientContext sparkContext;
 
   public SparkBatchSourceContext(SparkBatchSourceFactory sourceFactory, SparkClientContext sparkContext,
                                  PipelineRuntime pipelineRuntime, StageSpec stageSpec) {
     super(pipelineRuntime, stageSpec, sparkContext, sparkContext.getAdmin());
+    this.sparkContext = sparkContext;
     this.sourceFactory = sourceFactory;
     this.isPreviewEnabled = sparkContext.getDataTracer(stageSpec.getName()).isEnabled();
   }
@@ -54,5 +64,46 @@ public class SparkBatchSourceContext extends AbstractBatchContext implements Bat
   private Input suffixInput(Input input) {
     String suffixedAlias = String.format("%s-%s", input.getAlias(), UUID.randomUUID());
     return input.alias(suffixedAlias);
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return sparkContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return sparkContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return sparkContext.getMessageFetcher();
+  }
+
+  @Override
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+    sparkContext.getAdmin().createTopic(topic);
+  }
+
+  @Override
+  public void createTopic(String topic,
+                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+    sparkContext.getAdmin().createTopic(topic, properties);
+  }
+
+  @Override
+  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+    return sparkContext.getAdmin().getTopicProperties(topic);
+  }
+
+  @Override
+  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+    sparkContext.getAdmin().updateTopic(topic, properties);
+  }
+
+  @Override
+  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+    sparkContext.getAdmin().deleteTopic(topic);
   }
 }

@@ -725,6 +725,15 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(3, appId, "sleep.records.out");
     validateMetric(3, appId, "sink.records.in");
     Assert.assertTrue(getMetric(appId, "sleep." + co.cask.cdap.etl.common.Constants.Metrics.TOTAL_TIME) > 0L);
+
+    try (CloseableIterator<Message> messages =
+      getMessagingContext().getMessageFetcher().fetch(appId.getNamespace(), "sleepTopic", 10, null)) {
+      Assert.assertTrue(messages.hasNext());
+      Assert.assertEquals("2", messages.next().getPayloadAsString());
+      Assert.assertFalse(messages.hasNext());
+    }
+
+    getMessagingAdmin(appId.getNamespace()).deleteTopic("sleepTopic");
   }
 
   @Test

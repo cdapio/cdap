@@ -20,6 +20,11 @@ import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.messaging.MessageFetcher;
+import co.cask.cdap.api.messaging.MessagePublisher;
+import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
+import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
@@ -31,6 +36,7 @@ import co.cask.cdap.etl.common.plugin.Caller;
 import co.cask.cdap.etl.common.plugin.NoStageLoggingCaller;
 import co.cask.cdap.etl.spec.StageSpec;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -41,9 +47,10 @@ import java.util.concurrent.Callable;
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public class MapReduceBatchContext extends AbstractBatchContext implements BatchSinkContext, BatchSourceContext {
+public class MapReduceBatchContext extends AbstractBatchContext
+  implements BatchSinkContext, BatchSourceContext, StageSubmitterContext {
   private static final Caller CALLER = NoStageLoggingCaller.wrap(Caller.DEFAULT);
-  protected final MapReduceContext mrContext;
+  private final MapReduceContext mrContext;
   private final boolean isPreviewEnabled;
   private final Set<String> outputNames;
   private final Set<String> inputNames;
@@ -162,5 +169,46 @@ public class MapReduceBatchContext extends AbstractBatchContext implements Batch
       return Output.of(output.getName(), new NullOutputFormatProvider());
     }
     return output;
+  }
+
+  @Override
+  public MessagePublisher getMessagePublisher() {
+    return mrContext.getMessagePublisher();
+  }
+
+  @Override
+  public MessagePublisher getDirectMessagePublisher() {
+    return mrContext.getDirectMessagePublisher();
+  }
+
+  @Override
+  public MessageFetcher getMessageFetcher() {
+    return mrContext.getMessageFetcher();
+  }
+
+  @Override
+  public void createTopic(String topic) throws TopicAlreadyExistsException, IOException {
+    mrContext.getAdmin().createTopic(topic);
+  }
+
+  @Override
+  public void createTopic(String topic,
+                          Map<String, String> properties) throws TopicAlreadyExistsException, IOException {
+    mrContext.getAdmin().createTopic(topic, properties);
+  }
+
+  @Override
+  public Map<String, String> getTopicProperties(String topic) throws TopicNotFoundException, IOException {
+    return mrContext.getAdmin().getTopicProperties(topic);
+  }
+
+  @Override
+  public void updateTopic(String topic, Map<String, String> properties) throws TopicNotFoundException, IOException {
+    mrContext.getAdmin().updateTopic(topic, properties);
+  }
+
+  @Override
+  public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
+    mrContext.getAdmin().deleteTopic(topic);
   }
 }
