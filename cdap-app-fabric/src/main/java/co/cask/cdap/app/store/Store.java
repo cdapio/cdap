@@ -30,6 +30,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
+import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowNodeStateDetail;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -53,6 +54,66 @@ import javax.annotation.Nullable;
  * Responsible for managing {@link Program} and {@link Application} metadata.
  */
 public interface Store extends RuntimeStore {
+  /**
+   * Logs initialization of program run and persists program status to {@link ProgramRunStatus#STARTING}.
+
+   * @param id id of the program
+   * @param pid run id
+   * @param startTime start timestamp in seconds
+   * @param twillRunId Twill run id
+   * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
+   */
+  void setStart(ProgramId id, String pid, long startTime, @Nullable String twillRunId,
+                Map<String, String> runtimeArgs, Map<String, String> systemArgs);
+
+  /**
+   * Logs start of program run and persists program status to {@link ProgramRunStatus#RUNNING}.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param twillRunId Twill run id
+   */
+  void setRunning(ProgramId id, String pid, long runTime, @Nullable String twillRunId);
+
+  /**
+   * Logs end of program run and sets the run status to one of: {@link ProgramRunStatus#COMPLETED},
+   * or {@link ProgramRunStatus#KILLED}.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param endTime end timestamp in seconds
+   * @param runStatus {@link ProgramRunStatus} of program run
+   */
+  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus);
+
+  /**
+   * Logs end of program run and sets the run status to {@link ProgramRunStatus#FAILED} with a failure cause.
+   *
+   * @param id id of the program
+   * @param pid run id
+   * @param endTime end timestamp in seconds
+   * @param runStatus {@link ProgramRunStatus} of program run
+   * @param failureCause failure cause if the program failed to execute
+   */
+  void setStop(ProgramId id, String pid, long endTime, ProgramRunStatus runStatus,
+               @Nullable BasicThrowable failureCause);
+
+  /**
+   * Logs suspend of a program run and sets the run status to {@link ProgramRunStatus#SUSPENDED}.
+   *
+   * @param id id of the program
+   * @param pid run id
+   */
+  void setSuspend(ProgramId id, String pid);
+
+  /**
+   * Logs resume of a program run and sets the run status to {@link ProgramRunStatus#RUNNING}.
+   *
+   * @param id id of the program
+   * @param pid run id
+   */
+  void setResume(ProgramId id, String pid);
 
   /**
    * Loads a given program.
@@ -144,6 +205,20 @@ public interface Store extends RuntimeStore {
    * @return        map of logged runs
    */
   Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds);
+
+  /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given NamespaceId.
+   * @param namespaceId the namespace id to match against
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId);
+
+  /**
+   * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
+   * @param applicationId the application id to match against
+   * @return map of logged runs
+   */
+  Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId);
 
   /**
    * Fetches the run record for particular run of a program.

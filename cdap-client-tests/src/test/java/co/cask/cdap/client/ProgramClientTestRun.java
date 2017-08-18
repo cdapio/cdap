@@ -28,7 +28,7 @@ import co.cask.cdap.proto.BatchProgramResult;
 import co.cask.cdap.proto.BatchProgramStart;
 import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.ProgramRecord;
-import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -72,8 +72,8 @@ public class ProgramClientTestRun extends ClientTestBase {
 
   @Test
   public void testBatchProgramCalls() throws Exception {
-    NamespaceId namespace = NamespaceId.DEFAULT;
-    ApplicationId appId = namespace.app(FakeApp.NAME);
+    final NamespaceId namespace = NamespaceId.DEFAULT;
+    final ApplicationId appId = namespace.app(FakeApp.NAME);
     BatchProgram flow = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, FakeFlow.NAME);
     BatchProgram service = new BatchProgram(FakeApp.NAME, ProgramType.SERVICE, PingService.NAME);
     BatchProgram missing = new BatchProgram(FakeApp.NAME, ProgramType.FLOW, "not" + FakeFlow.NAME);
@@ -97,10 +97,10 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // wait for all programs to be in RUNNING status
-      programClient.waitForStatus(namespace.app(flow.getAppId()).flow(flow.getProgramId()),
-                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
-      programClient.waitForStatus(namespace.app(service.getAppId()).service(service.getProgramId()),
-                                  ProgramStatus.RUNNING, 2, TimeUnit.MINUTES);
+      assertProgramRuns(programClient, namespace.app(flow.getAppId()).flow(flow.getProgramId()),
+                        ProgramRunStatus.RUNNING, 1, 10);
+      assertProgramRuns(programClient, namespace.app(service.getAppId()).service(service.getProgramId()),
+                        ProgramRunStatus.RUNNING, 1, 10);
 
       // make a batch call for status of programs, one of which does not exist
       List<BatchProgram> programs = ImmutableList.of(flow, service, missing);
@@ -127,12 +127,22 @@ public class ProgramClientTestRun extends ClientTestBase {
       }
 
       // check programs are in stopped state
-      programs = ImmutableList.of(flow, service);
-      statusList = programClient.getStatus(namespace, programs);
-      for (BatchProgramStatus status : statusList) {
-        Assert.assertEquals(200, status.getStatusCode());
-        Assert.assertEquals("Program = " + status.getProgramId(), "STOPPED", status.getStatus());
-      }
+      final List<BatchProgram> stoppedPrograms = ImmutableList.of(flow, service);
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          List<BatchProgramStatus> statusList = programClient.getStatus(namespace, stoppedPrograms);
+          for (BatchProgramStatus status : statusList) {
+            if (status.getStatusCode() != 200) {
+              return false;
+            }
+            if (status.getStatus().equals("RUNNING")) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }, 10, TimeUnit.SECONDS);
     } finally {
       try {
         appClient.delete(appId);

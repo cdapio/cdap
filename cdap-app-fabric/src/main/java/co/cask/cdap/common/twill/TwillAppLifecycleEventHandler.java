@@ -18,15 +18,14 @@ package co.cask.cdap.common.twill;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -124,11 +123,11 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           new ZKClientModule(),
           new KafkaClientModule(),
           new DiscoveryRuntimeModule().getDistributedModules(),
+          new MessagingClientModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
-              bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
-              bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+              bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
             }
           }
         );

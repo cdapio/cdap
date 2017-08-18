@@ -25,6 +25,8 @@ import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
@@ -374,6 +376,24 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  protected MDSKey.Builder getApplicationKeyBuilder(String recordType, @Nullable ApplicationId applicationId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (applicationId != null) {
+      builder.add(applicationId.getNamespace());
+      builder.add(applicationId.getApplication());
+      builder.add(applicationId.getVersion());
+    }
+    return builder;
+  }
+
+  protected MDSKey.Builder getNamespaceKeyBuilder(String recordType, @Nullable NamespaceId namespaceId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (namespaceId != null) {
+      builder.add(namespaceId.getNamespace());
+    }
+    return builder;
   }
 
   protected MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {

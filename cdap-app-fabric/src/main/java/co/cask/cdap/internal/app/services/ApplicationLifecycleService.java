@@ -55,6 +55,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
@@ -64,11 +65,11 @@ import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.route.store.RouteStore;
 import co.cask.cdap.scheduler.Scheduler;
@@ -494,31 +495,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(final NamespaceId namespaceId) throws Exception {
-    List<ApplicationSpecification> allSpecs = new ArrayList<>(
-      store.getAllApplications(namespaceId));
-    final String namespace = namespaceId.getNamespace();
-    //Check if any program associated with this namespace is running
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getNamespace().equals(namespace);
-                         }
-                       });
-
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getApplication() +
-                            ": " + runtimeInfo.getProgramId().getProgram());
-    }
-
+    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
     if (!runningPrograms.isEmpty()) {
+      Set<String> activePrograms = new HashSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+        activePrograms.add(runningProgram.getKey().getApplication() +
+                            ": " + runningProgram.getKey().getProgram());
+      }
+
       String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
+        .join(activePrograms);
       throw new CannotBeDeletedException(namespaceId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }
+    List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
     //All Apps are STOPPED, delete them
     Set<ApplicationId> appIds = new HashSet<>();
     for (ApplicationSpecification appSpec : allSpecs) {
@@ -557,23 +547,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void ensureNoRunningPrograms(final ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new com.google.common.base.Predicate<ProgramRuntimeService.RuntimeInfo>() {
-                         @Override
-                         public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-                           return runtimeInfo.getProgramId().getParent().equals(appId);
-                         }
-                       });
-
-    Set<String> runningPrograms = new HashSet<>();
-    for (ProgramRuntimeService.RuntimeInfo runtimeInfo : runtimeInfos) {
-      runningPrograms.add(runtimeInfo.getProgramId().getProgram());
-    }
+    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(appId);
 
     if (!runningPrograms.isEmpty()) {
+      Set<String> activePrograms = new HashSet<>();
+      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+        activePrograms.add(runningProgram.getKey().getProgram());
+      }
+
       String appAllRunningPrograms = Joiner.on(',')
-        .join(runningPrograms);
+        .join(activePrograms);
       throw new CannotBeDeletedException(appId,
                                          "The following programs are still running: " + appAllRunningPrograms);
     }

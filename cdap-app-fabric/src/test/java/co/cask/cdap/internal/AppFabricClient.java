@@ -378,16 +378,33 @@ public class AppFabricClient {
   }
 
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) throws Exception {
-    String namespaceId = programId.getNamespaceId();
-    String appId = programId.getApplicationId();
+    String namespace = programId.getNamespaceId();
+    String application = programId.getApplicationId();
     String programName = programId.getId();
     String categoryName = programId.getType().getCategoryName();
 
+    return doGetHistory(namespace, application, ApplicationId.DEFAULT_VERSION, programName, categoryName, status);
+  }
+
+  public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) throws Exception {
+    String namespace = programId.getNamespace();
+    String application = programId.getApplication();
+    String applicationVersion = programId.getVersion();
+    String programName = programId.getProgram();
+    String categoryName = programId.getType().getCategoryName();
+
+    return doGetHistory(namespace, application, applicationVersion, programName, categoryName, status);
+  }
+
+  private List<RunRecord> doGetHistory(String namespace, String application, String applicationVersion,
+                                       String programName, String categoryName, ProgramRunStatus status)
+    throws Exception {
+
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/%s/%s/runs?status=" + status.name(),
-                               getNamespacePath(namespaceId), appId, categoryName, programName);
+    String uri = String.format("%s/apps/%s/versions/%s/%s/runs?status=" + status.name(),
+                               getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
+    programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
                                                categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
