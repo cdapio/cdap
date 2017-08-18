@@ -2088,12 +2088,14 @@
   </property>
 
   <property>
-    <name>metrics.v2.table.scan.enabled</name>
-    <value>false</value>
+    <name>metrics.v3.table.splits</name>
+    <value>16</value>
     <description>
-      Enable or disable scanning v2 metrics tables. By default set to false.
+      Number of splits for all v3 metrics tables. This property can only be changed when v3 tables are created for the
+      first time. Once v3 metrics tables are created, this property will not take any effect.
     </description>
   </property>
+
 
   <!-- Monitor Handler Configuration -->
 

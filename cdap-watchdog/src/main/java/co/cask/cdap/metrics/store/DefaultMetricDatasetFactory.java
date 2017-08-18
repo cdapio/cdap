@@ -119,21 +119,17 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   protected MetricsTable getOrCreateResolutionMetricsTable(String v3TableName, TableProperties.Builder props,
                                                            int resolution) {
     try {
-      MetricsTable v2Table = null;
+      String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                     Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
 
-      // TODO: By default do not allow reading from v2 tables. Remove this check once CDAP-12306 is fixed
-      if (cConf.getBoolean(Constants.Metrics.METRICS_V2_TABLE_SCAN_ENABLED)) {
-        String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                       Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
-        // metrics tables are in the system namespace
-        DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-        v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.<String, String>of(), null);
-      }
+      // metrics tables are in the system namespace
+      DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
+      MetricsTable v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.<String, String>of(), null);
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
-                GSON.toJson(getV3MetricsTableSplits(Constants.Metrics.METRICS_HBASE_SPLITS)));
-      props.add(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS,
-                cConf.get(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS));
+                GSON.toJson(getV3MetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
+      props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
+                cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
 
       DatasetId v3TableId = NamespaceId.SYSTEM.dataset(v3TableName);
       MetricsTable v3Table = DatasetsUtil.getOrCreateDataset(dsFramework, v3TableId, MetricsTable.class.getName(),
