@@ -24,6 +24,7 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -55,6 +56,7 @@ public class MapReduceBatchContext extends AbstractBatchContext
   private final Set<String> outputNames;
   private final Set<String> inputNames;
   private final Set<String> connectorDatasets;
+  private FieldLevelLineage fieldLevelLineage;
 
   public MapReduceBatchContext(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                Set<String> connectorDatasets) {
@@ -210,5 +212,15 @@ public class MapReduceBatchContext extends AbstractBatchContext
   @Override
   public void deleteTopic(String topic) throws TopicNotFoundException, IOException {
     mrContext.getAdmin().deleteTopic(topic);
+  }
+
+  @Override
+  public void recordLineage(FieldLevelLineage f) {
+    this.fieldLevelLineage = f;
+  }
+
+  @Override
+  public FieldLevelLineage getFieldLevelLineage() {
+    return this.fieldLevelLineage;
   }
 }

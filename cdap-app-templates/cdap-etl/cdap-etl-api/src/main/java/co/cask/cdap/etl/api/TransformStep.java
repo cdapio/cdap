@@ -16,16 +16,23 @@
 
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
+import javax.annotation.Nullable;
 
 /**
- * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
+ * <p>
+ *   A TransformStep represents a modification done by a transform stage.
+ * </p>
  */
-public interface StageSubmitterContext extends MessagingContext, MessagingAdmin, TransformContext {
+public interface TransformStep {
 
-  void recordLineage(FieldLevelLineage f);
+  /**
+   * @return the name of this modification
+   */
+  String getName();
 
-  FieldLevelLineage getFieldLevelLineage();
-
+  /**
+   * @return additional information about this modification
+   */
+  @Nullable
+  String getInformation();
 }

@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.FieldLevelLineage;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageConfigurer;
 import co.cask.cdap.etl.api.StageSubmitterContext;
@@ -66,6 +67,9 @@ public class SleepTransform extends Transform<StructuredRecord, StructuredRecord
       // ok
     }
     context.getMessagePublisher().publish(context.getNamespace(), "sleepTopic", Long.toString(config.millis));
+    FieldLevelLineage o = null;
+    // actually record lineage into o
+    context.recordLineage(o);
   }
 
   @Override
