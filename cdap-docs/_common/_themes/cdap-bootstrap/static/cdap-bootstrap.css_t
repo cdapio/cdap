@@ -433,7 +433,7 @@ tt {
 td > code.docutils.literal {
     background-color: white;
     white-space: normal;
-    word-break: normal;
+    word-break: break-all;
 }
 
 /* -- Images -- */
