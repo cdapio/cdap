@@ -21,9 +21,11 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -32,10 +34,9 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
-import com.google.common.base.Enums;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -78,6 +79,14 @@ public class ProgramLifecycleServiceAuthorizationTest {
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
+
+    // Create the DEFAULT namespace
+    String user = SecurityUtil.getMasterPrincipal(cConf);
+    authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                     Collections.singleton(Action.ADMIN));
+    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
+    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                      Collections.singleton(Action.ADMIN));
   }
 
   @Test

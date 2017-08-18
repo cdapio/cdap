@@ -102,7 +102,6 @@ import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InvalidAuthorizerException;
@@ -296,8 +295,6 @@ public class TestBase {
       ((Service) messagingService).startAndWait();
     }
 
-    AuthorizationBootstrapper authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
-    authorizationBootstrapper.run();
     txService = injector.getInstance(TransactionManager.class);
     txService.startAndWait();
     dsOpService = injector.getInstance(DatasetOpExecutor.class);

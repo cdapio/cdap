@@ -2835,23 +2835,6 @@
   </property>
 
   <property>
-    <name>security.authorization.admin.users</name>
-    <value></value>
-    <description>
-      A comma-separated list of users for whom admin privileges are to be
-      granted on the CDAP instance during CDAP startup, so that these users
-      can create namespaces. These users are also granted admin privileges
-      on the 'default' namespace, so that they can manage privileges on the
-      'default' namespace. This provides a method to bootstrap CDAP on an
-      authorization-enabled cluster. The default value is empty, in which
-      case no users have access to creating namespaces or to managing
-      privileges on the 'default' namespace. In that scenario, authorization
-      in CDAP has to be bootstrapped externally using interfaces provided by
-      the configured authorization extension.
-    </description>
-  </property>
-
-  <property>
     <name>security.authorization.cache.max.entries</name>
     <value>100000</value>
     <description>
