@@ -17,6 +17,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
@@ -88,7 +89,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     Set<EntityId> visibleEntities = new HashSet<>();
     // filter out entity id which is in system namespace and principal is the master user
     for (EntityId entityId : entityIds) {
-      if (isAccessingSystemNSAsMasterUser(entityId, principal)) {
+      if (isAccessingSystemNSAsMasterUser(entityId, principal) || isEnforcingOnSamePrincipalId(entityId, principal)) {
         visibleEntities.add(entityId);
       }
     }
@@ -102,7 +103,7 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
 
   private void doEnforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     // bypass the check when the principal is the master user and the entity is in the system namespace
-    if (isAccessingSystemNSAsMasterUser(entity, principal)) {
+    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
       return;
     }
     LOG.debug("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
@@ -112,5 +113,10 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   private boolean isAccessingSystemNSAsMasterUser(EntityId entityId, Principal principal) {
     return entityId instanceof NamespacedEntityId &&
       ((NamespacedEntityId) entityId).getNamespaceId().equals(NamespaceId.SYSTEM) && principal.equals(masterUser);
+  }
+
+  private boolean isEnforcingOnSamePrincipalId(EntityId entityId, Principal principal) {
+    return entityId.getEntityType().equals(EntityType.KERBEROSPRINCIPAL) &&
+      principal.getName().equals(entityId.getEntityName());
   }
 }

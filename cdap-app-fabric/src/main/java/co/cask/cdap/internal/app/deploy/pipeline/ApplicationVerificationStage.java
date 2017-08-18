@@ -49,8 +49,10 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.StreamId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
@@ -65,6 +67,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -79,13 +82,15 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
   private final DatasetFramework dsFramework;
   private final Store store;
   private final OwnerAdmin ownerAdmin;
+  private final AuthenticationContext authenticationContext;
 
   public ApplicationVerificationStage(Store store, DatasetFramework dsFramework,
-                                      OwnerAdmin ownerAdmin) {
+                                      OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
     this.ownerAdmin = ownerAdmin;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -124,18 +129,16 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
     emit(input);
   }
 
-  protected void verifySpec(ApplicationId appId,
-                            ApplicationSpecification specification) {
+  private void verifySpec(ApplicationId appId,
+                          ApplicationSpecification specification) {
     VerifyResult result = getVerifier(ApplicationSpecification.class).verify(appId, specification);
     if (!result.isSuccess()) {
       throw new RuntimeException(result.getMessage());
     }
   }
 
-  protected void verifyData(ApplicationId appId,
-                            ApplicationSpecification specification,
-                            @Nullable KerberosPrincipalId specifiedOwnerPrincipal)
-    throws DatasetManagementException, UnauthorizedException {
+  private void verifyData(ApplicationId appId, ApplicationSpecification specification,
+                          @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
     // NOTE: no special restrictions on dataset module names, etc
     VerifyResult result;
     for (DatasetCreationSpec dataSetCreateSpec : specification.getDatasets().values()) {
@@ -144,8 +147,17 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
         throw new RuntimeException(result.getMessage());
       }
       String dsName = dataSetCreateSpec.getInstanceName();
-      DatasetId datasetInstanceId = appId.getParent().dataset(dsName);
-      DatasetSpecification existingSpec = dsFramework.getDatasetSpec(datasetInstanceId);
+      final DatasetId datasetInstanceId = appId.getParent().dataset(dsName);
+      // get the authorizing user
+      String authorizingUser =
+        AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, appId, ownerPrincipal);
+      DatasetSpecification existingSpec =
+        AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
+          @Override
+          public DatasetSpecification call() throws Exception {
+            return dsFramework.getDatasetSpec(datasetInstanceId);
+          }
+        });
       if (existingSpec != null && !existingSpec.getType().equals(dataSetCreateSpec.getTypeName())) {
         // New app trying to deploy an dataset with same instanceName but different Type than that of existing.
         throw new DataSetException
@@ -155,7 +167,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
       // if the dataset existed verify its owner is same.
       if (existingSpec != null) {
-        verifyOwner(datasetInstanceId, specifiedOwnerPrincipal);
+        verifyOwner(datasetInstanceId, ownerPrincipal);
       }
     }
 
@@ -166,7 +178,7 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
       }
       // if the stream existed verify the owner to be the same
       if (store.getStream(appId.getNamespaceId(), spec.getName()) != null) {
-        verifyOwner(appId.getParent().stream(spec.getName()), specifiedOwnerPrincipal);
+        verifyOwner(appId.getParent().stream(spec.getName()), ownerPrincipal);
       }
     }
   }

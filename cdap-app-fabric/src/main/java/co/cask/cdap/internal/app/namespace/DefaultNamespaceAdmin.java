@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.namespace;
 
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NamespaceAlreadyExistsException;
@@ -33,7 +32,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
@@ -55,7 +53,6 @@ import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -148,11 +145,11 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
 
     // need to enforce on the principal id if impersonation is involved
     String ownerPrincipal = metadata.getConfig().getPrincipal();
+    Principal requestingUser = authenticationContext.getPrincipal();
     if (ownerPrincipal != null) {
-      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), authenticationContext.getPrincipal(),
-                                    Action.ADMIN);
+      authorizationEnforcer.enforce(new KerberosPrincipalId(ownerPrincipal), requestingUser, Action.ADMIN);
     }
-    authorizationEnforcer.enforce(namespace, authenticationContext.getPrincipal(), Action.ADMIN);
+    authorizationEnforcer.enforce(namespace, requestingUser, Action.ADMIN);
 
     // If this namespace has custom mapping then validate the given custom mapping
     if (hasCustomMapping(metadata)) {

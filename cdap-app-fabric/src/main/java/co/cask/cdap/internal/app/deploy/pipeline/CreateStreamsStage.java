@@ -19,6 +19,11 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -27,10 +32,15 @@ import com.google.common.reflect.TypeToken;
  */
 public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   private final StreamCreator streamCreator;
+  private final OwnerAdmin ownerAdmin;
+  private final AuthenticationContext authenticationContext;
 
-  public CreateStreamsStage(StreamAdmin streamAdmin) {
+  public CreateStreamsStage(StreamAdmin streamAdmin, OwnerAdmin ownerAdmin,
+                            AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.streamCreator = new StreamCreator(streamAdmin);
+    this.ownerAdmin = ownerAdmin;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -43,8 +53,13 @@ public class CreateStreamsStage extends AbstractStage<ApplicationDeployable> {
   public void process(ApplicationDeployable input) throws Exception {
     // create stream instances
     ApplicationSpecification specification = input.getSpecification();
-    streamCreator.createStreams(input.getApplicationId().getParent(), specification.getStreams().values(),
-                                input.getOwnerPrincipal());
+    NamespaceId namespaceId = input.getApplicationId().getParent();
+    KerberosPrincipalId ownerPrincipal = input.getOwnerPrincipal();
+    // get the authorizing user
+    String authorizingUser =
+      AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
+                                              ownerPrincipal);
+    streamCreator.createStreams(namespaceId, specification.getStreams().values(), ownerPrincipal, authorizingUser);
 
     // Emit the input to next stage.
     emit(input);

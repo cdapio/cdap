@@ -19,8 +19,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -86,7 +87,6 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
@@ -98,6 +98,7 @@ public class LevelDBStreamConsumerTest extends StreamConsumerTestBase {
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           }
         })
     );

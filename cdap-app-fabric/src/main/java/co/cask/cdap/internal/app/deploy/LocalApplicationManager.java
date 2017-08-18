@@ -121,10 +121,12 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework));
-    pipeline.addLast(new CreateStreamsStage(streamAdmin));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,
+                                                   ownerAdmin, authenticationContext));
+    pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, ownerAdmin,
+                                                     authenticationContext));
+    pipeline.addLast(new CreateStreamsStage(streamAdmin, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory, queueAdmin,
                                                     metricStore, metadataStore, impersonator));
     pipeline.addLast(new ProgramGenerationStage());

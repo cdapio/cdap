@@ -37,6 +37,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -118,6 +119,11 @@ class DatasetServiceClient {
     if (HttpResponseStatus.NOT_FOUND.getCode() == response.getResponseCode()) {
       return null;
     }
+    if (HttpResponseStatus.FORBIDDEN.getCode() == response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to get dataset instance %s, details: %s",
+                                                         instanceName, response),
+                                           new UnauthorizedException(response.getResponseBodyAsString()));
+    }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve dataset instance %s info, details: %s",
                                                          instanceName, response));
@@ -171,6 +177,11 @@ class DatasetServiceClient {
     if (HttpResponseStatus.CONFLICT.getCode() == response.getResponseCode()) {
       throw new InstanceConflictException(String.format("Failed to add instance %s due to conflict, details: %s",
                                                         datasetInstanceName, response));
+    }
+    if (HttpResponseStatus.FORBIDDEN.getCode() == response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",
+                                                         datasetInstanceName, response),
+                                           new UnauthorizedException(response.getResponseBodyAsString()));
     }
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to add instance %s, details: %s",

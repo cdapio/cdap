@@ -25,10 +25,12 @@ import co.cask.cdap.internal.dataset.DatasetCreationSpec;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -51,19 +53,33 @@ final class DatasetInstanceCreator {
    * @param namespaceId the namespace to create the dataset instance in
    * @param datasets the datasets to create
    * @param ownerPrincipal the principal of the owner for the datasets to be created.
+   * @param authorizingUser the authorizing user who will be making the call
    */
   void createInstances(NamespaceId namespaceId, Map<String, DatasetCreationSpec> datasets,
-                       @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+                       @Nullable final KerberosPrincipalId ownerPrincipal,
+                       String authorizingUser) throws Exception {
     // create dataset instances
     for (Map.Entry<String, DatasetCreationSpec> instanceEntry : datasets.entrySet()) {
       String instanceName = instanceEntry.getKey();
-      DatasetId instanceId = namespaceId.dataset(instanceName);
-      DatasetCreationSpec instanceSpec = instanceEntry.getValue();
-      DatasetSpecification existingSpec = datasetFramework.getDatasetSpec(instanceId);
+      final DatasetId instanceId = namespaceId.dataset(instanceName);
+      final DatasetCreationSpec instanceSpec = instanceEntry.getValue();
+      DatasetSpecification existingSpec =
+        AuthorizationUtil.authorizeAs(authorizingUser, new Callable<DatasetSpecification>() {
+          @Override
+          public DatasetSpecification call() throws Exception {
+            return datasetFramework.getDatasetSpec(instanceId);
+          }
+        });
       if (existingSpec == null) {
         LOG.info("Adding dataset instance: {}", instanceName);
-        datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties(),
-                                     ownerPrincipal);
+        AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {
+          @Override
+          public Void call() throws Exception {
+            datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, instanceSpec.getProperties(),
+                                         ownerPrincipal);
+            return null;
+          }
+        });
       } else {
         if (!existingSpec.getType().equals(instanceSpec.getTypeName())) {
           throw new IncompatibleUpdateException(
@@ -72,7 +88,13 @@ final class DatasetInstanceCreator {
         }
         if (allowDatasetUncheckedUpgrade) {
           LOG.info("Updating dataset instance: {}", instanceName);
-          datasetFramework.updateInstance(instanceId, instanceSpec.getProperties());
+          AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+              datasetFramework.updateInstance(instanceId, instanceSpec.getProperties());
+              return null;
+            }
+          });
         }
       }
     }
