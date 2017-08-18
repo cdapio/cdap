@@ -18,6 +18,7 @@ package co.cask.cdap.api.customaction;
 
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.SchedulableProgramContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetContext;
@@ -29,8 +30,8 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 /**
  * Represents runtime context of the {@link CustomAction} in the Workflow.
  */
-public interface CustomActionContext extends RuntimeContext, DatasetContext, Transactional, WorkflowInfoProvider,
-  PluginContext, SecureStore, ServiceDiscoverer, MessagingContext {
+public interface CustomActionContext extends SchedulableProgramContext, RuntimeContext, DatasetContext, Transactional,
+  WorkflowInfoProvider, PluginContext, SecureStore, ServiceDiscoverer, MessagingContext {
 
   /**
    * Return the specification of the custom action.

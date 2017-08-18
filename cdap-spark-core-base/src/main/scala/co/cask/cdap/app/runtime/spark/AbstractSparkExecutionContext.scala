@@ -65,7 +65,6 @@ import org.apache.spark.scheduler._
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
-
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -76,6 +75,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -362,6 +363,8 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   override def getDataTracer(tracerName: String): DataTracer = new SparkDataTracer(runtimeContext, tracerName)
+
+  override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] = Option(runtimeContext.getTriggeringScheduleInfo)
 
   /**
     * Returns a [[org.apache.spark.broadcast.Broadcast]] of [[java.net.URI]] for

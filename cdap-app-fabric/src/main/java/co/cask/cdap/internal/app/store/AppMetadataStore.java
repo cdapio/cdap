@@ -467,10 +467,11 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
 
     if (existing == null) {
       // No started or running or suspended record exists, so throw an error
-      String msg = String.format("No meta for run record for namespace %s app %s version %s program type %s " +
-                                 "program %s pid %s exists",
-                                 programId.getNamespace(), programId.getApplication(), programId.getVersion(),
-                                 programId.getType().name(), programId.getProgram(), pid);
+      String msg = String.format("No meta for run record with type %s for namespace %s app %s version %s " +
+                                   "program type %s program %s pid %s exists when recording run status %s",
+                                 TYPE_RUN_RECORD_STARTED, programId.getNamespace(), programId.getApplication(),
+                                 programId.getVersion(), programId.getType().name(), programId.getProgram(), pid,
+                                 runStatus.name());
       LOG.error(msg);
       throw new IllegalArgumentException(msg);
     }

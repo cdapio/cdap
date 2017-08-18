@@ -14,21 +14,23 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
-
-import co.cask.cdap.api.schedule.Trigger;
+package co.cask.cdap.api.schedule;
 
 /**
- * A Trigger builder that builds a {@link OrTrigger}.
+ * The time trigger information to be passed to the triggered program.
  */
-public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
+public interface TimeTriggerInfo extends TriggerInfo {
 
-  public OrTriggerBuilder(Trigger... triggers) {
-    super(Type.OR, triggers);
-  }
+  /**
+   * @return The cron expression in the time trigger.
+   */
+  String getCronExpression();
 
-  @Override
-  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
-    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
-  }
+  /**
+   * Returns the logical start time of the triggered program. Logical start time is when the schedule decides to launch
+   * the program when the cron expression is satisfied.
+   *
+   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC)
+   */
+  long getLogicalStartTime();
 }

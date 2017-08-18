@@ -77,6 +77,8 @@ public final class ProgramOptionConstants {
 
   public static final String USER_OVERRIDES = "userOverrides";
 
+  public static final String TRIGGERING_SCHEDULE_INFO = "triggeringScheduleInfo";
+
   public static final String PROGRAM_ERROR = "programError";
 
   /**

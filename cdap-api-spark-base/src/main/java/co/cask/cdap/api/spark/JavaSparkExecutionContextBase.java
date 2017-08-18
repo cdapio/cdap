@@ -17,6 +17,7 @@
 package co.cask.cdap.api.spark;
 
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.SchedulableProgramContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.Transactional;
@@ -52,7 +53,7 @@ import javax.annotation.Nullable;
  * Spark program execution context. User Spark program can interact with CDAP through this context.
  */
 @Beta
-public abstract class JavaSparkExecutionContextBase implements RuntimeContext, Transactional,
+public abstract class JavaSparkExecutionContextBase implements SchedulableProgramContext, RuntimeContext, Transactional,
                                                                WorkflowInfoProvider, SecureStore {
 
   /**

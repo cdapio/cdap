@@ -1,3 +1,5 @@
+
+
 /*
  * Copyright © 2017 Cask Data, Inc.
  *
@@ -27,6 +29,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
@@ -61,7 +64,10 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -78,7 +84,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.http.HttpResponse;
 import org.apache.tephra.RetryStrategies;
 import org.apache.twill.internal.RunIds;
 import org.junit.AfterClass;
@@ -133,7 +141,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
+    .create();
   private static final Type NOTIFICATION_LIST_TYPE = new TypeToken<List<Notification>>() { }.getType();
 
   private static MessagingService messagingService;
@@ -388,13 +398,48 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Enable the schedule
     scheduler.enableSchedule(APP_MULT_ID.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
 
-    String dummyUserKey = "dummy.user.argument.key";
-    String dummyUserValue = "dummy.user.argument.value";
     // Start a program with user arguments
-    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
+    startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(AppWithMultipleSchedules.ANOTHER_RUNTIME_ARG_KEY,
+                                                   AppWithMultipleSchedules.ANOTHER_RUNTIME_ARG_VALUE), 200);
 
     // Wait for a completed run record
     waitForCompleteRuns(1, TRIGGERED_WORKFLOW);
+    assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
+    RunRecord run = getProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED).get(0);
+    Map<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData =
+      getWorkflowToken(TRIGGERED_WORKFLOW, run.getPid(), null, null).getTokenData();
+    // There should be 2 entries in tokenData
+    Assert.assertEquals(2, tokenData.size());
+    // The value of TRIGGERED_RUNTIME_ARG_KEY should be ANOTHER_RUNTIME_ARG_VALUE from the triggering workflow
+    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_RUNTIME_ARG_VALUE,
+                        tokenData.get(AppWithMultipleSchedules.TRIGGERED_RUNTIME_ARG_KEY).get(0).getValue());
+    // The value of TRIGGERED_TOKEN_KEY should be ANOTHER_TOKEN_VALUE from the triggering workflow
+    Assert.assertEquals(AppWithMultipleSchedules.ANOTHER_TOKEN_VALUE,
+                        tokenData.get(AppWithMultipleSchedules.TRIGGERED_TOKEN_KEY).get(0).getValue());
+  }
+
+  private WorkflowTokenDetail getWorkflowToken(ProgramId workflowId, String runId,
+                                               @Nullable WorkflowToken.Scope scope,
+                                               @Nullable String key) throws Exception {
+    String workflowTokenUrl = String.format("apps/%s/workflows/%s/runs/%s/token", workflowId.getApplication(),
+                                            workflowId.getProgram(), runId);
+    String versionedUrl = getVersionedAPIPath(appendScopeAndKeyToUrl(workflowTokenUrl, scope, key),
+                                              Constants.Gateway.API_VERSION_3_TOKEN, workflowId.getNamespace());
+    HttpResponse response = doGet(versionedUrl);
+    return readResponse(response, new TypeToken<WorkflowTokenDetail>() { }.getType(), GSON);
+  }
+
+  private String appendScopeAndKeyToUrl(String workflowTokenUrl, @Nullable WorkflowToken.Scope scope, String key) {
+    StringBuilder output = new StringBuilder(workflowTokenUrl);
+    if (scope != null) {
+      output.append(String.format("?scope=%s", scope.name()));
+      if (key != null) {
+        output.append(String.format("&key=%s", key));
+      }
+    } else if (key != null) {
+      output.append(String.format("?key=%s", key));
+    }
+    return output.toString();
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {

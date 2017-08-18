@@ -19,8 +19,15 @@ package co.cask.cdap.common.app;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import org.apache.twill.api.RunId;
 
+import java.lang.reflect.Type;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -52,6 +59,22 @@ public final class RunIds {
 
   private static final AtomicLong COUNTER = new AtomicLong();
 
+  /**
+   * Serialization and deserialization of RunId as Json.
+   */
+  public static class RunIdCodec implements JsonSerializer<RunId>, JsonDeserializer<RunId> {
+
+    @Override
+    public RunId deserialize(JsonElement json, Type typeOfT,
+                             JsonDeserializationContext context) throws JsonParseException {
+      return RunIds.fromString(json.getAsString());
+    }
+
+    @Override
+    public JsonElement serialize(RunId src, Type typeOfSrc, JsonSerializationContext context) {
+      return context.serialize(src.getId());
+    }
+  }
   /**
    * @return UUID based on current time. If called repeatedly within the same millisecond, this is
    * guaranteed to generate at least 10000 unique UUIDs for the millisecond.

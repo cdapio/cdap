@@ -16,19 +16,30 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TimeTriggerInfo;
+
+import java.io.Serializable;
 
 /**
- * A Trigger builder that builds a {@link OrTrigger}.
+ * The time trigger information to be passed to the triggered program.
  */
-public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
+public class DefaultTimeTriggerInfo extends AbstractTriggerInfo implements TimeTriggerInfo, Serializable {
+  private final String cronExpression;
+  private final long logicalStartTime;
 
-  public OrTriggerBuilder(Trigger... triggers) {
-    super(Type.OR, triggers);
+  public DefaultTimeTriggerInfo(String cronExpression, long logicalStartTime) {
+    super(Type.TIME);
+    this.cronExpression = cronExpression;
+    this.logicalStartTime = logicalStartTime;
   }
 
   @Override
-  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
-    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
+  public String getCronExpression() {
+    return cronExpression;
+  }
+
+  @Override
+  public long getLogicalStartTime() {
+    return logicalStartTime;
   }
 }

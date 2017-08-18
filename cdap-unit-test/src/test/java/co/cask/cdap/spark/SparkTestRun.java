@@ -40,6 +40,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ClassicSparkProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
@@ -289,16 +290,27 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testSparkFork() throws Exception {
+  public void testSparkProgramStatusSchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
+    ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),
+                                           "schedule");
+    appManager.enableSchedule(scheduleId);
 
-    File barrierDir = TMP_FOLDER.newFolder();
+    // Start the upstream program
+    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName()).start();
 
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(
-      TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
-      .start(Collections.singletonMap("barrier.dir", barrierDir.getAbsolutePath()));
-
+    // Wait for the downstream to complete
+    WorkflowManager workflowManager =
+      appManager.getWorkflowManager(TestSparkApp.TriggeredWorkflow.class.getSimpleName());
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // Run again with the kryo serializer
+    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName())
+      .start(Collections.singletonMap("spark.serializer", "org.apache.spark.serializer.KryoSerializer"));
+
+    // Wait for the downstream to complete again
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+
   }
 
   @Test
