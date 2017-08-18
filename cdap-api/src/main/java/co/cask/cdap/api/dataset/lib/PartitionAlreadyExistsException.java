@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.api.dataset;
+package co.cask.cdap.api.dataset.lib;
+
+import co.cask.cdap.api.dataset.DataSetException;
 
 /**
- * Thrown when a data operation fails.
+ * Thrown when a Partition already exists.
  */
-public class DataSetException extends RuntimeException {
-  public DataSetException(String message) {
-    super(message);
-  }
-
-  public DataSetException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
-  public DataSetException(Throwable cause) {
-    super(cause);
+public class PartitionAlreadyExistsException extends DataSetException {
+  public PartitionAlreadyExistsException(String datasetName, PartitionKey partitionKey) {
+    super(String.format("Dataset '%s' already has a partition with the same key: %s",
+                        datasetName, partitionKey.toString()));
   }
 }

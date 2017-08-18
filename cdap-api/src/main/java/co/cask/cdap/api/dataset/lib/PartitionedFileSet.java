@@ -52,7 +52,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
   /**
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path).
    *
-   * @throws DataSetException if a partition for the same key already exists
+   * @throws PartitionAlreadyExistsException if a partition for the same key already exists
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addPartition(PartitionKey key, String path);
@@ -61,7 +61,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Add a partition for a given partition key, stored at a given path (relative to the file set's base path),
    * with the given metadata.
    *
-   * @throws DataSetException if a partition for the same key already exists
+   * @throws PartitionAlreadyExistsException if a partition for the same key already exists
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addPartition(PartitionKey key, String path, Map<String, String> metadata);
@@ -167,6 +167,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Obtain the location to write from the PartitionOutput, then call the {@link PartitionOutput#addPartition}
    * to add the partition to this dataset.
    *
+   * @throws PartitionAlreadyExistsException if the partition already exists
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   PartitionOutput getPartitionOutput(PartitionKey key);

@@ -22,6 +22,7 @@ import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -113,21 +114,19 @@ public class UploadService extends AbstractService {
         .addStringField("league", league)
         .addIntField("season", season)
         .build();
-      final AtomicReference<PartitionDetail> partitionDetail = new AtomicReference<>();
+      final AtomicReference<PartitionOutput> partitionOutput = new AtomicReference<>();
 
       getContext().execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          partitionDetail.set(results.getPartition(key));
+          if (results.getPartition(key) != null) {
+            throw new PartitionAlreadyExistsException("results", key);
+          }
+          partitionOutput.set(results.getPartitionOutput(key));
         }
       });
 
-      if (partitionDetail.get() != null) {
-        responder.sendString(409, "Partition exists.", Charsets.UTF_8);
-        return null;
-      }
-
-      final PartitionOutput output = results.getPartitionOutput(key);
+      final PartitionOutput output = partitionOutput.get();
       try {
         final Location partitionDir = output.getLocation();
         if (!partitionDir.mkdirs()) {
