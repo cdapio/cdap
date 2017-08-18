@@ -18,15 +18,19 @@ package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.customaction.CustomAction;
 import co.cask.cdap.api.workflow.Condition;
-import co.cask.cdap.api.workflow.WorkflowConfigurer;
+import co.cask.cdap.api.workflow.WorkflowForkConfigurer;
 
 /**
- * Implementation of {@link WorkflowProgramAdder} which adds node to the Workflow trunk.
+ * Implementation of the {@link WorkflowProgramAdder} which adds nodes on the Fork whose parent Workflow trunk.
+ * @param <T> type of the current configurer
  */
-public class TrunkProgramAdder implements WorkflowProgramAdder {
-  private final WorkflowConfigurer configurer;
+public class ForkToTrunkAdder<T extends WorkflowForkConfigurer> implements WorkflowProgramAdder {
 
-  public TrunkProgramAdder(WorkflowConfigurer configurer) {
+  private final WorkflowProgramAdder parent;
+  private final T configurer;
+
+  public ForkToTrunkAdder(WorkflowProgramAdder parent, T configurer) {
+    this.parent = parent;
     this.configurer = configurer;
   }
 
@@ -47,31 +51,33 @@ public class TrunkProgramAdder implements WorkflowProgramAdder {
 
   @Override
   public WorkflowProgramAdder condition(Condition condition) {
-    return new ConditionToTrunkAdder<>(this, configurer.condition(condition));
+    return new ConditionToForkAdder<>(this, configurer.condition(condition));
   }
 
   @Override
   public WorkflowProgramAdder otherwise() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    throw new UnsupportedOperationException("Operation not supported on the Fork");
   }
 
   @Override
   public WorkflowProgramAdder end() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    throw new UnsupportedOperationException("Operation not supported on the Fork");
   }
 
   @Override
   public WorkflowProgramAdder fork() {
-    return new ForkToTrunkAdder<>(this, configurer.fork());
+    return new ForkToForkAdder<>(this, configurer.fork());
   }
 
   @Override
   public WorkflowProgramAdder also() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    configurer.also();
+    return this;
   }
 
   @Override
   public WorkflowProgramAdder join() {
-    throw new UnsupportedOperationException("Operation not supported.");
+    configurer.join();
+    return parent;
   }
 }
