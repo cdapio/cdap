@@ -2097,10 +2097,11 @@
   </property>
 
   <property>
-    <name>metrics.v2.table.scan.enabled</name>
-    <value>false</value>
+    <name>metrics.table.splits</name>
+    <value>16</value>
     <description>
-      Enable or disable scanning v2 metrics tables. By default set to false.
+      Number of splits for all metrics tables. This property can only be changed before CDAP starts up for the first
+      time and creates the metrics tables. Once all metrics tables are created, this property will not take any effect.
     </description>
   </property>
 

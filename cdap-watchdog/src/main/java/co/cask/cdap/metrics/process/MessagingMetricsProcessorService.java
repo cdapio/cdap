@@ -19,6 +19,8 @@ package co.cask.cdap.metrics.process;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
@@ -26,11 +28,13 @@ import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.messaging.MessageFetcher;
@@ -38,6 +42,7 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.MessagingUtils;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
@@ -114,9 +119,10 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           @Named(Constants.Metrics.QUEUE_SIZE) int queueSize,
                                           @Assisted Set<Integer> topicNumbers,
                                           @Assisted MetricsContext metricsContext,
-                                          @Assisted Integer instanceId) {
+                                          @Assisted Integer instanceId, DatasetFramework datasetFramework,
+                                          CConfiguration cConf) {
     this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
-         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId);
+         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId, datasetFramework, cConf);
   }
 
   @VisibleForTesting
@@ -131,7 +137,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis,
-                                   int instanceId) {
+                                   int instanceId, DatasetFramework datasetFramework, CConfiguration cConf) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
     for (int topicNum : topicNumbers) {
@@ -158,6 +164,24 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
     processMetricName = String.format("metrics.%s.process.count", instanceId);
     delayMetricName = String.format("metrics.%s.process.delay.ms", instanceId);
+    // Validate metrics table splits after creation.
+    // TODO CDAP-12366 Make metrics table splits configurable
+    String metricsTable = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                    Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts.1");
+    DatasetId metricsTableId = NamespaceId.SYSTEM.dataset(metricsTable);
+    try {
+      DatasetSpecification spec = datasetFramework.getDatasetSpec(metricsTableId);
+      // If v3 metrics table is already exists, we will ignore splits value from cConf to avoid modifying splits
+      // after creation
+      if (spec != null && cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) !=
+        spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)) {
+        LOG.warn("Ignoring {} value of property {} from cdap-site.xml because splits value can not be changed for " +
+                   "system table {}", cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS),
+                 Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, spec.getName());
+      }
+    } catch (DatasetManagementException e) {
+      LOG.error("Got exception while accessing dataset {}", metricsTable, e);
+    }
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
