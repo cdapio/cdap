@@ -36,7 +36,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
-import org.apache.tephra.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,7 +67,6 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_PLUGINS = "cdap.mapreduce.plugins";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "cdap.mapreduce.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "cdap.mapreduce.cconf";
-  private static final String HCONF_ATTR_NEW_TX = "cdap.mapreduce.newtx";
   private static final String HCONF_ATTR_LOCAL_FILES = "cdap.mapreduce.local.files";
   private static final String HCONF_ATTR_PROGRAM_OPTIONS = "cdap.mapreduce.program.options";
 
@@ -224,16 +222,5 @@ public final class MapReduceContextConfig {
     String conf = hConf.getRaw(HCONF_ATTR_CCONF);
     Preconditions.checkArgument(conf != null, "No CConfiguration available");
     return CConfiguration.create(new ByteArrayInputStream(conf.getBytes(Charsets.UTF_8)));
-  }
-
-  void setTx(Transaction tx) {
-    hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
-  }
-
-  /**
-   * Returns the {@link Transaction} information stored inside the job {@link Configuration}.
-   */
-  public Transaction getTx() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_NEW_TX), Transaction.class);
   }
 }

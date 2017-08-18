@@ -35,15 +35,24 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRConfig;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -169,6 +178,31 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
       public BasicMapReduceTaskContext load(ContextCacheKey key) throws Exception {
+        Transaction tx = null;
+        TaskAttemptID taskAttemptId2 = key.getTaskAttemptID();
+        if (taskAttemptId2 != null) {
+          int appAttemptId = key.getConfiguration().getInt(MRJobConfig.APPLICATION_ATTEMPT_ID, 0);
+          Path txDir = new Path(new Path("/tmp", FileOutputCommitter.PENDING_DIR_NAME), String.valueOf(appAttemptId));
+          FileSystem fs = txDir.getFileSystem(key.getConfiguration());
+          LOG.info("alianwar4: Check existence of path: {}", txDir);
+          Preconditions.checkArgument(fs.isDirectory(txDir));
+          Preconditions.checkArgument(fs.exists(txDir));
+          Path txFile = new Path(txDir, "tx-file");
+          LOG.info("alianwar4: Check existence of path: {}", txFile);
+          Preconditions.checkArgument(fs.exists(txFile));
+
+          try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
+            byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
+            tx = new TransactionCodec().decode(txByteArray);
+            Preconditions.checkNotNull(tx);
+          }
+
+          LOG.info("YAY, shit's as expected.");
+        } else {
+          LOG.error("Aww, :(", new Exception());
+        }
+
+
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
         MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
 
@@ -214,7 +248,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         return new BasicMapReduceTaskContext(
           program, contextConfig.getProgramOptions(), cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
-          contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
+          tx, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           authorizationEnforcer, authenticationContext, messagingService
         );

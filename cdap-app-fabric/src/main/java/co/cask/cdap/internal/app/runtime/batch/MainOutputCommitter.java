@@ -19,26 +19,17 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.service.RetryStrategy;
-import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
 import co.cask.cdap.data2.transaction.Transactions;
-import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
-import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsCommitter;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
-import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -47,24 +38,23 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -76,7 +66,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private CConfiguration cConf;
   private TransactionSystemClient txClient;
   private Transaction transaction;
-  private MessagingService messagingService;
   private BasicMapReduceTaskContext taskContext;
 
   private Map<String, ProvidedOutput> outputs;
@@ -88,17 +77,14 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   @Override
   public void setupJob(JobContext jobContext) throws IOException {
-    // TODO: this is called per job attempt. Is it on the same OutputCommiter object?
     // Similarly, is the abortJob called on the same object?
     // Similarly, is it ok to have a separate tx for each job attempt?
 
-    // start Tx
     Configuration configuration = jobContext.getConfiguration();
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
     MapReduceTaskContextProvider taskContextProvider = classLoader.getTaskContextProvider();
 //    BasicMapReduceContext vs BasicMapReduceTaskContext
     Injector injector = taskContextProvider.getInjector();
-    messagingService = injector.getInstance(MessagingService.class);
 
     cConf = injector.getInstance(CConfiguration.class);
     TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
@@ -106,20 +92,33 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
     RetryStrategy retryStrategy =
       SystemArguments.getRetryStrategy(contextConfig.getProgramOptions().getUserArguments().asMap(),
-                                                                       contextConfig.getProgramId().getType(),
-                                                                       cConf);
+                                       contextConfig.getProgramId().getType(),
+                                       cConf);
     this.txClient = new RetryingLongTransactionSystemClient(txClient, retryStrategy);
 
     // We start long-running tx to be used by mapreduce job tasks.
     Transaction tx = txClient.startLong();
     try {
-      // We remember tx, so that we can re-use it in mapreduce tasks
-      new MapReduceContextConfig(configuration).setTx(tx);
-      new MapReduceContextConfig(taskAttemptContext.getConfiguration()).setTx(tx);
       this.transaction = tx;
     } catch (Throwable t) {
       Transactions.invalidateQuietly(txClient, tx);
       throw t;
+    }
+
+    // Write the tx somewhere, so that we can re-use it in mapreduce tasks
+    // we can't piggy back on MapReduce staging directory, since its only there for FileOutputFormat
+    // (whose FileOutputCommitter#setupJob hasn't run yet)
+    Path jobAttemptPath = FileOutputCommitter.getJobAttemptPath(jobContext, new Path("/tmp"));
+    FileSystem fs = jobAttemptPath.getFileSystem(jobContext.getConfiguration());
+    if (!fs.mkdirs(jobAttemptPath)) {
+      // TODO: throw exception instead
+      LOG.error("Mkdirs failed to create " + jobAttemptPath);
+    }
+
+    Path txFile = new Path(jobAttemptPath, "tx-file");
+    LOG.info("alianwar4: Writing tx-file to {}", txFile);
+    try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
+      fsDataOutputStream.write(new TransactionCodec().encode(transaction));
     }
 
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
@@ -127,11 +126,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
 
     this.outputs = OutputSerde.transform(OutputSerde.getOutputs(configuration), taskContext);
-
-    // need this in local mode
-//    setOutputsIfNeeded(jobContext);
-//    setOutputsIfNeeded(taskAttemptContext);
-
 
     super.setupJob(jobContext);
   }
@@ -186,7 +180,12 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       try {
         shutdown(jobContext);
       } finally {
-        commitDatasets(jobContext);
+        if (taskContext != null) {
+          commitDatasets(jobContext);
+        } else {
+          // taskContext can only be null if #setupJob fails
+          LOG.warn("Did not commit datasets, since job setup did not complete.");
+        }
       }
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
@@ -200,7 +199,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
       // "Commit" the data event topic by publishing an empty message.
       // Need to do it with the raw MessagingService.
-      messagingService.publish(
+      taskContext.getMessagingService().publish(
         StoreRequestBuilder
           .of(NamespaceId.SYSTEM.topic(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC)))
           .setTransaction(transaction.getWritePointer())
