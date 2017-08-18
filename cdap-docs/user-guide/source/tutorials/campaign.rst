@@ -76,12 +76,6 @@ Now, click "Create Pipeline" and select "Batch". You are now in the Pipelines UI
 
 In the left side bar, click on "Sink" and select both the "Table" and "TPFSAvro" plugins.  Connect the output of the "Wrangler" stage into "Table." Click the "Table" stage, and add "name" as the "Row Field."
 
-.. figure:: /_images/tutorials/address/address_state_pipeline.jpeg
-  :figwidth: 100%
-  :width: 500px
-  :align: center
-  :class: bordered-image
-
 Name the Pipeline "StateNamePipeline." Then, deploy the pipeline by clicking "Deploy." Run the pipeline by clicking "Run".
 
 You have created a Table that you can use to update the state names in the customer data from their full to abbreviated versions.
