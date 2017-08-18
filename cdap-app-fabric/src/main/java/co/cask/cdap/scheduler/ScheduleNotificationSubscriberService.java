@@ -16,8 +16,11 @@
 
 package co.cask.cdap.scheduler;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.api.workflow.NodeValue;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -27,12 +30,21 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -42,7 +54,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,6 +69,7 @@ import java.util.concurrent.TimeUnit;
 public class ScheduleNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleNotificationSubscriberService.class);
   private static final Gson GSON = new Gson();
+
   private final CConfiguration cConf;
   private final DatasetFramework datasetFramework;
   private ExecutorService taskExecutorService;
@@ -80,6 +96,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
       cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
     taskExecutorService.submit(new DataEventNotificationSubscriberThread());
+    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread());
     programNotificationSubscriberService.startAndWait();
   }
 
@@ -171,10 +188,47 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
       for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
-        // ignore disabled schedules
-        if (ProgramScheduleStatus.SCHEDULED.equals(schedule.getMeta().getStatus())) {
-          getJobQueue(context).addNotification(schedule, notification);
-        }
+        getJobQueue(context).addNotification(schedule, notification);
+      }
+    }
+  }
+
+  /**
+   * Private class that receives program status notifications from
+   * {@link co.cask.cdap.internal.app.program.MessagingProgramStateWriter}.
+   */
+  private class ProgramStatusEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
+
+    ProgramStatusEventNotificationSubscriberThread() {
+      super(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    }
+
+    @Override
+    public void processNotification(DatasetContext context, Notification notification)
+      throws IOException, DatasetManagementException {
+
+      String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
+      String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
+
+      ProgramStatus programStatus;
+      try {
+        programStatus = ProgramRunStatus.toProgramStatus(ProgramRunStatus.valueOf(programRunStatusString));
+      } catch (IllegalArgumentException e) {
+        // Return silently, this happens for statuses that are not meant to be scheduled
+        return;
+      }
+
+      // Ignore notifications which specify an invalid programRunId or programStatus
+      if (programRunIdString == null || programStatus == null) {
+        return;
+      }
+
+      ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
+      ProgramId programId = programRunId.getParent();
+      String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
+
+      for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
+        getJobQueue(context).addNotification(schedule, notification);
       }
     }
   }

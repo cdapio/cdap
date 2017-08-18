@@ -355,8 +355,8 @@ public abstract class ProtoTrigger implements Trigger {
       if (getProgramStatuses().contains(ProgramStatus.INITIALIZING) ||
           getProgramStatuses().contains(ProgramStatus.RUNNING)) {
         throw new IllegalArgumentException(String.format(
-                "Cannot allow triggering program %s with status %s: COMPLETED, FAILED, KILLED statuses are supported",
-                programId.getProgram(), programId.getType()));
+                "Cannot allow triggering program %s with statuses %s: %s statuses are supported",
+                programId.getProgram(), getProgramStatuses(), ProgramStatus.TERMINAL_STATES));
       }
 
       ProtoTrigger.validateNotNull(getProgramId(), "program id");

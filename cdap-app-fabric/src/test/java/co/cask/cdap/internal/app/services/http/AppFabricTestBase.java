@@ -679,13 +679,20 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgram(ProgramId program, int expectedStatusCode) throws Exception {
+  protected void startProgram(ProgramId program, Map<String, String> args, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram());
-    startProgram(path, program.getNamespace(), ImmutableMap.<String, String>of(), expectedStatusCode);
+    startProgram(path, program.getNamespace(), args, expectedStatusCode);
+  }
+
+  /**
+   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   */
+  protected void startProgram(ProgramId program, int expectedStatusCode) throws Exception {
+    startProgram(program, ImmutableMap.<String, String>of(), expectedStatusCode);
   }
 
   /**
