@@ -134,12 +134,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
+    // cache since the streaming sink function will check if the rdd is empty, which can cause recomputation
+    // and confusing metrics if its not cached.
+    Compat.foreachRDD(stream.cache(), new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
   }
 
   @Override
   public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
-    Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
+    Compat.foreachRDD(stream.cache(), new StreamingSparkSinkFunction<T>(sec, stageSpec));
   }
 
   @Override
