@@ -656,6 +656,58 @@ public class ConnectorDagTest {
   }
 
   @Test
+  public void testSubdagMerge() throws Exception {
+    /*
+        n1 -----|
+                |-- n4(r) -- n6
+             |--|
+        n2 --|
+             |--|
+                |-- n5(r) -- n7
+        n3 -----|
+     */
+    ConnectorDag cdag = ConnectorDag.builder()
+      .addConnection("n1", "n4")
+      .addConnection("n2", "n4")
+      .addConnection("n2", "n5")
+      .addConnection("n3", "n5")
+      .addConnection("n4", "n6")
+      .addConnection("n5", "n7")
+      .addReduceNodes("n4", "n5")
+      .build();
+    Assert.assertEquals(ImmutableSet.of("n4", "n5"), cdag.insertConnectors());
+
+    /*
+        n1 -----|
+                |-- n4.connector
+             |--|
+        n2 --|
+             |--|
+                |-- n5.connector
+        n3 -----|
+     */
+    Dag dag1 = new Dag(ImmutableSet.of(
+      new Connection("n1", "n4.connector"),
+      new Connection("n2", "n4.connector"),
+      new Connection("n2", "n5.connector"),
+      new Connection("n3", "n5.connector")));
+
+    /*
+       n4.connector -- n4 -- n6
+     */
+    Dag dag2 = new Dag(ImmutableSet.of(new Connection("n4.connector", "n4"), new Connection("n4", "n6")));
+
+    /*
+       n5.connector -- n5 -- n7
+     */
+    Dag dag3 = new Dag(ImmutableSet.of(new Connection("n5.connector", "n5"), new Connection("n5", "n7")));
+
+    Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3);
+    Set<Dag> actual = new HashSet<>(cdag.split());
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
   public void testSimpleCondition() throws Exception {
 
     /*
@@ -726,7 +778,6 @@ public class ConnectorDagTest {
     Set<Dag> expected = ImmutableSet.of(dag1, dag2, dag3, dag4);
     Assert.assertEquals(actual, expected);
   }
-
 
   @Test
   public void testSimpleConditionWithMultipleSources() throws Exception {
