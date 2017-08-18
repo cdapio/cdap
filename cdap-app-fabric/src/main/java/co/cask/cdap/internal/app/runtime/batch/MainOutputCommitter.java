@@ -42,10 +42,13 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.JobID;
 import org.apache.hadoop.mapreduce.JobStatus;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
+import org.apache.hadoop.mapreduce.v2.util.MRApps;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;
@@ -55,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -108,15 +112,8 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     // Write the tx somewhere, so that we can re-use it in mapreduce tasks
     // we can't piggy back on MapReduce staging directory, since its only there for FileOutputFormat
     // (whose FileOutputCommitter#setupJob hasn't run yet)
-    Path jobAttemptPath = FileOutputCommitter.getJobAttemptPath(jobContext, new Path("/tmp"));
-    FileSystem fs = jobAttemptPath.getFileSystem(jobContext.getConfiguration());
-    if (!fs.mkdirs(jobAttemptPath)) {
-      // TODO: throw exception instead
-      LOG.error("Mkdirs failed to create " + jobAttemptPath);
-    }
-
-    Path txFile = new Path(jobAttemptPath, "tx-file");
-    LOG.info("alianwar4: Writing tx-file to {}", txFile);
+    Path txFile = getTxFile(configuration, jobContext.getJobID());
+    FileSystem fs = txFile.getFileSystem(jobContext.getConfiguration());
     try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
       fsDataOutputStream.write(new TransactionCodec().encode(transaction));
     }
@@ -124,10 +121,17 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     // we can instantiate the TaskContext after we set the tx above. It's used by the operations below
     taskContext = taskContextProvider.get(taskAttemptContext);
 
-
     this.outputs = OutputSerde.transform(OutputSerde.getOutputs(configuration), taskContext);
 
     super.setupJob(jobContext);
+  }
+
+  // returns a Path to a file in the staging directory of the MapReduce
+  static Path getTxFile(Configuration configuration, JobID jobId) throws IOException {
+    Path stagingDir = MRApps.getStagingAreaDir(configuration, UserGroupInformation.getCurrentUser().getShortUserName());
+    int appAttemptId = configuration.getInt(MRJobConfig.APPLICATION_ATTEMPT_ID, 0);
+    // following the pattern of other files in the staging dir
+    return new Path(stagingDir, jobId.toString() + "/"  + jobId.toString() + "_" + appAttemptId + "_tx-file");
   }
 
   /**

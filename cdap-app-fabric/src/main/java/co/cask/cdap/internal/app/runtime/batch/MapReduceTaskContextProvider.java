@@ -180,15 +180,10 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
       public BasicMapReduceTaskContext load(ContextCacheKey key) throws Exception {
         Transaction tx = null;
         TaskAttemptID taskAttemptId2 = key.getTaskAttemptID();
+        // TODO: handle null case
         if (taskAttemptId2 != null) {
-          int appAttemptId = key.getConfiguration().getInt(MRJobConfig.APPLICATION_ATTEMPT_ID, 0);
-          Path txDir = new Path(new Path("/tmp", FileOutputCommitter.PENDING_DIR_NAME), String.valueOf(appAttemptId));
-          FileSystem fs = txDir.getFileSystem(key.getConfiguration());
-          LOG.info("alianwar4: Check existence of path: {}", txDir);
-          Preconditions.checkArgument(fs.isDirectory(txDir));
-          Preconditions.checkArgument(fs.exists(txDir));
-          Path txFile = new Path(txDir, "tx-file");
-          LOG.info("alianwar4: Check existence of path: {}", txFile);
+          Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(), taskAttemptId2.getJobID());
+          FileSystem fs = txFile.getFileSystem(key.getConfiguration());
           Preconditions.checkArgument(fs.exists(txFile));
 
           try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
