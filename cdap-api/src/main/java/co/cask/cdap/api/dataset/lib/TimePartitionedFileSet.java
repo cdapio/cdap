@@ -17,7 +17,6 @@
 package co.cask.cdap.api.dataset.lib;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
@@ -50,6 +49,7 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   void addPartition(long time, String path);
 
@@ -58,6 +58,7 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * with given metadata.
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   void addPartition(long time, String path, Map<String, String> metadata);
 
@@ -126,6 +127,7 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * to add the partition to this dataset.
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   TimePartitionOutput getPartitionOutput(long time);
 }

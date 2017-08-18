@@ -191,8 +191,10 @@ object AbstractSparkCompiler {
       .map(cl => new CombineClassLoader(null, List(cl, contextClassLoader)))
       .getOrElse(contextClassLoader)
     settings.embeddedDefaults(classLoader)
-    settings.classpath.value = ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL])
-                                           .mkString(File.pathSeparator)
+
+    val classpath = ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL]).toSet[URL]
+    settings.classpath.value = classpath.map(url => new File(url.getPath()).getAbsolutePath)
+                                        .mkString(File.pathSeparator)
     settings
   }
 
