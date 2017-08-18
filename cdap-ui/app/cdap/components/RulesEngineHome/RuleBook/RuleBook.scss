@@ -16,15 +16,24 @@
 
 @import '../../../styles/variables.scss';
 
-$rulebook_container_border_color: #cccccc;
-$version_label_color: gray;
+$rulebook_font_color: #999999;
+$rulebook_header_font_color: #333333;
+$rulebook_border_width: 2px;
+$rulebook_hover_border_width: 3px;
+$rulebook_hover_bg_color: #0099ff;
+$rulebook_bg_color: white;
+$rulebook_active_border_color: #fe6600;
+$rulebook_header_bg_color: #f5f5f5;
 
 .rule-book {
-  margin: 10px;
-  border: 1px solid $rulebook_container_border_color;
+  margin: 15px 10px;
+  border: $rulebook_border_width solid $rulebook_font_color;
+  border-radius: 6px 0 0 8px;
   padding: 10px;
-  min-height: 200px;
+  height: 204px;
   cursor: pointer;
+  background-color: $rulebook_bg_color;
+  color: $rulebook_font_color;
 
   > div {
     line-height: 1;
@@ -32,6 +41,27 @@ $version_label_color: gray;
     strong {
       margin-bottom: 0;
       font-size: 12px;
+    }
+  }
+  .rule-book-top {
+    height: 12px;
+    margin: -10px -10px -10px -12px;
+    border-left: $rulebook_border_width solid $rulebook_font_color;
+    border-bottom: $rulebook_border_width solid $rulebook_font_color;
+    border-radius: 6px 0 0 6px;
+  }
+  .rule-book-id {
+    background-color: $rulebook_header_bg_color;
+    margin: 10px -10px;
+    padding: 10px;
+    color: $rulebook_header_font_color;
+
+    strong {
+      width: 100%;
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
   .rule-book-owner {
@@ -43,19 +73,56 @@ $version_label_color: gray;
   .rule-book-num-of-rules {
     margin-bottom: 14px;
   }
+  .rule-book-description {
+    font-size: 13px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    max-height: 4.5em;
+    margin-right: -10px;
+    padding-right: 10px;
+    word-break: break-word;
+
+    &:before {
+      content: '...';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      right: 0;
+      width: 1em;
+      height: 1em;
+      margin-top: 0.2em;
+      background: white;
+    }
+  }
 
   &.active {
-    border: 4px solid $brand-primary;
+    border: $rulebook_border_width solid $rulebook_active_border_color;
+
+    .rule-book-top {
+      border-left: $rulebook_border_width solid $rulebook_active_border_color;
+      border-bottom: $rulebook_border_width solid $rulebook_active_border_color;
+    }
+  }
+
+  &:hover {
+    border: $rulebook_hover_border_width solid $rulebook_hover_bg_color;
+
+    .rule-book-top {
+      border-left: $rulebook_hover_border_width solid $rulebook_hover_bg_color;
+      border-bottom: $rulebook_hover_border_width solid $rulebook_hover_bg_color;
+      margin-left: -13px;
+    }
   }
 
   strong {
     font-size: 14px;
     margin-bottom: 10px;
     display: inline-block;
-
-    .version-label {
-      color: $version_label_color;
-      display: block;
-    }
   }
 }

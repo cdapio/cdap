@@ -107,11 +107,22 @@ const createNewRuleBook = (config) => {
   MyRulesEngineApi
     .createRulebook(urlParams, postBody,headers)
     .subscribe(
-      () => {
+      (res) => {
         resetCreateRuleBook();
+        setActiveRulebook(res.values[0]);
         getRuleBooks();
+        setActiveTab('2'); // 2 being the index of the Rules tab
       }
     );
+};
+
+const setActiveTab = (activeTab) => {
+  RulesEngineStore.dispatch({
+    type: RULESENGINEACTIONS.SETACTIVETAB,
+    payload: {
+      activeTab
+    }
+  });
 };
 
 const resetCreateRuleBook = () => {

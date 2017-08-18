@@ -17,7 +17,6 @@
 import React, {Component, PropTypes} from 'react';
 import {Input, Button} from 'reactstrap';
 import isEmpty from 'lodash/isEmpty';
-import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import {createNewRuleBook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import T from 'i18n-react';
 
@@ -74,22 +73,30 @@ export default class CreateRulebook extends Component {
     return (
       <div className="rule-book-create">
         <div className="create-metadata-container">
-          <Input
-            value={this.state.name}
-            onChange={this.onNameChangeHandler}
-            placeholder={T.translate(`${PREFIX}.nameplaceholder`)}
-          />
-          <div>
-            <span> {T.translate(`${PREFIX}.owner`)} : </span>
-            <span> {T.translate(`${PREFIX}.admin`)} </span>
+          <div className="rule-book-name-header">
+            <Input
+              value={this.state.name}
+              className="rule-book-name"
+              onChange={this.onNameChangeHandler}
+              placeholder={T.translate(`${PREFIX}.nameplaceholder`)}
+            />
+            <p className="rule-book-version">
+              {T.translate(`${PREFIX}.version`, {version: 1})}
+            </p>
           </div>
-          <div>
-            <span> {T.translate(`${PREFIX}.created`)} </span>
-            <span> {T.translate(`${PREFIX}.today`)} </span>
+          <div className="rule-book-metadata">
+            <div>
+              <strong> {T.translate(`${PREFIX}.owner`)} : </strong>
+              <span> {T.translate(`${PREFIX}.admin`)} </span>
+            </div>
+            <div>
+              <strong> {T.translate(`${PREFIX}.created`)} : </strong>
+              <span> {T.translate(`${PREFIX}.now`)} </span>
+            </div>
           </div>
           <textarea
-            rows="10"
-            className="form-control"
+            rows="5"
+            className="form-control rule-book-description"
             value={this.state.description}
             onChange={this.onDescriptionChangeHandler}
             placeholder={T.translate(`${PREFIX}.descriptionplaceholder`)}
@@ -97,19 +104,17 @@ export default class CreateRulebook extends Component {
           </textarea>
           <div className="button-container">
             <Button
-              color="primary"
+              color="secondary"
               onClick={this.createRulebook}
-              disabled={isEmpty(this.state.name)}
+              disabled={isEmpty(this.state.name) || isEmpty(this.state.description)}
             >
               {T.translate(`${PREFIX}.createBtnLabel`)}
             </Button>
+            <span className="create-next">
+              {T.translate(`${PREFIX}.createBtnNext`)}
+            </span>
           </div>
         </div>
-         <RulesList
-          rules={this.state.rules}
-          onRuleAdd={this.onRulesAdd}
-          onRemove={this.onRemove}
-        />
       </div>
     );
   }

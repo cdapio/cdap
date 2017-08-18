@@ -22,7 +22,8 @@ const DEFAULTRULEBOOKSSTATE = {
   list: null,
   activeRulebookId: null,
   activeRulebookRules: null,
-  createRulebook: false
+  createRulebook: false,
+  activeTab: '1'
 };
 const DEFAULTRULESSTATE = {
   list: null,
@@ -57,7 +58,8 @@ const RULESENGINEACTIONS = {
   SETERROR: 'SETERROR',
   RESETERROR: 'RESETERROR',
   SETINTEGRATIONEMBEDDED: 'SETINTEGRATIONEMBEDDED',
-  SETINTEGRATIONDONE: 'SETINTEGRATIONDONE'
+  SETINTEGRATIONDONE: 'SETINTEGRATIONDONE',
+  SETACTIVETAB: 'SETACTIVETAB'
 };
 
 const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
@@ -85,6 +87,10 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
       return Object.assign({}, state, {
         loading: action.payload.loading
       });
+    case RULESENGINEACTIONS.SETACTIVETAB:
+      return Object.assign({}, state, {
+        activeTab: action.payload.activeTab
+      });
     case RULESENGINEACTIONS.RESET:
       return DEFAULTRULEBOOKSSTATE;
     default:
@@ -105,6 +111,10 @@ const rules = (state = DEFAULTRULESSTATE, action = defaultAction) => {
         loading: false
       });
     case RULESENGINEACTIONS.RESETACTIVERULE:
+      return Object.assign({}, state, {
+        activeRuleId: null
+      });
+    case RULESENGINEACTIONS.SETACTIVETAB:
       return Object.assign({}, state, {
         activeRuleId: null
       });

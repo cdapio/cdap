@@ -14,14 +14,18 @@
  * the License.
 */
 
-@import '../../../../styles/variables.scss';
-
+$general-font-color: #333333;
+$lighter-font-color: #999999;
+$rule-actions-color: #0099ff;
 $table_row_border_color: #cccccc;
-$dnd_bars_color: gray;
-$drop_container_bg_color: #e8e9e9;
+$drop_container_bg_color: #f5f5f5;
 
 .rules-container {
+  font-size: 14px;
+  color: $general-font-color;
+
   .rules {
+
     .row {
       padding: 10px 0;
       border-bottom: 1px solid $table_row_border_color;
@@ -33,9 +37,23 @@ $drop_container_bg_color: #e8e9e9;
       &.dragging {
         opacity: 0;
       }
-      .icon-bars {
+
+      .remove-button,
+      .move-icon {
+        color: $lighter-font-color;
+
+        &:hover {
+          color: $rule-actions-color;
+          text-decoration: underline;
+        }
+      }
+      .remove-button {
+        font-size: 12px;
+        line-height: 1;
+      }
+
+      .move-icon {
         cursor: move;
-        color: $dnd_bars_color;
       }
     }
     .drag-drop-placeholder {
@@ -44,13 +62,14 @@ $drop_container_bg_color: #e8e9e9;
       padding: 10px 0;
       text-align: center;
       border: 2px dashed $table_row_border_color;
-      margin-top: 10px;
-      color: $brand-primary;
+      margin-top: 20px;
+      color: $rule-actions-color;
+      font-weight: bold;
     }
   }
 
   &.drag-hover {
-    border: 3px dashed $brand-primary;
+    border: 4px dashed $rule-actions-color;
     background: $drop_container_bg_color;
     position: relative;
     padding: 15px;
@@ -65,15 +84,14 @@ $drop_container_bg_color: #e8e9e9;
       left: 30%;
       font-size: 20px;
       top: 0;
-      color: $brand-primary;
+      color: $rule-actions-color;
       opacity: 0.5;
     }
   }
 
   .title {
     font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
   }
   .btn-link {
     &:focus,
@@ -83,7 +101,7 @@ $drop_container_bg_color: #e8e9e9;
       background: transparent;
       text-decoration: none;
     }
-    color: $brand-primary;
+    color: $rule-actions-color;
     cursor: pointer;
     padding: 0;
   }

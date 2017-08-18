@@ -217,7 +217,7 @@ class Rule extends Component {
             {this.props.rule.id}
           </Col>
           <Col xs="5">
-            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY HH:mm')}
+            {moment(this.props.rule.updated * 1000).format('MM-DD-YYYY')}
           </Col>
           <Col xs="1">
             <IconSVG name="icon-bars" />

@@ -16,7 +16,7 @@
 
 import React, {Component} from 'react';
 import RuleBook from 'components/RulesEngineHome/RuleBook';
-import {Input} from 'reactstrap';
+import {Input, InputGroup, InputGroupAddon} from 'reactstrap';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import Fuse from 'fuse.js';
 import isEmpty from 'lodash/isEmpty';
@@ -114,11 +114,19 @@ export default class RuleBooksTab extends Component {
   render() {
     return (
       <div className="rule-books-tab">
-        <Input
-          placeholder={T.translate(`${PREFIX}.searchplaceholder`)}
-          value={this.state.searchStr}
-          onChange={this.updateSearchStr}
-        />
+        <span className="rule-books-search-label">
+          {T.translate(`${PREFIX}.searchLabel`)}
+        </span>
+        <InputGroup className="rule-books-search-group">
+          <InputGroupAddon>
+            <IconSVG name="icon-search" />
+          </InputGroupAddon>
+          <Input
+            placeholder={T.translate(`${PREFIX}.searchplaceholder`)}
+            value={this.state.searchStr}
+            onChange={this.updateSearchStr}
+          />
+        </InputGroup>
         <div className={classnames("rule-books-container", {
           'loading': isNil(this.state.rulebooks)
         })}>

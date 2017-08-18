@@ -27,7 +27,7 @@ require('./RuleBook.scss');
 const PREFIX = 'features.RulesEngine.Rulebook';
 
 export default function RuleBook({bookDetails}) {
-  let {id, user:owner, updated, rules, description, version} = bookDetails;
+  let {id, user:owner, updated, rules, description} = bookDetails;
   let numOfRules = !isNil(rules) && typeof rules === 'string' ? rules.split(',').length : 0;
   const onClick = () => {
     setActiveRulebook(id);
@@ -41,10 +41,13 @@ export default function RuleBook({bookDetails}) {
         active: rulebooks.activeRulebookId === id
       })}
     >
-      <strong>
-        {id}
-        <small className="version-label">{T.translate(`${PREFIX}.version`)}: {version}</small>
-      </strong>
+      <div className="rule-book-top" />
+      <div
+        className="rule-book-id"
+        title={id}
+      >
+        <strong> {id} </strong>
+      </div>
       <div className="rule-book-owner">
         <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
         <span> {owner} </span>
@@ -55,7 +58,10 @@ export default function RuleBook({bookDetails}) {
       <div className="rule-book-num-of-rules">
         <strong>{numOfRules} {T.translate(`${PREFIX}.rules`)}</strong>
       </div>
-      <p>
+      <p
+        className="rule-book-description"
+        title={description}
+      >
         {description}
       </p>
     </div>

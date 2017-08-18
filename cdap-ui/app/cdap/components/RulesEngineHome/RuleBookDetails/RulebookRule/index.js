@@ -121,7 +121,7 @@ class RulebookRule extends Component {
         <Col xs={5}>{rule.description}</Col>
         <Col xs={2}>
           <button
-            className="btn btn-link"
+            className="btn btn-link remove-button"
             href
             onClick={() => onRemove(rule.id)}
           >
@@ -129,7 +129,10 @@ class RulebookRule extends Component {
           </button>
         </Col>
         <Col xs={1}>
-          <IconSVG name="icon-bars" />
+          <IconSVG
+            className="move-icon"
+            name="icon-arrows-v"
+          />
         </Col>
       </div>
     ));
