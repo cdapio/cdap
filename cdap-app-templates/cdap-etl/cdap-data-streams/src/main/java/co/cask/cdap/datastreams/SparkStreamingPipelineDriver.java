@@ -36,6 +36,7 @@ import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.PipelinePhase;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spark.StreamingCompat;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -133,7 +134,8 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         // Seems like they should be set at configure time instead of runtime? but that requires an API change.
         try {
           runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE,
-                             sec, new HashMap<String, Integer>(), pluginContext);
+                             sec, new HashMap<String, Integer>(), pluginContext,
+                             new HashMap<String, StageStatisticsCollector>());
         } catch (Exception e) {
           throw new RuntimeException(e);
         }

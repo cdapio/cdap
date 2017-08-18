@@ -45,7 +45,8 @@ public class ErrorTransformFunction<T, U> implements FlatMapFunc<ErrorRecord<T>,
       ErrorTransform<T, U> plugin = pluginFunctionContext.createPlugin();
       plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(),
+                                         pluginFunctionContext.getStageStatisticsCollector());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();

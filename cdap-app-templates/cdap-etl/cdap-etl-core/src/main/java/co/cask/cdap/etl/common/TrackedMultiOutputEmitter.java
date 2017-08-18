@@ -22,6 +22,7 @@ import co.cask.cdap.etl.api.MultiOutputEmitter;
 import co.cask.cdap.etl.api.StageMetrics;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Wrapper around another MultiOutputEmitter that tracks how many records were emitted to each port.
@@ -32,17 +33,21 @@ public class TrackedMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
   private final MultiOutputEmitter<E> delegate;
   private final StageMetrics stageMetrics;
   private final DataTracer dataTracer;
+  private final StageStatisticsCollector collector;
 
-  public TrackedMultiOutputEmitter(MultiOutputEmitter<E> delegate, StageMetrics stageMetrics, DataTracer dataTracer) {
+  public TrackedMultiOutputEmitter(MultiOutputEmitter<E> delegate, StageMetrics stageMetrics, DataTracer dataTracer,
+                                   StageStatisticsCollector collector) {
     this.delegate = delegate;
     this.stageMetrics = stageMetrics;
     this.dataTracer = dataTracer;
+    this.collector = collector;
   }
 
   @Override
   public void emit(String port, Object value) {
     String metricName = Constants.Metrics.RECORDS_OUT + "." + port;
     stageMetrics.count(metricName, 1);
+    collector.incrementOutputRecordCount();
     if (dataTracer.isEnabled()) {
       dataTracer.info(metricName, value);
     }
@@ -52,6 +57,7 @@ public class TrackedMultiOutputEmitter<E> implements MultiOutputEmitter<E> {
   @Override
   public void emitError(InvalidEntry<E> value) {
     stageMetrics.count(Constants.Metrics.RECORDS_ERROR, 1);
+    collector.incrementErrorRecordCount();
     if (dataTracer.isEnabled()) {
       dataTracer.info(Constants.Metrics.RECORDS_ERROR, value);
     }

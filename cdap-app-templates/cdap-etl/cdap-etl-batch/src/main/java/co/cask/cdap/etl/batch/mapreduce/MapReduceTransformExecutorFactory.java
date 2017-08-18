@@ -56,6 +56,7 @@ import co.cask.cdap.etl.common.NoErrorEmitter;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.TrackedMultiOutputTransform;
 import co.cask.cdap.etl.common.TrackedTransform;
 import co.cask.cdap.etl.common.TransformExecutor;
@@ -69,6 +70,7 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -136,7 +138,10 @@ public class MapReduceTransformExecutorFactory<T> {
     splitterTransform.initialize(transformContext);
 
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-    return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics, taskContext.getDataTracer(stageName));
+    TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
+    StageStatisticsCollector collector = new MapReduceStageStatisticsCollector(stageName, taskAttemptContext);
+    return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics, taskContext.getDataTracer(stageName),
+                                             collector);
   }
 
   @SuppressWarnings("unchecked")
@@ -149,6 +154,8 @@ public class MapReduceTransformExecutorFactory<T> {
     String stageName = stageSpec.getName();
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
+    TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
+    StageStatisticsCollector collector = new MapReduceStageStatisticsCollector(stageName, taskAttemptContext);
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageSpec);
@@ -156,12 +163,12 @@ public class MapReduceTransformExecutorFactory<T> {
       if (isMapPhase) {
         return getTrackedEmitKeyStep(new MapperAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
                                                                         mapOutputValClassName),
-                                     stageMetrics, taskContext.getDataTracer(stageName));
+                                     stageMetrics, taskContext.getDataTracer(stageName), collector);
       } else {
         return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator,
                                                                            mapOutputKeyClassName,
                                                                            mapOutputValClassName),
-                                       stageMetrics, taskContext.getDataTracer(stageName));
+                                       stageMetrics, taskContext.getDataTracer(stageName), collector);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -170,12 +177,12 @@ public class MapReduceTransformExecutorFactory<T> {
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
           new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName), stageMetrics,
-          taskContext.getDataTracer(stageName));
+          taskContext.getDataTracer(stageName), collector);
       } else {
         return getTrackedMergeStep(
           new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName,
                                           runtimeContext.getInputSchemas().size()), stageMetrics,
-          taskContext.getDataTracer(stageName));
+          taskContext.getDataTracer(stageName), collector);
       }
     }
 
@@ -187,7 +194,7 @@ public class MapReduceTransformExecutorFactory<T> {
     // not when we write the alerts to the temporary dataset
     String recordsInMetric = AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;
     return new TrackedTransform<>(transformation, stageMetrics, recordsInMetric, Constants.Metrics.RECORDS_OUT,
-                                  taskContext.getDataTracer(stageName));
+                                  taskContext.getDataTracer(stageName), collector);
   }
 
   /**
@@ -320,22 +327,25 @@ public class MapReduceTransformExecutorFactory<T> {
 
   private static <IN, OUT> TrackedTransform<IN, OUT> getTrackedEmitKeyStep(Transformation<IN, OUT> transform,
                                                                            StageMetrics stageMetrics,
-                                                                           DataTracer dataTracer) {
-    return new TrackedTransform<>(transform, stageMetrics, Constants.Metrics.RECORDS_IN, null, dataTracer);
+                                                                           DataTracer dataTracer,
+                                                                           StageStatisticsCollector collector) {
+    return new TrackedTransform<>(transform, stageMetrics, Constants.Metrics.RECORDS_IN, null, dataTracer, collector);
   }
 
   private static <IN, OUT> TrackedTransform<IN, OUT> getTrackedAggregateStep(Transformation<IN, OUT> transform,
                                                                              StageMetrics stageMetrics,
-                                                                             DataTracer dataTracer) {
+                                                                             DataTracer dataTracer,
+                                                                             StageStatisticsCollector collector) {
     // 'aggregator.groups' is the number of groups output by the aggregator
     return new TrackedTransform<>(transform, stageMetrics, Constants.Metrics.AGG_GROUPS, Constants.Metrics.RECORDS_OUT,
-                                  dataTracer);
+                                  dataTracer, collector);
   }
 
   private static <IN, OUT> TrackedTransform<IN, OUT> getTrackedMergeStep(Transformation<IN, OUT> transform,
                                                                          StageMetrics stageMetrics,
-                                                                         DataTracer dataTracer) {
-    return new TrackedTransform<>(transform, stageMetrics, null, Constants.Metrics.RECORDS_OUT, dataTracer);
+                                                                         DataTracer dataTracer,
+                                                                         StageStatisticsCollector collector) {
+    return new TrackedTransform<>(transform, stageMetrics, null, Constants.Metrics.RECORDS_OUT, dataTracer, collector);
   }
 
   /**
