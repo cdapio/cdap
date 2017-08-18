@@ -34,6 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
@@ -70,10 +72,10 @@ public class MetricsTableMigration {
    * @return
    */
   public boolean isOldMetricsDataAvailable() {
-    Scanner scanner = v2MetricsTable.scan(null, null, null);
-    Row row = scanner.next();
-    scanner.close();
-    return (row != null);
+    try (Scanner scanner = v2MetricsTable.scan(null, null, null)) {
+      Row row = scanner.next();
+      return (row != null);
+    }
   }
 
   /**
@@ -82,67 +84,69 @@ public class MetricsTableMigration {
    * @param maxRecordsToScan - limit on number of records scanned
    */
   public void transferData(int maxRecordsToScan) {
-    LOG.trace("Running Metrics Migrator Thread");
-    Scanner scanner = v2MetricsTable.scan(null, null, null);
-    Row row;
-    int recordsScanned = 0;
-
-    while (((row = scanner.next()) != null) && (recordsScanned < maxRecordsToScan)) {
-      if (recordsScanned % 10 == 0) {
-        LOG.trace("Scanned {} records in Metrics Data Migration", recordsScanned);
-      }
-
-      byte[] rowKey = row.getRow();
-      Map<byte[], byte[]> columns = row.getColumns();
-      //row-map
-      SortedMap<byte[], SortedMap<byte[], Long>> rowGauges = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      NavigableMap<byte[], NavigableMap<byte[], Long>> rowIncrements = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-
-      // column-map gauges
-      SortedMap<byte[], Long> gauges = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      // column-map increments
-      NavigableMap<byte[], Long> increments = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-
-      for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
-        // column is timestamp, do a get on the new table
-        byte[] value = v3MetricsTable.get(rowKey, entry.getKey());
-        if (value == null) {
-          gauges.put(entry.getKey(), Bytes.toLong(entry.getValue()));
-        } else {
-          increments.put(entry.getKey(), Bytes.toLong(entry.getValue()));
+    try (Scanner scanner = v2MetricsTable.scan(null, null, null)) {
+      LOG.debug("Starting scanning for Metrics Data Migration with {} max records", maxRecordsToScan);
+      Row row;
+      int recordsScanned = 0;
+      while ((recordsScanned < maxRecordsToScan) && ((row = scanner.next()) != null)) {
+        if (recordsScanned % 10 == 0) {
+          LOG.debug("Scanned {} records in Metrics Data Migration", recordsScanned);
         }
-      }
-      byte[][] deletes = getByteArrayFromSets(increments.keySet(), gauges.keySet());
 
-      if (deletes.length > 0) {
-        v2MetricsTable.delete(rowKey, deletes);
-      }
+        byte[] rowKey = row.getRow();
+        Map<byte[], byte[]> columns = row.getColumns();
+        //row-map
+        SortedMap<byte[], SortedMap<byte[], Long>> rowGauges = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+        NavigableMap<byte[], NavigableMap<byte[], Long>> rowIncrements = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
-      if (!gauges.isEmpty()) {
-        rowGauges.put(rowKey, gauges);
-        v3MetricsTable.put(rowGauges);
-      }
+        // column-map gauges
+        List<byte[]> gaugeDeletes = new ArrayList<>();
+        // column-map increments
+        NavigableMap<byte[], Long> increments = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
-      // increments
-      if (!increments.isEmpty()) {
-        rowIncrements.put(rowKey, increments);
-        v3MetricsTable.increment(rowIncrements);
+        for (Map.Entry<byte[], byte[]> entry : columns.entrySet()) {
+          // column is timestamp, do a get on the new table
+          byte[] value = v3MetricsTable.get(rowKey, entry.getKey());
+          if (value == null) {
+            LOG.debug("Trying checkAndPut");
+            if (v3MetricsTable.checkAndPut(rowKey, entry.getKey(), new byte[0], entry.getValue())) {
+              LOG.debug("checkAndPut Successful");
+              gaugeDeletes.add(entry.getKey());
+            } else {
+              LOG.debug("checkAndPut failed");
+            }
+          } else {
+            increments.put(entry.getKey(), Bytes.toLong(entry.getValue()));
+          }
+        }
+
+        byte[][] deletes = getByteArrayFromSets(increments.keySet(), gaugeDeletes);
+
+        // delete entries from old table
+        if (deletes.length > 0) {
+          v2MetricsTable.delete(rowKey, deletes);
+        }
+
+        // increments
+        if (!increments.isEmpty()) {
+          rowIncrements.put(rowKey, increments);
+          v3MetricsTable.increment(rowIncrements);
+        }
+
+        // break if we have exceeded max records to scan
+        recordsScanned++;
       }
-      // delete entries from old table
-      // break if we have exceeded max records to scan
-      recordsScanned++;
+      LOG.debug("Migrated {} records from the metrics table {}", recordsScanned, v2MetricsTable);
     }
-    scanner.close();
-    LOG.trace("Migrated {} records from the metrics table {}", recordsScanned, v2MetricsTable);
   }
 
-  private byte[][] getByteArrayFromSets(Set<byte[]> incrementSet, Set<byte[]> gaugeSet) {
-    byte [][] deletes = new byte[incrementSet.size() + gaugeSet.size()][];
+  private byte[][] getByteArrayFromSets(Set<byte[]> incrementSet, List<byte[]> gaugeDelets) {
+    byte [][] deletes = new byte[incrementSet.size() + gaugeDelets.size()][];
     int index = 0;
     for (byte[] column : incrementSet) {
       deletes[index++] = column;
     }
-    for (byte[] column : gaugeSet) {
+    for (byte[] column : gaugeDelets) {
       deletes[index++] = column;
     }
     return deletes;
@@ -167,7 +171,7 @@ public class MetricsTableMigration {
         TableId hBaseTableId =
           tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
         boolean doesExist  = tableUtil.tableExists(admin, hBaseTableId);
-        LOG.trace("Table {} exists ? : {}", hBaseTableId.getTableName(), doesExist);
+        LOG.debug("Table {} exists : {}", hBaseTableId.getTableName(), doesExist);
         return doesExist;
       }
     } catch (IOException e) {
@@ -186,15 +190,15 @@ public class MetricsTableMigration {
   public boolean deleteV2MetricsTable(HBaseDDLExecutorFactory ddlExecutorFactory,
                                       HBaseTableUtil tableUtil, int resolution) {
     TableId tableId = getV2MetricsTableName(resolution);
-    LOG.trace("Looking to delete table {}", tableId);
+    LOG.debug("Looking to delete table {}", tableId);
     try {
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
         TableId hBaseTableId =
           tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
         if (tableUtil.tableExists(admin, hBaseTableId)) {
-          LOG.trace("Found table {}, going to delete", hBaseTableId);
+          LOG.debug("Found table {}, going to delete", hBaseTableId);
           tableUtil.dropTable(ddlExecutor, hBaseTableId);
-          LOG.trace("Deleted table {}", hBaseTableId);
+          LOG.debug("Deleted table {}", hBaseTableId);
           return true;
         }
       }

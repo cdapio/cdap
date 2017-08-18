@@ -47,12 +47,28 @@ public class MetricsTableDeleter implements Runnable {
     this.hBaseTableUtil = hBaseTableUtil;
     this.hBaseDDLExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
   }
+  /**
+   * returns true when data migration is complete and all v2 metrics tables have been deleted; false otherwise
+   * @return true if migration is complete; false otherwise
+   */
+  public boolean allTablesDeleted() {
+    // when metrics.processor restarts and initializes TableDeleter,
+    // this is useful to decide whether to schedule deletion thread or not
+    for (Map.Entry<Integer, MetricsTableMigration> entry : resolutionTablesToDelete.entrySet()) {
+      if (entry.getValue().v2MetricsTableExists(hBaseTableUtil, entry.getKey())) {
+        return false;
+      }
+    }
+    // all tables have been deleted, so migration is complete
+    return true;
+  }
 
   @Override
   public void run() {
     for (int resolution : resolutionTablesToDelete.keySet()) {
       MetricsTableMigration metricsTableMigration = resolutionTablesToDelete.get(resolution);
       if (metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution) &&
+        !metricsTableMigration.isOldMetricsDataAvailable() &&
         metricsTableMigration.deleteV2MetricsTable(hBaseDDLExecutorFactory, hBaseTableUtil, resolution)) {
         LOG.info("Successfully Deleted the v2 metrics table for resolution {} seconds", resolution);
       }

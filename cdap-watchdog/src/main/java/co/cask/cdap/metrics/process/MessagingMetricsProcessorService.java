@@ -49,6 +49,7 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -66,6 +67,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -115,6 +117,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private long metricsProcessedCount;
 
   private MetricsConsumerMetaTable metaTable;
+
+  private DataMigrator dataMigrator;
+  private ScheduledExecutorService dataMigratorExecutor;
+  private MetricsTableDeleter tableDeleter;
+  private ScheduledExecutorService tableDeleterExecutor;
 
   private volatile boolean stopping;
 
@@ -248,31 +255,39 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       // of their data, except for the few metrics emitted in the last hour/minute.
 
       if (!skipMigration) {
-        DataMigrator dataMigrator = new DataMigrator(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
-                                                     ImmutableList.of(Integer.MAX_VALUE), Integer.MAX_VALUE);
-        dataMigrator.run();
+        int maxRecordsToScan = 1000;
+        LinkedHashMap<Integer, Integer> resolutionToMaxRecordsMap = new LinkedHashMap<>();
+        // migrate aggregates resolution table without limit on max records scan
+        resolutionToMaxRecordsMap.put(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        // migrate 1hr resolution table, then 1min resolution table,
+        // limit 1000 records to scan/transfer in a run.
+        resolutionToMaxRecordsMap.put(3600, maxRecordsToScan);
+        resolutionToMaxRecordsMap.put(60, maxRecordsToScan);
 
-        // migrate 1hr resolution table first, then 1min resolution table, limit 1000 records to scan/transfer in a run.
         dataMigrator = new DataMigrator(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
-                                        ImmutableList.of(3600, 60), 1000);
+                                                     resolutionToMaxRecordsMap);
 
-        ScheduledExecutorService scheduledExecutorService =
-          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-data-migrator"));
+        if (!dataMigrator.isMigrationComplete()) {
+          dataMigratorExecutor =
+            Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-data-migrator"));
 
-        // 5-min initial delay and scheduled to run each min after that
-        scheduledExecutorService.scheduleAtFixedRate(dataMigrator, 5, 1, TimeUnit.MINUTES);
-        LOG.info("Scheduled metrics migration thread for resolution 3600, 60 tables");
+          // 5-min initial delay and scheduled to run each min after that
+          dataMigratorExecutor.scheduleAtFixedRate(dataMigrator, 5, 1, TimeUnit.MINUTES);
+          LOG.info("Scheduled metrics migration thread for resolution INT_MAX, 3600, 60 tables");
+        }
 
-        MetricsTableDeleter tableDeletion =
+        tableDeleter =
           new MetricsTableDeleter(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
                                   ImmutableList.of(Integer.MAX_VALUE, 3600, 60, 1));
-        ScheduledExecutorService scheduledExecutorServiceDelete =
-          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
 
-        // scheduled to run every 2 hours
-        scheduledExecutorServiceDelete.scheduleAtFixedRate(tableDeletion, 1, 2, TimeUnit.HOURS);
-        LOG.info("Scheduled metrics deletion thread for 1, 60, 3600, INT_MAX resolution tables, " +
-                   "tables will only be deleted after data migration is completed for them");
+        if (!tableDeleter.allTablesDeleted()) {
+          tableDeleterExecutor =
+            Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
+          // scheduled to run every 2 hours
+          tableDeleterExecutor.scheduleAtFixedRate(tableDeleter, 1, 2, TimeUnit.HOURS);
+          LOG.info("Scheduled metrics deletion thread for 1, 60, 3600, INT_MAX resolution tables, " +
+                     "tables will only be deleted after data migration is completed for them");
+        }
       }
     }
 
@@ -353,7 +368,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                          new MetricValue(delayMetricName, MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     metricsProcessedCount += metricValues.size();
-      PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
+    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
                          "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
   }
 
@@ -401,6 +416,19 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           if (sleepTime > 0) {
             TimeUnit.MILLISECONDS.sleep(sleepTime);
           }
+
+          // shut down the executores if they are not needed anymore
+          // todo uncomment and run only every 100 times
+          /*if (instanceId == 0 && topicIdMetaKey.getTopicId().equals(metricsTopics.get(0))) {
+            if (dataMigrator != null && dataMigratorExecutor != null && !dataMigratorExecutor.isShutdown()
+              && dataMigrator.isMigrationComplete()) {
+              dataMigratorExecutor.shutdown();
+            }
+            if (tableDeleter != null && tableDeleterExecutor != null && !tableDeleterExecutor.isShutdown()
+              && tableDeleter.allTablesDeleted()) {
+              tableDeleterExecutor.shutdown();
+            }
+          }*/
         } catch (InterruptedException e) {
           // It's triggered by stop
           Thread.currentThread().interrupt();

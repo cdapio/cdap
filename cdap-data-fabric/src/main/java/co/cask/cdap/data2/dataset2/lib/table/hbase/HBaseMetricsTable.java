@@ -311,8 +311,9 @@ public class HBaseMetricsTable implements MetricsTable {
     putBuilder.add(columnFamily, qualifier, newValue);
     Put put = putBuilder.build();
     try {
-      return hTable.checkAndPut(row, columnFamily, qualifier, expectedValue, put);
+      return hTable.checkAndPut(distributedKey, columnFamily, qualifier, expectedValue, put);
     } catch (IOException e) {
+      LOG.debug("Exception during checkAndPut", e);
       throw new DataSetException("Put failed on table " + tableId, e);
     }
   }

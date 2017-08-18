@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Migrates data from v2 table to v3 table with salting.
@@ -33,18 +34,44 @@ public class DataMigrator implements Runnable {
   private static final Logger LOG = LoggerFactory.getLogger(DataMigrator.class);
 
   private final LinkedHashMap<Integer, MetricsTableMigration> migrationOrder;
-  private final int maxRecordsToScan;
+  private final Map<Integer, Integer> maxRecordsToScanResolutionMap;
   private final HBaseTableUtil hBaseTableUtil;
 
   // Data migrator thread will be created for each resolution tables, so they can be scheduled appropriately.
   public DataMigrator(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
-                      HBaseTableUtil hBaseTableUtil, List<Integer> resolutions, int maxRecordsToScan) {
+                      HBaseTableUtil hBaseTableUtil, LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap) {
     migrationOrder = new LinkedHashMap<>();
-    for (int resolution : resolutions) {
+    for (int resolution : maxRecordsToScanResolutionMap.keySet()) {
       migrationOrder.put(resolution, new MetricsTableMigration(metricDatasetFactory, resolution, cConf, hConf));
     }
-    this.maxRecordsToScan = maxRecordsToScan;
+    this.maxRecordsToScanResolutionMap = maxRecordsToScanResolutionMap;
     this.hBaseTableUtil = hBaseTableUtil;
+  }
+
+  /**
+   * returns true when data migration is complete and all v2 metrics tables have been deleted; false otherwise
+   * @return true if migration is complete; false otherwise
+   */
+  public boolean isMigrationComplete() {
+    if (migrationOrder.isEmpty()) {
+      // all tables have been deleted, so migration is complete;
+      // useful when metrics.processor is running and completed migration
+      // and the run method removed all the entries from map when the tables were deleted
+      return true;
+    }
+
+    // when metrics.processor restarts and initializes DataMigrator,
+    // this is useful to decide whether to schedule migration thread or not
+    Iterator<Integer> resolutions = migrationOrder.keySet().iterator();
+    while (resolutions.hasNext()) {
+      int resolution = resolutions.next();
+      MetricsTableMigration metricsTableMigration = migrationOrder.get(resolution);
+      if (metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution)) {
+        return false;
+      }
+    }
+    // all tables have been deleted, so migration is complete
+    return true;
   }
 
   @Override
@@ -68,7 +95,7 @@ public class DataMigrator implements Runnable {
 
       if (metricsTableMigration.isOldMetricsDataAvailable()) {
         LOG.info("Metrics data is available in v2 metrics - {} resolution table.. Running Migration", resolution);
-        metricsTableMigration.transferData(maxRecordsToScan);
+        metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
         break;
       }
     }
