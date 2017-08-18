@@ -30,6 +30,8 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.workflow.AbstractCondition;
+import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.NodeStatus;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
@@ -52,6 +54,7 @@ import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.service.Retries;
@@ -59,6 +62,7 @@ import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
@@ -108,7 +112,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.annotation.Nullable;
@@ -130,7 +133,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final Map<String, WorkflowActionNode> status = new ConcurrentHashMap<>();
   private final LoggingContext loggingContext;
   private final Lock lock;
-  private final Condition condition;
+  private final java.util.concurrent.locks.Condition condition;
   private final MetricsCollectionService metricsCollectionService;
   private final NameMappedDatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -479,25 +482,56 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   @SuppressWarnings("unchecked")
-  private void executeCondition(ApplicationSpecification appSpec, WorkflowConditionNode node,
+  private void executeCondition(ApplicationSpecification appSpec, final WorkflowConditionNode node,
                                 InstantiatorFactory instantiator, ClassLoader classLoader,
                                 WorkflowToken token) throws Exception {
+
+    final BasicWorkflowContext context = new BasicWorkflowContext(workflowSpec, null, token, program, programOptions,
+                                                                  cConf, metricsCollectionService, datasetFramework,
+                                                                  txClient, discoveryServiceClient, nodeStates,
+                                                                  pluginInstantiator, secureStore, secureStoreManager,
+                                                                  messagingService);
+    final Iterator<WorkflowNode> iterator;
     Class<?> clz = classLoader.loadClass(node.getPredicateClassName());
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, token, program, programOptions, cConf,
-                                                       metricsCollectionService, datasetFramework, txClient,
-                                                       discoveryServiceClient, nodeStates, pluginInstantiator,
-                                                       secureStore, secureStoreManager, messagingService);
-    Iterator<WorkflowNode> iterator;
-    if (predicate.apply(context)) {
-      // execute the if branch
-      iterator = node.getIfBranch().iterator();
+    if (!(predicate instanceof Condition)) {
+      iterator = predicate.apply(context) ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
     } else {
-      // execute the else branch
-      iterator = node.getElseBranch().iterator();
+      final Condition workflowCondition = (Condition) predicate;
+
+      Reflections.visit(workflowCondition, workflowCondition.getClass(),
+                        new PropertyFieldSetter(node.getConditionSpecification().getProperties()),
+                        new DataSetFieldSetter(context), new MetricsFieldSetter(context.getMetrics()));
+
+      try {
+        // AbstractCondition implements final initialize(context) and requires subclass to
+        // implement initialize(), whereas conditions that directly implement Condition can
+        // override initialize(context)
+
+        TransactionControl txControl = workflowCondition instanceof AbstractCondition
+          ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, AbstractCondition.class,
+                                               workflowCondition, "initialize")
+          : Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class,
+                                               workflowCondition, "initialize", WorkflowContext.class);
+
+        context.initializeProgram(workflowCondition, context, txControl, false);
+        boolean result = context.executeChecked(new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return workflowCondition.apply(context);
+          }
+        });
+        iterator = result ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
+      } finally {
+        TransactionControl txControl =
+          Transactions.getTransactionControl(TransactionControl.IMPLICIT, Condition.class, workflowCondition,
+                                             "destroy");
+        context.destroyProgram(workflowCondition, context, txControl, false);
+      }
     }
+
     // If a workflow updates its token at a condition node, it will be persisted after the execution of the next node.
     // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
     // condition node are also persisted.

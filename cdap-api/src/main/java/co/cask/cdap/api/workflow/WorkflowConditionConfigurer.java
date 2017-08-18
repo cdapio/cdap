@@ -67,6 +67,13 @@ public interface WorkflowConditionConfigurer<T> {
   WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Predicate<WorkflowContext> condition);
 
   /**
+   * Adds a nested condition to the current condition.
+   * @param condition the {@link Condition} to be evaluated
+   * @return the configurer for the condition
+   */
+  WorkflowConditionConfigurer<? extends WorkflowConditionConfigurer<T>> condition(Condition condition);
+
+  /**
    * Adds a branch to the {@link WorkflowConditionNode} which is executed if the condition evaluates to the false.
    * @return the configurer for the condition
    */

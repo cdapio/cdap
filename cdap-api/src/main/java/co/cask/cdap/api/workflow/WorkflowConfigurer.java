@@ -80,6 +80,13 @@ public interface WorkflowConfigurer extends ProgramConfigurer, PluginConfigurer 
   WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> condition);
 
   /**
+   * Adds a condition to the {@link Workflow}.
+   * @param condition the {@link Condition} to be evaluated
+   * @return the configurer for the condition
+   */
+  WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition);
+
+  /**
    * Adds a local dataset instance to the {@link Workflow}.
    * <p>
    * Local datasets are created at the start of every {@code Workflow} run and deleted once the run
