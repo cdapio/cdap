@@ -64,7 +64,6 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -84,6 +83,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -185,28 +185,26 @@ public class FileStreamAdmin implements StreamAdmin {
       }
     });
 
-    boolean shouldDeleteStateTable = true;
+    Map<StreamId, Location> streams = new HashMap<>();
     for (Location location : locations) {
-      try {
-        StreamId streamId = namespace.stream(StreamUtils.getStreamNameFromLocation(location));
-        ensureAccess(streamId, Action.ADMIN);
-        doDrop(streamId, location);
-      } catch (UnauthorizedException e) {
-        shouldDeleteStateTable = false;
-        // It's ok to be not authorized. Just skip the deletion.
-      }
+      StreamId streamId = namespace.stream(StreamUtils.getStreamNameFromLocation(location));
+      ensureAccess(streamId, Action.ADMIN);
+      streams.put(streamId, location);
+    }
+
+    // authorization passed, we can do the drop
+    for (StreamId streamId : streams.keySet()) {
+      doDrop(streamId, streams.get(streamId));
     }
 
     // Also drop the state table if all the streams are deleted
-    if (shouldDeleteStateTable) {
-      impersonator.doAs(namespace, new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          stateStoreFactory.dropAllInNamespace(namespace);
-          return null;
-        }
-      });
-    }
+    impersonator.doAs(namespace, new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        stateStoreFactory.dropAllInNamespace(namespace);
+        return null;
+      }
+    });
   }
 
   @Override

@@ -225,13 +225,11 @@ class DatasetServiceClient {
   /**
    * Deletes all dataset instances inside the namespace of this client is operating in.
    */
-  Set<String> deleteInstances() throws DatasetManagementException {
+  void deleteInstances() throws DatasetManagementException {
     HttpResponse response = doDelete("datasets");
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete instances, details: %s", response));
     }
-
-    return GSON.fromJson(response.getResponseBodyAsString(), DATASET_NAME_TYPE);
   }
 
   public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
