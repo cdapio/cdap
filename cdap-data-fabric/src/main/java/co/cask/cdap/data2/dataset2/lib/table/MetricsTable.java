@@ -16,8 +16,10 @@
 
 package co.cask.cdap.data2.dataset2.lib.table;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.table.Scanner;
+import org.apache.hadoop.hbase.client.Put;
 
 import java.util.Map;
 import java.util.NavigableMap;
@@ -82,6 +84,18 @@ public interface MetricsTable extends Dataset {
    * @param columns names of columns to delete
    */
   void delete(byte[] row, byte[][] columns);
+
+  /**
+   * checks the expected value before performing a put
+   * @param row
+   * @param column
+   * @param expectedValue
+   * @param newValue
+   * @return true if put is successful; false if actual value is different from expected value
+   */
+  @Beta
+  boolean checkAndPut(final byte [] row, final byte [] column, final byte [] expectedValue,
+                      final byte[] newValue);
 
   /**
    * Get a scanner for a table.

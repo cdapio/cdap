@@ -154,6 +154,17 @@ public class MetricsTableOnTableTest extends MetricsTableTest {
     }
 
     @Override
+    public boolean checkAndPut(final byte[] row,
+                               final byte[] column, final byte[] expectedValue, final byte[] newValue) {
+      return txnl.executeUnchecked(new Callable<Boolean>() {
+        @Override
+        public Boolean call() {
+          return delegate.checkAndPut(row, column, expectedValue, newValue);
+        }
+      });
+    }
+
+    @Override
     public Scanner scan(@Nullable final byte[] start, @Nullable final byte[] stop,
                         @Nullable final FuzzyRowFilter filter) {
       return txnl.executeUnchecked(new Callable<Scanner>() {

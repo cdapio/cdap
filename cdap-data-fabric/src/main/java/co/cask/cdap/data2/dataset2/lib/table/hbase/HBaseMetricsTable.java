@@ -305,6 +305,19 @@ public class HBaseMetricsTable implements MetricsTable {
   }
 
   @Override
+  public boolean checkAndPut(byte[] row, byte[] qualifier, byte[] expectedValue, byte[] newValue) {
+    byte[] distributedKey = createDistributedRowKey(row);
+    PutBuilder putBuilder = tableUtil.buildPut(distributedKey);
+    putBuilder.add(columnFamily, qualifier, newValue);
+    Put put = putBuilder.build();
+    try {
+      return hTable.checkAndPut(row, columnFamily, qualifier, expectedValue, put);
+    } catch (IOException e) {
+      throw new DataSetException("Put failed on table " + tableId, e);
+    }
+  }
+
+  @Override
   public Scanner scan(@Nullable byte[] startRow, @Nullable byte[] stopRow,
                       @Nullable FuzzyRowFilter filter) {
     ScanBuilder scanBuilder = tableUtil.buildScan();
