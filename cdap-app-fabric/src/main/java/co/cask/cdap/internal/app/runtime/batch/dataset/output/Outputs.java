@@ -25,6 +25,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvid
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -39,13 +40,12 @@ public final class Outputs {
    * Transforms a list of {@link Output}s to {@link ProvidedOutput}.
    */
   public static List<ProvidedOutput> transform(List<Output> outputs, final AbstractContext abstractContext) {
-    return Lists.transform(outputs, new Function<Output, ProvidedOutput>() {
-      @Nullable
-      @Override
-      public ProvidedOutput apply(Output output) {
-        return transform(output, abstractContext);
-      }
-    });
+    // we don't want to use Lists.transform, to catch any errors with transform earlier on
+    List<ProvidedOutput> providedOutputs = new ArrayList<>(outputs.size());
+    for (Output output : outputs) {
+      providedOutputs.add(transform(output, abstractContext));
+    }
+    return providedOutputs;
   }
 
   /**
