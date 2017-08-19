@@ -29,6 +29,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -102,19 +103,26 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
     if (committer == null) {
       // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
       // same order as outputs were added. This makes multi-output a little more predictable (and testable).
-      Map<String, OutputCommitter> committers = new LinkedHashMap<>();
+      Map<String, OutputCommitter> delegates = new LinkedHashMap<>();
 
-      for (String name : MultipleOutputs.getNamedOutputsList(context)) {
-        Class<? extends OutputFormat> namedOutputFormatClass =
-          MultipleOutputs.getNamedOutputFormatClass(context, name);
+      List<String> namedOutputsList = MultipleOutputs.getNamedOutputsList(context);
+      // if there is only 1 output configured, it is the same as the root OutputFormat, so no need to have it also in
+      // the delegates; otherwise, its methods would get called more than expected.
+      // If more than 1 outputs are configured, then the root OutputCommitter is a NullOutputCommitter (no-op).
+      // See MapReduceRuntimeService#setOutputsIfNeeded.
+      if (namedOutputsList.size() > 1) {
+        for (String name : namedOutputsList) {
+          Class<? extends OutputFormat> namedOutputFormatClass =
+            MultipleOutputs.getNamedOutputFormatClass(context, name);
 
           TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
-        OutputFormat<K, V> outputFormat =
-          ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
-        committers.put(name, outputFormat.getOutputCommitter(namedContext));
+          OutputFormat<K, V> outputFormat =
+            ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+          delegates.put(name, outputFormat.getOutputCommitter(namedContext));
+        }
       }
       // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
-      committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context), committers,
+      committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context), delegates,
                                           context);
     }
     return committer;

@@ -753,7 +753,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
     } else {
       // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
-      // as the root output format in this case to disallow writing directly on the context
+      // as the root output format in this case to disallow writing directly on the context.
+      // the OutputCommitter is effectively a no-op, as it runs as the RootOutputCommitter in MultipleOutputsCommitter
       rootOutputFormatProvider =
         new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), Collections.<String, String>emptyMap());
     }

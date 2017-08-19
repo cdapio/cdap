@@ -83,10 +83,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Category(XSlowTests.class)
 /**
  * Base class for test cases that need to run MapReduce programs.
  */
+@Category(XSlowTests.class)
 public class MapReduceRunnerTestBase {
 
   private static final Gson GSON = new Gson();
