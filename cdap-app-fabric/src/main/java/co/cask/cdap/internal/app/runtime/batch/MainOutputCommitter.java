@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -53,14 +52,14 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionFailureException;
-import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Map;
 
 /**
  * An {@link OutputCommitter} used to
@@ -72,10 +71,8 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private TransactionSystemClient txClient;
   private Transaction transaction;
   private BasicMapReduceTaskContext taskContext;
-  private JobContext jobContext;
 
   private List<ProvidedOutput> outputs;
-  private boolean success;
 
   public MainOutputCommitter(TaskAttemptContext taskAttemptContext) {
     super(taskAttemptContext);
@@ -83,36 +80,31 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   @Override
   public void setupJob(JobContext jobContext) throws IOException {
-    this.jobContext = jobContext;
     Configuration configuration = jobContext.getConfiguration();
     MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(configuration);
     MapReduceTaskContextProvider taskContextProvider = classLoader.getTaskContextProvider();
     Injector injector = taskContextProvider.getInjector();
 
     cConf = injector.getInstance(CConfiguration.class);
-    TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-
     MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
+
+    ProgramId programId = contextConfig.getProgramId();
+    LOG.info("Setting up for MapReduce job: namespaceId={}, applicationId={}, program={}, runid={}",
+             programId.getNamespace(), programId.getApplication(), programId.getProgram(),
+             ProgramRunners.getRunId(contextConfig.getProgramOptions()));
+
     RetryStrategy retryStrategy =
       SystemArguments.getRetryStrategy(contextConfig.getProgramOptions().getUserArguments().asMap(),
-                                       contextConfig.getProgramId().getType(),
-                                       cConf);
-    this.txClient = new RetryingLongTransactionSystemClient(txClient, retryStrategy);
+                                       contextConfig.getProgramId().getType(), cConf);
+    this.txClient = new RetryingLongTransactionSystemClient(injector.getInstance(TransactionSystemClient.class),
+                                                            retryStrategy);
 
     // We start long-running tx to be used by mapreduce job tasks.
-    Transaction tx = txClient.startLong();
-    try {
-      this.transaction = tx;
-    } catch (Throwable t) {
-      Transactions.invalidateQuietly(txClient, tx);
-      throw t;
-    }
+    this.transaction = txClient.startLong();
 
     // Write the tx somewhere, so that we can re-use it in mapreduce tasks
-    // we can't piggy back on MapReduce staging directory, since its only there for FileOutputFormat
-    // (whose FileOutputCommitter#setupJob hasn't run yet)
     Path txFile = getTxFile(configuration, jobContext.getJobID());
-    FileSystem fs = txFile.getFileSystem(jobContext.getConfiguration());
+    FileSystem fs = txFile.getFileSystem(configuration);
     try (FSDataOutputStream fsDataOutputStream = fs.create(txFile, false)) {
       fsDataOutputStream.write(new TransactionCodec().encode(transaction));
     }
@@ -135,16 +127,15 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   @Override
   public void commitJob(JobContext jobContext) throws IOException {
     super.commitJob(jobContext);
-    success = true;
 
     // commitTx
-    doShutdown(jobContext);
+    onFinish(jobContext, true);
     commitTx();
   }
 
   private void commitTx() throws IOException {
     try {
-      LOG.debug("Committing MapReduce Job transaction: {}", toString(jobContext));
+      LOG.debug("Committing MapReduce Job transaction: {}", transaction.getWritePointer());
 
       // "Commit" the data event topic by publishing an empty message.
       // Need to do it with the raw MessagingService.
@@ -159,7 +150,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
       if (!txClient.commit(transaction)) {
         LOG.warn("MapReduce Job transaction failed to commit");
-        throw new TransactionFailureException("Failed to commit transaction for MapReduce " + toString(jobContext));
+        throw new TransactionFailureException("Failed to commit transaction " + transaction.getWritePointer());
       }
     } catch (TransactionFailureException | TopicNotFoundException e) {
       throw Throwables.propagate(e);
@@ -174,119 +165,107 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     } finally {
 
       try {
-        doShutdown(jobContext);
+        onFinish(jobContext, false);
       } finally {
         if (transaction != null) {
           // invalids long running tx. All writes done by MR cannot be undone at this point.
+          LOG.info("Invalidating transaction {}", transaction.getWritePointer());
           txClient.invalidate(transaction.getWritePointer());
+          transaction = null;
         } else {
-          // setupJob failed before even successfully starting the transaction
-          LOG.warn("Did not commit datasets, since job setup did not complete.");
+          LOG.warn("Did not invalidate transaction, since job setup did not complete or invalidate already happened.");
         }
       }
     }
   }
 
-  private void doShutdown(JobContext jobContext) throws IOException {
+  private void onFinish(JobContext jobContext, boolean success) throws IOException {
     try {
-      onFinish(jobContext);
+      if (taskContext == null || outputs == null) {
+        // taskContext or outputs can only be null if #setupJob fails
+        LOG.warn("Did not commit datasets, since job setup did not complete.");
+        return;
+      }
+      finishDatasets(jobContext, success);
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       Throwables.propagate(e);
     }
   }
 
-  private void onFinish(JobContext jobContext) throws Exception {
-    if (taskContext == null || outputs == null) {
-      // taskContext or outputs can only be null if #setupJob fails
-      LOG.warn("Did not commit datasets, since job setup did not complete.");
-      return;
-    }
-    commitDatasets(jobContext);
-  }
-
-  // TODO: rename?
-  private String toString(JobContext jobContext) {
-    MapReduceContextConfig contextConfig = new MapReduceContextConfig(jobContext.getConfiguration());
-    ProgramId programId = contextConfig.getProgramId();
-    ProgramRunId runId = programId.run(ProgramRunners.getRunId(contextConfig.getProgramOptions()));
-    return String.format("namespaceId=%s, applicationId=%s, program=%s, runid=%s",
-                         programId.getNamespace(), programId.getApplication(), programId.getProgram(), runId.getRun());
-  }
-
-  private void commitDatasets(final JobContext jobContext) throws Exception {
-    final AtomicReference<Exception> failureCause = new AtomicReference<>();
-
-    try {
-      taskContext.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext ctxt) throws Exception {
-          ClassLoader oldClassLoader =
-            ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
-          try {
-            for (ProvidedOutput output : outputs) {
-              boolean wasSuccess = success;
-              commitOutput(output, failureCause);
-              if (wasSuccess && !success) {
-                // mapreduce was successful but this output committer failed: call onFailure() for all committers
-                for (ProvidedOutput toFail : outputs) {
-                  commitOutput(toFail, failureCause);
-                }
-                break;
-              }
-            }
-            // if there was a failure, we must throw an exception to fail the transaction
-            // this will roll back all the outputs and also make sure that postCommit() is not called
-            // throwing the failure cause: it will be wrapped in a TxFailure and handled in the outer catch()
-            Exception cause = failureCause.get();
-            if (cause != null) {
-              failureCause.set(null);
-              throw cause;
-            }
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
-        }
-      });
-    } catch (TransactionFailureException e) {
-      LOG.error("Transaction failure when committing dataset outputs", e);
-      if (failureCause.get() != null) {
-        failureCause.get().addSuppressed(e);
-      } else {
-        failureCause.set(e);
+  // returns alias-->DatasetOutputCommitter mapping, given the ProvidedOutputs
+  private Map<String, DatasetOutputCommitter> getDatasetOutputCommitters(List<ProvidedOutput> providedOutputs) {
+    Map<String, DatasetOutputCommitter> datasetOutputCommiterOutputs = new HashMap<>();
+    for (ProvidedOutput providedOutput : providedOutputs) {
+      if (providedOutput.getOutputFormatProvider() instanceof DatasetOutputCommitter) {
+        datasetOutputCommiterOutputs.put(providedOutput.getOutput().getAlias(),
+                                         (DatasetOutputCommitter) providedOutput.getOutputFormatProvider());
       }
     }
-
-    if (failureCause.get() != null) {
-      throw failureCause.get();
-    }
+    return datasetOutputCommiterOutputs;
   }
-
 
   /**
-   * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
-   * If any exception is thrown by the output committer, sets the failure cause to that exception.
-   * @param output configured ProvidedOutput
+   * Either calls onSuccess or onFailure on all of the DatasetOutputCommitters.
    */
-  private void commitOutput(ProvidedOutput output, AtomicReference<Exception> failureCause) {
-    OutputFormatProvider outputFormatProvider = output.getOutputFormatProvider();
-    if (outputFormatProvider instanceof DatasetOutputCommitter) {
-      try {
-        if (success) {
-          ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
-        } else {
-          ((DatasetOutputCommitter) outputFormatProvider).onFailure();
-        }
-      } catch (Throwable t) {
-        LOG.error(String.format("Error from %s method of output dataset %s.",
-                                success ? "onSuccess" : "onFailure", output.getOutput().getAlias()), t);
-        success = false;
-        if (failureCause.get() != null) {
-          failureCause.get().addSuppressed(t);
-        } else {
-          failureCause.set(t instanceof Exception ? (Exception) t : new RuntimeException(t));
+  private void finishDatasets(final JobContext jobContext, final boolean success) throws Exception {
+    taskContext.execute(new TxRunnable() {
+      @Override
+      public void run(DatasetContext ctxt) throws Exception {
+        ClassLoader oldClassLoader =
+          ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
+        Map<String, DatasetOutputCommitter> datasetOutputCommitters = getDatasetOutputCommitters(outputs);
+        try {
+          if (success) {
+            commitOutputs(datasetOutputCommitters);
+          } else {
+            // but this output committer failed: call onFailure() for all committers
+            failOutputs(datasetOutputCommitters);
+          }
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
         }
       }
+    });
+  }
+
+  /**
+   * Calls onSuccess on the DatasetOutputCommitters. If any throws an exception, the exception is propagated
+   * immediately. #abortJob will then be called, which is responsible for calling onFinish on each of them.
+   */
+  private void commitOutputs(Map<String, DatasetOutputCommitter> datasetOutputCommiters) {
+    for (Map.Entry<String, DatasetOutputCommitter> datasetOutputCommitter : datasetOutputCommiters.entrySet()) {
+      try {
+        datasetOutputCommitter.getValue().onSuccess();
+      } catch (Exception e) {
+        LOG.error(String.format("Error from onSuccess method of output dataset %s.",
+                                datasetOutputCommitter.getKey()), e);
+        throw e;
+      }
+    }
+  }
+
+  /**
+   * Calls onFailure for all of the DatasetOutputCommitters. If any operation throws an exception, it is suppressed
+   * until onFailure is called on all of the DatasetOutputCommitters.
+   */
+  private void failOutputs(Map<String, DatasetOutputCommitter> datasetOutputCommiters) throws Exception {
+    Exception e = null;
+    for (Map.Entry<String, DatasetOutputCommitter> datasetOutputCommitter : datasetOutputCommiters.entrySet()) {
+      try {
+        datasetOutputCommitter.getValue().onFailure();
+      } catch (Exception suppressedException) {
+        LOG.error(String.format("Error from onFailure method of output dataset %s.",
+                                datasetOutputCommitter.getKey()), suppressedException);
+        if (e != null) {
+          e.addSuppressed(suppressedException);
+        } else {
+          e = suppressedException;
+        }
+      }
+    }
+    if (e != null) {
+      throw e;
     }
   }
 
