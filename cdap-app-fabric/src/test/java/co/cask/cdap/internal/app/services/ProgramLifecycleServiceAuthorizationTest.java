@@ -23,9 +23,9 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
@@ -56,6 +56,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test authorization for ProgramLifeCycleService
@@ -74,20 +76,23 @@ public class ProgramLifecycleServiceAuthorizationTest {
   @BeforeClass
   public static void setup() throws Exception {
     cConf = createCConf();
-    Injector injector = AppFabricTestHelper.getInjector(cConf);
+    final Injector injector = AppFabricTestHelper.getInjector(cConf);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
 
-    // Create the DEFAULT namespace
+    // Wait for the default namespace creation
     String user = SecurityUtil.getMasterPrincipal(cConf);
     authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                      Collections.singleton(Action.ADMIN));
-    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.exists(NamespaceId.DEFAULT)) {
-      namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    }
+    // Starting the Appfabric server will create the default namespace
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
+      }
+    }, 5, TimeUnit.SECONDS);
     authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
