@@ -104,7 +104,10 @@ public class DefaultSecureStoreServiceTest {
     String user = SecurityUtil.getMasterPrincipal(cConf);
     authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                      Collections.singleton(Action.ADMIN));
-    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
+    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
+    if (!namespaceAdmin.exists(NamespaceId.DEFAULT)) {
+      namespaceAdmin.create(NamespaceMeta.DEFAULT);
+    }
     authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
