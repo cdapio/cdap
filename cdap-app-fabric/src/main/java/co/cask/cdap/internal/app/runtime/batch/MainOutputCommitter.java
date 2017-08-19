@@ -47,6 +47,7 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.Transaction;
@@ -60,12 +61,15 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * An {@link OutputCommitter} used to
  */
 public class MainOutputCommitter extends MultipleOutputsCommitter {
   private static final Logger LOG = LoggerFactory.getLogger(MainOutputCommitter.class);
+
+  private final TaskAttemptContext taskAttemptContext;
 
   private CConfiguration cConf;
   private TransactionSystemClient txClient;
@@ -74,8 +78,10 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   private List<ProvidedOutput> outputs;
 
-  public MainOutputCommitter(TaskAttemptContext taskAttemptContext) {
-    super(taskAttemptContext);
+  public MainOutputCommitter(OutputCommitter rootOutputCommitter, Map<String, OutputCommitter> committers,
+                             TaskAttemptContext taskAttemptContext) {
+    super(rootOutputCommitter, committers);
+    this.taskAttemptContext = taskAttemptContext;
   }
 
   @Override
@@ -117,11 +123,12 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   }
 
   // returns a Path to a file in the staging directory of the MapReduce
-  static Path getTxFile(Configuration configuration, JobID jobId) throws IOException {
+  static Path getTxFile(Configuration configuration, @Nullable JobID jobID) throws IOException {
     Path stagingDir = MRApps.getStagingAreaDir(configuration, UserGroupInformation.getCurrentUser().getShortUserName());
     int appAttemptId = configuration.getInt(MRJobConfig.APPLICATION_ATTEMPT_ID, 0);
     // following the pattern of other files in the staging dir
-    return new Path(stagingDir, jobId.toString() + "/"  + jobId.toString() + "_" + appAttemptId + "_tx-file");
+    String jobId = jobID != null ? jobID.toString() : configuration.get(MRJobConfig.ID);
+    return new Path(stagingDir, jobId + "/"  + jobId + "_" + appAttemptId + "_tx-file");
   }
 
   @Override

@@ -739,25 +739,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Sets the configurations used for outputs.
    */
-  private void setOutputsIfNeeded(Job job) {
+  private void setOutputsIfNeeded(Job job) throws ClassNotFoundException {
     List<ProvidedOutput> outputsMap = context.getOutputs();
     fixOutputPermissions(job, outputsMap);
     LOG.debug("Using as output for MapReduce Job: {}", outputsMap);
-    // We probably need to set the job's output format class as the root output format class...
-    if (outputsMap.isEmpty()) {
-      // user is not going through our APIs to add output; leave the job's output format to user
-      return;
-    }
-
     OutputFormatProvider rootOutputFormatProvider;
-    if (outputsMap.size() == 1) {
+    if (outputsMap.isEmpty()) {
+      // user is not going through our APIs to add output; propagate the job's output format
+      rootOutputFormatProvider =
+        new BasicOutputFormatProvider(job.getOutputFormatClass().getName(), Collections.<String, String>emptyMap());
+    } else if (outputsMap.size() == 1) {
       // If only one output is configured through the context, then set it as the root OutputFormat
       rootOutputFormatProvider = outputsMap.get(0).getOutputFormatProvider();
     } else {
       // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
       // as the root output format in this case to disallow writing directly on the context
       rootOutputFormatProvider =
-        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), new HashMap<String, String>());
+        new BasicOutputFormatProvider(UnsupportedOutputFormat.class.getName(), Collections.<String, String>emptyMap());
     }
 
     MultipleOutputsMainOutputWrapper.setRootOutputFormat(job,

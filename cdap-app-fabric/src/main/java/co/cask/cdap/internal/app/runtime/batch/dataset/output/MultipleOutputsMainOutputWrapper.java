@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -98,9 +99,23 @@ public class MultipleOutputsMainOutputWrapper<K, V> extends OutputFormat<K, V> {
   @Override
   public synchronized OutputCommitter getOutputCommitter(TaskAttemptContext context)
     throws IOException, InterruptedException {
-    // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
     if (committer == null) {
-      committer = new MainOutputCommitter(context);
+      // use a linked hash map: it preserves the order of insertion, so the output committers are called in the
+      // same order as outputs were added. This makes multi-output a little more predictable (and testable).
+      Map<String, OutputCommitter> committers = new LinkedHashMap<>();
+
+      for (String name : MultipleOutputs.getNamedOutputsList(context)) {
+        Class<? extends OutputFormat> namedOutputFormatClass =
+          MultipleOutputs.getNamedOutputFormatClass(context, name);
+
+          TaskAttemptContext namedContext = MultipleOutputs.getNamedTaskContext(context, name);
+        OutputFormat<K, V> outputFormat =
+          ReflectionUtils.newInstance(namedOutputFormatClass, namedContext.getConfiguration());
+        committers.put(name, outputFormat.getOutputCommitter(namedContext));
+      }
+      // return a MultipleOutputsCommitter that commits for the root output format as well as all delegate outputformats
+      committer = new MainOutputCommitter(getRootOutputFormat(context).getOutputCommitter(context), committers,
+                                          context);
     }
     return committer;
   }

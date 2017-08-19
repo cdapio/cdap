@@ -172,31 +172,26 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     final SecureStore secureStore = injector.getInstance(SecureStore.class);
     final SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
     final MessagingService messagingService = injector.getInstance(MessagingService.class);
-    // Multiple instances of BasicMapReduceTaskContext can shares the same program.
+    // Multiple instances of BasicMapReduceTaskContext can share the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
       public BasicMapReduceTaskContext load(ContextCacheKey key) throws Exception {
-        Transaction tx = null;
-        TaskAttemptID taskAttemptId2 = key.getTaskAttemptID();
-        // TODO: handle null case
-        if (taskAttemptId2 != null) {
-          Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(), taskAttemptId2.getJobID());
-          FileSystem fs = txFile.getFileSystem(key.getConfiguration());
-          Preconditions.checkArgument(fs.exists(txFile));
+        TaskAttemptID taskAttemptId = key.getTaskAttemptID();
+        // taskAttemptId could be null if used from a org.apache.hadoop.mapreduce.Partitioner or
+        // from a org.apache.hadoop.io.RawComparator, in which case we can get the JobId from the conf. Note that the
+        // JobId isn't in the conf for the OutputCommitter#setupJob method, in which case we use the taskAttemptId
+        Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
+                                                    taskAttemptId != null ? taskAttemptId.getJobID() : null);
+        FileSystem fs = txFile.getFileSystem(key.getConfiguration());
+        Preconditions.checkArgument(fs.exists(txFile));
 
-          try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
-            byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
-            tx = new TransactionCodec().decode(txByteArray);
-            Preconditions.checkNotNull(tx);
-          }
-
-          LOG.info("YAY, shit's as expected.");
-        } else {
-          LOG.error("Aww, :(", new Exception());
+        Transaction tx;
+        try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
+          byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
+          tx = Preconditions.checkNotNull(new TransactionCodec().decode(txByteArray));
         }
-
 
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
         MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
@@ -226,7 +221,6 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         MapReduceMetrics.TaskType taskType = null;
         String taskId = null;
 
-        TaskAttemptID taskAttemptId = key.getTaskAttemptID();
         // taskAttemptId can be null, if used from a org.apache.hadoop.mapreduce.Partitioner or
         // from a org.apache.hadoop.io.RawComparator
         if (taskAttemptId != null) {
