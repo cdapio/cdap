@@ -25,8 +25,8 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
@@ -63,6 +63,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultSecureStoreServiceTest {
@@ -100,14 +101,17 @@ public class DefaultSecureStoreServiceTest {
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
 
-    // Create the DEFAULT namespace
+    // Wait for the default namespace creation
     String user = SecurityUtil.getMasterPrincipal(cConf);
     authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                      Collections.singleton(Action.ADMIN));
-    NamespaceAdmin namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    if (!namespaceAdmin.exists(NamespaceId.DEFAULT)) {
-      namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    }
+    // Starting the Appfabric server will create the default namespace
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
+      }
+    }, 5, TimeUnit.SECONDS);
     authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
                       Collections.singleton(Action.ADMIN));
   }
