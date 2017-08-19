@@ -22,13 +22,10 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Utility class to help deal with Outputs.
@@ -39,7 +36,7 @@ public final class Outputs {
   /**
    * Transforms a list of {@link Output}s to {@link ProvidedOutput}.
    */
-  public static List<ProvidedOutput> transform(List<Output> outputs, final AbstractContext abstractContext) {
+  public static List<ProvidedOutput> transform(List<? extends Output> outputs, final AbstractContext abstractContext) {
     // we don't want to use Lists.transform, to catch any errors with transform earlier on
     List<ProvidedOutput> providedOutputs = new ArrayList<>(outputs.size());
     for (Output output : outputs) {

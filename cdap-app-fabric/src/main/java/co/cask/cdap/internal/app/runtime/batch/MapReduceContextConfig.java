@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.app.runtime.Arguments;
@@ -49,7 +50,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,10 +65,10 @@ public final class MapReduceContextConfig {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
-    .registerTypeAdapter(Output.class, new OutputCodec())
     .create();
   private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
-  private static final Type OUTPUT_LIST_TYPE = new com.google.gson.reflect.TypeToken<List<Output>>() { }.getType();
+  private static final Type INPUT_LIST_TYPE = new TypeToken<List<Input.DatasetInput>>() { }.getType();
+  private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output.DatasetOutput>>() { }.getType();
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";
   private static final String HCONF_ATTR_PROGRAM_ID = "cdap.mapreduce.program.id";
@@ -112,20 +113,20 @@ public final class MapReduceContextConfig {
 
   private void setOutputs(List<ProvidedOutput> providedOutputs) {
     // we only need to serialize the original Output objects, not the entire ProvidedOutput
-    List<Output> outputs = Lists.transform(providedOutputs, new Function<ProvidedOutput, Output>() {
-      @Nullable
-      @Override
-      public Output apply(ProvidedOutput providedOutput) {
-        return providedOutput.getOutput();
+    List<Output.DatasetOutput> datasetOutputs = new ArrayList<>();
+    for (ProvidedOutput providedOutput : providedOutputs) {
+      Output output = providedOutput.getOutput();
+      if (output instanceof Output.DatasetOutput) {
+        datasetOutputs.add((Output.DatasetOutput) output);
       }
-    });
-    hConf.set(HCONF_ATTR_OUTPUTS, GSON.toJson(outputs, OUTPUT_LIST_TYPE));
+    }
+    hConf.set(HCONF_ATTR_OUTPUTS, GSON.toJson(datasetOutputs));
   }
 
   /**
-   * @return the list of Outputs configured for this MapReduce job.
+   * @return the list of DatasetOutputs configured for this MapReduce job.
    */
-  public List<Output> getOutputs() {
+  public List<Output.DatasetOutput> getOutputs() {
     return GSON.fromJson(hConf.get(HCONF_ATTR_OUTPUTS), OUTPUT_LIST_TYPE);
   }
 
