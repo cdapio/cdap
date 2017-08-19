@@ -71,7 +71,6 @@ import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
-import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -622,9 +621,6 @@ public class MasterServiceMain extends DaemonMain {
       }
 
       authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
-      // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
-      // succeed on an authorization-enabled cluster
-      injector.getInstance(AuthorizationBootstrapper.class).run();
       services.add(getAndStart(injector, KafkaClientService.class));
       services.add(getAndStart(injector, MetricsCollectionService.class));
 

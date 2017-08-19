@@ -25,8 +25,8 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
-import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.AppFabricTestHelper;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
@@ -35,6 +35,7 @@ import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -62,7 +63,6 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 public class DefaultSecureStoreServiceTest {
@@ -85,7 +85,8 @@ public class DefaultSecureStoreServiceTest {
   public static void setup() throws Exception {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    final Injector injector = AppFabricTestHelper.getInjector(createCConf(), sConf, new AbstractModule() {
+    CConfiguration cConf = createCConf();
+    final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf, new AbstractModule() {
       @Override
       protected void configure() {
         // no overrides
@@ -98,14 +99,14 @@ public class DefaultSecureStoreServiceTest {
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
-    Tasks.waitFor(true, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
-      }
-    }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
+
+    // Create the DEFAULT namespace
+    String user = SecurityUtil.getMasterPrincipal(cConf);
+    authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                     Collections.singleton(Action.ADMIN));
+    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
+    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                      Collections.singleton(Action.ADMIN));
   }
 
   private static void waitForService(String service) {

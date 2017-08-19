@@ -74,7 +74,6 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.operations.OperationalStatsService;
 import co.cask.cdap.operations.guice.OperationalStatsModule;
-import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.guice.SecureStoreModules;
@@ -131,7 +130,6 @@ public class StandaloneMain {
   private final WranglerAppCreationService wranglerAppCreationService;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final RemoteSystemOperationsService remoteSystemOperationsService;
-  private final AuthorizationBootstrapper authorizationBootstrapper;
   private final MessagingService messagingService;
   private final OperationalStatsService operationalStatsService;
 
@@ -155,7 +153,6 @@ public class StandaloneMain {
     wranglerAppCreationService = injector.getInstance(WranglerAppCreationService.class);
     messagingService = injector.getInstance(MessagingService.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
-    authorizationBootstrapper = injector.getInstance(AuthorizationBootstrapper.class);
     txService = injector.getInstance(InMemoryTransactionService.class);
     router = injector.getInstance(NettyRouter.class);
     metricsQueryService = injector.getInstance(MetricsQueryService.class);
@@ -229,9 +226,6 @@ public class StandaloneMain {
     // TODO: CDAP-7688, remove next line after the issue is resolved
     injector.getInstance(MessagingHttpService.class).startAndWait();
 
-    // Authorization bootstrapping is a blocking call, because CDAP will not start successfully if it does not
-    // succeed on an authorization-enabled cluster
-    authorizationBootstrapper.run();
     txService.startAndWait();
     metricsCollectionService.startAndWait();
     datasetService.startAndWait();

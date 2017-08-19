@@ -53,7 +53,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -63,7 +62,6 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.scheduler.Scheduler;
-import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -123,7 +121,6 @@ public class AppFabricTestHelper {
       injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
       if (configuration.getBoolean(Constants.Security.ENABLED) &&
         configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
-        injector.getInstance(AuthorizationBootstrapper.class).run();
       }
       MessagingService messagingService = injector.getInstance(MessagingService.class);
       if (messagingService instanceof Service) {

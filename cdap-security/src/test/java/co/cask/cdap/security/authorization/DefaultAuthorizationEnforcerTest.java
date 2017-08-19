@@ -16,20 +16,17 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -188,13 +185,9 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       DefaultAuthorizationEnforcer authorizationEnforcer =
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
       NamespaceId ns1 = new NamespaceId("ns1");
-      InstanceId instanceId = new InstanceId(cConfCopy.get(Constants.INSTANCE_NAME));
-      AuthorizationBootstrapper bootstrapper = new AuthorizationBootstrapper(cConfCopy, authorizer);
-      bootstrapper.run();
-      authorizationEnforcer.enforce(instanceId, systemUser, Action.ADMIN);
       authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM, instanceId),
-                          authorizationEnforcer.isVisible(ImmutableSet.of(ns1, instanceId, NamespaceId.SYSTEM),
+      Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM),
+                          authorizationEnforcer.isVisible(ImmutableSet.of(ns1, NamespaceId.SYSTEM),
                                                           systemUser));
     }
   }
