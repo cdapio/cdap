@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.AllProgramsApp;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
@@ -109,8 +107,6 @@ public class ProgramLifecycleServiceAuthorizationTest {
       .put(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3), EnumSet.of(Action.ADMIN))
       .put(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME), EnumSet.of(Action.ADMIN))
       .put(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME), EnumSet.of(Action.ADMIN))
-      .put(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName()), EnumSet.of(Action.ADMIN))
-      .put(NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName()), EnumSet.of(Action.ADMIN))
       .build();
     setUpPrivilegesAndExpectFailedDeploy(neededPrivileges);
 

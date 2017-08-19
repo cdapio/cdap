@@ -90,7 +90,6 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
   public void testDatasetInstances() throws Exception {
     final DatasetId dsId = NamespaceId.DEFAULT.dataset("myds");
     final DatasetId dsId1 = NamespaceId.DEFAULT.dataset("myds1");
-    DatasetTypeId tableTypeId = NamespaceId.DEFAULT.datasetType(Table.class.getName());
     DatasetId dsId2 = NamespaceId.DEFAULT.dataset("myds2");
     SecurityRequestContext.setUserId(ALICE.getName());
     assertAuthorizationFailure(new DatasetOperationExecutor() {
@@ -101,7 +100,6 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     }, "Alice should not be able to add a dataset instance since she does not have ADMIN privileges on the dataset");
     // grant alice ADMIN access to the dsId and ADMIN access on the dataset type
     grantAndAssertSuccess(dsId, ALICE, ImmutableSet.of(Action.ADMIN));
-    grantAndAssertSuccess(tableTypeId, ALICE, EnumSet.of(Action.ADMIN));
     // now adding an instance should succeed
     dsFramework.addInstance(Table.class.getName(), dsId, DatasetProperties.EMPTY);
     // alice should be able to perform all operations on the dataset
@@ -139,7 +137,6 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
     // grant Bob corresponding privilege to create the dataset
     grantAndAssertSuccess(dsId1, BOB, ImmutableSet.of(Action.ADMIN));
     grantAndAssertSuccess(dsId2, BOB, ImmutableSet.of(Action.ADMIN));
-    grantAndAssertSuccess(tableTypeId, BOB, EnumSet.of(Action.ADMIN));
     dsFramework.addInstance(Table.class.getName(), dsId1, DatasetProperties.EMPTY);
     dsFramework.addInstance(Table.class.getName(), dsId2, DatasetProperties.EMPTY);
     // since Bob now has some privileges on all datasets, the list API should return all datasets for him
