@@ -36,11 +36,13 @@ import java.util.concurrent.Callable;
 public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN, VAL_IN, OUT> {
   private final BatchSource<KEY_IN, VAL_IN, OUT> batchSource;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
   public WrappedBatchSource(BatchSource<KEY_IN, VAL_IN, OUT> batchSource,
-                            Caller caller) {
+                            Caller caller, OperationTimer operationTimer) {
     this.batchSource = batchSource;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -67,13 +69,18 @@ public class WrappedBatchSource<KEY_IN, VAL_IN, OUT> extends BatchSource<KEY_IN,
 
   @Override
   public void transform(final KeyValue<KEY_IN, VAL_IN> input, final Emitter<OUT> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSource.transform(input, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          batchSource.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 
   @Override

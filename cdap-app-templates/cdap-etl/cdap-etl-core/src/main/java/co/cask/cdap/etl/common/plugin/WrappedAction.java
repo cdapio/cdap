@@ -54,6 +54,6 @@ public class WrappedAction extends Action {
         action.run(context);
         return null;
       }
-    }, CallArgs.TRACK_TIME);
+    });
   }
 }
