@@ -68,8 +68,9 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * If the metadata key already exists, it will be overwritten.
+   * Note that existing entries cannot be updated.
    *
+   * @throws DataSetException when an attempt is made to update an existing entry
    * @throws PartitionNotFoundException when a partition for the given key is not found
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
@@ -77,12 +78,22 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a set of new metadata entries for a particular partition.
-   * If the metadata key already exists, it will be overwritten.
+   * Note that existing entries cannot be updated.
    *
+   * @throws DataSetException when an attempt is made to update existing entries
    * @throws PartitionNotFoundException when a partition for the given key is not found
    * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
+
+  /**
+   * Sets metadata entries for a particular partition. If the metadata entry key does not already exist, it will be
+   * created; otherwise, it will be overwritten. Other existing keys remain unchanged.
+   *
+   * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   */
+  void setMetadata(PartitionKey key, Map<String, String> metadata);
 
   /**
    * Removes a metadata entry for a particular partition.
