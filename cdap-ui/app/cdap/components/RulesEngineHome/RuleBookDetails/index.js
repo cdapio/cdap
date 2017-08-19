@@ -28,6 +28,8 @@ import debounce from 'lodash/debounce';
 import MyRulesEngineApi from 'api/rulesengine';
 import RulebookMenu from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu';
 import T from 'i18n-react';
+import { MyMetricApi } from 'api/metric';
+import {RadialChart} from 'react-vis';
 
 require('./RuleBookDetails.scss');
 
@@ -55,8 +57,8 @@ export default class RuleBookDetails extends Component {
     let activeRulebook = rulebooks.activeRulebookId;
     let createMode = rulebooks.createRulebook;
     let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
-    rulebookDetails = {...rulebookDetails};
     rulebookDetails.rules = rulebooks.activeRulebookRules;
+    this.fetchRuleMetrics(rulebookDetails);
     this.setState({
       rulebookDetails,
       activeRuleBook: activeRulebook,
@@ -64,6 +66,44 @@ export default class RuleBookDetails extends Component {
       loading: false
     });
   };
+
+  fetchRuleMetrics(rulebookDetails = {rules: []}) {
+    if (!Array.isArray(rulebookDetails.rules) || (Array.isArray(rulebookDetails.rules) && !rulebookDetails.rules.length)) {
+      return;
+    }
+    let metrics = rulebookDetails.rules.map((rule) => {
+      return `user.${rule.id}.fired`;
+    });
+    let {selectedNamespace:namespace} = NamespaceStore.getState();
+    let postBody = {};
+    postBody[`rule.metrics`] = {
+      tags: {
+        namespace: namespace,
+        app: '*'
+      },
+      metrics : metrics,
+      "timeRange": {
+        end: "now",
+        start : "now-1d"
+      }
+    };
+    MyMetricApi
+      .query(null, postBody)
+      .subscribe(
+        (response) => {
+          let timeseries = response[`rule.metrics`].series;
+          let metricValues = {};
+          timeseries.map((series) => {
+            metricValues[series.metricName] = series.data.map((d) => d.value);
+          });
+          let rulebookDetails = {...this.state.rulebookDetails};
+          rulebookDetails.rules = rulebookDetails.rules.map((rule) => {
+            return Object.assign({}, rule, {metric : metricValues[`user.${rule.id}.fired`]});
+          });
+          this.setState({rulebookDetails});
+        }
+      );
+  }
 
   componentDidMount() {
     this.updateState();
@@ -124,6 +164,34 @@ export default class RuleBookDetails extends Component {
       );
   };
 
+  generateAggregateStats = () => {
+    let metricTotal = {};
+    let total = 0;
+    if (Array.isArray(this.state.rulebookDetails.rules) && this.state.rulebookDetails.rules.length) {
+      this.state.rulebookDetails.rules.map((rule) => {
+        if (isNil(rule.metric)) {
+          return;
+        }
+        rule.metric.map((point) => {
+          if (!metricTotal[rule.id]) {
+            metricTotal[rule.id] = point;
+          } else {
+            metricTotal[rule.id]+= point;
+          }
+          total += point;
+        });
+      });
+      let angles = [];
+      Object
+        .keys(metricTotal)
+        .forEach(metric => {
+          angles.push({angle : metricTotal[metric] / total});
+        });
+      return angles;
+    }
+    return null;
+  };
+
   renderCreateRulebook = () => {
     return (
       <CreateRulebook
@@ -165,7 +233,7 @@ export default class RuleBookDetails extends Component {
       return this.renderEmptyView();
     }
     let {rulebookDetails} = this.state;
-
+    let angles = this.generateAggregateStats();
     return (
       <div className="rule-book-details">
         <div className="rule-book-name-header">
@@ -201,17 +269,24 @@ export default class RuleBookDetails extends Component {
         </div>
         <div className="rule-book-metadata">
           <div>
-            <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
-            <span> {rulebookDetails.user}</span>
+            <div>
+              <strong> {T.translate(`${PREFIX}.owner`)}: </strong>
+              <span> {rulebookDetails.user}</span>
+            </div>
+            <div>
+              <strong>{T.translate(`${PREFIX}.lastmodified`)}: </strong>
+              <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
+            </div>
+            <p className="rule-book-description">
+              {rulebookDetails.description}
+            </p>
           </div>
           <div>
-            <strong>{T.translate(`${PREFIX}.lastmodified`)}: </strong>
-            <span>{moment(rulebookDetails.updated * 1000).format('MM-DD-YY HH:mm')}</span>
+            {
+              isNil(angles) ? null : <RadialChart data={angles} width={100} height={100}/>
+            }
           </div>
         </div>
-        <p className="rule-book-description">
-          {rulebookDetails.description}
-        </p>
         <RulesList
           rules={rulebookDetails.rules}
           rulebookid={rulebookDetails.id}

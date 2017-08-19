@@ -146,5 +146,12 @@ $header-bg-color: #f5f5f5;
 }
 
 .rule-book-metadata {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin: 10px 0 20px;
+
+  .rv-xy-plot.rv-radial-chart {
+    margin-top: -10px;
+  }
 }
