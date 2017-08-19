@@ -20,6 +20,7 @@ import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -102,6 +103,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -1307,15 +1309,40 @@ public class AuthorizationTest extends TestBase {
     }
   }
 
+  /**
+   * This test is to make sure we do not bypass the authorization check for datasets in system namespace
+   */
+  @Test
+  public void testDeleteSystemDatasets() throws Exception {
+    // create a random user and try to delete a system dataset
+    UserGroupInformation remoteUser = UserGroupInformation.createRemoteUser("random");
+    remoteUser.doAs(new PrivilegedAction<Void>() {
+      @Override
+      public Void run() {
+        try {
+          deleteDatasetInstance(NamespaceId.SYSTEM.dataset("app.meta"));
+          Assert.fail();
+        } catch (DatasetManagementException e) {
+          Assert.assertTrue(e.getMessage().contains("is not authorized to perform actions"));
+        } catch (Exception e) {
+          Assert.fail("Getting incorrect exception");
+        }
+        return null;
+      }
+    });
+  }
+
   @After
   @Override
   public void afterTest() throws Exception {
     Authorizer authorizer = getAuthorizer();
 
     grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.of(Action.ADMIN));
-    // clean up. remove the namespace.
-    getNamespaceAdmin().delete(AUTH_NAMESPACE);
-    Assert.assertFalse(getNamespaceAdmin().exists(AUTH_NAMESPACE));
+    // clean up. remove the namespace if it exists
+    if (getNamespaceAdmin().exists(AUTH_NAMESPACE)) {
+      getNamespaceAdmin().delete(AUTH_NAMESPACE);
+      Assert.assertFalse(getNamespaceAdmin().exists(AUTH_NAMESPACE));
+    }
     revokeAndAssertSuccess(AUTH_NAMESPACE);
     for (EntityId entityId : cleanUpEntities) {
       revokeAndAssertSuccess(entityId);
