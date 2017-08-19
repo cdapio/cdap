@@ -25,7 +25,6 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
-import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -55,7 +54,6 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsMainOutputWrapper;
-import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
@@ -143,7 +141,7 @@ import javax.annotation.Nullable;
  * Service start -> Performs job setup, initialize and submit job
  * Service run -> Poll for job completion
  * Service triggerStop -> kill job
- * Service stop -> Commit/abort transaction, destroy, cleanup
+ * Service stop -> destroy, cleanup
  */
 final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 

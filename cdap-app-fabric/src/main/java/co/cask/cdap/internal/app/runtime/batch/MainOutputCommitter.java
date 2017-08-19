@@ -64,7 +64,8 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * An {@link OutputCommitter} used to
+ * An {@link OutputCommitter} used to start/finish the long transaction used by the MapReduce job.
+ * Also responsible for executing {@link DatasetOutputCommitter} methods for any such outputs.
  */
 public class MainOutputCommitter extends MultipleOutputsCommitter {
   private static final Logger LOG = LoggerFactory.getLogger(MainOutputCommitter.class);
@@ -75,8 +76,8 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   private TransactionSystemClient txClient;
   private Transaction transaction;
   private BasicMapReduceTaskContext taskContext;
-
   private List<ProvidedOutput> outputs;
+  private boolean completedCallingOnFailure;
 
   public MainOutputCommitter(OutputCommitter rootOutputCommitter, Map<String, OutputCommitter> committers,
                              TaskAttemptContext taskAttemptContext) {
@@ -135,7 +136,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
   public void commitJob(JobContext jobContext) throws IOException {
     super.commitJob(jobContext);
 
-    // commitTx
     onFinish(jobContext, true);
     commitTx();
   }
@@ -152,8 +152,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
           .setTransaction(transaction.getWritePointer())
           .build());
 
-      // committing long running tx: no need to commit datasets, as they were committed in external processes
-      // also no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
+      // no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
       if (!txClient.commit(transaction)) {
         LOG.warn("MapReduce Job transaction failed to commit");
@@ -166,7 +165,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   @Override
   public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
-    // TODO: handle being called multiple times
     try {
       super.abortJob(jobContext, state);
     } finally {
@@ -180,7 +178,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
           txClient.invalidate(transaction.getWritePointer());
           transaction = null;
         } else {
-          LOG.warn("Did not invalidate transaction, since job setup did not complete or invalidate already happened.");
+          LOG.warn("Did not invalidate transaction; job setup did not complete or invalidate already happened.");
         }
       }
     }
@@ -257,6 +255,11 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
    * until onFailure is called on all of the DatasetOutputCommitters.
    */
   private void failOutputs(Map<String, DatasetOutputCommitter> datasetOutputCommiters) throws Exception {
+    if (completedCallingOnFailure) {
+      // guard against multiple calls to OutputCommitter#abortJob
+      LOG.info("Not calling onFailure on outputs, as it has they have already been executed.");
+      return;
+    }
     Exception e = null;
     for (Map.Entry<String, DatasetOutputCommitter> datasetOutputCommitter : datasetOutputCommiters.entrySet()) {
       try {
@@ -271,6 +274,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
         }
       }
     }
+    completedCallingOnFailure = true;
     if (e != null) {
       throw e;
     }

@@ -67,7 +67,6 @@ public final class MapReduceContextConfig {
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
   private static final Type PLUGIN_MAP_TYPE = new TypeToken<Map<String, Plugin>>() { }.getType();
-  private static final Type INPUT_LIST_TYPE = new TypeToken<List<Input.DatasetInput>>() { }.getType();
   private static final Type OUTPUT_LIST_TYPE = new TypeToken<List<Output.DatasetOutput>>() { }.getType();
 
   private static final String HCONF_ATTR_APP_SPEC = "cdap.mapreduce.app.spec";

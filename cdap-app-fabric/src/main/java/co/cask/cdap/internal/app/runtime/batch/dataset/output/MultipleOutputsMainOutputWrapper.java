@@ -34,7 +34,8 @@ import java.util.Map;
 
 /**
  * OutputFormat that wraps a root OutputFormat and provides an OutputFormatCommitter that delegates to multiple
- * preconfigured OutputFormatCommitters.
+ * preconfigured OutputFormatCommitters. By design, this is the OutputFormat configured for all MapReduce jobs
+ * being executed by CDAP. See MapReduceRuntimeService#setOutputsIfNeeded.
  *
  * @param <K> Type of key
  * @param <V> Type of value
