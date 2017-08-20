@@ -247,11 +247,11 @@ export default class LogsMetricsGraph extends Component {
                   <div className="log-stats">
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.errors`)}</span>
-                      <span className="text-danger">{popOverData.logsMetrics['system.app.log.error']}</span>
+                      <span className="text-danger">{popOverData.logsMetrics['system.app.log.error'] || '0'}</span>
                     </div>
                     <div>
                       <span>{T.translate(`${PREFIX}.hint.warnings`)}</span>
-                      <span className="text-warning">{popOverData.logsMetrics['system.app.log.warn']}</span>
+                      <span className="text-warning">{popOverData.logsMetrics['system.app.log.warn'] || '0'}</span>
                     </div>
                     <a href={logUrl} target="_blank">{T.translate(`${PREFIX}.hint.viewLogs`)}</a>
                   </div>

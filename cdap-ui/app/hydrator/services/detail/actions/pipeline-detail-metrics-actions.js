@@ -51,7 +51,7 @@ angular.module(PKG.name + '.feature.hydrator')
             sinks = config.sinks.map(function (n) { return n.name; });
             stagesArray = [source].concat(transforms, sinks);
           }
-          var metricQuery = [];
+          var metricQuery = ['system.app.log.error', 'system.app.log.warn'];
 
           if (res.length > 0) {
             angular.forEach(stagesArray, function (node) {
@@ -59,11 +59,6 @@ angular.module(PKG.name + '.feature.hydrator')
               // This was a problem if a node name is a substring of a system metric. Ref: CDAP-12121
               metricQuery = metricQuery.concat(filter(res, 'user.' + node));
             });
-
-            if (metricQuery.length === 0) {
-              dispatcher.dispatch('onEmptyMetrics');
-              return;
-            }
 
             /**
              *  Since the parent block is already a poll, we don't need another poll for

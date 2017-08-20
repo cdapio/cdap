@@ -238,10 +238,10 @@ angular.module(PKG.name + '.commons')
     function setZoom(zoom, instance, transformOrigin, el) {
       if ($scope.nodes.length === 0) { return; }
 
-      transformOrigin = transformOrigin || [ 0.5, 0.5 ];
+      transformOrigin = transformOrigin || [0.5, 0.5];
       instance = instance || jsPlumb;
       el = el || instance.getContainer();
-      var p = [ 'webkit', 'moz', 'ms', 'o' ],
+      var p = ['webkit', 'moz', 'ms', 'o'],
           s = 'scale(' + zoom + ')',
           oString = (transformOrigin[0] * 100) + '% ' + (transformOrigin[1] * 100) + '%';
 
@@ -658,6 +658,9 @@ angular.module(PKG.name + '.commons')
 
     vm.onMetricsClick = function(event, node) {
       event.stopPropagation();
+      if ($scope.disableMetricsClick) {
+        return;
+      }
       closeNodePopover(node);
       HydratorPlusPlusDetailMetricsActions.setMetricsTabActive(true);
       DAGPlusPlusNodesActionsFactory.selectNode(node.name);

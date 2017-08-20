@@ -15,43 +15,75 @@
 */
 
 $graph_container_border_color: lightgray;
+$table_header_border: #c9ccd6;
+$error_records_label_color: #a40403;
 
 .pipeline-node-metrics-graph {
   height: 100%;
+  .title-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+
+    &.graph-title {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 0 10px;
+    }
+
+    .btn-link {
+      padding: 0 10px;
+      cursor: pointer;
+    }
+    .total-records {
+      strong {
+        span {
+          margin: 0 10px 0 0;
+          &.error-records-count {
+            color: $error_records_label_color;
+          }
+        }
+      }
+    }
+    .title {
+      font-size: 18px;
+    }
+    > div:not(.title) {
+      font-size: 14px;
+    }
+  }
   .node-metrics-container {
     display: flex;
-    height: 100%;
+    height: 65%;
 
     > div {
       flex: 0.5;
       width: calc(50% - 40px);
-      height: 70%;
-      margin: 10px;
+      height: 100%;
+      margin: 0 10px;
       padding: 10px;
       border: 1px solid $graph_container_border_color;
 
-      .title-container {
-        display: flex;
-        justify-content: space-between;
-        margin: 10px;
-
-        .title {
-          font-size: 18px;
-          font-weight: 500;
-        }
+      &:only-child {
+        flex: 1;
       }
 
       .graph-container {
         height: calc(100% - 50px);
         .graph-plot-container {
           height: 100%;
-          padding: 20px;
+          padding: 0 20px;
           position: relative;
+          flex-direction: column;
+          border: 0;
+          svg.rv-xy-plot__inner {
+            padding: 0 0 0 20px;
+          }
 
           .y-axis-title {
             position: absolute;
             transform: rotate(270deg);
-            right: -65px;
+            left: -60px;
             top: 50%;
           }
           .x-axis-title {
@@ -59,14 +91,52 @@ $graph_container_border_color: lightgray;
             bottom: -10px;
             left: 50%;
           }
+          .rv-discrete-color-legend.horizontal {
+            width: 100%;
+            padding: 10px 0 0;
+            .rv-discrete-color-legend-item.horizontal {
+              display: inline-block;
+              margin: 0 40px 0 0;
+              .rv-discrete-color-legend-item__title {
+                font-size: 14px;
+              }
+              .rv-discrete-color-legend-item__color {
+                display: inline-block;
+                vertical-align: bottom;
+                width: 30px;
+                border: 1px solid $graph_container_border_color;
+                height: 20px;
+                margin: 0 5px 0 0;
+              }
+            }
+          }
         }
         .empty-runs-container {
           height: 100%;
         }
       }
       .node-metrics-single-datapoint {
-        font-size: 8em;
+        font-size: 4em;
         height: calc(100% - 50px);
+        display: flex;
+        flex-direction: column;
+
+        > span {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+
+          small {
+            font-size: 14px;
+            margin-bottom: 10px;
+          }
+          span {
+            line-height: 1;
+            margin-top: -10px;
+            margin-bottom: 10px;
+          }
+        }
       }
       .node-metrics-single-datapoint,
       .graph-plot-container {
@@ -74,6 +144,35 @@ $graph_container_border_color: lightgray;
         justify-content: center;
         display: flex;
         border: 1px solid $graph_container_border_color;
+      }
+    }
+  }
+  .process-time-table-container {
+    padding: 30px 10px;
+  }
+}
+
+// Solely for overriding styles in angular. ugh :( !!
+body.theme-cdap.state-hydrator {
+  pipeline-node-metrics-graph {
+    display: block;
+    height: 100%;
+  }
+  .pipeline-node-metrics-graph {
+    .process-time-table-container {
+      > .table {
+        border: 0;
+        > thead tr th {
+          padding: 10px;
+          padding-left: 0;
+          font-weight: normal;
+          max-width: 180px;
+        }
+        > tbody tr td {
+          border: 0;
+          padding-left: 0;
+          border-top: 1px solid $table_header_border;
+        }
       }
     }
   }

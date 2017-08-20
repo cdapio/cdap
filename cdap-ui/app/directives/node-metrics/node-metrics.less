@@ -24,6 +24,14 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 
+  &.disabled {
+    cursor: not-allowed;
+
+    .node-metrics-labels {
+      cursor: inherit;
+    }
+
+  }
   .node-metrics-labels {
     cursor: pointer;
 

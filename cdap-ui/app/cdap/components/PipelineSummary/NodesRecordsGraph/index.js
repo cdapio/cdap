@@ -123,7 +123,7 @@ export default class NodesRecordsGraph extends Component {
             color={getAreaColor(this.props.recordType)}
             stroke={getAreaColor(this.props.recordType)}
             data={this.state.data}
-            opacity={0.5}
+            opacity={0.2}
           />
           <LineSeries
             color={getAreaColor(this.props.recordType)}
@@ -165,7 +165,7 @@ export default class NodesRecordsGraph extends Component {
                       }}
                     />
                   </div>
-                  <strong>{T.translate(`${PREFIX}.${this.props.recordType}.hint.title`, {count: popOverData.numberOfRecords})} </strong>
+                  <strong>{T.translate(`${PREFIX}.${this.props.recordType}.hint.title`, {count: popOverData.numberOfRecords || '0'})} </strong>
                   {
                     this.props.xDomainType === 'limit' ?
                       <div>
