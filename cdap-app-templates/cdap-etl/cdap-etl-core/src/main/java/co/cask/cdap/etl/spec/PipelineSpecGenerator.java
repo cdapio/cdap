@@ -46,6 +46,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 
 import java.util.ArrayList;
@@ -183,8 +184,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         }
 
         // Do not allow more than one input schema for stages other than Joiner and Action
-        if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType) && !Action.PLUGIN_TYPE.equals(nextStageType) &&
-          !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
+        if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)
+          && !Action.PLUGIN_TYPE.equals(nextStageType)
+          && !Condition.PLUGIN_TYPE.equals(nextStageType)
+          && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
           throw new IllegalArgumentException("Two different input schema were set for the stage " + nextStageName);
         }
 
@@ -428,6 +431,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
     Dag dag = new Dag(config.getConnections());
 
+    Set<String> controlStages = Sets.union(actionStages, conditionStages);
     Map<String, ETLStage> stages = new HashMap<>();
     for (ETLStage stage : config.getStages()) {
       String stageName = stage.getName();
@@ -439,13 +443,13 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       boolean isSink = isSink(stageType);
       // check source plugins are sources in the dag
       if (isSource) {
-        if (!stageInputs.isEmpty() && !actionStages.containsAll(stageInputs)) {
+        if (!stageInputs.isEmpty() && !controlStages.containsAll(stageInputs)) {
           throw new IllegalArgumentException(
             String.format("%s %s has incoming connections from %s. %s stages cannot have any incoming connections.",
                           stageType, stageName, stageType, Joiner.on(',').join(stageInputs)));
         }
       } else if (isSink) {
-        if (!stageOutputs.isEmpty() && !actionStages.containsAll(stageOutputs)) {
+        if (!stageOutputs.isEmpty() && !controlStages.containsAll(stageOutputs)) {
           throw new IllegalArgumentException(
             String.format("%s %s has outgoing connections to %s. %s stages cannot have any outgoing connections.",
                           stageType, stageName, stageType, Joiner.on(',').join(stageOutputs)));
@@ -462,7 +466,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       }
 
       boolean isAction = isAction(stageType);
-      if (!isAction && !isSource && stageInputs.isEmpty()) {
+      if (!isAction && !stageType.equals(Condition.PLUGIN_TYPE) && !isSource && stageInputs.isEmpty()) {
         throw new IllegalArgumentException(
           String.format("Stage %s is unreachable, it has no incoming connections.", stageName));
       }

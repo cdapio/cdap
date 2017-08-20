@@ -63,6 +63,7 @@ import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.planner.ConditionBranches;
 import co.cask.cdap.etl.planner.ControlDag;
 import co.cask.cdap.etl.planner.Dag;
+import co.cask.cdap.etl.planner.DisjointConnectionsException;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.Connection;
@@ -161,8 +162,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     } else {
       planner = new PipelinePlanner(supportedPluginTypes,
                                     ImmutableSet.of(BatchAggregator.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE),
-                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
-                                                    Condition.PLUGIN_TYPE),
+                                    ImmutableSet.of(SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE),
                                     actionTypes);
     }
     plan = planner.plan(spec);
@@ -186,11 +186,14 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     dag = new ControlDag(plan.getPhaseConnections());
+    boolean dummyNodeAdded = false;
     Map<String, ConditionBranches> conditionBranches = plan.getConditionPhaseBranches();
     if (conditionBranches.isEmpty()) {
       // after flattening, there is guaranteed to be just one source
       dag.flatten();
-    } else {
+    } else if (!conditionBranches.keySet().containsAll(dag.getSources())) {
+      // Continue only if the conditon node is not the source of the dag, otherwise dag is already in the
+      // required form
       Set<String> conditions = conditionBranches.keySet();
       // flatten only the part of the dag starting from sources and ending in conditions/sinks.
       Set<String> dagNodes = dag.accessibleFrom(dag.getSources(), Sets.union(dag.getSinks(), conditions));
@@ -200,9 +203,37 @@ public class SmartWorkflow extends AbstractWorkflow {
       Deque<String> bfs = new LinkedList<>();
 
       Set<String> sinks = new HashSet<>();
+
       // If its a single phase without condition then no need to flatten
       if (dagNodesWithoutCondition.size() > 1) {
-        Dag subDag = dag.createSubDag(dagNodesWithoutCondition);
+        Dag subDag;
+        try {
+          subDag = dag.createSubDag(dagNodesWithoutCondition);
+        } catch (IllegalArgumentException | DisjointConnectionsException e) {
+          // DisjointConnectionsException thrown when islands are created from the dagNodesWithoutCondition
+          // IllegalArgumentException thrown when connections are empty
+          // In both cases we need to add dummy node and create connected Dag
+          String dummyNode = "dummy";
+          dummyNodeAdded = true;
+          Set<Connection> subDagConnections = new HashSet<>();
+          for (String source : dag.getSources()) {
+            subDagConnections.add(new Connection(dummyNode, source));
+          }
+          Deque<String> subDagBFS = new LinkedList<>();
+          subDagBFS.addAll(dag.getSources());
+
+          while (subDagBFS.peek() != null) {
+            String node = subDagBFS.poll();
+            for (String output : dag.getNodeOutputs(node)) {
+              if (dagNodesWithoutCondition.contains(output)) {
+                subDagConnections.add(new Connection(node, output));
+                subDagBFS.add(output);
+              }
+            }
+          }
+          subDag = new Dag(subDagConnections);
+        }
+
         ControlDag cdag = new ControlDag(subDag);
         cdag.flatten();
 
@@ -250,8 +281,19 @@ public class SmartWorkflow extends AbstractWorkflow {
       dag = new ControlDag(connections);
     }
 
-    String start = dag.getSources().iterator().next();
-    addPrograms(start, programAdder);
+    if (dummyNodeAdded) {
+      WorkflowProgramAdder fork = programAdder.fork();
+      String dummyNode = dag.getSources().iterator().next();
+      for (String output : dag.getNodeOutputs(dummyNode)) {
+        // need to make sure we don't call also() if this is the final branch
+        if (!addBranchPrograms(output, fork)) {
+          fork = fork.also();
+        }
+      }
+    } else {
+      String start = dag.getSources().iterator().next();
+      addPrograms(start, programAdder);
+    }
   }
 
   @Override

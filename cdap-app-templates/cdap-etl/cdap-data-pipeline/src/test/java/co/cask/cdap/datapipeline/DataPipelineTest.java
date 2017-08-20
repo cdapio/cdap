@@ -632,20 +632,23 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
     );
 
-    String sourceName = "simpleConditionSource-" + engine;
-    String trueOutput = "simpleCondition-true-" + engine;
-    String falseOutput = "simpleCondition-false-" + engine;
-    String conditionTableName = "condition-" + engine;
     /*
      * source --> condition --> trueSink
      *              |
      *              |-------> falseSink
      *
      */
+
+    String appName = "SimpleCondition-" + engine;
+    String source = appName + "Source-" + engine;
+    String trueSink = "true" + appName + "Sink-" + engine;
+    String falseSink = "false" + appName + "Sink-" + engine;
+    String conditionTableName = "condition-" + engine;
+
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
-      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName, schema)))
-      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueOutput)))
-      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseOutput)))
+      .addStage(new ETLStage("source", MockSource.getPlugin(source, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
       .addStage(new ETLStage("condition", MockCondition.getPlugin("condition", conditionTableName)))
       .addConnection("source", "condition")
       .addConnection("condition", "trueSink", true)
@@ -654,17 +657,20 @@ public class DataPipelineTest extends HydratorTestBase {
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("SimpleConditionApp-" + engine);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
     StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
 
     // write records to source
-    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceName));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source));
+
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     for (String branch : Arrays.asList("true", "false")) {
+      String sink = branch.equals("true") ? trueSink : falseSink;
       WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
       workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
 
@@ -675,7 +681,7 @@ public class DataPipelineTest extends HydratorTestBase {
       }
 
       // check sink
-      DataSetManager<Table> sinkManager = getDataset("simpleCondition-" + branch + "-" + engine);
+      DataSetManager<Table> sinkManager = getDataset(sink);
       Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
       Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
       Assert.assertEquals(expected, actual);
@@ -692,6 +698,385 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
+  public void testSimpleConditionWithActions() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * action --> condition --> file ---> trueSink
+     *              |
+     *              |---file-->----> falseSink
+     *
+     */
+
+    String appName = "SimpleConditionWithActions";
+    String trueSource = "true" + appName + "Source";
+    String falseSource = "false" + appName + "Source";
+    String trueSink = "true" + appName + "Sink";
+    String falseSink = "false" + appName + "Sink";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
+      .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addConnection("action", "condition")
+      .addConnection("condition", "trueSource", true)
+      .addConnection("condition", "falseSource", false)
+      .addConnection("trueSource", "trueSink")
+      .addConnection("falseSource", "falseSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    for (String branch : Arrays.asList("true", "false")) {
+      String source = branch.equals("true") ? trueSource : falseSource;
+      String sink = branch.equals("true") ? trueSink : falseSink;
+      // write records to source
+      DataSetManager<Table> inputManager
+        = getDataset(NamespaceId.DEFAULT.dataset(source));
+      MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      // check sink
+      DataSetManager<Table> sinkManager = getDataset(sink);
+      Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+      Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+      Assert.assertEquals(expected, actual);
+
+      validateMetric(2, appId, branch + "Source.records.out");
+      validateMetric(2, appId, branch + "Sink.records.in");
+      // check Action is executed correctly
+      DataSetManager<Table> actionTableDS = getDataset(actionTable);
+      Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+    }
+  }
+
+  @Test
+  public void testSimpleConditionWithMultipleInputActions() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * action1--|
+     *          |--> condition --> file ---> trueSink
+     * action2--|      |
+     *                 |--->file----> falseSink
+     *
+     */
+    String appName = "SimpleConditionWithMultipleInputActions";
+    String trueSource = "true" + appName + "Source";
+    String falseSource = "false" + appName + "Source";
+    String trueSink = "true" + appName + "Sink";
+    String falseSink = "false" + appName + "Sink";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
+      .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, "row2", "key2", "val2")))
+      .addConnection("action1", "condition")
+      .addConnection("action2", "condition")
+      .addConnection("condition", "trueSource", true)
+      .addConnection("condition", "falseSource", false)
+      .addConnection("trueSource", "trueSink")
+      .addConnection("falseSource", "falseSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    for (String branch : Arrays.asList("true", "false")) {
+      // write records to source
+      String source = branch.equals("true") ? trueSource : falseSource;
+      String sink = branch.equals("true") ? trueSink : falseSink;
+
+      DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source));
+      MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      // check sink
+      DataSetManager<Table> sinkManager = getDataset(sink);
+      Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+      Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+      Assert.assertEquals(expected, actual);
+
+      validateMetric(2, appId, branch + "Source.records.out");
+      validateMetric(2, appId, branch + "Sink.records.in");
+      // check Action1 and Action2 is executed correctly
+      DataSetManager<Table> actionTableDS = getDataset(actionTable);
+      Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+      Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+    }
+  }
+
+  @Test
+  public void testMultipleOrderedInputActions() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * action1--->action2---|
+     *                      |--> condition --> file ---> trueSink
+     * action3--->action4---|      |
+     *                             |--->file----> falseSink
+     *
+     */
+
+    String appName = "MultipleOrderedInputActions";
+    String trueSource = "true" + appName + "Source";
+    String falseSource = "false" + appName + "Source";
+    String trueSink = "true" + appName + "Sink";
+    String falseSink = "false" + appName + "Sink";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
+      .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, "row2", "key2", "val2", "row1key1", "val1")))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, "row3", "key3", "val3")))
+      .addStage(new ETLStage("action4", MockAction.getPlugin(actionTable, "row4", "key4", "val4", "row3key3", "val3")))
+      .addConnection("action1", "action2")
+      .addConnection("action3", "action4")
+      .addConnection("action2", "condition")
+      .addConnection("action4", "condition")
+      .addConnection("condition", "trueSource", true)
+      .addConnection("condition", "falseSource", false)
+      .addConnection("trueSource", "trueSink")
+      .addConnection("falseSource", "falseSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    for (String branch : Arrays.asList("true", "false")) {
+      // write records to source
+      String source = branch.equals("true") ? trueSource : falseSource;
+      String sink = branch.equals("true") ? trueSink : falseSink;
+      DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source));
+      MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      // check sink
+      DataSetManager<Table> sinkManager = getDataset(sink);
+      Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+      Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+      Assert.assertEquals(expected, actual);
+
+      validateMetric(2, appId, branch + "Source.records.out");
+      validateMetric(2, appId, branch + "Sink.records.in");
+      // check Action1 and Action2 is executed correctly
+      DataSetManager<Table> actionTableDS = getDataset(actionTable);
+      Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+      Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+      Assert.assertEquals("val3", MockAction.readOutput(actionTableDS, "row3", "key3"));
+      Assert.assertEquals("val4", MockAction.readOutput(actionTableDS, "row4", "key4"));
+    }
+  }
+
+  @Test
+  public void testSimpleConditionWithSingleOutputAction() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     *
+     * condition --Action--> file ---> trueSink
+     *       |
+     *       |--->file----> falseSink
+     *
+     */
+
+    String appName = "SimpleConditionWithSingleOutputAction";
+    String trueSource = "true" + appName + "Source";
+    String falseSource = "false" + appName + "Source";
+    String trueSink = "true" + appName + "Sink";
+    String falseSink = "false" + appName + "Sink";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
+      .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addConnection("condition", "action", true)
+      .addConnection("action", "trueSource")
+      .addConnection("trueSource", "trueSink")
+      .addConnection("condition", "falseSource", false)
+      .addConnection("falseSource", "falseSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    for (String branch : Arrays.asList("true", "false")) {
+      String source = branch.equals("true") ? trueSource : falseSource;
+      String sink = branch.equals("true") ? trueSink : falseSink;
+      // write records to source
+      DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source));
+      MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      // check sink
+      DataSetManager<Table> sinkManager = getDataset(sink);
+      Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+      Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+      Assert.assertEquals(expected, actual);
+
+      validateMetric(2, appId, branch + "Source.records.out");
+      validateMetric(2, appId, branch + "Sink.records.in");
+      // check Action1 and Action2 is executed correctly
+      DataSetManager<Table> actionTableDS = getDataset(actionTable);
+      if (branch.equals("true")) {
+        Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+      }
+    }
+  }
+
+  @Test
+  public void testSimpleConditionWithMultipleOutputActions() throws Exception {
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     *
+     * condition --Action--> file ---> trueSink
+     *       |
+     *       |--->Action--->file----> falseSink
+     *
+     */
+    String appName = "SimpleConditionWithMultipleOutputActions";
+    String trueSource = "true" + appName + "Source";
+    String falseSource = "false" + appName + "Source";
+    String trueSink = "true" + appName + "Sink";
+    String falseSink = "false" + appName + "Sink";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("trueSource", MockSource.getPlugin(trueSource, schema)))
+      .addStage(new ETLStage("falseSource", MockSource.getPlugin(falseSource, schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueSink)))
+      .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseSink)))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, "row2", "key2", "val2")))
+      .addConnection("condition", "action1", true)
+      .addConnection("action1", "trueSource")
+      .addConnection("trueSource", "trueSink")
+      .addConnection("condition", "action2", false)
+      .addConnection("action2", "falseSource")
+      .addConnection("falseSource", "falseSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    for (String branch : Arrays.asList("true", "false")) {
+      String source = branch.equals("true") ? trueSource : falseSource;
+      String sink = branch.equals("true") ? trueSink : falseSink;
+      // write records to source
+      DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(source));
+      MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      // check sink
+      DataSetManager<Table> sinkManager = getDataset(sink);
+      Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+      Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+      Assert.assertEquals(expected, actual);
+
+      validateMetric(2, appId, branch + "Source.records.out");
+      validateMetric(2, appId, branch + "Sink.records.in");
+      // check Action1 and Action2 is executed correctly
+      DataSetManager<Table> actionTableDS = getDataset(actionTable);
+      if (branch.equals("true")) {
+        Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+      } else {
+        Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+      }
+    }
+  }
+
+  @Test
   public void testNestedCondition() throws Exception {
     testNestedCondition(Engine.MAPREDUCE);
     testNestedCondition(Engine.SPARK);
@@ -703,39 +1088,60 @@ public class DataPipelineTest extends HydratorTestBase {
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
     );
 
-    String source = "nestedConditionSource-" + engine;
-    String sink1 = "nestedConditionSink1-" + engine;
-    String sink2 = "nestedConditionSink2-" + engine;
-    String sink3 = "nestedConditionSink3-" + engine;
     /*
-     *
+     * action1----->|
+     *              |
+     * action2----->|
+     *              |
+     *              V
      * source --> condition1 --> sink1
      *              |
      *              |------->condition2 --> sink2
      *                          |
-     *                          |-------> condition3----> sink3
-     *
-     *
+     *                          |-------> condition3----> sink3----->action3----->condition4---->action4
+     *                                                                                |
+     *                                                                                |------>action5
      */
+
+    String appName = "NestedCondition-" + engine;
+    String source = appName + "Source-" + engine;
+    String sink1 = appName + "Sink1-" + engine;
+    String sink2 = appName + "Sink2-" + engine;
+    String sink3 = appName + "Sink3-" + engine;
+    String actionTable = "actionTable" + appName + "-" + engine;
+
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       .addStage(new ETLStage("source", MockSource.getPlugin(source, schema)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2)))
       .addStage(new ETLStage("sink3", MockSink.getPlugin(sink3)))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, "row2", "key2", "val2")))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, "row3", "key3", "val3")))
+      .addStage(new ETLStage("action4", MockAction.getPlugin(actionTable, "row4", "key4", "val4")))
+      .addStage(new ETLStage("action5", MockAction.getPlugin(actionTable, "row5", "key5", "val5")))
       .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
       .addStage(new ETLStage("condition2", MockCondition.getPlugin("condition2")))
       .addStage(new ETLStage("condition3", MockCondition.getPlugin("condition3")))
+      .addStage(new ETLStage("condition4", MockCondition.getPlugin("condition4")))
+      .addConnection("action1", "condition1")
+      .addConnection("action2", "condition1")
       .addConnection("source", "condition1")
       .addConnection("condition1", "sink1", true)
       .addConnection("condition1", "condition2", false)
       .addConnection("condition2", "sink2", true)
       .addConnection("condition2", "condition3", false)
       .addConnection("condition3", "sink3", true)
+      .addConnection("sink3", "action3")
+      .addConnection("action3", "condition4")
+      .addConnection("condition4", "action4", true)
+      .addConnection("condition4", "action5", false)
       .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("NestedConditionApp-" + engine);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+
     ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
 
     StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
@@ -746,7 +1152,8 @@ public class DataPipelineTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start(ImmutableMap.of("condition3.branch.to.execute", "true"));
+    workflowManager.start(ImmutableMap.of("condition3.branch.to.execute", "true",
+                                          "condition4.branch.to.execute", "true"));
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // check sink
@@ -761,6 +1168,156 @@ public class DataPipelineTest extends HydratorTestBase {
 
     sinkManager = getDataset(sink2);
     Assert.assertTrue(MockSink.readOutput(sinkManager).isEmpty());
+
+    // check actions
+    DataSetManager<Table> actionTableDS = getDataset(actionTable);
+    // action1 is executed
+    Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+    // action2 is executed
+    Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+    // action3 is executed
+    Assert.assertEquals("val3", MockAction.readOutput(actionTableDS, "row3", "key3"));
+    // action4 is executed
+    Assert.assertEquals("val4", MockAction.readOutput(actionTableDS, "row4", "key4"));
+    // action5 should not get executed.
+    Assert.assertNull(MockAction.readOutput(actionTableDS, "row5", "key5"));
+  }
+
+  @Test
+  public void testSimpleControlOnlyDag() throws Exception {
+    //
+    //  condition-->action1
+    //     |
+    //     |------->action2
+    //
+
+    String appName = "SimpleControlOnlyDag";
+    String trueActionTable = "trueActionTable" + appName;
+    String falseActionTable = "falseActionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(trueActionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(falseActionTable, "row2", "key2", "val2")))
+      .addConnection("condition", "action1", true)
+      .addConnection("condition", "action2", false)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    for (String branch : Arrays.asList("true", "false")) {
+      String table = branch.equals("true") ? trueActionTable : falseActionTable;
+      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
+
+      if (branch.equals("true")) {
+        workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+      } else {
+        workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+      }
+
+      DataSetManager<Table> actionTableDS = getDataset(table);
+      if (branch.equals("true")) {
+        Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+      } else {
+        Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+      }
+    }
+  }
+
+  @Test
+  public void testMultiConditionControlOnlyDag() throws Exception {
+    //
+    //
+    //   action1---
+    //            |---condition1---action3
+    //   action2---      |
+    //                  action4-----condition2-----condition3----action5
+    //
+
+    String appName = "MultiConditionControlOnlyDag";
+    String actionTable = "actionTable" + appName;
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
+      .addStage(new ETLStage("condition2", MockCondition.getPlugin("condition2")))
+      .addStage(new ETLStage("condition3", MockCondition.getPlugin("condition3")))
+      .addStage(new ETLStage("action1", MockAction.getPlugin(actionTable, "row1", "key1", "val1")))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(actionTable, "row2", "key2", "val2")))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(actionTable, "row3", "key3", "val3")))
+      .addStage(new ETLStage("action4", MockAction.getPlugin(actionTable, "row4", "key4", "val4")))
+      .addStage(new ETLStage("action5", MockAction.getPlugin(actionTable, "row5", "key5", "val5")))
+      .addConnection("action1", "condition1")
+      .addConnection("action2", "condition1")
+      .addConnection("condition1", "action3", true)
+      .addConnection("condition1", "action4", false)
+      .addConnection("action4", "condition2")
+      .addConnection("condition2", "condition3", true)
+      .addConnection("condition3", "action5", true)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of("condition2.branch.to.execute", "true",
+                                          "condition3.branch.to.execute", "true"));
+
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    DataSetManager<Table> actionTableDS = getDataset(actionTable);
+    Assert.assertEquals("val1", MockAction.readOutput(actionTableDS, "row1", "key1"));
+    Assert.assertEquals("val2", MockAction.readOutput(actionTableDS, "row2", "key2"));
+    Assert.assertEquals("val4", MockAction.readOutput(actionTableDS, "row4", "key4"));
+    Assert.assertEquals("val5", MockAction.readOutput(actionTableDS, "row5", "key5"));
+
+    Assert.assertNull(MockAction.readOutput(actionTableDS, "row3", "key3"));
+  }
+
+  @Test
+  public void testNoConnectorsForSourceCondition() throws Exception {
+    //
+    //  condition1-->condition2-->source-->sink
+    //
+
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MockSource.getPlugin("simpleNoConnectorConditionSource", schema)))
+      .addStage(new ETLStage("trueSink", MockSink.getPlugin("trueOutput")))
+      .addStage(new ETLStage("condition1", MockCondition.getPlugin("condition1")))
+      .addStage(new ETLStage("condition2", MockCondition.getPlugin("condition2")))
+      .addConnection("condition1", "condition2", true)
+      .addConnection("condition2", "source", true)
+      .addConnection("source", "trueSink")
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("NoConnectorForSourceConditionApp");
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+
+    // write records to source
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset("simpleNoConnectorConditionSource"));
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.start(ImmutableMap.of("condition1.branch.to.execute", "true",
+                                          "condition2.branch.to.execute", "true"));
+
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("trueOutput");
+    Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   @Test

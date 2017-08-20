@@ -32,6 +32,7 @@ import java.util.Set;
 public class ConnectorDagTest {
 
   private static final Map<String, String> EMPTY_CONNECTORS = new HashMap<>();
+  private static final Set<String> EMPTY_ACTIONS = new HashSet<>();
 
   @Test
   public void testMultipleSourcesIsNoOp() {
@@ -726,7 +727,8 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
+                                            EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("file", "csv"),
@@ -762,7 +764,8 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
+                                            EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
@@ -802,7 +805,8 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("condition"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("n3"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
+                                            EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(ImmutableSet.of(
       new Connection("n1", "n2"),
@@ -848,7 +852,8 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("c1", "c2", "c3"));
     Set<String> reduceNodes = new HashSet<>(Arrays.asList("agg1", "agg2"));
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
+                                            EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(
       ImmutableSet.of(
@@ -895,7 +900,8 @@ public class ConnectorDagTest {
     Set<String> conditions = new HashSet<>(Arrays.asList("c1", "c2"));
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
-    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_CONNECTORS);
+    Set<Dag> actual = PipelinePlanner.split(connections, conditions, reduceNodes, isolationNodes, EMPTY_ACTIONS,
+                                            EMPTY_CONNECTORS);
 
     Dag dag1 = new Dag(
       ImmutableSet.of(
