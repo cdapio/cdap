@@ -233,11 +233,14 @@ function isNilOrEmptyString(value) {
 }
 
 function requiredFieldsCompleted(state, requiredFields) {
-  let emptyFieldsInState = Object.keys(state)
-    .filter(fieldName => {
-      return isNilOrEmptyString(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
-    });
-  return !emptyFieldsInState.length ? true : false;
+  for (let i = 0; i < requiredFields.length; i++) {
+    let requiredField = requiredFields[i];
+    if (isNilOrEmptyString(state[requiredField])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 const defaultAction = {

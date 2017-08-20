@@ -23,6 +23,8 @@
     .wizard-steps-header {
       width: 150px;
       background-color: #efefef;
+      height: 100%;
+      overflow: auto;
     }
     .wizard-steps-content {
       width: calc(100% - 150px);

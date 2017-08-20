@@ -49,7 +49,7 @@ export default function PropertiesStep() {
     <div className="microservice-properties">
       <Provider store={MicroserviceUploadStore}>
         <KeyValuePairsWrapper
-          keyPlaceholder={T.translate('features.Wizard.MicroserviceUpload.Step6.keyPlaceholder')}
+          keyPlaceholder={T.translate('features.Wizard.MicroserviceUpload.Step7.keyPlaceholder')}
         />
       </Provider>
     </div>

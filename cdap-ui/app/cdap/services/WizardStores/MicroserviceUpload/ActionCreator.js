@@ -19,6 +19,7 @@ import cookie from 'react-cookie';
 import Rx from 'rx';
 import NamespaceStore from 'services/NamespaceStore';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
+import {defaultQueueTypes} from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {objectQuery} from 'services/helpers';
 import {MyArtifactApi} from 'api/artifact';
@@ -73,7 +74,7 @@ const findMicroserviceArtifact = () => {
     .list({ namespace })
     .flatMap((artifacts) => {
       let microserviceArtifacts = artifacts.filter((artifact) => {
-        return artifact.name === 'microservice-app';
+        return artifact.name === 'microservice-core';
       });
 
       if (microserviceArtifacts.length === 0) {
@@ -117,10 +118,56 @@ const listMicroservicePlugins = (artifact) => {
   return MyArtifactApi.listMicroservicePlugins(pluginParams);
 };
 
+const getMicroservicePluginProperties = (pluginId) => {
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let { microserviceArtifact } = MicroserviceUploadStore.getState().general;
+  let {name: artifactId, version, scope} = microserviceArtifact;
+
+  let pluginParams = {
+    namespace,
+    artifactId,
+    version,
+    pluginId,
+    scope
+  };
+
+  return MyArtifactApi.gettMicroservicePluginDetails(pluginParams);
+};
+
+const getTrimmedMicroserviceQueueObj = (queueObj) => {
+  let trimmedObj = {};
+  trimmedObj.name = queueObj.name;
+  trimmedObj.type = queueObj.type;
+  trimmedObj.properties = {};
+
+  let defaultTypeProperties = [];
+  let defaultTypeObj = defaultQueueTypes.filter(type => type.id === queueObj.type);
+  if (defaultTypeObj.length > 0 && defaultTypeObj[0].properties) {
+    defaultTypeProperties = defaultTypeObj[0].properties;
+  }
+
+  Object.keys(queueObj.properties).forEach(queueProperty => {
+    if (defaultTypeProperties.indexOf(queueProperty) !== -1) {
+
+      // Need to add special case for this, because the backend expects the property 'topic'
+      // for queues of type 'mapr-stream', but we already have the same property for queues
+      // of type TMS. If we use the same name then it would show up in both places
+      if (queueProperty === 'mapRTopic') {
+        trimmedObj.properties['topic'] = queueObj.properties[queueProperty];
+      } else {
+        trimmedObj.properties[queueProperty] = queueObj.properties[queueProperty];
+      }
+    }
+  });
+
+  return trimmedObj;
+};
+
 const createApplication = () => {
   const state = MicroserviceUploadStore.getState();
   let namespace = NamespaceStore.getState().selectedNamespace;
-  let { instanceName: appId, description: appDescription, version: appVersion } = state.general;
+  let { instanceName: appId, description: appDescription, version: appVersion, microserviceArtifact } = state.general;
+  appVersion = parseInt(appVersion, 10) || appVersion;
   let pluginId, artifactId, artifactVersion, artifactScope;
 
   if (state.general.showNewMicroserviceTextbox) {
@@ -140,6 +187,11 @@ const createApplication = () => {
   }
 
   let { instances, vcores, memory, ethreshold } = state.configure;
+
+  instances = parseInt(instances, 10) || instances;
+  vcores = parseInt(vcores, 10) || vcores;
+  memory = parseInt(memory, 10) || memory;
+  ethreshold = parseInt(ethreshold, 10) || ethreshold;
 
   let config = {
     version: appVersion,
@@ -161,33 +213,38 @@ const createApplication = () => {
     }
   };
 
-  let endpoints = state.endpoints;
+  let inboundQueues = state.inboundQueues;
+  let outboundQueues = state.outboundQueues;
+
   let endpointsObj = {
     fetch: '',
     in: [],
     out: []
   };
 
-  if (typeof(endpoints.fetch) !== 'number') {
+  let fetchSize = inboundQueues.fetch;
+
+  if (fetchSize === '') {
     delete endpointsObj.fetch;
   } else {
-    endpointsObj.fetch = endpoints.fetch;
+    fetchSize = parseInt(fetchSize, 10) || fetchSize;
+    endpointsObj.fetch = fetchSize;
   }
 
-  endpoints.in.forEach((inboundQueue) => {
-    if (inboundQueue.property.length > 0) {
-      endpointsObj.in.push(inboundQueue.property);
-    }
+  inboundQueues.queues.forEach((inboundQueue) => {
+    let trimmedQueueObj = getTrimmedMicroserviceQueueObj(inboundQueue);
+    endpointsObj.in.push(trimmedQueueObj);
   });
+
   if (endpointsObj.in.length === 0) {
     delete endpointsObj.in;
   }
 
-  endpoints.out.forEach((outboundQueue) => {
-    if (outboundQueue.property.length > 0) {
-      endpointsObj.out.push(outboundQueue.property);
-    }
+  outboundQueues.queues.forEach((outboundQueue) => {
+    let trimmedQueueObj = getTrimmedMicroserviceQueueObj(outboundQueue);
+    endpointsObj.out.push(trimmedQueueObj);
   });
+
   if (endpointsObj.out.length === 0) {
     delete endpointsObj.out;
   }
@@ -208,18 +265,15 @@ const createApplication = () => {
     config.configuration.properties = propertiesObj;
   }
 
-  return findMicroserviceArtifact()
-    .flatMap((artifact) => {
-      return MyPipelineApi
-        .publish({
-          namespace,
-          appId
-          }, {
-            artifact,
-            config
-          }
-        );
-    });
+  return MyPipelineApi
+    .publish({
+      namespace,
+      appId
+      }, {
+        artifact: microserviceArtifact,
+        config
+      }
+    );
 };
 
 const MicroserviceUploadActionCreator = {
@@ -227,7 +281,8 @@ const MicroserviceUploadActionCreator = {
   uploadConfigurationJson,
   createApplication,
   findMicroserviceArtifact,
-  listMicroservicePlugins
+  listMicroservicePlugins,
+  getMicroservicePluginProperties
 };
 
 export default MicroserviceUploadActionCreator;

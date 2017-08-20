@@ -14,17 +14,21 @@
  * the License.
  */
 import React, { Component, PropTypes } from 'react';
+import Rx from 'rx';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
 import MicroserviceUploadWizardConfig from 'services/WizardConfigs/MicroserviceUploadWizardConfig';
 import MicroserviceUploadActionCreator from 'services/WizardStores/MicroserviceUpload/ActionCreator';
+import MicroserviceQueueStore from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueStore';
+import MicroserviceQueueActions from 'services/WizardStores/MicroserviceUpload/MicroserviceQueueActions';
 import NamespaceStore from 'services/NamespaceStore';
 import {MyProgramApi} from 'api/program';
 import T from 'i18n-react';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import isEmpty from 'lodash/isEmpty';
 
 require('./MicroserviceUpload.scss');
 
@@ -41,13 +45,16 @@ export default class MicroserviceUploadWizard extends Component {
     return MicroserviceUploadActionCreator
       .findMicroserviceArtifact()
       .flatMap((artifact) => {
+        if (isEmpty(artifact)) {
+          return Rx.Observable.of([]);
+        }
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setMicroserviceArtifact,
           payload: { artifact }
         });
         return MicroserviceUploadActionCreator.listMicroservicePlugins(artifact);
       })
-      .subscribe((plugins) => {
+      .flatMap((plugins) => {
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setDefaultMicroservicePlugins,
           payload: { plugins }
@@ -55,11 +62,28 @@ export default class MicroserviceUploadWizard extends Component {
         this.setState({
           showWizard: true
         });
+        return MicroserviceUploadActionCreator.getMicroservicePluginProperties(plugins[0].name || '');
+      })
+      .subscribe((propertiesArr) => {
+        if (propertiesArr.length > 0 && propertiesArr[0].properties) {
+          MicroserviceUploadStore.dispatch({
+            type: MicroserviceUploadActions.setMicroservicePluginProperties,
+            payload: {pluginProperties: Object.keys(propertiesArr[0].properties)}
+          });
+        }
+      }, () => {
+        MicroserviceUploadStore.dispatch({
+          type: MicroserviceUploadActions.setMicroservicePluginProperties,
+          payload: {pluginProperties: []}
+        });
       });
   }
   componentWillUnmount() {
     MicroserviceUploadStore.dispatch({
       type: MicroserviceUploadActions.onReset
+    });
+    MicroserviceQueueStore.dispatch({
+      type: MicroserviceQueueActions.onReset
     });
   }
   onSubmit() {

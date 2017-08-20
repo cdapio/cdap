@@ -88,11 +88,12 @@ commons:
   please: Please
   resource-center: Add Entity
   schemaLabel: Schema
-  secShortLabel: sec
   secondsShortLabel: secs
+  secShortLabel: sec
+  stream: Stream
   then: Then
   tracker: Cask Tracker
-  stream: Stream
+  typeLabel: Type
   when: When
   wrangler: Cask Wrangler
 features:
@@ -1670,6 +1671,31 @@ features:
       callToAction: Start Microservice
       headerlabel: Add Microservice
       footertitle: Add Microservice
+      MicroserviceQueue:
+        labels:
+          accessId: Access-id
+          accessKey: Access-key
+          connection: Connection String
+          endpoint: Endpoint
+          keySerdes: Key Serdes
+          mapRTopic: Topic Name
+          namespace: Namespace
+          queueName: Queue Name
+          region: Region
+          sslKeystoreFilePath: SSL Keystore File Path
+          sslKeystoreKeyPassword: SSL Keystore Key Password
+          sslKeystorePassword: SSL Keystore Password
+          sslKeystoreType: SSL Keystore Type
+          sslTruststoreFilePath: SSL Truststore File Path
+          sslTruststorePassword: SSL Truststore Password
+          sslTruststoreType: SSL Truststore Type
+          topic: Topic Name
+          valueSerdes: Value Serdes
+        types:
+          mapr-stream: Mapr Stream
+          sqs: Amazon SQS
+          tms: TMS (Transactional Messaging System)
+          websocket: Websocket
       secondaryCallToAction: Microservice Details
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
@@ -1726,16 +1752,17 @@ features:
         vcoresLabel: Virtual Cores
         vcoresPlaceholder: The number of virtual cores for the microservice
       Step5:
-        description: Provide inbound and outbound queue names (TMS Queue names).
-        fetchLabel: Fetch size (MB)
-        fetchPlaceholder: The fetch size across all the queues.
-        inboundLabel: Inbound queues
-        inboundPlaceholder: Name of inbound queue
-        outboundLabel: Outbound queues
-        outboundPlaceholder: Name of outbound queue
-        shorttitle: Endpoint Specification
-        title: Endpoint Specification
+        description: Provide inbound queue properties.
+        fetchLabel: Fetch Size
+        propertiesLabel: Inbound Queues
+        shorttitle: Inbound Queues
+        title: Inbound Queues
       Step6:
+        description: Provide outbound queue properties.
+        propertiesLabel: Outbound Queues
+        shorttitle: Outbound Queues
+        title: Outbound Queues
+      Step7:
         description: Provide microservice specific properties.
         keyPlaceholder: name
         propertiesLabel: Properties
