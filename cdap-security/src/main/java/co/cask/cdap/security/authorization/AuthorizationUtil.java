@@ -18,15 +18,22 @@ package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.SecurityUtil;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
+import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
@@ -123,5 +131,32 @@ public class AuthorizationUtil {
    */
   public static boolean isSecurityAuthorizationEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.ENABLED) && cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+  }
+
+  /**
+   * Helper function, to run the callable as the principal provided and reset back when the call is done
+   */
+  public static <T> T authorizeAs(String userName, Callable<T> callable) throws Exception {
+    String oldUserName = SecurityRequestContext.getUserId();
+    SecurityRequestContext.setUserId(userName);
+    try {
+      return callable.call();
+    } finally {
+      SecurityRequestContext.setUserId(oldUserName);
+    }
+  }
+
+  /**
+   * Helper function to get the authorizing user for app deployment, the authorzing user will be the app owner if it
+   * is present. If not, it will be the namespace owner. If that is also not present, it will be the user who is making
+   * the request
+   */
+  public static String getAppAuthorizingUser(OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext,
+                                             ApplicationId applicationId,
+                                             @Nullable KerberosPrincipalId appOwner) throws IOException {
+    KerberosPrincipalId effectiveOwner =
+      SecurityUtil.getEffectiveOwner(ownerAdmin, applicationId.getNamespaceId(),
+                                     appOwner == null ? null : appOwner.getPrincipal());
+    return effectiveOwner != null ? effectiveOwner.getPrincipal() : authenticationContext.getPrincipal().getName();
   }
 }

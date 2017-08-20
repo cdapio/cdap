@@ -84,10 +84,10 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
                                                   authorizationEnforcer, authenticationContext));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
-                                                   inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
+                                                   ownerAdmin, authenticationContext));
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.setFinally(new DeploymentCleanupStage());

@@ -48,6 +48,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -249,21 +250,16 @@ public class DatasetInstanceService {
   void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     NamespaceId namespace = ConversionHelpers.toNamespaceId(namespaceId);
     DatasetId datasetId = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
-    Principal principal = authenticationContext.getPrincipal();
+    Principal requestingUser = authenticationContext.getPrincipal();
     String ownerPrincipal = props.getOwnerPrincipal();
 
     // need to enforce on the principal id if impersonation is involved
-    KerberosPrincipalId principalId = ownerPrincipal == null ? null : new KerberosPrincipalId(ownerPrincipal);
-    if (!namespace.equals(NamespaceId.SYSTEM) && principalId == null) {
-      // if dataset owner is not present, get the namespace impersonation principal
-      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(namespace);
-      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
-    }
+    KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, namespace, ownerPrincipal);
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(datasetId)) {
-      if (principalId != null) {
-        authorizationEnforcer.enforce(principalId, principal, Action.ADMIN);
+      if (effectiveOwner != null) {
+        authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
       }
-      authorizationEnforcer.enforce(datasetId, principal, Action.ADMIN);
+      authorizationEnforcer.enforce(datasetId, requestingUser, Action.ADMIN);
     }
 
     ensureNamespaceExists(namespace);

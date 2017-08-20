@@ -427,15 +427,11 @@ public class FileStreamAdmin implements StreamAdmin {
     }
 
     // need to enforce on the principal id if impersonation is involved
-    KerberosPrincipalId principalId =
-      specifiedOwnerPrincipal == null ? null : new KerberosPrincipalId(specifiedOwnerPrincipal);
-    if (!streamId.getNamespaceId().equals(NamespaceId.SYSTEM) && principalId == null) {
-      // if stream owner is not present, get the namespace impersonation principal
-      String namespacePrincipal = ownerAdmin.getOwnerPrincipal(streamId.getNamespaceId());
-      principalId = namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
-    }
-    if (principalId != null) {
-      authorizationEnforcer.enforce(principalId, authenticationContext.getPrincipal(), Action.ADMIN);
+    KerberosPrincipalId effectiveOwner = SecurityUtil.getEffectiveOwner(ownerAdmin, streamId.getNamespaceId(),
+                                                                        specifiedOwnerPrincipal);
+    Principal requestingUser = authenticationContext.getPrincipal();
+    if (effectiveOwner != null) {
+      authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
     }
     ensureAccess(streamId, Action.ADMIN);
 
