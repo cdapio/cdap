@@ -379,7 +379,6 @@ public class DatasetInstanceService {
    *
    * @param namespaceId namespace to operate on
    * @throws Exception if it fails to delete dataset
-   * @return the set of {@link DatasetId} that get deleted
    */
   void dropAll(NamespaceId namespaceId) throws Exception {
     ensureNamespaceExists(namespaceId);
@@ -475,7 +474,7 @@ public class DatasetInstanceService {
     try {
       return byPassCheck ? noAuthDatasetTypeService.getType(datasetTypeId) :
         authorizationDatasetTypeService.getType(datasetTypeId);
-    } catch (DatasetTypeNotFoundException e) {
+    } catch (DatasetTypeNotFoundException | UnauthorizedException e) {
       try {
         // Type not found in the instance's namespace. Now try finding it in the system namespace
         DatasetTypeId systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(NamespaceId.SYSTEM, typeName);
