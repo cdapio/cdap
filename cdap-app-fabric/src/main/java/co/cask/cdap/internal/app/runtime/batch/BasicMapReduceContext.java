@@ -19,9 +19,11 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -227,7 +229,27 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    this.outputs.put(alias, Outputs.transform(output, this));
+
+    ProvidedOutput providedOutput;
+    if (output instanceof Output.DatasetOutput) {
+      providedOutput = Outputs.transform((Output.DatasetOutput) output, this);
+    } else if (output instanceof Output.OutputFormatProviderOutput) {
+      OutputFormatProvider outputFormatProvider =
+        ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
+      if (outputFormatProvider instanceof DatasetOutputCommitter) {
+        // disallow user from adding a DatasetOutputCommitter as an OutputFormatProviderOutput because we would not
+        // be able to call its methodsin MainOutputCommitter. It needs to be a DatasetOutput.
+        throw new IllegalArgumentException("Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. " +
+                                             "Add the output as a DatasetOutput.");
+      }
+      providedOutput = new ProvidedOutput(output, outputFormatProvider);
+    } else {
+      // shouldn't happen unless user defines their own Output class
+      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
+                                                       output.getName(), output.getClass().getCanonicalName()));
+    }
+
+    this.outputs.put(alias, providedOutput);
   }
 
   /**

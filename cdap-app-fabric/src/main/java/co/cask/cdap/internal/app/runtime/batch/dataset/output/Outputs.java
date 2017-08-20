@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -36,40 +37,27 @@ public final class Outputs {
   /**
    * Transforms a list of {@link Output}s to {@link ProvidedOutput}.
    */
-  public static List<ProvidedOutput> transform(List<? extends Output> outputs, final AbstractContext abstractContext) {
+  public static List<ProvidedOutput> transform(List<Output.DatasetOutput> outputs,
+                                               final AbstractContext abstractContext) {
     // we don't want to use Lists.transform, to catch any errors with transform earlier on
     List<ProvidedOutput> providedOutputs = new ArrayList<>(outputs.size());
-    for (Output output : outputs) {
+    for (Output.DatasetOutput output : outputs) {
       providedOutputs.add(transform(output, abstractContext));
     }
     return providedOutputs;
   }
 
-  /**
-   * Transforms a {@link Output}s to {@link ProvidedOutput}.
-   */
-  public static ProvidedOutput transform(Output output, AbstractContext abstractContext) {
-    return new ProvidedOutput(output, toOutputFormatProvider(output, abstractContext));
-  }
-
-  private static OutputFormatProvider toOutputFormatProvider(Output output, AbstractContext abstractContext) {
-    if (output instanceof Output.DatasetOutput) {
-      Output.DatasetOutput datasetOutput = (Output.DatasetOutput) output;
-      String datasetNamespace = datasetOutput.getNamespace();
-      if (datasetNamespace == null) {
-        datasetNamespace = abstractContext.getNamespace();
-      }
-      String datasetName = output.getName();
-      Map<String, String> args = datasetOutput.getArguments();
-      Dataset dataset = abstractContext.getDataset(datasetNamespace, datasetName, args, AccessType.WRITE);
-      return new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
-
-    } else if (output instanceof Output.OutputFormatProviderOutput) {
-      return ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
-    } else {
-      // shouldn't happen unless user defines their own Output class
-      throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
-                                                       output.getName(), output.getClass().getCanonicalName()));
+  public static ProvidedOutput transform(Output.DatasetOutput datasetOutput,
+                                         AbstractContext abstractContext) {
+    String datasetNamespace = datasetOutput.getNamespace();
+    if (datasetNamespace == null) {
+      datasetNamespace = abstractContext.getNamespace();
     }
+    String datasetName = datasetOutput.getName();
+    Map<String, String> args = datasetOutput.getArguments();
+    Dataset dataset = abstractContext.getDataset(datasetNamespace, datasetName, args, AccessType.WRITE);
+    DatasetOutputFormatProvider datasetOutputFormatProvider =
+      new DatasetOutputFormatProvider(datasetNamespace, datasetName, args, dataset);
+    return new ProvidedOutput(datasetOutput, datasetOutputFormatProvider);
   }
 }
