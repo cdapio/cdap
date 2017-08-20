@@ -30,7 +30,7 @@ import java.util.Map;
 
 /**
  * Represents the runtime context of a {@link Workflow}. This context is also
- * available to {@link WorkflowAction}.
+ * available to {@link WorkflowAction} and {@link Condition}.
  */
 public interface WorkflowContext extends RuntimeContext, Transactional, MessagingContext,
   ServiceDiscoverer, DatasetContext, PluginContext, SecureStore {
@@ -41,6 +41,12 @@ public interface WorkflowContext extends RuntimeContext, Transactional, Messagin
    * @throws UnsupportedOperationException if it is called from {@link Predicate}
    */
   WorkflowActionSpecification getSpecification();
+
+  /**
+   * Returns {@link ConditionSpecification} associated with the condition node in the Workflow.
+   * @throws UnsupportedOperationException if it is not called from {@link Predicate} or {@link Condition}
+   */
+  ConditionSpecification getConditionSpecification();
 
   long getLogicalStartTime();
 

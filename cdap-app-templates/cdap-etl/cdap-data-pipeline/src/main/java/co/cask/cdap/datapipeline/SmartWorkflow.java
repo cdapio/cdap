@@ -44,6 +44,7 @@ import co.cask.cdap.etl.batch.ActionSpec;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.BatchPipelineSpec;
 import co.cask.cdap.etl.batch.WorkflowBackedActionContext;
+import co.cask.cdap.etl.batch.condition.PipelineCondition;
 import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
 import co.cask.cdap.etl.batch.connector.AlertReader;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
@@ -84,6 +85,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Data Pipeline Smart Workflow.
@@ -184,35 +186,44 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     dag = new ControlDag(plan.getPhaseConnections());
-    if (plan.getConditionPhaseBranches().isEmpty()) {
+    Map<String, ConditionBranches> conditionBranches = plan.getConditionPhaseBranches();
+    if (conditionBranches.isEmpty()) {
       // after flattening, there is guaranteed to be just one source
       dag.flatten();
     } else {
-      Map<String, ConditionBranches> conditionBranches = plan.getConditionPhaseBranches();
       Set<String> conditions = conditionBranches.keySet();
       // flatten only the part of the dag starting from sources and ending in conditions/sinks.
       Set<String> dagNodes = dag.accessibleFrom(dag.getSources(), Sets.union(dag.getSinks(), conditions));
       Set<String> dagNodesWithoutCondition = Sets.difference(dagNodes, conditions);
-      Dag subDag = dag.createSubDag(dagNodesWithoutCondition);
-      ControlDag cdag = new ControlDag(subDag);
-      cdag.flatten();
 
       Set<Connection> connections = new HashSet<>();
-      // Add all connections from cdag
       Deque<String> bfs = new LinkedList<>();
-      bfs.addAll(cdag.getSources());
-      while (bfs.peek() != null) {
-        String node = bfs.poll();
-        for (String output : cdag.getNodeOutputs(node)) {
-          connections.add(new Connection(node, output));
-          bfs.add(output);
+
+      Set<String> sinks = new HashSet<>();
+      // If its a single phase without condition then no need to flatten
+      if (dagNodesWithoutCondition.size() > 1) {
+        Dag subDag = dag.createSubDag(dagNodesWithoutCondition);
+        ControlDag cdag = new ControlDag(subDag);
+        cdag.flatten();
+
+        // Add all connections from cdag
+        bfs.addAll(cdag.getSources());
+        while (bfs.peek() != null) {
+          String node = bfs.poll();
+          for (String output : cdag.getNodeOutputs(node)) {
+            connections.add(new Connection(node, output));
+            bfs.add(output);
+          }
         }
+        sinks.addAll(cdag.getSinks());
+      } else {
+        sinks.addAll(dagNodesWithoutCondition);
       }
 
       // Add back the existing condition nodes and corresponding conditions
       Set<String> conditionsFromDag = Sets.intersection(dagNodes, conditions);
       for (String condition : conditionsFromDag) {
-        connections.add(new Connection(cdag.getSinks().iterator().next(), condition));
+        connections.add(new Connection(sinks.iterator().next(), condition));
       }
       bfs.addAll(Sets.intersection(dagNodes, conditions));
       while (bfs.peek() != null) {
@@ -336,25 +347,29 @@ public class SmartWorkflow extends AbstractWorkflow {
   }
 
   private void addPrograms(String node, WorkflowProgramAdder programAdder) {
-    addProgram(node, programAdder);
-
+    programAdder = addProgram(node, programAdder);
     Set<String> outputs = dag.getNodeOutputs(node);
     if (outputs.isEmpty()) {
       return;
     }
 
-    // if this is a fork
-    if (outputs.size() > 1) {
-      WorkflowProgramAdder fork = programAdder.fork();
-      for (String output : outputs) {
-        // need to make sure we don't call also() if this is the final branch
-        if (!addBranchPrograms(output, fork)) {
-          fork = fork.also();
-        }
-      }
+    ConditionBranches branches = plan.getConditionPhaseBranches().get(node);
+    if (branches != null) {
+      // This is condition
+      addCondition(programAdder, branches);
     } else {
-      addPrograms(outputs.iterator().next(), programAdder);
-
+      // if this is a fork
+      if (outputs.size() > 1) {
+        WorkflowProgramAdder fork = programAdder.fork();
+        for (String output : outputs) {
+          // need to make sure we don't call also() if this is the final branch
+          if (!addBranchPrograms(output, fork)) {
+            fork = fork.also();
+          }
+        }
+      } else {
+        addPrograms(outputs.iterator().next(), programAdder);
+      }
     }
   }
 
@@ -378,18 +393,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     return addBranchPrograms(dag.getNodeOutputs(node).iterator().next(), programAdder);
   }
 
-  private void addProgram(String phaseName, WorkflowProgramAdder programAdder) {
-    PipelinePhase phase = plan.getPhase(phaseName);
-    // if the origin plan didn't have this name, it means it is a join node
-    // artificially added by the control dag flattening process. So nothing to add, skip it
-    if (phase == null) {
-      return;
-    }
-
-    // can't use phase name as a program name because it might contain invalid characters
-    String programName = "phase-" + phaseNum;
-    phaseNum++;
-
+  private BatchPhaseSpec getPhaseSpec(String programName, PipelinePhase phase) {
     // if this phase uses connectors, add the local dataset for that connector if we haven't already
     for (StageSpec connectorInfo : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
       String connectorName = connectorInfo.getName();
@@ -414,19 +418,34 @@ public class SmartWorkflow extends AbstractWorkflow {
     for (StageSpec connectorStage : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
       phaseConnectorDatasets.put(connectorStage.getName(), connectorDatasets.get(connectorStage.getName()));
     }
-    BatchPhaseSpec batchPhaseSpec = new BatchPhaseSpec(programName, phase, spec.getResources(),
-                                                       spec.getDriverResources(),
-                                                       spec.getClientResources(),
-                                                       spec.isStageLoggingEnabled(),
-                                                       spec.isProcessTimingEnabled(),
-                                                       phaseConnectorDatasets,
-                                                       spec.getNumOfRecordsPreview(),
-                                                       spec.getProperties());
+
+    return new BatchPhaseSpec(programName, phase, spec.getResources(), spec.getDriverResources(),
+                              spec.getClientResources(), spec.isStageLoggingEnabled(), spec.isProcessTimingEnabled(),
+                              phaseConnectorDatasets, spec.getNumOfRecordsPreview(), spec.getProperties());
+  }
+
+  private WorkflowProgramAdder addProgram(String phaseName, WorkflowProgramAdder programAdder) {
+    PipelinePhase phase = plan.getPhase(phaseName);
+    // if the origin plan didn't have this name, it means it is a join node
+    // artificially added by the control dag flattening process. So nothing to add, skip it
+    if (phase == null) {
+      return programAdder;
+    }
+
+    // can't use phase name as a program name because it might contain invalid characters
+    String programName = "phase-" + phaseNum;
+    phaseNum++;
+
+    BatchPhaseSpec batchPhaseSpec = getPhaseSpec(programName, phase);
 
     Set<String> pluginTypes = batchPhaseSpec.getPhase().getPluginTypes();
     if (pluginTypes.contains(Action.PLUGIN_TYPE)) {
       // actions will be all by themselves in a phase
       programAdder.addAction(new PipelineAction(batchPhaseSpec));
+    } else if (pluginTypes.contains(Condition.PLUGIN_TYPE)) {
+      // conditions will be all by themselves in a phase
+      // addCondition(programAdder, phaseName, batchPhaseSpec);
+      programAdder = programAdder.condition(new PipelineCondition(batchPhaseSpec));
     } else if (pluginTypes.contains(Constants.SPARK_PROGRAM_PLUGIN_TYPE)) {
       // spark programs will be all by themselves in a phase
       String stageName = phase.getStagesOfType(Constants.SPARK_PROGRAM_PLUGIN_TYPE).iterator().next().getName();
@@ -441,6 +460,20 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                           new HashSet<>(connectorDatasets.values())));
       programAdder.addMapReduce(programName);
     }
+    return programAdder;
   }
 
+  private void addCondition(WorkflowProgramAdder conditionAdder, ConditionBranches branches) {
+    // Add all phases on the true branch here
+    String trueOutput = branches.getTrueOutput();
+    if (trueOutput != null) {
+      addPrograms(trueOutput, conditionAdder);
+    }
+    String falseOutput = branches.getFalseOutput();
+    if (falseOutput != null) {
+      conditionAdder.otherwise();
+      addPrograms(falseOutput, conditionAdder);
+    }
+    conditionAdder.end();
+  }
 }

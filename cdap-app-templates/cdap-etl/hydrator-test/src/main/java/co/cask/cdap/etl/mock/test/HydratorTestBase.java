@@ -22,6 +22,7 @@ import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.SparkCompute;
+import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.mock.action.MockAction;
 import co.cask.cdap.etl.mock.alert.NullAlertTransform;
@@ -38,6 +39,7 @@ import co.cask.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import co.cask.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import co.cask.cdap.etl.mock.batch.joiner.DupeFlagger;
 import co.cask.cdap.etl.mock.batch.joiner.MockJoiner;
+import co.cask.cdap.etl.mock.condition.MockCondition;
 import co.cask.cdap.etl.mock.spark.Window;
 import co.cask.cdap.etl.mock.spark.compute.StringValueFilterCompute;
 import co.cask.cdap.etl.mock.transform.AllErrorTransform;
@@ -77,7 +79,8 @@ public class HydratorTestBase extends TestBase {
     StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     MockAction.PLUGIN_CLASS, StringValueFilterCompute.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
-    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS
+    NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
+    MockCondition.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     co.cask.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
@@ -101,6 +104,7 @@ public class HydratorTestBase extends TestBase {
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
                    Action.class.getPackage().getName(),
+                   Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
