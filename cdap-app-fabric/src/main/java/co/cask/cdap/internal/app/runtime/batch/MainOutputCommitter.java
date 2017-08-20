@@ -152,13 +152,16 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
           .setTransaction(transaction.getWritePointer())
           .build());
 
+      // flush dataset operations (such as from any DatasetOutputCommitters)
+      taskContext.flushOperations();
       // no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
       if (!txClient.commit(transaction)) {
         LOG.warn("MapReduce Job transaction failed to commit");
         throw new TransactionFailureException("Failed to commit transaction " + transaction.getWritePointer());
       }
-    } catch (TransactionFailureException | TopicNotFoundException e) {
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);
     }
   }
