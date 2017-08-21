@@ -1,0 +1,85 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$form-gray: #cccccc;
+$dropdown_border_bottom_color: #333333;
+
+.schedule-runtime-args {
+  .tab-content {
+    .tab-pane {
+      > * {
+        width: 100%;
+        padding: 5px 60px;
+        height: 100%;
+        h4 {
+          font-weight: 500;
+          font-size: 15px;
+        }
+        .row {
+          padding: 5px 0;
+          &.header {
+            color: $form-gray;
+          }
+          .macro-label {
+            flex: 0.5;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+
+            input.form-control {
+              border: 0;
+              box-shadow: none;
+              border-bottom: 1px solid $form-gray;
+              border-radius: 0;
+              padding: 0;
+              margin: 0 20px 0 0;
+              flex: 1;
+              background: transparent;
+            }
+            > * {
+              flex: 0.5;
+              align-items: center;
+            }
+          }
+          .select-dropdown {
+            display: inline-block;
+            width: 100%;
+            border-bottom: 2px solid $dropdown_border_bottom_color;
+            margin-bottom: 10px;
+            select {
+              border: 0;
+              height: initial;
+              box-shadow: none;
+              cursor: pointer;
+              width: 100%;
+              background: transparent;
+              &:focus,
+              &:active {
+                outline: none;
+              }
+            }
+          }
+        }
+        .empty-message-container {
+          height: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+    }
+  }
+}
