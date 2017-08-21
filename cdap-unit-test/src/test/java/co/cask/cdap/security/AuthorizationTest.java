@@ -21,7 +21,6 @@ import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -263,8 +262,8 @@ public class AuthorizationTest extends TestBase {
     streamManager2.send("Safety");
     try {
       flowManager.start();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    } catch (UnauthorizedException e) {
+      // Expected
     }
 
     authorizer.grant(streamId1, ALICE, ImmutableSet.of(Action.READ));
@@ -471,8 +470,8 @@ public class AuthorizationTest extends TestBase {
     try {
       deployApplication(NamespaceId.DEFAULT, DummyApp.class);
       Assert.fail("App deployment should fail because alice does not have ADMIN privilege on the application");
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    } catch (UnauthorizedException e) {
+      // Expected
     }
     createAuthNamespace();
     Authorizer authorizer = getAuthorizer();
@@ -491,7 +490,7 @@ public class AuthorizationTest extends TestBase {
     try {
       deployApplication(AUTH_NAMESPACE, DummyApp.class);
       Assert.fail();
-    } catch (Exception e) {
+    } catch (UnauthorizedException e) {
       // expected
     }
 
@@ -514,7 +513,7 @@ public class AuthorizationTest extends TestBase {
     try {
       appManager.update(new AppRequest(new ArtifactSummary(DummyApp.class.getSimpleName(), "1.0-SNAPSHOT")));
       Assert.fail("App update should have failed because Bob does not have admin privileges on the app.");
-    } catch (Exception expected) {
+    } catch (UnauthorizedException expected) {
       // expected
     }
     // grant READ and WRITE to Bob
@@ -522,7 +521,7 @@ public class AuthorizationTest extends TestBase {
     // delete should fail
     try {
       appManager.delete();
-    } catch (Exception expected) {
+    } catch (UnauthorizedException expected) {
       // expected
     }
     // grant ADMIN to Bob. Now delete should succeed
@@ -1082,16 +1081,16 @@ public class AuthorizationTest extends TestBase {
     try {
       scheduleManager.resume();
       Assert.fail("Resuming schedule should have failed since BOB does not have EXECUTE on the program");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    } catch (UnauthorizedException e) {
+      // Expected
     }
 
     // bob should also not be able see the status of the schedule
     try {
       scheduleManager.status(HttpURLConnection.HTTP_FORBIDDEN);
       Assert.fail("Getting schedule status should have failed since BOB does not have READ on the program");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    } catch (UnauthorizedException e) {
+      // Expected
     }
 
     // switch to Alice
@@ -1105,8 +1104,8 @@ public class AuthorizationTest extends TestBase {
     try {
       scheduleManager.resume();
       Assert.fail("Resuming schedule should have failed since BOB does not have EXECUTE on the program");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getCause() instanceof UnauthorizedException);
+    } catch (UnauthorizedException e) {
+      // Expected
     }
 
     // but BOB should be able to get schedule status now
@@ -1348,8 +1347,8 @@ public class AuthorizationTest extends TestBase {
         try {
           deleteDatasetInstance(NamespaceId.SYSTEM.dataset("app.meta"));
           Assert.fail();
-        } catch (DatasetManagementException e) {
-          Assert.assertTrue(e.getMessage().contains("is not authorized to perform actions"));
+        } catch (UnauthorizedException e) {
+          // Expected
         } catch (Exception e) {
           Assert.fail("Getting incorrect exception");
         }
@@ -1478,6 +1477,7 @@ public class AuthorizationTest extends TestBase {
   public void afterTest() throws Exception {
     Authorizer authorizer = getAuthorizer();
 
+    SecurityRequestContext.setUserId(ALICE.getName());
     grantAndAssertSuccess(AUTH_NAMESPACE, SecurityRequestContext.toPrincipal(), EnumSet.of(Action.ADMIN));
     // clean up. remove the namespace if it exists
     if (getNamespaceAdmin().exists(AUTH_NAMESPACE)) {
