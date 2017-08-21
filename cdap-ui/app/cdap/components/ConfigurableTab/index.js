@@ -38,10 +38,10 @@ export default class ConfigurableTab extends Component {
       - and more...
     */
     let {tabs, layout, defaultTab} = this.props.tabConfig;
-    this.state = { tabs, layout, defaultTab };
+    this.state = { tabs, layout, activeTab: this.props.activeTab || defaultTab };
   }
   setTab(tabId) {
-    this.setState({tabId});
+    this.setState({activeTab: tabId});
     document.querySelector('.tab-content').scrollTop = 0;
 
     if (typeof this.props.onTabClick === 'function') {
@@ -49,7 +49,7 @@ export default class ConfigurableTab extends Component {
     }
   }
   isActiveTab(tabId) {
-    return this.props.activeTab === tabId;
+    return this.state.activeTab === tabId;
   }
   componentWillReceiveProps(nextProps) {
     this.setState({ tabs: nextProps.tabConfig.tabs});
@@ -75,10 +75,10 @@ export default class ConfigurableTab extends Component {
               );
             })}
           </TabHeaders>
-          <TabContent activeTab={this.props.activeTab}>
+          <TabContent activeTab={this.state.activeTab}>
             {
               this.state.tabs
-                .filter((tab) => tab.id === this.props.activeTab)
+                .filter((tab) => tab.id === this.state.activeTab)
                 .map((tab, index) => {
                   return (
                     <TabPane
