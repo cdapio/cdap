@@ -49,7 +49,6 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
@@ -117,11 +116,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private long metricsProcessedCount;
 
   private MetricsConsumerMetaTable metaTable;
-
-  private DataMigrator dataMigrator;
-  private ScheduledExecutorService dataMigratorExecutor;
-  private MetricsTableDeleter tableDeleter;
-  private ScheduledExecutorService tableDeleterExecutor;
 
   private volatile boolean stopping;
 
@@ -264,34 +258,18 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         resolutionToMaxRecordsMap.put(3600, maxRecordsToScan);
         resolutionToMaxRecordsMap.put(60, maxRecordsToScan);
 
-        dataMigrator = new DataMigrator(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
-                                                     resolutionToMaxRecordsMap);
+        ScheduledExecutorService dataMigratorExecutor =
+          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-data-migrator"));
+        DataMigrator dataMigrator = new DataMigrator(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
+                                                     resolutionToMaxRecordsMap, dataMigratorExecutor);
+        dataMigrator.scheduleMigrationIfNecessary();
 
-        if (!dataMigrator.isMigrationComplete()) {
-          dataMigratorExecutor =
-            Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-data-migrator"));
-
-          // 5-min initial delay and scheduled to run each min after that
-          dataMigratorExecutor.scheduleAtFixedRate(dataMigrator, 5, 1, TimeUnit.MINUTES);
-          LOG.info("Scheduled metrics migration thread for resolution INT_MAX, 3600, 60 tables");
-        } else {
-          LOG.info("All Metrics data have been migrated, not scheduling migration thread");
-        }
-
-        tableDeleter =
+        ScheduledExecutorService tableDeleterExecutor =
+          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
+        MetricsTableDeleter tableDeleter =
           new MetricsTableDeleter(metricDatasetFactory, cConfiguration, hConf, hBaseTableUtil,
-                                  ImmutableList.of(Integer.MAX_VALUE, 3600, 60, 1));
-
-        if (!tableDeleter.allTablesDeleted()) {
-          tableDeleterExecutor =
-            Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
-          // scheduled to run every 2 hours
-          tableDeleterExecutor.scheduleAtFixedRate(tableDeleter, 1, 2, TimeUnit.HOURS);
-          LOG.info("Scheduled metrics deletion thread for 1, 60, 3600, INT_MAX resolution tables, " +
-                     "tables will only be deleted after data migration is completed for them");
-        } else {
-          LOG.info("All Metrics tables have been deleted, not scheduling deletion thread");
-        }
+                                  ImmutableList.of(Integer.MAX_VALUE, 3600, 60, 1), tableDeleterExecutor);
+        tableDeleter.scheduleDeletionIfNecessary();
       }
     }
 
@@ -372,7 +350,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                          new MetricValue(delayMetricName, MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     metricsProcessedCount += metricValues.size();
-    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
+    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric's timestamp: {}. " +
                          "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
   }
 
@@ -419,19 +397,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           // Don't sleep if sleepTime returned is 0
           if (sleepTime > 0) {
             TimeUnit.MILLISECONDS.sleep(sleepTime);
-          }
-
-          // shut down the executores if they are not needed anymore
-          // todo uncomment and run only every 100 times
-          if (instanceId == 0 && topicIdMetaKey.getTopicId().equals(metricsTopics.get(0))) {
-            if (dataMigrator != null && dataMigratorExecutor != null && !dataMigratorExecutor.isShutdown()
-              && dataMigrator.isMigrationComplete()) {
-              dataMigratorExecutor.shutdown();
-            }
-            if (tableDeleter != null && tableDeleterExecutor != null && !tableDeleterExecutor.isShutdown()
-              && tableDeleter.allTablesDeleted()) {
-              tableDeleterExecutor.shutdown();
-            }
           }
         } catch (InterruptedException e) {
           // It's triggered by stop

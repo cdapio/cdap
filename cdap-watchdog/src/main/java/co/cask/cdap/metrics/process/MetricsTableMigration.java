@@ -25,7 +25,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
@@ -52,12 +51,6 @@ public class MetricsTableMigration {
   private final MetricsTable v3MetricsTable;
   private final Configuration hConf;
   private final CConfiguration cConf;
-
-  public MetricsTableMigration(MetricDatasetFactory metricDatasetFactory, int resolution,
-                               CConfiguration cConf, Configuration hConf) {
-    this(metricDatasetFactory.getV2MetricsTable(resolution),
-         metricDatasetFactory.getV3MetricsTable(resolution), cConf, hConf);
-  }
 
   public MetricsTableMigration(MetricsTable v2MetricsTable, MetricsTable v3MetricsTable,
                                CConfiguration cConf, Configuration hConf) {
@@ -132,8 +125,6 @@ public class MetricsTableMigration {
           rowIncrements.put(rowKey, increments);
           v3MetricsTable.increment(rowIncrements);
         }
-
-        // break if we have exceeded max records to scan
         recordsScanned++;
       }
       LOG.debug("Migrated {} records from the metrics table {}", recordsScanned, v2MetricsTable);
@@ -190,7 +181,6 @@ public class MetricsTableMigration {
   public boolean deleteV2MetricsTable(HBaseDDLExecutorFactory ddlExecutorFactory,
                                       HBaseTableUtil tableUtil, int resolution) {
     TableId tableId = getV2MetricsTableName(resolution);
-    LOG.trace("Looking to delete table {}", tableId);
     try {
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
         TableId hBaseTableId =
