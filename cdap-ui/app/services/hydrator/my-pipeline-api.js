@@ -66,6 +66,10 @@ angular.module(PKG.name + '.services')
         // This should ideally be merged with fetchPluginProperties, however the path has SYSTEM scope
         fetchPostActionProperties: myHelpers.getConfig('GET', 'REQUEST', postActionDetailFetch, true),
 
+        // Batch fetching plugin properties
+        fetchAllPluginsProperties: myHelpers.getConfig('POST', 'REQUEST', '/namespaces/:namespace/artifactproperties', true),
+
+
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', pipelinePath + '/status'),
