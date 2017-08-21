@@ -226,13 +226,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   public void testCombinedTablePut() throws Exception {
     MetricsTable v2Table = getTable("v2Table");
     MetricsTable v3Table = getTable("v3Table");
-    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table, 1, cConf, hConf, tableUtil,
-                                                                      new Predicate<Integer>() {
-                                                                        @Override
-                                                                        public boolean apply(@Nullable Integer input) {
-                                                                          return true;
-                                                                        }
-                                                                      });
+    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table, 1, cConf, hConf, tableUtil);
 
     // Already existing data on v2
     v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
