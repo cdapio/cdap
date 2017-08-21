@@ -161,6 +161,13 @@ $action-btn-inactive-color: #aaaaaa;
 
     .message { padding: 15px; }
 
+    pre {
+      .btn-link {
+        cursor: pointer;
+        color: $cdap_orange;
+      }
+    }
+
     .loading-container {
       padding: 25px;
       &.error-message-container {

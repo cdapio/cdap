@@ -20,6 +20,7 @@ import {MyArtifactApi} from 'api/artifact';
 import find from 'lodash/find';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import NamespaceStore from 'services/NamespaceStore';
 import {findHighestVersion} from 'services/VersionRange/VersionUtilities';
 import {objectQuery} from 'services/helpers';
@@ -27,6 +28,7 @@ import T from 'i18n-react';
 import {getParsedSchemaForDataPrep} from 'components/SchemaEditor/SchemaHelpers';
 import {directiveRequestBodyCreator} from 'components/DataPrep/helper';
 import classnames from 'classnames';
+import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -35,10 +37,7 @@ const mapErrorToMessage = (e) => {
     let fieldName = objectQuery(splitMessage, 1) || e.message;
     return {
       message: T.translate('features.DataPrep.TopPanel.invalidFieldNameMessage', {fieldName}),
-      remedies: `
-${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}
-${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
-      `
+      remedies: `${T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies1')}`
     };
   }
   return {message: e.message};
@@ -431,6 +430,55 @@ export default class AddToHydratorModal extends Component {
       });
   }
 
+  applyDirective(directive) {
+    execute([directive])
+      .subscribe(
+        () => {
+          this.setState({
+            error: null,
+            loading: true,
+            schema: []
+          }, () => {
+            this.generateLinks();
+          });
+        },
+        (err) => {
+          console.log('Error', err);
+
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setError,
+            payload: {
+              message: err.message || err.response.message
+            }
+          });
+        }
+      );
+  }
+
+  renderInvalidFieldError() {
+    if (!objectQuery(this.state, 'error', 'remedies')) { return null; }
+
+    return (
+      <pre>
+        <div className="remedy-message">
+          {
+            objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
+          }
+        </div>
+        <span>
+          {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies2')}
+          <span
+            className="btn-link"
+            onClick={this.applyDirective.bind(this, 'cleanse-column-names')}
+          >
+            {T.translate('features.DataPrep.TopPanel.cleanseLinkLabel')}
+          </span>
+          {T.translate('features.DataPrep.TopPanel.invalidFieldNameRemedies3')}
+        </span>
+      </pre>
+    );
+  }
+
   render() {
     let content;
 
@@ -450,11 +498,7 @@ export default class AddToHydratorModal extends Component {
             <span>
               {typeof this.state.error === 'object' ? this.state.error.message : this.state.error}
             </span>
-            <pre>
-              {
-                objectQuery(this.state, 'error', 'remedies') ? this.state.error.remedies : null
-              }
-            </pre>
+            {this.renderInvalidFieldError()}
           </div>
         </div>
       );
