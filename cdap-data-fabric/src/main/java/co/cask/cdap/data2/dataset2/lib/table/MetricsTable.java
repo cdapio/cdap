@@ -86,18 +86,6 @@ public interface MetricsTable extends Dataset {
   void delete(byte[] row, byte[][] columns);
 
   /**
-   * checks the expected value before performing a put
-   * @param row
-   * @param column
-   * @param expectedValue
-   * @param newValue
-   * @return true if put is successful; false if actual value is different from expected value
-   */
-  @Beta
-  boolean checkAndPut(final byte [] row, final byte [] column, final byte [] expectedValue,
-                      final byte[] newValue);
-
-  /**
    * Get a scanner for a table.
    * @param start the row key of the first row to scan. If null, the scan begins at the first row of the table.
    * @param stop the row key of the last row to scan. If null, the scan goes to the last row of the table.

@@ -108,7 +108,11 @@ public class MetricsTableMigration {
           // column is timestamp, do a get on the new table
           byte[] value = v3MetricsTable.get(rowKey, entry.getKey());
           if (value == null) {
-            if (v3MetricsTable.checkAndPut(rowKey, entry.getKey(), new byte[0], entry.getValue())) {
+            // we perform checkAndPut for the new value, if the value was updated by the new upcoming metrics,
+            // if it was a gauge, the processing would have deleted the entry from the old table
+            // if it was a incrment, we would perform increment in the next iteration of the migration run
+            // so its safe to skip delete on checkAndPut failure
+            if (v3MetricsTable.swap(rowKey, entry.getKey(), null, entry.getValue())) {
               gaugeDeletes.add(entry.getKey());
             }
           } else {

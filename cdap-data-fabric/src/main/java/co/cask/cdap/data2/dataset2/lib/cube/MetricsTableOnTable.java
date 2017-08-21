@@ -104,11 +104,6 @@ class MetricsTableOnTable implements MetricsTable {
   }
 
   @Override
-  public boolean checkAndPut(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
-    throw new UnsupportedOperationException("Not Currently Supported for MetricsTableOnTable");
-  }
-
-  @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
                       @Nullable FuzzyRowFilter filter) {
     return table.scan(new Scan(start, stop, filter));

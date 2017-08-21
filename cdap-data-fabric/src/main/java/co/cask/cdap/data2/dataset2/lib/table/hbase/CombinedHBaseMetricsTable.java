@@ -164,11 +164,6 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   }
 
   @Override
-  public boolean checkAndPut(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
-    return v3HBaseTable.checkAndPut(row, column, expectedValue, newValue);
-  }
-
-  @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter) {
     Scanner v2Scan = null;
     if (tableExists.apply(resolution)) {

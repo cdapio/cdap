@@ -115,11 +115,6 @@ public class InMemoryMetricsTable implements MetricsTable {
   }
 
   @Override
-  public boolean checkAndPut(byte[] row, byte[] column, byte[] expectedValue, byte[] newValue) {
-    throw new UnsupportedOperationException("Not supported currently for in-memory");
-  }
-
-  @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop,
                       @Nullable FuzzyRowFilter filter) {
 
