@@ -19,16 +19,17 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 import co.cask.cdap.api.schedule.StreamSizeTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.StreamId;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,8 @@ import java.util.Set;
  * A Trigger that schedules a ProgramSchedule, based on new data in a stream.
  */
 public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements SatisfiableTrigger {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamSizeTrigger.class);
+  private static final Logger LOG =
+    LoggerFactory.getLogger(co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger.class);
   private static final Gson GSON = new Gson();
   private static final java.lang.reflect.Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -46,7 +48,7 @@ public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements
   }
 
   @Override
-  public boolean isSatisfied(List<Notification> notifications) {
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
     return true;
   }
 
@@ -56,28 +58,54 @@ public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements
   }
 
   @Override
-  public List<TriggerInfo> getTriggerInfosAddArgumentOverrides(TriggerInfoContext context, Map<String, String> sysArgs,
-                                                               Map<String, String> userArgs) {
-    Notification notification = context.getNotifications().get(0);
-    String userOverridesString = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
-    if (userOverridesString == null) {
+  public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
+    for (Notification notification : context.getNotifications()) {
+      if (notification.getNotificationType() != Notification.Type.STREAM_SIZE) {
+        continue;
+      }
+
+      String userOverridesJson = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
+      if (userOverridesJson == null) {
         LOG.warn("The notification '{}' in the job of schedule '{}' does not contain property '{}'.",
                  notification, context.getSchedule(), ProgramOptionConstants.USER_OVERRIDES);
-        return ImmutableList.of();
+        continue;
+      }
+
+      Map<String, String> userOverrides = GSON.fromJson(userOverridesJson, STRING_STRING_MAP);
+      try {
+        long logicalStartTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.LOGICAL_START_TIME));
+        long streamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
+        long basePollingTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
+        long baseStreamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
+        TriggerInfo triggerInfo = new StreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(), triggerMB,
+                                                            logicalStartTime, streamSize, basePollingTime,
+                                                            baseStreamSize);
+        return Collections.singletonList(triggerInfo);
+      } catch (NumberFormatException e) {
+        LOG.warn("Failed to parse long value from notification '{}'", notification, e);
+      }
     }
-    Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
-    try {
-      long logicalStartTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.LOGICAL_START_TIME));
-      long streamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
-      long basePollingTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
-      long baseStreamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
-      TriggerInfo triggerInfo =
-        new StreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(), triggerMB,
-                                  logicalStartTime, streamSize, basePollingTime, baseStreamSize);
-      return ImmutableList.of(triggerInfo);
-    } catch (NumberFormatException e) {
-      LOG.warn("Failed to parse long value from notification '{}'", notification, e);
+    return Collections.emptyList();
+  }
+
+  @Override
+  public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+    for (Notification notification : notifications) {
+      if (notification.getNotificationType() != Notification.Type.STREAM_SIZE) {
+        continue;
+      }
+
+      String systemOverridesJson = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+      String userOverridesJson = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
+      if (userOverridesJson == null || systemOverridesJson == null) {
+        // Ignore the malformed notification
+        continue;
+      }
+
+      systemArgs.putAll(GSON.<Map<String, String>>fromJson(systemOverridesJson, STRING_STRING_MAP));
+      userArgs.putAll(GSON.<Map<String, String>>fromJson(userOverridesJson, STRING_STRING_MAP));
+      return;
     }
-    return ImmutableList.of();
   }
 }

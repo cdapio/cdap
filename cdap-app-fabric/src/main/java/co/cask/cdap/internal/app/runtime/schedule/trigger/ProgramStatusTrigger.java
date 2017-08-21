@@ -23,6 +23,7 @@ import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -33,9 +34,9 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +47,6 @@ import java.util.Set;
  */
 public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger implements SatisfiableTrigger {
   private static final Gson GSON = new Gson();
-  private static final java.lang.reflect.Type STRING_STRING_MAP =
-    new TypeToken<Map<String, String>>() { }.getType();
 
   public ProgramStatusTrigger(ProgramId programId, Set<ProgramStatus> programStatuses) {
     super(programId, programStatuses);
@@ -59,7 +58,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
   }
 
   @Override
-  public boolean isSatisfied(List<Notification> notifications) {
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
     return getTriggerSatisfiedResult(notifications, false, new Function<ProgramRunInfo, Boolean>() {
       @Override
       public Boolean apply(ProgramRunInfo input) {
@@ -74,26 +73,28 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
   }
 
   @Override
-  public List<TriggerInfo> getTriggerInfosAddArgumentOverrides(final TriggerInfoContext context,
-                                                               Map<String, String> sysArgs,
-                                                               Map<String, String> userArgs) {
+  public List<TriggerInfo> getTriggerInfos(final TriggerInfoContext context) {
     Function<ProgramRunInfo, List<TriggerInfo>> function = new Function<ProgramRunInfo, List<TriggerInfo>>() {
       @Override
       public List<TriggerInfo> apply(ProgramRunInfo runInfo) {
-        Map<String, String> runtimeArgs =
-          GSON.fromJson(context.getProgramRuntimeArguments(programId, runInfo.getRunId())
-                          .get("runtimeArgs"), STRING_STRING_MAP);
+        Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
           new ProgramStatusTriggerInfo(programId.getNamespace(),
                                        context.getApplicationSpecification(programId.getParent()),
                                        ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
-                                       RunIds.fromString(runInfo.getRunId()), runInfo.getProgramStatus(),
-                                       context.getWorkflowToken(programId, runInfo.getRunId()), runtimeArgs);
-        ;
-        return ImmutableList.of(triggerInfo);
+                                       RunIds.fromString(runInfo.getProgramRunId().getRun()),
+                                       runInfo.getProgramStatus(),
+                                       context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
+        return Collections.singletonList(triggerInfo);
       }
     };
     return getTriggerSatisfiedResult(context.getNotifications(), ImmutableList.<TriggerInfo>of(), function);
+  }
+
+  @Override
+  public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+    // no-op
   }
 
   /**
@@ -128,7 +129,7 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
       ProgramId triggeringProgramId = programRunId.getParent();
       if (this.programId.equals(triggeringProgramId) && programStatuses.contains(programStatus)) {
-        return function.apply(new ProgramRunInfo(programStatus, programRunId.getRun()));
+        return function.apply(new ProgramRunInfo(programStatus, programRunId));
       }
     }
     return defaultResult;
@@ -139,19 +140,19 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
    */
   private static class ProgramRunInfo {
     private final ProgramStatus programStatus;
-    private final String runId;
+    private final ProgramRunId programRunId;
 
-    ProgramRunInfo(ProgramStatus programStatus, String runId) {
+    ProgramRunInfo(ProgramStatus programStatus, ProgramRunId programRunId) {
       this.programStatus = programStatus;
-      this.runId = runId;
+      this.programRunId = programRunId;
     }
 
-    public ProgramStatus getProgramStatus() {
+    ProgramStatus getProgramStatus() {
       return programStatus;
     }
 
-    public String getRunId() {
-      return runId;
+    ProgramRunId getProgramRunId() {
+      return programRunId;
     }
   }
 }

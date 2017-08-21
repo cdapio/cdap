@@ -41,13 +41,11 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -83,28 +81,33 @@ public final class ScheduleTaskRunner {
   public void launch(Job job) throws Exception {
     ProgramSchedule schedule = job.getSchedule();
     ProgramId programId = schedule.getProgramId();
+
+    TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
+
     Map<String, String> userArgs = Maps.newHashMap();
     userArgs.putAll(schedule.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
 
     Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
-    systemArgs.put(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    systemArgs.put(ProgramOptionConstants.EVENT_NOTIFICATIONS, GSON.toJson(job.getNotifications()));
-    systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO,
-                   GSON.toJson(getTriggeringScheduleInfo(job, schedule, systemArgs, userArgs)));
+
+    // Let the triggers update the arguments first before setting the triggering schedule info
+    ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),
+                                                                                job.getNotifications(),
+                                                                                userArgs, systemArgs);
+
+    systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
 
     execute(programId, systemArgs, userArgs);
     LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
   }
 
-  private TriggeringScheduleInfo getTriggeringScheduleInfo(Job job, ProgramSchedule schedule,
-                                                           Map<String, String> systemArgs,
-                                                           Map<String, String> userArgs) {
+  private TriggeringScheduleInfo getTriggeringScheduleInfo(Job job) {
     TriggerInfoContext triggerInfoContext = new TriggerInfoContext(job, store);
     SatisfiableTrigger trigger = ((SatisfiableTrigger) job.getSchedule().getTrigger());
-    List<TriggerInfo> triggerInfo = trigger.getTriggerInfosAddArgumentOverrides(triggerInfoContext, systemArgs,
-                                                                                userArgs);
+    List<TriggerInfo> triggerInfo = trigger.getTriggerInfos(triggerInfoContext);
+
+    ProgramSchedule schedule = job.getSchedule();
     return new TriggeringScheduleInfo(schedule.getName(), schedule.getDescription(),
                                       triggerInfo, schedule.getProperties());
   }

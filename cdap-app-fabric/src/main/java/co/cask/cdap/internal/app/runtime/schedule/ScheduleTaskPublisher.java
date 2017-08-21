@@ -23,8 +23,6 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.gson.Gson;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +31,6 @@ import java.util.Map;
  * Task publisher that sends notification for a triggered schedule.
  */
 public final class ScheduleTaskPublisher {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskPublisher.class);
 
   private static final Gson GSON = new Gson();
 

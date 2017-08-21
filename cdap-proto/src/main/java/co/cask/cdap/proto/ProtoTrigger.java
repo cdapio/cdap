@@ -22,7 +22,10 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.StreamId;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -141,15 +144,15 @@ public abstract class ProtoTrigger implements Trigger {
    * Abstract base class for composite trigger in REST requests/responses.
    */
   public abstract static class AbstractCompositeTrigger extends ProtoTrigger {
-    protected final Trigger[] triggers;
+    private final List<Trigger> triggers;
 
     public AbstractCompositeTrigger(Type type, Trigger... triggers) {
       super(type);
-      this.triggers = triggers;
+      this.triggers = Collections.unmodifiableList(new ArrayList<>(Arrays.asList(triggers)));
       validate();
     }
 
-    public Trigger[] getTriggers() {
+    public List<Trigger> getTriggers() {
       return triggers;
     }
 
@@ -158,13 +161,12 @@ public abstract class ProtoTrigger implements Trigger {
       if (!getType().equals(Type.AND) && !getType().equals(Type.OR)) {
         throw new IllegalArgumentException("Trigger type " + getType().name() + " is not a composite trigger.");
       }
-      Trigger[] internalTriggers = getTriggers();
-      ProtoTrigger.validateNotNull(internalTriggers, "internal trigger");
-      if (internalTriggers.length == 0) {
+      List<Trigger> triggers = getTriggers();
+      if (triggers.isEmpty()) {
         throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
                                                            "of type %s cannot be empty.", getType().name()));
       }
-      for (Trigger trigger : internalTriggers) {
+      for (Trigger trigger : triggers) {
         if (trigger == null) {
           throw new IllegalArgumentException(String.format("Triggers passed in to construct a trigger " +
                                                              "of type %s cannot contain null.", getType().name()));
@@ -182,12 +184,12 @@ public abstract class ProtoTrigger implements Trigger {
       }
 
       AbstractCompositeTrigger that = (AbstractCompositeTrigger) o;
-      return Arrays.equals(triggers, that.triggers);
+      return triggers.equals(that.getTriggers());
     }
 
     @Override
     public int hashCode() {
-      return Arrays.hashCode(triggers);
+      return triggers.hashCode();
     }
   }
 

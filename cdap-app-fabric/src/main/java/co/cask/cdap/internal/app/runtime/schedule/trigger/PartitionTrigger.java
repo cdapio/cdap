@@ -19,13 +19,14 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.PartitionTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.id.DatasetId;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +41,7 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
   }
 
   @Override
-  public boolean isSatisfied(List<Notification> notifications) {
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
     return getPartitionsCount(notifications) >= numPartitions;
   }
 
@@ -68,11 +69,15 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
   }
 
   @Override
-  public List<TriggerInfo> getTriggerInfosAddArgumentOverrides(TriggerInfoContext context, Map<String, String> sysArgs,
-                                                               Map<String, String> userArgs) {
-
+  public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
     TriggerInfo triggerInfo = new PartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
                                                        getPartitionsCount(context.getNotifications()));
-    return ImmutableList.of(triggerInfo);
+    return Collections.singletonList(triggerInfo);
+  }
+
+  @Override
+  public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+    // no-op
   }
 }

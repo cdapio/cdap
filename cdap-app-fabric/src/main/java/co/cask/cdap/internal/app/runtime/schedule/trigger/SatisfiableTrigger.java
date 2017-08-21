@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.internal.app.runtime.schedule.ScheduleTaskRunner;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
@@ -33,10 +36,12 @@ public interface SatisfiableTrigger extends Trigger {
    * Checks whether the given notifications can satisfy this trigger. Once the trigger is satisfied, it will
    * remain satisfied no matter what new notifications it receives.
    *
+   *
+   * @param schedule
    * @param notifications the notifications used to check whether this trigger is satisfied
    * @return {@code true} if this trigger is satisfied, {@code false} otherwise
    */
-  boolean isSatisfied(List<Notification> notifications);
+  boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications);
 
   /**
    * Get all trigger keys which will be used to index the schedule containing this trigger, so that we can
@@ -50,13 +55,22 @@ public interface SatisfiableTrigger extends Trigger {
    * Get the {@link TriggerInfo} constructed from this trigger with the given context.
    *
    * @param context the {@link TriggerInfoContext} that provides necessary information to build the {@link TriggerInfo}
-   * @param sysArgs system runtime arguments to override with appropriate notification properties
-   * @param userArgs user runtime arguments to override with appropriate notification properties
    * @return An immutable list of {@link TriggerInfo}'s of this trigger. If the trigger is not
    *         composite trigger, the list only contains one trigger info for this trigger.
    *         If the trigger is a composite trigger, the list will contain all the satisfied non-composite triggers
    *         in the composite trigger.
    */
-  List<TriggerInfo> getTriggerInfosAddArgumentOverrides(TriggerInfoContext context, Map<String, String> sysArgs,
-                                                        Map<String, String> userArgs);
+  List<TriggerInfo> getTriggerInfos(TriggerInfoContext context);
+
+  /**
+   * Called by the {@link ScheduleTaskRunner} before launching a given program. It gives triggers control on
+   * what to pass to the user program at runtime.
+   *
+   * @param schedule the schedule that this trigger belongs to
+   * @param notifications the list of notifications that have this trigger satisfied.
+   * @param systemArgs system arguments to the runtime system
+   * @param userArgs user arguments to the runtime system
+   */
+  void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                             Map<String, String> systemArgs, Map<String, String> userArgs);
 }

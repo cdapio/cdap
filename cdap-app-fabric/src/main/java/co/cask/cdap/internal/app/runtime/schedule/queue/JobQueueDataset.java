@@ -32,7 +32,6 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.Notification;
@@ -43,8 +42,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +60,6 @@ import javax.annotation.Nullable;
  *     'M':<topic>
  */
 public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicMessageIdStore {
-  private static final Logger LOG = LoggerFactory.getLogger(JobQueueDataset.class);
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
   private static final Gson GSON =
@@ -159,7 +155,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     // if no job exists for the scheduleId, add a new job with the first notification
     if (!jobExists) {
       List<Notification> notifications = Collections.singletonList(notification);
-      Job.State jobState = isTriggerSatisfied(schedule.getTrigger(), notifications)
+      Job.State jobState = isTriggerSatisfied(schedule, notifications)
         ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
       put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState,
                         record.getMeta().getLastUpdated()));
@@ -171,7 +167,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     notifications.add(notification);
 
     Job.State newState = job.getState();
-    if (isTriggerSatisfied(job.getSchedule().getTrigger(), notifications)) {
+    if (isTriggerSatisfied(job.getSchedule(), notifications)) {
       newState = Job.State.PENDING_CONSTRAINT;
       job.getState().checkTransition(newState);
     }
@@ -180,16 +176,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     put(newJob);
   }
 
-  private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
-    if (trigger instanceof TimeTrigger) {
-      // TimeTrigger#isSatisfied looks for the field cron expression in notifications to distinguish TIME notifications
-      // for different TimeTrigger's in composite triggers. No need to check for cron expression field in notification
-      // if the only trigger in the schedule is a TimeTrigger. This also keeps the compatibility with notifications from
-      // pre-4.3 version, since cron expression field in TIME notification is introduced in 4.3
-      // together with composite trigger.
-      return true;
-    }
-    return ((SatisfiableTrigger) trigger).isSatisfied(notifications);
+  private boolean isTriggerSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
+    return ((SatisfiableTrigger) schedule.getTrigger()).isSatisfied(schedule, notifications);
   }
 
   @Override

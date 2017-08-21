@@ -26,8 +26,13 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.WorkflowId;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -37,6 +42,10 @@ import javax.annotation.Nullable;
  * {@link co.cask.cdap.api.schedule.TriggerInfo} for a trigger.
  */
 public class TriggerInfoContext {
+
+  private static final Gson GSON = new Gson();
+  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+
   private final Job job;
   private final Store store;
 
@@ -67,26 +76,29 @@ public class TriggerInfoContext {
    * @return The workflow token if the program is a workflow, {@code null} otherwise.
    */
   @Nullable
-  public WorkflowToken getWorkflowToken(ProgramId programId, String runId) {
+  public WorkflowToken getWorkflowToken(ProgramRunId programRunId) {
+    ProgramId programId = programRunId.getParent();
     if (!programId.getType().equals(ProgramType.WORKFLOW)) {
       return null;
     }
-    return store.getWorkflowToken(new WorkflowId(programId.getParent(), programId.getProgram()), runId);
+    return store.getWorkflowToken(new WorkflowId(programId.getParent(), programId.getProgram()), programRunId.getRun());
   }
 
   /**
    * Fetches the run time arguments in a run record for a particular run of a program.
    *
-   * @param programId id of the program
-   * @param runId run id of the program
+   * @param programRunId The program run id
    * @return run time arguments as a map for the specified program and runId, null if not found
    */
-  @Nullable
-  public Map<String, String> getProgramRuntimeArguments(ProgramId programId, String runId) {
-    RunRecordMeta runRecordMeta = store.getRun(programId, runId);
+  public Map<String, String> getProgramRuntimeArguments(ProgramRunId programRunId) {
+    RunRecordMeta runRecordMeta = store.getRun(programRunId.getParent(), programRunId.getRun());
     if (runRecordMeta == null) {
-      return null;
+      return Collections.emptyMap();
     }
-    return runRecordMeta.getProperties();
+    Map<String, String> properties = runRecordMeta.getProperties();
+    String runtimeArgsJson = properties.get("runtimeArgs");
+    return runtimeArgsJson == null
+      ? Collections.<String, String>emptyMap()
+      : GSON.<Map<String, String>>fromJson(runtimeArgsJson, STRING_STRING_MAP);
   }
 }

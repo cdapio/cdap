@@ -18,11 +18,12 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
+import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +38,7 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   // A map of non-composite trigger type and set of triggers of the same type
   private Map<Type, Set<SatisfiableTrigger>> unitTriggers;
 
-  public AbstractCompositeTrigger(Type type, SatisfiableTrigger... triggers) {
+  protected AbstractCompositeTrigger(Type type, SatisfiableTrigger... triggers) {
     super(type, triggers);
   }
 
@@ -45,10 +46,18 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   public Set<String> getTriggerKeys() {
     // Only keep unique trigger keys in the set
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
-    for (Trigger trigger : triggers) {
+    for (Trigger trigger : getTriggers()) {
       triggerKeysBuilder.addAll(((SatisfiableTrigger) trigger).getTriggerKeys());
     }
     return triggerKeysBuilder.build();
+  }
+
+  @Override
+  public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
+                                    Map<String, String> systemArgs, Map<String, String> userArgs) {
+    for (Trigger trigger : getTriggers()) {
+      ((SatisfiableTrigger) trigger).updateLaunchArguments(schedule, notifications, systemArgs, userArgs);
+    }
   }
 
   /**
@@ -63,7 +72,7 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
 
   private void initializeUnitTriggers() {
     unitTriggers = new HashMap<>();
-    for (Trigger trigger : triggers) {
+    for (Trigger trigger : getTriggers()) {
       // Add current non-composite trigger to the corresponding set in the map
       Type triggerType = ((ProtoTrigger) trigger).getType();
       if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
@@ -93,12 +102,11 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   /**
    * @return An immutable list of trigger info's of all the unit triggers in this composite trigger
    */
-  public List<TriggerInfo> getUnitTriggerInfosAddRuntimeArgs(TriggerInfoContext context, Map<String, String> sysArgs,
-                                                             Map<String, String> userArgs) {
+  public List<TriggerInfo> getUnitTriggerInfosAddRuntimeArgs(TriggerInfoContext context) {
     ImmutableList.Builder<TriggerInfo> unitTriggerInfos = ImmutableList.builder();
     for (Set<SatisfiableTrigger> triggeSet : getUnitTriggers().values()) {
       for (SatisfiableTrigger trigger : triggeSet) {
-        unitTriggerInfos.addAll(trigger.getTriggerInfosAddArgumentOverrides(context, sysArgs, userArgs));
+        unitTriggerInfos.addAll(trigger.getTriggerInfos(context));
       }
     }
     return unitTriggerInfos.build();
