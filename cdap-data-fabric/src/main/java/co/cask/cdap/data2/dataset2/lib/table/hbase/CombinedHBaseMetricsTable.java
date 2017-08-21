@@ -16,9 +16,20 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.dataset.table.Scanner;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -43,12 +54,51 @@ import javax.annotation.Nullable;
  *
  */
 public class CombinedHBaseMetricsTable implements MetricsTable {
+  private static final Logger LOG = LoggerFactory.getLogger(CombinedHBaseMetricsTable.class);
   private final MetricsTable v2HBaseTable;
   private final MetricsTable v3HBaseTable;
+  private final int resolution;
+  private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final HBaseTableUtil hBaseTableUtil;
+  private final Predicate tableExists;
 
-  public CombinedHBaseMetricsTable(MetricsTable v2HBaseTable, MetricsTable v3HBaseTable) {
+  private boolean v2TableDeleted;
+
+  public CombinedHBaseMetricsTable(final MetricsTable v2HBaseTable, MetricsTable v3HBaseTable,
+                                   int tableResoluton, CConfiguration cConfiguration, Configuration hConf,
+                                   HBaseTableUtil hBaseTableUtil) {
     this.v2HBaseTable = v2HBaseTable;
     this.v3HBaseTable = v3HBaseTable;
+    this.resolution = tableResoluton;
+    this.cConf = cConfiguration;
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.v2TableDeleted = false;
+    this.tableExists =  new Predicate<Integer>() {
+      @Override
+      public boolean apply(@Nullable Integer input) {
+        if (!v2TableDeleted) {
+          return v2MetricsTableExists();
+        } else {
+          return false;
+        }
+      }
+    };
+  }
+
+   @VisibleForTesting
+   CombinedHBaseMetricsTable(MetricsTable v2HBaseTable, MetricsTable v3HBaseTable,
+                                   int tableResoluton, CConfiguration cConfiguration, Configuration hConf,
+                                   HBaseTableUtil hBaseTableUtil, Predicate<Integer> tableExists) {
+    this.v2HBaseTable = v2HBaseTable;
+    this.v3HBaseTable = v3HBaseTable;
+    this.resolution = tableResoluton;
+    this.cConf = cConfiguration;
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
+    this.v2TableDeleted = false;
+    this.tableExists = tableExists;
   }
 
   @Nullable
@@ -59,7 +109,9 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
 
   @Override
   public void put(SortedMap<byte[], ? extends SortedMap<byte[], Long>> updates) {
-    deleteColumns(updates);
+    if (tableExists.apply(resolution)) {
+      deleteColumns(updates);
+    }
     v3HBaseTable.put(updates);
   }
 
@@ -106,7 +158,9 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   @Override
   public void delete(byte[] row, byte[][] columns) {
     v3HBaseTable.delete(row, columns);
-    v2HBaseTable.delete(row, columns);
+    if (tableExists.apply(resolution)) {
+      v2HBaseTable.delete(row, columns);
+    }
   }
 
   @Override
@@ -116,7 +170,10 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
 
   @Override
   public Scanner scan(@Nullable byte[] start, @Nullable byte[] stop, @Nullable FuzzyRowFilter filter) {
-    Scanner v2Scan = v2HBaseTable.scan(start, stop, filter);
+    Scanner v2Scan = null;
+    if (tableExists.apply(resolution)) {
+      v2Scan = v2HBaseTable.scan(start, stop, filter);
+    }
     Scanner v3Scan = v3HBaseTable.scan(start, stop, filter);
     return new CombinedMetricsScanner(v2Scan, v3Scan);
   }
@@ -124,6 +181,36 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   @Override
   public void close() throws IOException {
     v3HBaseTable.close();
-    v2HBaseTable.close();
+    if (tableExists.apply(resolution)) {
+      v2HBaseTable.close();
+    }
+  }
+
+  private TableId getV2MetricsTableName(int resolution) {
+    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                   Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
+    return TableId.from(NamespaceId.SYSTEM.getNamespace(), v2TableName);
+  }
+
+  /**
+   * check if v2 metrics table exists for the resolution
+   * @return true if table exists; false otherwise
+   */
+  public boolean v2MetricsTableExists() {
+    TableId tableId = getV2MetricsTableName(resolution);
+    try {
+      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        TableId hBaseTableId =
+          hBaseTableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+        boolean doesExist  = hBaseTableUtil.tableExists(admin, hBaseTableId);
+        if (!doesExist) {
+          v2TableDeleted = true;
+        }
+        return doesExist;
+      }
+    } catch (IOException e) {
+      LOG.warn("Exception while checking table exists", e);
+    }
+    return false;
   }
 }

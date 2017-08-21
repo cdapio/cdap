@@ -313,7 +313,6 @@ public class HBaseMetricsTable implements MetricsTable {
     try {
       return hTable.checkAndPut(distributedKey, columnFamily, qualifier, expectedValue, put);
     } catch (IOException e) {
-      LOG.debug("Exception during checkAndPut", e);
       throw new DataSetException("Put failed on table " + tableId, e);
     }
   }

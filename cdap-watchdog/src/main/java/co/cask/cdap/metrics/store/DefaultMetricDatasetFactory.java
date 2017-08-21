@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collections;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -56,12 +57,18 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
+  private final Configuration hConf;
+  private final HBaseTableUtil hBaseTableUtil;
   private final Supplier<EntityTable> entityTable;
   private final DatasetFramework dsFramework;
 
   @Inject
-  public DefaultMetricDatasetFactory(final CConfiguration cConf, DatasetFramework dsFramework) {
+  public DefaultMetricDatasetFactory(final CConfiguration cConf, @Nullable final Configuration hConf,
+                                     @Nullable HBaseTableUtil hBaseTableUtil,
+                                     DatasetFramework dsFramework) {
     this.cConf = cConf;
+    this.hConf = hConf;
+    this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.entityTable = Suppliers.memoize(new Supplier<EntityTable>() {
       @Override
@@ -140,10 +147,8 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     try {
       // metrics tables are in the system namespace
       DatasetId tableId = NamespaceId.SYSTEM.dataset(tableName);
-      MetricsTable table = null;
       if (dsFramework.hasInstance(tableId)) {
-        table = getDataset(tableId);
-        return table;
+        return getDataset(tableId);
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -177,7 +182,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
       if (v2Table != null) {
         // the cluster is upgraded, so use Combined Metrics Table
-        return new CombinedHBaseMetricsTable(v2Table, v3Table);
+        return new CombinedHBaseMetricsTable(v2Table, v3Table, resolution, cConf, hConf, hBaseTableUtil);
       }
 
       return v3Table;

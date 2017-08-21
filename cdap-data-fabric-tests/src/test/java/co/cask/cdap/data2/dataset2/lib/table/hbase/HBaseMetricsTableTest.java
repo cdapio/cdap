@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
@@ -52,6 +53,7 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -71,6 +73,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
+
+import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertEquals;
 
@@ -222,7 +226,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   public void testCombinedTablePut() throws Exception {
     MetricsTable v2Table = getTable("v2Table");
     MetricsTable v3Table = getTable("v3Table");
-    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table);
+    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table, 1, cConf, hConf, tableUtil,
+                                                                      new Predicate<Integer>() {
+                                                                        @Override
+                                                                        public boolean apply(@Nullable Integer input) {
+                                                                          return true;
+                                                                        }
+                                                                      });
 
     // Already existing data on v2
     v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)

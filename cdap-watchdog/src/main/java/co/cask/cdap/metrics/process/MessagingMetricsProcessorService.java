@@ -274,6 +274,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           // 5-min initial delay and scheduled to run each min after that
           dataMigratorExecutor.scheduleAtFixedRate(dataMigrator, 5, 1, TimeUnit.MINUTES);
           LOG.info("Scheduled metrics migration thread for resolution INT_MAX, 3600, 60 tables");
+        } else {
+          LOG.info("All Metrics data have been migrated, not scheduling migration thread");
         }
 
         tableDeleter =
@@ -287,6 +289,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           tableDeleterExecutor.scheduleAtFixedRate(tableDeleter, 1, 2, TimeUnit.HOURS);
           LOG.info("Scheduled metrics deletion thread for 1, 60, 3600, INT_MAX resolution tables, " +
                      "tables will only be deleted after data migration is completed for them");
+        } else {
+          LOG.info("All Metrics tables have been deleted, not scheduling deletion thread");
         }
       }
     }
@@ -419,7 +423,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
           // shut down the executores if they are not needed anymore
           // todo uncomment and run only every 100 times
-          /*if (instanceId == 0 && topicIdMetaKey.getTopicId().equals(metricsTopics.get(0))) {
+          if (instanceId == 0 && topicIdMetaKey.getTopicId().equals(metricsTopics.get(0))) {
             if (dataMigrator != null && dataMigratorExecutor != null && !dataMigratorExecutor.isShutdown()
               && dataMigrator.isMigrationComplete()) {
               dataMigratorExecutor.shutdown();
@@ -428,7 +432,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
               && tableDeleter.allTablesDeleted()) {
               tableDeleterExecutor.shutdown();
             }
-          }*/
+          }
         } catch (InterruptedException e) {
           // It's triggered by stop
           Thread.currentThread().interrupt();

@@ -126,6 +126,7 @@ public class UpgradeTool {
   private final DatasetUpgrader dsUpgrade;
   private final QueueAdmin queueAdmin;
   private final HBaseTableFactory tmsTableFactory;
+  private final HBaseTableUtil tableUtil;
   private final CoprocessorManager coprocessorManager;
 
   /**
@@ -171,7 +172,7 @@ public class UpgradeTool {
     this.queueAdmin = injector.getInstance(QueueAdmin.class);
     this.tmsTableFactory = injector.getInstance(HBaseTableFactory.class);
     LocationFactory locationFactory = injector.getInstance(LocationFactory.class);
-    HBaseTableUtil tableUtil = injector.getInstance(HBaseTableUtil.class);
+    tableUtil = injector.getInstance(HBaseTableUtil.class);
     this.coprocessorManager = new CoprocessorManager(cConf, locationFactory, tableUtil);
 
 
@@ -286,7 +287,7 @@ public class UpgradeTool {
     LOG.info("Starting Transaction Service...");
     txService.startAndWait();
     LOG.info("Initializing Dataset Framework...");
-    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
+    initializeDSFramework(cConf, hConf, tableUtil, dsFramework, includeNewDatasets);
     LOG.info("Building and uploading new HBase coprocessors...");
     coprocessorManager.ensureCoprocessorExists();
   }
@@ -474,7 +475,7 @@ public class UpgradeTool {
    * Whereas during Hbase upgrade (2) we want these new tables to be added so that the co processor of these tables
    * can be upgraded when the user runs CDAP's Hbase Upgrade after upgrading to a newer version of Hbase.
    */
-  private void initializeDSFramework(CConfiguration cConf,
+  private void initializeDSFramework(CConfiguration cConf, Configuration hConf, HBaseTableUtil hBaseTableUtil,
                                      DatasetFramework datasetFramework, boolean includeNewDatasets)
     throws IOException, DatasetManagementException {
     // dataset service
@@ -501,7 +502,8 @@ public class UpgradeTool {
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
 
     // metrics data
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, hConf,
+                                                                          hBaseTableUtil, datasetFramework);
     DefaultMetricDatasetFactory.setupDatasets(factory);
 
     // Usage registry

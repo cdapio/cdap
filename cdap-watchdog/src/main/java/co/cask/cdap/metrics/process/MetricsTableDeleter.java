@@ -59,7 +59,7 @@ public class MetricsTableDeleter implements Runnable {
         return false;
       }
     }
-    // all tables have been deleted, so migration is complete
+    // all tables have been deleted already, so migration is complete
     return true;
   }
 

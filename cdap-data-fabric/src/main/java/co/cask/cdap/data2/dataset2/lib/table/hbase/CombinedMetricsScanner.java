@@ -37,10 +37,10 @@ public class CombinedMetricsScanner implements Scanner {
   private Row v3TableNextRow;
 
   @VisibleForTesting
-  public CombinedMetricsScanner(Scanner v2TableScanner, Scanner v3TableScanner) {
+  public CombinedMetricsScanner(@Nullable Scanner v2TableScanner, Scanner v3TableScanner) {
     this.v2TableScanner = v2TableScanner;
     this.v3TableScanner = v3TableScanner;
-    this.v2TableNextRow = v2TableScanner.next();
+    this.v2TableNextRow = v2TableScanner == null ? null : v2TableScanner.next();
     this.v3TableNextRow = v3TableScanner.next();
   }
 
@@ -105,12 +105,16 @@ public class CombinedMetricsScanner implements Scanner {
   @Override
   public void close() {
     v3TableScanner.close();
-    v2TableScanner.close();
+    if (v2TableScanner != null) {
+      v2TableScanner.close();
+    }
   }
 
   private Row advanceV2Scanner() {
     Row resultRow = v2TableNextRow;
-    v2TableNextRow = v2TableScanner.next();
+    if (v2TableScanner != null) {
+      v2TableNextRow = v2TableScanner.next();
+    }
     return resultRow;
   }
 

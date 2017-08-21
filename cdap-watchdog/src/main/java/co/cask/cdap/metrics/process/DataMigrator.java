@@ -49,7 +49,8 @@ public class DataMigrator implements Runnable {
   }
 
   /**
-   * returns true when data migration is complete and all v2 metrics tables have been deleted; false otherwise
+   * returns true when data migration is complete and
+   * all v2 metrics tables data has been migrated for configured resolutions ; false otherwise
    * @return true if migration is complete; false otherwise
    */
   public boolean isMigrationComplete() {
@@ -66,7 +67,7 @@ public class DataMigrator implements Runnable {
     while (resolutions.hasNext()) {
       int resolution = resolutions.next();
       MetricsTableMigration metricsTableMigration = migrationOrder.get(resolution);
-      if (metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution)) {
+      if (metricsTableMigration.isOldMetricsDataAvailable()) {
         return false;
       }
     }

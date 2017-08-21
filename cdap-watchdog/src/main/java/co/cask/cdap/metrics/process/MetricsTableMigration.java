@@ -108,12 +108,8 @@ public class MetricsTableMigration {
           // column is timestamp, do a get on the new table
           byte[] value = v3MetricsTable.get(rowKey, entry.getKey());
           if (value == null) {
-            LOG.debug("Trying checkAndPut");
             if (v3MetricsTable.checkAndPut(rowKey, entry.getKey(), new byte[0], entry.getValue())) {
-              LOG.debug("checkAndPut Successful");
               gaugeDeletes.add(entry.getKey());
-            } else {
-              LOG.debug("checkAndPut failed");
             }
           } else {
             increments.put(entry.getKey(), Bytes.toLong(entry.getValue()));
