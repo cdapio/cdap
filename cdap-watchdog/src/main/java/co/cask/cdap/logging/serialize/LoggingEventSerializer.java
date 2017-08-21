@@ -59,8 +59,6 @@ public final class LoggingEventSerializer {
    * Encodes a {@link ILoggingEvent} to byte array.
    */
   public byte[] toBytes(ILoggingEvent event) {
-    event.prepareForDeferredProcessing();
-
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     BinaryEncoder encoder = EncoderFactory.get().directBinaryEncoder(out, null);
     GenericDatumWriter<GenericRecord> writer = new GenericDatumWriter<>(getAvroSchema());
