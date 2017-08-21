@@ -31,7 +31,7 @@ export default function StagePropertiesTab() {
         <small>(if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)</small>
       </h4>
       {
-        !argsMapping.length ?
+        !triggeredPipelineInfo.macros.length ?
           <div className="empty-message-container">
             <h4> No Runtime Arguments found for "{triggeredPipelineInfo.id}"</h4>
           </div>
