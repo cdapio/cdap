@@ -431,7 +431,7 @@ export default class PipelineNodeMetricsGraph extends Component {
 
   renderRecordsCount = (type) => {
     return T.translate(`${PREFIX}.${type}`, {
-      [type]: this.state[type] || T.translate('commons.notAvailable')
+      [type]: this.state[type] || '0'
     });
   };
 
