@@ -85,12 +85,12 @@ public class MetricsTableMigration {
    */
   public void transferData(int maxRecordsToScan) {
     try (Scanner scanner = v2MetricsTable.scan(null, null, null)) {
-      LOG.debug("Starting scanning for Metrics Data Migration with {} max records", maxRecordsToScan);
+      LOG.trace("Starting scanning for Metrics Data Migration with {} max records", maxRecordsToScan);
       Row row;
       int recordsScanned = 0;
       while ((recordsScanned < maxRecordsToScan) && ((row = scanner.next()) != null)) {
         if (recordsScanned % 10 == 0) {
-          LOG.debug("Scanned {} records in Metrics Data Migration", recordsScanned);
+          LOG.trace("Scanned {} records in Metrics Data Migration", recordsScanned);
         }
 
         byte[] rowKey = row.getRow();
@@ -186,13 +186,13 @@ public class MetricsTableMigration {
   public boolean deleteV2MetricsTable(HBaseDDLExecutorFactory ddlExecutorFactory,
                                       HBaseTableUtil tableUtil, int resolution) {
     TableId tableId = getV2MetricsTableName(resolution);
-    LOG.debug("Looking to delete table {}", tableId);
+    LOG.trace("Looking to delete table {}", tableId);
     try {
       try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
         TableId hBaseTableId =
           tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
         if (tableUtil.tableExists(admin, hBaseTableId)) {
-          LOG.debug("Found table {}, going to delete", hBaseTableId);
+          LOG.trace("Found table {}, going to delete", hBaseTableId);
           tableUtil.dropTable(ddlExecutor, hBaseTableId);
           LOG.debug("Deleted table {}", hBaseTableId);
           return true;
