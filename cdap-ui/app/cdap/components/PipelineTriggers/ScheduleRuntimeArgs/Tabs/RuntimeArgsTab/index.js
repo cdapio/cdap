@@ -15,7 +15,7 @@
 */
 
 import React, {Component} from 'react';
-import ScheduleRuntimeArgsStore from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import ScheduleRuntimeArgsStore, {DEFAULTFIELDDELIMITER} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 import {Row, Col} from 'reactstrap';
 import RuntimeArgRow from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/RuntimeArgsTab/RuntimeArgRow';
 
@@ -27,7 +27,7 @@ export default class RuntimArgsTab extends Component {
       if (!arg.key || !arg.value) {
         return false;
       }
-      let splitKey = arg.key.split(':');
+      let splitKey = arg.key.split(DEFAULTFIELDDELIMITER);
       return splitKey.length > 1 ? false : true;
     });
     return runTimeArgMapping;
@@ -66,8 +66,8 @@ export default class RuntimArgsTab extends Component {
             let matchingKeyValue = this.state.runTimeArgMapping.find(arg => arg.value === macro);
             let key, value;
             if (matchingKeyValue) {
-              key = matchingKeyValue.key.split(':').length > 1 ? null : matchingKeyValue.key;
-              value = matchingKeyValue.key.split(':').length > 1 ? null : matchingKeyValue.value;
+              key = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.key;
+              value = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.value;
             }
 
             return (

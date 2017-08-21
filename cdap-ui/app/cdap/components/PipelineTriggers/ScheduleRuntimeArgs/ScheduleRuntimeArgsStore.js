@@ -33,6 +33,7 @@ const DEFAULTRUNTIMEARGSMESSAGE = 'Choose a Runtime Argument';
 const DEFAULTSTAGEMESSAGE = 'Choose a Plugin';
 const DEFAULTPROPERTYMESSAGE = 'Choose a Plugin Property';
 const DEFAULTTRIGGEREDMACROMESSAGE = 'Choose a Runtime Argument to map';
+const DEFAULTFIELDDELIMITER = ':';
 
 const DEFAULTMACROS = [];
 const DEFAULTCONFIGSTAGES = [];
@@ -71,7 +72,7 @@ const getUsedProperties = (mapping) => {
     if (isNil(key)) {
       return;
     }
-    key = key.split(':');
+    key = key.split(DEFAULTFIELDDELIMITER);
     if (key.length === 1) {
       return;
     }
@@ -191,5 +192,6 @@ export {
   DEFAULTRUNTIMEARGSMESSAGE,
   DEFAULTSTAGEMESSAGE,
   DEFAULTPROPERTYMESSAGE,
-  DEFAULTTRIGGEREDMACROMESSAGE
+  DEFAULTTRIGGEREDMACROMESSAGE,
+  DEFAULTFIELDDELIMITER
 };

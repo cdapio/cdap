@@ -15,14 +15,14 @@
 */
 
 import React from 'react';
-import ScheduleRuntimeArgsStore from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import ScheduleRuntimeArgsStore, {DEFAULTFIELDDELIMITER} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 import StagePropertiesRow from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/StagePropertiesTab/StagePropertiesRow';
 import {Row, Col} from 'reactstrap';
 import difference from 'lodash/difference';
 
 export default function StagePropertiesTab() {
   let {triggeringPipelineInfo, triggeredPipelineInfo, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
-  let macrosWithConfigProperty = argsMapping.filter(arg => arg.key && arg.key.split(':').length > 1).map(arg => arg.value);
+  let macrosWithConfigProperty = argsMapping.filter(arg => arg.key && arg.key.split(DEFAULTFIELDDELIMITER).length > 1).map(arg => arg.value);
   return (
     <div className="stage-properties-tab">
       <h4>
@@ -59,8 +59,8 @@ export default function StagePropertiesTab() {
               let keySplit = [];
               let pipelineName, pipelineStage, stageProperty, value;
               let matchingKeyValue = argsMapping.find(arg => arg.value === macro);
-              if (matchingKeyValue && matchingKeyValue.key && matchingKeyValue.key.split(':').length > 1) {
-                keySplit = matchingKeyValue.key.split(':');
+              if (matchingKeyValue && matchingKeyValue.key && matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1) {
+                keySplit = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER);
                 [pipelineName, pipelineStage, stageProperty] = keySplit;
                 value = matchingKeyValue.value;
               }
