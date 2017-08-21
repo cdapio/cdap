@@ -140,11 +140,11 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       Authorizer authorizer = authorizerInstantiator.get();
       NamespaceId ns1 = new NamespaceId("ns1");
       NamespaceId ns2 = new NamespaceId("ns2");
-      DatasetId ds11 = ns1.dataset("ds1");
-      DatasetId ds12 = ns1.dataset("ds2");
-      DatasetId ds21 = ns2.dataset("ds1");
-      DatasetId ds22 = ns2.dataset("ds2");
-      DatasetId ds23 = ns2.dataset("ds3");
+      DatasetId ds11 = ns1.dataset("ds11");
+      DatasetId ds12 = ns1.dataset("ds12");
+      DatasetId ds21 = ns2.dataset("ds21");
+      DatasetId ds22 = ns2.dataset("ds22");
+      DatasetId ds23 = ns2.dataset("ds33");
       Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
       // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
       authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
@@ -167,7 +167,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
                                                                                       ALICE).size());
       expectedDatasetIds = ImmutableSet.of(ds12, ds22);
       // this will be empty since now isVisible will not check the hierarchy privilege for the parent of the entity
-      Assert.assertTrue(authEnforcementService.isVisible(expectedDatasetIds, ALICE).isEmpty());
+      Assert.assertEquals(Collections.EMPTY_SET, authEnforcementService.isVisible(expectedDatasetIds, ALICE));
       expectedDatasetIds = ImmutableSet.of(ds11, ds12, ds22);
       Assert.assertEquals(expectedDatasetIds.size(), authEnforcementService.isVisible(expectedDatasetIds, BOB).size());
       expectedDatasetIds = ImmutableSet.of(ds21, ds23);

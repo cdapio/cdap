@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.security;
 
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,14 +58,14 @@ public class GrantRequestTest {
     }
 
     try {
-      new GrantRequest(null, bob, actions);
+      new GrantRequest((EntityId) null, bob, actions);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      new GrantRequest(null, null, null);
+      new GrantRequest((EntityId) null, null, null);
       Assert.fail();
     } catch (IllegalArgumentException e) {
       // expected

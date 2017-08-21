@@ -21,9 +21,9 @@ import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.ParentedId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class InMemoryAuthorizer extends AbstractAuthorizer {
 
-  private final ConcurrentMap<AuthorizableEntityId, ConcurrentMap<Principal, Set<Action>>> privileges =
+  private final ConcurrentMap<Authorizable, ConcurrentMap<Principal, Set<Action>>> privileges =
     new ConcurrentHashMap<>();
   private final ConcurrentMap<Role, Set<Principal>> roleToPrincipals = new ConcurrentHashMap<>();
   private final Set<Principal> superUsers = new HashSet<>();
@@ -98,8 +98,8 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     }
     Set<EntityId> results =  new HashSet<>();
     for (EntityId entityId : entityIds) {
-      for (AuthorizableEntityId existingEntity : privileges.keySet()) {
-        if (isParent(entityId, existingEntity.getEntityId())) {
+      for (Authorizable existingEntity : privileges.keySet()) {
+        if (isParent(entityId, existingEntity.getEntityParts())) {
           Set<Action> allowedActions = privileges.get(existingEntity).get(principal);
           if (allowedActions != null && !allowedActions.isEmpty()) {
             results.add(entityId);
@@ -117,18 +117,33 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).addAll(actions);
+  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    grant(Authorizable.fromEntityId(entity), principal, actions);
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).removeAll(actions);
+  public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    getActions(authorizable, principal).addAll(actions);
   }
 
   @Override
-  public void revoke(EntityId entity) {
-    privileges.remove(new AuthorizableEntityId(entity));
+  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    revoke(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    getActions(authorizable, principal).removeAll(actions);
+  }
+
+  @Override
+  public void revoke(EntityId entity) throws Exception {
+    revoke(Authorizable.fromEntityId(entity));
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable) throws Exception {
+    privileges.remove(authorizable);
   }
 
   @Override
@@ -196,23 +211,25 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   private Set<Privilege> getPrivileges(Principal principal) {
     Set<Privilege> result = new HashSet<>();
-    for (Map.Entry<AuthorizableEntityId, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
-      AuthorizableEntityId entityId = entry.getKey();
-      Set<Action> actions = getActions(entityId.getEntityId(), principal);
+    for (Map.Entry<Authorizable, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
+      Authorizable authorizable = entry.getKey();
+      Set<Action> actions = getActions(authorizable, principal);
       for (Action action : actions) {
-        result.add(new Privilege(entityId.getEntityId(), action));
+        result.add(new Privilege(authorizable, action));
       }
     }
     return Collections.unmodifiableSet(result);
   }
 
-  private Set<Action> getActions(EntityId entity, Principal principal) {
-    AuthorizableEntityId authorizableEntityId = new AuthorizableEntityId(entity);
-    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(authorizableEntityId);
+  private Set<Action> getActions(EntityId entityId, Principal principal) {
+    return getActions(Authorizable.fromEntityId(entityId), principal);
+  }
+
+  private Set<Action> getActions(Authorizable authorizable, Principal principal) {
+    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(authorizable);
     if (allActions == null) {
       allActions = new ConcurrentHashMap<>();
-      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(authorizableEntityId,
-                                                                                        allActions);
+      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(authorizable, allActions);
       allActions = (existingAllActions == null) ? allActions : existingAllActions;
     }
     Set<Action> actions = allActions.get(principal);
@@ -235,9 +252,15 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
     return roles;
   }
 
-  private boolean isParent(EntityId guessingParent, EntityId guessingChild) {
-    return guessingParent.equals(guessingChild) ||
-      (guessingChild instanceof ParentedId && isParent(guessingParent, ((ParentedId) guessingChild).getParent()));
+  private boolean isParent(EntityId guessingParent, Map<EntityType, String> guessingChild) {
+    Map<EntityType, String> questionedEntityParts = Authorizable.fromEntityId(guessingParent).getEntityParts();
+    for (EntityType entityType : questionedEntityParts.keySet()) {
+      if (!(guessingChild.containsKey(entityType) &&
+        guessingChild.get(entityType).equals(questionedEntityParts.get(entityType)))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public final class AuthorizableEntityId {
