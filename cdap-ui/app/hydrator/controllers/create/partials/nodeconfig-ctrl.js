@@ -161,9 +161,12 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.defaultState = angular.copy(this.state);
 
-    if (this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
+    let propertiesSchema = this.myHelpers.objectQuery(this.state.node, 'plugin', 'properties', 'schema');
+    let schema = propertiesSchema || this.state.node.outputSchema;
+
+    if (schema && schema.length > 0) {
       try {
-        this.avsc.parse(this.state.node.outputSchema);
+        this.avsc.parse(schema);
       } catch (e) {
         this.state.schemaAdvance = true;
       }
