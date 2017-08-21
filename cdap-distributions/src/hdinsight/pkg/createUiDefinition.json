@@ -4,6 +4,6 @@
   "clusterFilters": {
     "types": [ "HBase" ],
     "tiers": [ "Standard" ],
-    "versions": [ "3.4", "3.5" ]
+    "versions": [ "3.4", "3.5", "3.6" ]
   }
 }
