@@ -57,7 +57,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
       programName: DATA_PIPELINE_WORKFLOW,
       programType: 'WORKFLOW'
     },
-    properties: {},
+    properties: Object.assign({}, config.properties),
     trigger: {
       programId: {
         namespace: selectedNamespace,

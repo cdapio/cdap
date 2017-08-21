@@ -18,23 +18,31 @@ import React, { Component, PropTypes } from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTriggersStore';
 import {enableSchedule} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
+import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
 
 const TRIGGER_PREFIX = 'features.PipelineTriggers';
 const PREFIX = `${TRIGGER_PREFIX}.SetTriggers`;
 
 export default class PipelineTriggersRow extends Component {
+  static propTypes = {
+    isExpanded: PropTypes.bool,
+    onToggle: PropTypes.func,
+    pipelineRow: PropTypes.string,
+    triggeringPipelineInfo: PropTypes.object,
+    triggeredPipelineInfo: PropTypes.object,
+    selectedNamespace: PropTypes.string
+  };
+
+  state = {
+    completed: true,
+    killed: false,
+    failed: false
+  };
+
   constructor(props) {
     super(props);
-
-    this.state = {
-      completed: true,
-      killed: false,
-      failed: false
-    };
-
     this.pipelineName = PipelineTriggersStore.getState().triggers.pipelineName;
-    this.enableScheduleClick = this.enableScheduleClick.bind(this);
   }
 
   toggleKey(key) {
@@ -43,7 +51,7 @@ export default class PipelineTriggersRow extends Component {
     });
   }
 
-  enableScheduleClick() {
+  getConfig = () => {
     let config = {
       eventTriggers: []
     };
@@ -56,15 +64,59 @@ export default class PipelineTriggersRow extends Component {
     if (this.state.failed) {
       config.eventTriggers.push('FAILED');
     }
-
-    enableSchedule(this.props.pipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
+    return config;
   }
+
+  enableScheduleClick = () => {
+    let config = this.getConfig();
+    enableSchedule(this.props.triggeringPipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
+  }
+
+  /*
+    if key is triggering pipeline's run time argument use this as map
+      {"runtimeArgumentKey":"runtimeArgsKey","type":"RUNTIME_ARG","namespace":"ns1","pipelineName":"p1"}
+    if key is triggering pipeline's plugin property then use this as map
+      {"pluginName":"name1","propertyKey":"key1","type":"PLUGIN_PROPERTY","namespace":"ns1","pipelineName":"p1"}
+  */
+  configureAndEnable = (mapping) => {
+    const generateRuntimeMapping = () => {
+      let runArgsMapping = {};
+      let {selectedNamespace: namespace, triggeringPipelineInfo} = this.props;
+      mapping.forEach(map => {
+        let runargkey;
+        if (map.key.split(':').length > 1) {
+          let [pipelineName, pluginName, propertyKey] = map.key.split(':');
+          runargkey = JSON.stringify({
+            namespace,
+            pipelineName,
+            pluginName,
+            propertyKey,
+            type: 'PLUGIN_PROPERTY'
+          });
+        } else {
+          runargkey = JSON.stringify({
+            namespace,
+            pipelineName: triggeringPipelineInfo.id,
+            'runtimeArgumentKey': map.key,
+            'type': 'RUNTIME_ARG'
+          });
+        }
+        runArgsMapping[runargkey] = map.value;
+      });
+      return JSON.stringify(runArgsMapping);
+    };
+    let config = this.getConfig();
+    config.properties = {
+      'triggering.properties.mapping': generateRuntimeMapping()
+    };
+    enableSchedule(this.props.triggeringPipelineInfo, this.pipelineName, this.props.selectedNamespace, config);
+  };
 
   render() {
     let {
       onToggle,
       pipelineRow,
-      pipelineInfo,
+      triggeringPipelineInfo,
       selectedNamespace
     } = this.props;
 
@@ -104,7 +156,7 @@ export default class PipelineTriggersRow extends Component {
         <div className="pipeline-description">
           <strong>{T.translate(`${TRIGGER_PREFIX}.description`)}: </strong>
           <span>
-            {pipelineInfo.description}
+            {triggeringPipelineInfo.description}
           </span>
           <a href={`/pipelines/ns/${selectedNamespace}/view/${pipelineRow}`}>
             {T.translate(`${TRIGGER_PREFIX}.viewPipeline`)}
@@ -141,7 +193,7 @@ export default class PipelineTriggersRow extends Component {
           </div>
         </div>
 
-        <div className="action-buttons-container">
+        <div className="action-buttons-container clearfix">
           <button
             className="btn btn-primary"
             disabled={enabledButtonDisabled}
@@ -149,17 +201,15 @@ export default class PipelineTriggersRow extends Component {
           >
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
+          <PayloadConfigModal
+            triggeringPipelineInfo={this.props.triggeringPipelineInfo}
+            triggeredPipelineInfo={this.props.triggeredPipelineInfo}
+            onEnableSchedule={this.configureAndEnable}
+          />
         </div>
       </div>
     );
   }
 }
 
-PipelineTriggersRow.propTypes = {
-  isExpanded: PropTypes.bool,
-  onToggle: PropTypes.func,
-  pipelineRow: PropTypes.string,
-  pipelineInfo: PropTypes.object,
-  selectedNamespace: PropTypes.string
-};
 

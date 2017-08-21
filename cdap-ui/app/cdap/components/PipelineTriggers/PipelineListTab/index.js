@@ -49,7 +49,11 @@ const mapDispatch = (dispatch) => {
 
 function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, expandedPipeline, toggleExpandPipeline}) {
   let namespaceList = NamespaceStore.getState().namespaces;
-
+  let {selectedNamespace: namespace} = NamespaceStore.getState();
+  let triggeredPipelineInfo = {
+    id: pipelineName,
+    namespace
+  };
   function changeNamespaceEvent(e) {
     changeNamespace(e.target.value);
   }
@@ -103,13 +107,18 @@ function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, exp
               </div>
               {
                 pipelineList.map((pipeline) => {
+                  let triggeringPipelineInfo = {
+                    id: pipeline.name,
+                    namespace: selectedNamespace
+                  };
                   return (
                     <PipelineTriggersRow
                       key={pipeline.name}
                       pipelineRow={pipeline.name}
                       isExpanded={expandedPipeline === pipeline.name}
                       onToggle={toggleExpandPipeline}
-                      pipelineInfo={pipeline}
+                      triggeringPipelineInfo={triggeringPipelineInfo}
+                      triggeredPipelineInfo={triggeredPipelineInfo}
                       selectedNamespace={selectedNamespace}
                     />
                   );
