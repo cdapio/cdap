@@ -62,7 +62,7 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
       programId: {
         namespace: selectedNamespace,
         application: pipelineTrigger.id,
-        version: pipelineTrigger.version,
+        version: pipelineTrigger.version || '-SNAPSHOT', // FIXME: This is a temporary hack and is not required
         type: 'WORKFLOW',
         entity: 'PROGRAM',
         program: DATA_PIPELINE_WORKFLOW
