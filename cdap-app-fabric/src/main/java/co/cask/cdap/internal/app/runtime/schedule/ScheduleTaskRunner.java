@@ -41,6 +41,7 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
@@ -58,7 +59,8 @@ import javax.annotation.Nullable;
 public final class ScheduleTaskRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
+    .create();
 
   private final Store store;
   private final ProgramLifecycleService lifecycleService;
@@ -82,8 +84,6 @@ public final class ScheduleTaskRunner {
     ProgramSchedule schedule = job.getSchedule();
     ProgramId programId = schedule.getProgramId();
 
-    TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
-
     Map<String, String> userArgs = Maps.newHashMap();
     userArgs.putAll(schedule.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
@@ -96,6 +96,7 @@ public final class ScheduleTaskRunner {
                                                                                 job.getNotifications(),
                                                                                 userArgs, systemArgs);
 
+    TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
 
     execute(programId, systemArgs, userArgs);
