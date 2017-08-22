@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function getStatusIndicatorClass (displayStatus) {
-      if (displayStatus === 'Running') {
+      if (displayStatus === 'Running' || displayStatus === 'Starting') {
         return 'status-blue';
       } else if (displayStatus === 'Succeeded' || displayStatus === 'Starting' || displayStatus === 'Scheduling' || displayStatus === 'Stopping') {
         return 'status-light-green';
