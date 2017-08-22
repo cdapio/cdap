@@ -260,6 +260,9 @@ angular.module(PKG.name + '.commons')
     }
 
     function initNodes() {
+      vm.instance.unmakeEverySource();
+      vm.instance.unmakeEveryTarget();
+
       angular.forEach($scope.nodes, function (node) {
         if (node.type !== 'condition') {
           let sourceObj = {
@@ -803,6 +806,8 @@ angular.module(PKG.name + '.commons')
         }
         return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
       });
+      vm.instance.unmakeSource(node.name);
+      vm.instance.unmakeTarget(node.name);
       vm.instance.remove(node.name);
       vm.instance.bind('connectionDetached', removeConnection);
     };
