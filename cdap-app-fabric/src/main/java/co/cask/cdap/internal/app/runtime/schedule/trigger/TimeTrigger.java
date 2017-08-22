@@ -83,7 +83,7 @@ public class TimeTrigger extends ProtoTrigger.TimeTrigger implements Satisfiable
         continue;
       }
 
-      TriggerInfo triggerInfo = new TimeTriggerInfo(getCronExpression(), logicalStartTime);
+      TriggerInfo triggerInfo = new DefaultTimeTriggerInfo(getCronExpression(), logicalStartTime);
       return Collections.singletonList(triggerInfo);
     }
     return Collections.emptyList();

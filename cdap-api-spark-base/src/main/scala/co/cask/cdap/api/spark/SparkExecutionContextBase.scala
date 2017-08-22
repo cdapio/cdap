@@ -296,8 +296,9 @@ trait SparkExecutionContextBase extends RuntimeContext with Transactional {
   /**
     * Get the information of the schedule that launches this Spark program, if there is any.
     *
-    * @return a instance of [[Some]] containing [[TriggeringScheduleInfo]] of the schedule that launches this
-    *         Spark program. Return [[None]] if the program is not launched by a schedule
+    * @return a instance of [[scala.Some]] containing [[co.cask.cdap.api.schedule.TriggeringScheduleInfo]]
+    *         of the schedule that launches this Spark program. Return [[scala.None]] if the program is
+    *         not launched by a schedule
     */
   def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo]
 }

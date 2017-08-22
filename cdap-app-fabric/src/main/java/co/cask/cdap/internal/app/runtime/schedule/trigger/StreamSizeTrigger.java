@@ -77,9 +77,9 @@ public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements
         long streamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
         long basePollingTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
         long baseStreamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
-        TriggerInfo triggerInfo = new StreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(), triggerMB,
-                                                            logicalStartTime, streamSize, basePollingTime,
-                                                            baseStreamSize);
+        TriggerInfo triggerInfo = new DefaultStreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(),
+                                                                   triggerMB, logicalStartTime, streamSize,
+                                                                   basePollingTime, baseStreamSize);
         return Collections.singletonList(triggerInfo);
       } catch (NumberFormatException e) {
         LOG.warn("Failed to parse long value from notification '{}'", notification, e);

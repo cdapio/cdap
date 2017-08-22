@@ -32,10 +32,6 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
  * the License.
  */
 
-import co.cask.cdap.api.schedule.PartitionTriggerInfo;
-import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
-import co.cask.cdap.api.schedule.StreamSizeTriggerInfo;
-import co.cask.cdap.api.schedule.TimeTriggerInfo;
 import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import com.google.gson.JsonDeserializationContext;
@@ -62,10 +58,10 @@ public class TriggerInfoCodec implements JsonSerializer<TriggerInfo>, JsonDeseri
 
   private static Map<Trigger.Type, Class<? extends TriggerInfo>> generateMap() {
     Map<Trigger.Type, Class<? extends TriggerInfo>> map = new HashMap<>();
-    map.put(Trigger.Type.TIME, TimeTriggerInfo.class);
-    map.put(Trigger.Type.PARTITION, PartitionTriggerInfo.class);
-    map.put(Trigger.Type.STREAM_SIZE, StreamSizeTriggerInfo.class);
-    map.put(Trigger.Type.PROGRAM_STATUS, ProgramStatusTriggerInfo.class);
+    map.put(Trigger.Type.TIME, DefaultTimeTriggerInfo.class);
+    map.put(Trigger.Type.PARTITION, DefaultPartitionTriggerInfo.class);
+    map.put(Trigger.Type.STREAM_SIZE, DefaultStreamSizeTriggerInfo.class);
+    map.put(Trigger.Type.PROGRAM_STATUS, DefaultProgramStatusTriggerInfo.class);
     return map;
   }
 

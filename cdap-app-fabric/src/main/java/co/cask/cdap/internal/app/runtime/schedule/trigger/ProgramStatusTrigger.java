@@ -79,12 +79,12 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
       public List<TriggerInfo> apply(ProgramRunInfo runInfo) {
         Map<String, String> runtimeArgs = context.getProgramRuntimeArguments(runInfo.getProgramRunId());
         TriggerInfo triggerInfo =
-          new ProgramStatusTriggerInfo(programId.getNamespace(),
-                                       context.getApplicationSpecification(programId.getParent()),
-                                       ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
-                                       RunIds.fromString(runInfo.getProgramRunId().getRun()),
-                                       runInfo.getProgramStatus(),
-                                       context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
+          new DefaultProgramStatusTriggerInfo(programId.getNamespace(),
+                                              context.getApplicationSpecification(programId.getParent()),
+                                              ProgramType.valueOf(programId.getType().name()), programId.getProgram(),
+                                              RunIds.fromString(runInfo.getProgramRunId().getRun()),
+                                              runInfo.getProgramStatus(),
+                                              context.getWorkflowToken(runInfo.getProgramRunId()), runtimeArgs);
         return Collections.singletonList(triggerInfo);
       }
     };

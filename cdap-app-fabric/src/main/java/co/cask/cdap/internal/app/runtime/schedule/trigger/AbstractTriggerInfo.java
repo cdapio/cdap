@@ -14,21 +14,24 @@
  * the License.
  */
 
-package co.cask.cdap.api.schedule;
+package co.cask.cdap.internal.app.runtime.schedule.trigger;
+
+import co.cask.cdap.api.schedule.TriggerInfo;
 
 /**
- * Base interface for the trigger information to be passed to the triggered program.
+ * Base class for the trigger information to be passed to the triggered program.
  */
-public interface TriggerInfo {
-  enum Type {
-    TIME,
-    PARTITION,
-    STREAM_SIZE,
-    PROGRAM_STATUS
+public abstract class AbstractTriggerInfo implements TriggerInfo {
+  private final Type type;
+
+  public AbstractTriggerInfo(Type type) {
+    this.type = type;
   }
 
   /**
-   * @return The type of the trigger info.
+   * @return The type of the trigger.
    */
-  Type getType();
+  public Type getType() {
+    return type;
+  }
 }

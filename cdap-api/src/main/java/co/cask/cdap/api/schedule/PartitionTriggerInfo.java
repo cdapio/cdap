@@ -19,46 +19,25 @@ package co.cask.cdap.api.schedule;
 /**
  * The dataset partition trigger information to be passed to the triggered program.
  */
-public class PartitionTriggerInfo extends TriggerInfo {
-  private final String datasetNamespace;
-  private final String datasetName;
-  private final int expectedNumPartitions;
-  private final int actualNumPartitions;
-
-  public PartitionTriggerInfo(String datasetNamespace, String datasetName,
-                              int expectedNumPartitions, int actualNumPartitions) {
-    super(Trigger.Type.PARTITION);
-    this.datasetNamespace = datasetNamespace;
-    this.datasetName = datasetName;
-    this.expectedNumPartitions = expectedNumPartitions;
-    this.actualNumPartitions = actualNumPartitions;
-  }
-
+public interface PartitionTriggerInfo extends TriggerInfo {
+  
   /**
    * @return The namespace of the dataset specified in the trigger.
    */
-  public String getDatasetNamespace() {
-    return datasetNamespace;
-  }
+  String getDatasetNamespace();
 
   /**
    * @return The name of the dataset specified in the trigger.
    */
-  public String getDatasetName() {
-    return datasetName;
-  }
+  String getDatasetName();
 
   /**
    * @return The least number of new dataset partitions that can satisfy the trigger.
    */
-  public int getExpectedNumPartitions() {
-    return expectedNumPartitions;
-  }
+  int getExpectedNumPartitions();
 
   /**
    * @return The actual number of new dataset partitions that satisfies the trigger.
    */
-  public int getActualNumPartitions() {
-    return actualNumPartitions;
-  }
+  int getActualNumPartitions();
 }

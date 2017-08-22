@@ -19,8 +19,17 @@ package co.cask.cdap.common.app;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 import org.apache.twill.api.RunId;
 
+import java.lang.reflect.Type;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -52,6 +61,24 @@ public final class RunIds {
 
   private static final AtomicLong COUNTER = new AtomicLong();
 
+  public static class RunIdCodec implements JsonSerializer<RunId>, JsonDeserializer<RunId> {
+
+    @Override
+    public RunId deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+      throws JsonParseException {
+      if (json instanceof JsonPrimitive) {
+        return RunIds.fromString(json.getAsString());
+      } else if (json instanceof JsonObject) {
+        return RunIds.fromString(((JsonObject) json).get("id").getAsString());
+      }
+      throw new JsonParseException("Cannot parse RunId from json of class " + json.getClass().getName());
+    }
+
+    @Override
+    public JsonElement serialize(RunId src, Type typeOfSrc, JsonSerializationContext context) {
+      return context.serialize(src.getId());
+    }
+  }
   /**
    * @return UUID based on current time. If called repeatedly within the same millisecond, this is
    * guaranteed to generate at least 10000 unique UUIDs for the millisecond.

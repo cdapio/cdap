@@ -19,22 +19,12 @@ package co.cask.cdap.api.schedule;
 /**
  * The time trigger information to be passed to the triggered program.
  */
-public class TimeTriggerInfo extends TriggerInfo {
-  private final String cronExpression;
-  private final long logicalStartTime;
-
-  public TimeTriggerInfo(String cronExpression, long logicalStartTime) {
-    super(Trigger.Type.TIME);
-    this.cronExpression = cronExpression;
-    this.logicalStartTime = logicalStartTime;
-  }
+public interface TimeTriggerInfo extends TriggerInfo {
 
   /**
    * @return The cron expression in the time trigger.
    */
-  public String getCronExpression() {
-    return cronExpression;
-  }
+  String getCronExpression();
 
   /**
    * Returns the logical start time of the triggered program. Logical start time is when the schedule decides to launch
@@ -42,7 +32,5 @@ public class TimeTriggerInfo extends TriggerInfo {
    *
    * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC)
    */
-  long getLogicalStartTime() {
-    return logicalStartTime;
-  }
+  long getLogicalStartTime();
 }

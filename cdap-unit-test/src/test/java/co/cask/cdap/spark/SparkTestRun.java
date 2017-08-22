@@ -40,6 +40,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.spark.app.CharCountProgram;
 import co.cask.cdap.spark.app.ClassicSparkProgram;
 import co.cask.cdap.spark.app.DatasetSQLSpark;
@@ -291,14 +292,18 @@ public class SparkTestRun extends TestFrameworkTestBase {
   @Test
   public void testSparkFork() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
-
     File barrierDir = TMP_FOLDER.newFolder();
-
+    ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),
+                                           "schedule");
+    appManager.enableSchedule(scheduleId);
     final WorkflowManager workflowManager = appManager.getWorkflowManager(
       TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
       .start(Collections.singletonMap("barrier.dir", barrierDir.getAbsolutePath()));
 
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    WorkflowManager triggeredWorkflowManager = appManager.getWorkflowManager(
+      TestSparkApp.TriggeredWorkflow.class.getSimpleName());
+    triggeredWorkflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   @Test

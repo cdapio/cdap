@@ -70,8 +70,9 @@ public class PartitionTrigger extends ProtoTrigger.PartitionTrigger implements S
 
   @Override
   public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
-    TriggerInfo triggerInfo = new PartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
-                                                       getPartitionsCount(context.getNotifications()));
+    TriggerInfo triggerInfo =
+      new DefaultPartitionTriggerInfo(dataset.getNamespace(), dataset.getDataset(), numPartitions,
+                                      getPartitionsCount(context.getNotifications()));
     return Collections.singletonList(triggerInfo);
   }
 
