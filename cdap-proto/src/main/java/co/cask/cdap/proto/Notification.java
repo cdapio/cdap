@@ -93,4 +93,12 @@ public class Notification {
   public int hashCode() {
     return Objects.hash(notificationType, properties);
   }
+
+  @Override
+  public String toString() {
+    return "Notification{" +
+      "notificationType=" + notificationType +
+      ", properties=" + properties +
+      '}';
+  }
 }

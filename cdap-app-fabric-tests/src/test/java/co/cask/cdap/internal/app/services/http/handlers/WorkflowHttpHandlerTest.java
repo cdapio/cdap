@@ -78,6 +78,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -440,8 +441,8 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     WorkflowId workflow = new WorkflowId(TEST_NAMESPACE2, "SleepWorkflowApp", "SleepWorkflow");
 
-    // Start the workflow
-    startProgram(workflow, 200);
+    // Start the workflow, with max long as sleep time. This make the workflow never complete by itself.
+    startProgram(workflow, Collections.singletonMap("sleep.ms", Long.toString(Long.MAX_VALUE)), 200);
     waitState(workflow, ProgramStatus.RUNNING.name());
 
     String runId = getRunIdOfRunningProgram(workflow.toId());

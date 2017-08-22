@@ -18,23 +18,35 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.store.AppMetadataStore;
 import co.cask.cdap.internal.app.store.ApplicationMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import org.apache.tephra.TransactionSystemClient;
@@ -43,10 +55,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -54,26 +68,38 @@ import javax.annotation.Nullable;
  */
 public class ProgramNotificationSubscriberService extends AbstractNotificationSubscriberService {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramNotificationSubscriberService.class);
+  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(10000));
+
   private static final Gson GSON = new Gson();
   private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
 
+  // These attributes are used to fetch the AppMetadataStore
+  private static final DatasetId APP_META_INSTANCE_ID = NamespaceId.SYSTEM.dataset(Constants.AppMetaStore.TABLE);
+  private static final byte[] APP_VERSION_UPGRADE_KEY = Bytes.toBytes("version.default.store");
+
   private final CConfiguration cConf;
+  private final AtomicBoolean upgradeComplete;
+  private final DatasetFramework datasetFramework;
+
   private ExecutorService taskExecutorService;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
-                                       DatasetFramework datasetFramework, TransactionSystemClient txClient) {
-    super(messagingService, cConf, datasetFramework, txClient);
+                                       DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                                       MetricsCollectionService metricsCollectionService) {
+    super(messagingService, cConf, datasetFramework, txClient, metricsCollectionService);
     this.cConf = cConf;
+    this.datasetFramework = datasetFramework;
+    this.upgradeComplete = new AtomicBoolean(false);
   }
 
   @Override
   protected void startUp() {
-    LOG.info("Starting ProgramNotificationSubscriberService");
-    taskExecutorService = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-                                                          .setNameFormat("program-status-subscriber-task-%d")
-                                                          .build());
-    taskExecutorService.submit(new ProgramStatusNotificationSubscriberThread(
+    LOG.info("Starting {}", getClass().getSimpleName());
+    taskExecutorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
+                                                              .setNameFormat("program-status-subscriber-task")
+                                                              .build());
+    taskExecutorService.submit(new ProgramStatusSubscriberRunnable(
       cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)));
   }
 
@@ -81,48 +107,60 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   protected void shutDown() {
     super.shutDown();
     try {
+      // Shutdown the executor, which will issue an interrupt to the running thread.
+      taskExecutorService.shutdownNow();
       taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException ie) {
-      Thread.currentThread().interrupt();
+      // Ignore it.
     } finally {
       if (!taskExecutorService.isTerminated()) {
         taskExecutorService.shutdownNow();
       }
     }
-    LOG.info("Stopped ProgramNotificationSubscriberService.");
+    LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
   /**
    * Thread that receives TMS notifications and persists the program status notification to the store
    */
-  private class ProgramStatusNotificationSubscriberThread extends NotificationSubscriberThread {
+  private class ProgramStatusSubscriberRunnable extends AbstractSubscriberRunnable {
     private final String topic;
 
-    ProgramStatusNotificationSubscriberThread(String topic) {
-      super(topic);
+    ProgramStatusSubscriberRunnable(String topic) {
+      // Fetching of program status events are non-transactional
+      super("program.status", topic, cConf.getLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS),
+            cConf.getInt(Constants.AppFabric.STATUS_EVENT_FETCH_SIZE), false);
       this.topic = topic;
     }
 
+    @Nullable
     @Override
-    public String loadMessageId(DatasetContext context) {
+    protected String initialize(DatasetContext context) throws RetryableException {
       return getAppMetadataStore(context).retrieveSubscriberState(topic);
     }
 
     @Override
-    public void updateMessageId(DatasetContext context, String lastFetchedMessageId) {
+    public void persistMessageId(DatasetContext context, String lastFetchedMessageId) {
       getAppMetadataStore(context).persistSubscriberState(topic, lastFetchedMessageId);
     }
 
     @Override
-    public void processNotification(final DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException {
+    protected void processNotifications(DatasetContext context, Iterator<Notification> notifications) {
+      AppMetadataStore appMetadataStore = getAppMetadataStore(context);
+      while (notifications.hasNext()) {
+        processNotification(appMetadataStore, notifications.next());
+      }
+    }
+
+    private void processNotification(AppMetadataStore appMetadataStore, Notification notification) {
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programStatus = properties.get(ProgramOptionConstants.PROGRAM_STATUS);
 
-      // Ignore notifications which specify an invalid ProgramRunId or ProgramRunStatus
+      // Ignore notifications which specify an invalid ProgramRunId or ProgramRunStatus, which shouldn't happen
       if (programRun == null || programStatus == null) {
+        LOG.warn("Ignore notification that misses program run state information, {}", notification);
         return;
       }
 
@@ -130,86 +168,89 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       try {
         programRunStatus = ProgramRunStatus.valueOf(programStatus);
       } catch (IllegalArgumentException e) {
-        LOG.warn("Invalid program run status {} passed in notification for program {}",
-                 programStatus, programRun);
+        LOG.warn("Ignore notification with invalid program run status {} for program {}, {}",
+                 programStatus, programRun, notification);
         return;
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRun, ProgramRunId.class);
       ProgramId programId = programRunId.getParent();
 
-      ApplicationMeta meta = getAppMetadataStore(context).getApplication(programRunId.getNamespace(),
-                                                                         programRunId.getApplication(),
-                                                                         programRunId.getVersion());
+      ApplicationMeta meta = appMetadataStore.getApplication(programRunId.getNamespace(),
+                                                             programRunId.getApplication(),
+                                                             programRunId.getVersion());
       // Check if the application exists
       if (meta == null) {
-        LOG.warn(new NotFoundException(programId.getParent()).getMessage());
+        LOG.warn("Ignore notification for application {} that doesn't exist, {}", programRunId, notification);
         return;
       }
       // Check if the program exists
       if (getProgramSpecFromApp(meta.getSpec(), programRunId) == null) {
-        LOG.warn(new NotFoundException(programId).getMessage());
+        LOG.warn("Ignore notification for program {} that doesn't exist, {}", programRunId, notification);
         return;
       }
 
       String runId = programRunId.getRun();
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
+
       switch(programRunStatus) {
         case STARTING:
           long startTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.START_TIME);
           String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
           String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
           if (userArgumentsString == null || systemArgumentsString == null) {
-            LOG.warn((userArgumentsString == null) ? "user" : "system" + " arguments was not specified in program " +
-                     "status notification for program run " + programRunId);
+            LOG.warn("Ignore program starting notification for program {} without {} arguments, {}",
+                     programRunId, (userArgumentsString == null) ? "user" : "system", notification);
             return;
           }
           if (startTimeSecs == -1) {
-            LOG.warn("Start time was not specified in program notification for program run " + programRunId);
+            LOG.warn("Ignore program starting notification for program {} without start time, {}",
+                     programRunId, notification);
             return;
           }
           Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
           Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-          getAppMetadataStore(context).recordProgramStart(programId, runId, startTimeSecs, twillRunId,
-                                                          userArguments, systemArguments);
-          break;
+          appMetadataStore.recordProgramStart(programId, runId, startTimeSecs, twillRunId,
+                                              userArguments, systemArguments);
+          return;
         case RUNNING:
           long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
                                                      ProgramOptionConstants.LOGICAL_START_TIME);
           if (logicalStartTimeSecs == -1) {
-            LOG.warn("Logical start time was not specified in program notification for program run " + programRunId);
+            LOG.warn("Ignore program running notification for program {} without {} specified, {}",
+                     programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
             return;
           }
-
-          getAppMetadataStore(context).recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId);
-          break;
+          appMetadataStore.recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId);
+          return;
         case SUSPENDED:
-          getAppMetadataStore(context).recordProgramSuspend(programId, runId);
-          break;
+          appMetadataStore.recordProgramSuspend(programId, runId);
+          return;
         case RESUMING:
-          getAppMetadataStore(context).recordProgramResumed(programId, runId);
-          break;
+          appMetadataStore.recordProgramResumed(programId, runId);
+          return;
         case COMPLETED:
         case KILLED:
           if (endTimeSecs == -1) {
-            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            LOG.warn("Ignore program killed notification for program {} without end time specified, {}",
+                     programRunId, notification);
             return;
           }
-          getAppMetadataStore(context).recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null);
-          break;
+          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null);
+          return;
         case FAILED:
           if (endTimeSecs == -1) {
-            LOG.warn("Run time was not specified in program running notification for program run " + programRunId);
+            LOG.warn("Ignore program failed notification for program {} without end time specified, {}",
+                     programRunId, notification);
             return;
           }
-          String errorString = properties.get(ProgramOptionConstants.PROGRAM_ERROR);
-          BasicThrowable cause = (errorString == null) ? null : GSON.fromJson(errorString, BasicThrowable.class);
-          getAppMetadataStore(context).recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause);
-          break;
-        default:
-          LOG.error("Cannot persist ProgramRunStatus %s for Program %s", programRunStatus, programRunId);
+          BasicThrowable cause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
+          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause);
           return;
+        default:
+          // This should not happen
+          LOG.error("Unsupported program status {} for program {}, {}", programRunStatus, programRunId, notification);
       }
     }
 
@@ -219,19 +260,23 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       ProgramType type = programRunId.getType();
       if (type == ProgramType.FLOW && appSpec.getFlows().containsKey(programName)) {
         return appSpec.getFlows().get(programName);
-      } else if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
-        return appSpec.getMapReduce().get(programName);
-      } else if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
-        return appSpec.getSpark().get(programName);
-      } else if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
-        return appSpec.getWorkflows().get(programName);
-      } else if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
-        return appSpec.getServices().get(programName);
-      } else if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
-        return appSpec.getWorkers().get(programName);
-      } else {
-        return null;
       }
+      if (type == ProgramType.MAPREDUCE && appSpec.getMapReduce().containsKey(programName)) {
+        return appSpec.getMapReduce().get(programName);
+      }
+      if (type == ProgramType.SPARK && appSpec.getSpark().containsKey(programName)) {
+        return appSpec.getSpark().get(programName);
+      }
+      if (type == ProgramType.WORKFLOW && appSpec.getWorkflows().containsKey(programName)) {
+        return appSpec.getWorkflows().get(programName);
+      }
+      if (type == ProgramType.SERVICE && appSpec.getServices().containsKey(programName)) {
+        return appSpec.getServices().get(programName);
+      }
+      if (type == ProgramType.WORKER && appSpec.getWorkers().containsKey(programName)) {
+        return appSpec.getWorkers().get(programName);
+      }
+      return null;
     }
 
     /**
@@ -244,6 +289,45 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     private long getTimeSeconds(Map<String, String> properties, String option) {
       String timeString = properties.get(option);
       return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
+    }
+
+    /**
+     * Decodes a {@link BasicThrowable} from a given json string.
+     *
+     * @param encoded the json representing of the {@link BasicThrowable}
+     * @return the decode {@link BasicThrowable}; A {@code null} will be returned
+     *         if the encoded string is {@code null} or on decode failure.
+     */
+    @Nullable
+    private BasicThrowable decodeBasicThrowable(@Nullable String encoded) {
+      try {
+        return (encoded == null) ? null : GSON.fromJson(encoded, BasicThrowable.class);
+      } catch (JsonSyntaxException e) {
+        // This shouldn't happen normally, unless the BasicThrowable changed in an incompatible way
+        return null;
+      }
+    }
+
+    /**
+     * Returns an instance of {@link AppMetadataStore}.
+     */
+    private AppMetadataStore getAppMetadataStore(DatasetContext context) {
+      // TODO Find a way to access the appMetadataStore without copying code from the DefaultStore
+      try {
+        Table table = DatasetsUtil.getOrCreateDataset(context, datasetFramework, APP_META_INSTANCE_ID,
+                                                      Table.class.getName(), DatasetProperties.EMPTY);
+        AppMetadataStore appMetadataStore = new AppMetadataStore(table, cConf, upgradeComplete);
+        // If upgrade was not complete, check if it is and update boolean
+        if (!upgradeComplete.get()) {
+          boolean isUpgradeComplete = appMetadataStore.isUpgradeComplete(APP_VERSION_UPGRADE_KEY);
+          if (isUpgradeComplete) {
+            upgradeComplete.set(true);
+          }
+        }
+        return appMetadataStore;
+      } catch (DatasetManagementException | IOException e) {
+        throw Throwables.propagate(e);
+      }
     }
   }
 }

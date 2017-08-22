@@ -58,7 +58,7 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
     this.topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
-    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "program.message.");
+    this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.program.state.");
     this.messagingService = messagingService;
   }
 

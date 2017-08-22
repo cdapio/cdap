@@ -27,8 +27,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.AlreadyExistsException;
@@ -63,7 +61,6 @@ import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProtoTrigger;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
@@ -98,14 +95,12 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 @Ignore
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
@@ -298,8 +293,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     enableSchedule(AppWithFrequentScheduledWorkflows.COMPOSITE_SCHEDULE);
 
     // disable the two partition schedules, send them notifications (but they should not trigger)
-    int runs1 = getRuns(WORKFLOW_1);
-    int runs2 = getRuns(WORKFLOW_2);
+    int runs1 = getRuns(WORKFLOW_1, ProgramRunStatus.ALL);
+    int runs2 = getRuns(WORKFLOW_2, ProgramRunStatus.ALL);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_1);
     disableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
 
@@ -314,7 +309,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        return getRuns(SCHEDULED_WORKFLOW_1) > 0 && getRuns(SCHEDULED_WORKFLOW_2) > 0;
+        return getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.COMPLETED) > 0
+          && getRuns(SCHEDULED_WORKFLOW_2, ProgramRunStatus.COMPLETED) > 0;
       }
     }, 10, TimeUnit.SECONDS);
 
@@ -328,7 +324,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     ProgramId compositeWorkflow = APP_ID.workflow(AppWithFrequentScheduledWorkflows.COMPOSITE_WORKFLOW);
     // Workflow scheduled with the composite trigger has never been started
-    Assert.assertEquals(0, getRuns(compositeWorkflow));
+    Assert.assertEquals(0, getRuns(compositeWorkflow, ProgramRunStatus.ALL));
 
     // Publish two more new partition notifications to satisfy the partition trigger in the composite trigger,
     // and thus the whole composite trigger will be satisfied
@@ -353,8 +349,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
 
     // Also verify that the two partition schedules did not trigger
-    Assert.assertEquals(runs1, getRuns(WORKFLOW_1));
-    Assert.assertEquals(runs2, getRuns(WORKFLOW_2));
+    Assert.assertEquals(runs1, getRuns(WORKFLOW_1, ProgramRunStatus.ALL));
+    Assert.assertEquals(runs2, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
 
     // enable partition schedule 2
     enableSchedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
@@ -387,7 +383,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     lastProcessed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     programStateWriter.killed(someWorkflowRun);
     waitUntilProcessed(programEventTopic, lastProcessed);
-    Assert.assertEquals(0, getRuns(TRIGGERED_WORKFLOW));
+    Assert.assertEquals(0, getRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.ALL));
 
     // Enable the schedule
     scheduler.enableSchedule(APP_MULT_ID.schedule(AppWithMultipleSchedules.WORKFLOW_COMPLETED_SCHEDULE));
@@ -398,11 +394,11 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     startProgram(ANOTHER_WORKFLOW, ImmutableMap.of(dummyUserKey, dummyUserValue), 200);
 
     // Wait for a completed run record
-    assertProgramRuns(TRIGGERED_WORKFLOW, ProgramRunStatus.COMPLETED, 1);
+    waitForCompleteRuns(1, TRIGGERED_WORKFLOW);
   }
 
   private void testScheduleUpdate(String howToUpdate) throws Exception {
-    int runs = getRuns(WORKFLOW_2);
+    int runs = getRuns(WORKFLOW_2, ProgramRunStatus.ALL);
     final ScheduleId scheduleId2 = APP_ID.schedule(AppWithFrequentScheduledWorkflows.DATASET_PARTITION_SCHEDULE_2);
 
     // send one notification to it
@@ -422,7 +418,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     }));
 
-    Assert.assertEquals(runs, getRuns(WORKFLOW_2));
+    Assert.assertEquals(runs, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
 
     if ("disable".equals(howToUpdate)) {
       // disabling and enabling the schedule should remove the job
@@ -463,7 +459,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       }
     }));
 
-    Assert.assertEquals(runs, getRuns(WORKFLOW_2));
+    Assert.assertEquals(runs, getRuns(WORKFLOW_2, ProgramRunStatus.ALL));
     // publish one more notification, this should kick off the workflow
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     waitForCompleteRuns(runs + 1, WORKFLOW_2);
@@ -486,26 +482,21 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
 
-    try {
-      waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
-      waitForCompleteRuns(expectedNumRuns, WORKFLOW_2);
-    } finally {
-      LOG.info("WORKFLOW_1 runRecords: {}", getRuns(WORKFLOW_1));
-      LOG.info("WORKFLOW_2 runRecords: {}", getRuns(WORKFLOW_2));
-    }
+    waitForCompleteRuns(expectedNumRuns, WORKFLOW_1);
+    waitForCompleteRuns(expectedNumRuns, WORKFLOW_2);
   }
 
   private void waitForCompleteRuns(int numRuns, final ProgramId program) throws Exception {
     Tasks.waitFor(numRuns, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getRuns(program);
+        return getRuns(program, ProgramRunStatus.COMPLETED);
       }
     }, 10, TimeUnit.SECONDS);
   }
 
-  private int getRuns(ProgramId workflowId) {
-    return store.getRuns(workflowId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
+  private int getRuns(ProgramId workflowId, ProgramRunStatus status) {
+    return store.getRuns(workflowId, status, 0, Long.MAX_VALUE, Integer.MAX_VALUE).size();
   }
 
   private void publishNotification(TopicId topicId, NamespaceId namespaceId, String dataset) throws Exception {

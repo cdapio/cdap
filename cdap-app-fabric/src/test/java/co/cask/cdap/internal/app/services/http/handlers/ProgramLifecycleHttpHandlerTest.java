@@ -331,10 +331,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
 
     ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
-    ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
+    final ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
-    ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
+    final ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     // Start wordCountApp1
     Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
@@ -345,17 +345,35 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Start wordCountApp2
     Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
 
-    // start multiple workflow simultaneously
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
+    // start multiple workflow simultaneously with a long sleep time
+    Map<String, String> args = Collections.singletonMap("sleep.ms", "120000");
+    startProgram(sleepWorkflow1, args, 200);
+    startProgram(sleepWorkflow2, args, 200);
+    startProgram(sleepWorkflow1, args, 200);
+    startProgram(sleepWorkflow2, args, 200);
+
+    // Make sure they are all running. Otherwise on slow machine, it's possible that the TMS states hasn't
+    // been consumed and write to the store before we stop the program and query for STOPPED state.
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size();
+      }
+    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size();
+      }
+    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
     // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
 
+    // Wait until all are stopped
     waitState(sleepWorkflow1, STOPPED);
     waitState(sleepWorkflow2, STOPPED);
 

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.program;
 
+import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.AbstractProgramController;
@@ -45,7 +46,32 @@ public class StateChangeListener extends AbstractListener {
   }
 
   @Override
+  public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+    switch (currentState) {
+      case ALIVE:
+        alive();
+        break;
+      case SUSPENDED:
+        suspended();
+        break;
+      case RESUMING:
+        resuming();
+        break;
+      case COMPLETED:
+        completed();
+        break;
+      case KILLED:
+        killed();
+        break;
+      case ERROR:
+        error(cause);
+        break;
+    }
+  }
+
+  @Override
   public void alive() {
+    LOG.trace("Program {} is alive.", programRunId);
     programStateWriter.running(programRunId, twillRunId);
   }
 
@@ -75,7 +101,7 @@ public class StateChangeListener extends AbstractListener {
 
   @Override
   public void error(Throwable cause) {
-    LOG.info("Program {} stopped with error: {}", programRunId, cause);
+    LOG.trace("Program {} stopped with error: {}", programRunId, cause);
     programStateWriter.error(programRunId, cause);
   }
 }

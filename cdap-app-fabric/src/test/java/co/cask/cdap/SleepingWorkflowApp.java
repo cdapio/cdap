@@ -88,7 +88,7 @@ public class SleepingWorkflowApp extends AbstractApplication {
         String sleepTime = getContext().getRuntimeArguments().get("sleep.ms");
         Thread.sleep(sleepTime == null ? 2000 : Long.parseLong(sleepTime));
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        // expected if the workflow get killed
       }
       LOG.info("Custom run completed.");
     }

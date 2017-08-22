@@ -420,6 +420,23 @@
   </property>
 
   <property>
+    <name>app.program.status.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.status.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program status events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
@@ -498,6 +515,43 @@
       The delay in milliseconds that the scheduler checks again for new events after it detects there was no event
     </description>
   </property>
+
+  <property>
+    <name>scheduler.time.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      time schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.stream.size.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      stream size schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.data.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      data schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.program.status.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status schedule events
+    </description>
+  </property>
+
 
   <property>
     <name>time.event.topic</name>
@@ -2343,47 +2397,6 @@
   </property>
 
   <property>
-    <name>program.message.retry.policy.base.delay.ms</name>
-    <value>1000</value>
-    <description>
-      The base delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>program.message.retry.policy.max.delay.ms</name>
-    <value>3000</value>
-    <description>
-      The maximum delay between retries in milliseconds
-    </description>
-  </property>
-
-  <property>
-    <name>program.message.retry.policy.max.retries</name>
-    <value>1000</value>
-    <description>
-      The maximum number of retries to attempt before aborting
-    </description>
-  </property>
-
-  <property>
-    <name>program.message.retry.policy.max.time.secs</name>
-    <value>600</value>
-    <description>
-      The maximum elapsed time in seconds before retries are aborted
-    </description>
-  </property>
-
-  <property>
-    <name>program.message.retry.policy.type</name>
-    <value>fixed.delay</value>
-    <description>
-      The type of retry policy for programs. Allowed options:
-      "none", "fixed.delay", or "exponential.backoff".
-    </description>
-  </property>
-
-  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>
@@ -2527,6 +2540,88 @@
     <value>fixed.delay</value>
     <description>
       The type of retry policy for metrics publishing. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.delay.ms</name>
+    <value>5000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.retries</name>
+    <value>5000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.time.secs</name>
+    <value>7200</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for notification publish or subscription. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.delay.ms</name>
+    <value>3000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
       "none", "fixed.delay", or "exponential.backoff".
     </description>
   </property>
