@@ -23,6 +23,7 @@ import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
+import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
@@ -52,7 +53,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   private RunId runId;
   private ProgramStatus programStatus;
   @Nullable
-  private WorkflowToken workflowToken;
+  private BasicWorkflowToken workflowToken;
   private Map<String, String> runtimeArguments;
 
   public DefaultProgramStatusTriggerInfo() {
@@ -71,7 +72,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     this.program = program;
     this.runId = runId;
     this.programStatus = programStatus;
-    this.workflowToken = workflowToken;
+    this.workflowToken = (BasicWorkflowToken) workflowToken;
     this.runtimeArguments = Collections.unmodifiableMap(new HashMap<>(runtimeArguments));
   }
 
@@ -134,7 +135,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     program = in.readUTF();
     runId = RunIds.fromString(in.readUTF());
     programStatus = (ProgramStatus) in.readObject();
-    workflowToken = (WorkflowToken) in.readObject();
+    workflowToken = (BasicWorkflowToken) in.readObject();
     runtimeArguments = (Map<String, String>) in.readObject();
   }
 }
