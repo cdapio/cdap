@@ -105,7 +105,7 @@ function humanReadableDuration(timeInSeconds) {
   const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
   const pluralize = (number, label) => number > 1 ? `${label}s` : label;
   if (timeInSeconds < 60) {
-    return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, T.translate('commons.secondsShortLabel'))}`;
+    return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, T.translate('commons.secShortLabel'))}`;
   }
   if (timeInSeconds < ONE_HOUR_SECONDS) {
     let mins = Math.floor(timeInSeconds / ONE_MIN_SECONDS);
