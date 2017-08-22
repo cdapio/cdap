@@ -44,6 +44,7 @@ function collect(connect, monitor) {
   };
 }
 
+
 class RulesList extends Component {
   static propTypes = {
     rulebookid: PropTypes.string,
