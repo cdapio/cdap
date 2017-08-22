@@ -19,6 +19,7 @@ import MyRuleEngineApi from 'api/rulesengine';
 import enableDataPreparationService from 'components/DataPrep/DataPrepServiceControl/ServiceEnablerUtilities';
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
+import IconSVG from 'components/IconSVG';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
@@ -30,7 +31,8 @@ export default class RulesEngineServiceControl extends Component {
   };
 
   state = {
-    loading: false
+    loading: false,
+    error: null
   };
 
   enableRulesEngine = () => {
@@ -44,8 +46,31 @@ export default class RulesEngineServiceControl extends Component {
       i18nPrefix: ''
     })
       .subscribe(
-        this.props.onServiceStart
+        this.props.onServiceStart,
+        (err) => {
+          this.setState({
+            error: typeof err === 'object' ? err.error : err,
+            loading: false
+          });
+        }
       );
+  }
+
+  renderError = () => {
+    if (!this.state.error) {
+      return null;
+    }
+    return (
+      <div className="rules-engine-service-control-error">
+        <h5 className="text-danger">
+          <IconSVG name="icon-exclamation-triangle" />
+          <span>{T.translate(`${PREFIX}.errorTitle`)}</span>
+        </h5>
+        <p className="text-danger">
+          {this.state.error}
+        </p>
+      </div>
+    );
   }
 
   render() {
@@ -82,6 +107,7 @@ export default class RulesEngineServiceControl extends Component {
                 null
             } <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
           </button>
+          {this.renderError()}
         </div>
       </div>
     );

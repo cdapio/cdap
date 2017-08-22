@@ -73,7 +73,7 @@ export default class DataPrepServiceControl extends Component {
         <h5 className="text-danger">
           {this.state.error}
         </h5>
-        <p className="text-dangertext-xs-center">
+        <p className="text-danger">
           {this.state.extendedMessage}
         </p>
       </div>

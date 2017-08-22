@@ -37,6 +37,15 @@
           }
         }
       }
+      .error-message {
+        padding: 20px;
+        h5 > span {
+          vertical-align: bottom;
+        }
+        .icon-svg {
+          margin-right: 5px;
+        }
+      }
     }
   }
 }

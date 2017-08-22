@@ -28,6 +28,7 @@ import {Modal, ModalHeader, ModalBody} from 'reactstrap';
 import MyRulesEngine from 'api/rulesengine';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import IconSVG from 'components/IconSVG';
 
 require('./AddRulesEngineToPipelineModal.scss');
 const PREFIX = 'features.RulesEngine.AddRulesEngineToPipelineModal';
@@ -45,7 +46,8 @@ export default class AddRulesEngineToPipelineModal extends Component {
     batchUrl: '',
     realtimeUrl: '',
     batchConfig: null,
-    realtimeConfig: null
+    realtimeConfig: null,
+    error: null
   };
 
   updateBatchAndRealtimeConfigs = () => {
@@ -66,6 +68,12 @@ export default class AddRulesEngineToPipelineModal extends Component {
           let batchArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-pipeline');
           let realtimeArtifacts = artifacts.filter(artifact => artifact.name === 'cdap-data-streams');
           let yareArtifact = artifacts.filter(artifact => artifact.name === 'yare-plugins');
+          if (!yareArtifact.length) {
+            this.setState({
+              error: T.translate(`${PREFIX}.error`)
+            });
+            return;
+          }
           let batchHighestArtifact, realtimeHighestArtifact;
           if (batchArtifacts.length > 1) {
             let highestBatchArtifactVersion = findHighestVersion(batchArtifacts.map(artifact => artifact.version), true);
@@ -102,6 +110,7 @@ export default class AddRulesEngineToPipelineModal extends Component {
             artifact: realtimeHighestArtifact,
             config: {
               stages: [rulesEnginePlugin],
+              batchInterval: '10s',
               connections: []
             }
           };
@@ -125,7 +134,8 @@ export default class AddRulesEngineToPipelineModal extends Component {
             batchConfig,
             batchUrl,
             realtimeUrl,
-            realtimeConfig
+            realtimeConfig,
+            error: null
           });
         }
       );
@@ -152,6 +162,44 @@ export default class AddRulesEngineToPipelineModal extends Component {
     window.localStorage.setItem(this.state.rulebookid, JSON.stringify(this.state.batchConfig));
   };
 
+  renderContent = () => {
+    if (this.state.error) {
+      return (
+        <h5 className="error-message text-danger">
+          <IconSVG name="icon-exclamation-triangle" />
+          <span>{this.state.error}</span>
+        </h5>
+      );
+    }
+    return (
+      <div>
+        <div className="message">
+          {T.translate(`${PREFIX}.message`)}
+        </div>
+        <div className="action-buttons">
+          <a
+            className="btn btn-secondary"
+            href={this.state.batchUrl}
+            onClick={this.handleOnBatchUrlClick}
+          >
+            <i className="fa icon-ETLBatch" />
+            <span>{T.translate(`${PREFIX}.batchPipelineBtn`)}</span>
+          </a>
+          <a
+            href={this.state.realtimeUrl}
+            className={classnames('btn btn-secondary', {
+              'inactive': !this.state.realtimeUrl
+            })}
+            onClick={this.handleOnRealtimeUrlClick}
+          >
+            <i className="fa icon-sparkstreaming" />
+            <span>{T.translate(`${PREFIX}.realtimePipelineBtn`)}</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     return (
       <Modal
@@ -160,33 +208,11 @@ export default class AddRulesEngineToPipelineModal extends Component {
         className="rules-engine-to-pipeline-modal"
         size="lg"
       >
-        <ModalHeader>
+        <ModalHeader toggle={this.props.onClose}>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
         </ModalHeader>
         <ModalBody>
-          <div className="message">
-            {T.translate(`${PREFIX}.message`)}
-          </div>
-          <div className="action-buttons">
-            <a
-              className="btn btn-secondary"
-              href={this.state.batchUrl}
-              onClick={this.handleOnBatchUrlClick}
-            >
-              <i className="fa icon-ETLBatch" />
-              <span>{T.translate(`${PREFIX}.batchPipelineBtn`)}</span>
-            </a>
-            <a
-              href={this.state.realtimeUrl}
-              className={classnames('btn btn-secondary', {
-                'inactive': !this.state.realtimeUrl
-              })}
-              onClick={this.handleOnRealtimeUrlClick}
-            >
-              <i className="fa icon-sparkstreaming" />
-              <span>{T.translate(`${PREFIX}.realtimePipelineBtn`)}</span>
-            </a>
-          </div>
+          {this.renderContent()}
         </ModalBody>
       </Modal>
     );
