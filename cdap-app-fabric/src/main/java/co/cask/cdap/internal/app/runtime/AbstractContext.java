@@ -162,19 +162,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
-    this.programMetrics =
-      createProgramMetrics(programRunId,
-                           cConf.getBoolean(Constants.Metrics.EMIT_PRGOGRAM_CONTAINER_METRICS) ?
-                             metricsService : new NoOpMetricsCollectionService(),
-                           metricsTags);
-    this.userMetrics = new ProgramUserMetrics(programMetrics);
-    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
-                                                          program.getType(),
-                                                          cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
+
+    this.programMetrics = createProgramMetrics(programRunId, getMetricsService(cConf, metricsService, runtimeArgs),
+                                               metricsTags);
+    this.userMetrics = new ProgramUserMetrics(programMetrics);
+    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
+                                                          program.getType(),
+                                                          cConf);
 
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
@@ -210,6 +208,16 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
+  }
+
+  private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
+                                                     Map<String, String> runtimeArgs) {
+    String emitMetricsPreference = runtimeArgs.get(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
+
+    // Get the option for emitting metrics from preferences or as a fall back from cConf
+    boolean emitMetrics = emitMetricsPreference != null ? Boolean.valueOf(emitMetricsPreference) :
+      cConf.getBoolean(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
+    return emitMetrics ? metricsService : new NoOpMetricsCollectionService();
   }
 
   /**

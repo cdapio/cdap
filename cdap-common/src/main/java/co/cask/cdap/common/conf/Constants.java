@@ -610,7 +610,7 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
 
-    public static final String EMIT_PRGOGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+    public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
 
     /**
      * Metric's dataset related constants.
