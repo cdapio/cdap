@@ -48,7 +48,7 @@ export default class ScheduleRuntimeArgs extends Component {
     });
   }
 
-  componentDidUnmount() {
+  componentWillUnmount() {
     resetStore();
   }
 

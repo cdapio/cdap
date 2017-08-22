@@ -162,7 +162,10 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
       return Object.assign({}, state, {
         argsMapping,
         triggeredPipelineInfo: Object.assign({}, state.triggeredPipelineInfo, {
-          unMappedMacros: difference(state.triggeredPipelineInfo.macros, argsMapping.map(arg => arg.value))
+          unMappedMacros: action.payload.mappingKey && action.payload.mappingValue ?
+            difference(state.triggeredPipelineInfo.macros, argsMapping.map(arg => arg.value))
+            :
+            state.triggeredPipelineInfo.macros
         }),
         triggeringPipelineInfo: Object.assign({}, state.triggeringPipelineInfo, {
           unMappedConfigStageProperties: unUsedProperties,

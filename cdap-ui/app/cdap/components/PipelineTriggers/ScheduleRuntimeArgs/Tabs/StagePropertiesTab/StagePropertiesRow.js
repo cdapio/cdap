@@ -45,7 +45,8 @@ export default class StagePropertiesRow extends Component {
 
   onPropertyChange = (e) => {
     this.setState({
-      property: e.target.value
+      property: e.target.value,
+      triggeredPipelineMacro: null
     }, this.updateStore.bind(this, this.state.triggeredPipelineMacro));
   };
 
@@ -125,8 +126,10 @@ export default class StagePropertiesRow extends Component {
               {
                 this.getDisplaForPropertyName()
                 .concat(properties)
-                .map((prop) => {
-                  return (<option key={prop}>{prop}</option>);
+                .map((prop, i) => {
+                  return (
+                    <option key={i}>{prop}</option>
+                  );
                 })
               }
             </select>
@@ -142,8 +145,10 @@ export default class StagePropertiesRow extends Component {
               {
                 this.getDisplayForTriggeredPipelineMacro()
                 .concat(triggeredPipelineInfo.unMappedMacros)
-                .map((prop) => {
-                  return (<option key={prop}>{prop}</option>);
+                .map((prop, i) => {
+                  return (
+                    <option key={i}>{prop}</option>
+                  );
                 })
               }
             </select>
