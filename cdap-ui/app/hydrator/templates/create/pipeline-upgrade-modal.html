@@ -42,13 +42,13 @@
 
   <div
     class="row import-error-row"
-    ng-if="PipelineUpgradeController.missingArtifactStages.length > 0 || PipelineUpgradeController.missingArtifactPostRunActions.length > 0"
+    ng-if="PipelineUpgradeController.fixAllDisabled"
   >
     <div class="col-xs-12">
       <h4>Missing Plugin Artifacts</h4>
 
       <ul>
-        <li ng-repeat="stage in PipelineUpgradeController.missingArtifactStages.concat(PipelineUpgradeController.missingArtifactPostRunActions)">
+        <li ng-repeat="(key, stage) in PipelineUpgradeController.missingArtifactsMap">
           {{ stage.stageInfo.plugin.name }} <em>({{ stage.stageInfo.plugin.artifact.name }} {{ stage.stageInfo.plugin.artifact.version }}) </em>
         </li>
       </ul>
