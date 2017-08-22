@@ -47,6 +47,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
     switch(status){
       case 'RUNNING':
+      case 'STARTING':
       case 'STARTED':
         vm.statusType = 0;
         break;
