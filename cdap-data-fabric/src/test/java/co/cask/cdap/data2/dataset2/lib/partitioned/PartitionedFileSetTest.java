@@ -579,13 +579,20 @@ public class PartitionedFileSetTest {
         combinedEntries.putAll(updatedMetadata);
         Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
 
-        // adding an entry, for a key that already exists will overwrite the previous value
-        dataset.addMetadata(PARTITION_KEY, "key3", "value4");
+        // using the setMetadata API, adding an entry, for a key that already exists will overwrite the previous value
+        dataset.setMetadata(PARTITION_KEY, Collections.singletonMap("key3", "value4"));
 
         partitionDetail = dataset.getPartition(PARTITION_KEY);
         Assert.assertNotNull(partitionDetail);
         Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value4"),
                             partitionDetail.getMetadata().asMap());
+
+        // adding an entry, for a key that already exists will throw an Exception
+        try {
+          dataset.addMetadata(PARTITION_KEY, "key2", "value3");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
 
         // possible to remove multiple metadata entries; if a key doesn't exist, no error is thrown
         dataset.removeMetadata(PARTITION_KEY, ImmutableSet.of("key2", "key3", "key4"));

@@ -355,7 +355,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
     put.add(LAST_MODIFICATION_TIME_COL, nowInMillis);
 
-    addMetadataToPut(metadata, put);
+    // we allow updates, because an update will only happen if its an append
+    addMetadataToPut(row, metadata, put, true);
     // index each row by its transaction's write pointer
     put.add(WRITE_PTR_COL, tx.getWritePointer());
 
@@ -505,6 +506,15 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @WriteOnly
   @Override
   public void addMetadata(PartitionKey key, Map<String, String> metadata) {
+    setMetadata(key, metadata, false);
+  }
+
+  @Override
+  public void setMetadata(PartitionKey key, Map<String, String> metadata) {
+    setMetadata(key, metadata, true);
+  }
+
+  private void setMetadata(PartitionKey key, Map<String, String> metadata, boolean allowUpdates) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row.isEmpty()) {
@@ -512,14 +522,31 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
 
     Put put = new Put(rowKey);
-    addMetadataToPut(metadata, put);
+    addMetadataToPut(row, metadata, put, allowUpdates);
     partitionsTable.put(put);
   }
 
-  private void addMetadataToPut(Map<String, String> metadata, Put put) {
+  private void addMetadataToPut(Row existingRow, Map<String, String> metadata, Put put,
+                                boolean allowUpdates) {
+    // ensure that none of the entries already exist in the metadata
+    if (!allowUpdates) {
+      checkMetadataDoesNotExist(existingRow, metadata);
+    }
     for (Map.Entry<String, String> entry : metadata.entrySet()) {
       byte[] columnKey = columnKeyFromMetadataKey(entry.getKey());
       put.add(columnKey, Bytes.toBytes(entry.getValue()));
+    }
+  }
+
+  private void checkMetadataDoesNotExist(Row existingRow, Map<String, String> metadata) {
+    if (existingRow.isEmpty()) {
+      return;
+    }
+    for (String metadataKey : metadata.keySet()) {
+      byte[] columnKey = columnKeyFromMetadataKey(metadataKey);
+      if (existingRow.get(columnKey) != null) {
+        throw new DataSetException(String.format("Entry already exists for metadata key: %s", metadataKey));
+      }
     }
   }
 
@@ -635,10 +662,6 @@ public class PartitionedFileSetDataset extends AbstractDataset
     return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
-
-  private byte[] assertNotExists(PartitionKey key) {
-    return assertNotExists(key, false);
-  }
 
   // Throws PartitionAlreadyExistsException if the partition key already exists.
   // Otherwise, returns the rowkey corresponding to the PartitionKey.

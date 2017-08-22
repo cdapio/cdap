@@ -102,6 +102,11 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   }
 
   @Override
+  public void setMetadata(long time, Map<String, String> metadata) {
+    setMetadata(partitionKeyForTime(time), metadata);
+  }
+
+  @Override
   public void removeMetadata(long time, String metadataKey) {
     removeMetadata(partitionKeyForTime(time), metadataKey);
   }
