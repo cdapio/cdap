@@ -41,11 +41,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   vm.setProgramMetadata = (status) => {
     vm.programStatus = status;
 
-    if(!vm.entityName) {
+    if (!vm.entityName) {
       vm.entityName = vm.programId;
     }
 
-    switch(status){
+    switch (status) {
       case 'RUNNING':
       case 'STARTING':
       case 'STARTED':
@@ -92,13 +92,13 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     };
     var cols = vm.configOptions;
 
-    if(cols['source']){
+    if (cols['source']) {
       columnsList.push('source');
     }
-    if(cols['level']){
+    if (cols['level']) {
       columnsList.push('level');
     }
-    if(cols['time']){
+    if (cols['time']) {
       columnsList.push('time');
     }
     // FIXME: vm should have been defaulted from LogViewerStore but since we didn't plan for having a store for logviewer
@@ -143,7 +143,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
     if (logViewerState.status) {
       vm.setProgramMetadata(logViewerState.status);
-      if (vm.statusType !== 0){
+      if (vm.statusType !== 0) {
         if (pollStarted) {
           // Manually request for logs one final time after the preview has stopped,
           // since we might not have reached the polling interval before we stop
@@ -153,13 +153,13 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       }
     }
 
-    if (vm.logStartTime === logViewerState.startTime){
+    if (vm.logStartTime === logViewerState.startTime) {
       return;
     }
 
     vm.logStartTime = logViewerState.startTime;
 
-    if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime){
+    if (!vm.logStartTime || vm.startTimeMs === vm.logStartTime) {
       return;
     }
 
@@ -177,7 +177,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
   vm.inViewScrollUpdate = (index, isInview, event) => {
 
-    if(isInview && vm.displayData && vm.displayData.length > 0) {
+    if (isInview && vm.displayData && vm.displayData.length > 0) {
 
       // tbody extends beyond the viewport when scrolling down the table
       let topOfTable = event.inViewTarget.parentElement.getBoundingClientRect().top;
@@ -195,12 +195,12 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       let difference = adjustedVal - $scope.tableEl[0].offsetTop;
 
       // Offset the height of the bottom timeline and scrollpin row (55 + 15) if in full-screen
-      if (vm.fullScreen){
+      if (vm.fullScreen) {
         difference-=70;
       }
 
       // By taking the smallest non-negative value, we have found the top-most row
-      if (difference > 0 && (proximityVal > difference || proximityVal < 0)){
+      if (difference > 0 && (proximityVal > difference || proximityVal < 0)) {
         index++;
         newTime = vm.displayData[index].log.timestamp;
         vm.updateScrollPositionInStore(newTime);
@@ -248,7 +248,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     // Rerender data
     vm.renderData();
     // If the search query is blank, otherwise filter
-    if (vm.searchText.length === 0){
+    if (vm.searchText.length === 0) {
       vm.updateSearchResultsInStore([]);
       return;
     }
@@ -256,7 +256,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     let searchResults = [];
 
     vm.displayData = vm.displayData.filter( data => {
-      if (data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1){
+      if (data.log.message.toLowerCase().indexOf(vm.searchText.toLowerCase()) !== -1) {
         searchResults.push(data.log.timestamp);
         return true;
       }
@@ -267,17 +267,17 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   };
 
   vm.toggleStackTrace = (index) => {
-    //If the currently clicked row is a stack trace itself, do nothing
-    if(vm.displayData[index].stackTrace){
+    // If the currently clicked row is a stack trace itself, do nothing
+    if (vm.displayData[index].stackTrace) {
       return;
     }
 
-    if( (index+1 < vm.displayData.length) && vm.displayData[index+1].stackTrace){
+    if ((index+1 < vm.displayData.length) && vm.displayData[index+1].stackTrace) {
       vm.displayData.splice(index+1, 1);
       vm.displayData[index].selected = false;
       return;
     }
-    if(vm.displayData[index].log.stackTrace){
+    if (vm.displayData[index].log.stackTrace) {
       vm.displayData[index].selected = true;
       let stackTraceObj = {
         log: {
@@ -288,25 +288,25 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       };
       vm.displayData.splice(index+1, 0, stackTraceObj);
     } else {
-      //otherwise, it does not have stack trace but has been selected
+      // otherwise, it does not have stack trace but has been selected
       vm.displayData[index].selected = !vm.displayData[index].selected;
     }
     checkForScrollbar();
   };
 
   vm.collapseColumns = () => {
-    if(vm.isMessageExpanded){
+    if (vm.isMessageExpanded) {
       vm.isMessageExpanded = !vm.isMessageExpanded;
     }
-    if(collapseCount < columnsList.length){
+    if (collapseCount < columnsList.length) {
       vm.hiddenColumns[columnsList[collapseCount++]] = true;
-      if(collapseCount === columnsList.length){
+      if (collapseCount === columnsList.length) {
         vm.isMessageExpanded = true;
       }
     } else {
       collapseCount = 0;
-      for(var key in vm.hiddenColumns){
-        if(vm.hiddenColumns.hasOwnProperty(key)){
+      for (var key in vm.hiddenColumns) {
+        if (vm.hiddenColumns.hasOwnProperty(key)) {
           vm.hiddenColumns[key] = false;
         }
       }
@@ -356,14 +356,14 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   function requestWithOffset() {
     if (vm.loading) { return; }
 
-    if (!validUrl()){
+    if (!validUrl()) {
        vm.loading = false;
        return;
     }
 
     vm.loading = true;
 
-    if (pollStarted){
+    if (pollStarted) {
       stopPoll();
     }
 
@@ -398,7 +398,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
         vm.fromOffset = res[res.length-1].offset;
         angular.forEach(res, (element, index) => {
-          //Format dates properly for rendering and computing
+          // Format dates properly for rendering and computing
           let formattedDate = new Date(res[index].log.timestamp);
           res[index].log.timestamp = formattedDate;
           res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
@@ -407,7 +407,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
         vm.data = vm.data.concat(res);
         vm.renderData();
-        if(vm.displayData.length < vm.viewLimit){
+        if (vm.displayData.length < vm.viewLimit) {
           getStatus();
         }
       },
@@ -438,7 +438,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         });
         vm.setProgramMetadata(statusRes.status);
 
-        if (vm.statusType !== 0){
+        if (vm.statusType !== 0) {
           if (pollStarted) {
             stopPoll();
           }
@@ -482,7 +482,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         if (res.length > 0) {
           vm.fromOffset = res[res.length-1].offset;
           angular.forEach(res, (element, index) => {
-            //Format dates properly for rendering and computing
+            // Format dates properly for rendering and computing
             let formattedDate = new Date(res[index].log.timestamp);
             res[index].log.timestamp = formattedDate;
             res[index].log.displayTime = moment(formattedDate).format('L H:mm:ss');
@@ -494,7 +494,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         }
 
 
-        if (vm.displayData.length >= vm.viewLimit){
+        if (vm.displayData.length >= vm.viewLimit) {
           stopPoll();
         } else {
           getStatus();
@@ -542,7 +542,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   };
 
   function startTimeRequest () {
-    if(!validUrl()){
+    if (!validUrl()) {
        vm.loading = false;
        return;
     }
@@ -550,11 +550,11 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     vm.loading = true;
     vm.data = [];
     vm.renderData();
-    if (pollStarted){
+    if (pollStarted) {
       stopPoll();
     }
 
-    //Scroll table to the top
+    // Scroll table to the top
     angular.element(document.getElementsByClassName('logs-table-body'))[0].scrollTop = 0;
     // binds window element to check whether scrollbar has appeared on resize event
     angular.element($window).bind('resize', checkForScrollbar);
@@ -578,10 +578,10 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         vm.loading = false;
         vm.data = res;
 
-        if (res.length === 0){
-          //Update with start-time
+        if (res.length === 0) {
+          // Update with start-time
           getStatus();
-          if (vm.statusType !== 0){
+          if (vm.statusType !== 0) {
             vm.loading = false;
             vm.displayData = [];
             vm.renderData();
@@ -603,12 +603,12 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
         });
 
         vm.renderData();
-        //Update the scroll needle to be positioned at the first element in the rendered data
-        if(vm.displayData.length > 0){
+        // Update the scroll needle to be positioned at the first element in the rendered data
+        if (vm.displayData.length > 0) {
           vm.updateScrollPositionInStore(vm.displayData[0].log.timestamp);
         }
 
-        if(res.length < vm.viewLimit){
+        if (res.length < vm.viewLimit) {
           pollForNewLogs();
         }
       },
@@ -630,14 +630,14 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     };
 
     angular.forEach(dateObj, (value, key) => {
-      if(value < 10){
+      if (value < 10) {
         dateObj[key] = '0' + value;
       } else {
         dateObj[key] = value.toString();
       }
     });
 
-    if(isDownload){
+    if (isDownload) {
       return dateObj.year + dateObj.day + dateObj.month + dateObj.hours + dateObj.minutes + dateObj.seconds;
     }
 
@@ -647,12 +647,12 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
   vm.toggleLogExpansion = function() {
     let len = vm.displayData.length;
     vm.toggleExpandAll = !vm.toggleExpandAll;
-    for(var i = 0 ; i < len ; i++) {
+    for (var i = 0; i < len; i++) {
       let entry = vm.displayData[i];
-      if(!entry.stackTrace && entry.log.stackTrace.length > 0){
+      if (!entry.stackTrace && entry.log.stackTrace.length > 0) {
         entry.isStackTraceExpanded = vm.toggleExpandAll;
 
-        if(i < vm.displayData.length && vm.toggleExpandAll && (i+1 === vm.displayData.length || !vm.displayData[i+1].stackTrace)){
+        if (i < vm.displayData.length && vm.toggleExpandAll && (i+1 === vm.displayData.length || !vm.displayData[i+1].stackTrace)) {
           vm.displayData[i].selected = true;
           let stackTraceObj = {
             log: {
@@ -663,7 +663,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
           };
           vm.displayData.splice(i+1, 0, stackTraceObj);
           len++;
-        } else if(!vm.toggleExpandAll && !entry.stackTrace && i+1 < vm.displayData.length && vm.displayData[i+1].stackTrace){
+        } else if (!vm.toggleExpandAll && !entry.stackTrace && i+1 < vm.displayData.length && vm.displayData[i+1].stackTrace) {
           vm.displayData[i].selected = false;
           vm.displayData.splice(i+1, 1);
           len--;
@@ -675,7 +675,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     checkForScrollbar();
   };
 
-  vm.includeEvent = function(event, eventType){
+  vm.includeEvent = function(event, eventType) {
     if (eventType === vm.selectedLogLevel) {
       event.preventDefault();
       return;
@@ -725,13 +725,13 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
       now comes from backend, all the function needs to do now is set the
       displayData to the data list we get from backend
     */
-    //Clean slate
+    // Clean slate
     vm.displayData = vm.data;
     checkForScrollbar();
   };
 
   vm.highlight = (text) => {
-    if(!vm.searchText || (vm.searchText && !vm.searchText.length)){
+    if (!vm.searchText || (vm.searchText && !vm.searchText.length)) {
      return $sce.trustAsHtml(text);
     }
 
@@ -777,7 +777,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
 
   function checkForScrollbar() {
     // has to do timeout here for Firefox
-    timeout = $timeout(function(){
+    timeout = $timeout(function() {
       let tbodyEl = angular.element(document.querySelector('.logs-table-body'))[0];
       if (tbodyEl && tbodyEl.clientHeight < tbodyEl.scrollHeight) {
         let bodyRowEl = angular.element(document.querySelector('.logs-table-body tr'))[0];
@@ -819,7 +819,7 @@ function LogViewerController ($scope, $window, LogViewerStore, myLogsApi, LOGVIE
     LogViewerStore.dispatch({
       type: 'RESET'
     });
-    if (pollStarted){
+    if (pollStarted) {
       stopPoll();
     }
   });
