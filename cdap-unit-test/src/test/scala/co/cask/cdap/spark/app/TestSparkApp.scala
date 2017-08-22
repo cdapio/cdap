@@ -16,7 +16,6 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.{Config, ProgramStatus}
 import co.cask.cdap.api.annotation.{Property, UseDataSet}
 import co.cask.cdap.api.app.{AbstractApplication, ProgramType}
 import co.cask.cdap.api.common.Bytes
@@ -24,10 +23,9 @@ import co.cask.cdap.api.customaction.AbstractCustomAction
 import co.cask.cdap.api.data.schema.Schema
 import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
-import co.cask.cdap.api.schedule.{ProgramStatusTriggerInfo, TriggeringScheduleInfo}
-import co.cask.cdap.api.spark.{AbstractSpark, SparkClientContext, SparkExecutionContext, SparkMain}
+import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
-import com.google.common.base.Preconditions
+import co.cask.cdap.api.{Config, ProgramStatus}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -134,26 +132,9 @@ class TestSparkApp extends AbstractApplication[Config] {
   }
 
   final class TriggeredWorkflow extends AbstractWorkflow {
-    def configure(): Unit = {
+    override def configure(): Unit = {
       setDescription("TriggeredWorkflow description")
       addSpark(classOf[TriggeredSpark].getSimpleName)
-    }
-  }
-
-  final class TriggeredSpark extends AbstractSpark with SparkMain {
-    override def configure(): Unit = {
-      setDescription("Test Spark with Triggered Workflow")
-      setMainClass(classOf[TriggeredSpark])
-    }
-
-    def run(implicit sec: SparkExecutionContext): Unit = {
-      val scheduleInfoOption: Option[TriggeringScheduleInfo] = sec.getTriggeringScheduleInfo
-      Preconditions.checkState(scheduleInfoOption.isDefined)
-      val scheduleInfo: TriggeringScheduleInfo = scheduleInfoOption.get
-      val triggerInfo: ProgramStatusTriggerInfo =
-        scheduleInfo.getTriggerInfos.get(0).asInstanceOf[ProgramStatusTriggerInfo]
-      Preconditions.checkState(classOf[TestSparkApp].getSimpleName
-        .equals(triggerInfo.getApplicationSpecification.getName))
     }
   }
 }
