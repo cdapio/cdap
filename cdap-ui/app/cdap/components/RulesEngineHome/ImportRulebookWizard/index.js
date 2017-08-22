@@ -24,6 +24,8 @@ import Rx from 'rx';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
 import T from 'i18n-react';
+import cookie from 'react-cookie';
+import isNil from 'lodash/isNil';
 
 require('./ImportRulebookWizard.scss');
 const PREFIX = 'features.RulesEngine.ImportRulebook';
@@ -70,6 +72,12 @@ export default class ImportRulebookWizard extends Component {
     let headers = {
       'content-type': 'application/rules-engine'
     };
+    if (window.CDAP_CONFIG.securityEnabled) {
+      let token = cookie.load('CDAP_Auth_Token');
+      if (!isNil(token)) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
     let data = ImportRulebookStore.getState().upload.file.contents;
     return UploadFile({
       url,

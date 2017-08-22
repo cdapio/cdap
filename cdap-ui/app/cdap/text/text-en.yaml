@@ -1345,6 +1345,7 @@ features:
   RulesEngine:
     AddRulesEngineToPipelineModal:
       batchPipelineBtn: Batch Pipeline
+      error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline
       message: Choose the type of pipeline to create
       modalTitle: Add to Pipeline
       realtimePipelineBtn: Realtime Pipeline
@@ -1405,6 +1406,7 @@ features:
             It provides an alternative computational model for transforming your data while empowering the business
             users to specify and manage the transformations and policy enforcements.
       enableBtnLabel: Enable Rules Engine
+      errorTitle: Enabling Rules Engine Failed
       title: Welcome to Rules Engine Management
     RulesList:
       dropContainerText: Add a rule by dragging and dropping from the Rules tab
