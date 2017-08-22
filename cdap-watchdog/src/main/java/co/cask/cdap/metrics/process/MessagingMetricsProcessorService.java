@@ -350,7 +350,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                          new MetricValue(delayMetricName, MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     metricsProcessedCount += metricValues.size();
-    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric's timestamp: {}. " +
+    PROGRESS_LOG.debug("{} metrics persisted. Last metric's timestamp: {}. " +
                          "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
   }
 

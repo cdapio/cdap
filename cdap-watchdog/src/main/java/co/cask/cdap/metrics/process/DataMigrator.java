@@ -40,7 +40,19 @@ public class DataMigrator {
   private final MigrationTableUtility migrationTableUtility;
   private final CConfiguration cConf;
 
-  // Data migrator thread will be created for each resolution tables, so they can be scheduled appropriately.
+
+
+  /**
+   * Data migrator to schedule data migration for metrics tables from v2 to v3 metrics tables.
+   * @param metricDatasetFactory metric dataset factory
+   * @param cConf cConfiguration
+   * @param hConf hConfiguratioin
+   * @param hBaseTableUtil Hbase table util
+   * @param maxRecordsToScanResolutionMap linked hash map of resolutions to perform migration
+   *                                      to the max records to scan for that resolution table
+   *                                      while performing migration
+   * @param executorService scheduled executor service
+   */
   public DataMigrator(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
                       HBaseTableUtil hBaseTableUtil, LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap,
                       ScheduledExecutorService executorService) {
@@ -131,13 +143,18 @@ public class DataMigrator {
             MetricsTableMigration metricsTableMigration =
               new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
 
-            if (metricsTableMigration.isOldMetricsDataAvailable()) {
-              LOG.info("Metrics data is available in v2 metrics - {} resolution table.. Running Migration", resolution);
-              metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
-              break;
-            } else {
-              // no more metrics data is available for transfer, remove from iterator
-              resolutions.remove();
+            try {
+              if (metricsTableMigration.isOldMetricsDataAvailable()) {
+                LOG.info("Metrics data is available in v2 metrics - {} resolution table.. " +
+                           "Running Migration", resolution);
+                metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
+                break;
+              } else {
+                // no more metrics data is available for transfer, remove from iterator
+                resolutions.remove();
+              }
+            } catch (Exception e) {
+              LOG.warn("Exception while performing metrics data transfer", e);
             }
           } catch (IOException e) {
             // exception while closing metrics tables - ignoring

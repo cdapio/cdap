@@ -60,7 +60,7 @@ public class MigrationTableUtility {
     try {
       v2table = metricDatasetFactory.getV2MetricsTable(resolution);
     } catch (Exception e) {
-      LOG.debug("Cannot access v2 metricsTable due to exception", e);
+      LOG.info("Cannot access v2 metricsTable due to exception", e);
     }
     return v2table;
   }
@@ -72,7 +72,7 @@ public class MigrationTableUtility {
     try {
       v3table = metricDatasetFactory.getV3MetricsTable(resolution);
     } catch (Exception e) {
-      LOG.debug("Cannot access v3 metricsTable due to exception", e);
+      LOG.info("Cannot access v3 metricsTable due to exception", e);
     }
     return v3table;
   }
@@ -92,7 +92,7 @@ public class MigrationTableUtility {
         return doesExist;
       }
     } catch (IOException e) {
-      LOG.warn("Exception while checking table exists", e);
+      LOG.info("Exception while checking table exists", e);
     }
     return false;
   }

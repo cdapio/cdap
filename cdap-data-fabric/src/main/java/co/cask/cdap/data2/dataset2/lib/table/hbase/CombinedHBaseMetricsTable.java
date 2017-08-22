@@ -136,12 +136,14 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   @Override
   public void delete(byte[] row, byte[][] columns) {
     v3HBaseTable.delete(row, columns);
-    try {
-      v2HBaseTable.delete(row, columns);
-    } catch (Exception e) {
+    if (v2HBaseTable != null) {
+      try {
+        v2HBaseTable.delete(row, columns);
+      } catch (Exception e) {
         handleTableException(e);
       }
     }
+  }
 
   private void handleTableException(Exception e) {
     if (e instanceof IOException) {

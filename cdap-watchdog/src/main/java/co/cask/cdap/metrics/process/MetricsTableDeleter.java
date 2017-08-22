@@ -39,6 +39,15 @@ public class MetricsTableDeleter {
   private final ScheduledExecutorService scheduledExecutorService;
   private final CConfiguration cConf;
 
+  /**
+   * Schedule deletion of old metrics tables whose data have been migrated already
+   * @param metricDatasetFactory metrics dataset factory
+   * @param cConf cConfiguration
+   * @param hConf hConfiguration
+   * @param hBaseTableUtil hbase table util
+   * @param resolutions list of resolutions of metrics tables to be deleted
+   * @param scheduledExecutorService scheduled executor service
+   */
   public MetricsTableDeleter(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
                              HBaseTableUtil hBaseTableUtil, List<Integer> resolutions,
                              ScheduledExecutorService scheduledExecutorService) {
@@ -101,9 +110,13 @@ public class MetricsTableDeleter {
             }
             MetricsTableMigration metricsTableMigration =
               new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
-            if (!metricsTableMigration.isOldMetricsDataAvailable() &&
-              migrationTableUtility.deleteV2MetricsTable(resolution)) {
-              LOG.info("Successfully Deleted the v2 metrics table for resolution {} seconds", resolution);
+            try {
+              if (!metricsTableMigration.isOldMetricsDataAvailable() &&
+                migrationTableUtility.deleteV2MetricsTable(resolution)) {
+                LOG.info("Successfully Deleted the v2 metrics table for resolution {} seconds", resolution);
+              }
+            } catch (Exception e) {
+              LOG.info("Exception while deleting metrics table", e);
             }
           } catch (IOException e) {
             // exception while closing metrics-tables - ignoring
