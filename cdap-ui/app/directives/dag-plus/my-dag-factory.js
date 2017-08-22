@@ -17,13 +17,17 @@
 angular.module(PKG.name + '.commons')
   .factory('DAGPlusPlusFactory', function() {
     var defaultConnectionStyle = {
-      PaintStyle: {
+      paintStyle: {
         strokeStyle: '#4e5568',
         lineWidth: 2,
         outlineColor: 'transparent',
         outlineWidth: 4
       },
-      HoverPaintStyle: { strokeStyle: '#58b7f6', lineWidth: 4 }
+      hoverPaintStyle: {
+        strokeStyle: '#58b7f6',
+        lineWidth: 4,
+        dashstyle: 'solid'
+      }
     };
 
     var selectedConnectionStyle = {
@@ -31,9 +35,41 @@ angular.module(PKG.name + '.commons')
         strokeStyle: '#58b7f6',
         lineWidth: 4,
         outlineColor: 'transparent',
-        outlineWidth: 4
+        outlineWidth: 4,
+        dashstyle: 'solid'
       }
     };
+
+    var solidConnectionStyle = {
+      paintStyle: { dashstyle: 'solid' }
+    };
+
+    var dashedConnectionStyle = {
+      paintStyle: { dashstyle: '2 4' }
+    };
+
+    var conditionTrueConnectionStyle = {
+      strokeStyle: '#0099ff',
+      lineWidth: 2,
+      outlineColor: 'transparent',
+      outlineWidth: 4,
+      dashstyle: '2 4'
+    };
+
+    var conditionFalseConnectionStyle = {
+      strokeStyle: '#999999',
+      lineWidth: 2,
+      outlineColor: 'transparent',
+      outlineWidth: 4,
+      dashstyle: '2 4'
+    };
+
+    // Have to do this because jsPlumb expects key names of defaultSettings to be in PascalCase
+    var defaultConnectionStyleSettings = Object.assign({}, defaultConnectionStyle);
+    defaultConnectionStyleSettings['PaintStyle'] = defaultConnectionStyleSettings['paintStyle'];
+    delete defaultConnectionStyleSettings['paintStyle'];
+    defaultConnectionStyleSettings['HoverPaintStyle'] = defaultConnectionStyleSettings['hoverPaintStyle'];
+    delete defaultConnectionStyleSettings['hoverPaintStyle'];
 
     var defaultSettings = angular.extend({
       Anchor: [1, 0.5, 1, 0, 5, 0],
@@ -48,12 +84,17 @@ angular.module(PKG.name + '.commons')
             foldback: 0.8
         }]
       ]
-    }, defaultConnectionStyle);
+    }, defaultConnectionStyleSettings);
 
     function getSettings() {
       var settings = {
         default: defaultSettings,
-        selectedConnectionStyle: selectedConnectionStyle
+        defaultConnectionStyle,
+        selectedConnectionStyle,
+        conditionTrueConnectionStyle,
+        conditionFalseConnectionStyle,
+        dashedConnectionStyle,
+        solidConnectionStyle
       };
 
       return settings;
@@ -188,7 +229,8 @@ angular.module(PKG.name + '.commons')
         'cdcdatabase': 'icon-database',
         'cdchbase': 'icon-hbase',
         'cdckudu': 'icon-apachekudu',
-        'changetrackingsqlserver': 'icon-database'
+        'changetrackingsqlserver': 'icon-database',
+        'conditional': 'fa-question-circle-o'
       };
 
       var pluginName = plugin.toLowerCase();

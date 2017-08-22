@@ -108,7 +108,7 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/angular/angular-csp.css',
       './bower_components/angular-loading-bar/build/loading-bar.min.css',
       './bower_components/angular-motion/dist/angular-motion.min.css',
-      './bower_components/font-awesome/css/font-awesome.min.css',
+      './node_modules/font-awesome/css/font-awesome.min.css',
       './bower_components/c3/c3.min.css',
       './bower_components/angular-gridster/dist/angular-gridster.min.css',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
@@ -263,7 +263,7 @@ gulp.task('fonts', function() {
   return gulp.src([
       // './bower_components/bootstrap/dist/fonts/*',
       './app/styles/fonts/*',
-      './bower_components/font-awesome/fonts/*'
+      './node_modules/font-awesome/fonts/*'
     ])
     .pipe(gulp.dest('./dist/assets/fonts'));
 });

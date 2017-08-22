@@ -301,7 +301,8 @@ class HydratorPlusPlusTopPanelCtrl {
             - And combined (e,g, '${function(${macro1})}${macro2}')
             More complicated cases will be handled by the backend
           */
-          if (macroString.indexOf('${') !== -1 &&
+          if (macroString &&
+            macroString.indexOf('${') !== -1 &&
             macroString.indexOf('}') !== -1
           ) {
             let macroKeys = [];
