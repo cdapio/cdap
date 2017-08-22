@@ -105,9 +105,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options) {
     ProgramId programId = programDescriptor.getProgramId();
+    RunId runId = RunIds.generate();
+
+    // Publish the program's starting state. We don't know the Twill RunId yet, hence always passing in null.
+    programStateWriter.start(programId.run(runId), options, null);
 
     ProgramRunner runner = programRunnerFactory.create(programId.getType());
-    RunId runId = RunIds.generate();
     File tempDir = createTempDirectory(programId, runId);
     Runnable cleanUpTask = createCleanupTask(tempDir, runner);
     try {
@@ -124,9 +127,6 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
-      // Publish the program's starting state
-      String twillRunId = options.getArguments().getOption(ProgramOptionConstants.TWILL_RUN_ID);
-      programStateWriter.start(programId.run(runId), options, twillRunId);
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId);
       monitorProgram(runtimeInfo, cleanUpTask);
