@@ -29,6 +29,7 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.InstantiatorFactory;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
@@ -43,6 +44,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
@@ -61,10 +63,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -90,13 +96,18 @@ public class PluginInstantiator implements Closeable {
     .put("string", String.class)
     .build();
 
-  private final LoadingCache<ArtifactId, ClassLoader> classLoaders;
+  private final LoadingCache<ClassLoaderKey, PluginClassLoader> classLoaders;
   private final InstantiatorFactory instantiatorFactory;
   private final File tmpDir;
   private final File pluginDir;
   private final ClassLoader parentClassLoader;
 
   public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir) {
+    this(cConf, parentClassLoader, pluginDir, true);
+  }
+
+  public PluginInstantiator(CConfiguration cConf, ClassLoader parentClassLoader, File pluginDir,
+                            boolean filterClassloader) {
     this.instantiatorFactory = new InstantiatorFactory(false);
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -106,7 +117,7 @@ public class PluginInstantiator implements Closeable {
     this.classLoaders = CacheBuilder.newBuilder()
       .removalListener(new ClassLoaderRemovalListener())
       .build(new ClassLoaderCacheLoader());
-    this.parentClassLoader = PluginClassLoader.createParent(parentClassLoader);
+    this.parentClassLoader = filterClassloader ? PluginClassLoader.createParent(parentClassLoader) : parentClassLoader;
   }
 
   /**
@@ -131,7 +142,24 @@ public class PluginInstantiator implements Closeable {
    */
   public ClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
     try {
-      return classLoaders.get(artifactId);
+      return classLoaders.get(new ClassLoaderKey(artifactId));
+    } catch (ExecutionException e) {
+      Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
+      throw Throwables.propagate(e.getCause());
+    }
+  }
+
+  /**
+   * Returns a {@link ClassLoader} for the given plugin.
+   *
+   * @param plugin {@link Plugin}
+   * @throws IOException if failed to expand the artifact jar to create the plugin ClassLoader
+   *
+   * @see PluginClassLoader
+   */
+  public ClassLoader getPluginClassLoader(Plugin plugin) throws IOException {
+    try {
+      return classLoaders.get(new ClassLoaderKey(plugin.getParents(), plugin.getArtifactId()));
     } catch (ExecutionException e) {
       Throwables.propagateIfInstanceOf(e.getCause(), IOException.class);
       throw Throwables.propagate(e.getCause());
@@ -149,20 +177,18 @@ public class PluginInstantiator implements Closeable {
    */
   @SuppressWarnings("unchecked")
   public <T> Class<T> loadClass(Plugin plugin) throws IOException, ClassNotFoundException {
-    return (Class<T>) getArtifactClassLoader(plugin.getArtifactId()).loadClass(plugin.getPluginClass().getClassName());
+    return (Class<T>) getPluginClassLoader(plugin).loadClass(plugin.getPluginClass().getClassName());
   }
 
   /**
    * Create a new instance of plugin class without any config, config will be null in the instantiated plugin.
-   * @param artifact artifact of the plugin
-   * @param pluginClass information about plugin class
+   * @param plugin information about the plugin
    * @param <T> Type of plugin
    * @return a new plugin instance
    */
-  public <T> T newInstanceWithoutConfig(ArtifactId artifact,
-                                        PluginClass pluginClass) throws IOException, ClassNotFoundException {
-    ClassLoader pluginClassLoader = getArtifactClassLoader(artifact);
-    Class pluginClassLoaded = pluginClassLoader.loadClass(pluginClass.getClassName());
+  public <T> T newInstanceWithoutConfig(Plugin plugin) throws IOException, ClassNotFoundException {
+    ClassLoader pluginClassLoader = getPluginClassLoader(plugin);
+    Class pluginClassLoaded = pluginClassLoader.loadClass(plugin.getPluginClass().getClassName());
     return (T) instantiatorFactory.get(TypeToken.of(pluginClassLoaded)).create();
   }
 
@@ -191,7 +217,7 @@ public class PluginInstantiator implements Closeable {
    */
   public <T> T newInstance(Plugin plugin, @Nullable MacroEvaluator macroEvaluator)
     throws IOException, ClassNotFoundException, InvalidMacroException {
-    ClassLoader classLoader = getArtifactClassLoader(plugin.getArtifactId());
+    ClassLoader classLoader = getPluginClassLoader(plugin);
     PluginClass pluginClass = plugin.getPluginClass();
     TypeToken<?> pluginType = TypeToken.of(classLoader.loadClass(pluginClass.getClassName()));
 
@@ -348,30 +374,92 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
-   * A CacheLoader for creating plugin ClassLoader.
+   * Key for the classloader cache.
    */
-  private final class ClassLoaderCacheLoader extends CacheLoader<ArtifactId, ClassLoader> {
+  private static class ClassLoaderKey {
+    private final List<ArtifactId> parents;
+    private final ArtifactId artifact;
+
+    ClassLoaderKey(ArtifactId artifact) {
+      this(Collections.<ArtifactId>emptyList(), artifact);
+    }
+
+    ClassLoaderKey(List<ArtifactId> parents, ArtifactId artifact) {
+      this.parents = parents;
+      this.artifact = artifact;
+    }
 
     @Override
-    public ClassLoader load(ArtifactId artifactId) throws Exception {
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      ClassLoaderKey that = (ClassLoaderKey) o;
+
+      return Objects.equals(parents, that.parents) && Objects.equals(artifact, that.artifact);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(parents, artifact);
+    }
+  }
+
+  /**
+   * A CacheLoader for creating plugin ClassLoader.
+   */
+  private final class ClassLoaderCacheLoader extends CacheLoader<ClassLoaderKey, PluginClassLoader> {
+
+    @Override
+    public PluginClassLoader load(ClassLoaderKey key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      File artifact = new File(pluginDir, Artifacts.getFileName(artifactId));
+      File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
       BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir);
-      return new PluginClassLoader(unpackedDir, parentClassLoader);
+
+      Iterator<ArtifactId> parentIter = key.parents.iterator();
+      if (!parentIter.hasNext()) {
+        return new PluginClassLoader(key.artifact, unpackedDir, parentClassLoader);
+      }
+
+      List<ArtifactId> parentsOfParent = new ArrayList<>(key.parents.size() - 1);
+      ArtifactId parentArtifact = parentIter.next();
+      while (parentIter.hasNext()) {
+        parentsOfParent.add(parentIter.next());
+      }
+      /*
+       *   Combine CL [filtered grandparentCL (export-packages only),
+       *               filtered parentPluginCL (export-packages only)]
+       *                         ^
+       *                         |
+       *                         |
+       *        Plugin CL (classes in plugin artifact)
+       *
+       * The plugin classloader's parent will have whatever is exported by the parent plugin, and whatever
+       * is exported by the grandparent. Today, since we don't allow past a grandparent, the grandparent should
+       * always be the filtered program classloader. But if we change it to allow arbitrary levels, the grandparent
+       * could be another plugin. In effect, the plugin should have access to everything exported by plugins and apps
+       * above it.
+       */
+      PluginClassLoader parentPluginCL = classLoaders.get(new ClassLoaderKey(parentsOfParent, parentArtifact));
+      ClassLoader parentCL =
+        new CombineClassLoader(parentPluginCL.getParent(),
+                               ImmutableList.of(parentPluginCL.getExportPackagesClassLoader()));
+      return new PluginClassLoader(key.artifact, unpackedDir, parentCL);
     }
   }
 
   /**
    * A RemovalListener for closing plugin ClassLoader.
    */
-  private static final class ClassLoaderRemovalListener implements RemovalListener<ArtifactId, ClassLoader> {
+  private static final class ClassLoaderRemovalListener implements RemovalListener<ClassLoaderKey, PluginClassLoader> {
 
     @Override
-    public void onRemoval(RemovalNotification<ArtifactId, ClassLoader> notification) {
-      ClassLoader cl = notification.getValue();
-      if (cl instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) cl);
-      }
+    public void onRemoval(RemovalNotification<ClassLoaderKey, PluginClassLoader> notification) {
+      Closeables.closeQuietly(notification.getValue());
     }
   }
 

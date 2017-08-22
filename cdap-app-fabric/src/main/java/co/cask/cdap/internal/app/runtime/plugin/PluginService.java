@@ -19,7 +19,9 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.NotFoundException;
@@ -56,6 +58,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -316,10 +319,12 @@ public class PluginService extends AbstractIdleService {
                                            final DefaultEndpointPluginContext endpointPluginContext)
     throws IOException, ClassNotFoundException, NotFoundException {
 
-    ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifact.toArtifactId());
+    Plugin plugin = new Plugin(new ArrayList<ArtifactId>(), artifact.toArtifactId(),
+                               pluginClass, PluginProperties.builder().build());
+    ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(plugin);
     Class pluginClassLoaded = pluginClassLoader.loadClass(pluginClass.getClassName());
 
-    final Object pluginInstance = pluginInstantiator.newInstanceWithoutConfig(artifact.toArtifactId(), pluginClass);
+    final Object pluginInstance = pluginInstantiator.newInstanceWithoutConfig(plugin);
 
     Method[] methods = pluginClassLoaded.getMethods();
     for (final Method method : methods) {

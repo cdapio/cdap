@@ -16,20 +16,25 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
 import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -63,19 +68,21 @@ public class DefaultEndpointPluginContext implements EndpointPluginContext {
     return loadPluginClass(pluginType, pluginName, pluginProperties, new PluginSelector());
   }
 
-  private Plugin findAndGetPlugin(String pluginType, String pluginName, PluginProperties pluginProperties,
+  private Plugin findAndGetPlugin(String pluginType, String pluginName,
+                                  @Nullable PluginProperties pluginProperties,
                                   PluginSelector pluginSelector) throws IllegalStateException {
+    pluginProperties = pluginProperties == null ? PluginProperties.builder().build() : pluginProperties;
     for (ArtifactRange artifactRange : parentArtifacts) {
       try {
-        return FindPluginHelper.findPlugin(artifactRepository,
-                                           pluginInstantiator, namespace,
-                                           artifactRange, pluginType, pluginName, pluginProperties, pluginSelector);
-      } catch (PluginNotExistsException e) {
-        // plugin does not belong to this parent artifact, we will try next parent artifact
-        continue;
-      } catch (ArtifactNotFoundException e) {
-        // this shouldn't happen, it means the artifact for this app does not exist. we will try next artifact
-        continue;
+        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry
+          = artifactRepository.findPlugin(namespace, artifactRange, pluginType, pluginName, pluginSelector);
+        return FindPluginHelper.getPlugin(ImmutableList.<ArtifactId>of(), pluginEntry, pluginProperties,
+                                          pluginType, pluginName, pluginInstantiator);
+      } catch (PluginNotExistsException | ArtifactNotFoundException e) {
+        // PluginNotExists means plugin does not belong to this parent artifact, we will try next parent artifact
+        // ArtifactNotFound means the artifact for this app does not exist. we will try next artifact
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
       }
     }
     // none of the parents were able to find the plugin
