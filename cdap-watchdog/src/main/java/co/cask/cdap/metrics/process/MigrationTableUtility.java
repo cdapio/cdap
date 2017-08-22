@@ -19,21 +19,21 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.TableNotFoundException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * Useful to get v2/v3 metrics tables with retry and check if metrics table exists or not
+ * To get v2/v3 metrics tables; perform tableExists/delete table on v2 metrics tables
  */
 public class MigrationTableUtility {
   private static final Logger LOG = LoggerFactory.getLogger(MigrationTableUtility.class);
@@ -41,58 +41,38 @@ public class MigrationTableUtility {
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final MetricDatasetFactory metricDatasetFactory;
-  private final int resolution;
+  private final HBaseDDLExecutorFactory hBaseDDLExecutorFactory;
   private final HBaseTableUtil tableUtil;
 
   MigrationTableUtility(CConfiguration cConfiguration, Configuration hConf,
-                        MetricDatasetFactory metricDatasetFactory, HBaseTableUtil tableUtil, int resolution) {
+                        MetricDatasetFactory metricDatasetFactory, HBaseTableUtil tableUtil) {
     this.cConf = cConfiguration;
     this.hConf = hConf;
     this.metricDatasetFactory = metricDatasetFactory;
+    this.hBaseDDLExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
     this.tableUtil = tableUtil;
-    this.resolution = resolution;
   }
 
-  // we try to get v2 metrics table with retry, there is a chance that v2 table got deleted before we got it
-  // we return null if it was already deleted
+  // we try to get v2 metrics table; if there is any exception while getting the table we return null
   @Nullable
-   MetricsTable getV2MetricsTable() {
+  MetricsTable getV2MetricsTable(int resolution) {
     MetricsTable v2table = null;
-    while (v2table == null) {
-      try {
-        v2table = metricDatasetFactory.getV2MetricsTable(resolution);
-      } catch (Exception e) {
-        if (e instanceof TableNotFoundException) {
-          // we checked table exists, however the table got deleted in-between before we got the table
-          return null;
-        }
-        LOG.warn("Cannot access v2 metricsTable, will retry in 1 sec.");
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
+    try {
+      v2table = metricDatasetFactory.getV2MetricsTable(resolution);
+    } catch (Exception e) {
+      LOG.debug("Cannot access v2 metricsTable due to exception", e);
     }
     return v2table;
   }
 
-  // we try to get v3 metrics table with retry
-  MetricsTable getV3MetricsTable() {
+  // we try to get v3 metrics table; if there is any exception while getting the table we return null
+  @Nullable
+  MetricsTable getV3MetricsTable(int resolution) {
     MetricsTable v3table = null;
-    while (v3table == null) {
-      try {
-        v3table = metricDatasetFactory.getV3MetricsTable(resolution);
-      } catch (Exception e) {
-        LOG.warn("Cannot access v3 metricsTable, will retry in 1 sec.");
-        try {
-          TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
+    try {
+      v3table = metricDatasetFactory.getV3MetricsTable(resolution);
+    } catch (Exception e) {
+      LOG.debug("Cannot access v3 metricsTable due to exception", e);
     }
     return v3table;
   }
@@ -101,7 +81,7 @@ public class MigrationTableUtility {
    * check if v2 metrics table exists for the resolution
    * @return true if table exists; false otherwise
    */
-  boolean v2MetricsTableExists() {
+  boolean v2MetricsTableExists(int resolution) {
     TableId tableId = getV2MetricsTableName(resolution);
     try {
       try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
@@ -117,7 +97,29 @@ public class MigrationTableUtility {
     return false;
   }
 
-
+  /**
+   * delete v2 metrics table for the resolution
+   * @param resolution resolution of metrics table to delete
+   * @return true if deletion is successful; false otherwise
+   */
+  boolean deleteV2MetricsTable(int resolution) {
+    TableId tableId = getV2MetricsTableName(resolution);
+    try {
+      try (HBaseDDLExecutor ddlExecutor = hBaseDDLExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
+        TableId hBaseTableId =
+          tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
+        if (tableUtil.tableExists(admin, hBaseTableId)) {
+          LOG.trace("Found table {}, going to delete", hBaseTableId);
+          tableUtil.dropTable(ddlExecutor, hBaseTableId);
+          LOG.debug("Deleted table {}", hBaseTableId);
+          return true;
+        }
+      }
+    } catch (IOException e) {
+      LOG.warn("Exception while deleting table", e);
+    }
+    return false;
+  }
 
   private TableId getV2MetricsTableName(int resolution) {
     String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,

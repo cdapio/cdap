@@ -23,9 +23,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -35,35 +35,19 @@ import java.util.concurrent.TimeUnit;
 public class DataMigrator {
   private static final Logger LOG = LoggerFactory.getLogger(DataMigrator.class);
 
-  private final LinkedHashMap<Integer, MetricsTableMigration> migrationOrder;
-  private final Map<Integer, Integer> maxRecordsToScanResolutionMap;
-  private final HBaseTableUtil hBaseTableUtil;
+  private final LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap;
   private final ScheduledExecutorService scheduledExecutorService;
-
+  private final MigrationTableUtility migrationTableUtility;
+  private final CConfiguration cConf;
 
   // Data migrator thread will be created for each resolution tables, so they can be scheduled appropriately.
   public DataMigrator(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
                       HBaseTableUtil hBaseTableUtil, LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap,
                       ScheduledExecutorService executorService) {
-    migrationOrder = new LinkedHashMap<>();
-
-    for (int resolution : maxRecordsToScanResolutionMap.keySet()) {
-      MigrationTableUtility migrationTableUtility = new MigrationTableUtility(cConf, hConf,
-                                                                              metricDatasetFactory, hBaseTableUtil,
-                                                                              resolution);
-      if (migrationTableUtility.v2MetricsTableExists()) {
-        MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable();
-        MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable();
-        if (v2MetricsTable == null) {
-          // table got deleted, skip this resolution
-          continue;
-        }
-        migrationOrder.put(resolution, new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf, hConf));
-      }
-    }
+    this.migrationTableUtility = new MigrationTableUtility(cConf, hConf, metricDatasetFactory, hBaseTableUtil);
     this.maxRecordsToScanResolutionMap = maxRecordsToScanResolutionMap;
-    this.hBaseTableUtil = hBaseTableUtil;
     this.scheduledExecutorService = executorService;
+    this.cConf = cConf;
   }
 
   /**
@@ -89,7 +73,9 @@ public class DataMigrator {
    * @return true if migration is complete; false otherwise
    */
   private boolean isMigrationComplete() {
-    if (migrationOrder.isEmpty()) {
+    Iterator<Integer> resolutions = maxRecordsToScanResolutionMap.keySet().iterator();
+
+    if (!resolutions.hasNext()) {
       // all tables in migrationOrder map have been deleted, so migration is complete;
       // useful when metrics.processor is running and completed migration
       // and the run method removed all the entries from map when the tables were deleted
@@ -98,13 +84,27 @@ public class DataMigrator {
 
     // when metrics.processor restarts and initializes DataMigrator,
     // this is useful to decide whether to schedule migration thread or not
-    Iterator<Integer> resolutions = migrationOrder.keySet().iterator();
     while (resolutions.hasNext()) {
       int resolution = resolutions.next();
-      MetricsTableMigration metricsTableMigration = migrationOrder.get(resolution);
-      if (metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution) &&
-        metricsTableMigration.isOldMetricsDataAvailable()) {
-        return false;
+      if (migrationTableUtility.v2MetricsTableExists(resolution)) {
+        try (MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable(resolution);
+             MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable(resolution)) {
+          if (v2MetricsTable == null || v3MetricsTable == null) {
+            // dataset/hbase service not available, skipping check this time, will try in next schedule.
+            // return false to try again in next attempt,
+            // by false we will proceed to run the migration, however if all tables have been migrated
+            // migrationTask can handle that scenario and shutdown the executor service.
+            return false;
+          }
+          MetricsTableMigration metricsTableMigration =
+            new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
+          // if metrics data is available in old table, return false
+          if (metricsTableMigration.isOldMetricsDataAvailable()) {
+            return false;
+          }
+        } catch (IOException e) {
+          // exception while closing metrics tables - ignoring
+        }
       }
     }
     // all tables data have been migrated, so migration is complete
@@ -113,31 +113,46 @@ public class DataMigrator {
 
   private final class MigrationTask implements Runnable {
     public void run() {
-      if (isMigrationComplete()) {
-        // this will be printed once as the task is scheduled only if migration is not complete
-        // for future metrics.processor runs
+
+      Iterator<Integer> resolutions = maxRecordsToScanResolutionMap.keySet().iterator();
+      // iterate through resolutions, remove entry from iterator
+      // if the table has been deleted for that resolution or if there are no more data available in the table
+      while (resolutions.hasNext()) {
+        int resolution = resolutions.next();
+        if (migrationTableUtility.v2MetricsTableExists(resolution)) {
+          try (MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable(resolution);
+               MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable(resolution)) {
+            if (v2MetricsTable == null || v3MetricsTable == null) {
+              // dataset/hbase service not available, return,
+              // will try to get table and perform migration in next schedule.
+              return;
+            }
+
+            MetricsTableMigration metricsTableMigration =
+              new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
+
+            if (metricsTableMigration.isOldMetricsDataAvailable()) {
+              LOG.info("Metrics data is available in v2 metrics - {} resolution table.. Running Migration", resolution);
+              metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
+              break;
+            } else {
+              // no more metrics data is available for transfer, remove from iterator
+              resolutions.remove();
+            }
+          } catch (IOException e) {
+            // exception while closing metrics tables - ignoring
+          }
+        } else {
+          // table does not exist, remove from map
+          resolutions.remove();
+        }
+      }
+
+      if (maxRecordsToScanResolutionMap.isEmpty()) {
+        // this will be printed once so safe to log it in info
         LOG.info("Metrics migration complete for resolution INT_MAX, 3600, 60 table");
         scheduledExecutorService.shutdown();
         return;
-      }
-
-      Iterator<Integer> resolutions = migrationOrder.keySet().iterator();
-      while (resolutions.hasNext()) {
-        int resolution = resolutions.next();
-        MetricsTableMigration metricsTableMigration = migrationOrder.get(resolution);
-
-        // check if table exists first
-        if (!metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution)) {
-          LOG.debug("Table with resolution {} does not exist, removing from list", resolution);
-          resolutions.remove();
-          continue;
-        }
-
-        if (metricsTableMigration.isOldMetricsDataAvailable()) {
-          LOG.info("Metrics data is available in v2 metrics - {} resolution table.. Running Migration", resolution);
-          metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
-          break;
-        }
       }
     }
   }

@@ -17,16 +17,14 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -36,29 +34,18 @@ import java.util.concurrent.TimeUnit;
 public class MetricsTableDeleter {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTableDeleter.class);
 
-  private final Map<Integer, MetricsTableMigration> resolutionTablesToDelete;
-  private final HBaseTableUtil hBaseTableUtil;
-  private final HBaseDDLExecutorFactory hBaseDDLExecutorFactory;
+  private final List<Integer> resolutionsToDelete;
+  private final MigrationTableUtility migrationTableUtility;
   private final ScheduledExecutorService scheduledExecutorService;
+  private final CConfiguration cConf;
 
   public MetricsTableDeleter(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
                              HBaseTableUtil hBaseTableUtil, List<Integer> resolutions,
                              ScheduledExecutorService scheduledExecutorService) {
-    resolutionTablesToDelete = new HashMap<>();
-    for (int resolution : resolutions) {
-      MigrationTableUtility migrationTableUtility = new MigrationTableUtility(cConf, hConf,
-                                                                              metricDatasetFactory, hBaseTableUtil,
-                                                                              resolution);
-      if (migrationTableUtility.v2MetricsTableExists()) {
-        MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable();
-        MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable();
-        resolutionTablesToDelete.put(resolution,
-                                     new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf, hConf));
-      }
-    }
-    this.hBaseTableUtil = hBaseTableUtil;
-    this.hBaseDDLExecutorFactory = new HBaseDDLExecutorFactory(cConf, hConf);
+    this.resolutionsToDelete = resolutions;
+    this.migrationTableUtility = new MigrationTableUtility(cConf, hConf, metricDatasetFactory, hBaseTableUtil);
     this.scheduledExecutorService = scheduledExecutorService;
+    this.cConf = cConf;
   }
 
   /**
@@ -84,8 +71,8 @@ public class MetricsTableDeleter {
   private boolean allTablesDeleted() {
     // when metrics.processor restarts and initializes TableDeleter,
     // this is useful to decide whether to schedule deletion thread or not
-    for (Map.Entry<Integer, MetricsTableMigration> entry : resolutionTablesToDelete.entrySet()) {
-      if (entry.getValue().v2MetricsTableExists(hBaseTableUtil, entry.getKey())) {
+    for (int resolution : resolutionsToDelete) {
+      if (migrationTableUtility.v2MetricsTableExists(resolution)) {
         return false;
       }
     }
@@ -96,7 +83,6 @@ public class MetricsTableDeleter {
   private final class DeletionTask implements Runnable {
     @Override
     public void run() {
-
       if (allTablesDeleted()) {
         // this log will be printed only once when all tables are deleted
         // and the future runs will be skipped earlier before scheduling the Deletion task
@@ -105,12 +91,23 @@ public class MetricsTableDeleter {
         return;
       }
 
-      for (int resolution : resolutionTablesToDelete.keySet()) {
-        MetricsTableMigration metricsTableMigration = resolutionTablesToDelete.get(resolution);
-        if (metricsTableMigration.v2MetricsTableExists(hBaseTableUtil, resolution) &&
-          !metricsTableMigration.isOldMetricsDataAvailable() &&
-          metricsTableMigration.deleteV2MetricsTable(hBaseDDLExecutorFactory, hBaseTableUtil, resolution)) {
-          LOG.info("Successfully Deleted the v2 metrics table for resolution {} seconds", resolution);
+      for (int resolution : resolutionsToDelete) {
+        if (migrationTableUtility.v2MetricsTableExists(resolution)) {
+          try (MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable(resolution);
+          MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable(resolution)) {
+            if (v2MetricsTable == null || v3MetricsTable == null) {
+              // dataset/hbase service not available, skipping check this time, will try in next scheduled run.
+              return;
+            }
+            MetricsTableMigration metricsTableMigration =
+              new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
+            if (!metricsTableMigration.isOldMetricsDataAvailable() &&
+              migrationTableUtility.deleteV2MetricsTable(resolution)) {
+              LOG.info("Successfully Deleted the v2 metrics table for resolution {} seconds", resolution);
+            }
+          } catch (IOException e) {
+            // exception while closing metrics-tables - ignoring
+          }
         }
       }
     }

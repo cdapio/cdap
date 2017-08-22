@@ -23,16 +23,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,20 +38,18 @@ import java.util.TreeMap;
 /**
  * perform table data migration from v2 metrics table to v3.
  */
-public class MetricsTableMigration {
+public class  MetricsTableMigration {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTableMigration.class);
 
   private final MetricsTable v2MetricsTable;
   private final MetricsTable v3MetricsTable;
-  private final Configuration hConf;
   private final CConfiguration cConf;
 
   public MetricsTableMigration(MetricsTable v2MetricsTable, MetricsTable v3MetricsTable,
-                               CConfiguration cConf, Configuration hConf) {
+                               CConfiguration cConf) {
     this.v2MetricsTable = v2MetricsTable;
     this.v3MetricsTable = v3MetricsTable;
     this.cConf = cConf;
-    this.hConf = hConf;
   }
 
   /**
@@ -147,54 +139,5 @@ public class MetricsTableMigration {
     String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                    Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
     return TableId.from(NamespaceId.SYSTEM.getNamespace(), v2TableName);
-  }
-
-  /**
-   * check if v2 metrics table exists for the resolution
-   * @param tableUtil hbase table util
-   * @param resolution resolution of the metrics table to check
-   * @return true if table exists; false otherwise
-   */
-  public boolean v2MetricsTableExists(HBaseTableUtil tableUtil, int resolution) {
-    TableId tableId = getV2MetricsTableName(resolution);
-    try {
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        TableId hBaseTableId =
-          tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-        boolean doesExist  = tableUtil.tableExists(admin, hBaseTableId);
-        LOG.debug("Table {} exists : {}", hBaseTableId.getTableName(), doesExist);
-        return doesExist;
-      }
-    } catch (IOException e) {
-      LOG.warn("Exception while checking table exists", e);
-    }
-    return false;
-  }
-
-  /**
-   * delete v2 metrics table for the resolution
-   * @param ddlExecutorFactory HBaseDDLExecutorFactory
-   * @param tableUtil hbase table util
-   * @param resolution resolution of metrics table to delete
-   * @return true if deletion is successful; false otherwise
-   */
-  public boolean deleteV2MetricsTable(HBaseDDLExecutorFactory ddlExecutorFactory,
-                                      HBaseTableUtil tableUtil, int resolution) {
-    TableId tableId = getV2MetricsTableName(resolution);
-    try {
-      try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get(); HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        TableId hBaseTableId =
-          tableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-        if (tableUtil.tableExists(admin, hBaseTableId)) {
-          LOG.trace("Found table {}, going to delete", hBaseTableId);
-          tableUtil.dropTable(ddlExecutor, hBaseTableId);
-          LOG.debug("Deleted table {}", hBaseTableId);
-          return true;
-        }
-      }
-    } catch (IOException e) {
-      LOG.warn("Exception while deleting table", e);
-    }
-    return false;
   }
 }

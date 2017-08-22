@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Row;
@@ -53,7 +52,6 @@ import co.cask.cdap.security.impersonation.UGIProvider;
 import co.cask.cdap.security.impersonation.UnsupportedUGIProvider;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
-import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
@@ -73,8 +71,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
-
-import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertEquals;
 
@@ -296,7 +292,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // add just column A value for key X in table v3, so this is an increment, while column B is a gauge.
     v3Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                   .put(X, mapOf(A, Bytes.toLong(A))).build());
-    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table, cConf, hConf);
+    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table, cConf);
     Assert.assertTrue(metricsTableMigration.isOldMetricsDataAvailable());
     metricsTableMigration.transferData(Integer.MAX_VALUE);
 
