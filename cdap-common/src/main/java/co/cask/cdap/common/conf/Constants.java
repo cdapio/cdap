@@ -931,6 +931,8 @@ public final class Constants {
       public static final String ENABLED = "security.authorization.enabled";
       /** Extension jar path */
       public static final String EXTENSION_JAR_PATH = "security.authorization.extension.jar.path";
+      /** Extra classpath for security extension **/
+      public static final String EXTENSION_EXTRA_CLASSPATH = "security.authorization.extension.extra.classpath";
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
