@@ -53,7 +53,7 @@ Each configuration group consists of a list of the :ref:`individual properties
     "metadata": {
       ...
     },
-    "displayName": "Plugin Display Name",
+    "display-name": "Plugin Display Name",
     "icon": {
       "type": "builtin|link|inline",
       "arguments": {
@@ -109,7 +109,7 @@ Current version: |plugins-spec-version|. For example:
 
 Display Name
 ------------
-The ``displayName`` field specifies the name of the plugin as it is displayed on the CDAP UI. A display name can be
+The ``display-name`` field specifies the name of the plugin as it is displayed on the CDAP UI. A display name can be
 different from the plugin name, and is not guaranteed to be unique. A display name can contain whitespace. If not
 specified, the plugin name is used as the display name.
 
