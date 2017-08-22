@@ -30,6 +30,7 @@ import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
@@ -86,7 +87,8 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
         new MessagingMetricsProcessorService(injector.getInstance(MetricDatasetFactory.class), TOPIC_PREFIX,
                                              messagingService, injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore,
-                                             1000L, 5, partitions, new NoopMetricsContext(), 50, 0);
+                                             1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
+                                             injector.getInstance(DatasetFramework.class), cConf);
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore

@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.IncompatibleUpdateException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.AbstractTableDefinition;
@@ -71,12 +72,18 @@ public class HBaseMetricsTableDefinition extends AbstractTableDefinition<Metrics
   @Override
   public MetricsTable getDataset(DatasetContext datasetContext, DatasetSpecification spec,
                                  Map<String, String> arguments, ClassLoader classLoader) throws IOException {
-    return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil);
+    return new HBaseMetricsTable(datasetContext, spec, hConf, hBaseTableUtil, cConf);
   }
 
   @Override
   public DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                ClassLoader classLoader) throws IOException {
     return new HBaseTableAdmin(datasetContext, spec, hConf, hBaseTableUtil, cConf, locationFactory);
+  }
+
+  @Override
+  public DatasetSpecification reconfigure(String instanceName, DatasetProperties properties,
+                                          DatasetSpecification currentSpec) throws IncompatibleUpdateException {
+    throw new IncompatibleUpdateException("System Metrics Table properties can not be changed after creation.");
   }
 }

@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.TableProperties;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
@@ -81,11 +82,11 @@ public class HBaseMetricsTable implements MetricsTable {
   private ExecutorService scanExecutor;
 
   public HBaseMetricsTable(DatasetContext datasetContext, DatasetSpecification spec,
-                           Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+                           Configuration hConf, HBaseTableUtil tableUtil, CConfiguration cConf) throws IOException {
     this.tableUtil = tableUtil;
     this.tableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
 
-    initializeV3Vars(spec);
+    initializeV3Vars(cConf, spec);
 
     HTable hTable = tableUtil.createHTable(hConf, tableId);
     // todo: make configurable
@@ -95,7 +96,7 @@ public class HBaseMetricsTable implements MetricsTable {
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
   }
 
-  private void initializeV3Vars(DatasetSpecification spec) {
+  private void initializeV3Vars(CConfiguration cConf, DatasetSpecification spec) {
     boolean isV3Table = spec.getName().contains("v3");
     this.scanExecutor = null;
     this.rowKeyDistributor = null;
@@ -115,7 +116,7 @@ public class HBaseMetricsTable implements MetricsTable {
         }
       };
 
-      int maxScanThread = spec.getIntProperty(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS, 96);
+      int maxScanThread = cConf.getInt(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS);
       // Creates a executor that will shrink to 0 threads if left idle
       // Uses daemon thread, hence no need to worry about shutdown
       // When all threads are busy, use the caller thread to execute
@@ -125,7 +126,8 @@ public class HBaseMetricsTable implements MetricsTable {
                                                  callerRunsPolicy);
 
       this.rowKeyDistributor = new RowKeyDistributorByHashPrefix(
-        new RowKeyDistributorByHashPrefix.OneByteSimpleHash(Constants.Metrics.METRICS_HBASE_SPLITS));
+        new RowKeyDistributorByHashPrefix.
+          OneByteSimpleHash(spec.getIntProperty(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS, 16)));
     }
   }
 
