@@ -28,7 +28,7 @@ import java.util.Set;
  * Exception thrown when Authentication is successful, but a {@link Principal} is not authorized to perform an
  * {@link Action} on an {@link EntityId}.
  */
-public class UnauthorizedException extends Exception implements HttpErrorStatusProvider {
+public class UnauthorizedException extends RuntimeException implements HttpErrorStatusProvider {
 
   public UnauthorizedException(Principal principal, Action action, EntityId entityId) {
     super(String.format("Principal '%s' is not authorized to perform action '%s' on entity '%s'",

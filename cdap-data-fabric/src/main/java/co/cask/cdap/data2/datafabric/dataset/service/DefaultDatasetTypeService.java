@@ -35,7 +35,6 @@ import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetInstanceMDS;
@@ -53,7 +52,6 @@ import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.annotations.VisibleForTesting;
@@ -193,8 +191,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
                                 final boolean forceUpdate) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new UnauthorizedException(String.format("Cannot add module '%s' to '%s' namespace.",
-                                                    datasetModuleId.getModule(), datasetModuleId.getNamespace()));
+      throw new UnsupportedOperationException(
+        String.format("Cannot add module '%s' to '%s' namespace.",
+                      datasetModuleId.getModule(), datasetModuleId.getNamespace()));
     }
     ensureNamespaceExists(namespaceId);
 
@@ -216,8 +215,9 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
   public void delete(DatasetModuleId datasetModuleId) throws Exception {
     NamespaceId namespaceId = datasetModuleId.getParent();
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new UnauthorizedException(String.format("Cannot delete module '%s' from '%s' namespace.",
-                                                    datasetModuleId.getModule(), datasetModuleId.getNamespace()));
+      throw new UnsupportedOperationException(
+        String.format("Cannot delete module '%s' from '%s' namespace.",
+                      datasetModuleId.getModule(), datasetModuleId.getNamespace()));
     }
     ensureNamespaceExists(namespaceId);
 
@@ -238,7 +238,7 @@ public class DefaultDatasetTypeService extends AbstractIdleService implements Da
    */
   public void deleteAll(NamespaceId namespaceId) throws Exception {
     if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      throw new UnauthorizedException(String.format("Cannot delete modules from '%s' namespace.", namespaceId));
+      throw new UnsupportedOperationException(String.format("Cannot delete modules from '%s' namespace.", namespaceId));
     }
     ensureNamespaceExists(namespaceId);
 
