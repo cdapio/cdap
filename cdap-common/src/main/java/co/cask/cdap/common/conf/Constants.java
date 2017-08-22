@@ -1054,6 +1054,11 @@ public final class Constants {
     public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
     public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
       "hive.security.authorization.sqlstd.confwhitelist.append";
+    // Same as YarnConfiguration.TIMELINE_SERVICE_ENABLED, which isn't available on all hadoop versions
+    public static final String TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
+    // Same as YarnConfiguration.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL, which isn't available on all hadoop versions
+    public static final String TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL =
+      "yarn.timeline-service.delegation.key.update-interval";
 
     /** Determines how to behave when the Hive version is unsupported */
     public static final String HIVE_VERSION_RESOLUTION_STRATEGY = "hive.version.resolution.strategy";
