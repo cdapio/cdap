@@ -72,7 +72,7 @@ angular.module(PKG.name + '.commons')
 
       let key = generatePluginMapKey(plugin);
 
-      let displayName = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'displayName');
+      let displayName = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'display-name');
 
       displayName = displayName || myRemoveCamelCase(plugin.name);
 

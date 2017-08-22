@@ -298,7 +298,7 @@ class HydratorPlusPlusLeftPanelCtrl {
     if (!item.pluginTemplate) {
       let itemArtifact = item.artifact;
       let key = `${item.name}-${item.type}-${itemArtifact.name}-${itemArtifact.version}-${itemArtifact.scope}`;
-      let displayName = this.myHelpers.objectQuery(this.availablePluginMap, key, 'widgets', 'displayName');
+      let displayName = this.myHelpers.objectQuery(this.availablePluginMap, key, 'widgets', 'display-name');
 
       name = displayName || name;
     }
