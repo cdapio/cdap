@@ -132,7 +132,8 @@ final class ArtifactInspector {
 
         try (PluginInstantiator pluginInstantiator =
                new PluginInstantiator(cConf, parentClassLoader == null ? artifactClassLoader : parentClassLoader,
-                                      Files.createTempDirectory(stageDir, "plugins-").toFile())) {
+                                      Files.createTempDirectory(stageDir, "plugins-").toFile(),
+                                      false)) {
           pluginInstantiator.addArtifact(artifactLocation, artifactId.toArtifactId());
           inspectPlugins(builder, artifactFile, artifactId.toArtifactId(), pluginInstantiator);
         }

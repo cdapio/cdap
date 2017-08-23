@@ -21,7 +21,6 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactInfo;
 import co.cask.cdap.api.artifact.ArtifactRange;
-import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.plugin.PluginClass;
@@ -45,21 +44,18 @@ import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.NamespaceId;
-import co.cask.cdap.proto.security.Action;
-import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
@@ -71,7 +67,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -121,7 +116,8 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   public CloseableClassLoader createArtifactClassLoader(
     Location artifactLocation, EntityImpersonator entityImpersonator) throws IOException {
-    return artifactClassLoaderFactory.createClassLoader(artifactLocation, entityImpersonator);
+    return artifactClassLoaderFactory.createClassLoader(ImmutableList.of(artifactLocation).iterator(),
+                                                        entityImpersonator);
   }
 
   public void clear(NamespaceId namespace) throws Exception {
@@ -302,7 +298,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   public void addSystemArtifacts() throws Exception {
     // scan the directory for artifact .jar files and config files for those artifacts
-    List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
+    Map<Id.Artifact, SystemArtifactInfo> systemArtifacts = new HashMap<>();
     for (File systemArtifactDir : systemArtifactDirs) {
       for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
         // parse id from filename
@@ -326,21 +322,24 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
           validateParentSet(artifactId, artifactConfig.getParents());
           validatePluginSet(artifactConfig.getPlugins());
-          systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
+          systemArtifacts.put(artifactId, new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
         } catch (InvalidArtifactException e) {
           LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
         }
       }
     }
 
-    // taking advantage of the fact that we only have 1 level of dependencies
-    // so we can add all the parents first, then we know its safe to add everything else
-    // add all parents
-    Set<Id.Artifact> parents = new HashSet<>();
-    for (SystemArtifactInfo child : systemArtifacts) {
+    // child -> parents
+    Multimap<Id.Artifact, Id.Artifact> childToParents = HashMultimap.create();
+    // parent -> children
+    Multimap<Id.Artifact, Id.Artifact> parentToChildren = HashMultimap.create();
+    Set<Id.Artifact> remainingArtifacts = new HashSet<>();
+    // build mapping from child to parents and from parents to children
+    for (SystemArtifactInfo child : systemArtifacts.values()) {
       Id.Artifact childId = child.getArtifactId();
+      remainingArtifacts.add(childId);
 
-      for (SystemArtifactInfo potentialParent : systemArtifacts) {
+      for (SystemArtifactInfo potentialParent : systemArtifacts.values()) {
         Id.Artifact potentialParentId = potentialParent.getArtifactId();
         // skip if we're looking at ourselves
         if (childId.equals(potentialParentId)) {
@@ -348,23 +347,32 @@ public class DefaultArtifactRepository implements ArtifactRepository {
         }
 
         if (child.getConfig().hasParent(potentialParentId)) {
-          parents.add(potentialParentId);
+          childToParents.put(childId, potentialParentId);
+          parentToChildren.put(potentialParentId, childId);
         }
       }
     }
 
-    // add all parents first
-    for (SystemArtifactInfo systemArtifact : systemArtifacts) {
-      if (parents.contains(systemArtifact.getArtifactId())) {
-        addSystemArtifact(systemArtifact);
+    // loop until there is no change
+    boolean nochange = false;
+    while (!remainingArtifacts.isEmpty() && !nochange) {
+      // add all artifacts that don't have any more parents
+      Set<Id.Artifact> addedArtifacts = new HashSet<>();
+      for (Id.Artifact remainingArtifact : remainingArtifacts) {
+        if (!childToParents.containsKey(remainingArtifact)) {
+          addSystemArtifact(systemArtifacts.get(remainingArtifact));
+          addedArtifacts.add(remainingArtifact);
+          for (Id.Artifact child : parentToChildren.get(remainingArtifact)) {
+            childToParents.remove(child, remainingArtifact);
+          }
+        }
       }
+      remainingArtifacts.removeAll(addedArtifacts);
+      nochange = addedArtifacts.isEmpty();
     }
 
-    // add children next
-    for (SystemArtifactInfo systemArtifact : systemArtifacts) {
-      if (!parents.contains(systemArtifact.getArtifactId())) {
-        addSystemArtifact(systemArtifact);
-      }
+    if (!remainingArtifacts.isEmpty()) {
+      LOG.warn("Unable to add system artifacts {} due to cyclic dependencies", Joiner.on(",").join(remainingArtifacts));
     }
   }
 
@@ -426,7 +434,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   private ArtifactClasses inspectArtifact(Id.Artifact artifactId, File artifactFile,
                                           @Nullable Set<PluginClass> additionalPlugins,
-                                          @Nullable  ClassLoader parentClassLoader) throws IOException,
+                                          @Nullable ClassLoader parentClassLoader) throws IOException,
     InvalidArtifactException {
     ArtifactClasses artifactClasses = artifactInspector.inspectArtifact(artifactId, artifactFile, parentClassLoader);
     validatePluginSet(artifactClasses.getPlugins());
@@ -493,34 +501,55 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                              artifactId, Joiner.on('/').join(parentArtifacts)));
     }
 
-    // check if any of the parents also have parents, which is not allowed. This is to simplify things
+    Location parentLocation = null;
+    Location grandparentLocation = null;
+
+    // check if any of the parents also have grandparents, which is not allowed. This is to simplify things
     // so that we don't have to chain a bunch of classloaders, and also to keep it simple for users to avoid
     // complicated dependency trees that are hard to manage.
-    boolean isInvalid = false;
-    StringBuilder errMsg = new StringBuilder("Invalid artifact '")
-      .append(artifactId)
-      .append("'.")
-      .append(" Artifact parents cannot have parents.");
     for (ArtifactDetail parent : parents) {
-      Set<ArtifactRange> grandparents = parent.getMeta().getUsableBy();
-      if (!grandparents.isEmpty()) {
-        isInvalid = true;
-        errMsg
-          .append(" Parent '")
-          .append(parent.getDescriptor().getArtifactId().getName())
-          .append("-")
-          .append(parent.getDescriptor().getArtifactId().getVersion().getVersion())
-          .append("' has parents.");
+      Set<ArtifactRange> grandparentRanges = parent.getMeta().getUsableBy();
+      for (ArtifactRange grandparentRange : grandparentRanges) {
+        // if the parent as the child as a parent (cyclic dependency)
+        if (grandparentRange.getNamespace().equals(artifactId.getNamespace().getId()) &&
+          grandparentRange.getName().equals(artifactId.getName()) &&
+          grandparentRange.versionIsInRange(artifactId.getVersion())) {
+          throw new InvalidArtifactException(String.format(
+            "Invalid artifact '%s': cyclic dependency. Parent '%s' has artifact '%s' as a parent.",
+            artifactId, parent.getDescriptor().getArtifactId(), artifactId));
+        }
+
+        List<ArtifactDetail> grandparents =
+          artifactStore.getArtifacts(grandparentRange, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
+
+        // check that no grandparent has parents
+        for (ArtifactDetail grandparent : grandparents) {
+          Set<ArtifactRange> greatGrandparents = grandparent.getMeta().getUsableBy();
+          if (!greatGrandparents.isEmpty()) {
+            throw new InvalidArtifactException(String.format(
+              "Invalid artifact '%s'. Grandparents of artifacts cannot have parents. Grandparent '%s' has parents.",
+              artifactId, grandparent.getDescriptor().getArtifactId()));
+          }
+
+          // assumes any grandparent will do
+          if (parentLocation == null && grandparentLocation == null) {
+            grandparentLocation = grandparent.getDescriptor().getLocation();
+          }
+        }
+      }
+
+      // assumes any parent will do
+      if (parentLocation == null) {
+        parentLocation = parent.getDescriptor().getLocation();
       }
     }
-    if (isInvalid) {
-      throw new InvalidArtifactException(errMsg.toString());
+
+    List<Location> parentLocations = new ArrayList<>();
+    parentLocations.add(parentLocation);
+    if (grandparentLocation != null) {
+      parentLocations.add(grandparentLocation);
     }
-
-    // assumes any of the parents will do
-    Location parentLocation = parents.get(0).getDescriptor().getLocation();
-
-    return createArtifactClassLoader(parentLocation, entityImpersonator);
+    return artifactClassLoaderFactory.createClassLoader(parentLocations.iterator(), entityImpersonator);
   }
 
   private void addAppSummaries(List<ApplicationClassSummary> summaries, NamespaceId namespace) {

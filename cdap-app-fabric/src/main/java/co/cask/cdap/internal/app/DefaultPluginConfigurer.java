@@ -16,23 +16,32 @@
 
 package co.cask.cdap.internal.app;
 
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.Plugin;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.plugin.FindPluginHelper;
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import co.cask.cdap.internal.lang.CallerClassSecurityManager;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -149,7 +158,55 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
                                 "Plugin of type %s, name %s was already added as id %s.",
                                 pluginType, pluginName, pluginId);
-    return FindPluginHelper.findPlugin(artifactRepository, pluginInstantiator, deployNamespace.toEntityId(), artifactId,
-                                       pluginType, pluginName, properties, selector);
+
+
+    final Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
+    if (callerClasses.length < 3) {
+      // This shouldn't happen as there should be someone calling this method.
+      throw new IllegalStateException("Invalid call stack.");
+    }
+
+    LinkedHashSet<ArtifactId> parents = new LinkedHashSet<>();
+    // go through the call stack to get the parent plugins. This is to support plugins of plugins.
+    // for example, suppose appX uses pluginY, which uses pluginZ. When we try to use pluginZ, we need to first
+    // check if pluginZ extends pluginY. If it does not, we then check if it extends appX.
+    // 0 is the CallerClassSecurityManager, 1 is this class, hence 2 is the actual caller
+    for (int i = 2; i < callerClasses.length; i++) {
+      ClassLoader callerClassloader = callerClasses[i].getClassLoader();
+      if (callerClassloader instanceof PluginClassLoader) {
+        // if this is the first time we've seen this plugin artifact, it must be a new plugin parent.
+        ArtifactId pluginCallerArtifactId = ((PluginClassLoader) callerClassloader).getArtifactId();
+        parents.add(pluginCallerArtifactId);
+      }
+    }
+
+    List<ArtifactId> searchParents = new ArrayList<>(parents);
+    searchParents.add(artifactId.toArtifactId());
+    PluginNotExistsException lastException = null;
+    for (ArtifactId pluginParent : searchParents) {
+      Id.Artifact parentId = Id.Artifact.from(deployNamespace, pluginParent);
+      ArtifactRange parentRange = new ArtifactRange(parentId.getNamespace().getId(), parentId.getName(),
+                                                    parentId.getVersion(), true, parentId.getVersion(), true);
+      try {
+        Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry =
+          artifactRepository.findPlugin(deployNamespace.toEntityId(), parentRange, pluginType, pluginName, selector);
+        return FindPluginHelper.getPlugin(parents, pluginEntry, properties, pluginType, pluginName, pluginInstantiator);
+      } catch (PluginNotExistsException e) {
+        // ignore this in case the plugin extends something higher up in the call stack.
+        // For example, suppose the app uses pluginA, which uses pluginB. However, pluginB is a plugin that
+        // has the app as its parent and not pluginA as its parent. In this case, we want to keep going up the call
+        // stack until we get to the app as the parent, which would be able to find plugin B.
+        lastException = e;
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+    }
+
+    // this is impossible since we'll always loop at least once above, but putting this here to get rid of the warning
+    if (lastException == null) {
+      throw new PluginNotExistsException(deployNamespace, pluginType, pluginName);
+    }
+    throw lastException;
   }
+
 }
