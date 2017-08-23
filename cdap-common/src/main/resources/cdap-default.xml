@@ -2081,6 +2081,15 @@
   </property>
 
   <property>
+    <name>metrics.table.migration.sleep.millis</name>
+    <value>10</value>
+    <description>
+      Delay in milliseconds after migration of each row from pre-4.3 to post 4.3 metrics tables.
+      This is used to throttle the metrics migration and reduce its the load on the metrics system
+    </description>
+  </property>
+
+  <property>
     <name>app.program.metrics.enabled</name>
     <value>true</value>
     <description>

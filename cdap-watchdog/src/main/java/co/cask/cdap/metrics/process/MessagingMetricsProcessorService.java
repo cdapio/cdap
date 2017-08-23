@@ -53,6 +53,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +71,9 @@ import java.util.Set;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -101,10 +104,16 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
   private final List<ProcessMetricsThread> processMetricsThreads;
   private final String processMetricName;
   private final String delayMetricName;
+  private final int instanceId;
+  private final CConfiguration cConfiguration;
+  private final boolean skipMigration;
+  private final DatasetFramework datasetFramework;
 
   private long metricsProcessedCount;
 
   private MetricsConsumerMetaTable metaTable;
+  private ScheduledExecutorService metricsTableDeleterExecutor;
+  private DataMigrator metricsDataMigrator;
 
   private volatile boolean stopping;
 
@@ -122,7 +131,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           @Assisted Integer instanceId, DatasetFramework datasetFramework,
                                           CConfiguration cConf) {
     this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
-         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId, datasetFramework, cConf);
+         maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId,
+         datasetFramework, cConf, false);
   }
 
   @VisibleForTesting
@@ -137,7 +147,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                    Set<Integer> topicNumbers,
                                    MetricsContext metricsContext,
                                    int metricsProcessIntervalMillis,
-                                   int instanceId, DatasetFramework datasetFramework, CConfiguration cConf) {
+                                   int instanceId, DatasetFramework datasetFramework, CConfiguration cConf,
+                                   boolean skipMigration) {
     this.metricDatasetFactory = metricDatasetFactory;
     this.metricsTopics = new ArrayList<>();
     for (int topicNum : topicNumbers) {
@@ -162,8 +173,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     this.topicMessageIds = new ConcurrentHashMap<>();
     this.persistingFlag = new AtomicBoolean();
     this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
+    this.instanceId = instanceId;
+    this.cConfiguration = cConf;
     processMetricName = String.format("metrics.%s.process.count", instanceId);
     delayMetricName = String.format("metrics.%s.process.delay.ms", instanceId);
+    this.datasetFramework = datasetFramework;
     // Validate metrics table splits after creation.
     // TODO CDAP-12366 Make metrics table splits configurable
     String metricsTable = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
@@ -182,6 +196,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     } catch (DatasetManagementException e) {
       LOG.error("Got exception while accessing dataset {}", metricsTable, e);
     }
+    this.skipMigration = skipMigration;
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -237,6 +252,34 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       thread.start();
     }
 
+    if (instanceId == 0) {
+      if (!skipMigration) {
+        List<Integer> resolutions = new ArrayList<>();
+        resolutions.add(Integer.MAX_VALUE);
+        resolutions.add(3600);
+        resolutions.add(60);
+
+        String v2TableNamePrefix = cConfiguration.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                                      Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts.";
+        String v3TableNamePrefix = cConfiguration.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                                      Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts.";
+
+        int migrationSleepMillis =
+          Integer.valueOf(cConfiguration.get(Constants.Metrics.METRICS_MIGRATION_SLEEP_MILLIS));
+        metricsDataMigrator = new DataMigrator(datasetFramework, resolutions,
+                                               v2TableNamePrefix, v3TableNamePrefix, migrationSleepMillis);
+        metricsDataMigrator.run();
+
+        ScheduledExecutorService metricsTableDeleterExecutor =
+          Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
+
+        DatasetId v2metrics1sResolutionTable = NamespaceId.SYSTEM.dataset(v2TableNamePrefix + 1);
+        MetricsTableDeleter tableDeleter = new MetricsTableDeleter(datasetFramework, v2metrics1sResolutionTable);
+        // just schedule deletion of 1 second table to run after 2 hours
+        metricsTableDeleterExecutor.schedule(tableDeleter, 2, TimeUnit.HOURS);
+      }
+    }
+
     for (ProcessMetricsThread thread : processMetricsThreads) {
       try {
         thread.join();
@@ -245,6 +288,17 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         Thread.currentThread().interrupt();
       }
     }
+
+    try {
+      // wait upto 5 seconds for the migration to exit cleanly
+      if (metricsDataMigrator != null) {
+        metricsDataMigrator.join(5000);
+      }
+    } catch (InterruptedException e) {
+      LOG.info("Thread {} is being terminated while waiting for it to finish.", metricsDataMigrator.getName());
+      Thread.currentThread().interrupt();
+    }
+
     // Persist metricsFromAllTopics and messageId's after all ProcessMetricsThread's complete.
     // No need to make a copy of metricsFromAllTopics and topicMessageIds because no thread is writing to them
     persistMetricsMessageIds(metricsFromAllTopics, topicMessageIds);
@@ -256,6 +310,17 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     stopping = true;
     for (ProcessMetricsThread thread : processMetricsThreads) {
       thread.interrupt();
+    }
+    // set stopping to true for helper class that retries the get/hasInstance/delete dataset
+    MigrationTableHelper.requestStop(true);
+
+    if (metricsTableDeleterExecutor != null) {
+      metricsTableDeleterExecutor.shutdownNow();
+      metricsTableDeleterExecutor = null;
+    }
+    if (metricsDataMigrator != null) {
+      metricsDataMigrator.requestStop();
+      metricsDataMigrator.interrupt();
     }
     LOG.info("Metrics Processing Service stopped.");
   }
@@ -295,7 +360,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                          new MetricValue(delayMetricName, MetricType.GAUGE, delay))));
     metricStore.add(metricValues);
     metricsProcessedCount += metricValues.size();
-    PROGRESS_LOG.debug("{} metrics metrics persisted. Last metric metric's timestamp: {}. " +
+    PROGRESS_LOG.debug("{} metrics persisted. Last metric's timestamp: {}. " +
                          "Metrics process delay: {}ms", metricsProcessedCount, lastMetricTime, delay);
   }
 

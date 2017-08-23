@@ -88,7 +88,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
                                              messagingService, injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore,
                                              1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
-                                             injector.getInstance(DatasetFramework.class), cConf);
+                                             injector.getInstance(DatasetFramework.class), cConf, true);
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore
