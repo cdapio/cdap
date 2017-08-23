@@ -17,6 +17,7 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.messaging.data.MessageId;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -90,7 +91,7 @@ public final class MetricsProcessorStats {
   @Override
   public String toString() {
     return "PersistMetaInfo{" +
-      "messageId=" + Bytes.toStringBinary(messageId) +
+      "messageId=" + new MessageId(messageId) +
       ", oldestMetricsTimestamp=" + oldestMetricsTimestamp +
       ", latestMetricsTimestamp=" + latestMetricsTimestamp +
       ", messagesProcessed=" + messagesProcessed +

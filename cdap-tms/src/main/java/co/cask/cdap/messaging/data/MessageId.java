@@ -133,4 +133,12 @@ public class MessageId {
     MessageId other = (MessageId) o;
     return Arrays.equals(rawId, other.getRawId());
   }
+  public String toString() {
+    return "MessageId {" +
+      "publishTimestamp=" + publishTimestamp +
+      ", sequenceId=" + sequenceId +
+      ", writeTimestamp=" + writeTimestamp +
+      ", payloadSequenceId=" + payloadSequenceId +
+      '}';
+  }
 }
