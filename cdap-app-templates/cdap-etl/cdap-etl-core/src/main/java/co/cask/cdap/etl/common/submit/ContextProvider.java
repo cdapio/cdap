@@ -14,17 +14,16 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package co.cask.cdap.etl.common.submit;
 
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.etl.api.action.SettableArguments;
+import co.cask.cdap.api.data.DatasetContext;
 
 /**
- * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
+ * Returns some context given a DatasetContext
+ *
+ * @param <T> type of context
  */
-public interface StageSubmitterContext extends MessagingContext, MessagingAdmin, TransformContext {
+public interface ContextProvider<T> {
 
-  SettableArguments getArguments();
-
+  T getContext(DatasetContext datasetContext);
 }

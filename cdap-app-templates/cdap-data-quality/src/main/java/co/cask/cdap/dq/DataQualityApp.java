@@ -196,7 +196,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
                                                              null)).build();
       PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
       BatchSourceContext sourceContext = new MapReduceBatchContext(context, pipelineRuntime, stageSpec,
-                                                                   new HashSet<String>());
+                                                                   new HashSet<String>(), context);
       batchSource.prepareRun(sourceContext);
       context.addOutput(Output.ofDataset(context.getSpecification().getProperty("datasetName")));
     }

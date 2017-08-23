@@ -14,17 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
-
-import co.cask.cdap.api.messaging.MessagingAdmin;
-import co.cask.cdap.api.messaging.MessagingContext;
-import co.cask.cdap.etl.api.action.SettableArguments;
+package co.cask.cdap.etl.common.submit;
 
 /**
- * Similar to {@link TransformContext}, but also exposing functionality of {@link MessagingContext}.
+ * Prepares something.
  */
-public interface StageSubmitterContext extends MessagingContext, MessagingAdmin, TransformContext {
+public interface Preparer {
 
-  SettableArguments getArguments();
+  void prepareRun() throws Exception;
 
 }

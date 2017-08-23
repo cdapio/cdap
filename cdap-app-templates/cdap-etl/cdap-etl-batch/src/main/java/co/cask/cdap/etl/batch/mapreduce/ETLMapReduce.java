@@ -16,9 +16,11 @@
 
 package co.cask.cdap.etl.batch.mapreduce;
 
-import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -30,13 +32,13 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.AlertPublisher;
-import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchAggregator;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
@@ -45,15 +47,19 @@ import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
-import co.cask.cdap.etl.common.CompositeFinisher;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
-import co.cask.cdap.etl.common.Finisher;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.TypeChecker;
+import co.cask.cdap.etl.common.submit.AggregatorContextProvider;
+import co.cask.cdap.etl.common.submit.CompositeFinisher;
+import co.cask.cdap.etl.common.submit.ContextProvider;
+import co.cask.cdap.etl.common.submit.Finisher;
+import co.cask.cdap.etl.common.submit.JoinerContextProvider;
+import co.cask.cdap.etl.common.submit.SubmitterPlugin;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
@@ -76,9 +82,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -173,6 +181,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void initialize() throws Exception {
     MapReduceContext context = getContext();
     Map<String, String> properties = context.getSpecification().getProperties();
@@ -180,10 +189,10 @@ public class ETLMapReduce extends AbstractMapReduce {
       LogStageInjector.start();
     }
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context, mrMetrics);
-    CompositeFinisher.Builder finishers = CompositeFinisher.builder();
+    List<Finisher> finishers = new ArrayList<>();
 
-    Job job = context.getHadoopJob();
-    Configuration hConf = job.getConfiguration();
+    final Job job = context.getHadoopJob();
+    final Configuration hConf = job.getConfiguration();
     hConf.setBoolean("mapreduce.map.speculative", false);
     hConf.setBoolean("mapreduce.reduce.speculative", false);
 
@@ -203,61 +212,144 @@ public class ETLMapReduce extends AbstractMapReduce {
     PipelinePhase phase = phaseSpec.getPhase();
     PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, mrMetrics, phaseSpec);
 
-    Map<String, String> inputAliasToStage = new HashMap<>();
-    for (String sourceName : phase.getSources()) {
-      try {
-        BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(sourceName, evaluator);
-        StageSpec stageSpec = phaseSpec.getPhase().getStage(sourceName);
-        MapReduceBatchContext sourceContext = new MapReduceBatchContext(context, pipelineRuntime, stageSpec,
-                                                                        connectorDatasets);
-        batchSource.prepareRun(sourceContext);
-        for (Object inputAlias : sourceContext.getInputNames()) {
-          inputAliasToStage.put((String) inputAlias, sourceName);
-        }
-        finishers.add(batchSource, sourceContext);
-      } catch (Exception e) {
-        // Catch the Exception to generate a User Error Log for the Pipeline
-        PIPELINE_LOG.error("Failed to initialize batch source '{}' with the error: {}. Please review your pipeline " +
-                            "configuration and check the system logs for more details.", sourceName,
-                          Throwables.getRootCause(e).getMessage(), Throwables.getRootCause(e));
-        throw e;
+    // should never happen if planner is correct
+    Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
+                                                                   BatchJoiner.PLUGIN_TYPE);
+    if (reducers.size() > 1) {
+      Iterator<StageSpec> reducerIter = reducers.iterator();
+      StringBuilder reducersStr = new StringBuilder(reducerIter.next().getName());
+      while (reducerIter.hasNext()) {
+        reducersStr.append(",");
+        reducersStr.append(reducerIter.next().getName());
       }
-    }
-    hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
-
-    for (StageSpec transformInfo : phase.getStagesOfType(Transform.PLUGIN_TYPE)) {
-      Transform transform = pluginInstantiator.newPluginInstance(transformInfo.getName(), evaluator);
-      StageSubmitterContext transformContext =
-        new MapReduceBatchContext(context, pipelineRuntime, transformInfo, connectorDatasets);
-      transform.prepareRun(transformContext);
-      finishers.add(transform, transformContext);
+      throw new IllegalStateException("Found multiple reducers ( " + reducersStr + " ) in the same pipeline phase. " +
+                                        "This means there was a bug in planning the pipeline when it was deployed. ");
     }
 
-    Map<String, SinkOutput> sinkOutputs = new HashMap<>();
-    for (StageSpec stageInfo :
-      phase.getStagesOfType(Constants.CONNECTOR_TYPE, BatchSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE)) {
-      String sinkName = stageInfo.getName();
-      // todo: add a better way to get info for all sinks
-      if (!phase.getSinks().contains(sinkName)) {
-        continue;
+    job.setMapperClass(ETLMapper.class);
+    if (reducers.isEmpty()) {
+      job.setNumReduceTasks(0);
+    } else {
+      job.setReducerClass(ETLReducer.class);
+    }
+
+    final Map<String, SinkOutput> sinkOutputs = new HashMap<>();
+    final Map<String, String> inputAliasToStage = new HashMap<>();
+    // call prepareRun on each stage in order so that any arguments set by a stage will be visible to subsequent stages
+    for (final String stageName : phase.getDag().getTopologicalOrder()) {
+      final StageSpec stageSpec = phase.getStage(stageName);
+      String pluginType = stageSpec.getPluginType();
+      boolean isConnectorSource = Constants.CONNECTOR_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
+      boolean isConnectorSink = Constants.CONNECTOR_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
+
+      SubmitterPlugin submitterPlugin = null;
+      if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
+
+        BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        ContextProvider<MapReduceBatchContext> contextProvider =
+          new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
+        submitterPlugin = new SubmitterPlugin<>(
+          stageName, context, batchSource, contextProvider,
+          new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
+            @Override
+            public void act(MapReduceBatchContext sourceContext) {
+              for (String inputAlias : sourceContext.getInputNames()) {
+                inputAliasToStage.put(inputAlias, stageName);
+              }
+            }
+          });
+
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) ||
+        AlertPublisher.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
+
+        BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        ContextProvider<MapReduceBatchContext> contextProvider =
+          new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
+        submitterPlugin = new SubmitterPlugin<>(
+          stageName, context, batchSink, contextProvider,
+          new SubmitterPlugin.PrepareAction<MapReduceBatchContext>() {
+            @Override
+            public void act(MapReduceBatchContext sinkContext) {
+              sinkOutputs.put(stageName, new SinkOutput(sinkContext.getOutputNames(), stageSpec.getErrorDatasetName()));
+            }
+          });
+
+      } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
+
+        Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        ContextProvider<MapReduceBatchContext> contextProvider =
+          new MapReduceBatchContextProvider(context, pipelineRuntime, stageSpec, connectorDatasets);
+        submitterPlugin = new SubmitterPlugin<>(stageName, context, transform, contextProvider);
+
+      } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
+
+        final BatchAggregator<?, ?, ?> aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        ContextProvider<DefaultAggregatorContext> contextProvider =
+          new AggregatorContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+        submitterPlugin = new SubmitterPlugin<>(
+          stageName, context, aggregator, contextProvider,
+          new SubmitterPlugin.PrepareAction<DefaultAggregatorContext>() {
+            @Override
+            public void act(DefaultAggregatorContext aggregatorContext) {
+              if (aggregatorContext.getNumPartitions() != null) {
+                job.setNumReduceTasks(aggregatorContext.getNumPartitions());
+              }
+              Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
+              Class<?> outputValClass = aggregatorContext.getGroupValueClass();
+
+              if (outputKeyClass == null) {
+                outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
+              }
+              if (outputValClass == null) {
+                outputValClass = TypeChecker.getGroupValueClass(aggregator);
+              }
+              hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+              hConf.set(MAP_VAL_CLASS, outputValClass.getName());
+              job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+              job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
+            }
+          });
+
+      } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+
+        final BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
+        ContextProvider<DefaultJoinerContext> contextProvider =
+          new JoinerContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+        submitterPlugin = new SubmitterPlugin<>(
+          stageName, context, batchJoiner, contextProvider,
+          new SubmitterPlugin.PrepareAction<DefaultJoinerContext>() {
+            @Override
+            public void act(DefaultJoinerContext joinerContext) {
+              if (joinerContext.getNumPartitions() != null) {
+                job.setNumReduceTasks(joinerContext.getNumPartitions());
+              }
+              Class<?> outputKeyClass = joinerContext.getJoinKeyClass();
+              Class<?> inputRecordClass = joinerContext.getJoinInputRecordClass();
+
+              if (outputKeyClass == null) {
+                outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
+              }
+              if (inputRecordClass == null) {
+                inputRecordClass = TypeChecker.getJoinInputRecordClass(batchJoiner);
+              }
+              hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
+              hConf.set(MAP_VAL_CLASS, inputRecordClass.getName());
+              job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+              getOutputValClass(stageName, inputRecordClass);
+              // for joiner plugin map output is tagged with stageName
+              job.setMapOutputValueClass(TaggedWritable.class);
+            }
+          });
       }
-      try {
-        BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(sinkName, evaluator);
-        MapReduceBatchContext sinkContext = new MapReduceBatchContext(context, pipelineRuntime, stageInfo,
-                                                                      connectorDatasets);
-        batchSink.prepareRun(sinkContext);
-        finishers.add(batchSink, sinkContext);
-        sinkOutputs.put(sinkName, new SinkOutput(sinkContext.getOutputNames(), stageInfo.getErrorDatasetName()));
-      } catch (Exception e) {
-        // Catch the Exception to generate a User Error Log for the Pipeline
-        PIPELINE_LOG.error("Failed to initialize batch sink '{}' with the error: {}. Please review your pipeline " +
-                            "configuration and check the system logs for more details.", sinkName,
-                          Throwables.getRootCause(e).getMessage(), Throwables.getRootCause(e));
-        throw e;
+      if (submitterPlugin != null) {
+        submitterPlugin.prepareRun();
+        finishers.add(submitterPlugin);
       }
     }
-    finisher = finishers.build();
+
     hConf.set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
+    hConf.set(INPUT_ALIAS_KEY, GSON.toJson(inputAliasToStage));
+    finisher = new CompositeFinisher(finishers);
 
     // setup time partition for each error dataset
     for (StageSpec stageInfo : Sets.union(phase.getStagesOfType(Transform.PLUGIN_TYPE),
@@ -271,75 +363,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       }
     }
     job.setMapperClass(ETLMapper.class);
-
-    Admin admin = context.getAdmin();
-    Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
-                                                                   BatchJoiner.PLUGIN_TYPE);
-    if (!reducers.isEmpty()) {
-      job.setReducerClass(ETLReducer.class);
-      String reducerName = reducers.iterator().next().getName();
-      StageSpec stageInfo = phase.getStage(reducerName);
-      Class<?> outputKeyClass;
-      Class<?> outputValClass;
-      try {
-        if (!phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE).isEmpty()) {
-          BatchAggregator aggregator = pluginInstantiator.newPluginInstance(reducerName, evaluator);
-          DefaultAggregatorContext aggregatorContext =
-            new DefaultAggregatorContext(pipelineRuntime, stageInfo, context, admin);
-          aggregator.prepareRun(aggregatorContext);
-          finishers.add(aggregator, aggregatorContext);
-
-          if (aggregatorContext.getNumPartitions() != null) {
-            job.setNumReduceTasks(aggregatorContext.getNumPartitions());
-          }
-          outputKeyClass = aggregatorContext.getGroupKeyClass();
-          outputValClass = aggregatorContext.getGroupValueClass();
-
-          if (outputKeyClass == null) {
-            outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
-          }
-          if (outputValClass == null) {
-            outputValClass = TypeChecker.getGroupValueClass(aggregator);
-          }
-          hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
-          hConf.set(MAP_VAL_CLASS, outputValClass.getName());
-          job.setMapOutputKeyClass(getOutputKeyClass(reducerName, outputKeyClass));
-          job.setMapOutputValueClass(getOutputValClass(reducerName, outputValClass));
-        } else { // reducer type is joiner
-          BatchJoiner batchJoiner = pluginInstantiator.newPluginInstance(reducerName, evaluator);
-          DefaultJoinerContext joinerContext = new DefaultJoinerContext(pipelineRuntime, stageInfo, context, admin);
-          batchJoiner.prepareRun(joinerContext);
-          finishers.add(batchJoiner, joinerContext);
-
-          if (joinerContext.getNumPartitions() != null) {
-            job.setNumReduceTasks(joinerContext.getNumPartitions());
-          }
-          outputKeyClass = joinerContext.getJoinKeyClass();
-          Class<?> inputRecordClass = joinerContext.getJoinInputRecordClass();
-
-          if (outputKeyClass == null) {
-            outputKeyClass = TypeChecker.getJoinKeyClass(batchJoiner);
-          }
-          if (inputRecordClass == null) {
-            inputRecordClass = TypeChecker.getJoinInputRecordClass(batchJoiner);
-          }
-          hConf.set(MAP_KEY_CLASS, outputKeyClass.getName());
-          hConf.set(MAP_VAL_CLASS, inputRecordClass.getName());
-          job.setMapOutputKeyClass(getOutputKeyClass(reducerName, outputKeyClass));
-          getOutputValClass(reducerName, inputRecordClass);
-          // for joiner plugin map output is tagged with stageName
-          job.setMapOutputValueClass(TaggedWritable.class);
-        }
-      } catch (Exception e) {
-        // Catch the Exception to generate a User Error Log for the Pipeline
-        PIPELINE_LOG.error("Failed to initialize pipeline stage '{}' with the error: {}. Please review your pipeline " +
-                            "configuration and check the system logs for more details.", reducerName,
-                          Throwables.getRootCause(e).getMessage(), Throwables.getRootCause(e));
-        throw e;
-      }
-    } else {
-      job.setNumReduceTasks(0);
-    }
 
     WorkflowToken token = context.getWorkflowToken();
     if (token != null) {
@@ -384,11 +407,36 @@ public class ETLMapReduce extends AbstractMapReduce {
   }
 
   @Override
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   public void destroy() {
     boolean isSuccessful = getContext().getState().getStatus() == ProgramStatus.COMPLETED;
     finisher.onFinish(isSuccessful);
     LOG.info("Batch Run finished : status = {}", getContext().getState());
   }
+
+  /**
+   * Provider for MapReduceBatchContexts.
+   */
+  private static class MapReduceBatchContextProvider implements ContextProvider<MapReduceBatchContext> {
+    private final MapReduceContext context;
+    private final PipelineRuntime pipelineRuntime;
+    private final StageSpec stageSpec;
+    private final Set<String> connectorDatasets;
+
+    private MapReduceBatchContextProvider(MapReduceContext context, PipelineRuntime pipelineRuntime, StageSpec
+      stageSpec, Set<String> connectorDatasets) {
+      this.context = context;
+      this.pipelineRuntime = pipelineRuntime;
+      this.stageSpec = stageSpec;
+      this.connectorDatasets = connectorDatasets;
+    }
+
+    @Override
+    public MapReduceBatchContext getContext(DatasetContext datasetContext) {
+      return new MapReduceBatchContext(context, pipelineRuntime, stageSpec, connectorDatasets, datasetContext);
+    }
+  }
+
 
   /**
    * Mapper Driver for ETL Transforms.
