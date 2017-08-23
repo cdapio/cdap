@@ -61,6 +61,9 @@ public final class RunIds {
 
   private static final AtomicLong COUNTER = new AtomicLong();
 
+  /**
+   * Serialization and deserialization of RunId as Json.
+   */
   public static class RunIdCodec implements JsonSerializer<RunId>, JsonDeserializer<RunId> {
 
     @Override

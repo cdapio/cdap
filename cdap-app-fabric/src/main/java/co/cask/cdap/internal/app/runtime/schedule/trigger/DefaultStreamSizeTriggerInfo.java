@@ -31,7 +31,8 @@ public class DefaultStreamSizeTriggerInfo extends AbstractTriggerInfo implements
   private final long baseStreamSize;
 
   public DefaultStreamSizeTriggerInfo(String streamNamespace, String streamName, int triggerMB,
-                                      long logicalStartTime, long streamSize, long basePollingTime, long baseStreamSize) {
+                                      long logicalStartTime, long streamSize, long basePollingTime,
+                                      long baseStreamSize) {
     super(Type.STREAM_SIZE);
     this.streamNamespace = streamNamespace;
     this.streamName = streamName;
