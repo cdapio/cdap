@@ -36,15 +36,6 @@ public interface StreamSizeTriggerInfo extends TriggerInfo {
   int getTriggerMB();
 
   /**
-   * Returns the logical start time of the triggered program. Logical start time is when the schedule decides to launch
-   * the program when the stream size trigger is satisfied, i.e. when {@link #getStreamSize()} is at least
-   * {@link #getTriggerMB()} larger than the {@link #getBaseStreamSize()}.
-   *
-   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC)
-   */
-  long getLogicalStartTime();
-
-  /**
    * @return Stream size in bytes at the moment when the stream size trigger is satisfied, i.e. the stream size is
    *         at least {@link #getTriggerMB()} larger than the {@link #getBaseStreamSize()}.
    */

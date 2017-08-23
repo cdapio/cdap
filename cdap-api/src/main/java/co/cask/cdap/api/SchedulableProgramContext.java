@@ -21,7 +21,7 @@ import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import javax.annotation.Nullable;
 
 /**
- * This interface represents a context for a processor or elements of a processor.
+ * This interface provides the context for accessing scheduling information of this program.
  */
 public interface SchedulableProgramContext {
 

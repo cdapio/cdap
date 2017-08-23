@@ -31,6 +31,7 @@ public abstract class AbstractTriggerInfo implements TriggerInfo {
   /**
    * @return The type of the trigger.
    */
+  @Override
   public Type getType() {
     return type;
   }

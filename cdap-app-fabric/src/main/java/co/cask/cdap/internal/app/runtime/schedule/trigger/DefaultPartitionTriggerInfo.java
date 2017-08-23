@@ -36,18 +36,22 @@ public class DefaultPartitionTriggerInfo extends AbstractTriggerInfo implements 
     this.actualNumPartitions = actualNumPartitions;
   }
 
+  @Override
   public String getDatasetNamespace() {
     return datasetNamespace;
   }
 
+  @Override
   public String getDatasetName() {
     return datasetName;
   }
 
+  @Override
   public int getExpectedNumPartitions() {
     return expectedNumPartitions;
   }
 
+  @Override
   public int getActualNumPartitions() {
     return actualNumPartitions;
   }

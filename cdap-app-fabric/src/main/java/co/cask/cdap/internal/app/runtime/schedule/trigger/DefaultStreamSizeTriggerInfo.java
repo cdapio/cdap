@@ -25,48 +25,47 @@ public class DefaultStreamSizeTriggerInfo extends AbstractTriggerInfo implements
   private final String streamNamespace;
   private final String streamName;
   private final int triggerMB;
-  private final long logicalStartTime;
   private final long streamSize;
   private final long basePollingTime;
   private final long baseStreamSize;
 
   public DefaultStreamSizeTriggerInfo(String streamNamespace, String streamName, int triggerMB,
-                                      long logicalStartTime, long streamSize, long basePollingTime,
-                                      long baseStreamSize) {
+                                      long streamSize, long basePollingTime, long baseStreamSize) {
     super(Type.STREAM_SIZE);
     this.streamNamespace = streamNamespace;
     this.streamName = streamName;
     this.triggerMB = triggerMB;
-    this.logicalStartTime = logicalStartTime;
     this.streamSize = streamSize;
     this.basePollingTime = basePollingTime;
     this.baseStreamSize = baseStreamSize;
   }
 
+  @Override
   public String getStreamNamespace() {
     return streamNamespace;
   }
 
+  @Override
   public String getStreamName() {
     return streamName;
   }
 
+  @Override
   public int getTriggerMB() {
     return triggerMB;
   }
 
-  public long getLogicalStartTime() {
-    return logicalStartTime;
-  }
-
+  @Override
   public long getStreamSize() {
     return streamSize;
   }
 
+  @Override
   public long getBasePollingTime() {
     return basePollingTime;
   }
 
+  @Override
   public long getBaseStreamSize() {
     return baseStreamSize;
   }

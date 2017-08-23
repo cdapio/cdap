@@ -76,35 +76,43 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     this.runtimeArguments = Collections.unmodifiableMap(new HashMap<>(runtimeArguments));
   }
 
+  @Override
   public String getNamespace() {
     return namespace;
   }
 
+  @Override
   public ApplicationSpecification getApplicationSpecification() {
     return applicationSpecification;
   }
 
+  @Override
   public ProgramType getProgramType() {
     return programType;
   }
 
+  @Override
   public String getProgram() {
     return program;
   }
 
+  @Override
   public RunId getRunId() {
     return runId;
   }
 
+  @Override
   public ProgramStatus getProgramStatus() {
     return programStatus;
   }
 
   @Nullable
+  @Override
   public WorkflowToken getWorkflowToken() {
     return workflowToken;
   }
 
+  @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArguments;
   }

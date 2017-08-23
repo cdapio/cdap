@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.TimeTriggerInfo;
-import co.cask.cdap.api.schedule.Trigger;
-import co.cask.cdap.api.schedule.TriggerInfo;
 
 /**
  * The time trigger information to be passed to the triggered program.
@@ -33,10 +31,12 @@ public class DefaultTimeTriggerInfo extends AbstractTriggerInfo implements TimeT
     this.logicalStartTime = logicalStartTime;
   }
 
+  @Override
   public String getCronExpression() {
     return cronExpression;
   }
 
+  @Override
   public long getLogicalStartTime() {
     return logicalStartTime;
   }

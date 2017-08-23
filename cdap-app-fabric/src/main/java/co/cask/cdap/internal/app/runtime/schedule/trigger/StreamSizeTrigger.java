@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.StreamSizeTriggerInfo;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
@@ -73,12 +72,11 @@ public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements
 
       Map<String, String> userOverrides = GSON.fromJson(userOverridesJson, STRING_STRING_MAP);
       try {
-        long logicalStartTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.LOGICAL_START_TIME));
         long streamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
         long basePollingTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
         long baseStreamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
         TriggerInfo triggerInfo = new DefaultStreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(),
-                                                                   triggerMB, logicalStartTime, streamSize,
+                                                                   triggerMB, streamSize,
                                                                    basePollingTime, baseStreamSize);
         return Collections.singletonList(triggerInfo);
       } catch (NumberFormatException e) {
