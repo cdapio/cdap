@@ -109,8 +109,8 @@ public final class ScheduleTaskRunner {
     List<TriggerInfo> triggerInfo = trigger.getTriggerInfos(triggerInfoContext);
 
     ProgramSchedule schedule = job.getSchedule();
-    return new TriggeringScheduleInfo(schedule.getName(), schedule.getDescription(),
-                                      triggerInfo, schedule.getProperties());
+    return new DefaultTriggeringScheduleInfo(schedule.getName(), schedule.getDescription(),
+                                             triggerInfo, schedule.getProperties());
   }
 
   /**

@@ -57,8 +57,8 @@ public class TriggeringScheduleInfoAdapterTest {
         new DefaultPartitionTriggerInfo("ns", "ds", 10, 11),
         new DefaultStreamSizeTriggerInfo("ns", "stream", 1, 1000000L, 0L, 0L),
         new DefaultTimeTriggerInfo("1 * * * *", 0L));
-    TriggeringScheduleInfo scheduleInfo = new TriggeringScheduleInfo("schedule", "description", triggerInfos,
-                                                                     ImmutableMap.of("key", "value"));
+    TriggeringScheduleInfo scheduleInfo = new DefaultTriggeringScheduleInfo("schedule", "description", triggerInfos,
+                                                                            ImmutableMap.of("key", "value"));
 
     String scheduleInfoJson = GSON.toJson(scheduleInfo);
     TriggeringScheduleInfo deserializedScheduleInfo = GSON.fromJson(scheduleInfoJson,
