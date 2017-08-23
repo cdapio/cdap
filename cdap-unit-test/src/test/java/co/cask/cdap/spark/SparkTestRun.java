@@ -290,7 +290,7 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testSparkFork() throws Exception {
+  public void testSparkForkAndSparkTriggeredBySchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
     File barrierDir = TMP_FOLDER.newFolder();
     ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),

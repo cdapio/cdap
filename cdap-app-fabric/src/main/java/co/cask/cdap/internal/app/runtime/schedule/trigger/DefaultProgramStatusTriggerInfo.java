@@ -128,7 +128,10 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     namespace = in.readUTF();
     int appSpecBytesLength = in.readInt();
     byte[] appSpecBytes = new byte[appSpecBytesLength];
-    in.read(appSpecBytes);
+    int numBytesRead = 0;
+    while (numBytesRead < appSpecBytesLength) {
+      numBytesRead += in.read(appSpecBytes, numBytesRead, appSpecBytesLength - numBytesRead);
+    }
     applicationSpecification = GSON.fromJson(new String(appSpecBytes, StandardCharsets.UTF_8),
                                              ApplicationSpecification.class);
     programType = (ProgramType) in.readObject();
