@@ -17,13 +17,13 @@ Scenario
 ---------
 You work in the financial industry and trade in U.S. equities markets. To select top stocks for purchase, you need to ingest large amounts of market data with many different variables, process this data, and return your stock picks. 
 
-- You want to write a stock selection pipeline that uses the critera given by `Greenblatt's Magic Formula <https://en.wikipedia.org/wiki/Magic_formula_investing>`_. 
+- You want to write a stock selection pipeline that uses the criteria given by `Greenblatt's Magic Formula <https://en.wikipedia.org/wiki/Magic_formula_investing>`_. 
 
 - You want to write your selections to a database that will be read by a program which submits your selections to the NYSE
 
 Data
 ----
-Click below to donwload a `.csv` file containing the data necessary to complete the tutorial.
+Click below to download a `.csv` file containing the data necessary to complete the tutorial.
 
 :download:`stock_data.csv </_include/tutorials/stock_data.csv>`
 
@@ -47,7 +47,7 @@ Background
 ~~~~~~~~~~
 You are building a stock selection pipeline. The pipeline takes in all stocks on the NYSE and at each stage in the pipeline and reduces the number of stocks that are under consideration for purchase. 
 
-You are implementing a popular stategy in this tutorial known as `Greenblatt's Magic Formula <https://en.wikipedia.org/wiki/Magic_formula_investing>`_. You will adjust our strategy 
+You are implementing a popular strategy in this tutorial known as `Greenblatt's Magic Formula <https://en.wikipedia.org/wiki/Magic_formula_investing>`_. You will adjust our strategy 
 slightly:
 
 1. Establish a minimum market capitalization greater than $50 million.

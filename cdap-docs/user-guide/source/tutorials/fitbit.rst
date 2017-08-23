@@ -15,15 +15,15 @@ This tutorial demonstrates how to use CDAP's Data Preparation and Data Pipelines
 
 Scenario
 ---------
-You receive FitBit device data in JSON format. You are interested in sharing the data with an outside contracter, but you need to mask the data to remove personally identify information before sharing (i.e., data masking). You will parse FitBit JSON data, extract the UNIX timestamp, masking the devices' IDs, hash the results, and store into a CDAP table. 
+You receive FitBit device data in JSON format. You are interested in sharing the data with an outside contractor, but you need to mask the data to remove personally identifying information before sharing (i.e., data masking). 
 
-- You need to parse, transform, and clean events sent by IoT (Fitbit devices)
+- You will parse FitBit JSON data, extract the UNIX timestamp, mask the devices' IDs, hash the results, and store into a CDAP table
 
-- You need to write masked results to a database that will be used by the contractor
+- You will write masked results to a database that will be used by the contractor
 
 Data
 ----
-Click below to donwload a `.json` file containing the data necessary to complete the tutorial.
+Click below to download a `.json` file containing the data necessary to complete the tutorial.
 
 :download:`FitBit_Device.json </_include/tutorials/FitBit_Device.json>`
 
@@ -51,13 +51,13 @@ To split the JSON fields into columns, apply the Parse > JSON directive one more
 
 You will now have four columns: `body_device_id`, `body_calories_burnt`, `body_duration`, `body_timestamp`.
 
-Drop the `body_duration` by selecting the drop-down menu and choosing Delete Column. You don't need this column since every row has the same value of `60`.
+Drop the `body_duration` column by selecting the drop-down menu and choosing Delete Column. You don't need this column since every row has the same value of `60`.
 
 Masking the Device IDs
 ~~~~~~~~~~~~~~~~~~~~~~~
-This data contains FitBit device IDs. This is personally information and potentially compromising to the users whose data has been collected. You want to mask this data to ensure that important personal information cannot be stolen by malicious actors.
+This data contains FitBit device IDs. This is personally identifying information and potentially compromising to the users whose data has been collected. You want to mask this data to ensure that important personal information cannot be stolen by malicious actors.
 
-To do this, you can apply the `Mask Data` directive from the drop-down menu of the the `body_device_id` column. 
+To do this, you can apply the `Mask Data` directive from the drop-down menu of the `body_device_id` column. 
 
 .. figure:: /_images/tutorials/fitbit/mask.jpeg
 	:figwidth: 100%
@@ -102,7 +102,7 @@ To do, so type the following directive into the prompt at the bottom of the scre
 
 The `set-type` directive is used for converting between different data types. Here, you have converted a String to a Float, which is used to represent floating-point decimal numbers.
 
-Now that you have the timestamp in the proper data type, you want to calculate the modula as described above. You can use the `body_timestamp` drop-down menu to apply the modulo operation. Select Calculate > Modulo, then specify 86400.
+Now that you have the timestamp in the proper data type, you want to calculate the modulo as described above. You can use the `body_timestamp` drop-down menu to apply the modulo operation. Select Calculate > Modulo, then specify 86400.
 
 .. figure:: /_images/tutorials/fitbit/mod.jpeg
 	:figwidth: 100%
@@ -145,7 +145,7 @@ When you apply this directive, you will see the following:
 
 What happened here? 
 
-In Data Preparation, you ingested a single "record," which is the FitBit.json file. Although you have split this single record into several output records, it is still a single input record. Hence, when you apply `send-to-error`, you mark the whole record as erroneous. Consquently, no data is shown.
+In Data Preparation, you ingested a single "record," which is the FitBit.json file. Although you have split this single record into several output records, it is still a single input record. Hence, when you apply `send-to-error`, you mark the whole record as erroneous. Consequently, no data is shown.
 
 `send-to-error` is very useful when you don't want to accept your data as a whole unless everything is valid. 
 
@@ -175,7 +175,7 @@ You will see that the erroneous row has now been removed.
 
 Encoding the Data for Transmission
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Plain text in transmission is more resilient to transmission errors when it is encoded in Base64. You would therefore like to encode all your columsn in Base64.
+Plain text in transmission is more resilient to transmission errors when it is encoded in Base64. You would therefore like to encode all your columns in Base64.
 
 First, convert `body_calories_burnt` and `body_timestamp` back to strings by applying the directive `set-type body_calories_burnt String` and `set-type body_timestamp String`. 
 
@@ -199,7 +199,7 @@ Storing the Results in a Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Finally, you want to write your data to a Table, which can be exported and sent to the analysts who will study the masked data.
 
-A table requires a unique identifier for each row. Because you have masked the unique device IDs, it is possible that the Base64 encoding of the last 4 digits match. To be sure that no rows are overwritten, you will you the `generate-uuid` directive.
+A table requires a unique identifier for each row. Because you have masked the unique device IDs, it is possible that the Base64 encoding of the last 4 digits match. To be sure that no rows are overwritten, you will use the `generate-uuid` directive.
 
 A UUID is a unique identifier. The `generate-uuid` generates a UUID for each row. Type `generate-uuid uuid` in the prompt the bottom of the screen, which will create a new column called `uuid`. 
 

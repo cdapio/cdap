@@ -23,7 +23,7 @@ Your organization, a multinational enterprise with holdings across several conti
 
 Data
 ----
-Click below to donwload a `.xml` file containing the data necessary to complete the tutorial.
+Click below to donwnload a `.xml` file containing the data necessary to complete the tutorial.
 
 :download:`nytimes-world.xml </_include/tutorials/nytimes-world.xml>`
 
@@ -60,7 +60,7 @@ On the right hand side of your screen, there are two tabs used to control data s
   :align: center
   :class: bordered-image
 
-You will see that the corresponding column has been highlighted. Usin the caret icon next to the column name, select `Keep Selected Columns.`
+You will see that the corresponding column has been highlighted. Using the caret icon next to the column name, select `Keep Selected Columns.`
 
 `Keep Selected Columns` is a useful directive because it allows you to drop a large number of columns by only selecting the small subset you are interested in retaining.
 
@@ -76,7 +76,7 @@ Finally, you will remove all the columns that do not contain information useful 
 - `body_rss_channel_item_category`
 - `body_rss_channel_item_pubDate`
 
-Selecting the drop-down caret from one of these colums, choose the `Keep Selected Columns` option.
+Selecting the drop-down caret from one of these columns, choose the `Keep Selected Columns` option.
 
 Rename the columns above (in the same order) to:
 
@@ -142,13 +142,13 @@ From the `link` column drop-down, select Extract Fields > Using Patterns.
 
 In the `Extract Fields Using Patterns` menu, choose `Start/End` pattern. Specify the start pattern to be `http://www.nytimes.com` and the end pattern to be `?partner=rss&emc=rss`.
 
-Click `Extract`. You can now delete the `link` columm and rename `link_1_1` to `link`.
+Click `Extract`. You can now delete the `link` column and rename `link_1_1` to `link`.
 
 Formatting the Date
 ~~~~~~~~~~~~~~~~~~~
 You would like to turn the `pubDate` column, which is a String, into a `Date` object. From the `pubDate` column, choose Parse > Natural Date. The timezone is `GMT`.
 
-When you apply this directive, you will see a new column called `pubDate_1` containg a Date object. You can delete the `pubDate` column and rename this new column to `pubDate`.
+When you apply this directive, you will see a new column called `pubDate_1` containing a Date object. You can delete the `pubDate` column and rename this new column to `pubDate`.
 
 Cleaning the Author Names
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -194,7 +194,7 @@ Arrange the canvas in the format shown below.
 
 You can align the nodes by clicking the `Align` button, which is the fourth option from the top.
 
-Open the top `Python Evaluator` node by double clicking on the node. Replace the pre-populated code with the following snippet:
+Open the top `Python Evaluator` node configuration. Replace the pre-populated code with the following snippet:
 
 .. code-block:: python
 
@@ -231,7 +231,7 @@ To do so, click `Preview`:
   :align: center
   :class: bordered-image
 
-When you click `Run`, you will see that the timer will begin tracking how long the pipleine has run. When it terminates, you can see the records that have passed through each node. For example, clicking on the `BrazilEvaluator`, you can see that only records matching `Brazil` have passed:
+When you click `Run`, you will see that the timer will begin tracking how long the pipeline has run. When it completes, you can see the records that have passed through each node. For example, clicking on the `BrazilEvaluator`, you can see that only records matching `Brazil` have passed:
 
 .. figure:: /_images/tutorials/nytimes/brazil.jpeg
   :figwidth: 100%

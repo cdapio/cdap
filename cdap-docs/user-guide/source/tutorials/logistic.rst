@@ -11,11 +11,11 @@ Example: Building a Fraud Classification Machine Learning Model
 
 Introduction
 ------------
-In this tutorial, you will learn how to use CDAP to build and operationalize an enterprise-ready Machine Learning for prediciting credit fraud using only CDAP’s point-and-click interfaces.
+In this tutorial, you will learn how to use CDAP to build and operationalize an enterprise-ready Machine Learning for predicting credit fraud using only CDAP’s point-and-click interfaces.
 
 Scenario
 ---------
-You are processing a large number of credit card transactions. Identfiying which transactions are fraudelent is business critical.
+You are processing a large number of credit card transactions. Identifying which transactions are fraudulent is business critical.
 
 - You want to train a Logistic Regression model using labeled data
 
@@ -23,7 +23,7 @@ You are processing a large number of credit card transactions. Identfiying which
 
 Data
 ----
-Click below to donwload a `.csv` file containing the data necessary to complete the tutorial.
+Click the link below to download a `.csv` file containing the data necessary to complete the tutorial.
 
 :download:`fraud_train.csv </_include/tutorials/fraud_train.csv>`
 
@@ -41,7 +41,10 @@ Download the data linked in the Data section above. Open Data Preparation, and u
 
 Cleaning and Exploring the Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-First, you need to parse the data. From the `body` column drop-down menu, select Parse > CSV, setting the first row as the header. Next, from the `body` column drop-down, select Delete Column. You may also delete the `id` column, since we will not be using it in our regression. 
+First, you need to parse the data:
+
+- From the `body` column drop-down menu, select Parse > CSV, setting the first row as the header. 
+- Next, from the `body` column drop-down, select Delete Column. You may also delete the `id` column, since we will not be using it in our regression. 
 
 We have eight predictive variables, all of which have been normalized except for Amount:
 
@@ -50,7 +53,7 @@ We have eight predictive variables, all of which have been normalized except for
 - `normalized_time_since_last_transaction`: Time since the last purchase.
 - `normalized_average_transaction`: Average transaction size.
 - `normalized_time_till_expiration`: Time until the card expires.
-- `normalized_daily_average_transaction`: Average amount transacted per day.
+- `normalized_daily_average_transaction`: Average number of transactions per day.
 - `normalized_change_in_merchant_sales`: Change over the previous day in merchant sales.
 - `Amount`: Amount spent in the transaction.
 
@@ -126,7 +129,7 @@ You will see the following configuration appear on your screen.
 	:align: center
 	:class: bordered-image
 
-Since you are training a Logistic Regression model, you now want to add a Logistic Regression plugin to the canvas. You will need to download this plugin, which availabe on the Cask Market. 
+Since you are training a Logistic Regression model, you now want to add a Logistic Regression plugin to the canvas. You will need to download this plugin, which is available on the Cask Market. 
 
 Choose "Cask Market" in the global navigation bar. Find "Logistic Regression Analytics" in the application menu and deploy the plugin.
 
@@ -150,7 +153,7 @@ Looking at the canvas, you will see that several stages have small yellow number
 
 Open the `File` stage and rename it (by changing the label and reference name) to "CreditCardSource." Similarly, rename "Wrangler" to "CreditTransform" and "LogisticRegressionTrainer" to "FraudTrainerSink." 
 
-In the Trainer configuration, specify `Label Field` to be Class. This is the field that you Logistic Regression model will predict. Also, give `FileSet Name` the value "FraudModel," which is the fileset in which the trained model will be stored.
+In the Trainer configuration, specify `Label Field` to be Class. This is the field that your Logistic Regression model will predict. Also, give `FileSet Name` the value "FraudModel," which is the fileset in which the trained model will be stored.
 
 .. figure:: /_images/tutorials/logistic/trainer_config.jpeg
 	:figwidth: 100%
@@ -166,7 +169,7 @@ Your configured pipeline will appear as the pipeline below.
 	:align: center
 	:class: bordered-image
 
-To test your pipeline configuration, click `Preview` in the upper right hander corner, then `Run`. Opening the LogisticRegressionTrainer, you will be able to see the records that have flown through in the `Preview` tab.
+To test your pipeline configuration, click `Preview` in the upper right hander corner, then `Run`. Once the preview is complete you can open the LogisticRegressionTrainer and see the records that have flown through in the `Preview` tab.
 
 .. figure:: /_images/tutorials/logistic/verify.jpeg
 	:figwidth: 100%
@@ -181,7 +184,7 @@ Testing: Evaluating Unknown Events
 Return to Data Preparation, where you were working with the "fraud_train.csv" file. Click "Create Pipeline" again.
 
 
-Delete the File node. In its place, connect a "Stream" source to the "Wrangler" stage. You repeated this original procedure because the Wrangler stage has all the same transsformations you want to apply to your test data.
+Delete the File node. In its place, connect a "Stream" source to the "Wrangler" stage. You repeated this original procedure because the Wrangler stage has all the same transformations you want to apply to your test data.
 
 .. figure:: /_images/tutorials/logistic/delete.jpeg
 	:figwidth: 100%
@@ -227,7 +230,7 @@ These events should be pasted into this box:
 	:align: center
 	:class: bordered-image
 
-Return your pipeline and click "Run". Finally, you can inspect the "FraudSink" classification results by clicking "View Details" from the configuation and querying the database. Looking at the `Class` field, you will see that two the these events have a Class of "1", indicating that they were predicted to be fraudulent.
+Return your pipeline and click "Run". Finally, you can inspect the "FraudSink" classification results by clicking "View Details" from the configuration and querying the database. Looking at the `Class` field, you will see that two the these events have a Class of "1", indicating that they were predicted to be fraudulent.
 
 .. figure:: /_images/tutorials/logistic/fraud.jpeg
 	:figwidth: 100%
