@@ -24,8 +24,6 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.BinaryEncoder;
 import co.cask.cdap.common.io.DatumWriter;
 import co.cask.cdap.common.io.Encoder;
-import co.cask.cdap.common.logging.LogSamplers;
-import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.messaging.MessagingService;
@@ -55,7 +53,6 @@ import java.util.concurrent.TimeUnit;
 public class MessagingMetricsCollectionService extends AggregatedMetricsCollectionService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MessagingMetricsCollectionService.class);
-  private static final Logger TOPIC_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(1000));
 
   private final MessagingService messagingService;
   private final DatumWriter<MetricValues> recordWriter;
@@ -94,10 +91,8 @@ public class MessagingMetricsCollectionService extends AggregatedMetricsCollecti
       recordWriter.encode(metricValues, encoder);
       // Calculate the topic number with the hashcode of MetricValues' tags and store the encoded payload in the
       // corresponding list of the topic number
-      int topicNumber = Math.abs(metricValues.getTags().hashCode() % size);
-      // this log is useful in knowing to which topic the program's metrics are emitted to
-      TOPIC_LOG.debug("Metrics is emitted to topic {}", topicPayloads.get(topicNumber).topicId.getTopic());
-      topicPayloads.get(topicNumber).addPayload(encoderOutputStream.toByteArray());
+      topicPayloads.get(Math.abs(metricValues.getTags().hashCode() % size))
+        .addPayload(encoderOutputStream.toByteArray());
     }
     publishMetric(topicPayloads.values());
   }

@@ -245,4 +245,12 @@
     </description>
   </property>
 
+  <property>
+    <name>standalone.disable.ui</name>
+    <value>true</value>
+    <description>
+      Determines if Kerberos authentication is enabled
+    </description>
+  </property>
+
 </configuration>

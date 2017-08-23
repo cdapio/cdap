@@ -118,7 +118,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new LoggingModules().getInMemoryModules());
     install(new LogReaderRuntimeModules().getInMemoryModules());
     install(new MetricsHandlerModule());
-    install(new MetricsClientRuntimeModule().getCollectionServiceBindingModule());
+    install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());
     install(new NotificationFeedServiceRuntimeModule().getInMemoryModules());
     install(new NotificationServiceRuntimeModule().getInMemoryModules());

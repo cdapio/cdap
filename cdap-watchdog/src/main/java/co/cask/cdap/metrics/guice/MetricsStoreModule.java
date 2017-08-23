@@ -17,11 +17,15 @@
 package co.cask.cdap.metrics.guice;
 
 import co.cask.cdap.api.metrics.MetricStore;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
 
 /**
  * Guice module for providing bindings for {@link MetricStore}.

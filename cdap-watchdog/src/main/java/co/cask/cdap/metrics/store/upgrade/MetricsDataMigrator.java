@@ -139,7 +139,7 @@ public class MetricsDataMigrator {
     this.metricsTableNamePrefix = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                             UpgradeMetricsConstants.DEFAULT_METRICS_TABLE_PREFIX);
     this.metricsTableName = metricsTableNamePrefix + ".agg";
-    aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE});
+    aggMetricStore = new DefaultMetricStore(factory, new int[]{Integer.MAX_VALUE}, cConf);
     this.cConf = cConf;
     this.hConf = hConf;
   }

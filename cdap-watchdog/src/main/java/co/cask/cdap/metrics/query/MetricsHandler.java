@@ -17,21 +17,13 @@
 package co.cask.cdap.metrics.query;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
-import co.cask.cdap.metrics.process.MetricsProcessorStats;
-import co.cask.cdap.metrics.process.TopicIdMetaKey;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -40,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.GET;
@@ -58,23 +49,11 @@ public class MetricsHandler extends AbstractHttpHandler {
 
   private final MetricsQueryHelper metricsQueryHelper;
   private final List<TopicId> metricsTopics;
-  private final Supplier<MetricsConsumerMetaTable> metaTableSupplier;
 
   @Inject
-  public MetricsHandler(MetricsQueryHelper metricsQueryHelper, final MetricDatasetFactory metricDatasetFactory,
-                        @Named(Constants.Metrics.TOPIC_PREFIX) String topicPrefix,
-                        @Named(Constants.Metrics.MESSAGING_TOPIC_NUM) Integer topicNumbers) {
+  public MetricsHandler(MetricsQueryHelper metricsQueryHelper) {
     this.metricsQueryHelper = metricsQueryHelper;
     this.metricsTopics = new ArrayList<>();
-    for (int i = 0; i < topicNumbers; i++) {
-      this.metricsTopics.add(NamespaceId.SYSTEM.topic(topicPrefix + i));
-    }
-    this.metaTableSupplier = Suppliers.memoize(new Supplier<MetricsConsumerMetaTable>() {
-      @Override
-      public MetricsConsumerMetaTable get() {
-        return metricDatasetFactory.createConsumerMeta();
-      }
-    });
   }
 
   @POST
@@ -139,11 +118,6 @@ public class MetricsHandler extends AbstractHttpHandler {
   @GET
   @Path("/processor/status")
   public void processorStatus(HttpRequest request, HttpResponder responder) throws Exception {
-    MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
-    Map<TopicId, MetricsProcessorStats> processMap = new HashMap<>();
-    for (TopicId topicId : metricsTopics) {
-      processMap.put(topicId, metaTable.getMetricsProcessorStats(new TopicIdMetaKey(topicId)));
-    }
-    responder.sendJson(HttpResponseStatus.OK, processMap);
+    responder.sendJson(HttpResponseStatus.OK, metricsQueryHelper.getMetricStore().getMetricsProcessorStats());
   }
 }

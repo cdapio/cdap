@@ -147,7 +147,7 @@ public abstract class MetricsSuiteTestBase {
       new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new MetricsHandlerModule(),
-      new MetricsClientRuntimeModule().getCollectionServiceBindingModule(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),

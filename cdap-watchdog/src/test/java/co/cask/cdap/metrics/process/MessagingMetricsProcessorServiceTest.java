@@ -18,6 +18,7 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
+import co.cask.cdap.api.metrics.MetricProcessorStat;
 import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -40,6 +41,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -222,6 +224,11 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     @Override
     public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
       return null;
+    }
+
+    @Override
+    public Map<String, MetricProcessorStat> getMetricsProcessorStats() throws Exception {
+      return Collections.EMPTY_MAP;
     }
 
     Map<String, Long> getAllMetrics() {

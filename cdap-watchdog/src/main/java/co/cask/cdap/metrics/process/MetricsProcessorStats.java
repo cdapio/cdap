@@ -65,7 +65,7 @@ public final class MetricsProcessorStats {
   }
 
   @Nullable
-  byte[] getMessageId() {
+  public byte[] getMessageId() {
     return messageId;
   }
 

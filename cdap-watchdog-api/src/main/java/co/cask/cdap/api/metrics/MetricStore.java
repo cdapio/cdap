@@ -17,6 +17,8 @@
 package co.cask.cdap.api.metrics;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Stores and provides access to metrics data.
@@ -81,4 +83,6 @@ public interface MetricStore {
    * @return collection of metric names in no particular order
    */
   Collection<String> findMetricNames(MetricSearchQuery query) throws Exception;
+
+  Map<String, MetricProcessorStat> getMetricsProcessorStats() throws Exception;
 }

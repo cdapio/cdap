@@ -18,6 +18,8 @@ package co.cask.cdap.metrics.guice;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.metrics.collect.AggregatedMetricsCollectionService;
 import co.cask.cdap.metrics.collect.LocalMetricsCollectionService;
@@ -27,7 +29,9 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.name.Named;
 
 import java.util.Iterator;
 
@@ -70,20 +74,6 @@ public final class MetricsClientRuntimeModule extends RuntimeModule {
       }
     };
   }
-
-  public Module getCollectionServiceBindingModule() {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        // skip the metric store metric dataset binding;
-        // this module is used when injector also uses MetricsHandlerModule
-        // MetricsHandler Module has the binding for the metric dataset and metric store
-        bind(MetricsCollectionService.class).to(LocalMetricsCollectionService.class).in(Scopes.SINGLETON);
-        expose(MetricsCollectionService.class);
-      }
-    };
-  }
-
   @Override
   public Module getDistributedModules() {
     return new DistributedMetricsClientModule();
