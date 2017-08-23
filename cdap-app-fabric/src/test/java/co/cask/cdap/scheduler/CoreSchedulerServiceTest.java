@@ -88,6 +88,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -102,6 +103,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+@Ignore
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
 
