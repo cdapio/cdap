@@ -107,9 +107,13 @@ public class PluginSpec implements Externalizable {
     out.writeUTF(type);
     out.writeUTF(name);
     out.writeObject(properties);
-    out.writeUTF(artifact.getName());
-    out.writeUTF(artifact.getVersion().getVersion());
-    out.writeUTF(artifact.getScope().name());
+    out.writeBoolean(artifact != null);
+    // can be null for connectors
+    if (artifact != null) {
+      out.writeUTF(artifact.getName());
+      out.writeUTF(artifact.getVersion().getVersion());
+      out.writeUTF(artifact.getScope().name());
+    }
   }
 
   @Override
@@ -117,9 +121,12 @@ public class PluginSpec implements Externalizable {
     type = in.readUTF();
     name = in.readUTF();
     properties = (Map<String, String>) in.readObject();
-    String artifactName = in.readUTF();
-    ArtifactVersion artifactVersion = new ArtifactVersion(in.readUTF());
-    ArtifactScope artifactScope = ArtifactScope.valueOf(in.readUTF());
-    artifact = new ArtifactId(artifactName, artifactVersion, artifactScope);
+    boolean artifactExists = in.readBoolean();
+    if (artifactExists) {
+      String artifactName = in.readUTF();
+      ArtifactVersion artifactVersion = new ArtifactVersion(in.readUTF());
+      ArtifactScope artifactScope = ArtifactScope.valueOf(in.readUTF());
+      artifact = new ArtifactId(artifactName, artifactVersion, artifactScope);
+    }
   }
 }

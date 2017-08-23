@@ -244,7 +244,7 @@ public class MapReduceTransformExecutorFactory<T> {
 
     // handle ending stage case, which don't use PipeEmitter
     if (pipeline.getSinks().contains(stageName)) {
-      if (Constants.CONNECTOR_TYPE.equals(pluginType) || BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+      if (Constants.Connector.PLUGIN_TYPE.equals(pluginType) || BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         // connectors and joiners require the getting the RecordInfo class directly instead of unwrapping it
         Transformation<RecordInfo<Object>, Object> sink = getTransformation(stageSpec);
         return new DirectOutputPipeStage<>(stageName, sink, new SinkEmitter<>(stageName, outputWriter));
@@ -259,7 +259,7 @@ public class MapReduceTransformExecutorFactory<T> {
     // into a RecordInfo
     // ConnectorSources require a special emitter since they need to build RecordInfo from the temporary dataset
     PipeEmitter.Builder emitterBuilder =
-      Constants.CONNECTOR_TYPE.equals(pluginType) && pipeline.getSources().contains(stageName) ?
+      Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources().contains(stageName) ?
         ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
 
     emitterBuilder.setErrorOutputWriter(errorOutputs.get(stageName));
@@ -274,14 +274,14 @@ public class MapReduceTransformExecutorFactory<T> {
         emitterBuilder.addErrorConsumer(outputPipeStage);
       } else if (AlertPublisher.PLUGIN_TYPE.equals(outputStageType)) {
         emitterBuilder.addAlertConsumer(outputPipeStage);
-      } else if (Constants.CONNECTOR_TYPE.equals(pluginType)) {
+      } else if (Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
         // connectors only have a single output
         emitterBuilder.addOutputConsumer(outputPipeStage);
       } else {
         // if the output is a connector like agg5.connector, the outputPorts will contain the original 'agg5' as
         // a key, but not 'agg5.connector' so we need to lookup the original stage from the connector's plugin spec
-        String originalOutputName = Constants.CONNECTOR_TYPE.equals(outputStageType) ?
-          outputStageSpec.getPlugin().getProperties().get(Constants.CONNECTOR_ORIGINAL_NAME) : outputStageName;
+        String originalOutputName = Constants.Connector.PLUGIN_TYPE.equals(outputStageType) ?
+          outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME) : outputStageName;
 
         String port = outputPorts.containsKey(originalOutputName) ? outputPorts.get(originalOutputName).getPort()
           : null;

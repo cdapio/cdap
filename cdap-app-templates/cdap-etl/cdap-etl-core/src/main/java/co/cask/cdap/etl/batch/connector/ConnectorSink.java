@@ -17,20 +17,13 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.data.batch.Output;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,15 +39,15 @@ import java.util.Map;
  * This is because we don't want this to show up as a plugin that users can select and use, and also because
  * it uses features not exposed in the etl api (local workflow datasets).
  *
- * Connectors store the stage name each record came from in case they are placed in front of a joiner.
- *
  * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
+ *
+ * @param <T> type of input object
  */
-public class ConnectorSink extends BatchSink<RecordInfo<StructuredRecord>, NullWritable, Text> {
+public abstract class ConnectorSink<T> extends BatchSink<T, NullWritable, Text> {
   private final String datasetName;
   private final String phaseName;
 
-  public ConnectorSink(String datasetName, String phaseName) {
+  protected ConnectorSink(String datasetName, String phaseName) {
     this.datasetName = datasetName;
     this.phaseName = phaseName;
   }
@@ -65,24 +58,5 @@ public class ConnectorSink extends BatchSink<RecordInfo<StructuredRecord>, NullW
     PartitionKey outputPartition = PartitionKey.builder().addStringField("phase", phaseName).build();
     PartitionedFileSetArguments.setOutputPartitionKey(arguments, outputPartition);
     context.addOutput(Output.ofDataset(datasetName, arguments));
-  }
-
-  @Override
-  public void transform(RecordInfo<StructuredRecord> input, Emitter<KeyValue<NullWritable, Text>> emitter)
-    throws Exception {
-    StructuredRecord modifiedRecord = modifyRecord(input);
-    emitter.emit(new KeyValue<>(NullWritable.get(), new Text(StructuredRecordStringConverter.
-      toJsonString(modifiedRecord))));
-  }
-
-  private StructuredRecord modifyRecord(RecordInfo<StructuredRecord> input) throws IOException {
-    String stageName = input.getFromStage();
-    Schema inputSchema = input.getValue().getSchema();
-    return StructuredRecord.builder(ConnectorSource.RECORD_WITH_SCHEMA)
-      .set("stageName", stageName)
-      .set("type", input.getType().name())
-      .set("schema", inputSchema.toString())
-      .set("record", StructuredRecordStringConverter.toJsonString(input.getValue()))
-      .build();
   }
 }

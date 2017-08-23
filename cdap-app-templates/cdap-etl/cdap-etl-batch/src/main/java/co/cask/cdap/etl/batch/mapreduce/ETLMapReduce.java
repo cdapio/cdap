@@ -45,6 +45,7 @@ import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.StageFailureException;
+import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
 import co.cask.cdap.etl.common.Constants;
@@ -210,7 +211,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
 
     PipelinePhase phase = phaseSpec.getPhase();
-    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, mrMetrics, phaseSpec);
+    PipelinePluginInstantiator pluginInstantiator =
+      new PipelinePluginInstantiator(context, mrMetrics, phaseSpec, new MultiConnectorFactory());
 
     // should never happen if planner is correct
     Set<StageSpec> reducers = phaseSpec.getPhase().getStagesOfType(BatchAggregator.PLUGIN_TYPE,
@@ -239,8 +241,10 @@ public class ETLMapReduce extends AbstractMapReduce {
     for (final String stageName : phase.getDag().getTopologicalOrder()) {
       final StageSpec stageSpec = phase.getStage(stageName);
       String pluginType = stageSpec.getPluginType();
-      boolean isConnectorSource = Constants.CONNECTOR_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
-      boolean isConnectorSink = Constants.CONNECTOR_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
+      boolean isConnectorSource =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
+      boolean isConnectorSink =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
 
       SubmitterPlugin submitterPlugin = null;
       if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {

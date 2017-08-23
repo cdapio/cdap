@@ -23,9 +23,13 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.preview.DataTracer;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.etl.batch.connector.ConnectorSink;
+import co.cask.cdap.etl.batch.connector.ConnectorSource;
+import co.cask.cdap.etl.batch.connector.SingleConnectorSink;
+import co.cask.cdap.etl.batch.connector.SingleConnectorSource;
 import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.PipelineRuntime;
@@ -77,6 +81,15 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public <T> T createPlugin() throws Exception {
+    if (Constants.Connector.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
+      String connectorType = stageSpec.getPlugin().getProperties().get(Constants.Connector.TYPE);
+      // ok to pass in null to constructors here since we are only going to use the transform method
+      if (connectorType.equals(Constants.Connector.SOURCE_TYPE)) {
+        return (T) new SingleConnectorSource(null, null);
+      } else {
+        return (T) new SingleConnectorSink(null, null);
+      }
+    }
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
     return getPluginContext().newPluginInstance(stageSpec.getName(), macroEvaluator);
   }

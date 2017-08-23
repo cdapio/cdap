@@ -48,6 +48,7 @@ import co.cask.cdap.etl.batch.condition.PipelineCondition;
 import co.cask.cdap.etl.batch.connector.AlertPublisherSink;
 import co.cask.cdap.etl.batch.connector.AlertReader;
 import co.cask.cdap.etl.batch.connector.ConnectorSource;
+import co.cask.cdap.etl.batch.connector.MultiConnectorSource;
 import co.cask.cdap.etl.batch.customaction.PipelineAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.Constants;
@@ -85,7 +86,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Data Pipeline Smart Workflow.
@@ -395,14 +395,14 @@ public class SmartWorkflow extends AbstractWorkflow {
 
   private BatchPhaseSpec getPhaseSpec(String programName, PipelinePhase phase) {
     // if this phase uses connectors, add the local dataset for that connector if we haven't already
-    for (StageSpec connectorInfo : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
+    for (StageSpec connectorInfo : phase.getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
       String connectorName = connectorInfo.getName();
       String datasetName = connectorDatasets.get(connectorName);
       if (datasetName == null) {
         datasetName = "conn-" + connectorNum++;
         connectorDatasets.put(connectorName, datasetName);
         // add the local dataset
-        ConnectorSource connectorSource = new ConnectorSource(datasetName, null);
+        ConnectorSource connectorSource = new MultiConnectorSource(datasetName, null);
         connectorSource.configure(getConfigurer());
       }
     }
@@ -415,7 +415,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     Map<String, String> phaseConnectorDatasets = new HashMap<>();
-    for (StageSpec connectorStage : phase.getStagesOfType(Constants.CONNECTOR_TYPE)) {
+    for (StageSpec connectorStage : phase.getStagesOfType(Constants.Connector.PLUGIN_TYPE)) {
       phaseConnectorDatasets.put(connectorStage.getName(), connectorDatasets.get(connectorStage.getName()));
     }
 
