@@ -64,6 +64,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.HydratorPlusPlusConfigStore.registerOnChangeListener(this.setState.bind(this));
     this.DAGPlusPlusNodesStore.registerOnChangeListener(this.setActiveNodes.bind(this));
     this.focusTimeout = null;
+    this.fetchMacrosTimeout = null;
     this.timeoutInMinutes = 2;
 
     if ($stateParams.isClone) {
@@ -133,7 +134,12 @@ class HydratorPlusPlusTopPanelCtrl {
     this.userRuntimeArgumentsMap = this.previewStore.getState().preview.userRuntimeArguments;
 
     if (Object.keys(this.macrosMap).length === 0) {
-      this.fetchMacros();
+      if (this.fetchMacrosTimeout) {
+        this.$timeout.cancel(this.fetchMacrosTimeout);
+      }
+      this.fetchMacrosTimeout = this.$timeout(() => {
+        this.fetchMacros();
+      });
     }
 
     $scope.$on('$destroy', () => {
@@ -144,6 +150,7 @@ class HydratorPlusPlusTopPanelCtrl {
       );
       this.$interval.cancel(this.previewTimerInterval);
       this.$timeout.cancel(this.focusTimeout);
+      this.$timeout.cancel(this.fetchMacrosTimeout);
     });
   }
 
@@ -284,7 +291,7 @@ class HydratorPlusPlusTopPanelCtrl {
 
   fetchMacros() {
     let newMacrosMap = {};
-    let nodes = this.HydratorPlusPlusConfigStore.getStages();
+    let nodes = this.HydratorPlusPlusConfigStore.getNodes();
 
     for (let i = 0; i < nodes.length; i++) {
       let properties = this.myHelpers.objectQuery(nodes[i], 'plugin', 'properties');

@@ -263,6 +263,13 @@ angular.module(PKG.name + '.commons')
       vm.instance.unmakeEverySource();
       vm.instance.unmakeEveryTarget();
 
+      // This is to handle special case when we open a pipeline with only one node,
+      // thought not sure why jsPlumb behaves differently in this case. Exclude
+      // condition nodes since we add endpoints differently for those
+      if ($scope.nodes.length === 1 && $scope.nodes[0].type !== 'condition') {
+        vm.instance.deleteEveryEndpoint();
+      }
+
       angular.forEach($scope.nodes, function (node) {
         if (node.type !== 'condition') {
           let sourceObj = {
