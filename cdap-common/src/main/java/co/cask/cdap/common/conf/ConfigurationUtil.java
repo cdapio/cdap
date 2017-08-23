@@ -42,7 +42,7 @@ public final class ConfigurationUtil {
   }
 
   public static <T> T get(Configuration conf, String key, Codec<T> codec) throws IOException {
-    String value = conf.get(key);
+    String value = conf.getRaw(key);
     LOG.trace("De-serializing {} {}", key, value);
     // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
     // skipped.
