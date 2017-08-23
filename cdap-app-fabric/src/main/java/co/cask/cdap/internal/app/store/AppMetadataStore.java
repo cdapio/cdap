@@ -204,7 +204,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
     if (existing == null) {
       String msg = String.format("No meta for namespace %s app %s exists", namespaceId, appId);
       LOG.error(msg);
-      throw new IllegalArgumentException(msg);
+      return;
     }
 
     updated = ApplicationMeta.updateSpec(existing, spec);
@@ -342,7 +342,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                    programId.getNamespace(), programId.getApplication(), programId.getType().name(),
                                    programId.getProgram(), pid);
         LOG.error(msg);
-        throw new IllegalArgumentException(msg);
+        return;
       }
     }
 
@@ -409,7 +409,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                  programId.getNamespace(), programId.getApplication(), programId.getType().name(),
                                  programId.getProgram(), pid);
       LOG.error(msg);
-      throw new IllegalArgumentException(msg);
+      return;
     }
 
     // Since the key contains the RunId/PID in addition to the programId, it is ok to deleteAll.
@@ -473,7 +473,7 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
                                  programId.getVersion(), programId.getType().name(), programId.getProgram(), pid,
                                  runStatus.name());
       LOG.error(msg);
-      throw new IllegalArgumentException(msg);
+      return;
     }
 
     deleteAll(key);

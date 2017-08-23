@@ -104,7 +104,7 @@ import javax.annotation.Nullable;
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
-  public static final String TRIGGERING_PROPERTIES_MAPPING = "triggeringPropertiesMapping";
+  public static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
