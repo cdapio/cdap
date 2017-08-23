@@ -502,8 +502,7 @@ public class UpgradeTool {
     ScheduleStoreTableUtil.setupDatasets(datasetFramework);
 
     // metrics data
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, hConf,
-                                                                          hBaseTableUtil, datasetFramework);
+    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(cConf, datasetFramework);
     DefaultMetricDatasetFactory.setupDatasets(factory);
 
     // Usage registry

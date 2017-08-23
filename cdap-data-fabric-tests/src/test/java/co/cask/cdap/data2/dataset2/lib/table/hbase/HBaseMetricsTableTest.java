@@ -182,8 +182,9 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     Scanner v2Scanner = v2Table.scan(null, null, null);
     Scanner v3Scanner = v3Table.scan(null, null, null);
 
-    CombinedMetricsScanner combinedScanner = new CombinedMetricsScanner(v2Scanner, v3Scanner);
-
+    CombinedMetricsScanner combinedScanner = new CombinedMetricsScanner(v2Scanner, v3Scanner,
+                                                                        getDatasetId("v2Table"),
+                                                                        dsFramework);
     Row firstRow = combinedScanner.next();
     Assert.assertEquals(1L, Bytes.toLong(firstRow.getRow()));
     Iterator<Map.Entry<byte[], byte[]>> colIterator = firstRow.getColumns().entrySet().iterator();
@@ -222,7 +223,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
   public void testCombinedTablePut() throws Exception {
     MetricsTable v2Table = getTable("v2Table");
     MetricsTable v3Table = getTable("v3Table");
-    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table, 1, cConf, hConf, tableUtil);
+    MetricsTable combinedMetricsTable = new CombinedHBaseMetricsTable(v2Table, v3Table, 1, cConf, dsFramework);
 
     // Already existing data on v2
     v2Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
@@ -292,7 +293,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // add just column A value for key X in table v3, so this is an increment, while column B is a gauge.
     v3Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                   .put(X, mapOf(A, Bytes.toLong(A))).build());
-    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table, cConf);
+    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table);
     Assert.assertTrue(metricsTableMigration.isOldMetricsDataAvailable());
     metricsTableMigration.transferData(Integer.MAX_VALUE);
 
@@ -308,10 +309,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     Assert.assertFalse(metricsTableMigration.isOldMetricsDataAvailable());
   }
 
+  private DatasetId getDatasetId(String tableNamePrefix) {
+    return NamespaceId.SYSTEM.dataset(tableNamePrefix + "v3");
+  }
   @Override
   protected MetricsTable getTable(String name) throws Exception {
     // add v3 so that all the tests are performed for v3 table
-    DatasetId metricsDatasetInstanceId = NamespaceId.SYSTEM.dataset(name + "v3");
+    DatasetId metricsDatasetInstanceId = getDatasetId(name);
     DatasetProperties props = TableProperties.builder().setReadlessIncrementSupport(true).build();
     return DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                            MetricsTable.class.getName(), props, null);

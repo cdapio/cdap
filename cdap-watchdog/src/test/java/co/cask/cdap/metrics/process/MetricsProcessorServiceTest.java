@@ -25,7 +25,6 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
@@ -38,7 +37,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
@@ -133,9 +131,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore, 1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
-                                           injector.getInstance(DatasetFramework.class), cConf,
-                                           new Configuration(),
-                                           null, true);
+                                           injector.getInstance(DatasetFramework.class), cConf, true);
     messagingMetricsProcessorService.startAndWait();
 
     long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -154,8 +150,7 @@ public class MetricsProcessorServiceTest extends MetricsProcessorServiceTestBase
                                            messagingService, injector.getInstance(SchemaGenerator.class),
                                            injector.getInstance(DatumReaderFactory.class),
                                            metricStore, 500L, 100, partitions, new NoopMetricsContext(), 50, 0,
-                                           injector.getInstance(DatasetFramework.class), cConf, new Configuration(),
-                                           null, true);
+                                           injector.getInstance(DatasetFramework.class), cConf, true);
     messagingMetricsProcessorService.startAndWait();
 
     // Publish metrics after MessagingMetricsProcessorService restarts and record expected metrics

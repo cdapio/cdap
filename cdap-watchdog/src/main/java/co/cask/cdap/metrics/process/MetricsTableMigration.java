@@ -34,6 +34,7 @@ import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * perform table data migration from v2 metrics table to v3.
@@ -43,13 +44,10 @@ public class  MetricsTableMigration {
 
   private final MetricsTable v2MetricsTable;
   private final MetricsTable v3MetricsTable;
-  private final CConfiguration cConf;
 
-  public MetricsTableMigration(MetricsTable v2MetricsTable, MetricsTable v3MetricsTable,
-                               CConfiguration cConf) {
+  public MetricsTableMigration(MetricsTable v2MetricsTable, MetricsTable v3MetricsTable) {
     this.v2MetricsTable = v2MetricsTable;
     this.v3MetricsTable = v3MetricsTable;
-    this.cConf = cConf;
   }
 
   /**
@@ -66,14 +64,16 @@ public class  MetricsTableMigration {
   /**
    * transfers data from v2 metrics table to v3 metrics table, limit on number of records is specified by
    * maxRecordsToScan
-   * @param maxRecordsToScan - limit on number of records scanned
+   * @param sleepMillisBetweenRecords time in milliseconds to sleep between each record transfer
+   * @throws InterruptedException if it was interrupted when sleeping between record transfer
    */
-  public void transferData(int maxRecordsToScan) {
+  public void transferData(int sleepMillisBetweenRecords) throws InterruptedException {
     try (Scanner scanner = v2MetricsTable.scan(null, null, null)) {
-      LOG.trace("Starting scanning for Metrics Data Migration with {} max records", maxRecordsToScan);
+      LOG.trace("Starting Metrics Data Migration with {} ms sleep between records",
+                sleepMillisBetweenRecords);
       Row row;
       int recordsScanned = 0;
-      while ((recordsScanned < maxRecordsToScan) && ((row = scanner.next()) != null)) {
+      while (((row = scanner.next()) != null)) {
         if (recordsScanned % 10 == 0) {
           LOG.trace("Scanned {} records in Metrics Data Migration", recordsScanned);
         }
@@ -81,7 +81,6 @@ public class  MetricsTableMigration {
         byte[] rowKey = row.getRow();
         Map<byte[], byte[]> columns = row.getColumns();
         //row-map
-        SortedMap<byte[], SortedMap<byte[], Long>> rowGauges = new TreeMap<>(Bytes.BYTES_COMPARATOR);
         NavigableMap<byte[], NavigableMap<byte[], Long>> rowIncrements = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
         // column-map gauges
@@ -99,6 +98,9 @@ public class  MetricsTableMigration {
             // so its safe to skip delete on checkAndPut failure
             if (v3MetricsTable.swap(rowKey, entry.getKey(), null, entry.getValue())) {
               gaugeDeletes.add(entry.getKey());
+            } else {
+              LOG.trace("Swap operation failed for rowkey {} column {} with new value {}",
+                        rowKey, entry.getKey(), entry.getValue());
             }
           } else {
             increments.put(entry.getKey(), Bytes.toLong(entry.getValue()));
@@ -118,6 +120,7 @@ public class  MetricsTableMigration {
           v3MetricsTable.increment(rowIncrements);
         }
         recordsScanned++;
+        TimeUnit.MILLISECONDS.sleep(sleepMillisBetweenRecords);
       }
       LOG.debug("Migrated {} records from the metrics table {}", recordsScanned, v2MetricsTable);
     }
@@ -133,11 +136,5 @@ public class  MetricsTableMigration {
       deletes[index++] = column;
     }
     return deletes;
-  }
-
-  private TableId getV2MetricsTableName(int resolution) {
-    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                   Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    return TableId.from(NamespaceId.SYSTEM.getNamespace(), v2TableName);
   }
 }

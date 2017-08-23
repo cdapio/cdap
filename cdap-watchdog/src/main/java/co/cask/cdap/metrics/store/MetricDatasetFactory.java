@@ -27,20 +27,6 @@ public interface MetricDatasetFactory {
 
   /**
    * @param resolution resolution of {@link FactTable}
-   * @return A new instance of v2 {@link MetricsTable} if the table already exists, null otherwise
-   * @Nullable
-   */
-  MetricsTable getV2MetricsTable(int resolution);
-
-  /**
-   * @param resolution resolution of {@link FactTable}
-   * @return A new instance of v3 {@link MetricsTable} if the table already exists, null otherwise
-   * @Nullable
-   */
-  MetricsTable getV3MetricsTable(int resolution);
-
-  /**
-   * @param resolution resolution of {@link FactTable}
    * @return A new instance of {@link FactTable}.
    */
   FactTable getOrCreateFactTable(int resolution);

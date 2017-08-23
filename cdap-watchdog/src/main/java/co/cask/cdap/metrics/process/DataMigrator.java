@@ -15,163 +15,80 @@
  */
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.api.dataset.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import org.apache.hadoop.conf.Configuration;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 /**
  * Migrates data from v2 table to v3 table with salting.
  */
-public class DataMigrator {
+public class DataMigrator extends Thread {
   private static final Logger LOG = LoggerFactory.getLogger(DataMigrator.class);
 
-  private final LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap;
-  private final ScheduledExecutorService scheduledExecutorService;
-  private final MigrationTableUtility migrationTableUtility;
-  private final CConfiguration cConf;
-
-
+  private final List<Integer> resolutions;
+  private final DatasetFramework datasetFramework;
+  private final String v2TableNamePrefix;
+  private final String v3TableNamePrefix;
+  private final int sleepMillisBetweenTransfer;
 
   /**
-   * Data migrator to schedule data migration for metrics tables from v2 to v3 metrics tables.
-   * @param metricDatasetFactory metric dataset factory
-   * @param cConf cConfiguration
-   * @param hConf hConfiguratioin
-   * @param hBaseTableUtil Hbase table util
-   * @param maxRecordsToScanResolutionMap linked hash map of resolutions to perform migration
-   *                                      to the max records to scan for that resolution table
-   *                                      while performing migration
-   * @param executorService scheduled executor service
+   * Data migrator to run data migration for metrics tables from v2 to v3 metrics tables.
+   * @param resolutions - list of resolution tables to migrate data from
+   * @param sleepMillisBetweenTransfer while the data transfer is running -
+   *                                   amount of time to sleep between each record transfer
    */
-  public DataMigrator(MetricDatasetFactory metricDatasetFactory, CConfiguration cConf, Configuration hConf,
-                      HBaseTableUtil hBaseTableUtil, LinkedHashMap<Integer, Integer> maxRecordsToScanResolutionMap,
-                      ScheduledExecutorService executorService) {
-    this.migrationTableUtility = new MigrationTableUtility(cConf, hConf, metricDatasetFactory, hBaseTableUtil);
-    this.maxRecordsToScanResolutionMap = maxRecordsToScanResolutionMap;
-    this.scheduledExecutorService = executorService;
-    this.cConf = cConf;
+  public DataMigrator(DatasetFramework datasetFramework, List<Integer> resolutions,
+                      String v2TableNamePrefix, String v3TableNamePrefix, int sleepMillisBetweenTransfer) {
+    this.datasetFramework = datasetFramework;
+    this.resolutions = resolutions;
+    this.v2TableNamePrefix = v2TableNamePrefix;
+    this.v3TableNamePrefix = v3TableNamePrefix;
+    this.sleepMillisBetweenTransfer = sleepMillisBetweenTransfer;
   }
 
-  /**
-   * if the metrics data migration is already completed, we would just shutdown the executor service and return
-   * if not, we would schedule migration task at fixed rate schedule.
-   * when the migration is complete, the task would shutdown the executor service by itself
-   */
-  public void scheduleMigrationIfNecessary() {
-    if (!isMigrationComplete()) {
-      // we have 5 minute initial delay for availability of transaction/dataset service
-      // to be able to get the metrics table or if v3 tables are not already created they might take some time
-      // initially, we don't have to perform
-      scheduledExecutorService.scheduleAtFixedRate(new MigrationTask(), 5, 1, TimeUnit.MINUTES);
-      LOG.info("Scheduled metrics migration thread for resolution INT_MAX, 3600, 60 tables");
-    } else {
-      scheduledExecutorService.shutdown();
-    }
-  }
-
-  /**
-   * returns true when data migration is complete and
-   * all v2 metrics tables data has been migrated for configured resolutions ; false otherwise
-   * @return true if migration is complete; false otherwise
-   */
-  private boolean isMigrationComplete() {
-    Iterator<Integer> resolutions = maxRecordsToScanResolutionMap.keySet().iterator();
-
-    if (!resolutions.hasNext()) {
-      // all tables in migrationOrder map have been deleted, so migration is complete;
-      // useful when metrics.processor is running and completed migration
-      // and the run method removed all the entries from map when the tables were deleted
-      return true;
-    }
-
-    // when metrics.processor restarts and initializes DataMigrator,
-    // this is useful to decide whether to schedule migration thread or not
-    while (resolutions.hasNext()) {
-      int resolution = resolutions.next();
-      if (migrationTableUtility.v2MetricsTableExists(resolution)) {
-        try (MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable(resolution);
-             MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable(resolution)) {
-          if (v2MetricsTable == null || v3MetricsTable == null) {
-            // dataset/hbase service not available, skipping check this time, will try in next schedule.
-            // return false to try again in next attempt,
-            // by false we will proceed to run the migration, however if all tables have been migrated
-            // migrationTask can handle that scenario and shutdown the executor service.
-            return false;
+  @Override
+  public void run() {
+    // iterate through resolutions, if datasetFramework has v2metricsTable then try to get V2 table with a retry
+    // once you get v2 table, get v3 table and run migration
+    // if v2 table does not exist continue to next resolution
+    // if no v2 tables exist then exit this thread - data migration is complete.
+    for (int resolution : resolutions) {
+      try {
+        DatasetId v2MetricsTableId = getMetricsDatasetId(v2TableNamePrefix, resolution);
+        DatasetId v3MetricsDatasetId = getMetricsDatasetId(v3TableNamePrefix, resolution);
+        if (MigrationTableHelper.hasInstanceWithRetry(datasetFramework, v2MetricsTableId)) {
+          try (MetricsTable v2MetricsTable =
+                 MigrationTableHelper.getDatasetWithRetry(datasetFramework, v2MetricsTableId);
+               MetricsTable v3MetricsTable =
+                 MigrationTableHelper.getDatasetWithRetry(datasetFramework, v3MetricsDatasetId)) {
+            MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2MetricsTable, v3MetricsTable);
+            metricsTableMigration.transferData(sleepMillisBetweenTransfer);
+            LOG.info("Metrics table data migration is complete for resolution {}", resolution);
+            // now transfer is complete; its safe to delete the v2 metrics table
+            MigrationTableHelper.deleteInstanceWithRetry(datasetFramework, v3MetricsDatasetId);
+            LOG.debug("Deleted Metrics table for resolution {}", resolution);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            break;
           }
-          MetricsTableMigration metricsTableMigration =
-            new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
-          // if metrics data is available in old table, return false
-          if (metricsTableMigration.isOldMetricsDataAvailable()) {
-            return false;
-          }
-        } catch (IOException e) {
-          // exception while closing metrics tables - ignoring
         }
-      }
-    }
-    // all tables data have been migrated, so migration is complete
-    return true;
-  }
-
-  private final class MigrationTask implements Runnable {
-    public void run() {
-
-      Iterator<Integer> resolutions = maxRecordsToScanResolutionMap.keySet().iterator();
-      // iterate through resolutions, remove entry from iterator
-      // if the table has been deleted for that resolution or if there are no more data available in the table
-      while (resolutions.hasNext()) {
-        int resolution = resolutions.next();
-        if (migrationTableUtility.v2MetricsTableExists(resolution)) {
-          try (MetricsTable v3MetricsTable = migrationTableUtility.getV3MetricsTable(resolution);
-               MetricsTable v2MetricsTable = migrationTableUtility.getV2MetricsTable(resolution)) {
-            if (v2MetricsTable == null || v3MetricsTable == null) {
-              // dataset/hbase service not available, return,
-              // will try to get table and perform migration in next schedule.
-              return;
-            }
-
-            MetricsTableMigration metricsTableMigration =
-              new MetricsTableMigration(v2MetricsTable, v3MetricsTable, cConf);
-
-            try {
-              if (metricsTableMigration.isOldMetricsDataAvailable()) {
-                LOG.info("Metrics data is available in v2 metrics - {} resolution table.. " +
-                           "Running Migration", resolution);
-                metricsTableMigration.transferData(maxRecordsToScanResolutionMap.get(resolution));
-                break;
-              } else {
-                // no more metrics data is available for transfer, remove from iterator
-                resolutions.remove();
-              }
-            } catch (Exception e) {
-              LOG.warn("Exception while performing metrics data transfer", e);
-            }
-          } catch (IOException e) {
-            // exception while closing metrics tables - ignoring
-          }
-        } else {
-          // table does not exist, remove from map
-          resolutions.remove();
-        }
-      }
-
-      if (maxRecordsToScanResolutionMap.isEmpty()) {
-        // this will be printed once so safe to log it in info
-        LOG.info("Metrics migration complete for resolution INT_MAX, 3600, 60 table");
-        scheduledExecutorService.shutdown();
+      } catch (DatasetManagementException | IOException e) {
+        LOG.error("Exception while performing dataset operation during metrics table migration", e);
+        // TODO : confirm if this is okay
         return;
       }
     }
   }
 
+  private DatasetId getMetricsDatasetId(String tableNamePrefix, int resolution) {
+    String tableName =  tableNamePrefix + resolution;
+    return NamespaceId.SYSTEM.dataset(tableName);
+  }
 }

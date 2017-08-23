@@ -29,7 +29,7 @@ public class LocalMetricsDatasetFactory extends DefaultMetricDatasetFactory {
 
   @Inject
   public LocalMetricsDatasetFactory(CConfiguration cConf, DatasetFramework dsFramework) {
-    super(cConf, null, null, dsFramework);
+    super(cConf, dsFramework);
   }
 
   @Override

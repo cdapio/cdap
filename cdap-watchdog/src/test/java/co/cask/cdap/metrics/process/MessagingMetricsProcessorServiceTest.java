@@ -34,7 +34,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
 import org.junit.Test;
@@ -89,8 +88,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
                                              messagingService, injector.getInstance(SchemaGenerator.class),
                                              injector.getInstance(DatumReaderFactory.class), metricStore,
                                              1000L, 5, partitions, new NoopMetricsContext(), 50, 0,
-                                             injector.getInstance(DatasetFramework.class), cConf, new Configuration(),
-                                             null, true);
+                                             injector.getInstance(DatasetFramework.class), cConf, true);
       messagingMetricsProcessorService.startAndWait();
 
       // Wait for the 1 aggregated counter metric (with value 50) and 50 gauge metrics to be stored in the metricStore

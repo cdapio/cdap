@@ -16,17 +16,16 @@
 
 package co.cask.cdap.data2.dataset2.lib.table.hbase;
 
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.FuzzyRowFilter;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
-import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.io.Closeables;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,20 +57,18 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
   private final MetricsTable v3HBaseTable;
   private final int resolution;
   private final CConfiguration cConf;
-  private final Configuration hConf;
-  private final HBaseTableUtil hBaseTableUtil;
+  private final DatasetFramework datasetFramework;
 
   private MetricsTable v2HBaseTable;
 
   public CombinedHBaseMetricsTable(MetricsTable v2HBaseTable, MetricsTable v3HBaseTable,
-                                   int tableResoluton, CConfiguration cConfiguration, Configuration hConf,
-                                   HBaseTableUtil hBaseTableUtil) {
+                                   int tableResoluton, CConfiguration cConfiguration,
+                                   DatasetFramework datasetFramework) {
     this.v2HBaseTable = v2HBaseTable;
     this.v3HBaseTable = v3HBaseTable;
     this.resolution = tableResoluton;
     this.cConf = cConfiguration;
-    this.hConf = hConf;
-    this.hBaseTableUtil = hBaseTableUtil;
+    this.datasetFramework = datasetFramework;
   }
 
 
@@ -147,9 +144,14 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
 
   private void handleTableException(Exception e) {
     if (e instanceof IOException) {
-      if (!v2MetricsTableExists()) {
-        Closeables.closeQuietly(v2HBaseTable);
-        v2HBaseTable = null;
+      try {
+        if (!v2MetricsTableExists()) {
+          Closeables.closeQuietly(v2HBaseTable);
+          v2HBaseTable = null;
+        }
+      } catch (DatasetManagementException dme) {
+        // TODO : how to handle this exception ? should we throw ?
+        LOG.error("Exception while checking dataset exists", dme);
       }
     }
   }
@@ -166,7 +168,7 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
     }
 
     Scanner v3Scan = v3HBaseTable.scan(start, stop, filter);
-    return new CombinedMetricsScanner(v2Scan, v3Scan);
+    return new CombinedMetricsScanner(v2Scan, v3Scan, getV2MetricsTableDatasetId(), datasetFramework);
   }
 
   @Override
@@ -177,27 +179,17 @@ public class CombinedHBaseMetricsTable implements MetricsTable {
     }
   }
 
-  private TableId getV2MetricsTableName(int resolution) {
+  private DatasetId getV2MetricsTableDatasetId() {
     String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                    Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    return TableId.from(NamespaceId.SYSTEM.getNamespace(), v2TableName);
+    return NamespaceId.SYSTEM.dataset(v2TableName);
   }
 
   /**
    * check if v2 metrics table exists for the resolution
    * @return true if table exists; false otherwise
    */
-  public boolean v2MetricsTableExists() {
-    TableId tableId = getV2MetricsTableName(resolution);
-    try {
-      try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
-        TableId hBaseTableId =
-          hBaseTableUtil.createHTableId(new NamespaceId(tableId.getNamespace()), tableId.getTableName());
-        return hBaseTableUtil.tableExists(admin, hBaseTableId);
-      }
-    } catch (IOException e) {
-      LOG.warn("Exception while checking table exists", e);
-    }
-    return false;
+  public boolean v2MetricsTableExists() throws DatasetManagementException {
+    return datasetFramework.hasInstance(getV2MetricsTableDatasetId());
   }
 }

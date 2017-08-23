@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.store;
 
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.TableProperties;
@@ -29,7 +28,6 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.CombinedHBaseMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.proto.id.DatasetId;
@@ -40,13 +38,10 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Collections;
-import javax.annotation.Nullable;
 
 /**
  *
@@ -57,18 +52,12 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
-  private final Configuration hConf;
-  private final HBaseTableUtil hBaseTableUtil;
   private final Supplier<EntityTable> entityTable;
   private final DatasetFramework dsFramework;
 
   @Inject
-  public DefaultMetricDatasetFactory(final CConfiguration cConf, @Nullable final Configuration hConf,
-                                     @Nullable HBaseTableUtil hBaseTableUtil,
-                                     DatasetFramework dsFramework) {
+  public DefaultMetricDatasetFactory(final CConfiguration cConf, DatasetFramework dsFramework) {
     this.cConf = cConf;
-    this.hConf = hConf;
-    this.hBaseTableUtil = hBaseTableUtil;
     this.dsFramework = dsFramework;
     this.entityTable = Suppliers.memoize(new Supplier<EntityTable>() {
       @Override
@@ -78,20 +67,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
         return new EntityTable(getOrCreateMetricsTable(tableName, DatasetProperties.EMPTY));
       }
     });
-  }
-
-  @Override
-  public MetricsTable getV3MetricsTable(int resolution) {
-    String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                   Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts." + resolution);
-    return getResolutionMetricsTable(v3TableName);
-  }
-
-  @Override
-  public MetricsTable getV2MetricsTable(int resolution) {
-    String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                   Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX) + ".ts." + resolution;
-    return getResolutionMetricsTable(v2TableName);
   }
 
   // todo: figure out roll time based on resolution from config? See DefaultMetricsTableFactory for example
@@ -137,30 +112,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     return table;
   }
 
-  /**
-   * get the metrics table identified by tableName param if it exists, returns null if it doesn't exist.
-   * @param tableName
-   * @return MetricsTable ; null if the table does not exists
-   * @Nullable
-   */
-  private MetricsTable getResolutionMetricsTable(String tableName) {
-    try {
-      // metrics tables are in the system namespace
-      DatasetId tableId = NamespaceId.SYSTEM.dataset(tableName);
-      if (dsFramework.hasInstance(tableId)) {
-        return getDataset(tableId);
-      }
-    } catch (Exception e) {
-      throw Throwables.propagate(e);
-    }
-    return null;
-  }
-
-  private <T extends Dataset> T getDataset(DatasetId datasetInstanceId)
-    throws DatasetManagementException, IOException {
-    return dsFramework.getDataset(datasetInstanceId, Collections.<String, String>emptyMap(), null);
-  }
-
   protected MetricsTable getOrCreateResolutionMetricsTable(String v3TableName, TableProperties.Builder props,
                                                            int resolution) {
     try {
@@ -182,7 +133,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
       if (v2Table != null) {
         // the cluster is upgraded, so use Combined Metrics Table
-        return new CombinedHBaseMetricsTable(v2Table, v3Table, resolution, cConf, hConf, hBaseTableUtil);
+        return new CombinedHBaseMetricsTable(v2Table, v3Table, resolution, cConf, dsFramework);
       }
 
       return v3Table;
