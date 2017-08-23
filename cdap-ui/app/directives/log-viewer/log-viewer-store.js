@@ -16,9 +16,9 @@
 
 var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   const startTime = (state = null, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.START_TIME:
-        if(!action.payload.startTime) {
+        if (!action.payload.startTime) {
           return state;
         }
         return action.payload.startTime;
@@ -29,11 +29,11 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
-  //Scroll Position Reducer
+  // Scroll Position Reducer
   const scrollPosition = (state = null, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.SCROLL_POSITION:
-        if(!action.payload.scrollPosition) {
+        if (!action.payload.scrollPosition) {
           return state;
         }
         return action.payload.scrollPosition;
@@ -44,9 +44,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
-  //Scroll Position Reducer
+  // Scroll Position Reducer
   const fullScreen = (state = false, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.FULL_SCREEN:
         return action.payload.fullScreen;
       case LOGVIEWERSTORE_ACTIONS.RESET:
@@ -57,9 +57,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   };
 
   const searchResults = (state = [], action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.SEARCH_RESULTS:
-        if(!action.payload.searchResults) {
+        if (!action.payload.searchResults) {
           return state;
         }
         return action.payload.searchResults;
@@ -71,9 +71,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   };
 
   const totalLogs = (state = 0, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.TOTAL_LOGS:
-        if(!action.payload.totalLogs) {
+        if (!action.payload.totalLogs) {
           return state;
         }
         return action.payload.totalLogs;
@@ -85,9 +85,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   };
 
   const totalErrors = (state = 0, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.TOTAL_ERRORS:
-        if(!action.payload.totalErrors) {
+        if (!action.payload.totalErrors) {
           return state;
         }
         return action.payload.totalErrors;
@@ -99,9 +99,9 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   };
 
   const totalWarnings = (state = 0, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.TOTAL_WARNINGS:
-        if(!action.payload.totalWarnings) {
+        if (!action.payload.totalWarnings) {
           return state;
         }
         return action.payload.totalWarnings;
@@ -119,7 +119,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
   };
 
   const statusInfo = (state = defaultStatusState, action = {}) => {
-    switch(action.type) {
+    switch (action.type) {
       case LOGVIEWERSTORE_ACTIONS.SET_STATUS:
         return Object.assign({}, state, {
           status: action.payload.status,
@@ -133,7 +133,7 @@ var LogViewerStore = (LOGVIEWERSTORE_ACTIONS, Redux, ReduxThunk) => {
     }
   };
 
-  //Combine the reducers
+  // Combine the reducers
   let {combineReducers, applyMiddleware} = Redux;
   let combinedReducers = combineReducers({
     startTime,
