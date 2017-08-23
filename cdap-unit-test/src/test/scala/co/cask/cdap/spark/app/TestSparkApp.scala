@@ -73,9 +73,10 @@ class TestSparkApp extends AbstractApplication[Config] {
     addSpark(new TriggeredSpark)
 
     addWorkflow(new ForkSparkWorkflow)
+
     addWorkflow(new TriggeredWorkflow)
     schedule(buildSchedule("schedule", ProgramType.WORKFLOW, classOf[TriggeredWorkflow].getSimpleName)
-      .triggerOnProgramStatus(ProgramType.WORKFLOW, classOf[ForkSparkWorkflow].getSimpleName, ProgramStatus.COMPLETED))
+      .triggerOnProgramStatus(ProgramType.SPARK, classOf[ScalaClassicSpark].getSimpleName, ProgramStatus.COMPLETED))
   }
 
   final class ClassicSpark extends AbstractSpark {

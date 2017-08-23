@@ -16,9 +16,10 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.schedule.{ProgramStatusTriggerInfo, TriggeringScheduleInfo}
-import co.cask.cdap.api.spark.{AbstractSpark, SparkExecutionContext, SparkMain}
-import com.google.common.base.Preconditions
+import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo
+import co.cask.cdap.api.spark.AbstractSpark
+import co.cask.cdap.api.spark.SparkExecutionContext
+import co.cask.cdap.api.spark.SparkMain
 import org.apache.spark.SparkContext
 
 /**
@@ -31,14 +32,11 @@ final class TriggeredSpark extends AbstractSpark with SparkMain {
   }
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
-    val scheduleInfoOption: Option[TriggeringScheduleInfo] = sec.getTriggeringScheduleInfo
-    Preconditions.checkState(scheduleInfoOption.isDefined)
-    val triggerInfo = sec.getTriggeringScheduleInfo.get.getTriggerInfos.get(0).asInstanceOf[ProgramStatusTriggerInfo]
-    Preconditions.checkState(classOf[TestSparkApp].getSimpleName
-      .equals(triggerInfo.getApplicationSpecification.getName))
     val sc = new SparkContext
+    val triggerInfo = sec.getTriggeringScheduleInfo.get.getTriggerInfos.get(0).asInstanceOf[ProgramStatusTriggerInfo]
+
     val sum = sc.parallelize(Seq(1, 2, 3, 4, 5))
-      .filter(_ => triggerInfo.getProgram().equals("ForkSparkWorkflow")).reduce(_ + _)
+      .filter(_ => triggerInfo.getProgram().equals("ScalaClassicSpark")).reduce(_ + _)
     require(sum == 15)
   }
 }

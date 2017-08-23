@@ -290,20 +290,20 @@ public class SparkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testSparkForkAndSparkTriggeredBySchedule() throws Exception {
+  public void testSparkProgramStatusSchedule() throws Exception {
     ApplicationManager appManager = deploy(TestSparkApp.class);
-    File barrierDir = TMP_FOLDER.newFolder();
     ScheduleId scheduleId = new ScheduleId(NamespaceId.DEFAULT.getNamespace(), TestSparkApp.class.getSimpleName(),
                                            "schedule");
     appManager.enableSchedule(scheduleId);
-    final WorkflowManager workflowManager = appManager.getWorkflowManager(
-      TestSparkApp.ForkSparkWorkflow.class.getSimpleName())
-      .start(Collections.singletonMap("barrier.dir", barrierDir.getAbsolutePath()));
 
+    SparkManager sparkManager =
+      appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName()).start();
+
+    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    WorkflowManager workflowManager =
+      appManager.getWorkflowManager(TestSparkApp.TriggeredWorkflow.class.getSimpleName());
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
-    WorkflowManager triggeredWorkflowManager = appManager.getWorkflowManager(
-      TestSparkApp.TriggeredWorkflow.class.getSimpleName());
-    triggeredWorkflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
   }
 
   @Test
