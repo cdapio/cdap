@@ -42,6 +42,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
   protected void configure() {
     // Bind ProgramStateWriter
     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+    expose(ProgramStateWriter.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> defaultProgramRunnerBinder =

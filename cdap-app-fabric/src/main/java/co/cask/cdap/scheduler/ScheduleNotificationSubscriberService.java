@@ -46,7 +46,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -131,7 +130,8 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
     }
 
     @Override
-    protected final void processNotifications(DatasetContext context, Iterator<Notification> notifications) {
+    protected final void processNotifications(
+      DatasetContext context, AbstractNotificationSubscriberService.NotificationIterator notifications) {
       ProgramScheduleStoreDataset scheduleStore = getScheduleStore(context);
       JobQueueDataset jobQueue = getJobQueue(context);
 

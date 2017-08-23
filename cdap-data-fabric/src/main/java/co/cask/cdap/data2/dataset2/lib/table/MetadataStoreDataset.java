@@ -19,6 +19,7 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Delete;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
@@ -127,6 +128,29 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  // Get all non-null values with the given ids
+  public <T> List<T> get(Set<MDSKey> ids, Type typeOfT) {
+    List<T> resultList = new ArrayList<>();
+    List<Get> getList = new ArrayList<>();
+    for (MDSKey id : ids) {
+      getList.add(new Get(id.getKey()));
+    }
+    List<Row> rowList = table.get(getList);
+    for (Row row : rowList) {
+      if (row.isEmpty()) {
+        continue;
+      }
+
+      byte[] value = row.get(COLUMN);
+      if (value == null) {
+        continue;
+      }
+      T result = deserialize(value, typeOfT);
+      resultList.add(result);
+    }
+    return resultList;
   }
 
   // lists all that has same first id parts

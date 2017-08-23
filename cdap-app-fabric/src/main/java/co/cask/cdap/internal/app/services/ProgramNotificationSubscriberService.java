@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -145,14 +144,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     @Override
-    protected void processNotifications(DatasetContext context, Iterator<Notification> notifications) {
+    protected void processNotifications(DatasetContext context,
+                                        AbstractNotificationSubscriberService.NotificationIterator notifications) {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       while (notifications.hasNext()) {
-        processNotification(appMetadataStore, notifications.next());
+        processNotification(appMetadataStore, notifications.next(), notifications.getLastMessageId().getBytes());
       }
     }
 
-    private void processNotification(AppMetadataStore appMetadataStore, Notification notification) {
+    private void processNotification(AppMetadataStore appMetadataStore, Notification notification,
+                                     byte[] messageIdBytes) {
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
@@ -212,7 +213,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
           Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
           appMetadataStore.recordProgramStart(programId, runId, startTimeSecs, twillRunId,
-                                              userArguments, systemArguments);
+                                              userArguments, systemArguments, messageIdBytes);
           return;
         case RUNNING:
           long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
@@ -222,13 +223,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                      programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
             return;
           }
-          appMetadataStore.recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId);
+          appMetadataStore.recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId, messageIdBytes);
           return;
         case SUSPENDED:
-          appMetadataStore.recordProgramSuspend(programId, runId);
+          appMetadataStore.recordProgramSuspend(programId, runId, messageIdBytes);
           return;
         case RESUMING:
-          appMetadataStore.recordProgramResumed(programId, runId);
+          appMetadataStore.recordProgramResumed(programId, runId, messageIdBytes);
           return;
         case COMPLETED:
         case KILLED:
@@ -237,7 +238,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                      programRunId, notification);
             return;
           }
-          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null);
+          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null, messageIdBytes);
           return;
         case FAILED:
           if (endTimeSecs == -1) {
@@ -246,7 +247,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             return;
           }
           BasicThrowable cause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
-          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause);
+          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause, messageIdBytes);
           return;
         default:
           // This should not happen
