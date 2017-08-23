@@ -1280,6 +1280,31 @@ features:
       runTime: Run Time
       totalRuns: TotalRuns
     title: 'Summary'
+
+  PipelineTriggers:
+    collapsedTabLabel: "Show Inbound Triggers ({count})"
+    description: Description
+    EnabledTriggers:
+      buttonLabel: Disable Trigger
+      pipelineCount: "{count} pipeline is set as trigger"
+      tabLabel: "View Enabled Triggers ({count})"
+      title: "View pipelines enabled to trigger pipeline \"{pipelineName}\""
+    Events:
+      COMPLETED: Succeeds
+      FAILED: Fails
+      KILLED: Stops
+    expandedTabLabel: "Hide Inbound Triggers ({count})"
+    helperText: "\"{pipelineName}\" is triggered when this pipeline"
+    namespace: Namespace
+    pipelineName: Pipeline Name
+    SetTriggers:
+      buttonLabel: Enable Trigger
+      pipelineCount: "{count} pipelines available"
+      tabLabel: Set Pipeline Triggers
+      title: "Set which pipeline triggers \"{pipelineName}\""
+      viewNamespace: View pipelines in namespace
+    viewPipeline: View Pipeline
+
   PropertiesEditor:
     AddProperty:
       button: Add Property
@@ -1458,6 +1483,22 @@ features:
   Tags:
     label: Tags
     notags: No tags found. Click to add a new business tag.
+
+  TriggeredPipelines:
+    collapsedTabLabel: "Show Outbound Triggers ({count})"
+    description: Description
+    Events:
+      COMPLETED: Succeeds
+      KILLED: Stopped
+      FAILED: Fails
+    expandedTabLabel: "Hide Outbound Triggers ({count})"
+    helperText: "This pipeline is triggered when \"{pipelineName}\""
+    namespace: Namespace
+    pipelineCount: "{count} pieplines triggered"
+    pipelineName: Pipeline Name
+    title: "Pipelines to be triggered by \"{pipelineName}\""
+    viewPipeline: View Pipeline
+
   ViewSwitch:
     actionsLabel: Actions
     DatasetStreamTable:
