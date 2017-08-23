@@ -94,6 +94,7 @@ function makeApp (authAddress, cdapConfig, uiSettings) {
       },
       marketUrl: cdapConfig['market.base.url'],
       sslEnabled: cdapConfig['ssl.external.enabled'] === 'true',
+      header: uiSettings['header'],
       securityEnabled: authAddress.enabled,
       isEnterprise: process.env.NODE_ENV === 'production',
       sandboxMode: process.env.NODE_ENV

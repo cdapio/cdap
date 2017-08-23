@@ -71,9 +71,16 @@
   .brand-section {
     display: inline-block;
     vertical-align: top;
-    min-width: 108px;
-    img {
+    width: 108px;
+    margin-left: 10px;
+    > a {
+      width: inherit;
       height: 50px;
+      display: flex;
+      align-items: center;
+    }
+    img {
+      width: inherit;
     }
   }
 

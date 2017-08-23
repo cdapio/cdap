@@ -16,6 +16,7 @@
 
 import React, { PropTypes } from 'react';
 import classNames from 'classnames';
+import {objectQuery} from 'services/helpers';
 
 const CustomDropdownMenu = (props, context) => {
   let { className, right, children, tag:Tag } = props;
@@ -26,7 +27,15 @@ const CustomDropdownMenu = (props, context) => {
   );
   Tag = Tag || 'ul';
   return (
-    <Tag tabIndex="-1" aria-hidden={!context.isOpen} role="menu" className={classes}>
+    <Tag
+      tabIndex="-1"
+      aria-hidden={!context.isOpen}
+      role="menu"
+      className={classes}
+      style={{
+        'background-color': objectQuery(window.CDAP_CONFIG, 'header', 'color')
+      }}
+      >
       {children}
     </Tag>
   );

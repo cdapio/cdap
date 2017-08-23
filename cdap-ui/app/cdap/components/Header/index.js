@@ -29,6 +29,7 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
 import DataPrepDropdown from 'components/Header/DataPrepDropdown';
+import {objectQuery} from 'services/helpers';
 
 require('./Header.scss');
 
@@ -120,7 +121,9 @@ export default class Header extends Component {
     };
 
     return (
-      <div className="global-navbar">
+      <div className="global-navbar" style={{
+        'background-color': objectQuery(window.CDAP_CONFIG, 'header', 'color')
+      }}>
         <div
           className="global-navbar-toggler float-xs-right btn"
           onClick={this.toggleNavbar.bind(this)}
@@ -138,11 +141,11 @@ export default class Header extends Component {
               <NavLink
                 to={`/ns/${this.state.currentNamespace}`}
               >
-                <img src="/cdap_assets/img/company_logo.png" />
+                <img src="/cdap_assets/img/company_logo.png" style={{"width": objectQuery(window.CDAP_CONFIG, 'header', 'logo', 'width')}} />
               </NavLink>
             :
-              <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
-                <img src="/cdap_assets/img/company_logo.png" />
+              <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})} >
+                <img src="/cdap_assets/img/company_logo.png" style={{"width": objectQuery(window.CDAP_CONFIG, 'header', 'logo', 'width')}} />
               </a>
           }
         </div>
