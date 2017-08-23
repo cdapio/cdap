@@ -345,17 +345,43 @@ public class DataPipelineTest extends HydratorTestBase {
     String key1 = "trigger-runtime-arg";
     String key2 = "trigger-plugin-property";
     String key3 = "trigger-token";
-    ETLStage action1 = new ETLStage("action1", MockAction.getPlugin(tableName, "row1", "column1",
-                                                                    String.format("${%s}", key1)));
-    ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
-      .addStage(action1)
+    String sourceName = "runtimeArgInput-" + engine;
+    String sinkName = "runtimeArgOutput-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
+      .addStage(new ETLStage("action1", MockAction.getPlugin(tableName, "row1", "column1",
+                                                             String.format("${%s}", key1))))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(tableName, "row2", "column2",
+                                                             String.format("${%s}", key2))))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(tableName, "row3", "column3",
+                                                             String.format("${%s}", key3))))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", String.format("${%s}", key1))))
+      .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", String.format("${%s}", key2))))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("action1", "action2")
+      .addConnection("action2", "action3")
+      .addConnection("action3", "source")
+      .addConnection("source", "filter1")
+      .addConnection("filter1", "filter2")
+      .addConnection("filter2", "sink")
       .setEngine(engine)
       .build();
 
-    AppRequest<co.cask.cdap.etl.proto.v2.ETLBatchConfig> appRequest =
-      new AppRequest<>(APP_ARTIFACT, etlConfig);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("triggeredActionPipeline-" + engine);
-    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordKey1Value = StructuredRecord.builder(schema).set("name", "macroValue").build();
+    StructuredRecord recordKey2Value = StructuredRecord.builder(schema).set("name", "action1.row").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordKey1Value, recordKey2Value));
+
     String defaultNamespace = NamespaceId.DEFAULT.getNamespace();
     String triggeringPipeline = "macroActionTest-SPARK";
     // Use properties from the triggering pipeline as values for runtime argument key1, key2, and key3
@@ -400,14 +426,23 @@ public class DataPipelineTest extends HydratorTestBase {
     String tableName = "actionTable" + engine;
     DataSetManager<Table> actionTableDS = getDataset(tableName);
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row1", "column1"));
+    Assert.assertEquals("action1.row", MockAction.readOutput(actionTableDS, "row2", "column2"));
+    Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row3", "column3"));
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("runtimeArgOutput-" + engine);
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected =
+      ImmutableSet.of(StructuredRecord.builder(schema).set("name", "samuel").build());
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
-    ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
-                                                                    "${value}"));
 
     ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
-      .addStage(action1)
+      .addStage(new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
+                                                             "${value}")))
       .setEngine(engine)
       .build();
 
