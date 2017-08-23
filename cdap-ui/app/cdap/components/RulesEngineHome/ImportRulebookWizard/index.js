@@ -19,7 +19,7 @@ import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import UploadFile from 'services/upload-file';
 import NamespaceStore from 'services/NamespaceStore';
-import {setActiveRulebook, getRuleBooks} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {setActiveRulebook, getRuleBooks, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import Rx from 'rx';
 import ImportRulebookWizardConfig from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookWizardConfig';
 import ImportRulebookStore from 'components/RulesEngineHome/ImportRulebookWizard/ImportRulebookStore';
@@ -96,6 +96,7 @@ export default class ImportRulebookWizard extends Component {
             console.log('Unable to parse response. Just getting rulebooks', e);
           }
           getRuleBooks();
+          getRules();
           this.toggleWizard();
           return Rx.Observable.create((obs) => {
             obs.onNext();

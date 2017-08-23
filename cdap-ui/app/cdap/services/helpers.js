@@ -257,6 +257,10 @@ const isPluginSource = (pluginType) => {
   return ['batchsource', 'realtimesource', 'streamingsource'].indexOf(pluginType) !== -1;
 };
 
+const isBatchPipeline = (pipelineType) => {
+  return ['cdap-data-pipeline'].indexOf(pipelineType) !== -1;
+};
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -274,5 +278,6 @@ export {
   defaultAction,
   difference,
   isPluginSource,
-  isPluginSink
+  isPluginSink,
+  isBatchPipeline
 };

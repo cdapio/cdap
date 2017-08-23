@@ -1047,6 +1047,8 @@ features:
     contactadmin: Contact System Administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
+    restartCDAP: Restart CDAP
+    restartUI: Restart the UI; or
     servicesDown: A few system services are down
     serviceDown: The system service {serviceName} is down
     systemDashboard: View System Services Dashboard
