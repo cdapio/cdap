@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.messaging.data.MessageId;
 
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -67,6 +68,14 @@ public final class MetricsProcessorStats {
   @Nullable
   public byte[] getMessageId() {
     return messageId;
+  }
+
+  /**
+   * get the publish timestamp in seconds from the tms message id
+   * @return publish timestamp in seconds ; -1 if null
+   */
+  public long getPublishTimestamp() {
+    return messageId == null ? -1 : TimeUnit.MILLISECONDS.toSeconds(new MessageId(messageId).getPublishTimestamp());
   }
 
   @Nullable

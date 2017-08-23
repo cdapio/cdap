@@ -17,11 +17,13 @@
 package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An abstraction on persistent storage of consumer information.
@@ -33,7 +35,7 @@ public class MetricsConsumerMetaTable {
   private static final byte[] PROCESS_COUNT_TOTAL = Bytes.toBytes("pct");
   private static final byte[] PROCESS_TIMESTAMP_OLDEST = Bytes.toBytes("pto");
   private static final byte[] PROCESS_TIMESTAMP_LATEST = Bytes.toBytes("ptl");
-  private static final byte[] PROCESS_TMS_ID = Bytes.toBytes("pti");
+  private static final byte[] PROCESS_TMS_PUBLISH_TIME = Bytes.toBytes("ppt");
 
   private final MetricsTable metaTable;
 
@@ -65,24 +67,18 @@ public class MetricsConsumerMetaTable {
   public <T extends MetricsMetaKey>
   void saveMetricsProcessorStats(Map<T, MetricsProcessorStats> messageIds) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> timestampUpdates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    SortedMap<byte[], SortedMap<byte[], byte[]>> offset = new TreeMap<>(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<T, MetricsProcessorStats> entry : messageIds.entrySet()) {
       SortedMap<byte[], Long> timeMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      SortedMap<byte[], byte[]> offsetMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
       MetricsProcessorStats metaInfo = entry.getValue();
       if (metaInfo.getMessagesProcessed() > 0L) {
         timeMap.put(PROCESS_COUNT_TOTAL, metaInfo.getMessagesProcessed());
         timeMap.put(PROCESS_TIMESTAMP_LATEST, metaInfo.getLatestMetricsTimestamp());
         timeMap.put(PROCESS_TIMESTAMP_OLDEST, metaInfo.getOldestMetricsTimestamp());
+        timeMap.put(PROCESS_TMS_PUBLISH_TIME, metaInfo.getPublishTimestamp());
         timestampUpdates.put(entry.getKey().getKey(), timeMap);
-      }
-      if (metaInfo.getMessageId() != null) {
-        offsetMap.put(PROCESS_TMS_ID, metaInfo.getMessageId());
-        offset.put(entry.getKey().getKey(), offsetMap);
       }
     }
     metaTable.put(timestampUpdates);
-    metaTable.putBytes(offset);
   }
 
   /**
@@ -107,13 +103,13 @@ public class MetricsConsumerMetaTable {
    * @return The value or {@code -1} if the value is not found.
    * @throws Exception If there is an error when fetching.
    */
-  public synchronized <T extends MetricsMetaKey> MetricsProcessorStats getMetricsProcessorStats(T metaKey)
+  public synchronized <T extends MetricsMetaKey> MetricsProcessorStatus getMetricsProcessorStats(T metaKey)
     throws Exception {
+    long publishTimestamp = getLong(metaKey.getKey(), PROCESS_TMS_PUBLISH_TIME);
     long processedCount = getLong(metaKey.getKey(), PROCESS_COUNT_TOTAL);
     long oldestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_OLDEST);
     long latestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_LATEST);
-    byte[] messageId = metaTable.get(metaKey.getKey(), PROCESS_TMS_ID);
-    return new MetricsProcessorStats(messageId, oldestTs, latestTs, processedCount);
+    return new MetricsProcessorStatus(publishTimestamp, processedCount, oldestTs, latestTs);
   }
 
   private synchronized long getLong(byte[] rowKey, byte[] column) {

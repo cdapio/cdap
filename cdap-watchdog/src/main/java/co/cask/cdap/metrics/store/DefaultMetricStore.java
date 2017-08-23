@@ -379,14 +379,7 @@ public class DefaultMetricStore implements MetricStore {
     MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
     Map<String, MetricsProcessorStatus> processMap = new HashMap<>();
     for (TopicId topicId : metricsTopics) {
-      MetricsProcessorStats metricProcessorStat = metaTable.getMetricsProcessorStats(new TopicIdMetaKey(topicId));
-
-      long publishTimestamp = metricProcessorStat.getMessageId() == null ? -1 :
-        TimeUnit.MILLISECONDS.toSeconds(new MessageId(metricProcessorStat.getMessageId()).getPublishTimestamp());
-      processMap.put(topicId.getTopic(), new MetricsProcessorStatus(publishTimestamp,
-                                                                    metricProcessorStat.getMessagesProcessed(),
-                                                                    metricProcessorStat.getOldestMetricsTimestamp(),
-                                                                    metricProcessorStat.getLatestMetricsTimestamp()));
+      processMap.put(topicId.getTopic(), metaTable.getMetricsProcessorStats(new TopicIdMetaKey(topicId)));
     }
     return processMap;
   }

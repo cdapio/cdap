@@ -27,10 +27,11 @@ public class MetricsProcessorStatus {
 
   /**
    *
-   * @param messagePublishTimestamp  - when the message was first published to the messaging system
-   * @param messagesProcessed - number of messages processed in the most recent iteration of processing
-   * @param oldestTimestamp - oldest timestamp among the processed metrics
-   * @param latestTimestamp - latest timestamp among the processed metrics
+   * @param messagePublishTimestamp  timestamp in seconds
+   *                                 when the message was first published to the messaging system
+   * @param messagesProcessed number of messages processed in the most recent iteration of processing
+   * @param oldestTimestamp oldest timestamp among the processed metrics
+   * @param latestTimestamp latest timestamp among the processed metrics
    */
   public MetricsProcessorStatus(long messagePublishTimestamp,
                                 long messagesProcessed, long oldestTimestamp, long latestTimestamp) {
