@@ -658,7 +658,8 @@
     <name>data.tx.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of transaction service instances
+      Maximum number of transaction service instances.
+      Increasing the number of transaction service instances only improves availability, but not scalability
     </description>
   </property>
 
@@ -1572,7 +1573,6 @@
     <description>
       Number of instances for the messaging service
     </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -1673,9 +1673,10 @@
 
   <property>
     <name>messaging.max.instances</name>
-    <value>1</value>
+    <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of instances for the messaging service
+      Maximum number of instances for the messaging service.
+      Increasing the number of messaging service instances only improves availability, but not scalability
     </description>
     <final>true</final>
   </property>

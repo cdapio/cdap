@@ -26,6 +26,7 @@ import co.cask.cdap.messaging.store.MetadataTable;
 import co.cask.cdap.messaging.store.PayloadTable;
 import co.cask.cdap.messaging.store.TableFactory;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.common.Threads;
 import org.iq80.leveldb.Options;
@@ -55,8 +56,9 @@ public final class LevelDBTableFactory implements TableFactory {
   private LevelDBMessageTable messageTable;
   private LevelDBPayloadTable payloadTable;
 
+  @VisibleForTesting
   @Inject
-  LevelDBTableFactory(CConfiguration cConf) {
+  public LevelDBTableFactory(CConfiguration cConf) {
     this.baseDir = new File(cConf.get(Constants.MessagingSystem.LOCAL_DATA_DIR));
     this.dbOptions = new Options()
       .blockSize(cConf.getInt(Constants.CFG_DATA_LEVELDB_BLOCKSIZE, Constants.DEFAULT_DATA_LEVELDB_BLOCKSIZE))

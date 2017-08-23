@@ -24,6 +24,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.messaging.cache.MessageCache;
+import co.cask.cdap.messaging.distributed.LeaderElectionMessagingService;
 import co.cask.cdap.messaging.server.FetchHandler;
 import co.cask.cdap.messaging.server.MessagingHttpService;
 import co.cask.cdap.messaging.server.MetadataHandler;
@@ -38,6 +39,7 @@ import co.cask.cdap.messaging.store.hbase.HBaseTableFactory;
 import co.cask.cdap.messaging.store.leveldb.LevelDBTableFactory;
 import co.cask.cdap.proto.id.TopicId;
 import co.cask.http.HttpHandler;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Binder;
 import com.google.inject.Inject;
 import com.google.inject.Module;
@@ -76,20 +78,19 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
 
         // The cache must be in singleton scope
         bind(MessageTableCacheProvider.class).to(DefaultMessageTableCacheProvider.class).in(Scopes.SINGLETON);
-        bind(TableFactory.class).to(CachingTableFactory.class).in(Scopes.SINGLETON);
-        expose(TableFactory.class);
+        bind(TableFactory.class).to(CachingTableFactory.class);
 
-        bind(MessagingService.class).to(CoreMessagingService.class).in(Scopes.SINGLETON);
-        expose(MessagingService.class);
-
+        // Bind http handlers
         bindHandlers(binder(), Constants.MessagingSystem.HANDLER_BINDING_NAME);
-        bind(MessagingHttpService.class).in(Scopes.SINGLETON);
-        expose(MessagingHttpService.class);
+
+        bind(MessagingService.class).to(LeaderElectionMessagingService.class).in(Scopes.SINGLETON);
+        expose(MessagingService.class);
       }
     };
   }
 
-  private void bindHandlers(Binder binder, String bindingName) {
+  @VisibleForTesting
+  public static void bindHandlers(Binder binder, String bindingName) {
     Multibinder<HttpHandler> handlerBinder =
       Multibinder.newSetBinder(binder, HttpHandler.class, Names.named(bindingName));
 
@@ -112,6 +113,11 @@ public class MessagingServerRuntimeModule extends RuntimeModule {
         @Override
         public MessageCache<MessageTable.Entry> getMessageCache(TopicId topicId) {
           return null;
+        }
+
+        @Override
+        public void clear() {
+          // no-op
         }
       });
 
