@@ -2,6 +2,7 @@
 # Please keep this file alphabetically sorted!
 commons:
   application: Application
+  as: as
   back: Back
   cask: CASK
   cdap: CDAP
@@ -1280,6 +1281,62 @@ features:
       runTime: Run Time
       totalRuns: TotalRuns
     title: 'Summary'
+
+  PipelineTriggers:
+    collapsedTabLabel: "Show Inbound Triggers ({count})"
+    description: Description
+    EnabledTriggers:
+      buttonLabel: Disable Trigger
+      pipelineCount:
+        0: "No Pipelines set as trigger"
+        1: "1 Pipeline is set as trigger"
+        _: "{context.count} Pipelines is set as trigger"
+      tabLabel: "View Enabled Triggers ({count})"
+      title: "View pipelines enabled to trigger pipeline \"{pipelineName}\""
+    Events:
+      COMPLETED: Succeeds
+      FAILED: Fails
+      KILLED: Stops
+    expandedTabLabel: "Hide Inbound Triggers ({count})"
+    helperText: "\"{pipelineName}\" is triggered when this pipeline"
+    namespace: Namespace
+    pipelineName: Pipeline Name
+    ScheduleRuntimeArgs:
+      configure_enable_btn: Configure and Enable Trigger
+      DefaultMessages:
+        choose_runtime_arg: Choose a Runtime Argument
+        choose_plugin: Choose a Plugin
+        choose_plugin_property: Choose a Plugin Property
+        choose_runtime_arg_map: Choose a Runtime Argument to map
+      PayloadConfigModal:
+        title: Payload Configuration
+        configPayloadBtn: Configure Payload
+      Tabs:
+        RuntimeArgs:
+          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          TableHeaders:
+            runtimeargs: Runtime Arguments
+            t_runtimeargs: Trigger Runtime Arguments
+          tab_message: Select how Runtime Arguments for trigger "{triggeringPipelineid}" map to Runtime Arguments for "{triggeredPipelineid}"
+          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
+          title: Runtime Arguments
+        StageProps:
+          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          TableHeaders:
+            pluginName: Plugin Name
+            pluginProperty: Plugin Property
+            runtimeArg: Runtime Argument
+          tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" Runtime Arguments.
+          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
+          title: Plugin Config
+    SetTriggers:
+      buttonLabel: Enable Trigger
+      pipelineCount: "{count} pipelines available"
+      tabLabel: Set Pipeline Triggers
+      title: "Set which pipeline triggers \"{pipelineName}\""
+      viewNamespace: View pipelines in namespace
+    viewPipeline: View Pipeline
+
   PropertiesEditor:
     AddProperty:
       button: Add Property
@@ -1458,6 +1515,25 @@ features:
   Tags:
     label: Tags
     notags: No tags found. Click to add a new business tag.
+
+  TriggeredPipelines:
+    collapsedTabLabel: "Show Outbound Triggers ({count})"
+    description: Description
+    Events:
+      COMPLETED: Succeeds
+      KILLED: Stopped
+      FAILED: Fails
+    expandedTabLabel: "Hide Outbound Triggers ({count})"
+    helperText: "This pipeline is triggered when \"{pipelineName}\""
+    namespace: Namespace
+    pipelineCount:
+      "0": "No Pipelines triggered"
+      "1": "1 Pipeline triggered"
+      _: "{context.count} Pipelines triggered"
+    pipelineName: Pipeline Name
+    title: "Pipelines to be triggered by \"{pipelineName}\""
+    viewPipeline: View Pipeline
+
   ViewSwitch:
     actionsLabel: Actions
     DatasetStreamTable:
