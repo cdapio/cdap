@@ -16,12 +16,13 @@
 
 angular.module(PKG.name + '.commons')
   .controller('RulesEngineModalController', function(rPlugin, $uibModalInstance) {
-    // FIXME: UI doesn't have a rulebookid when navigating into rulesengine from pipelines.
     this.$uibModalInstance = $uibModalInstance;
+    this.rulebookid = rPlugin.properties.rulebookid;
     this.node = rPlugin;
-    this.onApply = (rulebook) => {
+    this.onApply = (rulebook, rulebookid) => {
       if (rulebook) {
         this.node.properties.rulebook = rulebook;
+        this.node.properties.rulebookid = rulebookid;
       }
       this.$uibModalInstance.close();
     };

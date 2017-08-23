@@ -95,7 +95,8 @@ export default class AddRulesEngineToPipelineModal extends Component {
               "label": "RulesEngine",
               artifact: yareArtifact,
               "properties": {
-                "rulebook": rulebook
+                "rulebook": rulebook,
+                "rulebookid": this.props.rulebookid
               }
             }
           };
