@@ -27,6 +27,8 @@ import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.SetMultimapCodec;
@@ -45,7 +47,6 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
-import scala.Tuple2;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -129,6 +130,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                     phaseSpec.isStageLoggingEnabled(),
                                                                     phaseSpec.isProcessTimingEnabled());
-    runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginContext);
+
+    PipelinePluginInstantiator pluginInstantiator =
+      new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
+    runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator);
   }
 }

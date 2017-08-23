@@ -17,9 +17,6 @@
 package co.cask.cdap.etl.batch.connector;
 
 import co.cask.cdap.api.data.batch.Input;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -27,12 +24,8 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.RecordType;
-import co.cask.cdap.format.StructuredRecordStringConverter;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
@@ -40,7 +33,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Internal batch source used as a connector between pipeline phases.
@@ -54,22 +46,13 @@ import javax.annotation.Nullable;
  * This is because we don't want this to show up as a plugin that users can select and use, and also because
  * it uses features not exposed in the etl api (local workflow datasets).
  *
- * TODO: improve storage format. It is currently a json of the record but that is obviously not ideal
+ * @param <T> type of output object
  */
-public class ConnectorSource extends BatchSource<LongWritable, Text, RecordInfo<StructuredRecord>> {
-  static final Schema RECORD_WITH_SCHEMA = Schema.recordOf(
-    "record",
-    Schema.Field.of("stageName", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("type", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("schema", Schema.of(Schema.Type.STRING)),
-    Schema.Field.of("record", Schema.of(Schema.Type.STRING)));
+public class ConnectorSource<T> extends BatchSource<LongWritable, Text, T> {
   private final String datasetName;
-  @Nullable
-  private final Schema schema;
 
-  public ConnectorSource(String datasetName, @Nullable Schema schema) {
+  protected ConnectorSource(String datasetName) {
     this.datasetName = datasetName;
-    this.schema = schema;
   }
 
   // not the standard configurePipeline method. Need a workflowConfigurer to create a local dataset
@@ -94,24 +77,6 @@ public class ConnectorSource extends BatchSource<LongWritable, Text, RecordInfo<
       PartitionedFileSetArguments.addInputPartition(arguments, partitionDetail);
     }
     context.setInput(Input.ofDataset(datasetName, arguments));
-  }
-
-  @Override
-  public void transform(KeyValue<LongWritable, Text> input,
-                        Emitter<RecordInfo<StructuredRecord>> emitter) throws Exception {
-    StructuredRecord output;
-    String inputStr = input.getValue().toString();
-    StructuredRecord recordWithSchema =
-      StructuredRecordStringConverter.fromJsonString(inputStr, RECORD_WITH_SCHEMA);
-    String stageName = recordWithSchema.get("stageName");
-    if (schema == null) {
-      Schema outputSchema = Schema.parseJson((String) recordWithSchema.get("schema"));
-      output = StructuredRecordStringConverter.fromJsonString((String) recordWithSchema.get("record"), outputSchema);
-    } else {
-      output = StructuredRecordStringConverter.fromJsonString(inputStr, schema);
-    }
-    RecordType recordType = RecordType.valueOf((String) recordWithSchema.get("type"));
-    emitter.emit(RecordInfo.builder(output, stageName, recordType).build());
   }
 
 }

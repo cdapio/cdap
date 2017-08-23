@@ -43,8 +43,11 @@ import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.SetMultimapCodec;
 import co.cask.cdap.etl.common.submit.AggregatorContextProvider;
@@ -139,17 +142,25 @@ public class ETLSpark extends AbstractSpark {
     PluginContext pluginContext = new SparkPipelinePluginContext(context, context.getMetrics(),
                                                                  phaseSpec.isStageLoggingEnabled(),
                                                                  phaseSpec.isProcessTimingEnabled());
+    PipelinePluginInstantiator pluginInstantiator =
+      new PipelinePluginInstantiator(pluginContext, context.getMetrics(), phaseSpec, new SingleConnectorFactory());
     final PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
     final Admin admin = context.getAdmin();
 
-    for (final StageSpec stageSpec : phaseSpec.getPhase()) {
-      final String stageName = stageSpec.getName();
+    PipelinePhase phase = phaseSpec.getPhase();
+    // go through in topological order so that arguments set by one stage are seen by stages after it
+    for (final String stageName : phase.getDag().getTopologicalOrder()) {
+      final StageSpec stageSpec = phase.getStage(stageName);
       String pluginType = stageSpec.getPluginType();
+      boolean isConnectorSource =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSources().contains(stageName);
+      boolean isConnectorSink =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && phase.getSinks().contains(stageName);
 
       SubmitterPlugin submitterPlugin = null;
-      if (BatchSource.PLUGIN_TYPE.equals(pluginType)) {
+      if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
 
-        BatchConfigurable<BatchSourceContext> batchSource = pluginContext.newPluginInstance(stageName, evaluator);
+        BatchConfigurable<BatchSourceContext> batchSource = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<BatchSourceContext> contextProvider =
           new ContextProvider<BatchSourceContext>() {
             @Override
@@ -161,7 +172,7 @@ public class ETLSpark extends AbstractSpark {
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
-        Transform transform = pluginContext.newPluginInstance(stageName, evaluator);
+        Transform transform = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<StageSubmitterContext> contextProvider =
           new ContextProvider<StageSubmitterContext>() {
             @Override
@@ -171,9 +182,9 @@ public class ETLSpark extends AbstractSpark {
           };
         submitterPlugin = new SubmitterPlugin(stageName, context, transform, contextProvider);
 
-      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
-        BatchConfigurable<BatchSinkContext> batchSink = pluginContext.newPluginInstance(stageName, evaluator);
+        BatchConfigurable<BatchSinkContext> batchSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<BatchSinkContext> contextProvider = new ContextProvider<BatchSinkContext>() {
           @Override
           public BatchSinkContext getContext(DatasetContext datasetContext) {
@@ -184,7 +195,7 @@ public class ETLSpark extends AbstractSpark {
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
-        BatchConfigurable<SparkPluginContext> sparkSink = pluginContext.newPluginInstance(stageName, evaluator);
+        BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<SparkPluginContext> contextProvider =
           new ContextProvider<SparkPluginContext>() {
             @Override
@@ -196,14 +207,14 @@ public class ETLSpark extends AbstractSpark {
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
-        BatchAggregator aggregator = pluginContext.newPluginInstance(stageName, evaluator);
+        BatchAggregator aggregator = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultAggregatorContext> contextProvider =
           new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
         submitterPlugin = new SubmitterPlugin(stageName, context, aggregator, contextProvider);
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
-        BatchJoiner joiner = pluginContext.newPluginInstance(stageName, evaluator);
+        BatchJoiner joiner = pluginInstantiator.newPluginInstance(stageName, evaluator);
         ContextProvider<DefaultJoinerContext> contextProvider =
           new JoinerContextProvider(pipelineRuntime, stageSpec, admin);
         submitterPlugin = new SubmitterPlugin<>(

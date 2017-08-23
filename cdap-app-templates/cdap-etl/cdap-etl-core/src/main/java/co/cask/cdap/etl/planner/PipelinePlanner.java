@@ -439,10 +439,13 @@ public class PipelinePlanner {
       // add connectors
       String originalName = connectors.get(stageName);
       if (originalName != null || conditionConnectors.values().contains(stageName)) {
+        String connectorType = dag.getSources().contains(stageName) ?
+          Constants.Connector.SOURCE_TYPE : Constants.Connector.SINK_TYPE;
         PluginSpec connectorSpec =
-          new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
-                         ImmutableMap.of(Constants.CONNECTOR_ORIGINAL_NAME, originalName != null
-                           ? originalName : stageName), null);
+          new PluginSpec(Constants.Connector.PLUGIN_TYPE, "connector",
+                         ImmutableMap.of(Constants.Connector.ORIGINAL_NAME, originalName != null
+                                           ? originalName : stageName,
+                                         Constants.Connector.TYPE, connectorType), null);
         phaseBuilder.addStage(StageSpec.builder(stageName, connectorSpec).build());
         continue;
       }
