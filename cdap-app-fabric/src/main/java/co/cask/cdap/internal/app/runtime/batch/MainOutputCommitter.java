@@ -171,7 +171,6 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
     try {
       super.abortJob(jobContext, state);
     } finally {
-
       try {
         onFinish(jobContext, false);
       } finally {
@@ -203,14 +202,14 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
 
   // returns alias-->DatasetOutputCommitter mapping, given the ProvidedOutputs
   private Map<String, DatasetOutputCommitter> getDatasetOutputCommitters(List<ProvidedOutput> providedOutputs) {
-    Map<String, DatasetOutputCommitter> datasetOutputCommiterOutputs = new HashMap<>();
+    Map<String, DatasetOutputCommitter> datasetOutputCommitterOutputs = new HashMap<>();
     for (ProvidedOutput providedOutput : providedOutputs) {
       if (providedOutput.getOutputFormatProvider() instanceof DatasetOutputCommitter) {
-        datasetOutputCommiterOutputs.put(providedOutput.getOutput().getAlias(),
+        datasetOutputCommitterOutputs.put(providedOutput.getOutput().getAlias(),
                                          (DatasetOutputCommitter) providedOutput.getOutputFormatProvider());
       }
     }
-    return datasetOutputCommiterOutputs;
+    return datasetOutputCommitterOutputs;
   }
 
   /**

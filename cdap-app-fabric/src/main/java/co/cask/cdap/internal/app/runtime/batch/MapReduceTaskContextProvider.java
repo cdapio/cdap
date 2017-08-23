@@ -190,13 +190,12 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         Transaction tx;
         try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
           byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
-          tx = Preconditions.checkNotNull(new TransactionCodec().decode(txByteArray));
+          tx = new TransactionCodec().decode(txByteArray);
         }
 
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
         MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
 
-        // TODO: similarly, we should be able to reuse the tx object ^
         Program program = programRef.get();
         if (program == null) {
           // Creation of program is relatively cheap, so just create and do compare and set.

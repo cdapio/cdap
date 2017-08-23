@@ -134,11 +134,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  // TODO: remove unused?
-  public TransactionContext getTransactionContext() throws TransactionFailureException {
-    return getDatasetCache().newTransactionContext();
-  }
-
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
                                               @Nullable WorkflowProgramInfo workflowProgramInfo) {
     if (workflowProgramInfo == null) {
@@ -238,7 +233,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
         ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
       if (outputFormatProvider instanceof DatasetOutputCommitter) {
         // disallow user from adding a DatasetOutputCommitter as an OutputFormatProviderOutput because we would not
-        // be able to call its methodsin MainOutputCommitter. It needs to be a DatasetOutput.
+        // be able to call its methods in MainOutputCommitter. It needs to be a DatasetOutput.
         throw new IllegalArgumentException("Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. " +
                                              "Add the output as a DatasetOutput.");
       }
