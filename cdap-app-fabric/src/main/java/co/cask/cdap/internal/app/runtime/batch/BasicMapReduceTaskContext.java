@@ -375,6 +375,15 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   /**
+   * Calls postTxCommit on all the transaction-aware datasets participating in this context.
+   */
+  public void postTxCommit() throws Exception {
+    for (TransactionAware txAware : txAwares) {
+      txAware.postTxCommit();
+    }
+  }
+
+  /**
    * Return {@link AuthorizationEnforcer} to enforce authorization checks in MR tasks.
    */
   public AuthorizationEnforcer getAuthorizationEnforcer() {

@@ -160,6 +160,7 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
         LOG.warn("MapReduce Job transaction failed to commit");
         throw new TransactionFailureException("Failed to commit transaction " + transaction.getWritePointer());
       }
+      taskContext.postTxCommit();
     } catch (Exception e) {
       Throwables.propagateIfInstanceOf(e, IOException.class);
       throw Throwables.propagate(e);
