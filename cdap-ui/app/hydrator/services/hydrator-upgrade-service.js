@@ -15,7 +15,7 @@
  */
 
 class HydratorUpgradeService {
-  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q) {
+  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q, PipelineAvailablePluginsActions) {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -23,6 +23,7 @@ class HydratorUpgradeService {
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.leftPanelStore = HydratorPlusPlusLeftPanelStore;
     this.$q = $q;
+    this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
   }
 
   _checkVersionIsInRange(range, version) {
@@ -66,7 +67,29 @@ class HydratorUpgradeService {
    * If there exist 2 artifacts with same version, it will maintain both scopes in an array.
    **/
   _createPluginsMap(pipelineConfig) {
-    let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+    let deferred = this.$q.defer();
+    let activePipelineType = this.HydratorPlusPlusConfigStore.getState().artifact.name;
+
+    if (pipelineConfig.artifact.name !== activePipelineType) {
+      this.PipelineAvailablePluginsActions.fetchPluginsForUpgrade(
+        {
+          namespace: this.$state.params.namespace,
+          pipelineType: 'cdap-data-streams',
+          version: this.$rootScope.cdapVersion
+        }
+      ).then((res) => {
+        let plugins = res;
+        this._formatPluginsMap(plugins, pipelineConfig, deferred);
+      });
+    } else {
+      let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+      this._formatPluginsMap(plugins, pipelineConfig, deferred);
+    }
+
+    return deferred.promise;
+  }
+
+  _formatPluginsMap(plugins, pipelineConfig, promise) {
     let pluginTypes = Object.keys(plugins);
 
     let pluginsMap = {};
@@ -84,7 +107,7 @@ class HydratorUpgradeService {
 
         allArtifacts.forEach((artifact) => {
           if (!highestVersion) {
-            highestVersion = artifact;
+            highestVersion = angular.copy(artifact);
           } else if (highestVersion.version === artifact.version) {
             highestVersion.scope = [highestVersion.scope, artifact.scope];
           } else {
@@ -92,15 +115,8 @@ class HydratorUpgradeService {
             let currVersion = new window.CaskCommon.Version(artifact.version);
 
             if (currVersion.compareTo(prevVersion) === 1) {
-              highestVersion = artifact;
+              highestVersion = angular.copy(artifact);
             }
-          }
-
-          if (artifactVersionMap[artifact.version]) {
-            let existingScope = artifactVersionMap[artifact.version];
-            artifactVersionMap[artifact.version] = [existingScope, artifact.scope];
-          } else {
-            artifactVersionMap[artifact.version] = artifact.scope;
           }
         });
 
@@ -113,8 +129,6 @@ class HydratorUpgradeService {
         pluginsMap[key] = value;
       });
     });
-
-    let deferred = this.$q.defer();
 
     if (pipelineConfig.artifact.name === 'cdap-data-pipeline') {
       this._fetchPostRunActions()
@@ -136,13 +150,11 @@ class HydratorUpgradeService {
 
           pluginsMap  = Object.assign(pluginsMap, postRunActionsMap);
 
-          deferred.resolve(pluginsMap);
+          promise.resolve(pluginsMap);
         });
     } else {
-      deferred.resolve(pluginsMap);
+      promise.resolve(pluginsMap);
     }
-
-    return deferred.promise;
   }
 
   _checkErrorStages(stages, pluginsMap) {

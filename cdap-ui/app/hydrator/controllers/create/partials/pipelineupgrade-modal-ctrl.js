@@ -35,13 +35,15 @@ angular.module(PKG.name + '.feature.hydrator')
     // missing artifacts map
     this.missingArtifactsMap = {};
 
-    this.loading = true;
+    this.loading = false;
 
     const checkStages = () => {
+      if (this.loading) { return; }
       this.loading = true;
 
       HydratorUpgradeService.getErrorStages(rPipelineConfig)
         .then((transformedStages) => {
+
           allStages = transformedStages.stages.map((stage) => {
             stage.icon = DAGPlusPlusFactory.getIcon(stage.stageInfo.plugin.name.toLowerCase());
             stage.type = GLOBALS.pluginConvert[stage.stageInfo.plugin.type];
@@ -103,6 +105,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
     checkStages();
 
+    // This store subscription can cause the fetching of the plugins list to happen twice.
+    // The reason is because in LeftPanelController, we fetch the default version map
+    // with a 10 seconds timeout. So if user import before 10 seconds, it will make another
+    // call to fetch list of plugins
     let sub = HydratorPlusPlusLeftPanelStore.subscribe(checkStages);
 
     this.openMarket = () => {
