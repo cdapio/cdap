@@ -1655,6 +1655,14 @@
   </property>
 
   <property>
+    <name>messaging.ha.fencing.delay.seconds</name>
+    <value>5</value>
+    <description>
+      Number of seconds to wait before the leader process start serving requests
+    </description>
+  </property>
+
+  <property>
     <name>messaging.hbase.max.scan.threads</name>
     <value>96</value>
     <description>

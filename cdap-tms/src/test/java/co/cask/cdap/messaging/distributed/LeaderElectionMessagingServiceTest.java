@@ -30,8 +30,8 @@ import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategies;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.messaging.MessagingService;
-import co.cask.cdap.messaging.TopicMetadata;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.messaging.data.RawMessage;
 import co.cask.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -64,7 +64,10 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Unit test for {@link LeaderElectionMessagingService}.
@@ -90,6 +93,7 @@ public class LeaderElectionMessagingServiceTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, InetAddress.getLocalHost().getHostName());
     cConf.set(Constants.MessagingSystem.SYSTEM_TOPICS, "topic");
+    cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, 0L);
 
     namespaceQueryAdmin = new InMemoryNamespaceClient();
     levelDBTableFactory = new LevelDBTableFactory(cConf);
@@ -181,6 +185,54 @@ public class LeaderElectionMessagingServiceTest {
 
     zkClient1.stopAndWait();
     zkClient2.stopAndWait();
+  }
+
+  @Test
+  public void testFencing() throws IOException, InterruptedException, ExecutionException, TimeoutException {
+    final TopicId topicId = NamespaceId.SYSTEM.topic("topic");
+
+    // Change the fencing time
+    long oldFencingDelay = cConf.getLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS);
+    cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, 3L);
+
+    try {
+      Injector injector = createInjector(0);
+      ZKClientService zkClient = injector.getInstance(ZKClientService.class);
+      zkClient.startAndWait();
+
+      final MessagingService messagingService = injector.getInstance(MessagingService.class);
+      if (messagingService instanceof Service) {
+        ((Service) messagingService).startAndWait();
+      }
+
+      // Shouldn't be serving request yet.
+      try {
+        messagingService.listTopics(NamespaceId.SYSTEM);
+        Assert.fail("Expected service unavailable exception");
+      } catch (ServiceUnavailableException e) {
+        // expected
+      }
+
+      // Retry until pass the fencing delay (with some buffer)
+      Tasks.waitFor(topicId, new Callable<TopicId>() {
+        @Override
+        public TopicId call() throws Exception {
+          try {
+            return messagingService.getTopic(topicId).getTopicId();
+          } catch (ServiceUnavailableException e) {
+            return null;
+          }
+        }
+      }, 10L, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+
+      if (messagingService instanceof Service) {
+        ((Service) messagingService).stopAndWait();
+      }
+      zkClient.stopAndWait();
+
+    } finally {
+      cConf.setLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS, oldFencingDelay);
+    }
   }
 
 
