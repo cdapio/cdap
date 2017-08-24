@@ -334,6 +334,12 @@ public class SmartWorkflow extends AbstractWorkflow {
         alertPublisher.publish(trackedIterator);
       } catch (Exception e) {
         LOG.warn("Stage {} had errors publishing alerts. Alerts may not have been published.", name, e);
+      } finally {
+        try {
+          alertPublisher.destroy();
+        } catch (Exception e) {
+          LOG.warn("Error destroying alert publisher for stage {}", name, e);
+        }
       }
     }
 
