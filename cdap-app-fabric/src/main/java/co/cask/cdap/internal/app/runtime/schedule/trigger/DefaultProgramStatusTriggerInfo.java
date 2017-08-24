@@ -23,7 +23,6 @@ import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
@@ -32,7 +31,6 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,8 +41,8 @@ import javax.annotation.Nullable;
  */
 public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   implements ProgramStatusTriggerInfo, Externalizable {
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
-    .create();
+
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private String namespace;
   private ApplicationSpecification applicationSpecification;
@@ -53,9 +51,12 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   private RunId runId;
   private ProgramStatus programStatus;
   @Nullable
-  private BasicWorkflowToken workflowToken;
+  private WorkflowToken workflowToken;
   private Map<String, String> runtimeArguments;
 
+  /**
+   * Constructor for {@link Externalizable} to use only. Don't call it directly.
+   */
   public DefaultProgramStatusTriggerInfo() {
     super(Type.PROGRAM_STATUS);
   }
@@ -72,7 +73,7 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
     this.program = program;
     this.runId = runId;
     this.programStatus = programStatus;
-    this.workflowToken = (BasicWorkflowToken) workflowToken;
+    this.workflowToken = workflowToken;
     this.runtimeArguments = Collections.unmodifiableMap(new HashMap<>(runtimeArguments));
   }
 
@@ -120,33 +121,41 @@ public class DefaultProgramStatusTriggerInfo extends AbstractTriggerInfo
   @Override
   public void writeExternal(ObjectOutput out) throws IOException {
     out.writeUTF(namespace);
-    byte[] appSpecBytes = GSON.toJson(applicationSpecification).getBytes();
-    out.writeInt(appSpecBytes.length);
-    out.write(appSpecBytes);
+
+    // Can't use writeUTF for app spec because it could be larger than 64K
+    out.writeObject(GSON.toJson(applicationSpecification));
+
     out.writeObject(programType);
     out.writeUTF(program);
     out.writeUTF(runId.getId());
     out.writeObject(programStatus);
     out.writeObject(workflowToken);
-    out.writeObject(runtimeArguments);
+
+    // Write out the map size and the entries
+    out.writeInt(runtimeArguments.size());
+    for (Map.Entry<String, String> entry : runtimeArguments.entrySet()) {
+      out.writeObject(entry.getKey());
+      out.writeObject(entry.getValue());
+    }
   }
 
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     namespace = in.readUTF();
-    int appSpecBytesLength = in.readInt();
-    byte[] appSpecBytes = new byte[appSpecBytesLength];
-    int numBytesRead = 0;
-    while (numBytesRead < appSpecBytesLength) {
-      numBytesRead += in.read(appSpecBytes, numBytesRead, appSpecBytesLength - numBytesRead);
-    }
-    applicationSpecification = GSON.fromJson(new String(appSpecBytes, StandardCharsets.UTF_8),
-                                             ApplicationSpecification.class);
+    applicationSpecification = GSON.fromJson((String) in.readObject(), ApplicationSpecification.class);
+
     programType = (ProgramType) in.readObject();
     program = in.readUTF();
     runId = RunIds.fromString(in.readUTF());
     programStatus = (ProgramStatus) in.readObject();
-    workflowToken = (BasicWorkflowToken) in.readObject();
-    runtimeArguments = (Map<String, String>) in.readObject();
+    workflowToken = (WorkflowToken) in.readObject();
+
+    Map<String, String> args = new HashMap<>();
+    int argsSize = in.readInt();
+    for (int i = 0; i < argsSize; i++) {
+      args.put((String) in.readObject(), (String) in.readObject());
+    }
+
+    runtimeArguments = Collections.unmodifiableMap(args);
   }
 }
