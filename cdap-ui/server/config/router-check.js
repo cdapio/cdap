@@ -87,6 +87,20 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
           deferred.resolve(self);
         }
         else {
+          if (err) {
+            log.debug(err);
+          }
+
+          if (response && response.statusCode) {
+            var logDebug = 'Status Code: ' + response.statusCode;
+
+            if (body) {
+              logDebug = logDebug + ', Body: ' + body;
+            }
+
+            log.debug(logDebug);
+          }
+
           // if check timeout is enabled, and check takes longer than checkTimeout then exit
           if (checkTimeout > 0 && Math.round(Date.now() / 1000) - startTime > checkTimeout) {
             log.error('Could not connect to CDAP Router using URL ' + url + ' for more than ' +
