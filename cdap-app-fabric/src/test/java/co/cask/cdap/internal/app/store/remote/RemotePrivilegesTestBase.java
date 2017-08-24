@@ -37,6 +37,7 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.authorization.RemoteAuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
@@ -145,6 +146,12 @@ public abstract class RemotePrivilegesTestBase {
     authorizationEnforcer.enforce(NS, ALICE, EnumSet.allOf(Action.class));
     authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     authorizationEnforcer.enforce(PROGRAM, ALICE, Action.EXECUTE);
+    try {
+      authorizationEnforcer.enforce(NS, BOB, Action.ADMIN);
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
     privilegesManager.revoke(PROGRAM);
     privilegesManager.revoke(APP);
