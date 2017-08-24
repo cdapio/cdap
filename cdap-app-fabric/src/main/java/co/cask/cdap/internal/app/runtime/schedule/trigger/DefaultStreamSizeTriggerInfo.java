@@ -18,10 +18,13 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.StreamSizeTriggerInfo;
 
+import java.io.Serializable;
+
 /**
  * The stream size trigger information to be passed to the triggered program.
  */
-public class DefaultStreamSizeTriggerInfo extends AbstractTriggerInfo implements StreamSizeTriggerInfo {
+public class DefaultStreamSizeTriggerInfo extends AbstractTriggerInfo implements StreamSizeTriggerInfo, Serializable {
+
   private final String streamNamespace;
   private final String streamName;
   private final int triggerMB;

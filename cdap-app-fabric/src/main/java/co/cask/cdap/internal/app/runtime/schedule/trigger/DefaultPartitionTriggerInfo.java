@@ -18,10 +18,12 @@ package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.PartitionTriggerInfo;
 
+import java.io.Serializable;
+
 /**
  * The dataset partition trigger information to be passed to the triggered program.
  */
-public class DefaultPartitionTriggerInfo extends AbstractTriggerInfo implements PartitionTriggerInfo {
+public class DefaultPartitionTriggerInfo extends AbstractTriggerInfo implements PartitionTriggerInfo, Serializable {
   private final String datasetNamespace;
   private final String datasetName;
   private final int expectedNumPartitions;
