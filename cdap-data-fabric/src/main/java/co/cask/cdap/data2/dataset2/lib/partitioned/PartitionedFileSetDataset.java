@@ -230,6 +230,12 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @Override
   public boolean rollbackTx() throws Exception {
+    rollbackPartitionOperations();
+    this.tx = null;
+    return super.rollbackTx();
+  }
+
+  private void rollbackPartitionOperations() throws Exception {
     // rollback all the partition add and drop operations, in reverse order
     // if any throw exception, suppress it temporarily while attempting to roll back the remainder operations
     Exception caughtExn = null;
@@ -245,12 +251,10 @@ public class PartitionedFileSetDataset extends AbstractDataset
         }
       }
     }
+    operationsInThisTx.clear();
     if (caughtExn != null) {
       throw caughtExn;
     }
-
-    this.tx = null;
-    return super.rollbackTx();
   }
 
   private void rollbackOperation(PartitionOperation operation) throws Exception {
@@ -998,7 +1002,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @Override
   public void onFailure() throws DataSetException {
     try {
-      // depend on FileSetDataset's implementation of #onFailure to rollback
+      rollbackPartitionOperations();
+
       ((FileSetDataset) files).onFailure();
     } catch (Throwable caught) {
       Throwables.propagateIfPossible(caught, DataSetException.class);

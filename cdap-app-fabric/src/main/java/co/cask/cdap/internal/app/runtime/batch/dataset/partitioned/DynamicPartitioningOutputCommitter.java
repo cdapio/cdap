@@ -157,14 +157,6 @@ public class DynamicPartitioningOutputCommitter extends FileOutputCommitter {
       outputDataset.addPartition(entry.getValue(), entry.getKey(), metadata, true, allowAppend);
     }
 
-    // close the TaskContext, which flushes dataset operations
-    try {
-      taskContext.flushOperations();
-    } catch (Exception e) {
-      Throwables.propagateIfPossible(e, IOException.class);
-      throw new IOException(e);
-    }
-
     // delete the job-specific _temporary folder
     cleanupJob(context);
 

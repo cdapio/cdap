@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
  * OutputFormat that allows instantiation of the RecordWriter, but throws {@link UnsupportedOperationException}
  * upon any attempts to write to it.
  *
- * All other operations are no-ops.
+ * All other operations, such as its OutputCommitter's operations, are no-ops.
  *
  * @param <K> Type of key
  * @param <V> Type of value

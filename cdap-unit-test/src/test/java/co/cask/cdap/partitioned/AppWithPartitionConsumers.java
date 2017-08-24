@@ -227,10 +227,7 @@ public class AppWithPartitionConsumers extends AbstractApplication {
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
       PartitionedFileSetArguments.setOutputPartitionKey(outputArgs, partitionKey);
 
-      // We know that PartitionedFileSet is an OutputFormatProvider, so we set an instance of it as an output to the
-      // MapReduce job to test MapReduceContext#addOutput(Output#OutputFormatProviderOutput)
-      final PartitionedFileSet outputLines = context.getDataset("outputLines", outputArgs);
-      context.addOutput(Output.of("outputLines", outputLines));
+      context.addOutput(Output.ofDataset("outputLines", outputArgs));
       context.addOutput(Output.ofDataset("counts"));
 
       Job job = context.getHadoopJob();
