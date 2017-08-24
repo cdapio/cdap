@@ -314,7 +314,6 @@ public class SmartWorkflow extends AbstractWorkflow {
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
-    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
                                                             spec.isStageLoggingEnabled(),
                                                             spec.isProcessTimingEnabled());
@@ -332,9 +331,6 @@ public class SmartWorkflow extends AbstractWorkflow {
       stageSpecs.put(stageName, stageSpec);
       if (AlertPublisher.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
         AlertPublisher alertPublisher = context.newPluginInstance(stageName, macroEvaluator);
-        AlertPublisherContext alertContext =
-          new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, context, context.getAdmin());
-        alertPublisher.initialize(alertContext);
         alertPublishers.put(stageName, alertPublisher);
       }
     }
@@ -346,9 +342,9 @@ public class SmartWorkflow extends AbstractWorkflow {
   public void destroy() {
     WorkflowContext workflowContext = getContext();
 
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
     // Execute the post actions only if pipeline is not running in preview mode.
     if (!workflowContext.getDataTracer(PostAction.PLUGIN_TYPE).isEnabled()) {
-      PipelineRuntime pipelineRuntime = new PipelineRuntime(workflowContext, workflowMetrics);
       for (Map.Entry<String, PostAction> endingActionEntry : postActions.entrySet()) {
         String name = endingActionEntry.getKey();
         PostAction action = endingActionEntry.getValue();
@@ -370,7 +366,16 @@ public class SmartWorkflow extends AbstractWorkflow {
       PartitionedFileSet alertConnector = workflowContext.getDataset(name);
       try (CloseableIterator<Alert> alerts =
              new AlertReader(alertConnector.getPartitions(PartitionFilter.ALWAYS_MATCH))) {
+        if (!alerts.hasNext()) {
+          continue;
+        }
+
         StageMetrics stageMetrics = new DefaultStageMetrics(workflowMetrics, name);
+        StageSpec stageSpec = stageSpecs.get(name);
+        AlertPublisherContext alertContext =
+          new DefaultAlertPublisherContext(pipelineRuntime, stageSpec, workflowContext, workflowContext.getAdmin());
+        alertPublisher.initialize(alertContext);
+
         TrackedIterator<Alert> trackedIterator =
           new TrackedIterator<>(alerts, stageMetrics, Constants.Metrics.RECORDS_IN);
         alertPublisher.publish(trackedIterator);
