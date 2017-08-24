@@ -176,7 +176,11 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
       .withBody(GSON.toJson(authorizationPrivilege))
       .build();
-    return HttpURLConnection.HTTP_OK == remoteClient.execute(request).getResponseCode();
+    try {
+      return HttpURLConnection.HTTP_OK == remoteClient.execute(request).getResponseCode();
+    } catch (UnauthorizedException e) {
+      return false;
+    }
   }
 
   private Set<? extends EntityId> visibilityCheckCall(VisibilityRequest visibilityRequest) throws IOException {
