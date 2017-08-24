@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -88,6 +89,23 @@ public class DefaultMessageTableCacheProvider implements MessageTableCacheProvid
     }
 
     return topicMessageCaches.get(topicId);
+  }
+
+  @Override
+  public void clear() {
+    Collection<MessageCache<MessageTable.Entry>> caches;
+
+    synchronized (this) {
+      initialized = false;
+      caches = topicMessageCaches == null ? null : topicMessageCaches.values();
+      topicMessageCaches = null;
+    }
+
+    if (caches != null) {
+      for (MessageCache<MessageTable.Entry> cache : caches) {
+        cache.clear();
+      }
+    }
   }
 
   /**
