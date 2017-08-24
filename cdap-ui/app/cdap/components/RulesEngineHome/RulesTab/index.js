@@ -55,7 +55,7 @@ export default class RulesTab extends Component {
   };
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
       let {rules} = RulesEngineStore.getState();
       if (Array.isArray(rules.list)) {
         this.setState({
@@ -63,6 +63,12 @@ export default class RulesTab extends Component {
         });
       }
     });
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   getFilteredRules() {

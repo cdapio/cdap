@@ -74,7 +74,7 @@ class Rule extends Component {
   };
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
       let {rules} = RulesEngineStore.getState();
       if (rules.activeRuleId === this.props.rule.id) {
         this.fetchRuleDetails();
@@ -86,6 +86,12 @@ class Rule extends Component {
         }
       }
     });
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   viewDetails = () => {
