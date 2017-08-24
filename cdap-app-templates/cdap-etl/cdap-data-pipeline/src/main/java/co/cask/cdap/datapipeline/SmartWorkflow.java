@@ -469,7 +469,8 @@ public class SmartWorkflow extends AbstractWorkflow {
 
     return new BatchPhaseSpec(programName, phase, spec.getResources(), spec.getDriverResources(),
                               spec.getClientResources(), spec.isStageLoggingEnabled(), spec.isProcessTimingEnabled(),
-                              phaseConnectorDatasets, spec.getNumOfRecordsPreview(), spec.getProperties());
+                              phaseConnectorDatasets, spec.getNumOfRecordsPreview(), spec.getProperties(),
+                              !plan.getConditionPhaseBranches().isEmpty());
   }
 
   private WorkflowProgramAdder addProgram(String phaseName, WorkflowProgramAdder programAdder) {
