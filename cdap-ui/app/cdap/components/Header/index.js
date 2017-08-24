@@ -15,7 +15,6 @@
  */
 
 import React, {Component, PropTypes} from 'react';
-import {NavLink} from 'react-router-dom';
 import T from 'i18n-react';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceDropdown from 'components/NamespaceDropdown';
@@ -28,7 +27,7 @@ import classnames from 'classnames';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import getLastSelectedNamespace from 'services/get-last-selected-namespace';
-import DataPrepDropdown from 'components/Header/DataPrepDropdown';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 
 require('./Header.scss');
 
@@ -37,7 +36,7 @@ export default class Header extends Component {
     super(props);
     this.state = {
       toggleNavbar: false,
-      currentNamespace: null,
+      currentNamespace: NamespaceStore.getState().selectedNamespace,
       metadataDropdown: false
     };
     this.namespacesubscription = null;
@@ -84,11 +83,52 @@ export default class Header extends Component {
     });
   }
 
+  isRulesEnginedActive = (match, location = window.location) => {
+    if (match && match.isExact) {
+      return true;
+    }
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let rulesenginepath = `/ns/${namespace}/ruleengine`;
+    return location.pathname.startsWith(rulesenginepath);
+  };
+
+  isDataPrepActive = (match, location = window.location) => {
+    if (match && match.isExact) {
+      return true;
+    }
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    let dataprepBasePath = `/ns/${namespace}/dataprep`;
+    let connectionsBasePath = `/ns/${namespace}/connections`;
+
+    if (location.pathname.startsWith(dataprepBasePath) || location.pathname.startsWith(connectionsBasePath)) {
+      return true;
+    }
+    return false;
+  };
+
+  isCDAPActive = (match, location = window.location) => {
+    if (match && match.isExact) {
+      return true;
+    }
+    let basePath = `/ns/${this.state.currentNamespace}`;
+    let dataprepBasePath = `${basePath}/dataprep`;
+    let connectionsBasePath = `${basePath}/connections`;
+    let rulesenginepath = `${basePath}/rulesengine`;
+    if (
+      location.pathname.startsWith(basePath) &&
+      !location.pathname.startsWith(dataprepBasePath) &&
+      !location.pathname.startsWith(connectionsBasePath) &&
+      !location.pathname.startsWith(rulesenginepath)
+    ) {
+      return true;
+    }
+    return false;
+  };
+
   render() {
-    let baseCDAPURL = window.getAbsUIUrl({
-      namespace: this.state.currentNamespace
-    });
-    let overviewUrl = `${baseCDAPURL}/ns/${this.state.currentNamespace}`;
+    let baseCDAPURL = `/ns/${this.state.currentNamespace}`;
+    let rulesengineUrl = `${baseCDAPURL}/rulesengine`;
+    let dataprepUrl = `${baseCDAPURL}/dataprep`;
     let pipelinesListUrl =  window.getHydratorUrl({
       stateName: 'hydrator.list',
       stateParams: {
@@ -99,25 +139,6 @@ export default class Header extends Component {
     });
     let isPipelinesViewActive = location.pathname.indexOf('/pipelines/') !== -1;
 
-
-    const isCDAPActive = (match, location) => {
-      if (!match) { return false; }
-      if (match.isExact) { return true; }
-
-      let basePath = `/ns/${this.state.currentNamespace}`;
-      let dataprepBasePath = `/ns/${this.state.currentNamespace}/dataprep`;
-      let connectionsBasePath = `/ns/${this.state.currentNamespace}/connections`;
-      let rulesenginepath = `${basePath}/rulesengine`;
-      if (
-        location.pathname.startsWith(basePath) &&
-        !location.pathname.startsWith(dataprepBasePath) &&
-        !location.pathname.startsWith(connectionsBasePath) &&
-        !location.pathname.startsWith(rulesenginepath)
-      ) {
-        return true;
-      }
-      return false;
-    };
 
     return (
       <div className="global-navbar">
@@ -133,45 +154,50 @@ export default class Header extends Component {
           }
         </div>
         <div className="brand-section">
-          {
-            !this.props.nativeLink ?
-              <NavLink
-                to={`/ns/${this.state.currentNamespace}`}
-              >
-                <img src="/cdap_assets/img/company_logo.png" />
-              </NavLink>
-            :
-              <a href={window.getAbsUIUrl({namespaceId: this.state.currentNamespace})}>
-                <img src="/cdap_assets/img/company_logo.png" />
-              </a>
-          }
+          <NavLinkWrapper
+            isNativeLink={this.props.nativeLink}
+            to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
+          >
+            <img src="/cdap_assets/img/company_logo.png" />
+          </NavLinkWrapper>
         </div>
-        <ul className="navbar-list-section">
-          <li>
-            {
-              !this.props.nativeLink ?
-                <NavLink
-                  to={`/ns/${this.state.currentNamespace}`}
-                  isActive={isCDAPActive}
-                >
-                  {T.translate('features.Navbar.overviewLabel')}
-                </NavLink>
-              :
-                <a href={overviewUrl}>
-                  {T.translate('features.Navbar.overviewLabel')}
-                </a>
-            }
+        <ul className="navbar-list-section control-center">
+          <li className="with-shadow">
+            <NavLinkWrapper
+              isNativeLink={this.props.nativeLink}
+              to={this.props.nativeLink ? `/cdap${baseCDAPURL}` : baseCDAPURL}
+              isActive={this.isCDAPActive}
+            >
+              {T.translate('features.Navbar.overviewLabel')}
+            </NavLinkWrapper>
           </li>
-          <li>
-            <DataPrepDropdown nativeLink={this.props.nativeLink}/>
+          <li className="with-shadow">
+            <NavLinkWrapper
+              isNativeLink={this.props.nativeLink}
+              to={this.props.nativeLink ? `/cdap${dataprepUrl}` : dataprepUrl}
+              isActive={this.isDataPrepActive}
+            >
+              {T.translate(`features.Navbar.Dataprep`)}
+            </NavLinkWrapper>
           </li>
           <li>
             <a
               href={pipelinesListUrl}
-              className={classnames({'active': isPipelinesViewActive})}
+              className={classnames({
+                'active': isPipelinesViewActive
+              })}
             >
               {T.translate('features.Navbar.pipelinesLabel')}
             </a>
+          </li>
+          <li>
+              <NavLinkWrapper
+                isNativeLink={this.props.nativeLink}
+                to={this.props.nativeLink ? `/cdap${rulesengineUrl}` : rulesengineUrl}
+                isActive={this.isRulesEnginedActive}
+              >
+                {T.translate(`features.Navbar.rulesmgmt`)}
+              </NavLinkWrapper>
           </li>
           <li>
             <MetadataDropdown />

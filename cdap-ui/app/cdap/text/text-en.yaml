@@ -1108,9 +1108,7 @@ features:
     version: "Version :"
   Navbar:
     dataprepLabel: Data Preparation
-    Dataprep:
-      home: Home
-      rulesmgmt: Rules Management
+    Dataprep: Preparation
     metadataLabel: Metadata
     Metadata:
       dictionaryLabel: Dictionary
@@ -1123,7 +1121,7 @@ features:
       datasets: Datasets
       namespaceLabel: Namespace
       streams: Streams
-    overviewLabel: Overview
+    overviewLabel: Control Center
     pipelinesLabel: Pipelines
     ProductDropdown:
       aboutLabel: About CDAP
@@ -1138,6 +1136,7 @@ features:
       olduilink: Switch to Classic View
       prodWebsiteLabel: Product Website
       supportLabel: Support
+    rulesmgmt: Rules
   Overview:
     DatasetTab:
       title: "Datasets and Streams used by \"{appId}\""
