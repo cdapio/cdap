@@ -16,8 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.messaging.data.MessageId;
-
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -122,30 +120,5 @@ public final class TopicProcessMeta {
   @Override
   public int hashCode() {
     return Objects.hash(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed);
-  }
-
-  private String getMessageIdString() {
-    if (messageId == null) {
-      return "MessageId : null";
-    } else {
-      MessageId messageId1 = new MessageId(messageId);
-      return "MessageId{" +
-        "publishTimestamp=" + messageId1.getPublishTimestamp() +
-        ", sequenceId=" + messageId1.getSequenceId()  +
-        ", writeTimestamp=" + messageId1.getPayloadWriteTimestamp() +
-        ", payloadSequenceId=" + messageId1.getPayloadSequenceId() +
-        '}';
-    }
-  }
-
-  @Override
-  public String toString() {
-    return "TopicProcessMeta{" +
-      getMessageIdString() +
-      ", oldestMetricsTimestamp=" + oldestMetricsTimestamp +
-      ", latestMetricsTimestamp=" + latestMetricsTimestamp +
-      ", lastProcessedTimestamp=" + lastProcessedTimestamp +
-      ", messagesProcessed=" + messagesProcessed +
-      '}';
   }
 }

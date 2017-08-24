@@ -389,14 +389,16 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
     private final TopicIdMetaKey topicIdMetaKey;
     private final PayloadInputStream payloadInput;
     private final BinaryDecoder decoder;
+    private final String oldestTsMetricName;
+    private final String latestTsMetricName;
     private long lastMetricTimeSecs;
 
     ProcessMetricsThread(TopicIdMetaKey topicIdMetaKey, @Nullable TopicProcessMeta topicProcessMeta) {
       super(String.format("ProcessMetricsThread-%s", topicIdMetaKey.getTopicId()));
       setDaemon(true);
-      String oldestTsMetricName = String.format("%s.topic.%s.oldest.delay.ms",
+      oldestTsMetricName = String.format("%s.topic.%s.oldest.delay.ms",
                                                 metricsPrefixForDelayMetrics, topicIdMetaKey.getTopicId().getTopic());
-      String latestTsMetricName = String.format("%s.topic.%s.latest.delay.ms",
+      latestTsMetricName = String.format("%s.topic.%s.latest.delay.ms",
                                                 metricsPrefixForDelayMetrics, topicIdMetaKey.getTopicId().getTopic());
       byte[] persistedMessageId = null;
       if (topicProcessMeta != null && topicProcessMeta.getMessageId() != null) {
@@ -409,11 +411,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                                      topicProcessMeta.getMessagesProcessed(),
                                                      topicProcessMeta.getLastProcessedTimestamp(),
                                                      oldestTsMetricName, latestTsMetricName));
-      } else {
-        // message-id doesn't exist for this topic in metaTable, we initialize TopicProcessMeta with default values
-        // and put it in map
-        topicProcessMetaMap.put(topicIdMetaKey,
-                                new TopicProcessMeta(null, 0, 0, 0, 0, oldestTsMetricName, latestTsMetricName));
       }
       this.topicIdMetaKey = topicIdMetaKey;
       this.payloadInput = new PayloadInputStream();
@@ -450,12 +447,11 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         fetcher.setLimit(fetcherLimit);
         TopicProcessMeta persistMetaInfo = topicProcessMetaMap.get(topicIdMetaKey);
         byte[] lastMessageId = null;
+
         if (persistMetaInfo != null) {
           lastMessageId = persistMetaInfo.getMessageId();
-        } else {
-          // this should not happen as we put topic process meta for the topic id during initialization
-          LOG.warn("PersistMetaInfo is null, this should not happen");
         }
+
         if (lastMessageId != null) {
           if (LOG.isTraceEnabled()) {
             LOG.trace("Start fetching from lastMessageId = {}", Bytes.toStringBinary(lastMessageId));
@@ -470,8 +466,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         TopicProcessMeta localTopicProcessMeta =
           new TopicProcessMeta(lastMessageId, Long.MAX_VALUE, Long.MIN_VALUE, 0,
                                TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
-                               persistMetaInfo.getOldestMetricsTimestampMetricName(),
-                               persistMetaInfo.getLatestMetricsTimestampMetricName());
+                               oldestTsMetricName, latestTsMetricName);
         try (CloseableIterator<RawMessage> iterator = fetcher.fetch()) {
           while (iterator.hasNext() && isRunning()) {
             RawMessage input = iterator.next();
@@ -486,10 +481,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
               if (LOG.isTraceEnabled()) {
                 LOG.trace("Received message {} with metrics: {}", Bytes.toStringBinary(currentMessageId), metricValues);
               }
-
-              if (currentMessageId != null) {
-                localTopicProcessMeta.updateTopicProcessingStats(currentMessageId, lastMetricTimeSecs);
-              }
+              localTopicProcessMeta.updateTopicProcessingStats(currentMessageId, lastMetricTimeSecs);
             } catch (IOException e) {
               LOG.warn("Failed to decode message to MetricValue. Skipped. {}", e.getMessage());
             }
@@ -502,7 +494,6 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
           localTopicProcessMeta.updateLastProcessedTimestamp();
           topicProcessMetaMap.put(topicIdMetaKey, localTopicProcessMeta);
         }
-        // TODO q: should we try persist only if current messageId is non-null(have processed)? currently we always try
         // Try to persist metrics and messageId's of the last metrics to be persisted if no other thread is persisting
         tryPersist();
 
