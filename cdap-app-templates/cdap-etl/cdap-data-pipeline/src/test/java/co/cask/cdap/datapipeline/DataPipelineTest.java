@@ -341,12 +341,12 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   private WorkflowManager deployPipelineWithSchedule(Engine engine) throws Exception {
-    String tableName = "actionTable" + engine;
+    String tableName = "actionScheduleTable" + engine;
     String key1 = "trigger-runtime-arg";
     String key2 = "trigger-plugin-property";
     String key3 = "trigger-token";
-    String sourceName = "runtimeArgInput-" + engine;
-    String sinkName = "runtimeArgOutput-" + engine;
+    String sourceName = "macroActionWithScheduleInput-" + engine;
+    String sinkName = "macroActionWithScheduleOutput-" + engine;
     ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
       // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
       .addStage(new ETLStage("action1", MockAction.getPlugin(tableName, "row1", "column1",
@@ -423,14 +423,14 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals("macroValue", tokenData.get(key1).get(0).getValue());
     Assert.assertEquals("action1.row", tokenData.get(key2).get(0).getValue());
     Assert.assertEquals("macroValue", tokenData.get(key3).get(0).getValue());
-    String tableName = "actionTable" + engine;
+    String tableName = "actionScheduleTable" + engine;
     DataSetManager<Table> actionTableDS = getDataset(tableName);
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row1", "column1"));
     Assert.assertEquals("action1.row", MockAction.readOutput(actionTableDS, "row2", "column2"));
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row3", "column3"));
 
     // check sink
-    DataSetManager<Table> sinkManager = getDataset("runtimeArgOutput-" + engine);
+    DataSetManager<Table> sinkManager = getDataset("macroActionWithScheduleOutput-" + engine);
     Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     Set<StructuredRecord> expected =
       ImmutableSet.of(StructuredRecord.builder(schema).set("name", "samuel").build());
