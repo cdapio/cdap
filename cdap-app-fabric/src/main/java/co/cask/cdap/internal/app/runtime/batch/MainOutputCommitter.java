@@ -217,24 +217,18 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
    * Either calls onSuccess or onFailure on all of the DatasetOutputCommitters.
    */
   private void finishDatasets(final JobContext jobContext, final boolean success) throws Exception {
-    taskContext.execute(new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        ClassLoader oldClassLoader =
-          ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
-        Map<String, DatasetOutputCommitter> datasetOutputCommitters = getDatasetOutputCommitters(outputs);
-        try {
-          if (success) {
-            commitOutputs(datasetOutputCommitters);
-          } else {
-            // but this output committer failed: call onFailure() for all committers
-            failOutputs(datasetOutputCommitters);
-          }
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(jobContext.getConfiguration().getClassLoader());
+    Map<String, DatasetOutputCommitter> datasetOutputCommitters = getDatasetOutputCommitters(outputs);
+    try {
+      if (success) {
+        commitOutputs(datasetOutputCommitters);
+      } else {
+        // but this output committer failed: call onFailure() for all committers
+        failOutputs(datasetOutputCommitters);
       }
-    });
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
   }
 
   /**
