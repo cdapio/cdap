@@ -1284,7 +1284,8 @@ public final class Constants {
     public static final String HTTP_SERVER_MAX_REQUEST_SIZE_MB = "messaging.http.server.max.request.size.mb";
     public static final String HTTP_SERVER_CONSUME_CHUNK_SIZE = "messaging.http.server.consume.chunk.size";
 
-
+    // Distributed mode related configurations
+    public static final String HA_FENCING_DELAY_SECONDS = "messaging.ha.fencing.delay.seconds";
     public static final String CONTAINER_VIRTUAL_CORES = "messaging.container.num.cores";
     public static final String CONTAINER_MEMORY_MB = "messaging.container.memory.mb";
     public static final String CONTAINER_INSTANCES = "messaging.container.instances";

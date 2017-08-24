@@ -38,6 +38,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.twill.api.ElectionHandler;
+import org.apache.twill.common.Threads;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.zookeeper.ZKClient;
 import org.slf4j.Logger;
@@ -46,7 +47,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicMarkableReference;
 import javax.annotation.Nullable;
 
 /**
@@ -60,9 +64,10 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
   private final CConfiguration cConf;
   private final MessageTableCacheProvider cacheProvider;
   private final ZKClient zkClient;
-  private final AtomicReference<DelegateService> delegate;
+  private final AtomicMarkableReference<DelegateService> delegate;
   private boolean tableUpgraded;
   private LeaderElection leaderElection;
+  private ScheduledExecutorService delayExecutor;
 
   @Inject
   LeaderElectionMessagingService(Injector injector, CConfiguration cConf,
@@ -71,11 +76,13 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     this.cConf = cConf;
     this.cacheProvider = cacheProvider;
     this.zkClient = zkClient;
-    this.delegate = new AtomicReference<>();
+    this.delegate = new AtomicMarkableReference<>(null, false);
   }
 
   @Override
   protected void startUp() throws Exception {
+    delayExecutor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("fencing-delay"));
+
     // Starts leader election
     final CountDownLatch latch = new CountDownLatch(1);
     leaderElection = new LeaderElection(zkClient, Constants.Service.MESSAGING_SERVICE, new ElectionHandler() {
@@ -86,13 +93,14 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
           tableUpgraded = true;
         }
 
-        DelegateService delegateService = new DelegateService(injector.getInstance(CoreMessagingService.class),
-                                                              injector.getInstance(MessagingHttpService.class));
-        delegateService.startAndWait();
+        final DelegateService delegateService = new DelegateService(injector.getInstance(CoreMessagingService.class),
+                                                                    injector.getInstance(MessagingHttpService.class));
         updateDelegate(delegateService);
         LOG.info("Messaging service instance {} running at {} becomes leader",
                  cConf.get(Constants.MessagingSystem.CONTAINER_INSTANCE_ID),
                  cConf.get(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS));
+
+        fencingStart(delegateService);
         latch.countDown();
       }
 
@@ -116,6 +124,8 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     } catch (Exception e) {
       // It can happen if it is currently disconnected from ZK. There is no harm in just continue the shutdown process.
       LOG.warn("Exception during shutting down leader election", e);
+    } finally {
+      delayExecutor.shutdownNow();
     }
   }
 
@@ -195,16 +205,46 @@ public class LeaderElectionMessagingService extends AbstractIdleService implemen
     return factory instanceof HBaseTableFactory ? (HBaseTableFactory) factory : null;
   }
 
+  /**
+   * Updates the delegate with the given {@link DelegateService} and stop the old one.
+   * It also mark the delegate not usable.
+   */
   private void updateDelegate(@Nullable DelegateService newService) {
-    DelegateService oldService = delegate.getAndSet(newService);
+    DelegateService oldService = delegate.getReference();
+    while (!delegate.compareAndSet(oldService, newService, delegate.isMarked(), false)) {
+      oldService = delegate.getReference();
+    }
+
     if (oldService != null) {
       oldService.stopAndWait();
     }
   }
 
+  private void fencingStart(final DelegateService service) {
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        service.startAndWait();
+        // If failed to mark the service to become available, this means the follower() call happened before this,
+        // so just go ahead and shutdown the service.
+        if (!delegate.attemptMark(service, true)) {
+          service.stopAndWait();
+        }
+      }
+    };
+
+    long fencingDelaySeconds = cConf.getLong(Constants.MessagingSystem.HA_FENCING_DELAY_SECONDS);
+    if (fencingDelaySeconds <= 0) {
+      // No-fencing, so just start synchronously. Should only for unit-testing.
+      runnable.run();
+    } else {
+      delayExecutor.schedule(runnable, fencingDelaySeconds, TimeUnit.SECONDS);
+    }
+  }
+
   private MessagingService getMessagingService() {
-    DelegateService delegateService = delegate.get();
-    if (delegateService == null) {
+    DelegateService delegateService = delegate.getReference();
+    if (delegateService == null || !delegate.isMarked()) {
       throw new ServiceUnavailableException(Constants.Service.MESSAGING_SERVICE,
                                             "Messaging service is temporarily unavailable due to leader transition");
     }
