@@ -27,16 +27,20 @@ import java.util.Objects;
  */
 @Beta
 public class Privilege {
-  private final EntityId entity;
+  private final Authorizable authorizable;
   private final Action action;
 
-  public Privilege(EntityId entity, Action action) {
-    this.entity = entity;
+  public Privilege(EntityId entityId, Action action) {
+    this(Authorizable.fromEntityId(entityId), action);
+  }
+
+  public Privilege(Authorizable authorizable, Action action) {
+    this.authorizable = authorizable;
     this.action = action;
   }
 
-  public EntityId getEntity() {
-    return entity;
+  public Authorizable getAuthorizable() {
+    return authorizable;
   }
 
   public Action getAction() {
@@ -53,18 +57,18 @@ public class Privilege {
     }
 
     Privilege privilege = (Privilege) o;
-    return Objects.equals(entity, privilege.entity) && Objects.equals(action, privilege.action);
+    return Objects.equals(authorizable, privilege.authorizable) && Objects.equals(action, privilege.action);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entity, action);
+    return Objects.hash(authorizable, action);
   }
 
   @Override
   public String toString() {
     return "Privilege{" +
-      "entity=" + entity +
+      "authorizable=" + authorizable +
       ", action=" + action +
       '}';
   }

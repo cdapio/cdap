@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.FeatureDisabledException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
@@ -81,9 +80,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   private final boolean authorizationEnabled;
   private final PrivilegesManager privilegesManager;
   private final Authorizer authorizer;
-  private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
-  private final EntityExistenceVerifier entityExistenceVerifier;
 
   @Inject
   AuthorizationHandler(PrivilegesManager privilegesManager, AuthorizerInstantiator authorizerInstantiator,
@@ -91,11 +88,9 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
                        AuthenticationContext authenticationContext, EntityExistenceVerifier entityExistenceVerifier) {
     this.privilegesManager = privilegesManager;
     this.authorizer = authorizerInstantiator.get();
-    this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.authenticationEnabled = cConf.getBoolean(Constants.Security.ENABLED);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.entityExistenceVerifier = entityExistenceVerifier;
   }
 
   @Path("/privileges/grant")
@@ -105,12 +100,12 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     ensureSecurityEnabled();
 
     GrantRequest request = parseBody(httpRequest, GrantRequest.class);
-    verifyAuthRequest(request);
+    if (request == null) {
+      throw new BadRequestException("Missing request body");
+    }
 
     Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-    // enforce that the user granting access has admin privileges on the entity
-    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
-    privilegesManager.grant(request.getEntity(), request.getPrincipal(), actions);
+    privilegesManager.grant(request.getAuthorizable(), request.getPrincipal(), actions);
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
     createLogEntry(httpRequest, request, HttpResponseStatus.OK);
@@ -123,15 +118,15 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     ensureSecurityEnabled();
 
     RevokeRequest request = parseBody(httpRequest, RevokeRequest.class);
-    verifyAuthRequest(request);
+    if (request == null) {
+      throw new BadRequestException("Missing request body");
+    }
 
-    // enforce that the user revoking access has admin privileges on the entity
-    authorizationEnforcer.enforce(request.getEntity(), authenticationContext.getPrincipal(), Action.ADMIN);
     if (request.getPrincipal() == null && request.getActions() == null) {
-      privilegesManager.revoke(request.getEntity());
+      privilegesManager.revoke(request.getAuthorizable());
     } else {
       Set<Action> actions = request.getActions() == null ? EnumSet.allOf(Action.class) : request.getActions();
-      privilegesManager.revoke(request.getEntity(), request.getPrincipal(), actions);
+      privilegesManager.revoke(request.getAuthorizable(), request.getPrincipal(), actions);
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
@@ -231,14 +226,6 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
   }
 
-  private void verifyAuthRequest(AuthorizationRequest request) throws BadRequestException, NotFoundException {
-    if (request == null) {
-      throw new BadRequestException("Missing request body");
-    }
-    EntityId entity = request.getEntity();
-    entityExistenceVerifier.ensureExists(entity);
-  }
-
   private void createLogEntry(HttpRequest httpRequest, @Nullable AuthorizationRequest request,
                               HttpResponseStatus responseStatus) throws UnknownHostException {
     AuditLogEntry logEntry = new AuditLogEntry();
@@ -246,7 +233,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     logEntry.setClientIP(InetAddress.getByName(Objects.firstNonNull(SecurityRequestContext.getUserIP(), "0.0.0.0")));
     logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
     if (request != null) {
-      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getEntity(),
+      logEntry.setRequestBody(String.format("[%s %s %s]", request.getPrincipal(), request.getAuthorizable(),
                                             request.getActions()));
     }
     logEntry.setResponseCode(responseStatus.getCode());

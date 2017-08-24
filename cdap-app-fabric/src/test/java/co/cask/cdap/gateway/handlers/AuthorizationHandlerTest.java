@@ -27,10 +27,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.entity.EntityExistenceVerifier;
 import co.cask.cdap.common.http.AuthenticationChannelHandler;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
+import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
@@ -94,11 +97,11 @@ public class AuthorizationHandlerTest {
     service = new CommonNettyHttpServiceBuilder(conf, getClass().getSimpleName())
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
         auth, new AuthorizerInstantiator(conf, FACTORY) {
-          @Override
-          public Authorizer get() {
-            return auth;
-          }
-        }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier)))
+        @Override
+        public Authorizer get() {
+          return auth;
+        }
+      }, conf, auth, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
         @Override
         public ChannelPipeline apply(ChannelPipeline input) {
@@ -149,11 +152,11 @@ public class AuthorizationHandlerTest {
     NettyHttpService service = new CommonNettyHttpServiceBuilder(cConf, getClass().getSimpleName())
       .addHttpHandlers(ImmutableList.of(new AuthorizationHandler(
         authorizer, new AuthorizerInstantiator(cConf, FACTORY) {
-          @Override
-          public Authorizer get() {
-            return authorizer;
-          }
-        }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier)))
+        @Override
+        public Authorizer get() {
+          return authorizer;
+        }
+      }, cConf, authorizer, new MasterAuthenticationContext(), entityExistenceVerifier)))
       .build();
     service.startAndWait();
     try {
@@ -373,66 +376,59 @@ public class AuthorizationHandlerTest {
     }
   }
 
+
   @Test
-  public void testAuthorizationForPrivileges() throws Exception {
-    Principal bob = new Principal("bob", Principal.PrincipalType.USER);
-    Principal alice = new Principal("alice", Principal.PrincipalType.USER);
-    // olduser has been set as admin in the beginning of this test. admin has been configured as a superuser.
-    String oldUser = getCurrentUser();
-    setCurrentUser(alice.getName());
-    try {
-      try {
-        client.grant(ns1, bob, EnumSet.allOf(Action.class));
-        Assert.fail(String.format("alice should not be able to grant privileges to bob on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns1));
-      } catch (UnauthorizedException expected) {
-        // expected
-      }
-      setCurrentUser(oldUser);
-      // admin should be able to grant since he is a super user
-      client.grant(ns1, alice, ImmutableSet.of(Action.ADMIN));
-      // now alice should be able to grant privileges on ns since she has ADMIN privileges
-      setCurrentUser(alice.getName());
-      client.grant(ns1, bob, EnumSet.allOf(Action.class));
-      // revoke alice's permissions as admin
-      setCurrentUser(oldUser);
-      client.revoke(ns1);
-      // revoking bob's privileges as alice should fail
-      setCurrentUser(alice.getName());
-      try {
-        client.revoke(ns1, bob, EnumSet.allOf(Action.class));
-        Assert.fail(String.format("alice should not be able to revoke bob's privileges on namespace %s because she " +
-                                    "does not have admin privileges on the namespace.", ns1));
-      } catch (UnauthorizedException expected) {
-        // expected
-      }
-      // grant alice privileges as admin again
-      setCurrentUser(oldUser);
-      client.grant(ns1, alice, EnumSet.allOf(Action.class));
-      // Now alice should be able to revoke bob's privileges
-      setCurrentUser(alice.getName());
-      client.revoke(ns1, bob, EnumSet.allOf(Action.class));
-    } finally {
-      setCurrentUser(oldUser);
-    }
-  }
-
-  @Test(expected = NotFoundException.class)
-  public void testGrantOnNonExistingEntity()
-    throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+  public void testGrantOnNonExistingEntity() throws Exception {
+    // should be able to grant on non existing entities
     client.grant(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
+    verifyAuthSuccess(Ids.namespace("ns3"), admin, Action.ADMIN);
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void testRevokeOnNonExistingEntity()
     throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    // revoke on non exiting entities should work fine
     client.revoke(Ids.namespace("ns3"), admin, ImmutableSet.of(Action.ADMIN));
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test
   public void testRevokeAllOnNonExistingEntity()
     throws FeatureDisabledException, UnauthenticatedException, UnauthorizedException, IOException, NotFoundException {
+    // revoke on non existing entities should work fine
     client.revoke(Ids.namespace("ns3"));
+  }
+
+  @Test
+  public void testWildCardEntities() throws Exception {
+    // in-mem authorizer does not support wildcard privileges so we can't actually enforce after grant.
+    // this test is just to check that our grant apis work fine. After grant we list privileges to check for existence
+    StreamId streamId = new StreamId("ns", "wildcard");
+    String wildcardEntityStar = streamId.toString().replace("wildcard", "*");
+    client.grant(Authorizable.fromString(wildcardEntityStar), admin, ImmutableSet.of(Action.ADMIN));
+    String wildcardEntityQuestion = streamId.toString().replace("wildcard", "someSt?");
+    client.grant(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(Action.ADMIN));
+
+    Set<Privilege> privileges = client.listPrivileges(admin);
+    Assert.assertTrue(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityStar), Action.ADMIN)));
+    Assert.assertTrue(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityQuestion),
+                                                        Action.ADMIN)));
+
+    // revoke privilege from the wildcard entity and it should not exist anymore
+    client.revoke(Authorizable.fromString(wildcardEntityQuestion), admin, ImmutableSet.of(Action.ADMIN));
+    privileges = client.listPrivileges(admin);
+    Assert.assertFalse(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityQuestion),
+                                                         Action.ADMIN)));
+
+    // revoke all should work too
+    String authFromPrivilege = null;
+    for (Privilege privilege : privileges) {
+      if (privilege.getAuthorizable().getEntityType().equals(EntityType.STREAM)) {
+        authFromPrivilege = privilege.getAuthorizable().toString();
+      }
+    }
+    client.revoke(Authorizable.fromString(authFromPrivilege));
+    privileges = client.listPrivileges(admin);
+    Assert.assertFalse(privileges.contains(new Privilege(Authorizable.fromString(wildcardEntityStar), Action.ADMIN)));
   }
 
   /**
@@ -482,14 +478,6 @@ public class AuthorizationHandlerTest {
       ),
       privileges.contains(privilegeToCheck)
     );
-  }
-
-  private static void setCurrentUser(String username) {
-    System.setProperty(USERNAME_PROPERTY, username);
-  }
-
-  private static String getCurrentUser() {
-    return System.getProperty(USERNAME_PROPERTY);
   }
 
   /**
