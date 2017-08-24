@@ -439,10 +439,21 @@ public class FileSetTest {
                                      .build());
     Assert.assertTrue(someFile.exists());
 
+    // get the base location, and toggle its group write flag.
+    // we will use this to test whether truncate() preserves the original base dir
+    FileSet fs = dsFrameworkUtil.getInstance(testFileSetInstance5);
+    Location base = fs.getBaseLocation();
+    String permissions = base.getPermissions();
+    char groupWriteFlag = permissions.charAt(4); // rwxrwxrwx
+    char toggledGroupWriteFlag = groupWriteFlag == 'w' ? '-' : 'w';
+    String toggledPermissions = permissions.substring(0, 4) + toggledGroupWriteFlag + permissions.substring(5, 9);
+    base.setPermissions(toggledPermissions);
+
     // truncate the file set
     dsFrameworkUtil.getFramework().truncateInstance(testFileSetInstance5);
     Assert.assertFalse(someFile.exists());
     Assert.assertTrue(existingDir.exists());
+    Assert.assertEquals(toggledPermissions, base.getPermissions());
     someFile.createNewFile();
 
     // truncate the file set
