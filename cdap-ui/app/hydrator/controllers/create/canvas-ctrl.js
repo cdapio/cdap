@@ -105,7 +105,8 @@ class HydratorPlusPlusCreateCanvasCtrl {
                     isSource: GLOBALS.pluginConvert[pluginType] === 'source',
                     isSink: GLOBALS.pluginConvert[pluginType] === 'sink',
                     isTransform: GLOBALS.pluginConvert[pluginType] === 'transform',
-                    isAction: GLOBALS.pluginConvert[pluginType] === 'action'
+                    isAction: GLOBALS.pluginConvert[pluginType] === 'action',
+                    isCondition: GLOBALS.pluginConvert[pluginType] === 'condition',
                   };
                 });
             }]

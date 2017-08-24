@@ -48,7 +48,6 @@ angular.module(PKG.name + '.services')
         'batchjoiner': 'batchjoiner',
         'windower': 'windower',
         'errortransform': 'errortransform',
-        'sparkprogram': 'sparkprogram',
         'alertpublisher': 'alertpublisher',
         'condition': 'condition'
       },
@@ -114,7 +113,7 @@ angular.module(PKG.name + '.services')
       'errortransform': 'transform',
       'sparkprogram': 'action',
       'alertpublisher': 'sink',
-      'condition': 'transform'
+      'condition': 'condition'
     },
 
     artifactConvert: {
