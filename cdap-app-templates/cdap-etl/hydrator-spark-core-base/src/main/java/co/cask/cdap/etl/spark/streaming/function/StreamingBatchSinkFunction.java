@@ -22,10 +22,10 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelineRuntime;
-import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
@@ -66,8 +66,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
     }
 
     final long logicalStartTime = batchTime.milliseconds();
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(),
-                                                         sec.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());

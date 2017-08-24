@@ -52,7 +52,7 @@ public class PluginFunctionContext implements Serializable {
   private final String namespace;
   private final String pipelineName;
   private final long logicalStartTime;
-  private final Map<String, String> arguments;
+  private final BasicArguments arguments;
   private final PluginContext pluginContext;
   private final ServiceDiscoverer serviceDiscoverer;
   private final Metrics metrics;
@@ -73,7 +73,7 @@ public class PluginFunctionContext implements Serializable {
     this.pipelineName = sec.getApplicationSpecification().getName();
     this.stageSpec = stageSpec;
     this.logicalStartTime = logicalStartTime;
-    this.arguments = new HashMap<>(arguments);
+    this.arguments = new BasicArguments(sec);
     this.pluginContext = sec.getPluginContext();
     this.serviceDiscoverer = sec.getServiceDiscoverer();
     this.metrics = sec.getMetrics();
@@ -115,7 +115,7 @@ public class PluginFunctionContext implements Serializable {
 
   public SparkBatchRuntimeContext createBatchRuntimeContext() {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(namespace, pipelineName, logicalStartTime,
-                                                          new BasicArguments(arguments), metrics, pluginContext,
+                                                          arguments, metrics, pluginContext,
                                                           serviceDiscoverer);
     return new SparkBatchRuntimeContext(pipelineRuntime, stageSpec);
   }
