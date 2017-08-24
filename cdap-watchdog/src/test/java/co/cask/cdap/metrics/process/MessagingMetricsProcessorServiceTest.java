@@ -25,7 +25,6 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.Tasks;
@@ -226,7 +225,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     }
 
     @Override
-    public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+    public Map<String, String> getMetricsProcessorStats() throws Exception {
       return Collections.EMPTY_MAP;
     }
 

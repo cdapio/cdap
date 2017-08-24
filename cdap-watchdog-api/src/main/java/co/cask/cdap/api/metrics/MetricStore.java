@@ -89,5 +89,5 @@ public interface MetricStore {
    * @return map of topic info to processing info for the topic
    * @throws Exception
    */
-  Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception;
+  Map<String, String> getMetricsProcessorStats() throws Exception;
 }

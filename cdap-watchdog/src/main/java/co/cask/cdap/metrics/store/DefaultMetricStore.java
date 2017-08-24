@@ -34,7 +34,6 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -44,9 +43,7 @@ import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
-import co.cask.cdap.metrics.process.MetricsProcessorStats;
 import co.cask.cdap.metrics.process.TopicIdMetaKey;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -67,7 +64,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -375,11 +371,11 @@ public class DefaultMetricStore implements MetricStore {
    * @throws Exception
    */
   @Override
-  public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+  public Map<String, String> getMetricsProcessorStats() throws Exception {
     MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
-    Map<String, MetricsProcessorStatus> processMap = new HashMap<>();
+    Map<String, String> processMap = new HashMap<>();
     for (TopicId topicId : metricsTopics) {
-      processMap.put(topicId.getTopic(), metaTable.getMetricsProcessorStats(new TopicIdMetaKey(topicId)));
+      processMap.put(topicId.getTopic(), metaTable.getTopicProcessMeta(new TopicIdMetaKey(topicId)).toString());
     }
     return processMap;
   }
