@@ -24,7 +24,11 @@ import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginContext;
+import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo;
+import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.etl.api.Alert;
@@ -67,10 +71,10 @@ import co.cask.cdap.etl.planner.DisjointConnectionsException;
 import co.cask.cdap.etl.planner.PipelinePlan;
 import co.cask.cdap.etl.planner.PipelinePlanner;
 import co.cask.cdap.etl.proto.Connection;
+import co.cask.cdap.etl.proto.v2.TriggeringPipelinePropertyMapping;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
 import co.cask.cdap.etl.spec.StageSpec;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -79,12 +83,14 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,6 +100,8 @@ import java.util.Set;
 public class SmartWorkflow extends AbstractWorkflow {
   public static final String NAME = "DataPipelineWorkflow";
   public static final String DESCRIPTION = "Data Pipeline Workflow";
+  public static final String TRIGGERING_PROPERTIES_MAPPING = "triggeringPropertiesMapping";
+
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
@@ -296,22 +304,110 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
   }
 
+  private Map<String, String> getNewRuntimeArgsFromScheduleInfo(TriggeringScheduleInfo scheduleInfo,
+                                                                TriggeringPipelinePropertyMapping propertiesMapping) {
+    List<ProgramStatusTriggerInfo> programStatusTriggerInfos = new ArrayList<>();
+    for (TriggerInfo info : scheduleInfo.getTriggerInfos()) {
+      if (info instanceof ProgramStatusTriggerInfo) {
+        programStatusTriggerInfos.add((ProgramStatusTriggerInfo) info);
+      }
+    }
+    Map<String, String> newRuntimeArgs = new HashMap<>();
+    // If no ProgramStatusTriggerInfo, no need of override the existing runtimeArgs
+    if (programStatusTriggerInfos.isEmpty()) {
+      return newRuntimeArgs;
+    }
+    // Currently only expecting one trigger in a schedule
+    ProgramStatusTriggerInfo triggerInfo = programStatusTriggerInfos.get(0);
+    // Get the value of every triggering pipeline property and put it to newRuntimeArgs if it's not null
+    addTriggeringPipelineArguments(propertiesMapping.getArguments(), triggerInfo, newRuntimeArgs);
+    addTriggeringPipelinePluginProperties(propertiesMapping.getPluginProperties(), triggerInfo, newRuntimeArgs);
+    return newRuntimeArgs;
+  }
+
+  private void addTriggeringPipelineArguments(List<TriggeringPipelinePropertyMapping.ArgumentMapping> argumentMappings,
+                                              ProgramStatusTriggerInfo triggerInfo,
+                                              Map<String, String> runtimeArgs) {
+    Map<String, String> triggerRuntimeArgs = triggerInfo.getRuntimeArguments();
+    if (triggerRuntimeArgs == null) {
+      if (!argumentMappings.isEmpty()) {
+        LOG.warn("No runtime arguments in the run '{}' of the triggering pipeline '{}' in namespace '{}' ",
+                 triggerInfo.getRunId(), triggerInfo.getApplicationSpecification().getName(),
+                 triggerInfo.getNamespace());
+      }
+      return;
+    }
+    for (TriggeringPipelinePropertyMapping.ArgumentMapping mapping : argumentMappings) {
+      String value = triggerRuntimeArgs.get(mapping.getSource());
+      if (value == null) {
+        if (!argumentMappings.isEmpty()) {
+          LOG.warn("Runtime argument '{}' is not found in the run '{}' of the triggering pipeline '{}' " +
+                     "in namespace '{}' ",
+                   mapping.getSource(), triggerInfo.getRunId(), triggerInfo.getApplicationSpecification().getName(),
+                   triggerInfo.getNamespace());
+        }
+        continue;
+      }
+      // Use the argument name in the triggering pipeline if target is not specified
+      String key = mapping.getTarget() == null ? mapping.getSource() : mapping.getTarget();
+      runtimeArgs.put(key, value);
+    }
+  }
+
+  private void addTriggeringPipelinePluginProperties(
+    List<TriggeringPipelinePropertyMapping.PluginPropertyMapping> pluginMapping,
+    ProgramStatusTriggerInfo triggerInfo, Map<String, String> runtimeArgs) {
+    Map<String, Plugin> plugins = triggerInfo.getApplicationSpecification().getPlugins();
+
+    for (TriggeringPipelinePropertyMapping.PluginPropertyMapping mapping : pluginMapping) {
+      Plugin plugin = plugins.get(mapping.getStageName());
+      if (plugin == null) {
+        LOG.warn("No plugin with name '{}' can be found in triggering pipeline '{}' in namespace '{}' ",
+                 mapping.getStageName(), triggerInfo.getApplicationSpecification().getName(),
+                 triggerInfo.getNamespace());
+        continue;
+      }
+      String value = plugin.getProperties().getProperties().get(mapping.getSource());
+      if (value == null) {
+        LOG.warn("No property with name '{}' can be found in plugin '{}' of the triggering pipeline '{}' " +
+                   "in namespace '{}' ",
+                 mapping.getSource(), mapping.getStageName(), triggerInfo.getApplicationSpecification().getName(),
+                 triggerInfo.getNamespace());
+        continue;
+      }
+      // Use the argument name in the triggering pipeline if target is not specified
+      String key = mapping.getTarget() == null ? mapping.getSource() : mapping.getTarget();
+      runtimeArgs.put(key, value);
+    }
+  }
+
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
-
-    String arguments = Joiner.on(", ").withKeyValueSeparator("=").join(context.getRuntimeArguments());
+    TriggeringScheduleInfo scheduleInfo = context.getTriggeringScheduleInfo();
+    if (scheduleInfo != null) {
+      String propertiesMappingString = scheduleInfo.getProperties().get(TRIGGERING_PROPERTIES_MAPPING);
+      if (propertiesMappingString != null) {
+        TriggeringPipelinePropertyMapping propertiesMapping =
+          GSON.fromJson(propertiesMappingString, TriggeringPipelinePropertyMapping.class);
+        Map<String, String> newRuntimeArgs = getNewRuntimeArgsFromScheduleInfo(scheduleInfo, propertiesMapping);
+        for (Map.Entry<String, String> entry : newRuntimeArgs.entrySet()) {
+          context.getToken().put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, workflowMetrics);
     WRAPPERLOGGER.info("Pipeline '{}' is started by user '{}' with arguments {}",
                        context.getApplicationSpecification().getName(),
                        UserGroupInformation.getCurrentUser().getShortUserName(),
-                       arguments);
+                       pipelineRuntime.getArguments().asMap());
 
     alertPublishers = new HashMap<>();
     postActions = new LinkedHashMap<>();
     spec = GSON.fromJson(context.getWorkflowSpecification().getProperty(Constants.PIPELINE_SPEC_KEY),
                          BatchPipelineSpec.class);
     stageSpecs = new HashMap<>();
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,

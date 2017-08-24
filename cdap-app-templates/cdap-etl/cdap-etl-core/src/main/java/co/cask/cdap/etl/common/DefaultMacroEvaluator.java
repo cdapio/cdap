@@ -24,6 +24,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.macro.LogicalStartTimeMacro;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -49,6 +50,21 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
       for (String tokenKey : workflowToken.getAll(WorkflowToken.Scope.USER).keySet()) {
         resolvedArguments.put(tokenKey, workflowToken.get(tokenKey, WorkflowToken.Scope.USER).toString());
       }
+    }
+    this.resolvedArguments = resolvedArguments;
+    this.logicalStartTime = logicalStartTime;
+    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
+    this.secureStore = secureStore;
+    this.namespace = namespace;
+  }
+
+  public DefaultMacroEvaluator(BasicArguments arguments,
+                               long logicalStartTime, SecureStore secureStore, String namespace) {
+    Map<String, String> resolvedArguments = new HashMap<>();
+    Iterator<Map.Entry<String, String>> iter = arguments.iterator();
+    while (iter.hasNext()) {
+      Map.Entry<String, String> entry = iter.next();
+      resolvedArguments.put(entry.getKey(), entry.getValue());
     }
     this.resolvedArguments = resolvedArguments;
     this.logicalStartTime = logicalStartTime;
