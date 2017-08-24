@@ -32,7 +32,7 @@ export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, lo
           <IconSVG name="icon-caret-right" />
         </div>
         <div className="pipeline-name">
-          {pipeline.pipelineName}
+          {pipeline.application}
         </div>
         <div className="namespace">
           {pipeline.namespace}
@@ -58,7 +58,7 @@ export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, lo
         </div>
 
         <div className="pipeline-name">
-          {pipeline.pipelineName}
+          {pipeline.application}
         </div>
         <div className="namespace">
           {pipeline.namespace}
@@ -76,7 +76,7 @@ export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, lo
                 <span>
                   {pipelineInfo.description}
                 </span>
-                <a href={`/pipelines/ns/${pipeline.namespace}/view/${pipeline.pipelineName}`}>
+                <a href={`/pipelines/ns/${pipeline.namespace}/view/${pipeline.application}`}>
                   {T.translate(`${PREFIX}.viewPipeline`)}
                 </a>
               </div>
@@ -87,7 +87,7 @@ export default function TriggeredPipelineRow({isExpanded, pipeline, onToggle, lo
 
               <div className="events-list">
                 {
-                  pipeline.schedule.trigger.programStatuses.map((status) => {
+                  pipeline.trigger.programStatuses.map((status) => {
                     return <div>- {T.translate(`${PREFIX}.Events.${status}`)}</div>;
                   })
                 }
