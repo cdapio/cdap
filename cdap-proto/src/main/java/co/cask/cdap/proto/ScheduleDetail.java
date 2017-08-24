@@ -52,6 +52,16 @@ public class ScheduleDetail {
   private final Long timeoutMillis;
   private final String status;
 
+  public ScheduleDetail(@Nullable String name,
+                        @Nullable String description,
+                        @Nullable ScheduleProgramInfo program,
+                        @Nullable Map<String, String> properties,
+                        @Nullable Trigger trigger,
+                        @Nullable List<? extends Constraint> constraints,
+                        @Nullable Long timeoutMillis) {
+    this(null, null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null);
+  }
+
   public ScheduleDetail(@Nullable String namespace,
                         @Nullable String application,
                         @Nullable String applicationVersion,
