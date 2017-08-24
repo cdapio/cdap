@@ -298,6 +298,8 @@ export default class RunsHistoryGraph extends Component {
     );
   }
   renderTableBody(runs) {
+    let runsLength = runs.length;
+
     return (
       <table className="table">
         <tbody>
@@ -306,7 +308,7 @@ export default class RunsHistoryGraph extends Component {
               return (
                 <tr>
                   <td>
-                    <span>{run.index}</span>
+                    <span>{runsLength - run.index + 1}</span>
                     <CopyableRunID
                       runid={run.runid}
                       idprefix="runs-history"
