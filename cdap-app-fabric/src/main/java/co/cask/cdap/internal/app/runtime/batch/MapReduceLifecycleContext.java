@@ -153,6 +153,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    return delegate.getPluginProperties(pluginId, evaluator);
+  }
+
+  @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     return delegate.loadPluginClass(pluginId);
   }

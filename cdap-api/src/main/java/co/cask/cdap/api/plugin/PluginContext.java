@@ -37,6 +37,20 @@ public interface PluginContext {
   PluginProperties getPluginProperties(String pluginId);
 
   /**
+   * Gets the {@link PluginProperties} associated with the given plugin id. If a plugin field has a macro,
+   * the parameter evaluator is used to evaluate the macro and the evaluated value is used for the plugin field.
+   *
+   * @param pluginId the unique identifier provide when declaring plugin usage in the program.
+   * @param evaluator the macro evaluator that's used to evaluate macro for plugin field
+   *                  if macro is supported on those fields.
+   * @return the macro evaluated {@link PluginProperties}.
+   * @throws IllegalArgumentException if pluginId is not found
+   * @throws UnsupportedOperationException if the program does not support plugin
+   * @throws InvalidMacroException if there is an exception during macro evaluation
+   */
+  PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) throws InvalidMacroException;
+
+  /**
    * Loads and returns a plugin class as specified by the given plugin id.
    *
    * @param pluginId the unique identifier provide when declaring plugin usage in the program.
@@ -79,7 +93,7 @@ public interface PluginContext {
    * @throws InstantiationException if failed create a new instance
    * @throws IllegalArgumentException if pluginId is not found
    * @throws UnsupportedOperationException if the program does not support plugin
-   * @throws InvalidMacroException if there is exception during macro evaluation
+   * @throws InvalidMacroException if there is an exception during macro evaluation
    */
   <T> T newPluginInstance(String pluginId, MacroEvaluator evaluator) throws InstantiationException,
     InvalidMacroException;

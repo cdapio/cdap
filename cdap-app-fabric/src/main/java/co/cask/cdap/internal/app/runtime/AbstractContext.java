@@ -445,6 +445,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    return pluginContext.getPluginProperties(pluginId, evaluator);
+  }
+
+  @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     return pluginContext.loadPluginClass(pluginId);
   }

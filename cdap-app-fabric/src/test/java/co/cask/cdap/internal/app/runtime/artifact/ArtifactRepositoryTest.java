@@ -24,6 +24,7 @@ import co.cask.cdap.api.macro.MacroFunction;
 import co.cask.cdap.api.macro.Macros;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
@@ -43,6 +44,7 @@ import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
+import co.cask.cdap.internal.app.runtime.DefaultPluginContext;
 import co.cask.cdap.internal.app.runtime.ProgramClassLoader;
 import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestApp;
 import co.cask.cdap.internal.app.runtime.artifact.app.plugin.PluginTestRunnable;
@@ -439,6 +441,7 @@ public class ArtifactRepositoryTest {
 
     // Instantiate the plugins and execute them
     try (PluginInstantiator instantiator = new PluginInstantiator(cConf, appClassLoader, pluginDir)) {
+
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> entry : plugins.entrySet()) {
         for (PluginClass pluginClass : entry.getValue()) {
           Plugin pluginInfo = new Plugin(new ArrayList<ArtifactId>(), entry.getKey().getArtifactId(), pluginClass,
@@ -459,6 +462,25 @@ public class ArtifactRepositoryTest {
                                                                          new HashMap<String, String>());
           Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
           Assert.assertEquals("localhost/index.html:80,true,101,k,64.0,52.0,42,32,81", plugin.call());
+
+          String pluginId = "5";
+          PluginContext pluginContext = new DefaultPluginContext(instantiator,
+                                                                 NamespaceId.DEFAULT.app("abc").worker("w"),
+                                                                 ImmutableMap.of(pluginId, pluginInfo));
+          PluginProperties resolvedProperties = pluginContext.getPluginProperties(pluginId, testMacroEvaluator);
+          Map<String, String> expected = new HashMap<>();
+          expected.put("class.name", TEST_EMPTY_CLASS);
+          expected.put("nullableLongFlag", "10");
+          expected.put("host", "localhost/index.html:80");
+          expected.put("aBoolean", "true");
+          expected.put("aByte", "101");
+          expected.put("aChar", "k");
+          expected.put("aDouble", "64.0");
+          expected.put("anInt", "42");
+          expected.put("aFloat", "52.0");
+          expected.put("aLong", "32");
+          expected.put("aShort", "81");
+          Assert.assertEquals(expected, resolvedProperties.getProperties());
         }
       }
     }

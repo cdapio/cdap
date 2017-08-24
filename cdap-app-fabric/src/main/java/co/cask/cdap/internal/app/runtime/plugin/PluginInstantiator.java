@@ -249,7 +249,7 @@ public class PluginInstantiator implements Closeable {
     }
   }
 
-  private PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator) {
+  public PluginProperties substituteMacros(Plugin plugin, @Nullable MacroEvaluator macroEvaluator) {
     Map<String, String> properties = new HashMap<>();
     Map<String, PluginPropertyField> pluginPropertyFieldMap = plugin.getPluginClass().getProperties();
 
