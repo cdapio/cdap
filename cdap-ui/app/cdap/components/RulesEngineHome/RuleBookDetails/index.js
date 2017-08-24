@@ -124,7 +124,7 @@ export default class RuleBookDetails extends Component {
       .subscribe(
         (res) => {
           let rulebook = res.values[0];
-          this.props.onApply(rulebook);
+          this.props.onApply(rulebook, rulebookid);
         }
       );
   };

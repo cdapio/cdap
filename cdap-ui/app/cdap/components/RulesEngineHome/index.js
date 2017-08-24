@@ -15,7 +15,7 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import {getRuleBooks, resetStore, getRules} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
+import {getRuleBooks, resetStore, getRules, setActiveRulebook} from 'components/RulesEngineHome/RulesEngineStore/RulesEngineActions';
 import RulesEngineStore, {RULESENGINEACTIONS} from 'components/RulesEngineHome/RulesEngineStore';
 import RulesEngineAlert from 'components/RulesEngineHome/RulesEngineAlert';
 import NamespaceStore from 'services/NamespaceStore';
@@ -25,6 +25,8 @@ import RulesEngineServiceControl from 'components/RulesEngineHome/RulesEngineSer
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import RulesEngineWrapper from 'components/RulesEngineHome/RulesEngineWrapper';
+import isNil from 'lodash/isNil';
+
 const PREFIX = 'features.RulesEngine.Home';
 
 export default class RulesEngineHome extends Component {
@@ -82,6 +84,9 @@ export default class RulesEngineHome extends Component {
   fetchRulesAndRulebooks = () => {
     getRuleBooks();
     getRules();
+    if (!isNil(this.props.rulebookid)) {
+      setActiveRulebook(this.props.rulebookid);
+    }
   };
 
   checkIfBackendUp() {
