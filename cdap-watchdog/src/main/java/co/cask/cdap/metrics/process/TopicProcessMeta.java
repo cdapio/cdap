@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metrics.process;
 
-import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.messaging.data.MessageId;
 
 import java.util.Objects;
@@ -27,22 +26,31 @@ import javax.annotation.Nullable;
  * Metrics processor processing information about messageId, metrics processed count, oldest and latest processed
  * timestamp
  */
-public final class MetricsProcessorStats {
+public final class TopicProcessMeta {
   private byte[] messageId;
-  private Long oldestMetricsTimestamp;
-  private Long latestMetricsTimestamp;
-  private Long messagesProcessed;
+  private long oldestMetricsTimestamp;
+  private long latestMetricsTimestamp;
+  private long messagesProcessed;
 
-  MetricsProcessorStats(byte[] messageId) {
-    this(messageId, null, null, 0L);
+  private final transient String oldestMetricsTimestampMetricName;
+  private final transient String latestMetricsTimestampMetricName;
+
+
+  public TopicProcessMeta(byte[] messageId, long oldestMetricsTimestamp,
+                          long latestMetricsTimestamp, long messagesProcessed) {
+    this(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed, null, null);
   }
 
-  MetricsProcessorStats(byte[] messageId, Long oldestMetricsTimestamp,
-                        Long latestMetricsTimestamp, Long messagesProcessed) {
+  public TopicProcessMeta(byte[] messageId, long oldestMetricsTimestamp,
+                          long latestMetricsTimestamp, long messagesProcessed,
+                          @Nullable String oldestMetricsTimestampMetricName,
+                          @Nullable String latestMetricsTimestampMetricName) {
     this.messageId = messageId;
     this.oldestMetricsTimestamp = oldestMetricsTimestamp;
     this.latestMetricsTimestamp = latestMetricsTimestamp;
     this.messagesProcessed = messagesProcessed;
+    this.oldestMetricsTimestampMetricName = oldestMetricsTimestampMetricName;
+    this.latestMetricsTimestampMetricName = latestMetricsTimestampMetricName;
   }
 
   void updateStats(byte[] messageId, long timestamp) {
@@ -55,6 +63,17 @@ public final class MetricsProcessorStats {
     }
     messagesProcessed += 1;
   }
+
+  @Nullable
+  public String getOldestMetricsTimestampMetricName() {
+    return oldestMetricsTimestampMetricName;
+  }
+
+  @Nullable
+  public String getLatestMetricsTimestampMetricName() {
+    return latestMetricsTimestampMetricName;
+  }
+
 
   /**
    * resets the timestamp and messages processed, we don't want to reset the messageId.

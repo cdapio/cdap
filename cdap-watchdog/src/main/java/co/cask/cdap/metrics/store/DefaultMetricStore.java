@@ -44,9 +44,7 @@ import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
-import co.cask.cdap.metrics.process.MetricsProcessorStats;
 import co.cask.cdap.metrics.process.TopicIdMetaKey;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
@@ -67,7 +65,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**

@@ -23,7 +23,6 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * An abstraction on persistent storage of consumer information.
@@ -65,11 +64,11 @@ public class MetricsConsumerMetaTable {
 
 
   public <T extends MetricsMetaKey>
-  void saveMetricsProcessorStats(Map<T, MetricsProcessorStats> messageIds) throws Exception {
+  void saveMetricsProcessorStats(Map<T, TopicProcessMeta> messageIds) throws Exception {
     SortedMap<byte[], SortedMap<byte[], Long>> timestampUpdates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-    for (Map.Entry<T, MetricsProcessorStats> entry : messageIds.entrySet()) {
+    for (Map.Entry<T, TopicProcessMeta> entry : messageIds.entrySet()) {
       SortedMap<byte[], Long> timeMap = new TreeMap<>(Bytes.BYTES_COMPARATOR);
-      MetricsProcessorStats metaInfo = entry.getValue();
+      TopicProcessMeta metaInfo = entry.getValue();
       if (metaInfo.getMessagesProcessed() > 0L) {
         timeMap.put(PROCESS_COUNT_TOTAL, metaInfo.getMessagesProcessed());
         timeMap.put(PROCESS_TIMESTAMP_LATEST, metaInfo.getLatestMetricsTimestamp());
@@ -118,6 +117,21 @@ public class MetricsConsumerMetaTable {
       return -1;
     }
     return Bytes.toLong(result);
+  }
+
+  /**
+   * Gets the value as a byte array in the {@link MetricsTable} of a given key.
+   *
+   * @param metaKey Object form of the key to get value with.
+   * @return The value or {@code null} if the value is not found.
+   * @throws Exception If there is an error when fetching.
+   */
+  public synchronized <T extends MetricsMetaKey> TopicProcessMeta getTopicProcessMeta(T metaKey) throws Exception {
+    long processedCount = getLong(metaKey.getKey(), PROCESS_COUNT_TOTAL);
+    long oldestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_OLDEST);
+    long latestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_LATEST);
+    byte[] messageId = metaTable.get(metaKey.getKey(), MESSAGE_ID_COLUMN);
+    return new TopicProcessMeta(messageId, oldestTs, latestTs, processedCount);
   }
 
   /**
