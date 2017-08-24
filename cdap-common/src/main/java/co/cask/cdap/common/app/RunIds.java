@@ -22,9 +22,7 @@ import com.google.common.primitives.Longs;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import org.apache.twill.api.RunId;
@@ -67,14 +65,9 @@ public final class RunIds {
   public static class RunIdCodec implements JsonSerializer<RunId>, JsonDeserializer<RunId> {
 
     @Override
-    public RunId deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-      throws JsonParseException {
-      if (json instanceof JsonPrimitive) {
-        return RunIds.fromString(json.getAsString());
-      } else if (json instanceof JsonObject) {
-        return RunIds.fromString(((JsonObject) json).get("id").getAsString());
-      }
-      throw new JsonParseException("Cannot parse RunId from json of class " + json.getClass().getName());
+    public RunId deserialize(JsonElement json, Type typeOfT,
+                             JsonDeserializationContext context) throws JsonParseException {
+      return RunIds.fromString(json.getAsString());
     }
 
     @Override
