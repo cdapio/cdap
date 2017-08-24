@@ -34,7 +34,10 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MetricsMessageId;
+import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.api.metrics.TagValue;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.cube.Aggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.AggregationAlias;
@@ -42,6 +45,12 @@ import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import co.cask.cdap.messaging.data.MessageId;
+import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
+import co.cask.cdap.metrics.process.TopicIdMetaKey;
+import co.cask.cdap.metrics.process.TopicProcessMeta;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -52,8 +61,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,7 +96,9 @@ public class DefaultMetricStore implements MetricStore {
 
   private final int resolutions[];
   private final Supplier<Cube> cube;
+  private final Supplier<MetricsConsumerMetaTable> metaTableSupplier;
   private MetricsContext metricsContext;
+  private final List<TopicId> metricsTopics;
 
 
   static {
@@ -197,13 +210,14 @@ public class DefaultMetricStore implements MetricStore {
   }
 
   @Inject
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory) {
-    // 1 sec, 1 min, 1 hour and "all time totals"
-    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION});
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory,
+                            final CConfiguration cConf) {
+    this(dsFactory, new int[] {1, 60, 3600, TOTALS_RESOLUTION}, cConf);
   }
 
   // NOTE: should never be used apart from data migration during cdap upgrade
-  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[]) {
+  public DefaultMetricStore(final MetricDatasetFactory dsFactory, final int resolutions[],
+                            final CConfiguration cConf) {
     this.resolutions = resolutions;
     final FactTableSupplier factTableSupplier = new FactTableSupplier() {
       @Override
@@ -220,6 +234,19 @@ public class DefaultMetricStore implements MetricStore {
         return cube;
       }
     });
+
+    this.metaTableSupplier = Suppliers.memoize(new Supplier<MetricsConsumerMetaTable>() {
+      @Override
+      public MetricsConsumerMetaTable get() {
+        return dsFactory.createConsumerMeta();
+      }
+    });
+    int topicNumbers = cConf.getInt(Constants.Metrics.MESSAGING_TOPIC_NUM);
+    String topicPrefix = cConf.get(Constants.Metrics.TOPIC_PREFIX);
+    metricsTopics = new ArrayList<>();
+    for (int i = 0; i < topicNumbers; i++) {
+      this.metricsTopics.add(NamespaceId.SYSTEM.topic(topicPrefix + i));
+    }
   }
 
   @Override
@@ -340,6 +367,34 @@ public class DefaultMetricStore implements MetricStore {
   @Override
   public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
     return cube.get().findMeasureNames(buildCubeSearchQuery(query));
+  }
+
+  /**
+   * Read the metrics processing stats from meta table and return the map of topic information to stats
+   * @return Map of topic to metrics processing stats
+   * @throws Exception
+   */
+  @Override
+  public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+    MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
+    Map<String, MetricsProcessorStatus> processMap = new HashMap<>();
+    for (TopicId topicId : metricsTopics) {
+      TopicProcessMeta topicProcessMeta = metaTable.getTopicProcessMeta(new TopicIdMetaKey(topicId));
+      if (topicProcessMeta != null) {
+        MessageId messageId = new MessageId(topicProcessMeta.getMessageId());
+        MetricsMessageId metricsMessageId = new MetricsMessageId(messageId.getPublishTimestamp(),
+                                                                 messageId.getSequenceId(),
+                                                                 messageId.getPayloadWriteTimestamp(),
+                                                                 messageId.getPayloadSequenceId());
+        processMap.put(
+          topicId.getTopic(), new MetricsProcessorStatus(metricsMessageId,
+                                                         topicProcessMeta.getOldestMetricsTimestamp(),
+                                                         topicProcessMeta.getLatestMetricsTimestamp(),
+                                                         topicProcessMeta.getMessagesProcessed(),
+                                                         topicProcessMeta.getLastProcessedTimestamp()));
+      }
+    }
+    return processMap;
   }
 
   private List<DimensionValue> toTagValues(List<co.cask.cdap.api.metrics.TagValue> input) {

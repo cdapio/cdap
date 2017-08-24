@@ -25,6 +25,7 @@ import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValue;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.MetricsProcessorStatus;
 import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.utils.Tasks;
@@ -39,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -179,7 +181,17 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     }
 
     public boolean isMetricsProcessorDelayEmitted() {
-      return systemMetricsMap.containsKey("metrics.0.process.delay.ms");
+      for (int i = 0; i < PARTITION_SIZE; i++) {
+        if (!systemMetricsMap.containsKey(
+          String.format(
+            "metrics.processor.0.topic.metrics%s.oldest.delay.ms", i)) &&
+          !systemMetricsMap.containsKey(
+            String.format(
+              "metrics.processor.0.topic.metrics%s.latest.delay.ms", i))) {
+          return false;
+        }
+      }
+      return true;
     }
 
     @Override
@@ -211,6 +223,11 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     @Override
     public Collection<String> findMetricNames(MetricSearchQuery query) throws Exception {
       return null;
+    }
+
+    @Override
+    public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+      return Collections.EMPTY_MAP;
     }
 
     Map<String, Long> getAllMetrics() {
