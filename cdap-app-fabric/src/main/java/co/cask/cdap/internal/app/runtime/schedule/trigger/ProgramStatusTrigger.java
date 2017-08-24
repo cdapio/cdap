@@ -50,6 +50,6 @@ public class ProgramStatusTrigger extends ProtoTrigger.ProgramStatusTrigger impl
 
   @Override
   public Set<String> getTriggerKeys() {
-    return Schedulers.triggerKeysForProgramStatus(programId, programStatuses);
+    return Schedulers.triggerKeysForProgramStatuses(programId, programStatuses);
   }
 }

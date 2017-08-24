@@ -27,6 +27,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,16 +91,26 @@ public class NoOpScheduler implements Scheduler {
 
   @Override
   public List<ProgramSchedule> listSchedules(ApplicationId appId) {
-    return null;
+    return Collections.EMPTY_LIST;
   }
 
   @Override
   public List<ProgramSchedule> listSchedules(ProgramId programId) {
-    return null;
+    return Collections.EMPTY_LIST;
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ApplicationId appId) throws NotFoundException {
+    return Collections.EMPTY_LIST;
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(ProgramId programId) throws NotFoundException {
+    return Collections.EMPTY_LIST;
   }
 
   @Override
   public Collection<ProgramScheduleRecord> findSchedules(String triggerKey) {
-    return null;
+    return Collections.EMPTY_LIST;
   }
 }

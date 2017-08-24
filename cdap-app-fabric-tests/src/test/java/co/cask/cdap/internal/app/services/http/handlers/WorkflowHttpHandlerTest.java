@@ -37,6 +37,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
@@ -55,6 +56,7 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenDetailCodec;
 import co.cask.cdap.proto.codec.WorkflowTokenNodeDetailCodec;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
@@ -883,10 +885,25 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
 
     long current = System.currentTimeMillis();
 
+    // sampleSchedule is initially  suspended, so listing schedules with SCHEDULED status will get 0 schedule
+    schedules = getSchedules(TEST_NAMESPACE2, appName, ApplicationId.DEFAULT_VERSION, sampleSchedule,
+                             ProgramScheduleStatus.SCHEDULED);
+    Assert.assertEquals(0, schedules.size());
+
     // Resume the schedule
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
     // Check schedule status
     assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
+
+    // sampleSchedule is now resumed in SCHEDULED, so listing schedules with SCHEDULED status
+    // should return sampleSchedule
+    schedules = getSchedules(TEST_NAMESPACE2, appName, ApplicationId.DEFAULT_VERSION, sampleSchedule,
+                             ProgramScheduleStatus.SCHEDULED);
+    Assert.assertEquals(1, schedules.size());
+    Assert.assertEquals(TEST_NAMESPACE2, schedules.get(0).getNamespace());
+    Assert.assertEquals(appName, schedules.get(0).getApplication());
+    Assert.assertEquals(ApplicationId.DEFAULT_VERSION, schedules.get(0).getApplicationVersion());
+    Assert.assertEquals(sampleSchedule, schedules.get(0).getName());
 
     List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
     String id = runtimes.get(0).getId();
