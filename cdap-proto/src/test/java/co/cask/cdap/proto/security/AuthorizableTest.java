@@ -40,13 +40,17 @@ public class AuthorizableTest {
     ArtifactId artifactId = new ArtifactId("ns", "art", "1.0-SNAPSHOT");
     authorizable = Authorizable.fromEntityId(artifactId);
     // drop the version while asserting
-    Assert.assertEquals(artifactId.toString().replace(".1.0-SNAPSHOT", ""), authorizable.toString());
+    String artifactIdNoVer = artifactId.toString().replace(".1.0-SNAPSHOT", "");
+    Assert.assertEquals(artifactIdNoVer, authorizable.toString());
+
+    String widcardId = artifactIdNoVer.replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testNamespace() {
     Authorizable authorizable;
-    NamespaceId namespaceId = new NamespaceId("ns");
+    NamespaceId namespaceId = new NamespaceId("test_ns");
     authorizable = Authorizable.fromEntityId(namespaceId);
     Assert.assertEquals(namespaceId.toString(), authorizable.toString());
 
@@ -57,6 +61,9 @@ public class AuthorizableTest {
     wildcardNs = namespaceId.toString() + "*" + "more";
     authorizable = Authorizable.fromString(wildcardNs);
     Assert.assertEquals(wildcardNs, authorizable.toString());
+
+    String widcardId = namespaceId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
@@ -79,7 +86,11 @@ public class AuthorizableTest {
     programId = appId.program(ProgramType.MAPREDUCE, "prog");
     authorizable = Authorizable.fromEntityId(programId);
     // drop the version while asserting
-    Assert.assertEquals(programId.toString().replace(".1.0-SNAPSHOT", ""), authorizable.toString());
+    String programIdNoVer = programId.toString().replace(".1.0-SNAPSHOT", "");
+    Assert.assertEquals(programIdNoVer, authorizable.toString());
+
+    String widcardId = programIdNoVer.replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
@@ -87,7 +98,8 @@ public class AuthorizableTest {
     ApplicationId appId = new ApplicationId("ns", "app", "1.0-SNAPSHOT");
     Authorizable authorizable = Authorizable.fromEntityId(appId);
     // drop the version while asserting
-    Assert.assertEquals(appId.toString().replace(".1.0-SNAPSHOT", ""), authorizable.toString());
+    String appIdNoVer = appId.toString().replace(".1.0-SNAPSHOT", "");
+    Assert.assertEquals(appIdNoVer, authorizable.toString());
 
     try {
       Authorizable.fromString(appId.toString());
@@ -95,47 +107,68 @@ public class AuthorizableTest {
     } catch (UnsupportedOperationException e) {
       // expected
     }
+
+    String widcardId = appIdNoVer.replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testPrincipal() {
-    KerberosPrincipalId kerberosPrincipalId = new KerberosPrincipalId("eve/host1.com@domain.net");
+    KerberosPrincipalId kerberosPrincipalId = new KerberosPrincipalId("eve/host*.com@domai?.net");
     Authorizable authorizable = Authorizable.fromEntityId(kerberosPrincipalId);
     Assert.assertEquals(kerberosPrincipalId.toString(), authorizable.toString());
+
+    Assert.assertEquals(kerberosPrincipalId.toString() + "*.com",
+                        Authorizable.fromString(authorizable.toString() + "*.com").toString());
   }
 
   @Test
   public void testStream() {
-    StreamId streamId = new StreamId("ns", "stream");
+    StreamId streamId = new StreamId("ns", "test_stream");
     Authorizable authorizable = Authorizable.fromEntityId(streamId);
     Assert.assertEquals(streamId.toString(), authorizable.toString());
+
+    String widcardId = streamId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testDataset() {
-    DatasetId datasetId = new DatasetId("ns", "dataset");
+    DatasetId datasetId = new DatasetId("ns", "co.cask.test_dataset");
     Authorizable authorizable = Authorizable.fromEntityId(datasetId);
     Assert.assertEquals(datasetId.toString(), authorizable.toString());
+
+    String widcardId = datasetId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testSecureKey() {
-    SecureKeyId secureKeyId = new SecureKeyId("ns", "secure");
+    SecureKeyId secureKeyId = new SecureKeyId("ns", "test_secure");
     Authorizable authorizable = Authorizable.fromEntityId(secureKeyId);
     Assert.assertEquals(secureKeyId.toString(), authorizable.toString());
+
+    String widcardId = secureKeyId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testDatasetType() {
-    DatasetTypeId datasetTypeId = new DatasetTypeId("ns", "datasetType");
+    DatasetTypeId datasetTypeId = new DatasetTypeId("ns", "co.cask.test_datasetType");
     Authorizable authorizable = Authorizable.fromEntityId(datasetTypeId);
     Assert.assertEquals(datasetTypeId.toString(), authorizable.toString());
+
+    String widcardId = datasetTypeId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 
   @Test
   public void testDatasetModule() {
-    DatasetModuleId datasetModuleId = new DatasetModuleId("ns", "datasetModule");
+    DatasetModuleId datasetModuleId = new DatasetModuleId("ns", "co.cask.test_datasetModule");
     Authorizable authorizable = Authorizable.fromEntityId(datasetModuleId);
     Assert.assertEquals(datasetModuleId.toString(), authorizable.toString());
+
+    String widcardId = datasetModuleId.toString().replace("est", "*es?t");
+    Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
   }
 }

@@ -19,6 +19,7 @@ package co.cask.cdap.proto.security;
 import co.cask.cdap.proto.element.EntityType;
 import co.cask.cdap.proto.id.EntityId;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -74,14 +75,28 @@ public class Authorizable {
     String typeString = typeAndId[0];
     EntityType type = EntityType.valueOf(typeString.toUpperCase());
     String idString = typeAndId[1];
-    List<String> idParts;
-    if (type != EntityType.KERBEROSPRINCIPAL) {
-      // kerberos principal might contain . which is also EntityId.IDSTRING_PART_SEPARATOR_PATTERN so don't split for
-      // them and also principal doesn't have other parts so just initialize
-      idParts = Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(idString));
-    } else {
-      idParts = Collections.singletonList(idString);
+
+    List<String> idParts = Collections.emptyList();
+    switch (type) {
+      case KERBEROSPRINCIPAL:
+        // kerberos principal might contain . which is also EntityId.IDSTRING_PART_SEPARATOR_PATTERN so don't split for
+        // them and also principal doesn't have other parts so just initialize
+        idParts = Collections.singletonList(idString);
+        break;
+      case DATASET:
+      case DATASET_TYPE:
+      case DATASET_MODULE:
+        int namespaceSeparatorPos = idString.indexOf(EntityId.IDSTRING_PART_SEPARATOR);
+        if (namespaceSeparatorPos > 0) {
+          idParts = new ArrayList<>();
+          idParts.add(idString.substring(0, namespaceSeparatorPos));
+          idParts.add(idString.substring(namespaceSeparatorPos + 1));
+        }
+        break;
+      default:
+        idParts = Arrays.asList(EntityId.IDSTRING_PART_SEPARATOR_PATTERN.split(idString));
     }
+
     Map<EntityType, String> entityParts = new LinkedHashMap<>();
     checkParts(type, idParts, idParts.size() - 1, entityParts);
     return new Authorizable(type, entityParts);
