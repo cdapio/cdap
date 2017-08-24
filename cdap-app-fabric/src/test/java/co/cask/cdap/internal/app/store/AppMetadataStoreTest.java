@@ -89,7 +89,8 @@ public class AppMetadataStoreTest {
       public void apply() throws Exception {
         metadataStoreDataset.recordProgramStart(program, runId.getId(),
                                                 RunIds.getTime(runId, TimeUnit.SECONDS), null, null, null);
-        metadataStoreDataset.recordProgramRunningOldFormat(program, runId.getId(),
+        metadataStoreDataset.recordProgramRunningOldFormat(program,
+                                                           runId.getId(),
                                                            RunIds.getTime(runId, TimeUnit.SECONDS), null);
       }
     });

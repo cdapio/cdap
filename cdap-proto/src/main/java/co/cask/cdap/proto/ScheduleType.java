@@ -17,13 +17,14 @@
 package co.cask.cdap.proto;
 
 import co.cask.cdap.api.schedule.Schedule;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 
 /**
  * Schedule Type.
  *
- * @deprecated as of 4.2.0. Use {@link co.cask.cdap.api.schedule.Trigger} instead.
+ * @deprecated as of 4.2.0. Use {@link Trigger} instead.
  */
 @Deprecated
 public enum ScheduleType {

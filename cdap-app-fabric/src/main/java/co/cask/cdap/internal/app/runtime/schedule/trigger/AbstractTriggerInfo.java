@@ -16,19 +16,23 @@
 
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
-import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggerInfo;
 
 /**
- * A Trigger builder that builds a {@link OrTrigger}.
+ * Base class for the trigger information to be passed to the triggered program.
  */
-public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
+public abstract class AbstractTriggerInfo implements TriggerInfo {
+  private final Type type;
 
-  public OrTriggerBuilder(Trigger... triggers) {
-    super(Type.OR, triggers);
+  public AbstractTriggerInfo(Type type) {
+    this.type = type;
   }
 
+  /**
+   * @return The type of the trigger.
+   */
   @Override
-  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
-    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
+  public Type getType() {
+    return type;
   }
 }

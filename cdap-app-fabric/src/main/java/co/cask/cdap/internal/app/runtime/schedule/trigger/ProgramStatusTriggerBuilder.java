@@ -18,6 +18,7 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -41,6 +42,11 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
       throw new IllegalArgumentException("Must set a program state for the triggering program");
     }
     this.programStatuses = EnumSet.of(programStatuses[0], programStatuses);
+  }
+
+  @Override
+  public Type getType() {
+    return Type.PROGRAM_STATUS;
   }
 
   @Override

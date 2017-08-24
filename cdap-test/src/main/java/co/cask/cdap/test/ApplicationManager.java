@@ -21,8 +21,10 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
@@ -152,6 +154,20 @@ public interface ApplicationManager {
    * @return list of {@link RunRecord} history
    */
   List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status);
+
+  /**
+   * Adds a schedule to the app.
+   *
+   * @param scheduleDetail the schedule to be added.
+   */
+  void addSchedule(ScheduleDetail scheduleDetail) throws Exception;
+
+  /**
+   * Enable a schedule in an app.
+   *
+   * @param scheduleId the id of the schedule to be enabled.
+   */
+  void enableSchedule(ScheduleId scheduleId) throws Exception;
 
   /**
    * Updates this application

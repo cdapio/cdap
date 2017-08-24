@@ -14,21 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.schedule.trigger;
+package co.cask.cdap.api;
 
-import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
+
+import javax.annotation.Nullable;
 
 /**
- * A Trigger builder that builds a {@link OrTrigger}.
+ * This interface provides the context for accessing scheduling information of this program.
  */
-public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
+public interface SchedulableProgramContext {
 
-  public OrTriggerBuilder(Trigger... triggers) {
-    super(Type.OR, triggers);
-  }
-
-  @Override
-  public OrTrigger build(String namespace, String applicationName, String applicationVersion) {
-    return new OrTrigger(getBuiltTriggers(namespace, applicationName, applicationVersion));
-  }
+  /**
+   * @return The information of the schedule that launches this program.
+   *         Return {@code null} if the program is not launched by a schedule.
+   */
+  @Nullable
+  TriggeringScheduleInfo getTriggeringScheduleInfo();
 }

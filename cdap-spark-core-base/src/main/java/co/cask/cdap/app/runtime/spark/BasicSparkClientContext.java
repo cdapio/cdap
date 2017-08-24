@@ -31,6 +31,7 @@ import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -168,6 +169,12 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public DataTracer getDataTracer(String dataTracerName) {
     return sparkRuntimeContext.getDataTracer(dataTracerName);
+  }
+
+  @Nullable
+  @Override
+  public TriggeringScheduleInfo getTriggeringScheduleInfo() {
+    return sparkRuntimeContext.getTriggeringScheduleInfo();
   }
 
   @Override
