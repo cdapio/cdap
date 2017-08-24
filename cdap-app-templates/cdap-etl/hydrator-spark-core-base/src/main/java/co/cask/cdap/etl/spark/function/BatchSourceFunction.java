@@ -49,7 +49,8 @@ public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, 
                                            new LimitingTransform<>(batchSource, numOfRecordsPreview) :
                                            batchSource,
                                          pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(),
+                                         pluginFunctionContext.getStageStatisticsCollector());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();

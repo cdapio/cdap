@@ -635,6 +635,7 @@ public class DataPipelineTest extends HydratorTestBase {
     String sourceName = "simpleConditionSource-" + engine;
     String trueOutput = "simpleCondition-true-" + engine;
     String falseOutput = "simpleCondition-false-" + engine;
+    String conditionTableName = "condition-" + engine;
     /*
      * source --> condition --> trueSink
      *              |
@@ -645,7 +646,7 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("source", MockSource.getPlugin(sourceName, schema)))
       .addStage(new ETLStage("trueSink", MockSink.getPlugin(trueOutput)))
       .addStage(new ETLStage("falseSink", MockSink.getPlugin(falseOutput)))
-      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition")))
+      .addStage(new ETLStage("condition", MockCondition.getPlugin("condition", conditionTableName)))
       .addConnection("source", "condition")
       .addConnection("condition", "trueSink", true)
       .addConnection("condition", "falseSink", false)
@@ -678,6 +679,12 @@ public class DataPipelineTest extends HydratorTestBase {
       Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
       Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
       Assert.assertEquals(expected, actual);
+
+      // check condition table
+      DataSetManager<Table> conditionTableDS = getDataset(conditionTableName);
+      Assert.assertEquals("2", MockCondition.readOutput(conditionTableDS, "stats", "source.input.records"));
+      Assert.assertEquals("2", MockCondition.readOutput(conditionTableDS, "stats", "source.output.records"));
+      Assert.assertEquals("0", MockCondition.readOutput(conditionTableDS, "stats", "source.error.records"));
 
       validateMetric(branch.equals("true") ? 2 : 4, appId, "source.records.out");
       validateMetric(2, appId, branch + "Sink.records.in");

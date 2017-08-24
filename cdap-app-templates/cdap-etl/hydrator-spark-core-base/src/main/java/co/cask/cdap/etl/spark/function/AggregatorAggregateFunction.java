@@ -51,7 +51,8 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
                                                   Constants.Metrics.AGG_GROUPS,
-                                                  Constants.Metrics.RECORDS_OUT, pluginFunctionContext.getDataTracer());
+                                                  Constants.Metrics.RECORDS_OUT, pluginFunctionContext.getDataTracer(),
+                                                  pluginFunctionContext.getStageStatisticsCollector());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();

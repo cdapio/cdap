@@ -23,6 +23,7 @@ import co.cask.cdap.etl.api.MultiOutputTransformation;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 
+
 /**
  * A {@link Transformation} that delegates transform operations while emitting metrics
  * around how many records were input into the transform and output by it.
@@ -34,18 +35,26 @@ public class TrackedMultiOutputTransform<IN, ERROR> implements MultiOutputTransf
   private final MultiOutputTransformation<IN, ERROR> transform;
   private final StageMetrics metrics;
   private final DataTracer dataTracer;
+  private final StageStatisticsCollector collector;
 
   public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform, StageMetrics metrics,
                                      DataTracer dataTracer) {
+    this(transform, metrics, dataTracer, new NoopStageStatisticsCollector());
+  }
+
+  public TrackedMultiOutputTransform(MultiOutputTransformation<IN, ERROR> transform, StageMetrics metrics,
+                                     DataTracer dataTracer, StageStatisticsCollector collector) {
     this.transform = transform;
     this.metrics = metrics;
     this.dataTracer = dataTracer;
+    this.collector = collector;
   }
 
   @Override
   public void transform(IN input, MultiOutputEmitter<ERROR> emitter) throws Exception {
     metrics.count(Constants.Metrics.RECORDS_IN, 1);
-    transform.transform(input, new TrackedMultiOutputEmitter<>(emitter, metrics, dataTracer));
+    collector.incrementInputRecordCount();
+    transform.transform(input, new TrackedMultiOutputEmitter<>(emitter, metrics, dataTracer, collector));
   }
 
   @Override

@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.spark.streaming;
 
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.function.PluginFunctionContext;
 import co.cask.cdap.etl.spec.StageSpec;
 
@@ -43,11 +45,11 @@ public class DynamicDriverContext implements Externalizable {
     // for deserialization
   }
 
-  public DynamicDriverContext(StageSpec stageSpec, JavaSparkExecutionContext sec) {
+  public DynamicDriverContext(StageSpec stageSpec, JavaSparkExecutionContext sec, StageStatisticsCollector collector) {
     this.serializationVersion = "4.3";
     this.stageSpec = stageSpec;
     this.sec = sec;
-    this.pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+    this.pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
   }
 
   @Override
@@ -67,7 +69,7 @@ public class DynamicDriverContext implements Externalizable {
     // and logical start time are picked up from the JavaSparkExecutionContext. If we serialized it,
     // the arguments and start time of the very first pipeline run would get serialized, then
     // used for every subsequent run that loads from the checkpoint.
-    pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+    pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, new NoopStageStatisticsCollector());
   }
 
   public JavaSparkExecutionContext getSparkExecutionContext() {

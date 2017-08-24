@@ -16,15 +16,14 @@
 
 package co.cask.cdap.etl.spark;
 
-import co.cask.cdap.etl.api.AlertPublisher;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spec.StageSpec;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
-import scala.Tuple2;
 
 import javax.annotation.Nullable;
 
@@ -46,13 +45,14 @@ public interface SparkCollection<T> {
 
   SparkCollection<T> union(SparkCollection<T> other);
 
-  SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec);
+  SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector);
 
-  SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec);
+  SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec, StageStatisticsCollector collector);
 
   <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function);
 
-  SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions);
+  SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                StageStatisticsCollector collector);
 
   <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function);
 
@@ -62,7 +62,7 @@ public interface SparkCollection<T> {
 
   void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
 
-  void publishAlerts(StageSpec stageSpec) throws Exception;
+  void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception;
 
   SparkCollection<T> window(StageSpec stageSpec, Windower windower);
 }

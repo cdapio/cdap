@@ -23,7 +23,9 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelineRuntime;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
 import co.cask.cdap.etl.spark.batch.SparkBatchSinkContext;
@@ -92,7 +94,8 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec,
                                                                               pipelineRuntime.getArguments().asMap(),
-                                                                              batchTime.milliseconds());
+                                                                              batchTime.milliseconds(),
+                                                                              new NoopStageStatisticsCollector());
       PairFlatMapFunc<T, Object, Object> sinkFunction = new BatchSinkFunction<T, Object, Object>(pluginFunctionContext);
 
       sinkFactory.writeFromRDD(data.flatMapToPair(Compat.convert(sinkFunction)), sec, stageName,
