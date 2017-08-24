@@ -24,7 +24,7 @@ import co.cask.cdap.api.schedule.Trigger;
 public class OrTriggerBuilder extends AbstractCompositeTriggerBuilder {
 
   public OrTriggerBuilder(Trigger... triggers) {
-    super(triggers);
+    super(Type.OR, triggers);
   }
 
   @Override

@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NamespaceNotFoundException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
@@ -108,7 +107,7 @@ class ConstraintCheckerService extends AbstractIdleService {
     LOG.info("Starting ConstraintCheckerService.");
     taskExecutorService = MoreExecutors.listeningDecorator(
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("constraint-checker-task").build()));
-    taskRunner = new ScheduleTaskRunner(lifecycleService, propertiesResolver,
+    taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
                                         taskExecutorService, namespaceQueryAdmin, cConf);
 
     int numPartitions = Schedulers.getJobQueue(multiThreadDatasetCache, datasetFramework).getNumPartitions();

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -27,7 +28,9 @@ import co.cask.cdap.api.messaging.Message;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginPropertyField;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.NodeStatus;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.datapipeline.mock.NaiveBayesClassifier;
@@ -69,13 +72,20 @@ import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.spark.Compat;
+import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ServiceManager;
@@ -92,6 +102,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -103,6 +116,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -113,6 +128,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -312,17 +328,121 @@ public class DataPipelineTest extends HydratorTestBase {
   }
 
   @Test
-  public void testMacroActionPipelines() throws Exception {
+  public void testMacroActionPipelinesAndSchedule() throws Exception {
     testMacroEvaluationActionPipeline(Engine.MAPREDUCE);
+    // Deploy two pipelines which are scheduled to be triggered by the completion of the pipeline deployed in
+    // testMacroEvaluationActionPipeline(Engine.SPARK)
+    WorkflowManager triggeredWorkflowManagerMR = deployPipelineWithSchedule(Engine.MAPREDUCE);
+    WorkflowManager triggeredWorkflowManagerSpark = deployPipelineWithSchedule(Engine.SPARK);
     testMacroEvaluationActionPipeline(Engine.SPARK);
+    // After the completion of the above pipeline, verify the results of two triggered pipelines
+    assertTriggeredPipelinesResult(triggeredWorkflowManagerMR, Engine.MAPREDUCE);
+    assertTriggeredPipelinesResult(triggeredWorkflowManagerSpark, Engine.SPARK);
+  }
+
+  private WorkflowManager deployPipelineWithSchedule(Engine engine) throws Exception {
+    String tableName = "actionScheduleTable" + engine;
+    String key1 = "trigger-runtime-arg";
+    String key2 = "trigger-plugin-property";
+    String key3 = "trigger-token";
+    String sourceName = "macroActionWithScheduleInput-" + engine;
+    String sinkName = "macroActionWithScheduleOutput-" + engine;
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      // 'filter' stage is configured to remove samuel, but action will set an argument that will make it filter dwayne
+      .addStage(new ETLStage("action1", MockAction.getPlugin(tableName, "row1", "column1",
+                                                             String.format("${%s}", key1))))
+      .addStage(new ETLStage("action2", MockAction.getPlugin(tableName, "row2", "column2",
+                                                             String.format("${%s}", key2))))
+      .addStage(new ETLStage("action3", MockAction.getPlugin(tableName, "row3", "column3",
+                                                             String.format("${%s}", key3))))
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter1", StringValueFilterTransform.getPlugin("name", String.format("${%s}", key1))))
+      .addStage(new ETLStage("filter2", StringValueFilterTransform.getPlugin("name", String.format("${%s}", key2))))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("action1", "action2")
+      .addConnection("action2", "action3")
+      .addConnection("action3", "source")
+      .addConnection("source", "filter1")
+      .addConnection("filter1", "filter2")
+      .addConnection("filter2", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("triggeredActionPipeline-" + engine);
+    ApplicationManager appManager = deployApplication(appId.toId(), appRequest);
+
+    // there should be only two programs - one workflow and one mapreduce/spark
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordKey1Value = StructuredRecord.builder(schema).set("name", "macroValue").build();
+    StructuredRecord recordKey2Value = StructuredRecord.builder(schema).set("name", "action1.row").build();
+
+    // write one record to each source
+    DataSetManager<Table> inputManager = getDataset(sourceName);
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordKey1Value, recordKey2Value));
+
+    String defaultNamespace = NamespaceId.DEFAULT.getNamespace();
+    String triggeringPipeline = "macroActionTest-SPARK";
+    // Use properties from the triggering pipeline as values for runtime argument key1, key2, and key3
+    Map<String, String> triggeringPropertiesMap = ImmutableMap.<String, String>builder()
+      // use the value of runtime argument with key "value" in triggering pipeline as the value for key1
+      .put(GSON.toJson(new TriggeringPipelineRuntimeArgId(defaultNamespace, triggeringPipeline, "value")), key1)
+      // use the value of property "rowKey" in plugin "action1" in triggering pipeline as the value for key2
+      .put(GSON.toJson(new TriggeringPipelinePluginPropertyId(defaultNamespace, triggeringPipeline,
+                                                              "action1", "rowKey")), key2)
+      // use the value of token with key "columnKey" and SmartWorkflow.NAME as node name
+      // in triggering pipeline as the value for key3
+      .put(GSON.toJson(new TriggeringPipelineTokenId(defaultNamespace, triggeringPipeline,
+                                                     "action1.rowaction1.column", "phase-1")), key3)
+      .build();
+    ProgramStatusTrigger completeTrigger =
+      new ProgramStatusTrigger(new WorkflowId(defaultNamespace, triggeringPipeline, SmartWorkflow.NAME),
+                               ImmutableSet.of(ProgramStatus.COMPLETED));
+    ScheduleId scheduleId = appId.schedule(("completeSchedule"));
+    appManager.addSchedule(
+      new ScheduleDetail(scheduleId.getSchedule(), "",
+                         new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, SmartWorkflow.NAME),
+                         ImmutableMap.of(SmartWorkflow.TRIGGERING_PROPERTIES_MAPPING,
+                                         GSON.toJson(triggeringPropertiesMap)),
+                         completeTrigger, ImmutableList.<Constraint>of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS));
+    appManager.enableSchedule(scheduleId);
+    WorkflowManager manager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    return manager;
+  }
+
+  private void assertTriggeredPipelinesResult(WorkflowManager workflowManager, Engine engine) throws Exception {
+    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = workflowManager.getHistory(ProgramRunStatus.COMPLETED);
+    Assert.assertEquals(1, runRecords.size());
+    String key1 = "trigger-runtime-arg";
+    String key2 = "trigger-plugin-property";
+    String key3 = "trigger-token";
+    Map<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData =
+      workflowManager.getToken(runRecords.get(0).getPid(), null, null).getTokenData();
+    Assert.assertEquals("macroValue", tokenData.get(key1).get(0).getValue());
+    Assert.assertEquals("action1.row", tokenData.get(key2).get(0).getValue());
+    Assert.assertEquals("macroValue", tokenData.get(key3).get(0).getValue());
+    String tableName = "actionScheduleTable" + engine;
+    DataSetManager<Table> actionTableDS = getDataset(tableName);
+    Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row1", "column1"));
+    Assert.assertEquals("action1.row", MockAction.readOutput(actionTableDS, "row2", "column2"));
+    Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "row3", "column3"));
+
+    // check sink
+    DataSetManager<Table> sinkManager = getDataset("macroActionWithScheduleOutput-" + engine);
+    Schema schema = Schema.recordOf("testRecord", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected =
+      ImmutableSet.of(StructuredRecord.builder(schema).set("name", "samuel").build());
+    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Assert.assertEquals(expected, actual);
   }
 
   public void testMacroEvaluationActionPipeline(Engine engine) throws Exception {
-    ETLStage action1 = new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
-                                                                    "${value}"));
 
     ETLBatchConfig etlConfig = co.cask.cdap.etl.proto.v2.ETLBatchConfig.builder("* * * * *")
-      .addStage(action1)
+      .addStage(new ETLStage("action1", MockAction.getPlugin("actionTable", "action1.row", "action1.column",
+                                                             "${value}")))
       .setEngine(engine)
       .build();
 
@@ -340,8 +460,6 @@ public class DataPipelineTest extends HydratorTestBase {
 
     DataSetManager<Table> actionTableDS = getDataset("actionTable");
     Assert.assertEquals("macroValue", MockAction.readOutput(actionTableDS, "action1.row", "action1.column"));
-
-    appManager.getHistory(appId.workflow(SmartWorkflow.NAME).toId(), ProgramRunStatus.FAILED);
   }
 
   @Test

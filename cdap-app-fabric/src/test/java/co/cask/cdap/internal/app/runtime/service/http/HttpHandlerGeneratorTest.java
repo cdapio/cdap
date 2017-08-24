@@ -33,6 +33,7 @@ import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;

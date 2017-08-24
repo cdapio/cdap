@@ -17,6 +17,8 @@
 package co.cask.cdap.internal.app.runtime.schedule.trigger;
 
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
 
 import java.util.List;
@@ -31,12 +33,17 @@ public class AndTrigger extends AbstractCompositeTrigger implements SatisfiableT
   }
 
   @Override
-  public boolean isSatisfied(List<Notification> notifications) {
-    for (Trigger trigger : triggers) {
-      if (!((SatisfiableTrigger) trigger).isSatisfied(notifications)) {
+  public boolean isSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
+    for (Trigger trigger : getTriggers()) {
+      if (!((SatisfiableTrigger) trigger).isSatisfied(schedule, notifications)) {
         return false;
       }
     }
     return true;
+  }
+
+  @Override
+  public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
+    return getUnitTriggerInfosAddRuntimeArgs(context);
   }
 }

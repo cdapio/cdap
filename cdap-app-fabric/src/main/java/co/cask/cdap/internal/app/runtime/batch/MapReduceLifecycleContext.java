@@ -35,6 +35,7 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.workflow.WorkflowInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -272,6 +273,12 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public DataTracer getDataTracer(String dataTracerName) {
     return delegate.getDataTracer(dataTracerName);
+  }
+
+  @Nullable
+  @Override
+  public TriggeringScheduleInfo getTriggeringScheduleInfo() {
+    return delegate.getTriggeringScheduleInfo();
   }
 
   @Override
