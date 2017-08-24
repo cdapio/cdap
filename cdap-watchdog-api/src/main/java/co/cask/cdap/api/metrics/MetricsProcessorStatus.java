@@ -24,6 +24,7 @@ public class MetricsProcessorStatus {
   private final long messagesProcessed;
   private final long oldestTimestamp;
   private final long latestTimestamp;
+  private final long lastProcessedTimestamp;
 
   /**
    *
@@ -32,12 +33,15 @@ public class MetricsProcessorStatus {
    * @param messagesProcessed number of messages processed in the most recent iteration of processing
    * @param oldestTimestamp oldest timestamp among the processed metrics
    * @param latestTimestamp latest timestamp among the processed metrics
+   * @param lastProcessedTimestamp timestamp when messages was last processed by metrics processor for the topic
    */
   public MetricsProcessorStatus(long messagePublishTimestamp,
-                                long messagesProcessed, long oldestTimestamp, long latestTimestamp) {
+                                long messagesProcessed, long oldestTimestamp, long latestTimestamp,
+                                long lastProcessedTimestamp) {
     this.messagePublishTimestamp = messagePublishTimestamp;
     this.messagesProcessed = messagesProcessed;
     this.oldestTimestamp = oldestTimestamp;
     this.latestTimestamp = latestTimestamp;
+    this.lastProcessedTimestamp = lastProcessedTimestamp;
   }
 }

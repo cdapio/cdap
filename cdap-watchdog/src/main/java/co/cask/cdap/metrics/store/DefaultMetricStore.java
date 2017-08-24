@@ -44,8 +44,10 @@ import co.cask.cdap.data2.dataset2.lib.cube.DefaultAggregation;
 import co.cask.cdap.data2.dataset2.lib.cube.DefaultCube;
 import co.cask.cdap.data2.dataset2.lib.cube.FactTableSupplier;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
+import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
 import co.cask.cdap.metrics.process.TopicIdMetaKey;
+import co.cask.cdap.metrics.process.TopicProcessMeta;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Function;
@@ -372,11 +374,11 @@ public class DefaultMetricStore implements MetricStore {
    * @throws Exception
    */
   @Override
-  public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+  public Map<String, String> getMetricsProcessorStats() throws Exception {
     MetricsConsumerMetaTable metaTable = metaTableSupplier.get();
-    Map<String, MetricsProcessorStatus> processMap = new HashMap<>();
+    Map<String, String> processMap = new HashMap<>();
     for (TopicId topicId : metricsTopics) {
-      processMap.put(topicId.getTopic(), metaTable.getMetricsProcessorStats(new TopicIdMetaKey(topicId)));
+      processMap.put(topicId.getTopic(), metaTable.getTopicProcessMeta(new TopicIdMetaKey(topicId)).toString());
     }
     return processMap;
   }

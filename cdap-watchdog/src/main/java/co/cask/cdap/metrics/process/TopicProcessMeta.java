@@ -31,37 +31,44 @@ public final class TopicProcessMeta {
   private long oldestMetricsTimestamp;
   private long latestMetricsTimestamp;
   private long messagesProcessed;
+  private long lastProcessedTimestamp;
 
   private final transient String oldestMetricsTimestampMetricName;
   private final transient String latestMetricsTimestampMetricName;
 
 
-  public TopicProcessMeta(byte[] messageId, long oldestMetricsTimestamp,
-                          long latestMetricsTimestamp, long messagesProcessed) {
-    this(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed, null, null);
+  public TopicProcessMeta(@Nullable byte[] messageId, long oldestMetricsTimestamp,
+                          long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp) {
+    this(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed, lastProcessedTimestamp,
+         null, null);
   }
 
-  public TopicProcessMeta(byte[] messageId, long oldestMetricsTimestamp,
-                          long latestMetricsTimestamp, long messagesProcessed,
+  public TopicProcessMeta(@Nullable byte[] messageId, long oldestMetricsTimestamp,
+                          long latestMetricsTimestamp, long messagesProcessed, long lastProcessedTimestamp,
                           @Nullable String oldestMetricsTimestampMetricName,
                           @Nullable String latestMetricsTimestampMetricName) {
     this.messageId = messageId;
     this.oldestMetricsTimestamp = oldestMetricsTimestamp;
     this.latestMetricsTimestamp = latestMetricsTimestamp;
     this.messagesProcessed = messagesProcessed;
+    this.lastProcessedTimestamp = lastProcessedTimestamp;
     this.oldestMetricsTimestampMetricName = oldestMetricsTimestampMetricName;
     this.latestMetricsTimestampMetricName = latestMetricsTimestampMetricName;
   }
 
   void updateStats(byte[] messageId, long timestamp) {
     this.messageId = messageId;
-    if (oldestMetricsTimestamp == null || timestamp < oldestMetricsTimestamp) {
+    if (timestamp < oldestMetricsTimestamp) {
       oldestMetricsTimestamp = timestamp;
     }
-    if (latestMetricsTimestamp == null || timestamp > latestMetricsTimestamp) {
+    if (timestamp > latestMetricsTimestamp) {
       latestMetricsTimestamp = timestamp;
     }
     messagesProcessed += 1;
+  }
+
+  void updateLastProcessedTimestamp() {
+    lastProcessedTimestamp = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
   }
 
   @Nullable
@@ -74,36 +81,20 @@ public final class TopicProcessMeta {
     return latestMetricsTimestampMetricName;
   }
 
-
-  /**
-   * resets the timestamp and messages processed, we don't want to reset the messageId.
-   */
-  void resetMetaInfo() {
-    this.oldestMetricsTimestamp = null;
-    this.latestMetricsTimestamp = null;
-    this.messagesProcessed = 0L;
-  }
-
   @Nullable
   public byte[] getMessageId() {
     return messageId;
   }
 
-  /**
-   * get the publish timestamp in seconds from the tms message id
-   * @return publish timestamp in seconds ; -1 if null
-   */
-  public long getPublishTimestamp() {
-    return messageId == null ? -1 : TimeUnit.MILLISECONDS.toSeconds(new MessageId(messageId).getPublishTimestamp());
-  }
-
-  @Nullable
-  public Long getOldestMetricsTimestamp() {
+  public long getOldestMetricsTimestamp() {
     return oldestMetricsTimestamp;
   }
 
-  @Nullable
-  public Long getLatestMetricsTimestamp() {
+  public long getLastProcessedTimestamp() {
+    return lastProcessedTimestamp;
+  }
+
+  public long getLatestMetricsTimestamp() {
     return latestMetricsTimestamp;
   }
 
@@ -116,12 +107,27 @@ public final class TopicProcessMeta {
     return Objects.hash(messageId, oldestMetricsTimestamp, latestMetricsTimestamp, messagesProcessed);
   }
 
+  private String getMessageIdString() {
+    if (messageId == null) {
+      return "MessageId : null";
+    } else {
+      MessageId messageId1 = new MessageId(messageId);
+      return "MessageId{" +
+        "publishTimestamp=" + messageId1.getPublishTimestamp() +
+        ", sequenceId=" + messageId1.getSequenceId()  +
+        ", writeTimestamp=" + messageId1.getPayloadWriteTimestamp() +
+        ", payloadSequenceId=" + messageId1.getPayloadSequenceId() +
+        '}';
+    }
+  }
+
   @Override
   public String toString() {
-    return "PersistMetaInfo{" +
-      "messageId=" + new MessageId(messageId) +
+    return "TopicProcessMeta{" +
+      getMessageIdString() +
       ", oldestMetricsTimestamp=" + oldestMetricsTimestamp +
       ", latestMetricsTimestamp=" + latestMetricsTimestamp +
+      ", lastProcessedTimestamp=" + lastProcessedTimestamp +
       ", messagesProcessed=" + messagesProcessed +
       '}';
   }

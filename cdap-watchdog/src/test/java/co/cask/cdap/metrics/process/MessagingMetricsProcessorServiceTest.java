@@ -226,7 +226,7 @@ public class MessagingMetricsProcessorServiceTest extends MetricsProcessorServic
     }
 
     @Override
-    public Map<String, MetricsProcessorStatus> getMetricsProcessorStats() throws Exception {
+    public Map<String, String> getMetricsProcessorStats() throws Exception {
       return Collections.EMPTY_MAP;
     }
 
