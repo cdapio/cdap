@@ -20,6 +20,7 @@ import co.cask.cdap.api.schedule.ProgramStatusTriggerInfo
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.SparkMain
+import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 
 /**
@@ -32,9 +33,16 @@ final class TriggeredSpark extends AbstractSpark with SparkMain {
   }
 
   override def run(implicit sec: SparkExecutionContext): Unit = {
-    val sc = new SparkContext
     val triggerInfo = sec.getTriggeringScheduleInfo.get.getTriggerInfos.get(0).asInstanceOf[ProgramStatusTriggerInfo]
 
+    val sparkConf = new SparkConf
+
+    // Optionally set the serializer
+    Option(triggerInfo.getRuntimeArguments.get("spark.serializer")).foreach(
+      sparkConf.set("spark.serializer", _)
+    )
+
+    val sc = new SparkContext(sparkConf)
     val sum = sc.parallelize(Seq(1, 2, 3, 4, 5))
       .filter(_ => triggerInfo.getProgram().equals("ScalaClassicSpark")).reduce(_ + _)
     require(sum == 15)

@@ -296,14 +296,21 @@ public class SparkTestRun extends TestFrameworkTestBase {
                                            "schedule");
     appManager.enableSchedule(scheduleId);
 
-    SparkManager sparkManager =
-      appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName()).start();
+    // Start the upstream program
+    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName()).start();
 
-    sparkManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
-
+    // Wait for the downstream to complete
     WorkflowManager workflowManager =
       appManager.getWorkflowManager(TestSparkApp.TriggeredWorkflow.class.getSimpleName());
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    // Run again with the kryo serializer
+    appManager.getSparkManager(TestSparkApp.ScalaClassicSpark.class.getSimpleName())
+      .start(Collections.singletonMap("spark.serializer", "org.apache.spark.serializer.KryoSerializer"));
+
+    // Wait for the downstream to complete again
+    workflowManager.waitForRuns(ProgramRunStatus.COMPLETED, 2, 5, TimeUnit.MINUTES);
+
   }
 
   @Test
