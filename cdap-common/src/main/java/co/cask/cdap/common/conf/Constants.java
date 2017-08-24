@@ -173,6 +173,8 @@ public final class Constants {
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
+    public static final String STATUS_EVENT_FETCH_SIZE = "app.program.status.event.fetch.size";
+    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "app.program.status.event.poll.delay.millis";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
@@ -275,6 +277,11 @@ public final class Constants {
     public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
 
     public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
+
+    public static final String TIME_EVENT_FETCH_SIZE = "scheduler.time.event.fetch.size";
+    public static final String STREAM_SIZE_EVENT_FETCH_SIZE = "scheduler.stream.size.event.fetch.size";
+    public static final String DATA_EVENT_FETCH_SIZE = "scheduler.data.event.fetch.size";
+    public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
   }
 
   /**

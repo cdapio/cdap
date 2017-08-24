@@ -18,33 +18,26 @@ package co.cask.cdap.scheduler;
 
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.dataset.DatasetManagementException;
-import co.cask.cdap.api.workflow.NodeValue;
-import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
-import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
+import co.cask.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.app.services.AbstractNotificationSubscriberService;
 import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
-import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.ScheduleId;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -53,15 +46,12 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Subscribe to notification TMS topic and update schedules in schedule store and job queue
@@ -78,8 +68,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   @Inject
   ScheduleNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
                                         DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                                        MetricsCollectionService metricsCollectionService,
                                         ProgramNotificationSubscriberService programNotificationSubscriberService) {
-    super(messagingService, cConf, datasetFramework, txClient);
+    super(messagingService, cConf, datasetFramework, txClient, metricsCollectionService);
 
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
@@ -88,15 +79,17 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
 
   @Override
   protected void startUp() {
-    LOG.info("Start running ScheduleNotificationSubscriberService");
+    LOG.info("Starting {}", getClass().getSimpleName());
     taskExecutorService =
       Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("scheduler-subscriber-task-%d").build());
-    taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
-      cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC)));
-    taskExecutorService.submit(new SchedulerEventNotificationSubscriberThread(
-      cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC)));
-    taskExecutorService.submit(new DataEventNotificationSubscriberThread());
-    taskExecutorService.submit(new ProgramStatusEventNotificationSubscriberThread());
+    taskExecutorService.submit(new SchedulerEventSubscriberRunnable(
+      cConf.get(Constants.Scheduler.TIME_EVENT_TOPIC),
+      cConf.getInt(Constants.Scheduler.TIME_EVENT_FETCH_SIZE)));
+    taskExecutorService.submit(new SchedulerEventSubscriberRunnable(
+      cConf.get(Constants.Scheduler.STREAM_SIZE_EVENT_TOPIC),
+      cConf.getInt(Constants.Scheduler.STREAM_SIZE_EVENT_FETCH_SIZE)));
+    taskExecutorService.submit(new DataEventSubscriberRunnable());
+    taskExecutorService.submit(new ProgramStatusEventSubscriberRunnable());
     programNotificationSubscriberService.startAndWait();
   }
 
@@ -104,6 +97,7 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
   protected void shutDown() {
     super.shutDown();
     try {
+      taskExecutorService.shutdownNow();
       taskExecutorService.awaitTermination(5, TimeUnit.SECONDS);
     } catch (InterruptedException ie) {
       Thread.currentThread().interrupt();
@@ -113,41 +107,75 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       }
     }
     programNotificationSubscriberService.stopAndWait();
-    LOG.info("Stopped SchedulerNotificationSubscriberService.");
+    LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
   /**
-   * Thread that subscribes to TMS notifications and adds the notification containing the schedule id to the job queue
+   * Abstract base class for implementing job queue logic for various kind of notifications.
    */
-  private class SchedulerEventNotificationSubscriberThread extends NotificationSubscriberThread {
-    private String topic;
+  private abstract class AbstractSchedulerSubscriberRunnable extends AbstractSubscriberRunnable {
 
-    SchedulerEventNotificationSubscriberThread(String topic) {
-      super(topic);
-      this.topic = topic;
+    AbstractSchedulerSubscriberRunnable(String name, String topic, int fetchSize, boolean transactionalFetch) {
+      super(name, topic, cConf.getLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS), fetchSize, transactionalFetch);
+    }
+
+    @Nullable
+    @Override
+    protected final String initialize(DatasetContext context) throws RetryableException {
+      return getJobQueue(context).retrieveSubscriberState(getTopic());
     }
 
     @Override
-    public String loadMessageId(DatasetContext context) {
-      return getJobQueue(context).retrieveSubscriberState(topic);
+    protected final void persistMessageId(DatasetContext context, String lastFetchedMessageId) {
+      getJobQueue(context).persistSubscriberState(getTopic(), lastFetchedMessageId);
     }
 
     @Override
-    public void updateMessageId(DatasetContext context, String lastFetchedMessageId) {
-      getJobQueue(context).persistSubscriberState(topic, lastFetchedMessageId);
+    protected final void processNotifications(DatasetContext context, Iterator<Notification> notifications) {
+      ProgramScheduleStoreDataset scheduleStore = getScheduleStore(context);
+      JobQueueDataset jobQueue = getJobQueue(context);
+
+      while (notifications.hasNext()) {
+        processNotification(scheduleStore, jobQueue, notifications.next());
+      }
+    }
+
+    /**
+     * Processes a single {@link Notification}.
+     */
+    protected abstract void processNotification(ProgramScheduleStoreDataset scheduleStore,
+                                                JobQueueDataset jobQueue, Notification notification);
+
+    private JobQueueDataset getJobQueue(DatasetContext datasetContext) {
+      return Schedulers.getJobQueue(datasetContext, datasetFramework);
+    }
+
+    private ProgramScheduleStoreDataset getScheduleStore(DatasetContext datasetContext) {
+      return Schedulers.getScheduleStore(datasetContext, datasetFramework);
+    }
+  }
+
+  /**
+   * Class responsible for time and stream size events.
+   */
+  private final class SchedulerEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
+
+    SchedulerEventSubscriberRunnable(String topic, int fetchSize) {
+      // Time and stream size events are non-transactional
+      super("scheduler.event", topic, fetchSize, false);
     }
 
     @Override
-    public void processNotification(DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException {
+    protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
+                                       JobQueueDataset jobQueue, Notification notification) {
 
       Map<String, String> properties = notification.getProperties();
       String scheduleIdString = properties.get(ProgramOptionConstants.SCHEDULE_ID);
       if (scheduleIdString == null) {
-        LOG.warn("Cannot find schedule id in the notification with properties {}. Skipping current notification.",
-                 properties);
+        LOG.warn("Ignore notification that misses schedule id, {}", notification);
         return;
       }
+
       ScheduleId scheduleId;
       try {
         scheduleId = GSON.fromJson(scheduleIdString, ScheduleId.class);
@@ -156,57 +184,59 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
         // parse it with fromString method
         scheduleId = ScheduleId.fromString(scheduleIdString);
       }
+
       ProgramScheduleRecord record;
       try {
-        record = Schedulers.getScheduleStore(context, datasetFramework).getScheduleRecord(scheduleId);
+        record = scheduleStore.getScheduleRecord(scheduleId);
       } catch (NotFoundException e) {
-        LOG.warn("Cannot find schedule {}. Skipping current notification with properties {}.",
-                 scheduleId, properties, e);
+        LOG.warn("Ignore notification that doesn't have a schedule {} associated with, {}", scheduleId, notification);
         return;
       }
-      getJobQueue(context).addNotification(record, notification);
-    }
-
-    JobQueueDataset getJobQueue(DatasetContext datasetContext) {
-      return Schedulers.getJobQueue(datasetContext, datasetFramework);
+      jobQueue.addNotification(record, notification);
     }
   }
 
-  private class DataEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
+  /**
+   * Class responsible for dataset partition events.
+   */
+  private final class DataEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
 
-    DataEventNotificationSubscriberThread() {
-      super(cConf.get(Constants.Dataset.DATA_EVENT_TOPIC));
+    DataEventSubscriberRunnable() {
+      // Dataset partition events are published transactionally, hence fetch need to be transactional too.
+      super("scheduler.data.event", cConf.get(Constants.Dataset.DATA_EVENT_TOPIC),
+            cConf.getInt(Constants.Scheduler.DATA_EVENT_FETCH_SIZE), true);
     }
 
     @Override
-    public void processNotification(DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException {
-
+    protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
+                                       JobQueueDataset jobQueue, Notification notification) {
       String datasetIdString = notification.getProperties().get(Notification.DATASET_ID);
       if (datasetIdString == null) {
         return;
       }
       DatasetId datasetId = DatasetId.fromString(datasetIdString);
-      for (ProgramScheduleRecord schedule : getSchedules(context, Schedulers.triggerKeyForPartition(datasetId))) {
-        getJobQueue(context).addNotification(schedule, notification);
+      for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(Schedulers.triggerKeyForPartition(datasetId))) {
+        jobQueue.addNotification(schedule, notification);
       }
     }
   }
 
   /**
-   * Private class that receives program status notifications from
-   * {@link co.cask.cdap.internal.app.program.MessagingProgramStateWriter}.
+   * Class responsible for program status events.
    */
-  private class ProgramStatusEventNotificationSubscriberThread extends SchedulerEventNotificationSubscriberThread {
+  private final class ProgramStatusEventSubscriberRunnable extends AbstractSchedulerSubscriberRunnable {
 
-    ProgramStatusEventNotificationSubscriberThread() {
-      super(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
+    ProgramStatusEventSubscriberRunnable() {
+      // Currently program status are published non-transactionally
+      // However, after refactoring to have it publish from AppMetaStore update, then it should be transactional.
+      // Hence for future proof, just fetch transactionally.
+      super("scheduler.program.event", cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC),
+            cConf.getInt(Constants.Scheduler.PROGRAM_STATUS_EVENT_FETCH_SIZE), true);
     }
 
     @Override
-    public void processNotification(DatasetContext context, Notification notification)
-      throws IOException, DatasetManagementException {
-
+    protected void processNotification(ProgramScheduleStoreDataset scheduleStore,
+                                       JobQueueDataset jobQueue, Notification notification) {
       String programRunIdString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_RUN_ID);
       String programRunStatusString = notification.getProperties().get(ProgramOptionConstants.PROGRAM_STATUS);
 
@@ -227,14 +257,9 @@ public class ScheduleNotificationSubscriberService extends AbstractNotificationS
       ProgramId programId = programRunId.getParent();
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
 
-      for (ProgramScheduleRecord schedule : getSchedules(context, triggerKeyForProgramStatus)) {
-        getJobQueue(context).addNotification(schedule, notification);
+      for (ProgramScheduleRecord schedule : scheduleStore.findSchedules(triggerKeyForProgramStatus)) {
+        jobQueue.addNotification(schedule, notification);
       }
     }
-  }
-
-  private Collection<ProgramScheduleRecord> getSchedules(DatasetContext context, String triggerKey)
-    throws IOException, DatasetManagementException {
-    return Schedulers.getScheduleStore(context, datasetFramework).findSchedules(triggerKey);
   }
 }
