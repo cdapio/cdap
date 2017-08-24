@@ -53,7 +53,7 @@ public class TriggeringScheduleInfoAdapterTest {
       ImmutableList.<TriggerInfo>of(
         new DefaultProgramStatusTriggerInfo("ns", Specifications.from(new WebCrawlApp()), ProgramType.WORKFLOW,
                                             "workflow", RunIds.generate(), ProgramStatus.COMPLETED,
-                                            token, Collections.EMPTY_MAP),
+                                            token, Collections.<String, String>emptyMap()),
         new DefaultPartitionTriggerInfo("ns", "ds", 10, 11),
         new DefaultStreamSizeTriggerInfo("ns", "stream", 1, 1000000L, 0L, 0L),
         new DefaultTimeTriggerInfo("1 * * * *", 0L));

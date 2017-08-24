@@ -105,8 +105,7 @@ public class TriggerInfoCodec implements JsonSerializer<TriggerInfo>, JsonDeseri
     if (subClass == null) {
       throw new JsonParseException("Unable to map trigger type " + triggerType + " to a TriggerInfo class");
     }
-    TriggerInfo triggerInfo = context.deserialize(json, subClass);
-    return triggerInfo;
+    return context.deserialize(json, subClass);
   }
 }
 
