@@ -128,7 +128,7 @@ public class Dag {
       }
       // if this is empty, no sources were added to the island. That means the island really is an island.
       if (sourcesAdded.isEmpty()) {
-        throw new IllegalStateException(
+        throw new DisjointConnectionsException(
           String.format("Invalid DAG. There is an island made up of stages %s (no other stages connect to them).",
                         Joiner.on(',').join(islandNodes)));
       }
@@ -137,11 +137,11 @@ public class Dag {
   }
 
   /**
-   * Split the dag based on the input condition nodes.
-   * @param conditionNodes set of conditions based on which to split the Dag
+   * Split the dag based on the input control nodes.
+   * @param controlNodes set of conditions and actions based on which to split the Dag
    * @return set of splitted dags
    */
-  public Set<Dag> splitByConditions(Set<String> conditionNodes) {
+  public Set<Dag> splitByControlNodes(Set<String> controlNodes) {
 
     /*
       Consider the following example, where c1, c2, and c3 are conditions:
@@ -163,21 +163,33 @@ public class Dag {
      */
 
     Set<Dag> dags = new HashSet<>();
-    Set<String> childStopperNodes = Sets.union(sinks, conditionNodes);
+    Set<String> childStopperNodes = Sets.union(sinks, controlNodes);
+    Set<String> accessibleFromSources = accessibleFrom(sources, childStopperNodes);
+    if (!controlNodes.containsAll(sources)) {
+      // We only need to add dag corresponding to the parent section (i.e. nodes accessible from sources till the
+      // control nodes and sinks) if sources do not include control nodes. If the dag is started with the control
+      // nodes, For example if the dag is as follows where c is control node,
+      //
+      //   c----->n0
+      //   |
+      //   |----->n1
+      //
+      // we want to split it into 2 subdags c->n0 and c->n1, which will happen in the for loop below
+      dags.add(createSubDag(accessibleFromSources));
+    }
 
-    dags.add(createSubDag(accessibleFrom(sources, childStopperNodes)));
-    for (String condition : conditionNodes) {
+    for (String controlNode : controlNodes) {
       // For child we need to add two sub-dags corresponding to the true and false branch
       // Condition node has at least one and at max two output nodes
-      Set<String> outputs = getNodeOutputs(condition);
+      Set<String> outputs = getNodeOutputs(controlNode);
       for (String output : outputs) {
-        if (conditionNodes.contains(output)) {
+        if (controlNodes.contains(output)) {
           // condition is attached to the condition so just return that path
-          dags.add(createSubDag(new HashSet<>(Arrays.asList(condition, output))));
+          dags.add(createSubDag(new HashSet<>(Arrays.asList(controlNode, output))));
           continue;
         }
         Set<String> childNodes = accessibleFrom(output, childStopperNodes);
-        childNodes.add(condition);
+        childNodes.add(controlNode);
         dags.add(createSubDag(childNodes));
       }
     }

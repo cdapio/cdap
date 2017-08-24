@@ -36,6 +36,7 @@ import com.google.common.collect.ImmutableMap;
 
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Mock sink that writes records to a Table and has a utility method for getting all records written.
@@ -55,6 +56,11 @@ public class MockAction extends Action {
     private String columnKey;
     @Macro
     private String value;
+
+    @Nullable
+    private String argumentKey;
+    @Nullable
+    private String argumentValue;
   }
 
   public MockAction(Config config) {
@@ -80,12 +86,31 @@ public class MockAction extends Action {
 
     // Set the same value in the arguments as well.
     context.getArguments().set(config.rowKey + config.columnKey, config.value);
+
+    if (config.argumentKey != null && config.argumentValue != null) {
+      if (!context.getArguments().get(config.argumentKey).equals(config.argumentValue)) {
+        throw new IllegalStateException(String.format("Expected %s to be present in the argument map with value %s.",
+                                                      config.argumentKey, config.argumentValue));
+      }
+    }
+  }
+
+  public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey, String value,
+                                    @Nullable String argumentKey, @Nullable String argumentValue) {
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    builder.put("tableName", tableName);
+    builder.put("rowKey", rowKey);
+    builder.put("columnKey", columnKey);
+    builder.put("value", value);
+    if (argumentKey != null && argumentValue != null) {
+      builder.put("argumentKey", argumentKey);
+      builder.put("argumentValue", argumentValue);
+    }
+    return new ETLPlugin("TableWriterAction", Action.PLUGIN_TYPE, builder.build(), null);
   }
 
   public static ETLPlugin getPlugin(String tableName, String rowKey, String columnKey, String value) {
-    Map<String, String> properties = ImmutableMap.of("tableName", tableName, "rowKey", rowKey, "columnKey", columnKey,
-                                                     "value", value);
-    return new ETLPlugin("TableWriterAction", Action.PLUGIN_TYPE, properties, null);
+    return getPlugin(tableName, rowKey, columnKey, value, null, null);
   }
 
   private static PluginClass getPluginClass() {
@@ -94,6 +119,8 @@ public class MockAction extends Action {
     properties.put("rowKey", new PluginPropertyField("rowKey", "", "string", true, false));
     properties.put("columnKey", new PluginPropertyField("columnKey", "", "string", true, false));
     properties.put("value", new PluginPropertyField("value", "", "string", true, true));
+    properties.put("argumentKey", new PluginPropertyField("argumentKey", "", "string", false, false));
+    properties.put("argumentValue", new PluginPropertyField("argumentValue", "", "string", false, false));
     return new PluginClass(Action.PLUGIN_TYPE, "TableWriterAction", "", MockAction.class.getName(),
                            "config", properties);
   }

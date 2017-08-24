@@ -38,7 +38,7 @@ public class Connection {
     this(from, to, port, null);
   }
 
-  public Connection(String from, String to, Boolean condition) {
+  public Connection(String from, String to, @Nullable Boolean condition) {
     this(from, to, null, condition);
   }
 

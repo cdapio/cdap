@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -159,7 +161,7 @@ public class DagTest {
         new Connection("n1", "n2"),
         new Connection("n3", "n4")));
       Assert.fail();
-    } catch (IllegalStateException e) {
+    } catch (DisjointConnectionsException e) {
       // expected
       Assert.assertTrue(e.getMessage().startsWith("Invalid DAG. There is an island"));
     }
@@ -180,7 +182,7 @@ public class DagTest {
         new Connection("n5", "n4"),
         new Connection("n6", "n7")));
       Assert.fail();
-    } catch (IllegalStateException e) {
+    } catch (DisjointConnectionsException e) {
       // expected
       Assert.assertTrue(e.getMessage().startsWith("Invalid DAG. There is an island"));
     }
@@ -515,5 +517,103 @@ public class DagTest {
       new Connection("n7", "n8")));
     actual = fulldag.subsetFrom("n2", ImmutableSet.of("n4", "n8", "n1"));
     Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testSplitByControlNodes() throws Exception {
+
+    // In following test cases note that Action nodes are named as (a0, a1...) and condition nodes are named
+    // as (c0, c1, ..)
+
+
+    // Test condition in the beginning and one branch connects to the action.
+
+    // c1 --> a1 --> n1 --> n2
+    //  |
+    //  | --> n3 --> n4 --> a2
+
+    Dag dag = new Dag(ImmutableSet.of(
+      new Connection("c1", "a1"),
+      new Connection("a1", "n1"),
+      new Connection("n1", "n2"),
+      new Connection("c1", "n3"),
+      new Connection("n3", "n4"),
+      new Connection("n4", "a2")));
+
+    Set<Dag> actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("c1", "a1", "a2")));
+    Set<Dag> expectedDags = new HashSet<>();
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n3"),
+                                             new Connection("n3", "n4"),
+                                             new Connection("n4", "a2"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "n1"), new Connection("n1", "n2"))));
+
+    Assert.assertEquals(expectedDags, actual);
+
+    // Test condition in the end and branches connects to the Action.
+    // n0-->n1--c0-->n2-->c1-->a1
+    //                    |
+    //                    |-->a2
+    dag = new Dag(ImmutableSet.of(
+      new Connection("n0", "n1"),
+      new Connection("n1", "c0"),
+      new Connection("c0", "n2"),
+      new Connection("n2", "c1"),
+      new Connection("c1", "a1"),
+      new Connection("c1", "a2")));
+
+    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("c0", "c1", "a1", "a2")));
+    expectedDags.clear();
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("n0", "n1"),
+                                             new Connection("n1", "c0"))));
+
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c0", "n2"),
+                                             new Connection("n2", "c1"))));
+
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a2"))));
+
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "a1"))));
+
+    Assert.assertEquals(expectedDags, actual);
+
+    // Test Actions in the beginning and connects to the Condition.
+    // a1 - a2 - c1 - n0
+    //      |
+    // a0 --
+
+    dag = new Dag(ImmutableSet.of(
+      new Connection("a0", "a2"),
+      new Connection("a1", "a2"),
+      new Connection("a2", "c1"),
+      new Connection("c1", "n0")));
+
+    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("a0", "a1", "a2", "c1")));
+    expectedDags.clear();
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "a2"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "a2"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a2", "c1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n0"))));
+    Assert.assertEquals(expectedDags, actual);
+
+    // Tests Actions in the beginning and connect to the Condition through other plugin
+    // a1 - n0 - c1 - n1
+    //      |
+    // a0 --
+
+    dag = new Dag(ImmutableSet.of(
+      new Connection("a0", "n0"),
+      new Connection("a1", "n0"),
+      new Connection("n0", "c1"),
+      new Connection("c1", "n1")));
+
+    actual = dag.splitByControlNodes(new HashSet<>(Arrays.asList("a0", "a1", "c1")));
+
+    expectedDags.clear();
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a0", "n0"),
+                                             new Connection("n0", "c1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("a1", "n0"),
+                                             new Connection("n0", "c1"))));
+    expectedDags.add(new Dag(ImmutableSet.of(new Connection("c1", "n1"))));
+    Assert.assertEquals(expectedDags, actual);
   }
 }

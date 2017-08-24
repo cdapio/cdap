@@ -25,13 +25,12 @@ import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -82,16 +81,20 @@ public class PipelinePlanner {
     Set<String> reduceNodes = new HashSet<>();
     Set<String> isolationNodes = new HashSet<>();
     Set<String> actionNodes = new HashSet<>();
-
-    Map<String, StageSpec> specs = new HashMap<>();
+    Set<String> allNodes = new HashSet<>();
 
     // Map to hold the connection information from condition nodes to the first stage
     // they connect to. Condition information also includes whether the stage is connected
     // on the 'true' branch or the 'false' branch
     Map<String, ConditionBranches> conditionBranches = new HashMap<>();
+    Map<String, Set<String>> conditionOutputs = new HashMap<>();
+    Map<String, Set<String>> conditionInputs = new HashMap<>();
+
+    Map<String, StageSpec> specs = new HashMap<>();
 
     for (StageSpec stage : spec.getStages()) {
       String pluginType = stage.getPlugin().getType();
+      allNodes.add(stage.getName());
       if (reduceTypes.contains(pluginType)) {
         reduceNodes.add(stage.getName());
       }
@@ -104,24 +107,43 @@ public class PipelinePlanner {
       }
       if (Condition.PLUGIN_TYPE.equals(pluginType)) {
         conditionBranches.put(stage.getName(), new ConditionBranches(null, null));
+        conditionOutputs.put(stage.getName(), new HashSet<String>());
+        conditionInputs.put(stage.getName(), new HashSet<String>());
       }
       specs.put(stage.getName(), stage);
     }
 
-    // Map to hold set of stages to which there is a connection from a action stage.
-    SetMultimap<String, String> outgoingActionConnections = HashMultimap.create();
-    // Map to hold set of stages from which there is a connection to action stage.
-    SetMultimap<String, String> incomingActionConnections = HashMultimap.create();
+    // Special case for action nodes when there is no connection between them
+    if (spec.getConnections().isEmpty()) {
+      // All nodes should be actions
+      if (!actionNodes.containsAll(allNodes)) {
+        throw new IllegalStateException("No connections are specified.");
+      }
 
-    Set<Connection> connectionsWithoutAction = new HashSet<>();
+      Map<String, PipelinePhase> phases = new HashMap<>();
+      for (String actionNode : actionNodes) {
+        PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
+        PipelinePhase actionPhase = phaseBuilder
+          .addStage(specs.get(actionNode))
+          .build();
+        phases.put(actionNode, actionPhase);
+      }
+      return new PipelinePlan(phases, new HashSet<Connection>());
+    }
+
+    // Set representing control nodes (Conditions and Actions)
+    Set<String> controlNodes = Sets.union(actionNodes, conditionBranches.keySet());
 
     Map<String, String> conditionChildToParent = new HashMap<>();
 
-
-    // Remove the connections to and from Action nodes in the pipeline in order to build the
-    // ConnectorDag. Since Actions can only occur before sources or after sink nodes, the creation
-    // of the ConnectorDag should not be affected after removal of connections involving action nodes.
     for (Connection connection : spec.getConnections()) {
+      if (conditionBranches.containsKey(connection.getFrom())) {
+        conditionOutputs.get(connection.getFrom()).add(connection.getTo());
+      }
+
+      if (conditionBranches.containsKey(connection.getTo())) {
+        conditionInputs.get(connection.getTo()).add(connection.getFrom());
+      }
 
       if (conditionBranches.containsKey(connection.getFrom())) {
         if (conditionBranches.containsKey(connection.getTo())) {
@@ -140,53 +162,13 @@ public class PipelinePlanner {
           trueOutput = branches.getTrueOutput();
           falseOutput = connection.getTo();
         }
-
         conditionBranches.put(connection.getFrom(), new ConditionBranches(trueOutput, falseOutput));
       }
-
-      if (actionNodes.contains(connection.getFrom()) || actionNodes.contains(connection.getTo())) {
-        if (actionNodes.contains(connection.getFrom())) {
-          // Source of the connection is Action node
-          outgoingActionConnections.put(connection.getFrom(), connection.getTo());
-        }
-
-        if (actionNodes.contains(connection.getTo())) {
-          // Destination of the connection is Action node
-          incomingActionConnections.put(connection.getTo(), connection.getFrom());
-        }
-
-        // Skip connections to and from action nodes
-        continue;
-      }
-      connectionsWithoutAction.add(connection);
     }
 
-
-    if (connectionsWithoutAction.isEmpty()) {
-      // Pipeline only contains Actions
-      Set<Connection> phaseConnections = new HashSet<>();
-      Map<String, PipelinePhase> phases = new HashMap<>();
-      populateActionPhases(specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
-                           incomingActionConnections, new HashMap<String, Dag>());
-      return new PipelinePlan(phases, phaseConnections);
-    }
-
-    Set<Dag> splittedDags;
     Map<String, String> connectorNodes = new HashMap<>();
-    if (conditionBranches.keySet().isEmpty()) {
-      // insert connector stages into the logical pipeline
-      ConnectorDag cdag = ConnectorDag.builder()
-        .addConnections(connectionsWithoutAction)
-        .addReduceNodes(reduceNodes)
-        .addIsolationNodes(isolationNodes)
-        .build();
-      cdag.insertConnectors();
-      connectorNodes.putAll(cdag.getConnectors());
-      splittedDags = new HashSet<>(cdag.split());
-    } else {
-      splittedDags = split(connectionsWithoutAction, conditionBranches.keySet(), reduceNodes, isolationNodes,
-                           connectorNodes);
-    }
+    Set<Dag> splittedDags = split(spec.getConnections(), conditionBranches.keySet(), reduceNodes, isolationNodes,
+                                  actionNodes, connectorNodes);
 
     // convert to objects the programs expect.
     Map<String, PipelinePhase> phases = new HashMap<>();
@@ -197,7 +179,17 @@ public class PipelinePlanner {
     for (Dag subdag : splittedDags) {
       String name = getPhaseName(subdag.getSources(), subdag.getSinks());
       subdags.put(name, subdag);
+      // create control phases (Condition and Action) if there are any
+      addControlPhasesIfRequired(controlNodes, subdag, specs, phases);
     }
+
+    // Maintain the control nodes for which phase connections have been added.
+    // Since we include phase connection based on the common sinks between the two dags,
+    // it is possible that we do not get chance to process some control phases.
+    // For example if dag1 is Action1->someNode-->Condition and dag2 is Condition->Action2.
+    // We will process Condition here, however phase connections for Action1 and Action2 will
+    // be added later.
+    Set<String> processedControlNodes = new HashSet<>();
 
     // build connections between phases
     Set<Connection> phaseConnections = new HashSet<>();
@@ -214,203 +206,254 @@ public class PipelinePlanner {
 
         // if dag1 has any sinks that are a source in dag2, add a connection between the dags
         if (Sets.intersection(dag1.getSinks(), dag2.getSources()).size() > 0) {
-          Set<String> conditionAsSink = Sets.intersection(dag1.getSinks(), conditionBranches.keySet());
-          if (!conditionAsSink.isEmpty()) {
-            // dag1 ends with condition
-            // here we need to add new phase corresponding to the destination condition
-            // also we need to add phase connections with either true or false from dag1 to dag2
-            if (conditionAsSink.size() != 1) {
-              // sink should only have a single stage if its condition
-              throw new IllegalStateException(String.format("Dag '%s' to '%s' has condition as well " +
-                                                              "as non-condition stages in sink which is not " +
-                                                              "allowed.", dag1.getSources(), dag1.getSinks()));
-            }
-            String conditionName = conditionAsSink.iterator().next();
-            createConditionPhase(conditionName, conditionBranches, dag1, dag1Name, dag2, dag2Name, phases,
-                                 phaseConnections);
-          } else {
+
+          // check if common node is control node
+          Set<String> controlAsSink = Sets.intersection(dag1.getSinks(), controlNodes);
+          if (controlAsSink.isEmpty()) {
+            // Common node is not control add connection between dag1Name and dag2Name.
             phaseConnections.add(new Connection(dag1Name, dag2Name));
+            continue;
           }
+
+          String controlNodeName = controlAsSink.iterator().next();
+          // Add current control node to the processed set
+          processedControlNodes.add(controlNodeName);
+
+          if (!controlNodes.containsAll(dag1.getNodes())) {
+            // Only add connection from dag 1 to the current control stage,
+            // if dag 1 contains stages other than control stages. If dag 1 only contains
+            // the control stages, then instead of using dagName as source of connection
+            // we would need the name of the control stage in dag1's sources. For example consider
+            // the following dags -
+            //
+            //  dag1: condition.to.action with nodes as condition--->action
+            //  dag2: action.to.somenode with nodes as action--->somenode
+            //
+            // Currently we are processing common nodes between dag1 sink and dag2 source which is action
+            // Now we cannot add connection from condition.to.action to action, since the dag 1 only contains
+            // control nodes, it would get filtered out later. We need connection of the form condition->action.
+            // This connection gets added when for some dag0: file->csv-sink->condition we process the
+            // common condition node.
+            phaseConnections.add(new Connection(dag1Name, controlNodeName));
+          }
+
+          ConditionBranches branches = conditionBranches.get(controlNodeName);
+          Boolean condition = branches == null ?  null : dag2.getNodes().contains(branches.getTrueOutput());
+          // check if dag 2 only contains control stages. if so dag1 sink(which is a control node) will
+          // connect to dag2 sink(which is another control node) dag1 sink is same as dag 2 source
+          // which is control node, otherwise current control node will connect to whole dag2Name
+          String connectTo = controlNodes.containsAll(dag2.getNodes()) ? dag2.getSinks().iterator().next() : dag2Name;
+          phaseConnections.add(new Connection(controlNodeName, connectTo, condition));
+
+        } else if (Sets.intersection(dag1.getSources(), dag2.getSources()).size() > 0) {
+          // Two subdags have common sources
+          // Consider the scenario below
+          //            |----Action2
+          // Action1--->|
+          //            |----Action3
+          // In this case the splits would be (Action1, Action2) and (Action1, Action3).
+          // There wont be any common sinks however sources would be common. We need to process
+          // that as well. Logic is similar to above if block except it operates on the sources now.
+
+          Set<String> controlAsSource = Sets.intersection(dag1.getSources(), controlNodes);
+
+          if (controlAsSource.isEmpty()) {
+            phaseConnections.add(new Connection(dag1Name, dag2Name));
+            continue;
+          }
+
+          String controlNodeName = controlAsSource.iterator().next();
+          processedControlNodes.add(controlNodeName);
+
+          ConditionBranches branches = conditionBranches.get(controlNodeName);
+          Boolean condition = branches == null ?  null : dag2.getNodes().contains(branches.getTrueOutput());
+          // check if dag 2 only contains control stages. if so dag1 sink(which is a control node) will
+          // connect to dag2 sink(which is another control node) dag1 sink is same as dag 2 source
+          // which is control node, otherwise current control node will connect to whole dag2Name
+          String connectTo = controlNodes.containsAll(dag2.getNodes()) ? dag2.getSinks().iterator().next() : dag2Name;
+          phaseConnections.add(new Connection(controlNodeName, connectTo, condition));
         }
       }
     }
 
-    Map<String, String> conditionConnectors = getConnectorsAssociatedWithConditions(conditionBranches.keySet(),
-                                                                                    conditionChildToParent);
+    Map<String, String> controlConnectors = getConnectorsAssociatedWithConditions(conditionBranches.keySet(),
+                                                                                  conditionChildToParent,
+                                                                                  conditionInputs, conditionOutputs,
+                                                                                  actionNodes);
+
+    // At this point we have added phase connections between subdags, processing control nodes if they are
+    // common to the two dags as either source or sink. However subdag can only contain control nodes
+    // when two control nodes are chained together for example Action-->Condition. We need to add connection
+    // between them. Also we need to process any control nodes which are NOT yet in the processedControlNodes set.
+    // For example if we have two splitted dags
+    // dag1: Action-->Condition
+    // dag2: Condition->N0
+    // Now we processed connections from Condition, since its common between dag 1 sink and dag 2 source.
+    // However we have not process Action yet, since there is not dag0 with which it is common. So the Action
+    // will not be in processedControlNode set.
     for (Map.Entry<String, Dag> dagEntry : subdags.entrySet()) {
-      // If dag only contains conditions then ignore it
-      if (conditionBranches.keySet().containsAll(dagEntry.getValue().getNodes())) {
+      Dag dag = dagEntry.getValue();
+      if (controlNodes.containsAll(dag.getSources())) {
+        String source = dag.getSources().iterator().next();
+        String sink = dagEntry.getKey();
+        if (controlNodes.containsAll(dag.getNodes())) {
+          // Current dag only contain control nodes.
+          sink = dag.getSinks().iterator().next();
+        }
+        if (!processedControlNodes.contains(source)) {
+
+          // This control node is not processed yet, because it is first in the pipeline.
+          ConditionBranches branches = conditionBranches.get(source);
+          Boolean condition = branches == null ? null : dag.getNodes().contains(branches.getTrueOutput());
+          phaseConnections.add(new Connection(source, sink, condition));
+          processedControlNodes.add(source);
+        }
+      }
+
+      if (controlNodes.containsAll(dag.getSinks())) {
+        String source = dagEntry.getKey();
+        if (controlNodes.containsAll(dag.getNodes())) {
+          source = dag.getSources().iterator().next();
+        }
+        String sink = dag.getSinks().iterator().next();
+        if (!processedControlNodes.contains(sink)) {
+          // This control node is not processed yet, because it is last in the pipeline.
+          // Conditions cannot be last however action nodes can be
+          phaseConnections.add(new Connection(source, sink));
+          processedControlNodes.add(sink);
+        }
+      }
+
+      // If dag only contains control nodes then ignore it, since all of its connections are processed already
+      if (controlNodes.containsAll(dag.getNodes())) {
         continue;
       }
-      Dag dag = getUpdatedDag(dagEntry.getValue(), conditionConnectors);
-      phases.put(dagEntry.getKey(), dagToPipeline(dag, connectorNodes, specs, conditionConnectors));
-    }
 
-    populateActionPhases(specs, actionNodes, phases, phaseConnections, outgoingActionConnections,
-                         incomingActionConnections, subdags);
+      Dag updatedDag = getUpdatedDag(dag, controlConnectors);
+      // Remove any control nodes from this dag
+      if (!Sets.intersection(updatedDag.getNodes(), controlNodes).isEmpty()) {
+        Set<String> nodes = Sets.difference(updatedDag.getNodes(), controlNodes);
+        updatedDag = updatedDag.createSubDag(nodes);
+      }
+
+      phases.put(dagEntry.getKey(), dagToPipeline(updatedDag, connectorNodes, specs, controlConnectors));
+    }
 
     return new PipelinePlan(phases, phaseConnections);
   }
 
   /**
-   * This method is responsible for creating phases corresponding to the condition nodes. It also puts the phase
-   * connections with appropriate true or false tags.
+   * This method is responsible for creating control(Condition and Action) phases if the stages are present in the Dag.
    */
-  private void createConditionPhase(String conditionName, Map<String, ConditionBranches> conditionBranches,
-                                    Dag dag1, String dag1Name, Dag dag2, String dag2Name,
-                                    Map<String, PipelinePhase> phases, Set<Connection> phaseConnections) {
-    Set<String> conditionNodes = conditionBranches.keySet();
-    PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
-    PluginSpec conditionSpec = new PluginSpec(Condition.PLUGIN_TYPE, conditionName,
-                                              new HashMap<String, String>(), null);
-    PipelinePhase conditionPhase = phaseBuilder
-      .addStage(StageSpec.builder(conditionName, conditionSpec).build())
-      .build();
-    phases.put(conditionName, conditionPhase);
+  private void addControlPhasesIfRequired(Set<String> controlNodes, Dag dag, Map<String, StageSpec> stageSpecs,
+                                          Map<String, PipelinePhase> phases) {
+    // Add control phases corresponding to the subdag source
+    if (controlNodes.containsAll(dag.getSources())) {
+      if (dag.getSources().size() != 1) {
+        // sources should only have a single stage if its control
+        throw new IllegalStateException(String.format("Dag '%s' to '%s' cannot have multiple sources when one of the" +
+                                                        "source is a control (Condition or Action).", dag.getSources(),
+                                                      dag.getSinks()));
+      }
 
-    if (!conditionNodes.containsAll(dag1.getNodes())) {
-      // dag1 does not only contain condition stages in it
-      phaseConnections.add(new Connection(dag1Name, conditionName));
+      String controlNode = dag.getSources().iterator().next();
+      if (!phases.containsKey(controlNode)) {
+        PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
+        PipelinePhase controlPhase = phaseBuilder
+          .addStage(stageSpecs.get(controlNode))
+          .build();
+        phases.put(controlNode, controlPhase);
+      }
     }
 
-    ConditionBranches branches = conditionBranches.get(conditionName);
-    for (Boolean condition : Arrays.asList(true, false)) {
-      String stage = condition ? branches.getTrueOutput() : branches.getFalseOutput();
-      if (stage == null) {
-        continue;
+    // Add control phases corresponding to the subdag sink
+    if (controlNodes.containsAll(dag.getSinks())) {
+      if (dag.getSinks().size() != 1) {
+        // sinks should only have a single stage if its control
+        throw new IllegalStateException(String.format("Dag '%s' to '%s' cannot have multiple sinks when one of the" +
+                                                        "sink is a control (Condition or Action).", dag.getSources(),
+                                                      dag.getSinks()));
       }
 
-      if (!dag2.getNodes().contains(stage)) {
-        continue;
+      String controlNode = dag.getSinks().iterator().next();
+      if (!phases.containsKey(controlNode)) {
+        PipelinePhase.Builder phaseBuilder = PipelinePhase.builder(supportedPluginTypes);
+        PipelinePhase controlPhase = phaseBuilder
+          .addStage(stageSpecs.get(controlNode))
+          .build();
+        phases.put(controlNode, controlPhase);
       }
-
-      if (conditionNodes.containsAll(dag2.getNodes())) {
-        // dag 2 only contains condition stages. dag1 sink is same as dag 2 source condition node.
-        // so we added condition phase corresponding to the dag1 sink. Now phase connection should be
-        // added from newly created condition phase to the dag 2 sink condition, rather than using dag2name
-        // here. The scenario here is n1-c1-c2-c3-n2. dag1 is <n1, c1> and dag 2 is <c1, c2>. We just created
-        // c1 as new phase. since dag2 satisfies the above if condition (as it only contains conditions) we add
-        // phase connection from c1->c2, rather than c1->c1.to.c2
-        phaseConnections.add(new Connection(conditionName, dag2.getSinks().iterator().next(),
-                                            condition));
-      } else {
-        // scenario here is n1-c1-c2-n2. dag 1 is <c1, c2> and dag 2 is <c2, n2>. We just created condition phase
-        // for c2 and the phase connection should be c2->c2.to.n2
-        phaseConnections.add(new Connection(conditionName, dag2Name, condition));
-      }
-      break;
     }
   }
 
   /**
    * This method is responsible for returning {@link Map} of condition and associated connector name.
    * By default each condition will have associated connector named as conditionname.connector. This connector
-   * will hold the data from the previeous phase. However it is possible that multiple conditions are
+   * will hold the data from the previous phase. However it is possible that multiple conditions are
    * chained together. In this case we do not need to create individual connector for each of the child condition
    * but they should have connector same as parent condition.
    * @param conditionNodes Set of condition nodes in the spec
    * @param childToParent Map contains only conditions as keys. The corresponding value represents its immediate parent
+   * @param conditionInputs Map of condition nodes to corresponding inputs
+   * @param conditionOutputs Map of condition nodes to corresponding outputs
+   * @param actionNodes Set of action nodes
    * @return the resolved connectors for each condition
    */
   private Map<String, String> getConnectorsAssociatedWithConditions(Set<String> conditionNodes,
-                                                                    Map<String, String> childToParent) {
+                                                                    Map<String, String> childToParent,
+                                                                    Map<String, Set<String>> conditionInputs,
+                                                                    Map<String, Set<String>> conditionOutputs,
+                                                                    Set<String> actionNodes) {
     Map<String, String> conditionConnectors = new HashMap<>();
     for (String condition : conditionNodes) {
-      // Put the default connector for the condition
-      conditionConnectors.put(condition, condition + ".connector");
+      Set<String> inputs = conditionInputs.get(condition);
+      Set<String> outputs = conditionOutputs.get(condition);
+
+      if (actionNodes.containsAll(inputs) || actionNodes.containsAll(outputs)
+        || conditionInputs.get(condition).isEmpty()) {
+        // Put null connector for conditions which has all inputs or all outputs as action nodes
+        // OR the condition for which there is no input connection
+        conditionConnectors.put(condition, "null");
+      } else {
+        // Put the default connector for the condition
+        conditionConnectors.put(condition, condition + ".connector");
+      }
     }
 
     for (Map.Entry<String, String> entry : childToParent.entrySet()) {
-      String parent = childToParent.get(entry.getValue());
-      conditionConnectors.put(entry.getKey(), entry.getValue() + ".connector");
+      String parent = entry.getValue();
       while (parent != null) {
-        conditionConnectors.put(entry.getKey(), parent + ".connector");
+        conditionConnectors.put(entry.getKey(), conditionConnectors.get(parent));
         parent = childToParent.get(parent);
       }
     }
+
+    conditionConnectors.values().removeAll(Collections.singleton("null"));
     return conditionConnectors;
-  }
-
-  /**
-   * This method is responsible for populating phases and phaseConnections with the Action phases.
-   * Action phase is a single stage {@link PipelinePhase} which does not have any dag.
-   *
-   * @param specs the Map of stage specs
-   * @param actionNodes the Set of action nodes in the pipeline
-   * @param phases the Map of phases created so far
-   * @param phaseConnections the Set of connections between phases added so far
-   * @param outgoingActionConnections the Map that holds set of stages to which
-   *                                  there is an outgoing connection from a Action stage
-   * @param incomingActionConnections the Map that holds set of stages to which
-   *                                  there is a incoming connection to an Action stage
-   * @param subdags subdags created so far from the pipeline stages
-   */
-  private void populateActionPhases(Map<String, StageSpec> specs, Set<String> actionNodes,
-                                    Map<String, PipelinePhase> phases, Set<Connection> phaseConnections,
-                                    SetMultimap<String, String> outgoingActionConnections,
-                                    SetMultimap<String, String> incomingActionConnections, Map<String, Dag> subdags) {
-
-    // Create single stage phases for the Action nodes
-    for (String node : actionNodes) {
-      StageSpec actionStageSpec = specs.get(node);
-      phases.put(node, PipelinePhase.builder(supportedPluginTypes).addStage(actionStageSpec).build());
-    }
-
-    // Build phaseConnections for the Action nodes
-    for (String sourceAction : outgoingActionConnections.keySet()) {
-      // Check if destination is one of the source stages in the pipeline
-      for (Map.Entry<String, Dag> subdagEntry : subdags.entrySet()) {
-        if (Sets.intersection(outgoingActionConnections.get(sourceAction),
-                              subdagEntry.getValue().getSources()).size() > 0) {
-          phaseConnections.add(new Connection(sourceAction, subdagEntry.getKey()));
-        }
-      }
-
-      // Check if destination is other Action node
-      for (String destination : outgoingActionConnections.get(sourceAction)) {
-        if (actionNodes.contains(destination)) {
-          phaseConnections.add(new Connection(sourceAction, destination));
-        }
-      }
-    }
-
-    // At this point we have build phaseConnections from Action node to another Action node or phaseConnections
-    // from Action node to another subdags. However it is also possible that sudags connects to the action node.
-    // Build those connections here.
-
-    for (String destinationAction : incomingActionConnections.keySet()) {
-      // Check if source is one of the sink stages in the pipeline
-      for (Map.Entry<String, Dag> subdagEntry : subdags.entrySet()) {
-        if (Sets.intersection(incomingActionConnections.get(destinationAction),
-                              subdagEntry.getValue().getSinks()).size() > 0) {
-          phaseConnections.add(new Connection(subdagEntry.getKey(), destinationAction));
-        }
-      }
-    }
   }
 
   /**
    * Update the current dag by replacing conditions in the dag with the corresponding condition connectors
    */
-  private Dag getUpdatedDag(Dag dag, Map<String, String> conditionConnectors) {
-    Set<String> conditionsAsSources = Sets.intersection(conditionConnectors.keySet(), dag.getSources());
-    Set<String> conditionsAsSinks =  Sets.intersection(conditionConnectors.keySet(), dag.getSinks());
-    if (conditionsAsSources.isEmpty() && conditionsAsSinks.isEmpty()) {
+  private Dag getUpdatedDag(Dag dag, Map<String, String> controlConnectors) {
+    Set<String> controlAsSources = Sets.intersection(controlConnectors.keySet(), dag.getSources());
+    Set<String> controlAsSink =  Sets.intersection(controlConnectors.keySet(), dag.getSinks());
+    if (controlAsSources.isEmpty() && controlAsSink.isEmpty()) {
       return dag;
     }
 
     Set<Connection> newConnections = new HashSet<>();
 
     for (String node : dag.getNodes()) {
-      String newNode = conditionConnectors.get(node) == null ? node : conditionConnectors.get(node);
+      String newNode = controlConnectors.get(node) == null ? node : controlConnectors.get(node);
       for (String inputNode : dag.getNodeInputs(node)) {
-        newConnections.add(new Connection(conditionConnectors.get(inputNode) == null ? inputNode
-                                            : conditionConnectors.get(inputNode), newNode));
+        newConnections.add(new Connection(controlConnectors.get(inputNode) == null ? inputNode
+                                            : controlConnectors.get(inputNode), newNode));
       }
 
       for (String outputNode : dag.getNodeOutputs(node)) {
-        newConnections.add(new Connection(newNode, conditionConnectors.get(outputNode) == null ? outputNode
-          : conditionConnectors.get(outputNode)));
+        newConnections.add(new Connection(newNode, controlConnectors.get(outputNode) == null ? outputNode
+          : controlConnectors.get(outputNode)));
       }
     }
 
@@ -468,12 +511,18 @@ public class PipelinePlanner {
 
   @VisibleForTesting
   static Set<Dag> split(Set<Connection> connections, Set<String> conditions, Set<String> reduceNodes,
-                        Set<String> isolationNodes, Map<String, String> connectorNodes) {
+                        Set<String> isolationNodes, Set<String> actionNodes, Map<String, String> connectorNodes) {
     Dag dag = new Dag(connections);
-    Set<Dag> subdags = dag.splitByConditions(conditions);
+    Set<Dag> subdags = dag.splitByControlNodes(Sets.union(conditions, actionNodes));
 
     Set<Dag> result = new HashSet<>();
     for (Dag subdag : subdags) {
+      if (Sets.union(conditions, actionNodes).containsAll(subdag.getNodes())) {
+        // Current Dag only contains control nodes and no reducers/isolation nodes. So no need to insert any
+        // connectors here, which is only done for reducer/isolation nodes.
+        result.add(subdag);
+        continue;
+      }
       Set<String> subdagReduceNodes = Sets.intersection(reduceNodes, subdag.getNodes());
       Set<String> subdagIsolationNodes = Sets.intersection(isolationNodes, subdag.getNodes());
 
