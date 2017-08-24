@@ -16,12 +16,16 @@
 
 package co.cask.cdap.etl.common;
 
+import java.io.Serializable;
+
 /**
  * Implementation of {@link StageStatisticsCollector} which is no-op.
  * This implementation is used particularly in the Spark Streaming pipelines and possibly when
  * the collection of the stage level statistics is disabled.
  */
-public class NoopStageStatisticsCollector implements StageStatisticsCollector {
+public class NoopStageStatisticsCollector implements StageStatisticsCollector, Serializable {
+  private static final long serialVersionUID = -7897960584858589310L;
+  
   @Override
   public void incrementInputRecordCount() {
     // no-op
