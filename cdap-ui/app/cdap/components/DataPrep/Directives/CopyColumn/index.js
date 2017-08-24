@@ -22,6 +22,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import WarningContainer from 'components/WarningContainer';
 import {columnNameAlreadyExists} from 'components/DataPrep/helper';
+import {setPopoverOffset} from 'components/DataPrep/helper';
 
 const PREFIX = 'features.DataPrep.Directives.Copy';
 const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn';
@@ -39,9 +40,16 @@ export default class CopyColumnDirective extends Component {
     this.handleKeyPress = this.handleKeyPress.bind(this);
   }
 
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('copy-directive'));
+  }
+
   componentDidUpdate() {
     if (this.props.isOpen) {
       this.inputBox.focus();
+      if (this.calculateOffset) {
+        this.calculateOffset();
+      }
     }
   }
 
@@ -140,6 +148,7 @@ export default class CopyColumnDirective extends Component {
   render() {
     return (
       <div
+        id="copy-directive"
         className={classnames('copy-directive clearfix action-item', {
           'active': this.props.isOpen
         })}

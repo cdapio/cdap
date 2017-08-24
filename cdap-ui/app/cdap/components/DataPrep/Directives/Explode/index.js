@@ -23,7 +23,6 @@ import DataPrepStore from 'components/DataPrep/store';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
-import debounce from 'lodash/debounce';
 
 require('./Explode.scss');
 export default class Explode extends Component {
@@ -39,17 +38,12 @@ export default class Explode extends Component {
   }
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('explode-fields-directive'));
-    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
   }
 
   componentDidUpdate() {
     if (this.props.isOpen && this.calculateOffset) {
       this.calculateOffset();
     }
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   execute(addDirective) {

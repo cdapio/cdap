@@ -23,6 +23,7 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {preventPropagation} from 'services/helpers';
 import Mousetrap from 'mousetrap';
+import {setPopoverOffset} from 'components/DataPrep/helper';
 
 require('./CustomTransform.scss');
 
@@ -41,7 +42,14 @@ export default class CustomTransform extends Component {
   };
 
   componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('custom-transform-directive'));
     Mousetrap.bind('enter', this.applyDirective);
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
+    }
   }
 
   componentWillUnmount() {
