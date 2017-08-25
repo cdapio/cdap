@@ -68,10 +68,12 @@ import co.cask.cdap.etl.mock.transform.IdentityTransform;
 import co.cask.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import co.cask.cdap.etl.mock.transform.SleepTransform;
 import co.cask.cdap.etl.mock.transform.StringValueFilterTransform;
+import co.cask.cdap.etl.proto.v2.ArgumentMapping;
 import co.cask.cdap.etl.proto.v2.ETLBatchConfig;
 import co.cask.cdap.etl.proto.v2.ETLPlugin;
 import co.cask.cdap.etl.proto.v2.ETLStage;
-import co.cask.cdap.etl.proto.v2.TriggeringPipelinePropertyMapping;
+import co.cask.cdap.etl.proto.v2.PluginPropertyMapping;
+import co.cask.cdap.etl.proto.v2.TriggeringPropertyMapping;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
@@ -374,18 +376,17 @@ public class DataPipelineTest extends HydratorTestBase {
 
     String defaultNamespace = NamespaceId.DEFAULT.getNamespace();
     String triggeringPipeline = "macroActionTest-SPARK";
+    // use the value of runtime argument with key "value" in triggering pipeline as the value for key1
+    List<ArgumentMapping> argumentMappings = ImmutableList.of(new ArgumentMapping("value", key1));
+    // use the value of property "rowKey" in plugin "action1" in triggering pipeline as the value for key2
+    List<PluginPropertyMapping> pluginPropertyMappings =
+      ImmutableList.of(new PluginPropertyMapping("action1", "rowKey", key2));
     // Use properties from the triggering pipeline as values for runtime argument key1, key2, and key3
-    TriggeringPipelinePropertyMapping propertyMapping = new TriggeringPipelinePropertyMapping();
-
-      // use the value of runtime argument with key "value" in triggering pipeline as the value for key1
-    propertyMapping.addArgumentMapping(new TriggeringPipelinePropertyMapping.ArgumentMapping("value", key1));
-      // use the value of property "rowKey" in plugin "action1" in triggering pipeline as the value for key2
-    propertyMapping.addPluginPropertyMapping(
-      new TriggeringPipelinePropertyMapping.PluginPropertyMapping("action1", "rowKey", key2));
+    TriggeringPropertyMapping propertyMapping = new TriggeringPropertyMapping(argumentMappings, pluginPropertyMappings);
     ProgramStatusTrigger completeTrigger =
       new ProgramStatusTrigger(new WorkflowId(defaultNamespace, triggeringPipeline, SmartWorkflow.NAME),
                                ImmutableSet.of(ProgramStatus.COMPLETED));
-    ScheduleId scheduleId = appId.schedule(("completeSchedule"));
+    ScheduleId scheduleId = appId.schedule("completeSchedule");
     appManager.addSchedule(
       new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
                          scheduleId.getSchedule(), "",
