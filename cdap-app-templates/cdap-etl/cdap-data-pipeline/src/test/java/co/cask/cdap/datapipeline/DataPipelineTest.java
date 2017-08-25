@@ -432,7 +432,7 @@ public class DataPipelineTest extends HydratorTestBase {
     workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 3, TimeUnit.MINUTES);
     List<RunRecord> runRecords = workflowManager.getHistory(ProgramRunStatus.COMPLETED);
     Assert.assertEquals(1, runRecords.size());
-    String tableName = "actionScheduleTable" + engine;
+    String tableName = "actionScheduleTable"  + pipelineName + engine;
     DataSetManager<Table> actionTableDS = getDataset(tableName);
     Assert.assertEquals(expectedKey1Value, MockAction.readOutput(actionTableDS, "row1", "column1"));
     Assert.assertEquals(expectedKey2Value, MockAction.readOutput(actionTableDS, "row2", "column2"));
