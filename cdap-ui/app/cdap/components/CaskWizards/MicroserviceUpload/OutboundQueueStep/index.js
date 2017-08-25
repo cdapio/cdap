@@ -15,14 +15,15 @@
  */
 import React from 'react';
 import {connect, Provider} from 'react-redux';
-import DSVEditor from 'components/DSVEditor';
+import {Form} from 'reactstrap';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
 import MicroserviceUploadActions from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
-import T from 'i18n-react';
+import MicroserviceQueueEditor from 'components/CaskWizards/MicroserviceUpload/MicroserviceQueueEditor';
+import { preventPropagation } from 'services/helpers';
 
 const mapStateToOutboundQueuesProps = (state) => {
   return {
-    values: state.endpoints.out
+    values: state.outboundQueues.queues
   };
 };
 
@@ -35,18 +36,23 @@ const mapDispatchToOutboundQueuesProps = (dispatch) => {
   };
 };
 
-const DSVWrapper = connect(
+const MicroserviceQueueWrapper = connect(
   mapStateToOutboundQueuesProps,
   mapDispatchToOutboundQueuesProps
-)(DSVEditor);
+)(MicroserviceQueueEditor);
 
-
-export default function DSVOutboundQueues() {
+export default function OutboundQueueStep() {
   return (
     <Provider store={MicroserviceUploadStore}>
-      <DSVWrapper
-        placeholder={T.translate('features.Wizard.MicroserviceUpload.Step5.outboundPlaceholder')}
-      />
+      <Form
+        className="form-horizontal"
+        onSubmit={(e) => {
+          preventPropagation(e);
+          return false;
+        }}
+      >
+        <MicroserviceQueueWrapper />
+      </Form>
     </Provider>
   );
 }

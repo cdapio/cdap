@@ -18,10 +18,31 @@
 @import '../../CaskWizards/ArtifactUpload/ArtifactUpload.scss';
 
 .microservice-upload-wizard {
+  &.wizard-modal.modal-dialog {
+    .modal-content {
+      .modal-body {
+        max-height: 357px;
+      }
+    }
+  }
+
   .step-summary {
     .summary-label {
       font-weight: bold;
       margin-right: 5px;
+    }
+  }
+
+  .inbound-queue-fetch-size {
+    display: flex;
+    align-items: center;
+
+    .col-xs-3 {
+      padding-left: 30px;
+    }
+
+    .col-xs-7 {
+      padding: 0 7px;
     }
   }
 }

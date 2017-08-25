@@ -18,6 +18,7 @@ import React, { PropTypes } from 'react';
 import { connect, Provider } from 'react-redux';
 import MicroserviceUploadActions  from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadActions';
 import MicroserviceUploadStore from 'services/WizardStores/MicroserviceUpload/MicroserviceUploadStore';
+import MicroserviceUploadActionCreator from 'services/WizardStores/MicroserviceUpload/ActionCreator';
 import { Label, Form, FormGroup, Col, Input } from 'reactstrap';
 import InputWithValidations from 'components/InputWithValidations';
 import SelectWithOptions from 'components/SelectWithOptions';
@@ -111,6 +112,21 @@ const mapDispatchToMicroserviceOptionProps = (dispatch) => {
         type: MicroserviceUploadActions.setMicroserviceOption,
         payload: {microserviceOption: e.target.value}
       });
+      return MicroserviceUploadActionCreator
+        .getMicroservicePluginProperties(e.target.value)
+        .subscribe((propertiesArr) => {
+          if (propertiesArr.length > 0 && propertiesArr[0].properties) {
+            dispatch({
+              type: MicroserviceUploadActions.setMicroservicePluginProperties,
+              payload: {pluginProperties: Object.keys(propertiesArr[0].properties)}
+            });
+          }
+        }, () => {
+          dispatch({
+            type: MicroserviceUploadActions.setMicroservicePluginProperties,
+            payload: {pluginProperties: []}
+          });
+        });
     }
   };
 };
