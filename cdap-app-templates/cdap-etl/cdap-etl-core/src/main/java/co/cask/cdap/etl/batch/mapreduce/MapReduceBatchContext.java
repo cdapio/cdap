@@ -25,6 +25,8 @@ import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.messaging.TopicAlreadyExistsException;
 import co.cask.cdap.api.messaging.TopicNotFoundException;
+import co.cask.cdap.etl.api.Lineage;
+import co.cask.cdap.etl.api.LineageConnection;
 import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
@@ -69,6 +71,8 @@ public class MapReduceBatchContext extends AbstractBatchContext
 
   @Override
   public void setInput(final Input input) {
+    LineageConnection lineageConnection = LineageConnection.builder().from("a").from("b").to("z").build();
+    LineageConnection.FromToBuilder from = LineageConnection.builder().from("a").from("b");
     Input trackableInput = CALLER.callUnchecked(new Callable<Input>() {
       @Override
       public Input call() throws Exception {
