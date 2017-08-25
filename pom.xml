@@ -150,7 +150,7 @@
     <tephra.version>0.12.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.12.0-SNAPSHOT</twill.version>
+    <twill.version>0.12.0</twill.version>
     <twitter4j.version>4.0.3</twitter4j.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
