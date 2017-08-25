@@ -30,7 +30,7 @@ Click below to download a `.csv` file containing the data necessary to complete 
 Video Tutorial
 --------------
 
-..  youtube:: iW271ChYoJA
+..  youtube:: _LB3_qm5yQM
 
 Step-by-Step Walkthrough
 ------------------------
@@ -182,9 +182,9 @@ In the "Plugins" section, choose "Top-N."
 
 Deploy the Top-N application. Save your pipeline - giving it the name "StockPipeline" - and refresh the page. You will see the Top-N plugin appear in the Analytics section of the the plugin menu on the left side of your screen.
 
-Add a Top-N node to the canvas, as well as a TPFSAvro sink.
+Add a Top-N node to the canvas, as well as a Avro Time Partitioned Dataset sink.
 
-Name the TPFSAvro sink `StockSink` and also specify `StockSink` as the "Database Name."
+Name the Avro Time Partitioned Dataset sink `StockSink` and also specify `StockSink` as the "Database Name."
 
 .. figure:: /_images/tutorials/stocks/stocksink.jpeg
 	:figwidth: 100%

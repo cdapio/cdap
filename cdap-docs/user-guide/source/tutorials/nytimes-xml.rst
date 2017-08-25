@@ -30,7 +30,7 @@ Click below to donwnload a `.xml` file containing the data necessary to complete
 Video Tutorial
 --------------
 
-..  youtube:: v1Rf6gu5hbs
+..  youtube:: e-5K4cxwGrc
 
 Step-by-Step Walkthrough
 ------------------------
@@ -182,7 +182,7 @@ You will see the following pipeline appear on your screen.
   :align: center
   :class: bordered-image
 
-Add two `TPFSAvro` sinks to the canvas, as well as two `Python Evaluators` (from the `Transform` menu).
+Add two `Avro Time Partitioned Dataset` sinks to the canvas, as well as two `Python` (from the `Transform` menu).
 
 Arrange the canvas in the format shown below.
 
@@ -194,7 +194,7 @@ Arrange the canvas in the format shown below.
 
 You can align the nodes by clicking the `Align` button, which is the fourth option from the top.
 
-Open the top `Python Evaluator` node configuration. Replace the pre-populated code with the following snippet:
+Open the top `Python` node configuration. Replace the pre-populated code with the following snippet:
 
 .. code-block:: python
 

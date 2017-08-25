@@ -30,7 +30,7 @@ Click the link below to download a `.csv` file containing the data necessary to 
 Video Tutorial
 --------------
 
-..  youtube:: DyahfonSTRY
+..  youtube:: bt_qTj63c04
 
 Step-by-Step Walkthrough
 ------------------------
@@ -183,8 +183,7 @@ Testing: Evaluating Unknown Events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Return to Data Preparation, where you were working with the "fraud_train.csv" file. Click "Create Pipeline" again.
 
-
-Delete the File node. In its place, connect a "Stream" source to the "Wrangler" stage. You repeated this original procedure because the Wrangler stage has all the same transformations you want to apply to your test data.
+Delete the File node. In its place, connect a "CDAP Stream" source to the "Wrangler" stage. You repeated this original procedure because the Wrangler stage has all the same transformations you want to apply to your test data.
 
 .. figure:: /_images/tutorials/logistic/delete.jpeg
 	:figwidth: 100%
@@ -192,9 +191,9 @@ Delete the File node. In its place, connect a "Stream" source to the "Wrangler" 
 	:align: center
 	:class: bordered-image
 
-Name the "Stream" to "FraudStream" and specify the duration to be 10m.
+Name the "CDAP Stream" to "FraudStream" and specify the duration to be 10m.
 
-Add a "LogisticRegressionClassifier" to the canvas, followed by a "TPFSAvro" sink. Rename the "Stream" to "TestStream", "Wrangler" to "CreditTransform", "LogisiticRegressionClassifier" to "FraudClassifier", and "TPFSAvro" to "FraudSink."
+Add a "LogisticRegressionClassifier" to the canvas, followed by a "Avro Time Partitioned Dataset" sink. Rename "Wrangler" to "CreditTransform", "LogisiticRegressionClassifier" to "FraudClassifier", and "Avro Time Partitioned Dataset" to "FraudSink."
 
 In the "FraudClassifier" stage, set the `FileSet Name` to "LogisticRegressionModel" and `Prediction Field` to "Class".
 

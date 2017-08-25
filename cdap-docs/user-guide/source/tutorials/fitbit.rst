@@ -30,7 +30,7 @@ Click below to download a `.json` file containing the data necessary to complete
 Video Tutorial
 --------------
 
-..  youtube:: cxBKFxH6LjM
+..  youtube:: V8e6yr8hpZA
 
 Step-by-Step Walkthrough
 ------------------------
@@ -197,13 +197,13 @@ Repeat this for all columns. The data will now be encoded in Base64 format. Dele
 
 Storing the Results in a Table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Finally, you want to write your data to a Table, which can be exported and sent to the analysts who will study the masked data.
+Finally, you want to write your data to a CDAP Table Dataset, which can be exported and sent to the analysts who will study the masked data.
 
-A table requires a unique identifier for each row. Because you have masked the unique device IDs, it is possible that the Base64 encoding of the last 4 digits match. To be sure that no rows are overwritten, you will use the `generate-uuid` directive.
+A CDAP Table Dataset requires a unique identifier for each row. Because you have masked the unique device IDs, it is possible that the Base64 encoding of the last 4 digits match. To be sure that no rows are overwritten, you will use the `generate-uuid` directive.
 
 A UUID is a unique identifier. The `generate-uuid` generates a UUID for each row. Type `generate-uuid uuid` in the prompt the bottom of the screen, which will create a new column called `uuid`. 
 
-Now, you are ready to ingest the data into a table.
+Now, you are ready to ingest the data into a CDAP Table Dataset.
 
 Click `Ingest Data` in the upper right hand corner. 
 
