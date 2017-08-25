@@ -45,13 +45,13 @@ export default class MicroserviceUploadWizard extends Component {
     return MicroserviceUploadActionCreator
       .findMicroserviceArtifact()
       .flatMap((artifact) => {
-        if (isEmpty(artifact)) {
-          return Rx.Observable.of([]);
-        }
         MicroserviceUploadStore.dispatch({
           type: MicroserviceUploadActions.setMicroserviceArtifact,
           payload: { artifact }
         });
+        if (isEmpty(artifact)) {
+          return Rx.Observable.of([]);
+        }
         return MicroserviceUploadActionCreator.listMicroservicePlugins(artifact);
       })
       .flatMap((plugins) => {

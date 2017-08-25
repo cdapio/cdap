@@ -107,12 +107,9 @@ export default class RulesEngineServiceControl extends Component {
     }
     if (this.state.rulesEngineNotAvailable) {
       return (
-        <a
-          href="mailto:Sales@cask.co"
-          className="btn-link mail-to-link"
-        >
+        <span className="mail-to-link">
           {T.translate(`${PREFIX}.contactMessage`)}
-        </a>
+        </span>
       );
     }
     if (this.state.showEnableButton) {

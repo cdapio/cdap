@@ -1464,7 +1464,7 @@ features:
         b5: "Easy governance: The Rules engine provides a centralized repository for policies and transformations"
         title: "Benefits of the Cask Rules Engine include:"
       checkMessage: Checking if Rules Engine is available...
-      contactMessage: Contact Cask Data for a Demo
+      contactMessage: Contact support@cask.co to enable
       description: Cask Distributed Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
                   The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
@@ -1702,7 +1702,7 @@ features:
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
-        helperText: Please load the microservice-app artifact for creating and managing microservices using the _load artifact <artifact-jar-file>_ CLI command.
+        helperText: Microservice Core is not available. Please contact support@cask.co to enable.
         instanceNameLabel: Instance Name
         instanceNamePlaceholder: Name of the microservice instance
         microserviceOptionLabel: Microservice Name
