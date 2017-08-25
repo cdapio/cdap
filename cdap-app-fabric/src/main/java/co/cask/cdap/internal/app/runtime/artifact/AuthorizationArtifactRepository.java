@@ -120,8 +120,8 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
     ArtifactId artifact = artifactId.toEntityId();
     // No authorization for system artifacts
     if (!NamespaceId.SYSTEM.equals(artifact.getParent())) {
-      // need READ or ADMIN to get the artifact detail
-      AuthorizationUtil.ensureOnePrivilege(artifact, EnumSet.of(Action.READ, Action.ADMIN), authorizationEnforcer,
+      // need at least one privilege to get the artifact detail
+      AuthorizationUtil.ensureOnePrivilege(artifact, EnumSet.allOf(Action.class), authorizationEnforcer,
                                            authenticationContext.getPrincipal());
     }
     return delegate.getArtifact(artifactId);

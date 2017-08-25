@@ -184,7 +184,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
-    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.ADMIN), authorizationEnforcer,
+    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.allOf(Action.class), authorizationEnforcer,
                                          authenticationContext.getPrincipal());
     ApplicationSpecification appSpec;
     appSpec = store.getApplication(programId.getParent());

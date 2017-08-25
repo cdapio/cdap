@@ -241,9 +241,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
   public ApplicationDetail getAppDetail(ApplicationId appId) throws Exception {
-    // user needs to have READ or ADMIN to get the app detail
-    AuthorizationUtil.ensureOnePrivilege(appId, EnumSet.of(Action.ADMIN, Action.READ), authorizationEnforcer,
-                                         authenticationContext.getPrincipal());
+    // TODO: CDAP-12473: filter based on the entity visibility in the app detail
+    // user needs to pass the visibility check to get the app detail
+    AuthorizationUtil.ensureAccess(appId, authorizationEnforcer, authenticationContext.getPrincipal());
     ApplicationSpecification appSpec = store.getApplication(appId);
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);

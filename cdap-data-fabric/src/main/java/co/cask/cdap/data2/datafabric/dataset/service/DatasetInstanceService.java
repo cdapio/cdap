@@ -163,7 +163,7 @@ public class DatasetInstanceService {
   DatasetMeta get(final DatasetId instance, List<? extends EntityId> owners) throws Exception {
     // ensure user has correct privileges before getting the meta if the dataset is not a system dataset
     if (!DatasetsUtil.isSystemDatasetInUserNamespace(instance)) {
-      AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.of(Action.ADMIN, Action.READ, Action.WRITE),
+      AuthorizationUtil.ensureOnePrivilege(instance, EnumSet.allOf(Action.class),
                                            authorizationEnforcer, authenticationContext.getPrincipal());
     }
     // Application Deployment first makes a call to the dataset service to check if the instance already exists with
