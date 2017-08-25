@@ -346,8 +346,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param twillRunId Twill run id
    * @param runtimeArgs the runtime arguments for this program run
    * @param systemArgs the system arguments for this program run
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @return {@link ProgramRunStatus#STARTING} if it is successfully persisted, {@code null} otherwise.
    */
   public ProgramRunStatus recordProgramStart(ProgramId programId, String pid, long startTs, String twillRunId,
@@ -386,8 +388,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param pid run id
    * @param stateChangeTime start timestamp in seconds
    * @param twillRunId Twill run id
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
    */
   public ProgramRunStatus recordProgramRunning(ProgramId programId, String pid, long stateChangeTime, String twillRunId,
@@ -442,8 +446,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * Logs suspend of a program run and sets the run status to {@link ProgramRunStatus#SUSPENDED}.
    * @param programId id of the program
    * @param pid run id
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @return {@link ProgramRunStatus#SUSPENDED} if it is successfully persisted, {@code null} otherwise.
    */
   @Nullable
@@ -465,8 +471,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * Logs resume of a program run and sets the run status to {@link ProgramRunStatus#RUNNING}.
    * @param programId id of the program
    * @param pid run id
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @return {@link ProgramRunStatus#RUNNING} if it is successfully persisted, {@code null} otherwise.
    */
   @Nullable
@@ -529,8 +537,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param stopTs stop timestamp in seconds
    * @param runStatus {@link ProgramRunStatus} of program run
    * @param failureCause failure cause if the program failed to execute
-   * @param sourceId id of the source of program run status, which is proportional to the timestamp of
-   *                 when the current program run status is reached, e.g. a message id from TMS
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @return the program run status that is successfully persisted, {@code null} otherwise.
    */
   public ProgramRunStatus recordProgramStop(ProgramId programId, String pid, long stopTs, ProgramRunStatus runStatus,
@@ -595,7 +605,10 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    * @param existingRecords the existing run record metas of the given program run
    * @param programId id of the program
    * @param pid run id
-   * @param sourceId the source id of the current program status
+   * @param sourceId unique id representing the source of program run status, such as the message id of the program
+   *                 run status notification in TMS. The source id must increase as the recording time of the program
+   *                 run status increases, so that the attempt to persist program run status older than the existing
+   *                 program run status will be ignored
    * @param recordType the type of record corresponding to the current status
    * @param status the status that the program run is transitioning into
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
