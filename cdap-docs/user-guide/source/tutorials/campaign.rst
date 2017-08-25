@@ -74,17 +74,11 @@ We apply it twice because we first must parse the array, then each JSON object i
 
 Now, click "Create Pipeline" and select "Batch". You are now in the Pipelines UI, and you will see a "File" stage feeding into a "Wrangler" stage. This "Wrangler" stage represents the directives you just applied in Wrangler.
 
-In the left side bar, click on "Sink" and select both the "Table" and "TPFSAvro" plugins.  Connect the output of the "Wrangler" stage into "Table." Click the "Table" stage, and add "name" as the "Row Field."
-
-.. figure:: /_images/tutorials/address/address_state_pipeline.jpeg
-  :figwidth: 100%
-  :width: 500px
-  :align: center
-  :class: bordered-image
+In the left side bar, click on "Sink" and select both the "CDAP Table Dataset" and "Avro Time Partitioned Dataset" plugins.  Connect the output of the "Wrangler" stage into "CDAP Table Dataset." Click the "CDAP Table Dataset" stage, and add "name" as the "Row Field."
 
 Name the Pipeline "StateNamePipeline." Then, deploy the pipeline by clicking "Deploy." Run the pipeline by clicking "Run".
 
-You have created a Table that you can use to update the state names in the customer data from their full to abbreviated versions.
+You have created a CDAP Table Dataset that you can use to update the state names in the customer data from their full to abbreviated versions.
 
 Updating the State Names in the Customer Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -168,11 +162,11 @@ Click ``Create Pipeline``, and select a ``Batch Pipeline``. You want Batch since
 
 In the Data Pipelines UI, you will see a Database (with the annotation ``customer``) stage connected into a Wrangler stage. The Wrangler state contains all the transformations you applied in Data Preparation. 
 
-Navigate to the "Sink" section of the left-side bar, and choose a ``TPFSAvro`` sink. Connect the output of Wrangler into this sink. Double-click on the ``TPFSAvro`` sink, and give it the name ``CampaignSink``. Similarly, name your pipeline ``CampaignPipeline``.
+Navigate to the "Sink" section of the left-side bar, and choose a ``Avro Time Partitioned Dataset`` sink. Connect the output of Wrangler into this sink. Double-click on the ``Avro Time Partitioned Dataset`` sink, and give it the name ``CampaignSink``. Similarly, name your pipeline ``CampaignPipeline``.
 
 You should now be able to deploy the Pipeline. Click ``Deploy`` in the upper right hand corner. When it is deployed, click ``Run``.
 
-Once the Pipeline has run, double click on your ``TPFSAvro`` sink. In the menu that pops up, you will see a button that says ``View Details``. Once you have chosen this view, select the "Eye" icon. Execute the SQL query that is pre-populated in the field. You will see a SQL Query result appear below. Click the "Eye" next to this query, and you will see the results of the Pipeline.
+Once the Pipeline has run, double click on your ``Avro Time Partitioned Dataset`` sink. In the menu that pops up, you will see a button that says ``View Details``. Once you have chosen this view, select the "Eye" icon. Execute the SQL query that is pre-populated in the field. You will see a SQL Query result appear below. Click the "Eye" next to this query, and you will see the results of the Pipeline.
 
 .. figure:: /_images/tutorials/address/address_results.jpeg
   :figwidth: 100%
