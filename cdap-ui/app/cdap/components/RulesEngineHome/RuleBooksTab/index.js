@@ -39,7 +39,7 @@ export default class RuleBooksTab extends Component {
   };
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
       if (Array.isArray(rulebooks.list)) {
         this.setState({
@@ -47,6 +47,12 @@ export default class RuleBooksTab extends Component {
         });
       }
     });
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   updateSearchStr = (e) => {

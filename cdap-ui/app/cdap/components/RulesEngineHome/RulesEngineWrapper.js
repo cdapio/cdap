@@ -41,7 +41,7 @@ class RulesEngineWrapper extends Component {
   };
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
       let {rulebooks} = RulesEngineStore.getState();
       if (rulebooks.activeTab && rulebooks.activeTab !== this.state.activeTab) {
         this.setState({
@@ -49,6 +49,12 @@ class RulesEngineWrapper extends Component {
         });
       }
     });
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   toggleTab = (activeTab) => {

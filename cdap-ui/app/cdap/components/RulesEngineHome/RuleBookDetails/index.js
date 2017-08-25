@@ -24,7 +24,6 @@ import moment from 'moment';
 import RulesList from 'components/RulesEngineHome/RuleBookDetails/RulesList';
 import LoadingSVG from 'components/LoadingSVG';
 import CreateRulebook from 'components/RulesEngineHome/CreateRulebook';
-import debounce from 'lodash/debounce';
 import MyRulesEngineApi from 'api/rulesengine';
 import RulebookMenu from 'components/RulesEngineHome/RuleBookDetails/RulebookMenu';
 import T from 'i18n-react';
@@ -60,6 +59,7 @@ export default class RuleBookDetails extends Component {
     let createMode = rb.createRulebook;
     let rulebookDetails = rb.list.find(rb => rb.id === activeRulebook) || {};
     rulebookDetails.rules = rb.activeRulebookRules;
+    // FIXME: This will fetch metrics whenever there is an update in the store.
     this.fetchRuleMetrics(rulebookDetails);
     this.setState({
       rulebookDetails,
@@ -109,7 +109,13 @@ export default class RuleBookDetails extends Component {
 
   componentDidMount() {
     this.updateState();
-    RulesEngineStore.subscribe(this.updateState);
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(this.updateState);
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   onApply = () => {
@@ -131,7 +137,7 @@ export default class RuleBookDetails extends Component {
       );
   };
 
-  updateRulebook = debounce((rules) => {
+  updateRulebook = (rules) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
     let urlparams = {
       namespace,
@@ -145,10 +151,12 @@ export default class RuleBookDetails extends Component {
     MyRulesEngineApi
       .updateRulebook(urlparams, postBody, headers)
       .subscribe(
-        () => {},
+        () => {
+          getRulesForActiveRuleBook();
+        },
         setError
       );
-  }, 2000);
+  };
 
   removeRule = (ruleid) => {
     let {selectedNamespace: namespace} = NamespaceStore.getState();
