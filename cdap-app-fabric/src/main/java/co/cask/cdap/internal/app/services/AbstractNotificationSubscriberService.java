@@ -152,12 +152,10 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
 
     /**
      * Processes a set of notifications.
-     *
-     * @param context the dataset context
+     *  @param context the dataset context
      * @param notifications an {@link Iterator} of {@link Notification} to be processed.
-     *                      The next fetch of notifications will start from where the iterator is consumed up to.
      */
-    protected abstract void processNotifications(DatasetContext context, Iterator<Notification> notifications);
+    protected abstract void processNotifications(DatasetContext context, NotificationIterator notifications);
 
     /**
      * Persists the message id to storage. Note that this method is already executed inside a transaction.
@@ -316,7 +314,7 @@ public abstract class AbstractNotificationSubscriberService extends AbstractIdle
    * An {@link Iterator} that transform {@link Message} into {@link Notification} and maintain the message id that
    * it has consumed up to.
    */
-  private static final class NotificationIterator extends AbstractIterator<Notification> {
+  protected static final class NotificationIterator extends AbstractIterator<Notification> {
 
     private final String topic;
     private final Iterator<Message> messages;

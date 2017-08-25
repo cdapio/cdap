@@ -55,6 +55,7 @@ import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.messaging.MessagingService;
+import co.cask.cdap.messaging.data.MessageId;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -138,6 +139,12 @@ public class AppFabricTestHelper {
       }
     }
     return injector;
+  }
+
+  public static byte[] createSourceId(long sourceId) {
+    byte[] buffer = new byte[MessageId.RAW_ID_SIZE];
+    MessageId.putRawId(sourceId, (byte) 0, 0, (byte) 0, buffer, 0);
+    return buffer;
   }
 
   /**

@@ -91,6 +91,7 @@ public final class InMemoryProgramRunnerModule extends PrivateModule {
 
     // Bind ProgramStateWriter
     bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
+    expose(ProgramStateWriter.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =
