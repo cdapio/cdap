@@ -91,6 +91,9 @@ public class AuthorizableTest {
 
     String widcardId = programIdNoVer.replace("est", "*es?t");
     Assert.assertEquals(widcardId, Authorizable.fromString(widcardId).toString());
+
+    String allProgs = "program:ns.app.*";
+    Assert.assertEquals(allProgs, Authorizable.fromString(allProgs).toString());
   }
 
   @Test

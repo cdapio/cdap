@@ -225,8 +225,19 @@ public class Authorizable {
                                                     "If you are including version please remove it. Given entity: " +
                                                     parts);
         }
-        checkParts(EntityType.APPLICATION, parts, index - 2, entityParts);
-        entityParts.put(entityType, parts.get(index - 1) + "." + parts.get(index));
+
+        if (parts.size() == 3 && index == (parts.size() - 1)) {
+          String program = parts.get(index);
+          if (!"*".equals(program)) {
+            throw new UnsupportedOperationException("When program type is not given, " +
+                                                      "a program name can only contain a *");
+          }
+          checkParts(EntityType.APPLICATION, parts, index - 1, entityParts);
+          entityParts.put(entityType, parts.get(index));
+        } else {
+          checkParts(EntityType.APPLICATION, parts, index - 2, entityParts);
+          entityParts.put(entityType, parts.get(index - 1) + "." + parts.get(index));
+        }
         break;
       default:
         // although it should never happen
