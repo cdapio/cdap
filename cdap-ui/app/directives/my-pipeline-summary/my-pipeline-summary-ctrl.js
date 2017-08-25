@@ -23,39 +23,7 @@ class MyPipelineSummaryCtrl {
     this.appId = '';
     this.moment = moment;
     this.setState();
-    var nextRunTimeInterval;
-    var statisticsInterval;
     this.store.registerOnChangeListener(this.setState.bind(this));
-    if (GLOBALS.etlBatchPipelines.indexOf(this.pipelineType) !== -1) {
-      this.actionCreator.getNextRunTime(
-        this.store.getApi(),
-        this.store.getParams()
-      );
-      this.actionCreator.getStatistics(
-        this.store.getApi(),
-        this.store.getParams()
-      );
-      nextRunTimeInterval = $interval(() => {
-        this.actionCreator.getNextRunTime(
-          this.store.getApi(),
-          this.store.getParams()
-        );
-      }, 10000);
-      statisticsInterval = $interval(() => {
-        this.actionCreator.getStatistics(
-          this.store.getApi(),
-          this.store.getParams()
-        );
-      }, 10000);
-    }
-    $scope.$on('$destroy', () => {
-      if (nextRunTimeInterval) {
-        $interval.cancel(nextRunTimeInterval);
-      }
-      if (statisticsInterval) {
-        $interval.cancel(statisticsInterval);
-      }
-    });
   }
   setState() {
     this.totalRunsCount = this.store.getRunsCount();

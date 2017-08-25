@@ -30,6 +30,7 @@ import RulebookMenu from 'components/RulesEngineHome/RuleBookDetails/RulebookMen
 import T from 'i18n-react';
 import { MyMetricApi } from 'api/metric';
 import {RadialChart} from 'react-vis';
+import cloneDeep from 'lodash/cloneDeep';
 
 require('./RuleBookDetails.scss');
 
@@ -54,10 +55,11 @@ export default class RuleBookDetails extends Component {
     if (isNil(rulebooks.list)) {
       return;
     }
-    let activeRulebook = rulebooks.activeRulebookId;
-    let createMode = rulebooks.createRulebook;
-    let rulebookDetails = rulebooks.list.find(rb => rb.id === activeRulebook) || {};
-    rulebookDetails.rules = rulebooks.activeRulebookRules;
+    let rb = cloneDeep(rulebooks);
+    let activeRulebook = rb.activeRulebookId;
+    let createMode = rb.createRulebook;
+    let rulebookDetails = rb.list.find(rb => rb.id === activeRulebook) || {};
+    rulebookDetails.rules = rb.activeRulebookRules;
     this.fetchRuleMetrics(rulebookDetails);
     this.setState({
       rulebookDetails,
