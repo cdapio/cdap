@@ -64,6 +64,15 @@ public class DefaultPluginContext implements PluginContext {
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    Plugin plugin = getPlugin(pluginId);
+    if (pluginInstantiator == null) {
+      throw new UnsupportedOperationException("Plugin is not supported");
+    }
+    return pluginInstantiator.substituteMacros(plugin, evaluator);
+  }
+
+  @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     try {
       if (pluginInstantiator == null) {

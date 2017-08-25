@@ -59,6 +59,11 @@ public class PipelinePluginContext implements PluginContext {
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) throws InvalidMacroException {
+    return delegate.getPluginProperties(pluginId, evaluator);
+  }
+
+  @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     return delegate.loadPluginClass(pluginId);
   }

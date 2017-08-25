@@ -740,6 +740,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+      return null;
+    }
+
+    @Override
     public <T> Class<T> loadPluginClass(String pluginId) {
       return null;
     }

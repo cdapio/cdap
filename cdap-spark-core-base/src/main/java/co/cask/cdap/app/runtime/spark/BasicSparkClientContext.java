@@ -25,6 +25,7 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
@@ -255,6 +256,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
     return sparkRuntimeContext.getPluginProperties(pluginId);
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    return sparkRuntimeContext.getPluginProperties(pluginId, evaluator);
   }
 
   @Override

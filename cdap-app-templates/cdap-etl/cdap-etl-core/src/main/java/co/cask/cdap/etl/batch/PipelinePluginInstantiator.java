@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -68,6 +69,11 @@ public class PipelinePluginInstantiator implements PluginContext {
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
     return pluginContext.getPluginProperties(pluginId);
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) throws InvalidMacroException {
+    return pluginContext.getPluginProperties(pluginId, evaluator);
   }
 
   @Override
