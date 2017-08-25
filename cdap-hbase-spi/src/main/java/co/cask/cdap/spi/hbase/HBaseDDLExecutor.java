@@ -69,10 +69,7 @@ public interface HBaseDDLExecutor extends Closeable {
     throws IOException;
 
   /**
-   * Enable the specified table if it is disabled. This is called when an HBase
-   * backed dataset has its properties modified. In order to modify the HBase table,
-   * CDAP first calls {@code disableTableIfEnabled}, then calls {@code modifyTable},
-   * then enables the table with this method.
+   * Enable the specified table if it is disabled.
    *
    * @param namespace the namespace of the table to enable
    * @param name the name of the table to enable
@@ -81,10 +78,7 @@ public interface HBaseDDLExecutor extends Closeable {
   void enableTableIfDisabled(String namespace, String name) throws IOException;
 
   /**
-   * Disable the specified table if it is enabled. This is called when an HBase backed
-   * dataset has its properties modified. In order to modify the HBase table, CDAP first
-   * disables it with this method, then calls {@code modifyTable}, then calls
-   * {@code enableTableIfDisabled}.
+   * Disable the specified table if it is enabled.
    *
    * @param namespace the namespace of the table to disable
    * @param name the name of the table to disable
@@ -106,8 +100,8 @@ public interface HBaseDDLExecutor extends Closeable {
   void modifyTable(String namespace, String name, TableDescriptor descriptor) throws IOException;
 
   /**
-   * Truncate the specified table. The table must be disabled first to truncate it,
-   * after which it must be enabled again.
+   * Truncate the specified table. Implementation of this method should disable the table first.
+   * The table must also be re-enabled by implementation at the end of truncate operation.
    *
    * @param namespace the namespace of the table to truncate
    * @param name the name of the table to truncate
@@ -117,7 +111,8 @@ public interface HBaseDDLExecutor extends Closeable {
   void truncateTable(String namespace, String name) throws IOException;
 
   /**
-   * Delete the table if it exists. The table must be disabled.
+   * Delete the table if it exists. In order to delete the HBase table,
+   * CDAP first calls {@code disableTableIfEnabled}, then calls this method.
    *
    * @param namespace the namespace of the table to delete
    * @param name the table to delete
