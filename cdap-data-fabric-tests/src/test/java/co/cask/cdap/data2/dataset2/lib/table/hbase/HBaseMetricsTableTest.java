@@ -293,7 +293,7 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
     // add just column A value for key X in table v3, so this is an increment, while column B is a gauge.
     v3Table.put(ImmutableSortedMap.<byte[], SortedMap<byte[], Long>>orderedBy(Bytes.BYTES_COMPARATOR)
                   .put(X, mapOf(A, Bytes.toLong(A))).build());
-    MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2Table, v3Table);
+    MetricsTableMigration metricsTableMigration = new MetricsTableMigration("V2Table", v2Table, "V3Table", v3Table);
     Assert.assertTrue(isMetricsDataAvailable(v2Table));
     metricsTableMigration.transferData(1);
 

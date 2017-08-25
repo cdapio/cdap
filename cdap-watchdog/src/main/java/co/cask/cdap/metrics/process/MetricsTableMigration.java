@@ -20,6 +20,7 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +38,18 @@ import java.util.concurrent.TimeUnit;
 public class  MetricsTableMigration {
   private static final Logger LOG = LoggerFactory.getLogger(MetricsTableMigration.class);
 
+  private final String v2MetricsTableName;
+  private final String v3MetricsTableName;
   private final MetricsTable v2MetricsTable;
   private final MetricsTable v3MetricsTable;
 
   private volatile boolean stopping;
 
-  public MetricsTableMigration(MetricsTable v2MetricsTable, MetricsTable v3MetricsTable) {
+  public MetricsTableMigration(String v2MetricsTableName,
+                               MetricsTable v2MetricsTable, String v3MetricsTableName, MetricsTable v3MetricsTable) {
+    this.v2MetricsTableName = v2MetricsTableName;
     this.v2MetricsTable = v2MetricsTable;
+    this.v3MetricsTableName = v3MetricsTableName;
     this.v3MetricsTable = v3MetricsTable;
     this.stopping = false;
   }
@@ -63,13 +69,16 @@ public class  MetricsTableMigration {
    */
   public void transferData(int sleepMillisBetweenRecords) throws InterruptedException {
     try (Scanner scanner = v2MetricsTable.scan(null, null, null)) {
-      LOG.info("Starting Metrics Data Migration with {} ms sleep between records",
-                sleepMillisBetweenRecords);
+      LOG.info("Starting Metrics Data Migration from {} to {} with {}ms sleep between records",
+               v2MetricsTableName, v3MetricsTableName, sleepMillisBetweenRecords);
       Row row;
       int recordsScanned = 0;
+      Stopwatch stopwatch = new Stopwatch();
+      stopwatch.start();
       while (!stopping && ((row = scanner.next()) != null)) {
-        if (recordsScanned % 10 == 0) {
-          LOG.trace("Scanned {} records in Metrics Data Migration", recordsScanned);
+        if (recordsScanned % 1000 == 0) {
+          LOG.debug("Took {}s for transferring {} records in Metrics Data Migration",
+                    stopwatch.elapsedTime(TimeUnit.SECONDS), recordsScanned);
         }
 
         byte[] rowKey = row.getRow();
@@ -122,7 +131,9 @@ public class  MetricsTableMigration {
           TimeUnit.MILLISECONDS.sleep(sleepMillisBetweenRecords);
         }
       }
-      LOG.info("Migrated {} records from the metrics table {}", recordsScanned, v2MetricsTable);
+      stopwatch.stop();
+      LOG.info("Finished migrating {} records from the metrics table {}. Took {}s",
+               recordsScanned, v2MetricsTableName, stopwatch.elapsedTime(TimeUnit.SECONDS));
     }
   }
 

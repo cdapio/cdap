@@ -17,6 +17,7 @@ package co.cask.cdap.metrics.process;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
+import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ public class DataMigrator extends Thread {
   private final String v2TableNamePrefix;
   private final String v3TableNamePrefix;
   private final int sleepMillisBetweenTransfer;
+  private final MetricDatasetFactory metricDatasetFactory;
 
   private volatile boolean stopping;
   private MetricsTableMigration metricsTableMigration;
@@ -44,11 +46,13 @@ public class DataMigrator extends Thread {
    * @param sleepMillisBetweenTransfer while the data transfer is running -
    *                                   amount of time to sleep between each record transfer
    */
-  public DataMigrator(DatasetFramework datasetFramework, List<Integer> resolutions,
+  public DataMigrator(DatasetFramework datasetFramework, MetricDatasetFactory metricDatasetFactory,
+                      List<Integer> resolutions,
                       String v2TableNamePrefix, String v3TableNamePrefix, int sleepMillisBetweenTransfer) {
-    super(String.format("MetricsMigratorThread"));
+    super("MetricsMigratorThread");
     setDaemon(true);
     this.datasetFramework = datasetFramework;
+    this.metricDatasetFactory = metricDatasetFactory;
     this.resolutions = resolutions;
     this.v2TableNamePrefix = v2TableNamePrefix;
     this.v3TableNamePrefix = v3TableNamePrefix;
@@ -74,14 +78,21 @@ public class DataMigrator extends Thread {
     for (int resolution : resolutions) {
       try {
         DatasetId v2MetricsTableId = getMetricsDatasetId(v2TableNamePrefix, resolution);
-        DatasetId v3MetricsDatasetId = getMetricsDatasetId(v3TableNamePrefix, resolution);
-
+        DatasetId v3MetricsTableId = getMetricsDatasetId(v3TableNamePrefix, resolution);
         if (MigrationTableHelper.hasInstanceWithRetry(datasetFramework, v2MetricsTableId)) {
+          // if v3 table is not available, call getOrCreate,
+          // this could happen when migrator thread might have started running before processing threads
+          if (!MigrationTableHelper.hasInstanceWithRetry(datasetFramework, v3MetricsTableId)) {
+            metricDatasetFactory.getOrCreateFactTable(resolution);
+          }
           try (MetricsTable v2MetricsTable =
                  MigrationTableHelper.getDatasetWithRetry(datasetFramework, v2MetricsTableId);
                MetricsTable v3MetricsTable =
-                 MigrationTableHelper.getDatasetWithRetry(datasetFramework, v3MetricsDatasetId)) {
-            MetricsTableMigration metricsTableMigration = new MetricsTableMigration(v2MetricsTable, v3MetricsTable);
+                 MigrationTableHelper.getDatasetWithRetry(datasetFramework, v3MetricsTableId)) {
+            MetricsTableMigration metricsTableMigration =
+              new MetricsTableMigration(v2MetricsTableId.getDataset(), v2MetricsTable,
+                                        v3MetricsTableId.getDataset(), v3MetricsTable);
+
             metricsTableMigration.transferData(sleepMillisBetweenTransfer);
             LOG.info("Metrics table data migration is complete for {}", v2MetricsTableId.getDataset());
             // don't delete if we are stopping
