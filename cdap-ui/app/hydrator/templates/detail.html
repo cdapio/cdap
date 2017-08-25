@@ -21,7 +21,7 @@
 <div class="detail-canvas-container" ui-view="canvas"></div>
 
 <!-- TRIGGERS -->
-<div ng-if="$state.params.pipelineId">
+<div ng-if="$state.params.pipelineId && DetailCtrl.pipelineType === 'cdap-data-pipeline'">
   <pipeline-triggers-sidebars
     pipeline-name="$state.params.pipelineId"
     namespace="$state.params.namespace"></pipeline-triggers-sidebars>

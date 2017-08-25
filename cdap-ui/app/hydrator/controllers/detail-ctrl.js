@@ -20,6 +20,8 @@ angular.module(PKG.name + '.feature.hydrator')
     HydratorPlusPlusDetailRunsStore.init(rPipelineDetail);
     HydratorPlusPlusDetailNonRunsStore.init(rPipelineDetail);
 
+    this.pipelineType = rPipelineDetail.artifact.name;
+
     let runid = $stateParams.runid;
     if (runid) {
       HydratorPlusPlusDetailActions.setCurrentRun(runid);
