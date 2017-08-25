@@ -20,6 +20,8 @@ import enableDataPreparationService from 'components/DataPrep/DataPrepServiceCon
 import LoadingSVG from 'components/LoadingSVG';
 import T from 'i18n-react';
 import IconSVG from 'components/IconSVG';
+import {MyArtifactApi} from 'api/artifact';
+import NamespaceStore from 'services/NamespaceStore';
 
 require('./RulesEngineServiceControl.scss');
 const PREFIX = 'features.RulesEngine.RulesEngineServiceControl';
@@ -32,8 +34,14 @@ export default class RulesEngineServiceControl extends Component {
 
   state = {
     loading: false,
-    error: null
+    error: null,
+    rulesEngineNotAvailable: false,
+    showEnableButton: false
   };
+
+  componentDidMount() {
+    this.checkIfRulesEngineIsAvailable();
+  }
 
   enableRulesEngine = () => {
     this.setState({
@@ -56,6 +64,26 @@ export default class RulesEngineServiceControl extends Component {
       );
   }
 
+  checkIfRulesEngineIsAvailable = () => {
+    let {selectedNamespace: namespace} = NamespaceStore.getState();
+    MyArtifactApi
+      .list({ namespace })
+      .subscribe(
+        (artifacts) => {
+          let isYareServicePresent = artifacts.find(artifact => artifact.name === 'yare-service');
+          if (!isYareServicePresent) {
+            this.setState({
+              rulesEngineNotAvailable: true
+            });
+          } else {
+            this.setState({
+              showEnableButton: true
+            });
+          }
+        }
+      );
+  };
+
   renderError = () => {
     if (!this.state.error) {
       return null;
@@ -73,12 +101,45 @@ export default class RulesEngineServiceControl extends Component {
     );
   }
 
+  renderAvailableOrEnableBtn = () => {
+    if (!this.state.rulesEngineNotAvailable && !this.state.showEnableButton) {
+      return (<span> {T.translate(`${PREFIX}.checkMessage`)}</span>);
+    }
+    if (this.state.rulesEngineNotAvailable) {
+      return (
+        <a
+          href="mailto:Sales@cask.co"
+          className="btn-link mail-to-link"
+        >
+          {T.translate(`${PREFIX}.contactMessage`)}
+        </a>
+      );
+    }
+    if (this.state.showEnableButton) {
+      return (
+        <button
+          className="btn btn-primary"
+          onClick={this.enableRulesEngine}
+          disabled={this.state.loading}
+        >
+          {
+            this.state.loading ?
+              <LoadingSVG height="16px"/>
+            :
+              null
+          }
+          <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
+        </button>
+      );
+    }
+  };
+
   render() {
     return (
       <div className="rules-engine-service-control">
         <div className="image-containers">
-          <img src="/cdap_assets/img/RulesEnginePreview1.png" />
-          <img src="/cdap_assets/img/RulesEnginePreview2.png" />
+          <img className="img-thumbnail" src="/cdap_assets/img/RulesEngine_preview_1.png" />
+          <img className="img-thumbnail" src="/cdap_assets/img/RulesEngine_preview_2.png" />
         </div>
         <div className="text-container">
           <h2> {T.translate(`${PREFIX}.title`)} </h2>
@@ -89,24 +150,31 @@ export default class RulesEngineServiceControl extends Component {
             {T.translate(`${PREFIX}.benefits.title`)}
 
             <ul>
-              <li>{T.translate(`${PREFIX}.benefits.b1`)}</li>
-              <li>{T.translate(`${PREFIX}.benefits.b2`)}</li>
-              <li>{T.translate(`${PREFIX}.benefits.b3`)}</li>
-              <li>{T.translate(`${PREFIX}.benefits.b4`)}</li>
+              <li>
+                <span className="fa fa-laptop" />
+                <span>{T.translate(`${PREFIX}.benefits.b1`)}</span>
+              </li>
+              <li>
+                <IconSVG name="icon-edit" />
+                <span>{T.translate(`${PREFIX}.benefits.b2`)}</span>
+              </li>
+              <li>
+                <IconSVG name="icon-cogs" />
+                <span>{T.translate(`${PREFIX}.benefits.b3`)}</span>
+              </li>
+              <li>
+                <IconSVG name="icon-arrows-alt" />
+                <span>{T.translate(`${PREFIX}.benefits.b4`)}</span>
+              </li>
+              <li>
+                <span className="fa fa-university" />
+                <span>{T.translate(`${PREFIX}.benefits.b5`)}</span>
+              </li>
             </ul>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={this.enableRulesEngine}
-            disabled={this.state.loading}
-          >
-            {
-              this.state.loading ?
-                <LoadingSVG height="16px"/>
-              :
-                null
-            } <span className="btn-label">{T.translate(`${PREFIX}.enableBtnLabel`)}</span>
-          </button>
+          {
+            this.renderAvailableOrEnableBtn()
+          }
           {this.renderError()}
         </div>
       </div>

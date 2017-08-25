@@ -85,12 +85,12 @@ export default class DataPrepServiceControl extends Component {
       <div className={classnames("dataprep-container dataprep-service-control", {
         'error': this.state.error
       })}>
-        <div className="row">
-          <div className="col-xs-5">
-            <img src="/cdap_assets/img/DataPrep_preview1.png" />
-            <img src="/cdap_assets/img/DataPrep_preview2.png" />
+        <div className="service-control-container">
+          <div className="image-container">
+            <img src="/cdap_assets/img/DataPrep_preview1.png" className="img-thumbnail" />
+            <img src="/cdap_assets/img/DataPrep_preview2.png" className="img-thumbnail" />
           </div>
-          <div className="col-xs-7">
+          <div className="text-container">
             <div className="description-container">
               <h2 className="text-xs-left">
                 {T.translate(`${PREFIX}.title`)}
