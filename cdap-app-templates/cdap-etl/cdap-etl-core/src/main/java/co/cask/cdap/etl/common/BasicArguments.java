@@ -20,6 +20,7 @@ import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.SettableArguments;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -29,7 +30,7 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link SettableArguments}.
  */
-public class BasicArguments implements SettableArguments {
+public class BasicArguments implements SettableArguments, Serializable {
 
   private final Map<String, String> options;
   private final Map<String, String> addedArguments;

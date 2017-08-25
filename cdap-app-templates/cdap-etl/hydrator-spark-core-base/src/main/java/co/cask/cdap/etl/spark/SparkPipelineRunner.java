@@ -33,6 +33,7 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
@@ -82,7 +83,8 @@ public abstract class SparkPipelineRunner {
                           Map<String, StageStatisticsCollector> collectors) throws Exception {
 
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
+      new DefaultMacroEvaluator(new BasicArguments(sec),
+                                sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 

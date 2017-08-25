@@ -54,8 +54,7 @@ public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, 
 
   @Override
   public Void call(JavaRDD<Alert> data, Time batchTime) throws Exception {
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(),
-                                                         sec.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          batchTime.milliseconds(),
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
