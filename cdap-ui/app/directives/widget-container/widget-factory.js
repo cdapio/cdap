@@ -237,6 +237,15 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig',
           'properties': 'properties'
         }
+      },
+      'textarea-validate': {
+        element: '<my-textarea-validate></my-textarea-validate>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'disabled': 'disabled',
+          'node': 'node'
+        }
       }
     };
     this.registry['__default__'] = this.registry['textbox'];

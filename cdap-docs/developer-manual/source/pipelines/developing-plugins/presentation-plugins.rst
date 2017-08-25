@@ -584,6 +584,28 @@ CDAP pipelines as of version |version|.
             }
           }
      
+   * - ``textarea-validate``
+     - - ``placeholder``: placeholder text for the textarea
+       - ``validate-endpoint``: plugin function endpoint to hit to validate the contents of the textarea
+       - ``validate-button-text``: label of the validate button
+       - ``validate-success-message``: message to display when validation succeeds
+     - ``string``
+     - An HTML ``textarea`` element with a button to validate its contents using a plugin function endpoint
+     - .. container:: copyable copyable-text
+     
+         ::
+
+          {
+            "name": "property-to-validate",
+            "widget-type": "textarea-validate",
+            "widget-attributes": {
+              "placeholder": "E.g. ((token['Data Quality']['error'] / token['File']['output']) * 100) > runtime['error_percentage']",
+              "validate-endpoint": "validate",
+              "validate-button-text": "Validate",
+              "validate-success-message": "Expression is valid"
+            }
+          }
+     
    * - ``textbox``
      - ``default``: default value for the widget
      - ``string``
