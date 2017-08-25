@@ -33,11 +33,17 @@ $border-shadow-color: #cccccc;
     .text-container {
       width: 50%;
     }
+    .image-container {
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    }
   }
 
   img {
     height: auto;
     margin: 20px;
+    width: 75%;
     &:first-child {
       margin-top: 0;
     }
