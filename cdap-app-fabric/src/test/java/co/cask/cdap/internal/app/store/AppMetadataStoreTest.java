@@ -32,6 +32,7 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
 import com.google.common.base.Ticker;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
@@ -62,6 +63,8 @@ public class AppMetadataStoreTest {
   private static DatasetFramework datasetFramework;
   private static CConfiguration cConf;
   private static TransactionExecutorFactory txExecutorFactory;
+  private static final List<ProgramRunStatus> STOP_STATUSES =
+    ImmutableList.of(ProgramRunStatus.COMPLETED, ProgramRunStatus.FAILED, ProgramRunStatus.KILLED);
 
   private final AtomicInteger sourceId = new AtomicInteger();
 
@@ -204,7 +207,7 @@ public class AppMetadataStoreTest {
             AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
           metadataStoreDataset.recordProgramStop(
             program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-            ProgramRunStatus.values()[j % ProgramRunStatus.values().length],
+            STOP_STATUSES.get(j % STOP_STATUSES.size()),
             null, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
         }
       });

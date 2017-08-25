@@ -584,12 +584,17 @@ public class AppMetadataStore extends MetadataStoreDataset implements TopicMessa
    */
   private boolean validateExistingRecords(List<RunRecordMeta> existingRecords, ProgramId programId, String pid,
                                           byte[] sourceId, String recordType, ProgramRunStatus status) {
-    Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
-    Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
     if (existingRecords.size() > 1) {
       // This should never happen
       LOG.warn("Found more than 1 existing run record meta '{}' for program '{}' run id '{}'. " +
                  "Skip recording program {}.", existingRecords, programId, pid, recordType);
+      return false;
+    }
+    Set<ProgramRunStatus> allowedStatuses = ALLOWED_STATUSES.get(status);
+    Set<ProgramRunStatus> allowedWithLogStatuses = ALLOWED_WITH_LOG_STATUSES.get(status);
+    if (allowedStatuses == null || allowedWithLogStatuses == null) {
+      LOG.error("Run status '{}' is not allowed to be persisted for program '{}' run id '{}'.",
+                status, programId, pid);
       return false;
     }
     // If existing record is not allowed, only empty existing records is valid
