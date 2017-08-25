@@ -93,7 +93,8 @@ public interface HBaseDDLExecutor extends Closeable {
   void modifyTable(String namespace, String name, TableDescriptor descriptor) throws IOException;
 
   /**
-   * Truncate the specified table. The table must be disabled.
+   * Truncate the specified table. Implementation of this method should disable the table first.
+   * The table must also be re-enabled by implementation at the end of truncate operation.
    *
    * @param namespace the namespace of the table to truncate
    * @param name the name of the table to truncate
@@ -103,7 +104,8 @@ public interface HBaseDDLExecutor extends Closeable {
   void truncateTable(String namespace, String name) throws IOException;
 
   /**
-   * Delete the table if it exists. The table must be disabled.
+   * Delete the table if it exists. In order to delete the HBase table,
+   * CDAP first calls {@code disableTableIfEnabled}, then calls this method.
    *
    * @param namespace the namespace of the table to delete
    * @param name the table to delete
