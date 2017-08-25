@@ -32,8 +32,10 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -67,7 +69,7 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
     }
 
     if (!processedInvalidRunRecordIds.isEmpty()) {
-      LOG.info("Corrected {} of run records with RUNNING status but no actual program running.",
+      LOG.info("Corrected {} of run records with RUNNING or STARTING status but no actual program running.",
                processedInvalidRunRecordIds.size());
     }
   }
@@ -83,17 +85,21 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
                                                    final Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, ProgramRuntimeService.RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
+    com.google.common.base.Predicate<RunRecordMeta> filter = new com.google.common.base.Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta input) {
+        String runId = input.getPid();
+        // Check if it is not actually running.
+        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+      }
+    };
     LOG.trace("Start getting run records not actually running ...");
-    Collection<RunRecordMeta> notActuallyRunning =
-      store.getRuns(ProgramRunStatus.RUNNING,
-                    new com.google.common.base.Predicate<RunRecordMeta>() {
-                      @Override
-                      public boolean apply(RunRecordMeta input) {
-                        String runId = input.getPid();
-                        // Check if it is not actually running.
-                        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
-                      }
-                    }).values();
+    List<RunRecordMeta> notActuallyRunning = new ArrayList<>();
+
+    notActuallyRunning.addAll(store.getRuns(ProgramRunStatus.RUNNING, filter).values());
+    LOG.trace("{} run records that are not actually running", notActuallyRunning.size());
+    notActuallyRunning.addAll(store.getRuns(ProgramRunStatus.STARTING, filter).values());
+    LOG.trace("{} run records that are not actually running or starting", notActuallyRunning.size());
     LOG.trace("End getting {} run records not actually running.", notActuallyRunning.size());
 
     final Map<String, ProgramId> runIdToProgramId = new HashMap<>();
@@ -135,10 +141,12 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
     LOG.trace("End getting invalid run records.");
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status and the program not actually running for program type {}",
+      LOG.warn("Found {} RunRecords with RUNNING or STARTING status and the program not actually " +
+                 "running or starting for program type {}",
                invalidRunRecords.size(), programType.getPrettyName());
     } else {
-      LOG.trace("No RunRecords found with RUNNING status and the program not actually running for program type {}",
+      LOG.trace("No RunRecords found with RUNNING or STARTING status and the program not actually " +
+                  "running or starting for program type {}",
                 programType.getPrettyName());
     }
 
@@ -148,8 +156,8 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
       ProgramId targetProgramId = runIdToProgramId.get(runId);
       programStateWriter.error(targetProgramId.run(runId),
                                new Throwable("Marking run record as failed since no running program found."));
-      LOG.warn("Fixed RunRecord {} for program {} with RUNNING status because the program was not " +
-                 "actually running",
+      LOG.warn("Fixed RunRecord {} for program {} with RUNNING or STARTING status because the program was not " +
+                 "actually running or starting",
                runId, targetProgramId);
 
       processedInvalidRunRecordIds.add(runId);
