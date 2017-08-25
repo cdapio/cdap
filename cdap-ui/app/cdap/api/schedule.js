@@ -23,7 +23,7 @@ let workflowPath = '/namespaces/:namespace/apps/:appId/workflows/:workflowId';
 export const MyScheduleApi = {
   create: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:scheduleName`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/:scheduleName`),
-  update: apiCreator(dataSrc, 'PUT', 'REQUEST', `${basepath}/:scheduleName/update`),
+  update: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:scheduleName/update`),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:scheduleName`),
   getTriggers: apiCreator(dataSrc, 'GET', 'REQUEST', `${workflowPath}/schedules`),
   enableTrigger: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:scheduleName/enable`),

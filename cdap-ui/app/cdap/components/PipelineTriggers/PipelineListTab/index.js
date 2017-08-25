@@ -109,7 +109,8 @@ function PipelineListTabView({pipelineList, pipelineName, selectedNamespace, exp
                 pipelineList.map((pipeline) => {
                   let triggeringPipelineInfo = {
                     id: pipeline.name,
-                    namespace: selectedNamespace
+                    namespace: selectedNamespace,
+                    description: pipeline.description
                   };
                   return (
                     <PipelineTriggersRow

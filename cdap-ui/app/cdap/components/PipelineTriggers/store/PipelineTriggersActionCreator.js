@@ -119,7 +119,8 @@ export function fetchTriggersAndApps(pipeline, activeNamespace) {
     namespace,
     appId: pipeline,
     workflowId: DATA_PIPELINE_WORKFLOW,
-    'trigger-type': 'program-status'
+    'trigger-type': 'program-status',
+    'schedule-status': 'SCHEDULED'
   };
 
   MyScheduleApi.getTriggers(params)

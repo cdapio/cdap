@@ -49,24 +49,13 @@ export default class TriggeredPipelines extends Component {
       'trigger-namespace-id': namespace,
       'trigger-program-type': 'workflows',
       'trigger-app-name': this.props.pipelineName,
-      'trigger-program-name': 'DataPipelineWorkflow'
+      'trigger-program-name': 'DataPipelineWorkflow',
+      'schedule-status': 'SCHEDULED'
     };
 
     MyScheduleApi.getTriggeredList(params)
       .subscribe((res) => {
-        let triggeredPipelines = res.map((schedule) => {
-          // doing this because currently the backend does not return the pipeline name
-          let nameSplit = schedule.name.split('.');
-          let obj = {
-            pipelineName: nameSplit[0],
-            namespace: nameSplit[1],
-            schedule
-          };
-
-          return obj;
-        });
-
-        this.setState({triggeredPipelines});
+        this.setState({triggeredPipelines: res});
       });
   }
 
@@ -84,13 +73,12 @@ export default class TriggeredPipelines extends Component {
 
     this.setState({
       loading: true,
-      expanded: `${pipeline.namespace}_${pipeline.pipelineName}`
+      expanded: `${pipeline.namespace}_${pipeline.application}`
     });
 
-    let namespace = NamespaceStore.getState().selectedNamespace;
     let params = {
-      namespace,
-      appId: this.props.pipelineName
+      namespace: pipeline.namespace,
+      appId: pipeline.application
     };
 
     MyAppApi.get(params)
@@ -147,7 +135,7 @@ export default class TriggeredPipelines extends Component {
                     this.state.triggeredPipelines.map((pipeline) => {
                       return (
                         <TriggeredPipelineRow
-                          isExpanded={`${pipeline.namespace}_${pipeline.pipelineName}` === this.state.expanded}
+                          isExpanded={`${pipeline.namespace}_${pipeline.application}` === this.state.expanded}
                           pipeline={pipeline}
                           onToggle={this.onToggle}
                           loading={this.state.loading}
