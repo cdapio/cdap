@@ -23,6 +23,7 @@ import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import MouseTrap from 'mousetrap';
 import { Popover, PopoverTitle, PopoverContent } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
+import {setPopoverOffset} from 'components/DataPrep/helper';
 
 require('./FilterDirective.scss');
 
@@ -80,9 +81,15 @@ export default class FilterDirective extends Component {
     ];
   }
 
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('filter-directive'));
+  }
 
   componentDidUpdate() {
     if (this.props.isOpen) {
+      if (this.calculateOffset) {
+        this.calculateOffset();
+      }
       // This is not in componentDidMount as Mousetrap can bind to 'enter' only once.
       // So the last .bind will get the callback always when all the directives are rendered in ColumnActionDropdown
       // So we bind to enter key only when the directive is opened.
@@ -412,6 +419,7 @@ export default class FilterDirective extends Component {
   render() {
     return (
       <div
+        id="filter-directive"
         className={classnames('filter-directive clearfix action-item', {
           'active': this.props.isOpen
         })}
