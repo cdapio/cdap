@@ -123,10 +123,11 @@ export default class RulesEngineHome extends Component {
         title={T.translate(`${PREFIX}.pageTitle`)}
       />
     );
+    const renderPageTitle = () => !this.props.embedded ? pageTitle : null;
     if (this.state.loading) {
       return (
         <div>
-          {pageTitle}
+          {renderPageTitle()}
           <LoadingSVGCentered />
         </div>
       );
@@ -135,7 +136,7 @@ export default class RulesEngineHome extends Component {
     if (this.state.backendDown) {
       return (
         <div>
-          {pageTitle}
+          {renderPageTitle()}
           <RulesEngineServiceControl
             onServiceStart={this.onServiceStart}
           />
@@ -145,9 +146,7 @@ export default class RulesEngineHome extends Component {
 
     return (
       <div className="rules-engine-home">
-        <Helmet
-          title={T.translate(`${PREFIX}.pageTitle`)}
-        />
+        {renderPageTitle()}
           <RulesEngineWrapper onApply={this.props.onApply}/>
         <RulesEngineAlert />
       </div>
