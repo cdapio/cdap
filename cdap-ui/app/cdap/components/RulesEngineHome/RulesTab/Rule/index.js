@@ -192,6 +192,7 @@ class Rule extends Component {
                 <DSVEditor
                   values={rules}
                   onChange={this.onRulesChange}
+                  disabled={!this.state.edit}
                 />
               </fieldset>
             </Col>
