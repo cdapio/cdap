@@ -20,22 +20,30 @@ $border-shadow-color: #cccccc;
   &.dataprep-service-control,
   &.dataprep-service-control.error {
     padding-top: 50px;
+    height: calc(100vh - 104px);
+    overflow: auto;
   }
 }
 
 .dataprep-service-control {
-  img {
-    margin: 20px 70px;
-    height: calc(40vh - 40px);
-    width: 85%;
-    box-shadow: 1px 1px 5px $border-shadow-color;
+  .service-control-container {
+    display: flex;
+    height: 100%;
+    .image-container,
+    .text-container {
+      width: 50%;
+    }
+  }
 
+  img {
+    height: auto;
+    margin: 20px;
     &:first-child {
       margin-top: 0;
     }
   }
   .description-container {
-    padding: 40px 50px;
+    padding: 0 50px;
   }
   .dataprep-checklist {
     list-style: none;

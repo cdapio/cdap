@@ -1457,14 +1457,16 @@ features:
       norulesbooks: No Rulebooks found
     RulesEngineServiceControl:
       benefits:
-        b1: Non-Programmers who want to analyze big data
-        b2: One-time infrastructure setup
-        b3: Separation of Logic and Data
-        b4: Speed and Scalability
-        title: Some of the benefits of Rules Engine are,
-      description: Rules Engine is a sophisticated if-then-else statement interpreter that runs natively on big data system like Spark and Hadoop.
-            It provides an alternative computational model for transforming your data while empowering the business
-            users to specify and manage the transformations and policy enforcements.
+        b1: "Intuitive UI: Business users can easily set up and govern data ingestion and data processing - no programming required"
+        b2: "Flexible Management: Rules and Rulebooks can be easily added, updated and shared"
+        b3: "Fully integrated: The Rules Engine is available as a library to integrate with JBoss, WebLogic, Spring, and SQL tools"
+        b4: "Scalable: The Rules Engine is horizontally scalable, i.e. it scales out with your big data environment"
+        b5: "Easy governance: The Rules engine provides a centralized repository for policies and transformations"
+        title: "Benefits of the Cask Rules Engine include:"
+      checkMessage: Checking if Rules Engine is available...
+      contactMessage: Contact Cask Data for a Demo
+      description: Cask Distributed Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
+                  The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
       errorTitle: Enabling Rules Engine Failed
       title: Welcome to Rules Engine Management
