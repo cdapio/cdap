@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
  * Macro evaluator used by batch application
  */
 public class DefaultMacroEvaluator implements MacroEvaluator {
-  private final Map<String, String> resolvedArguments;
+  private final BasicArguments arguments;
   private final long logicalStartTime;
   private final LogicalStartTimeMacro logicalStartTimeMacro;
   private final SecureStore secureStore;
@@ -43,13 +43,7 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
 
   public DefaultMacroEvaluator(BasicArguments arguments,
                                long logicalStartTime, SecureStore secureStore, String namespace) {
-    Map<String, String> resolvedArguments = new HashMap<>();
-    Iterator<Map.Entry<String, String>> iter = arguments.iterator();
-    while (iter.hasNext()) {
-      Map.Entry<String, String> entry = iter.next();
-      resolvedArguments.put(entry.getKey(), entry.getValue());
-    }
-    this.resolvedArguments = resolvedArguments;
+    this.arguments = arguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
     this.secureStore = secureStore;
@@ -59,7 +53,7 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   @Override
   @Nullable
   public String lookup(String property) {
-    String val = resolvedArguments.get(property);
+    String val = arguments.get(property);
     if (val == null) {
       throw new InvalidMacroException(String.format("Argument '%s' is not defined.", property));
     }

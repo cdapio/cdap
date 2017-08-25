@@ -80,14 +80,13 @@ public class PipelineAction extends AbstractCustomAction {
     PluginContext pluginContext = new PipelinePluginContext(context, metrics,
                                                             phaseSpec.isStageLoggingEnabled(),
                                                             phaseSpec.isProcessTimingEnabled());
+    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
     Action action =
       pluginContext.newPluginInstance(stageSpec.getName(),
-                                      new DefaultMacroEvaluator(new BasicArguments(context.getWorkflowToken(),
-                                                                                   context.getRuntimeArguments()),
+                                      new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                                 context.getLogicalStartTime(),
                                                                 context,
                                                                 context.getNamespace()));
-    PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
     ActionContext actionContext = new BasicActionContext(context, pipelineRuntime, stageSpec);
     if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {
       action.run(actionContext);

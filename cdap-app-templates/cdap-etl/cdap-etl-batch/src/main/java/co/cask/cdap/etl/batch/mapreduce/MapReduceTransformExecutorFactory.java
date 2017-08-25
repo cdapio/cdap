@@ -112,8 +112,7 @@ public class MapReduceTransformExecutorFactory<T> {
     this.metrics = metrics;
     this.sourceStageName = sourceStageName;
     this.macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments()),
-                                taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
+      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
     Configuration hConf = hadoopContext.getConfiguration();
     this.mapOutputKeyClassName = hConf.get(ETLMapReduce.MAP_KEY_CLASS);
@@ -132,8 +131,7 @@ public class MapReduceTransformExecutorFactory<T> {
     throws Exception {
     String stageName = stageSpec.getName();
     DefaultMacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments()),
-                                taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
+      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
     SplitterTransform<IN, ERROR> splitterTransform =
       pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
     TransformContext transformContext = createRuntimeContext(stageSpec);
@@ -151,8 +149,7 @@ public class MapReduceTransformExecutorFactory<T> {
   private <IN, OUT> TrackedTransform<IN, OUT> getTransformation(StageSpec stageSpec) throws Exception {
 
     DefaultMacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(taskContext.getWorkflowToken(), taskContext.getRuntimeArguments()),
-                                taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
+      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
     String stageName = stageSpec.getName();
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
