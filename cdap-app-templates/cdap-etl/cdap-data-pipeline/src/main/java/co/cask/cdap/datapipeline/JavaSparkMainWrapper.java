@@ -22,6 +22,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.plugin.Caller;
@@ -52,7 +53,7 @@ public class JavaSparkMainWrapper implements JavaSparkMain {
 
     // if it's a CDAP JavaSparkMain, instantiate it and call the run method
     if (JavaSparkMain.class.isAssignableFrom(mainClass)) {
-      MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(),
+      MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                                 sec.getLogicalStartTime(), sec.getSecureStore(),
                                                                 sec.getNamespace());
       JavaSparkMain javaSparkMain = pluginContext.newPluginInstance(stageName, macroEvaluator);

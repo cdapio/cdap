@@ -80,28 +80,24 @@ export default class PipelineTriggersRow extends Component {
   */
   configureAndEnable = (mapping) => {
     const generateRuntimeMapping = () => {
-      let runArgsMapping = {};
-      let {selectedNamespace: namespace, triggeringPipelineInfo} = this.props;
+      let runArgsMapping = {
+        arguments: [],
+        pluginProperties: []
+      };
       mapping.forEach(map => {
-        let runargkey;
-        if (map.key.split(':').length > 1) {
-          let [pipelineName, pluginName, propertyKey] = map.key.split(':');
-          runargkey = JSON.stringify({
-            namespace,
-            pipelineName,
-            pluginName,
-            propertyKey,
-            type: 'PLUGIN_PROPERTY'
+        let keySplit = map.key.split(':');
+        if (keySplit.length > 1) {
+          runArgsMapping.pluginProperties.push({
+            stageName: keySplit[1],
+            source: keySplit[2],
+            target: map.value
           });
         } else {
-          runargkey = JSON.stringify({
-            namespace,
-            pipelineName: triggeringPipelineInfo.id,
-            'runtimeArgumentKey': map.key,
-            'type': 'RUNTIME_ARG'
+          runArgsMapping.arguments.push({
+            source: map.key,
+            target: map.value
           });
         }
-        runArgsMapping[runargkey] = map.value;
       });
       return JSON.stringify(runArgsMapping);
     };

@@ -45,6 +45,7 @@ import co.cask.cdap.etl.batch.DefaultAggregatorContext;
 import co.cask.cdap.etl.batch.DefaultJoinerContext;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
 import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -133,7 +134,7 @@ public class ETLSpark extends AbstractSpark {
       sparkConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
     }
 
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(context),
                                                          context.getLogicalStartTime(), context,
                                                          context.getNamespace());
     final SparkBatchSourceFactory sourceFactory = new SparkBatchSourceFactory();
