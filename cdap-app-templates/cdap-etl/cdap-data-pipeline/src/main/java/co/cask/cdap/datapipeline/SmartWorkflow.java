@@ -83,10 +83,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
@@ -113,6 +115,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+  private static final Type STAGE_PROPERTIES_MAP = new TypeToken<Map<String, Map<String, String>>>() { }.getType();
 
   private final ApplicationConfigurer applicationConfigurer;
   private final Set<String> supportedPluginTypes;
@@ -348,18 +351,19 @@ public class SmartWorkflow extends AbstractWorkflow {
       String targetKey = mapping.getTarget() == null ? sourceKey : mapping.getTarget();
       token.put(targetKey, value);
     }
-    // TODO: this should be changed once #9485 is merged.
-    Map<String, Plugin> plugins = triggerInfo.getApplicationSpecification().getPlugins();
+    // Get the resolved plugin properties map from triggering pipeline's workflow token in triggeringArguments
+    Map<String, Map<String, String>> resolvedProperties =
+      GSON.fromJson(triggeringArguments.get(RESOLVED_PLUGIN_PROPERTIES_MAP), STAGE_PROPERTIES_MAP);
     for (PluginPropertyMapping mapping : propertiesMapping.getPluginProperties()) {
       String stageName = mapping.getStageName();
       if (stageName == null) {
         LOG.warn("The name of the stage cannot be null in plugin property mapping, skip this mapping: '{}'.", mapping);
         continue;
       }
-      Plugin plugin = plugins.get(stageName);
-      if (plugin == null) {
-        LOG.warn("No plugin with name '{}' can be found in triggering pipeline '{}' in namespace '{}' ",
-                 mapping.getStageName(), triggerInfo.getApplicationSpecification().getName(),
+      Map<String, String> pluginProperties = resolvedProperties.get(stageName);
+      if (pluginProperties == null) {
+        LOG.warn("No plugin properties can be found with stage name '{}' in triggering pipeline '{}' " +
+                   "in namespace '{}' ", mapping.getStageName(), triggerInfo.getApplicationSpecification().getName(),
                  triggerInfo.getNamespace());
         continue;
       }
@@ -369,7 +373,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                    "skip this argument mapping: '{}'.", mapping);
         continue;
       }
-      String value = plugin.getProperties().getProperties().get(sourceKey);
+      String value = pluginProperties.get(sourceKey);
       if (value == null) {
         LOG.warn("No property with name '{}' can be found in plugin '{}' of the triggering pipeline '{}' " +
                    "in namespace '{}' ", sourceKey, stageName, triggerInfo.getApplicationSpecification().getName(),
@@ -492,12 +496,17 @@ public class SmartWorkflow extends AbstractWorkflow {
                          status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
     }
 
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
+                                                              workflowContext.getLogicalStartTime(), workflowContext,
+                                                              workflowContext.getNamespace());
     // Get resolved plugin properties
     Map<String, Map<String, String>> resolvedProperties = new HashMap<>();
     for (StageSpec spec : stageSpecs.values()) {
       String stageName = spec.getName();
-      resolvedProperties.put(stageName, workflowContext.getPluginProperties(stageName));
+      resolvedProperties.put(stageName, workflowContext.getPluginProperties(stageName, macroEvaluator).getProperties());
     }
+    // Add resolved plugin properties to workflow token as a JSON String
+    workflowContext.getToken().put(RESOLVED_PLUGIN_PROPERTIES_MAP, GSON.toJson(resolvedProperties));
   }
 
   private void addPrograms(String node, WorkflowProgramAdder programAdder) {
