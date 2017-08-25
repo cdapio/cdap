@@ -34,6 +34,8 @@ import co.cask.cdap.common.io.BinaryDecoder;
 import co.cask.cdap.common.io.DatumReader;
 import co.cask.cdap.common.logging.LogSamplers;
 import co.cask.cdap.common.logging.Loggers;
+import co.cask.cdap.common.service.Retries;
+import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.io.DatumReaderFactory;
 import co.cask.cdap.internal.io.SchemaGenerator;
@@ -181,7 +183,7 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                     Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX + ".ts.1");
     DatasetId metricsTableId = NamespaceId.SYSTEM.dataset(metricsTable);
     try {
-      DatasetSpecification spec = datasetFramework.getDatasetSpec(metricsTableId);
+      DatasetSpecification spec = getDatasetSpecWithRetry(datasetFramework, metricsTableId);
       // If v3 metrics table is already exists, we will ignore splits value from cConf to avoid modifying splits
       // after creation
       if (spec != null && cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS) !=
@@ -194,6 +196,20 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
       LOG.error("Got exception while accessing dataset {}", metricsTable, e);
     }
     this.skipMigration = skipMigration;
+  }
+
+  @Nullable
+  private DatasetSpecification getDatasetSpecWithRetry(final DatasetFramework datasetFramework,
+                                               final DatasetId datasetId) throws DatasetManagementException {
+    return Retries.callWithRetries(new Retries.Callable<DatasetSpecification, DatasetManagementException>() {
+      @Override
+      public DatasetSpecification call() throws DatasetManagementException {
+        if (!stopping) {
+          return datasetFramework.getDatasetSpec(datasetId);
+        }
+        return null;
+      }
+    }, RetryStrategies.fixDelay(1, TimeUnit.SECONDS));
   }
 
   private MetricsConsumerMetaTable getMetaTable() {
@@ -263,9 +279,9 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
 
         int migrationSleepMillis =
           Integer.valueOf(cConfiguration.get(Constants.Metrics.METRICS_MIGRATION_SLEEP_MILLIS));
-        metricsDataMigrator = new DataMigrator(datasetFramework, resolutions,
+        metricsDataMigrator = new DataMigrator(datasetFramework, metricDatasetFactory, resolutions,
                                                v2TableNamePrefix, v3TableNamePrefix, migrationSleepMillis);
-        metricsDataMigrator.run();
+        metricsDataMigrator.start();
 
         ScheduledExecutorService metricsTableDeleterExecutor =
           Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("metrics-table-deleter"));
