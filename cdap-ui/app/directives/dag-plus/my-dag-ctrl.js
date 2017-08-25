@@ -718,7 +718,9 @@ angular.module(PKG.name + '.commons')
     }
 
     function removeContextMenuEventListener(connection) {
-      connection.connector.canvas.removeEventListener('contextmenu', openContextMenu);
+      if (myHelpers.objectQuery(connection, 'connector', 'canvas')) {
+        connection.connector.canvas.removeEventListener('contextmenu', openContextMenu);
+      }
     }
 
     jsPlumb.ready(function() {
