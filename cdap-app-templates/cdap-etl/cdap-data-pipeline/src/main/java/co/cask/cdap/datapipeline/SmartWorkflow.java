@@ -106,6 +106,8 @@ public class SmartWorkflow extends AbstractWorkflow {
   public static final String DESCRIPTION = "Data Pipeline Workflow";
   public static final String TRIGGERING_PROPERTIES_MAPPING = "triggering.properties.mapping";
 
+  private static final String RESOLVED_PLUGIN_PROPERTIES_MAP = "resolved.plugin.properties.map";
+
   private static final Logger LOG = LoggerFactory.getLogger(SmartWorkflow.class);
   private static final Logger WRAPPERLOGGER = new LocationAwareMDCWrapperLogger(LOG, Constants.EVENT_TYPE_TAG,
                                                                                 Constants.PIPELINE_LIFECYCLE_TAG_VALUE);
@@ -449,7 +451,6 @@ public class SmartWorkflow extends AbstractWorkflow {
           LOG.error("Error while running post action {}.", name, t);
         }
       }
-
     }
 
     // publish all alerts
@@ -489,6 +490,13 @@ public class SmartWorkflow extends AbstractWorkflow {
     } else {
       WRAPPERLOGGER.info("Pipeline '{}' {}.", getContext().getApplicationSpecification().getName(),
                          status == ProgramStatus.COMPLETED ? "succeeded" : status.name().toLowerCase());
+    }
+
+    // Get resolved plugin properties
+    Map<String, Map<String, String>> resolvedProperties = new HashMap<>();
+    for (StageSpec spec : stageSpecs.values()) {
+      String stageName = spec.getName();
+      resolvedProperties.put(stageName, workflowContext.getPluginProperties(stageName));
     }
   }
 
