@@ -115,7 +115,8 @@ public class TransformRunner<KEY, VALUE> {
     MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
                                               new BasicArguments(context.getWorkflowToken(), runtimeArgs),
-                                              sourceStage, phaseSpec.getNumOfRecordsPreview());
+                                              sourceStage, phaseSpec.getNumOfRecordsPreview(),
+                                              phaseSpec.pipelineContainsCondition());
     this.transformExecutor = transformExecutorFactory.create(phase, outputWriter, transformErrorSinkMap);
   }
 

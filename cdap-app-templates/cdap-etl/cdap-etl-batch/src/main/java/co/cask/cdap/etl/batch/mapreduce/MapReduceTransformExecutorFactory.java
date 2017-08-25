@@ -53,6 +53,7 @@ import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.NoErrorEmitter;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
@@ -95,6 +96,7 @@ public class MapReduceTransformExecutorFactory<T> {
   private final String mapOutputValClassName;
   private final int numberOfRecordsPreview;
   private final BasicArguments arguments;
+  private final boolean isPipelineContainsCondition;
   private boolean isMapPhase;
 
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
@@ -102,7 +104,8 @@ public class MapReduceTransformExecutorFactory<T> {
                                            Metrics metrics,
                                            BasicArguments arguments,
                                            String sourceStageName,
-                                           int numberOfRecordsPreview) {
+                                           int numberOfRecordsPreview,
+                                           boolean isPipelineContainsCondition) {
     this.taskContext = taskContext;
     this.numberOfRecordsPreview = numberOfRecordsPreview;
     this.pluginInstantiator = pluginInstantiator;
@@ -118,6 +121,7 @@ public class MapReduceTransformExecutorFactory<T> {
     this.mapOutputValClassName = hConf.get(ETLMapReduce.MAP_VAL_CLASS);
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
     this.arguments = arguments;
+    this.isPipelineContainsCondition = isPipelineContainsCondition;
   }
 
   private MapReduceRuntimeContext createRuntimeContext(StageSpec stageInfo) {
@@ -139,7 +143,8 @@ public class MapReduceTransformExecutorFactory<T> {
 
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
-    StageStatisticsCollector collector = new MapReduceStageStatisticsCollector(stageName, taskAttemptContext);
+    StageStatisticsCollector collector = isPipelineContainsCondition
+      ? new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
     return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics, taskContext.getDataTracer(stageName),
                                              collector);
   }
@@ -155,7 +160,8 @@ public class MapReduceTransformExecutorFactory<T> {
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
-    StageStatisticsCollector collector = new MapReduceStageStatisticsCollector(stageName, taskAttemptContext);
+    StageStatisticsCollector collector = isPipelineContainsCondition ?
+      new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageSpec);

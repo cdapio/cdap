@@ -618,6 +618,17 @@ public class DataPipelineTest extends HydratorTestBase {
 
     validateMetric(2, appId, sourceName + ".records.out");
     validateMetric(2, appId, sinkName + ".records.in");
+
+    List<RunRecord> history = workflowManager.getHistory(ProgramRunStatus.COMPLETED);
+    Assert.assertEquals(1, history.size());
+    String runId = history.get(0).getPid();
+
+    for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM, WorkflowToken.Scope.USER)) {
+      WorkflowTokenDetail token = workflowManager.getToken(runId, scope, null);
+      for (Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData : token.getTokenData().entrySet()) {
+        Assert.assertTrue(!tokenData.getKey().startsWith(co.cask.cdap.etl.common.Constants.StageStatistics.PREFIX));
+      }
+    }
   }
 
   @Test
@@ -669,9 +680,10 @@ public class DataPipelineTest extends HydratorTestBase {
 
     MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
 
+    WorkflowManager workflowManager = null;
     for (String branch : Arrays.asList("true", "false")) {
       String sink = branch.equals("true") ? trueSink : falseSink;
-      WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+      workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
       workflowManager.start(ImmutableMap.of("condition.branch.to.execute", branch));
 
       if (branch.equals("true")) {
@@ -695,6 +707,23 @@ public class DataPipelineTest extends HydratorTestBase {
       validateMetric(branch.equals("true") ? 2 : 4, appId, "source.records.out");
       validateMetric(2, appId, branch + "Sink.records.in");
     }
+
+    boolean foundStatisticsInToken = false;
+    if (workflowManager != null) {
+      List<RunRecord> history = workflowManager.getHistory(ProgramRunStatus.COMPLETED);
+      // Checking for single run should be fine.
+      String runId = history.get(0).getPid();
+      for (WorkflowToken.Scope scope : Arrays.asList(WorkflowToken.Scope.SYSTEM, WorkflowToken.Scope.USER)) {
+        WorkflowTokenDetail token = workflowManager.getToken(runId, scope, null);
+        for (Map.Entry<String, List<WorkflowTokenDetail.NodeValueDetail>> tokenData : token.getTokenData().entrySet()) {
+          if (tokenData.getKey().startsWith(co.cask.cdap.etl.common.Constants.StageStatistics.PREFIX)) {
+            foundStatisticsInToken = true;
+            break;
+          }
+        }
+      }
+    }
+    Assert.assertTrue(foundStatisticsInToken);
   }
 
   @Test

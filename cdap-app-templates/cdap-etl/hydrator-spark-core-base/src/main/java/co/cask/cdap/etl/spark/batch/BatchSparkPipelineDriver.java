@@ -138,10 +138,12 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                                     phaseSpec.isProcessTimingEnabled());
 
     Map<String, StageStatisticsCollector> collectors = new HashMap<>();
-    Iterator<StageSpec> iterator = phaseSpec.getPhase().iterator();
-    while (iterator.hasNext()) {
-      StageSpec spec = iterator.next();
-      collectors.put(spec.getName(), new SparkStageStatisticsCollector(jsc));
+    if (phaseSpec.pipelineContainsCondition()) {
+      Iterator<StageSpec> iterator = phaseSpec.getPhase().iterator();
+      while (iterator.hasNext()) {
+        StageSpec spec = iterator.next();
+        collectors.put(spec.getName(), new SparkStageStatisticsCollector(jsc));
+      }
     }
     try {
       PipelinePluginInstantiator pluginInstantiator =
