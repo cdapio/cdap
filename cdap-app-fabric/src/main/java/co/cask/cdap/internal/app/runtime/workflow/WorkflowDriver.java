@@ -306,6 +306,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeAction(WorkflowActionNode node, WorkflowToken token) throws Exception {
+    LOG.info(String.format("Workflow '%s' is starting to execute node '%s'.",
+                           workflowSpec.getName(), node.getNodeId()));
     WorkflowActionSpecification actionSpec = getActionSpecification(node, node.getProgram().getProgramType());
     status.put(node.getNodeId(), node);
 
@@ -341,6 +343,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       status.remove(node.getNodeId());
     }
     runtimeStore.updateWorkflowToken(workflowRunId, token);
+    LOG.info("Workflow '%s' finished the execution of node '%s'.", workflowSpec.getName(), node.getNodeId());
   }
 
   private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
@@ -464,17 +467,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     switch (nodeType) {
       case ACTION:
         WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        LOG.info(String.format("Workflow '%s' is starting execution of node '%s'.", workflowRunId, node.getNodeId()));
         if (SchedulableProgramType.CUSTOM_ACTION == actionNode.getProgram().getProgramType()) {
           executeCustomAction(actionNode, instantiator, classLoader, token);
         } else {
           executeAction(actionNode, token);
         }
+        LOG.info(String.format("Workflow '%s' finished execution of node '%s'.", workflowRunId, node.getNodeId()));
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
         break;
       case CONDITION:
+        LOG.info(String.format("Workflow '%s' is starting execution of condition '%s'.",
+                               workflowRunId, node.getNodeId()));
         executeCondition(appSpec, (WorkflowConditionNode) node, instantiator, classLoader, token);
+        LOG.info(String.format("Workflow '%s' finished execution of all nodes on the branch of condition '%s'.",
+                               workflowRunId, node.getNodeId()));
         break;
       default:
         break;
@@ -496,8 +505,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
+    boolean result;
     if (!(predicate instanceof Condition)) {
-      iterator = predicate.apply(context) ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
+      result = predicate.apply(context);
+      iterator = result ? node.getIfBranch().iterator() : node.getElseBranch().iterator();
     } else {
       final Condition workflowCondition = (Condition) predicate;
 
@@ -517,7 +528,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                workflowCondition, "initialize", WorkflowContext.class);
 
         context.initializeProgram(workflowCondition, context, txControl, false);
-        boolean result = context.executeChecked(new Callable<Boolean>() {
+        result = context.executeChecked(new Callable<Boolean>() {
           @Override
           public Boolean call() throws Exception {
             return workflowCondition.apply(context);
@@ -536,6 +547,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     // However, the call below ensures that even if the workflow fails/crashes after a condition node, updates from the
     // condition node are also persisted.
     runtimeStore.updateWorkflowToken(workflowRunId, token);
+    LOG.info(String.format("Condition '%s' in the Workflow '%s' evaluated to '%s'.", node.getNodeId(), workflowRunId,
+                           result));
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
