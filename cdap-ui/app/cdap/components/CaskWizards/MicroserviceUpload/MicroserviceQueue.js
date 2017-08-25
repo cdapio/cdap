@@ -77,6 +77,7 @@ export default class MicroserviceQueue extends Component {
 
   renderTMSProperties() {
     let namespaces = NamespaceStore.getState().namespaces.map(namespace => namespace.name);
+    namespaces.push('system');
 
     return (
       <div>
