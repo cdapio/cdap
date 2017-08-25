@@ -186,7 +186,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         // Do not allow more than one input schema for stages other than Joiner and Action
         if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)
           && !Action.PLUGIN_TYPE.equals(nextStageType)
-          && !Condition.PLUGIN_TYPE.equals(nextStageType)
           && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
           throw new IllegalArgumentException("Two different input schema were set for the stage " + nextStageName);
         }
@@ -269,7 +268,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         outputSchemas.put(outputStage, new StageSpec.Port(outputPort, outputPortSchemas.get(outputPort)));
       }
     } else {
-      Schema outputSchema = stageConfigurer.getOutputSchema();
+      // conditions should always propagate schema directly.
+      Schema outputSchema = Condition.PLUGIN_TYPE.equals(pluginSpec.getType()) ?
+        stageConfigurer.getInputSchema() : stageConfigurer.getOutputSchema();
       for (String outputStage : validatedPipeline.getOutputs(stageName)) {
         outputSchemas.put(outputStage, new StageSpec.Port(null, outputSchema));
       }
