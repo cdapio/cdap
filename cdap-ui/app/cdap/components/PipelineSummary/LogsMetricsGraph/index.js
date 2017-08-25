@@ -286,6 +286,8 @@ export default class LogsMetricsGraph extends Component {
   }
   renderTableBody(runs) {
     let {namespaceId, appId, programType, programId} = this.props.runContext;
+    let runsLength = runs.length;
+
     return (
       <table className="table">
         <tbody>
@@ -296,7 +298,7 @@ export default class LogsMetricsGraph extends Component {
               return (
                 <tr>
                   <td>
-                    <span>{run.index}</span>
+                    <span>{runsLength - run.index + 1}</span>
                     <CopyableRunID
                       runid={runid}
                       idprefix="logs-metrics"
