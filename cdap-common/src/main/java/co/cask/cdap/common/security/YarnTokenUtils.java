@@ -69,7 +69,7 @@ public final class YarnTokenUtils {
           Token<? extends TokenIdentifier> atsToken = (Token<? extends TokenIdentifier>) method.invoke(yarnClient);
           if (atsToken != null) {
             credentials.addToken(atsToken.getService(), atsToken);
-            LOG.info("Added Yarn Timeline Server delegation token: {}", atsToken);
+            LOG.debug("Added Yarn Timeline Server delegation token: {}", atsToken);
           }
         }
 
