@@ -27,6 +27,7 @@ import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
@@ -90,7 +91,8 @@ public class ETLWorkflow extends AbstractWorkflow {
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(context.getToken(),
+                                                                                 context.getRuntimeArguments()),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
     postActionSpecs = new HashMap<>();

@@ -25,6 +25,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.action.Action;
 import co.cask.cdap.etl.api.action.ActionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -81,8 +82,8 @@ public class PipelineAction extends AbstractCustomAction {
                                                             phaseSpec.isProcessTimingEnabled());
     Action action =
       pluginContext.newPluginInstance(stageSpec.getName(),
-                                      new DefaultMacroEvaluator(context.getWorkflowToken(),
-                                                                context.getRuntimeArguments(),
+                                      new DefaultMacroEvaluator(new BasicArguments(context.getWorkflowToken(),
+                                                                                   context.getRuntimeArguments()),
                                                                 context.getLogicalStartTime(),
                                                                 context,
                                                                 context.getNamespace()));

@@ -48,6 +48,7 @@ import co.cask.cdap.etl.batch.StageFailureException;
 import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
 import co.cask.cdap.etl.batch.conversion.WritableConversion;
 import co.cask.cdap.etl.batch.conversion.WritableConversions;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.LocationAwareMDCWrapperLogger;
@@ -198,7 +199,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     hConf.setBoolean("mapreduce.reduce.speculative", false);
 
     // plugin name -> runtime args for that plugin
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(context.getWorkflowToken(), context.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(context),
                                                          context.getLogicalStartTime(),
                                                          context, context.getNamespace());
 

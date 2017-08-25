@@ -26,6 +26,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.condition.Condition;
 import co.cask.cdap.etl.api.condition.ConditionContext;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelinePhase;
@@ -84,8 +85,9 @@ public class PipelineCondition extends AbstractCondition {
     PluginContext pluginContext = new PipelinePluginContext(input, metrics, phaseSpec.isStageLoggingEnabled(),
                                                             phaseSpec.isProcessTimingEnabled());
 
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(input.getToken(), input.getRuntimeArguments(),
-                                                              input.getLogicalStartTime(), input, input.getNamespace());
+    MacroEvaluator macroEvaluator =
+      new DefaultMacroEvaluator(new BasicArguments(input.getToken(), input.getRuntimeArguments()),
+                                input.getLogicalStartTime(), input, input.getNamespace());
 
     try {
       Condition condition = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);

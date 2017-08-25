@@ -41,23 +41,6 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
   private static final String SECURE_FUNCTION_NAME = "secure";
 
-  public DefaultMacroEvaluator(@Nullable WorkflowToken workflowToken, Map<String, String> runtimeArguments,
-                               long logicalStartTime, SecureStore secureStore, String namespace) {
-    Map<String, String> resolvedArguments = new HashMap<>();
-    resolvedArguments.putAll(runtimeArguments);
-    // not expected, but can happen if user runs just the program and not the workflow
-    if (workflowToken != null) {
-      for (String tokenKey : workflowToken.getAll(WorkflowToken.Scope.USER).keySet()) {
-        resolvedArguments.put(tokenKey, workflowToken.get(tokenKey, WorkflowToken.Scope.USER).toString());
-      }
-    }
-    this.resolvedArguments = resolvedArguments;
-    this.logicalStartTime = logicalStartTime;
-    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
-    this.secureStore = secureStore;
-    this.namespace = namespace;
-  }
-
   public DefaultMacroEvaluator(BasicArguments arguments,
                                long logicalStartTime, SecureStore secureStore, String namespace) {
     Map<String, String> resolvedArguments = new HashMap<>();
@@ -67,15 +50,6 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
       resolvedArguments.put(entry.getKey(), entry.getValue());
     }
     this.resolvedArguments = resolvedArguments;
-    this.logicalStartTime = logicalStartTime;
-    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
-    this.secureStore = secureStore;
-    this.namespace = namespace;
-  }
-
-  public DefaultMacroEvaluator(Map<String, String> arguments, long logicalStartTime, SecureStore secureStore,
-                               String namespace) {
-    this.resolvedArguments = arguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
     this.secureStore = secureStore;
