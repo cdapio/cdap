@@ -118,17 +118,28 @@ export default class RulesEngineHome extends Component {
   };
 
   render() {
+    let pageTitle = (
+      <Helmet
+        title={T.translate(`${PREFIX}.pageTitle`)}
+      />
+    );
     if (this.state.loading) {
       return (
-        <LoadingSVGCentered />
+        <div>
+          {pageTitle}
+          <LoadingSVGCentered />
+        </div>
       );
     }
 
     if (this.state.backendDown) {
       return (
-        <RulesEngineServiceControl
-          onServiceStart={this.onServiceStart}
-        />
+        <div>
+          {pageTitle}
+          <RulesEngineServiceControl
+            onServiceStart={this.onServiceStart}
+          />
+        </div>
       );
     }
 

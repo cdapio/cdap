@@ -123,9 +123,6 @@ export default class DataPrepServiceControl extends Component {
             </div>
           </div>
         </div>
-        <br/>
-
-        <br/>
       </div>
     );
   }

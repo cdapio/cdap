@@ -276,7 +276,7 @@ features:
       errorMessage: Page {pageNum} not found
       suggestionMessage1: "Go back to:"
       suggestionMessage2: Page 1
-    Title: CDAP | Overview
+    Title: CDAP | Control Center
   DataPrepServiceControl:
     btnLabel: Enable Data Preparation Service
     btnLoadingLabel: "Enabling..."
@@ -1429,7 +1429,7 @@ features:
       owner: Owner
       version: Version {version}
     Home:
-      pageTitle: Rules Management
+      pageTitle: CDAP | Rules Engine
       Tabs:
         rbTitle: RuleBooks
         rulesTitle: Rules

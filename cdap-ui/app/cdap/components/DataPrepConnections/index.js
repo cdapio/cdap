@@ -36,6 +36,7 @@ import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
 import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
 import DataPrepStore from 'components/DataPrep/store';
 import {objectQuery, preventPropagation} from 'services/helpers';
+import Helmet from 'react-helmet';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -491,9 +492,15 @@ export default class DataPrepConnections extends Component {
     );
   }
   render() {
+    let pageTitle = (
+      <Helmet
+        title={T.translate('features.DataPrep.pageTitle')}
+      />
+    );
     if (this.state.backendChecking) {
       return (
         <div className="text-xs-center">
+          {pageTitle}
           <LoadingSVG />
         </div>
       );
@@ -501,14 +508,18 @@ export default class DataPrepConnections extends Component {
 
     if (this.state.backendDown) {
       return (
-        <DataPrepServiceControl
-          onServiceStart={this.onServiceStart}
-        />
+        <div>
+          {pageTitle}
+          <DataPrepServiceControl
+            onServiceStart={this.onServiceStart}
+          />
+        </div>
       );
     }
 
     return (
       <div className="dataprep-connections-container">
+        {pageTitle}
         {this.renderPanel()}
 
         <div className={classnames('connections-content', {
