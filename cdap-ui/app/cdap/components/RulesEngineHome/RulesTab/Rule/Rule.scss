@@ -52,6 +52,10 @@ $drag_bars_color: gray;
         }
         .dsv-input-container {
           width: calc(100% - 50px);
+
+          &.disabled {
+            width: 100%;
+          }
         }
         .action-buttons-container {
           width: 50px;
