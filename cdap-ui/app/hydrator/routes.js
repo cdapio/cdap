@@ -313,7 +313,8 @@ angular.module(PKG.name + '.feature.hydrator')
           views: {
             '': {
               templateUrl: '/assets/features/hydrator/templates/detail.html',
-              controller: 'HydratorPlusPlusDetailCtrl'
+              controller: 'HydratorPlusPlusDetailCtrl',
+              controllerAs: 'DetailCtrl'
             },
             'toppanel@hydrator.detail': {
               templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html',
