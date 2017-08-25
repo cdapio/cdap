@@ -53,7 +53,7 @@ class PipelineAvailablePluginsActions {
     this.mySettings = mySettings;
   }
 
-  fetchPlugins(extensionsParams) {
+  fetchPlugins(extensionsParams, promise) {
     this.api.fetchExtensions(extensionsParams)
       .$promise
       .then((res) => {
@@ -68,8 +68,11 @@ class PipelineAvailablePluginsActions {
           return extensionMap.indexOf(ext) !== -1;
         });
 
-        this._fetchPlugins(extensionsParams, supportedExtensions);
+        this._fetchPlugins(extensionsParams, supportedExtensions, promise);
       }, (err) => {
+        if (promise) {
+          promise.reject(err);
+        }
         console.log('ERR: Fetching list of artifacts failed', err);
       });
   }
@@ -90,7 +93,15 @@ class PipelineAvailablePluginsActions {
     this._fetchInfo(availablePluginsMap, namespace, pluginsList);
   }
 
-  _fetchPlugins(params, extensions) {
+  fetchPluginsForUpgrade(extensionsParams) {
+    let deferred = this.$q.defer();
+
+    this.fetchPlugins(extensionsParams, deferred);
+
+    return deferred.promise;
+  }
+
+  _fetchPlugins(params, extensions, promise) {
     let fetchList = [];
 
     extensions.forEach((ext) => {
@@ -103,9 +114,32 @@ class PipelineAvailablePluginsActions {
 
     this.$q.all(fetchList)
       .then((res) => {
+        let pluginTypes = this._formatPluginsResponse(res, extensions);
+
+        if (promise) {
+          promise.resolve(pluginTypes);
+          return;
+        }
+
+        this.leftpanelstore.dispatch({
+          type: this.leftpanelactions.FETCH_ALL_PLUGINS,
+          payload: {
+            pluginTypes,
+            extensions
+          }
+        });
+
+        this.leftpanelstore.dispatch({
+          type: this.leftpanelactions.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE
+        });
+
         this._prepareInfoRequest(params.namespace, res);
-        this._formatPluginsResponse(res, extensions, params.namespace, params.pipelineType);
+        this._fetchTemplates(params.namespace, params.pipelineType);
+
       }, (err) => {
+        if (promise) {
+          promise.reject(err);
+        }
         console.log('ERR: Fetching plugins', err);
       });
   }
@@ -222,7 +256,7 @@ class PipelineAvailablePluginsActions {
     });
   }
 
-  _formatPluginsResponse(pluginsList, extensions, namespace, pipelineType) {
+  _formatPluginsResponse(pluginsList, extensions) {
     let pluginTypes = {};
 
     extensions.forEach((ext, i) => {
@@ -240,19 +274,7 @@ class PipelineAvailablePluginsActions {
       });
     });
 
-    this.leftpanelstore.dispatch({
-      type: this.leftpanelactions.FETCH_ALL_PLUGINS,
-      payload: {
-        pluginTypes,
-        extensions
-      }
-    });
-
-    this.leftpanelstore.dispatch({
-      type: this.leftpanelactions.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE
-    });
-
-    this._fetchTemplates(namespace, pipelineType);
+    return pluginTypes;
   }
 
   _fetchTemplates(namespace, pipelineType) {
