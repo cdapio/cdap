@@ -332,8 +332,8 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public StreamProperties getProperties(StreamId streamId) throws Exception {
-    // User should have READ or ADMIN to read stream properties
-    AuthorizationUtil.ensureOnePrivilege(streamId, EnumSet.of(Action.ADMIN, Action.READ), authorizationEnforcer,
+    // User should have at least one privilege to read stream properties
+    AuthorizationUtil.ensureOnePrivilege(streamId, EnumSet.allOf(Action.class), authorizationEnforcer,
                                          authenticationContext.getPrincipal());
     // get the principal which will be used for impersonation to display as owner
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(streamId);

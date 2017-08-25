@@ -83,7 +83,7 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
   public DatasetModuleMeta getModule(DatasetModuleId datasetModuleId) throws Exception {
     // No authorization for system modules
     if (!NamespaceId.SYSTEM.equals(datasetModuleId.getNamespaceId())) {
-      AuthorizationUtil.ensureOnePrivilege(datasetModuleId, EnumSet.of(Action.ADMIN, Action.READ),
+      AuthorizationUtil.ensureOnePrivilege(datasetModuleId, EnumSet.allOf(Action.class),
                                            authorizationEnforcer, authenticationContext.getPrincipal());
     }
     return delegate.getModule(datasetModuleId);
@@ -131,7 +131,7 @@ public class AuthorizationDatasetTypeService extends AbstractIdleService impleme
   public DatasetTypeMeta getType(DatasetTypeId datasetTypeId) throws Exception {
     // No authorization for system dataset types
     if (!NamespaceId.SYSTEM.equals(datasetTypeId.getNamespaceId())) {
-      AuthorizationUtil.ensureOnePrivilege(datasetTypeId, EnumSet.of(Action.ADMIN, Action.READ),
+      AuthorizationUtil.ensureOnePrivilege(datasetTypeId, EnumSet.allOf(Action.class),
                                            authorizationEnforcer, authenticationContext.getPrincipal());
     }
     return delegate.getType(datasetTypeId);
