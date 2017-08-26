@@ -186,6 +186,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         // Do not allow more than one input schema for stages other than Joiner and Action
         if (!BatchJoiner.PLUGIN_TYPE.equals(nextStageType)
           && !Action.PLUGIN_TYPE.equals(nextStageType)
+          && !Condition.PLUGIN_TYPE.equals(nextStageType)
           && !hasSameSchema(outputStageConfigurer.getInputSchemas(), nextStageInputSchema)) {
           throw new IllegalArgumentException("Two different input schema were set for the stage " + nextStageName);
         }
@@ -256,6 +257,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     PluginSpec pluginSpec = configurePlugin(stageName, stagePlugin, pluginConfigurer);
     DefaultStageConfigurer stageConfigurer = pluginConfigurer.getStageConfigurer();
     Map<String, StageSpec.Port> outputSchemas = new HashMap<>();
+    Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     if (pluginSpec.getType().equals(SplitterTransform.PLUGIN_TYPE)) {
       Map<String, Schema> outputPortSchemas = stageConfigurer.getOutputPortSchemas();
       for (Map.Entry<String, String> outputEntry : validatedPipeline.getOutputPorts(stageName).entrySet()) {
@@ -268,15 +270,31 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         outputSchemas.put(outputStage, new StageSpec.Port(outputPort, outputPortSchemas.get(outputPort)));
       }
     } else {
-      // conditions should always propagate schema directly.
-      Schema outputSchema = Condition.PLUGIN_TYPE.equals(pluginSpec.getType()) ?
-        stageConfigurer.getInputSchema() : stageConfigurer.getOutputSchema();
+      Schema outputSchema = stageConfigurer.getOutputSchema();
+      // conditions handled specially since they can have an action and a transform as input, where they might have
+      // different input schemas. picking the first non-null schema, or null if they're all null
+      // this isn't perfect, as we should really be checking all non-action input schemas and validating that they're
+      // all the same
+      if (Condition.PLUGIN_TYPE.equals(pluginSpec.getType())) {
+        outputSchema = null;
+        for (Schema schema : inputSchemas.values()) {
+          if (schema != null) {
+            // this check isn't perfect, as we should still error if 2 transforms are inputs,
+            // one has null schema and another has non-null schema.
+            // todo: fix this cleanly and fully
+            if (outputSchema != null && !outputSchema.equals(schema)) {
+              throw new IllegalArgumentException("Cannot have different input schemas going into stage " + stageName);
+            }
+            outputSchema = schema;
+          }
+        }
+      }
+
       for (String outputStage : validatedPipeline.getOutputs(stageName)) {
         outputSchemas.put(outputStage, new StageSpec.Port(null, outputSchema));
       }
     }
 
-    Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
     StageSpec stageSpec = StageSpec.builder(stageName, pluginSpec)
       .setErrorDatasetName(stage.getErrorDatasetName())
       .addInputSchemas(inputSchemas)
