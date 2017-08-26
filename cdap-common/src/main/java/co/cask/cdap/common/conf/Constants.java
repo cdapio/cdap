@@ -749,6 +749,8 @@ public final class Constants {
     public static final String ADDRESS = "metrics.processor.status.bind.address";
 
     public static final String SERVICE_DESCRIPTION = "Service to process application and system metrics.";
+
+    public static final String METRICS_DATA_MIGRATION_SKIP = "metrics.data.migration.skip";
   }
 
   /**
