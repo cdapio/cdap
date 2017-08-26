@@ -111,7 +111,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Use the store manipulate state to be RUNNING
-    long now = System.currentTimeMillis();
+    // subtract one second so that the run corrector threshold will not filter it out
+    long now = System.currentTimeMillis() - 1000L;
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
     store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs, null, ImmutableMap.<String, String>of(),
                    ImmutableMap.<String, String>of(), ByteBuffer.allocate(0).array());
@@ -127,7 +128,10 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Assert.assertEquals(0, runRecords.size());
 
     // Start the RunRecordCorrectorService, which will fix the run record
-    new LocalRunRecordCorrectorService(CConfiguration.create(), store, programStateWriter, programLifecycleService,
+    CConfiguration testConf = CConfiguration.create();
+    // set threshold to 0 so that it will actually correct the record
+    testConf.set(Constants.AppFabric.PROGRAM_MAX_START_SECONDS, "0");
+    new LocalRunRecordCorrectorService(testConf, store, programStateWriter, programLifecycleService,
                                        runtimeService).startUp();
 
     // Wait for the FAILED run record for the application
