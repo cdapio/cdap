@@ -94,9 +94,6 @@ public class DefaultSparkConfigurer extends DefaultPluginConfigurer implements S
   }
 
   public SparkSpecification createSpecification() {
-    Preconditions.checkArgument(mainClassName != null,
-                                "Spark main class is not set. Make sure setMainClass or setMainClassName is called.");
-
     Set<String> datasets = new HashSet<>();
     // Grab all @Property and @Dataset fields
     Reflections.visit(spark, spark.getClass(), new PropertyFieldExtractor(properties),

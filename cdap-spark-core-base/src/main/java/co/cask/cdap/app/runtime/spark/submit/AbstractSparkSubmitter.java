@@ -21,6 +21,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.app.runtime.spark.SparkClassLoader;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
+import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Function;
@@ -37,7 +38,7 @@ import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -75,10 +76,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
   @Override
   public final <V> ListenableFuture<V> submit(final SparkRuntimeContext runtimeContext,
                                               Map<String, String> configs, List<LocalizeResource> resources,
-                                              File jobJar, final V result) {
+                                              URI jobFile, final V result) {
     final SparkSpecification spec = runtimeContext.getSparkSpecification();
 
-    final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobJar);
+    final List<String> args = createSubmitArguments(runtimeContext, configs, resources, jobFile);
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
@@ -183,17 +184,16 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param runtimeContext the {@link SparkRuntimeContext} for the spark program
    * @param configs set of Spark configurations
    * @param resources list of resources that needs to be localized to Spark containers
-   * @param jobJar the job jar file for Spark
+   * @param jobFile the job file for Spark
    * @return a list of arguments
    */
   private List<String> createSubmitArguments(SparkRuntimeContext runtimeContext, Map<String, String> configs,
-                                             List<LocalizeResource> resources, File jobJar) {
+                                             List<LocalizeResource> resources, URI jobFile) {
     SparkSpecification spec = runtimeContext.getSparkSpecification();
 
     ImmutableList.Builder<String> builder = ImmutableList.builder();
 
     addMaster(configs, builder);
-    builder.add("--class").add(SparkMainWrapper.class.getName());
     builder.add("--conf").add("spark.app.name=" + spec.getName());
 
     for (Map.Entry<String, String> entry : configs.entrySet()) {
@@ -216,12 +216,29 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       builder.add("--files").add(files);
     }
 
-    builder.add(jobJar.getAbsolutePath());
+    boolean isPySpark = jobFile.getPath().endsWith(".py");
+    if (isPySpark) {
+      // For python, add extra py library files
+      String pyFiles = configs.get("spark.submit.pyFiles");
+      if (pyFiles != null) {
+        builder.add("--py-files").add(pyFiles);
+      }
+    } else {
+      builder.add("--class").add(SparkMainWrapper.class.getName());
+    }
 
-    // Add extra arguments for easily identifying the program from command line. They don't serve actual purpose.
-    // Arguments to user program is always coming from the runtime arguments.
-    builder.add("--cdap.spark.program=" + runtimeContext.getProgramRunId().toString());
-    builder.add("--cdap.user.main.class=" + spec.getMainClassName());
+    if ("file".equals(jobFile.getScheme())) {
+      builder.add(jobFile.getPath());
+    } else {
+      builder.add(jobFile.toString());
+    }
+
+    if (!isPySpark) {
+      // Add extra arguments for easily identifying the program from command line.
+      // Arguments to user program is always coming from the runtime arguments.
+      builder.add("--cdap.spark.program=" + runtimeContext.getProgramRunId().toString());
+      builder.add("--cdap.user.main.class=" + spec.getMainClassName());
+    }
 
     return builder.build();
   }

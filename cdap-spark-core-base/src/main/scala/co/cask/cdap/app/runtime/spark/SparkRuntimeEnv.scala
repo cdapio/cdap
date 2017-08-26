@@ -72,6 +72,14 @@ object SparkRuntimeEnv {
   def setProperty(key: String, value: String): String = properties.setProperty(key, value).asInstanceOf[String]
 
   /**
+    * Returns the value of a property set via the `setProperty` method before.
+    *
+    * @param key property key
+    * @return the property value or `null`
+    */
+  def getProperty(key: String): String = properties.getProperty(key)
+
+  /**
     * Puts all global properties into the given [[org.apache.spark.SparkConf]].
     */
   def setupSparkConf(sparkConf: SparkConf): Unit = sparkConf.setAll(properties)
