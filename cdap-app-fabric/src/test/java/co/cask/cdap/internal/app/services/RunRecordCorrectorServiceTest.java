@@ -127,7 +127,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Assert.assertEquals(0, runRecords.size());
 
     // Start the RunRecordCorrectorService, which will fix the run record
-    new LocalRunRecordCorrectorService(store, programStateWriter, programLifecycleService, runtimeService).startUp();
+    new LocalRunRecordCorrectorService(CConfiguration.create(), store, programStateWriter, programLifecycleService,
+                                       runtimeService).startUp();
 
     // Wait for the FAILED run record for the application
     Tasks.waitFor(1, new Callable<Integer>() {
