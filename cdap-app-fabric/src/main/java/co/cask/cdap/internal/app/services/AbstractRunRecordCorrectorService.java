@@ -20,6 +20,8 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -38,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A default implementation of {@link RunRecordCorrectorService}.
@@ -49,15 +52,17 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
   private final ProgramStateWriter programStateWriter;
   private final ProgramLifecycleService programLifecycleService;
   private final ProgramRuntimeService runtimeService;
+  private final long startTimeoutSecs;
 
   @Inject
-  AbstractRunRecordCorrectorService(Store store, ProgramStateWriter programStateWriter,
+  AbstractRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                     ProgramLifecycleService programLifecycleService,
                                     ProgramRuntimeService runtimeService) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.programLifecycleService = programLifecycleService;
     this.runtimeService = runtimeService;
+    this.startTimeoutSecs = 2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS);
   }
 
   void validateAndCorrectRunningRunRecords() {
@@ -85,12 +90,17 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
                                                    final Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, ProgramRuntimeService.RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
+    final long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
     com.google.common.base.Predicate<RunRecordMeta> filter = new com.google.common.base.Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta input) {
         String runId = input.getPid();
+        // runs are marked as starting before they get into the runtimeService list.
+        // Therefore, add some buffer so that we don't incorrectly 'fix' runs that are actually starting
+        long timeSinceStart = now - input.getStartTs();
+
         // Check if it is not actually running.
-        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
+        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId)) && timeSinceStart > startTimeoutSecs;
       }
     };
     LOG.trace("Start getting run records not actually running ...");

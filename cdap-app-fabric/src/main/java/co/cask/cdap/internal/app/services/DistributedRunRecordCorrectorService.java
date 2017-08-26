@@ -43,7 +43,7 @@ public class DistributedRunRecordCorrectorService extends AbstractRunRecordCorre
   public DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                               ProgramLifecycleService programLifecycleService,
                                               ProgramRuntimeService runtimeService) {
-    super(store, programStateWriter, programLifecycleService, runtimeService);
+    super(cConf, store, programStateWriter, programLifecycleService, runtimeService);
     this.cConf = cConf;
   }
 
