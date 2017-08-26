@@ -283,8 +283,8 @@ features:
     description: CDAP Data Preparation provides an easy and interactive way to visualize, transform, and cleanse data. It allows the user to view data from a local source, a cluster or a database, and derive new schemas and operationalize the data preparation with a few clicks.
     list:
       1: Easy and interactive way to work with messy data
-      2: Apply transformations using merge, delete, and substring operations
-      3: Quickly visualize pattern both within and across columns
+      2: Apply transformations using a variety of operations on various data types
+      3: Quickly visualize results of transformations, and patterns both within and across columns
       4: Operationalize effortlessly into production pipeline
     title: Welcome to Data Preparation
   DataPrep:
@@ -404,7 +404,7 @@ features:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
-          textareaplaceholder: "Enter column names seperated by comma. Special character (eg., @ - #) are not allowed"
+          textareaplaceholder: "Enter column names seperated by comma. Special characters (eg., @ - #) are not allowed"
         ReplaceColumns:
           applyButton: Replace
           ignoreCase: Ignore Case
@@ -1241,7 +1241,7 @@ features:
         recordOutPerSec: Records Out per second
         stddevProcessTime: Standard Deviation
       recordsInTitle: Records In
-      recordsOutTitle: Records out
+      recordsOutTitle: Records Out
       recordsErrorTitle: Records Error # Error Records??
       runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
@@ -1479,7 +1479,7 @@ features:
       createrulebook: Create a new Rulebook
       importrulebook: Import a Rulebook
       searchLabel: Select a Rulebook
-      searchplaceholder: Search Rulebook by name, owner or description
+      searchplaceholder: Search Rulebook by name
     RulesTab:
       createRuleBtn: Create a New Rule
       date: Date
@@ -1558,15 +1558,15 @@ features:
         primary: Switch to '{namespaceId}'
       headerlabel: Add Namespace
       Status:
-        creation-error-desc: "Failed to create namespace '%s'."
-        creation-success-desc: Successfully created namespace '{namespaceId}'.
+        creation-error-desc: "Failed to create the namespace '%s'."
+        creation-success-desc: Successfully created the namespace '{namespaceId}'.
       Step1:
         description-label: "Description"
         description-placeholder: "Namespace description"
         name-label: "Name"
         name-placeholder: "Namespace name"
         scheduler-queue-label: "Scheduler Queue"
-        scheduler-queue-placeholder: "Specify the YARN queue name to be used for programs in this namespace"
+        scheduler-queue-placeholder: "Specify the Yarn queue name to be used for programs in this namespace"
         sld-desc:  "Specify the name and the description of the namespace."
         ssd-label: "General Information"
       Step2:
@@ -1610,7 +1610,7 @@ features:
         description: Upload your Driver
         shorttitle: Upload Driver
         title: Upload JAR
-        uploadHelperText: Upload the third party driver that was downloaded from the previous step
+        uploadHelperText: Upload the third party driver that was downloaded in the previous step
         filePathLabel: Choose file
       Step2:
         classnameLabel: Class Name
@@ -1714,7 +1714,7 @@ features:
         versionLabel: Version
         versionPlaceholder: Version of the microservice
       Step2:
-        description: An Artifact containing implementation of a microservice interface.
+        description: An Artifact containing implementation of the microservice interface.
         errorMessage: Invalid plugin. Plugin must be a JAR file.
         filePathLabel: Choose file
         shorttitle: Artifact JAR
