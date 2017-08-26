@@ -270,8 +270,8 @@ function pipelines_download_includes() {
   download_md_file database-plugins Database-batchsource.md _includes/database-batchsource-append.md.txt
   download_md_file database-plugins Database-action.md
   download_md_file database-plugins DatabaseQuery-postaction.md
-  download_md_file elasticsearch-plugins Elasticsearch-batchsink.md
-  download_md_file elasticsearch-plugins Elasticsearch-batchsource.md
+  # download_md_file elasticsearch-plugins Elasticsearch-batchsink.md # Moved to https://github.com/hydrator/amazon-s3-plugins
+  # download_md_file elasticsearch-plugins Elasticsearch-batchsource.md # Moved to https://github.com/hydrator/amazon-s3-plugins
   download_md_file hbase-plugins HBase-batchsink.md
   download_md_file hbase-plugins HBase-batchsource.md
   download_md_file hdfs-plugins HDFS-batchsink.md
