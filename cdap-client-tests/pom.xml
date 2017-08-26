@@ -22,7 +22,7 @@ the License.
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>co.cask.cdap</groupId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.3.0</version>
   </parent>
 
   <artifactId>cdap-client-tests</artifactId>
