@@ -19,6 +19,8 @@ package co.cask.cdap.test.app;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.service.AbstractService;
@@ -27,6 +29,7 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 
+import java.io.IOException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 
@@ -41,6 +44,7 @@ public class DummyApp extends AbstractApplication {
     setDescription("DummyApp");
     addStream(new Stream("who"));
     createDataset("whom", KeyValueTable.class);
+    createDataset("customDataset", CustomDummyDataset.class);
     addService(new Greeting());
   }
 
@@ -79,6 +83,19 @@ public class DummyApp extends AbstractApplication {
         metrics.count("greetings.count.jane_doe", 1);
       }
       responder.sendString(String.format("Hello %s!", toGreet));
+    }
+  }
+
+  /**
+   * A dummy custom dataset to test the creation
+   */
+  public static final class CustomDummyDataset implements Dataset {
+
+    public CustomDummyDataset(DatasetSpecification spec) {
+    }
+
+    @Override
+    public void close() throws IOException {
     }
   }
 }

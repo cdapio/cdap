@@ -19,7 +19,10 @@ import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.artifact.CloseableClassLoader;
 import co.cask.cdap.api.plugin.EndpointPluginContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
+import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
@@ -45,6 +48,7 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +58,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,7 +73,8 @@ import javax.ws.rs.Path;
 public class PluginService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(PluginService.class);
 
-  private final ArtifactRepository artifactRepository;
+  private final ArtifactRepository authArtifactRepository;
+  private final ArtifactRepository noAuthArtifactRepository;
   private final File tmpDir;
   private final CConfiguration cConf;
   private final LoadingCache<ArtifactDescriptor, Instantiators> instantiators;
@@ -77,8 +83,11 @@ public class PluginService extends AbstractIdleService {
   private File stageDir;
 
   @Inject
-  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf, Impersonator impersonator) {
-    this.artifactRepository = artifactRepository;
+  public PluginService(ArtifactRepository artifactRepository, CConfiguration cConf, Impersonator impersonator,
+                       @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+                         ArtifactRepository noAuthArtifactRepository) {
+    this.authArtifactRepository = artifactRepository;
+    this.noAuthArtifactRepository = noAuthArtifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.cConf = cConf;
@@ -118,7 +127,7 @@ public class PluginService extends AbstractIdleService {
       throw new ServiceUnavailableException("Plugin Service is not running currently");
     }
 
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    ArtifactDetail artifactDetail = authArtifactRepository.getArtifact(artifactId);
     return getPluginEndpoint(namespace, artifactDetail, pluginType, pluginName,
                              getParentArtifactDescriptor(artifactDetail, artifactId),
                              artifactDetail.getMeta().getUsableBy(), methodName);
@@ -131,9 +140,11 @@ public class PluginService extends AbstractIdleService {
     if (parentArtifactRanges.isEmpty()) {
       throw new ArtifactNotFoundException(artifact.toEntityId());
     }
-    List<ArtifactDetail> artifactDetails = artifactRepository.getArtifactDetails(parentArtifactRanges.iterator().next(),
-                                                                                 Integer.MAX_VALUE,
-                                                                                 ArtifactSortOrder.UNORDERED);
+
+    // we will do enforcement on getting the artifact for the plugin itself,
+    // but we will do no enforcement on getting the parent artifact of the plugin
+    List<ArtifactDetail> artifactDetails = noAuthArtifactRepository.getArtifactDetails(
+      parentArtifactRanges.iterator().next(), Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     return artifactDetails.iterator().next().getDescriptor();
   }
 
@@ -169,10 +180,10 @@ public class PluginService extends AbstractIdleService {
     private final Map<ArtifactDescriptor, InstantiatorInfo> instantiatorInfoMap;
     private final File pluginDir;
 
-    private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws IOException {
+    private Instantiators(ArtifactDescriptor parentArtifactDescriptor) throws Exception {
       // todo : shouldn't pass null, should use ArtifactId instead of ArtifactDescriptor so we have namespace.
       this.parentClassLoader =
-        artifactRepository.createArtifactClassLoader(
+        authArtifactRepository.createArtifactClassLoader(
           // todo : should not pass null, (Temporary)
           // change Instantiators to accept ArtifactId instead of ArtifactDescriptor
           parentArtifactDescriptor.getLocation(), new EntityImpersonator(null, impersonator));
@@ -284,7 +295,7 @@ public class PluginService extends AbstractIdleService {
     // we pass the parent artifact to endpoint plugin context,
     // as plugin method will use this context to load other plugins.
     DefaultEndpointPluginContext defaultEndpointPluginContext =
-      new DefaultEndpointPluginContext(namespace, artifactRepository, pluginInstantiator, parentArtifactRanges);
+      new DefaultEndpointPluginContext(namespace, authArtifactRepository, pluginInstantiator, parentArtifactRanges);
 
     return getPluginEndpoint(pluginInstantiator, artifactId,
                              pluginClass, methodName, defaultEndpointPluginContext);
@@ -308,10 +319,12 @@ public class PluginService extends AbstractIdleService {
                                            final DefaultEndpointPluginContext endpointPluginContext)
     throws IOException, ClassNotFoundException, NotFoundException {
 
-    ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifact.toArtifactId());
+    Plugin plugin = new Plugin(new ArrayList<ArtifactId>(), artifact.toArtifactId(),
+                               pluginClass, PluginProperties.builder().build());
+    ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(plugin);
     Class pluginClassLoaded = pluginClassLoader.loadClass(pluginClass.getClassName());
 
-    final Object pluginInstance = pluginInstantiator.newInstanceWithoutConfig(artifact.toArtifactId(), pluginClass);
+    final Object pluginInstance = pluginInstantiator.newInstanceWithoutConfig(plugin);
 
     Method[] methods = pluginClassLoaded.getMethods();
     for (final Method method : methods) {

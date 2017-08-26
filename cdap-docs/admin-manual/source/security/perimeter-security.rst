@@ -364,6 +364,27 @@ Property                                                   Default Value     Val
                                                                                        LDAP server
 ========================================================== ================= ========= ======================================
 
+LDAP with Active Directory
+--------------------------
+
+The following properties are listed as "optional" for LDAP but
+are required if you are using LDAP with Active Directory.
+
+- security.authentication.handler.userIdAttribute
+- security.authentication.handler.bindDn
+- security.authentication.handler.bindPassword
+
+When using group based authentication, you will need the following properties to further filter the access.
+
+- security.authentication.handler.roleBaseDn
+- security.authentication.handler.roleMemberAttribute
+- security.authentication.handler.roleNameAttribute
+- security.authentication.handler.roleObjectClass
+
+For Active Directory, the property ``security.authentication.handler.userBaseDn`` should NOT include the group information.
+It should return the full list of users in the organization or domain. The group information should be included in the property
+``security.authentication.handler.roleBaseDn`` and will only allow access to these users.
+
 .. _installation-jaspi-authentication:
 
 JASPI Authentication

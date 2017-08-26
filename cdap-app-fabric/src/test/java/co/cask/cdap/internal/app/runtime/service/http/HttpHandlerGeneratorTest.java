@@ -33,6 +33,7 @@ import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
@@ -735,6 +736,11 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public PluginProperties getPluginProperties(String pluginId) {
+      return null;
+    }
+
+    @Override
+    public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
       return null;
     }
 

@@ -35,4 +35,9 @@ public interface MessageTableCacheProvider {
    */
   @Nullable
   MessageCache<MessageTable.Entry> getMessageCache(TopicId topicId);
+
+  /**
+   * Resets all {@link MessageCache} created by this cache provider.
+   */
+  void clear();
 }

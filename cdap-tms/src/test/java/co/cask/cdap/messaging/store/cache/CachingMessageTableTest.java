@@ -33,6 +33,8 @@ import co.cask.cdap.proto.id.TopicId;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.Lists;
 import org.apache.tephra.Transaction;
 import org.junit.Assert;
@@ -54,7 +56,17 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
   @BeforeClass
   public static void initCache() {
     final LoadingCache<TopicId, MessageCache<MessageTable.Entry>> caches = CacheBuilder
-      .newBuilder().build(new CacheLoader<TopicId, MessageCache<MessageTable.Entry>>() {
+      .newBuilder()
+      .removalListener(new RemovalListener<TopicId, MessageCache<MessageTable.Entry>>() {
+        @Override
+        public void onRemoval(RemovalNotification<TopicId, MessageCache<MessageTable.Entry>> notification) {
+          MessageCache<MessageTable.Entry> cache = notification.getValue();
+          if (cache != null) {
+            cache.clear();
+          }
+        }
+      })
+      .build(new CacheLoader<TopicId, MessageCache<MessageTable.Entry>>() {
         @Override
         public MessageCache<MessageTable.Entry> load(TopicId key) throws Exception {
           return new MessageCache<>(new MessageTableEntryComparator(), new MessageTableEntryWeigher(),
@@ -66,6 +78,11 @@ public class CachingMessageTableTest extends LevelDBMessageTableTest {
       @Override
       public MessageCache<MessageTable.Entry> getMessageCache(TopicId topicId) {
         return caches.getUnchecked(topicId);
+      }
+
+      @Override
+      public void clear() {
+        caches.invalidateAll();
       }
     };
   }

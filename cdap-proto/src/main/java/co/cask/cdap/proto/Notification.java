@@ -45,7 +45,8 @@ public class Notification {
   public enum Type {
     TIME,
     STREAM_SIZE,
-    PARTITION
+    PARTITION,
+    PROGRAM_STATUS
   }
 
   private final Type notificationType;
@@ -91,5 +92,13 @@ public class Notification {
   @Override
   public int hashCode() {
     return Objects.hash(notificationType, properties);
+  }
+
+  @Override
+  public String toString() {
+    return "Notification{" +
+      "notificationType=" + notificationType +
+      ", properties=" + properties +
+      '}';
   }
 }

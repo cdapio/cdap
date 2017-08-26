@@ -27,7 +27,7 @@ import {UncontrolledDropdown} from 'components/UncontrolledComponents';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import {MyPipelineApi} from 'api/pipeline';
-import {humanReadableDuration} from 'services/helpers';
+import {humanReadableDuration, isBatchPipeline} from 'services/helpers';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
 import ee from 'event-emitter';
@@ -130,7 +130,11 @@ export default class PipelineSummary extends Component {
     }
     Mousetrap.unbind('esc');
   }
-  componentDidMount() {
+
+  fetchStats = () => {
+    if (!isBatchPipeline(this.props.pipelineType)) {
+      return;
+    }
     let {namespaceId: namespace, appId, programId: workflowId} = this.props;
     MyPipelineApi.pollStatistics({
       namespace,
@@ -147,6 +151,9 @@ export default class PipelineSummary extends Component {
           });
         }
       );
+  };
+  componentDidMount() {
+    this.fetchStats();
     Mousetrap.bind('esc', () => {
       this.eventEmitter.emit('CLOSE_HINT_TOOLTIP');
       this.setState({
@@ -237,12 +244,17 @@ export default class PipelineSummary extends Component {
       <div className="top-title-bar">
         <div> {T.translate(`${PREFIX}.title`)}</div>
         <div className="stats-container text-xs-right">
-          <span>
-            <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
-            {
-              humanReadableDuration(this.state.avgRunTime)
-            }
-          </span>
+          {
+            isBatchPipeline(this.props.pipelineType) ?
+              <span>
+                <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
+                {
+                  humanReadableDuration(this.state.avgRunTime)
+                }
+              </span>
+            :
+              null
+          }
           <span>
             <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
             {this.state.totalRunsCount}
@@ -350,6 +362,7 @@ export default class PipelineSummary extends Component {
 }
 
 PipelineSummary.propTypes = {
+  pipelineType: PropTypes.string.isRequired,
   namespaceId: PropTypes.string.isRequired,
   appId: PropTypes.string.isRequired,
   programType: PropTypes.string.isRequired,

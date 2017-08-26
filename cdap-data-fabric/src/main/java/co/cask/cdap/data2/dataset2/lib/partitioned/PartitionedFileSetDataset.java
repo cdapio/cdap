@@ -35,6 +35,7 @@ import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
@@ -52,6 +53,8 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.data.RuntimeProgramContext;
 import co.cask.cdap.data.RuntimeProgramContextAware;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetDataset;
@@ -88,6 +91,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -99,6 +103,7 @@ public class PartitionedFileSetDataset extends AbstractDataset
   implements PartitionedFileSet, DatasetOutputCommitter, RuntimeProgramContextAware {
 
   private static final Logger LOG = LoggerFactory.getLogger(PartitionedFileSetDataset.class);
+  private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(1)));
   private static final Gson GSON =
     new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
   private static final String QUARANTINE_DIR = ".quarantine";
@@ -225,6 +230,12 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   @Override
   public boolean rollbackTx() throws Exception {
+    rollbackPartitionOperations();
+    this.tx = null;
+    return super.rollbackTx();
+  }
+
+  private void rollbackPartitionOperations() throws Exception {
     // rollback all the partition add and drop operations, in reverse order
     // if any throw exception, suppress it temporarily while attempting to roll back the remainder operations
     Exception caughtExn = null;
@@ -240,12 +251,10 @@ public class PartitionedFileSetDataset extends AbstractDataset
         }
       }
     }
+    operationsInThisTx.clear();
     if (caughtExn != null) {
       throw caughtExn;
     }
-
-    this.tx = null;
-    return super.rollbackTx();
   }
 
   private void rollbackOperation(PartitionOperation operation) throws Exception {
@@ -322,14 +331,11 @@ public class PartitionedFileSetDataset extends AbstractDataset
 
   public void addPartition(PartitionKey key, String path, Map<String, String> metadata, boolean filesCreated,
                            boolean allowAppend) {
-    AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
-    operationsInThisTx.add(operation);
     byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     boolean appending = !row.isEmpty();
     if (appending && !allowAppend) {
-      throw new DataSetException(String.format("Dataset '%s' already has a partition with the same key: %s",
-                                               getName(), key.toString()));
+      throw new PartitionAlreadyExistsException(getName(), key);
     }
     if (appending) {
       // this can happen if user originally created the partition with a custom relative path
@@ -342,6 +348,9 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
     LOG.debug("{} partition with key {} and path {} to dataset {}", appending ? "Appending to" : "Creating",
               key, path, getName());
+    AddPartitionOperation operation = new AddPartitionOperation(key, path, filesCreated);
+    operationsInThisTx.add(operation);
+
     Put put = new Put(rowKey);
     byte[] nowInMillis = Bytes.toBytes(System.currentTimeMillis());
     if (!appending) {
@@ -350,7 +359,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
     put.add(LAST_MODIFICATION_TIME_COL, nowInMillis);
 
-    addMetadataToPut(metadata, put);
+    // we allow updates, because an update will only happen if its an append
+    addMetadataToPut(row, metadata, put, true);
     // index each row by its transaction's write pointer
     put.add(WRITE_PTR_COL, tx.getWritePointer());
 
@@ -500,6 +510,15 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @WriteOnly
   @Override
   public void addMetadata(PartitionKey key, Map<String, String> metadata) {
+    setMetadata(key, metadata, false);
+  }
+
+  @Override
+  public void setMetadata(PartitionKey key, Map<String, String> metadata) {
+    setMetadata(key, metadata, true);
+  }
+
+  private void setMetadata(PartitionKey key, Map<String, String> metadata, boolean allowUpdates) {
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row.isEmpty()) {
@@ -507,14 +526,31 @@ public class PartitionedFileSetDataset extends AbstractDataset
     }
 
     Put put = new Put(rowKey);
-    addMetadataToPut(metadata, put);
+    addMetadataToPut(row, metadata, put, allowUpdates);
     partitionsTable.put(put);
   }
 
-  private void addMetadataToPut(Map<String, String> metadata, Put put) {
+  private void addMetadataToPut(Row existingRow, Map<String, String> metadata, Put put,
+                                boolean allowUpdates) {
+    // ensure that none of the entries already exist in the metadata
+    if (!allowUpdates) {
+      checkMetadataDoesNotExist(existingRow, metadata);
+    }
     for (Map.Entry<String, String> entry : metadata.entrySet()) {
       byte[] columnKey = columnKeyFromMetadataKey(entry.getKey());
       put.add(columnKey, Bytes.toBytes(entry.getValue()));
+    }
+  }
+
+  private void checkMetadataDoesNotExist(Row existingRow, Map<String, String> metadata) {
+    if (existingRow.isEmpty()) {
+      return;
+    }
+    for (String metadataKey : metadata.keySet()) {
+      byte[] columnKey = columnKeyFromMetadataKey(metadataKey);
+      if (existingRow.get(columnKey) != null) {
+        throw new DataSetException(String.format("Entry already exists for metadata key: %s", metadataKey));
+      }
     }
   }
 
@@ -626,9 +662,51 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @Override
   public PartitionOutput getPartitionOutput(PartitionKey key) {
     checkNotExternal();
+    assertNotExists(key, true);
     return new BasicPartitionOutput(this, getOutputPath(key), key);
   }
 
+
+  // Throws PartitionAlreadyExistsException if the partition key already exists.
+  // Otherwise, returns the rowkey corresponding to the PartitionKey.
+  @ReadOnly
+  byte[] assertNotExists(PartitionKey key, boolean supportNonTransactional) {
+    byte[] rowKey = generateRowKey(key, partitioning);
+    if (tx == null && supportNonTransactional) {
+      if (LOG.isWarnEnabled()) {
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement stackTraceElement : Thread.currentThread().getStackTrace()) {
+          sb.append("\n\tat ").append(stackTraceElement.toString());
+        }
+        SAMPLING_LOG.warn("Operation should be performed within a transaction. " +
+                            "This operation may require a transaction in the future. {}", sb);
+      }
+      // to handle backwards compatibility (user might have called PartitionedFileSet#getPartitionOutput outside
+      // of a transaction), we can't check partition existence via the partitionsTable. As an fallback approach,
+      // check the filesystem.
+      Location partitionLocation = files.getLocation(getOutputPath(key));
+      if (exists(partitionLocation)) {
+        throw new DataSetException(String.format("Location %s for partition key %s already exists: ",
+                                                 partitionLocation, key));
+      }
+    } else {
+      Row row = partitionsTable.get(rowKey);
+      if (!row.isEmpty()) {
+        throw new PartitionAlreadyExistsException(getName(), key);
+      }
+    }
+    return rowKey;
+  }
+
+  private boolean exists(Location location) {
+    try {
+      return location.exists();
+    } catch (IOException e) {
+      throw new DataSetException(e);
+    }
+  }
+
+  @ReadOnly
   @Override
   public PartitionDetail getPartition(PartitionKey key) {
     byte[] rowKey = generateRowKey(key, partitioning);
@@ -873,6 +951,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_FORMAT_CLASS_NAME,
                      files.getOutputFormatClassName());
       outputArgs.put(Constants.Dataset.Partitioned.HCONF_ATTR_OUTPUT_DATASET, getName());
+    } else {
+      assertNotExists(outputKey, true);
     }
     return ImmutableMap.copyOf(outputArgs);
   }
@@ -922,7 +1002,8 @@ public class PartitionedFileSetDataset extends AbstractDataset
   @Override
   public void onFailure() throws DataSetException {
     try {
-      // depend on FileSetDataset's implementation of #onFailure to rollback
+      rollbackPartitionOperations();
+
       ((FileSetDataset) files).onFailure();
     } catch (Throwable caught) {
       Throwables.propagateIfPossible(caught, DataSetException.class);

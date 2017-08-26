@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.artifact.SystemArtifactLoader;
 import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
+import co.cask.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.gateway.handlers.store.ProgramStore;
@@ -95,6 +96,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ProgramStore programStore;
   private final MetricsCollectionService metricsCollectionService;
   private final MetricsQueryHelper metricsQueryHelper;
+  private final ProgramNotificationSubscriberService programNotificationSubscriberService;
 
   private volatile PreviewStatus status;
   private volatile boolean killedByTimer;
@@ -110,7 +112,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin, ProgramStore programStore,
-                       MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper) {
+                       MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper,
+                       ProgramNotificationSubscriberService programNotificationSubscriberService) {
     this.messagingService = messagingService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
@@ -125,6 +128,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.programStore = programStore;
     this.metricsCollectionService = metricsCollectionService;
     this.metricsQueryHelper = metricsQueryHelper;
+    this.programNotificationSubscriberService = programNotificationSubscriberService;
   }
 
   @Override
@@ -262,7 +266,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       systemArtifactLoader.start(),
       programRuntimeService.start(),
       programLifecycleService.start(),
-      metricsCollectionService.start()
+      metricsCollectionService.start(),
+      programNotificationSubscriberService.start()
     ).get();
   }
 
@@ -285,5 +290,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programLifecycleService.stopAndWait();
+    programNotificationSubscriberService.stopAndWait();
   }
 }

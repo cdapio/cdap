@@ -16,44 +16,34 @@
 
 package co.cask.cdap.etl.batch.condition;
 
-import co.cask.cdap.api.workflow.Value;
-import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.condition.StageStatistics;
-import co.cask.cdap.etl.common.Constants;
 
 /**
  * Default implementation of the {@link StageStatistics}.
  */
 public class BasicStageStatistics implements StageStatistics {
-  private final WorkflowToken token;
-  private final String stageName;
+  private final long numOfInputRecords;
+  private final long numOfOutputRecords;
+  private final long numOfErrorRecords;
 
-  public BasicStageStatistics(WorkflowToken token, String stageName) {
-    this.token = token;
-    this.stageName = stageName;
+  public BasicStageStatistics(long numOfInputRecords, long numOfOutputRecords, long numOfErrorRecords) {
+    this.numOfInputRecords = numOfInputRecords;
+    this.numOfOutputRecords = numOfOutputRecords;
+    this.numOfErrorRecords = numOfErrorRecords;
   }
 
   @Override
   public long getInputRecordsCount() {
-    return getValue(Constants.StageStatistics.INPUT_RECORDS);
+    return numOfInputRecords;
   }
 
   @Override
   public long getOutputRecordsCount() {
-    return getValue(Constants.StageStatistics.OUTPUT_RECORDS);
+    return numOfOutputRecords;
   }
 
   @Override
   public long getErrorRecordsCount() {
-    return getValue(Constants.StageStatistics.ERROR_RECORDS);
-  }
-
-  private long getValue(String property) {
-    String stageProperty = stageName + "." + property;
-    Value value = token.get(stageProperty);
-    if (value != null) {
-      return value.getAsLong();
-    }
-    return 0;
+    return numOfErrorRecords;
   }
 }

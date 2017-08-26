@@ -20,8 +20,8 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
@@ -46,7 +46,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    Authorizable authorizable = Authorizable.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String principalName = arguments.getOptional("principal-name", null);
     String type = arguments.getOptional("principal-type", null);
     Principal.PrincipalType principalType =
@@ -55,10 +55,10 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
     String actionsString = arguments.getOptional("actions", null);
     Set<Action> actions = actionsString == null ? null : ACTIONS_STRING_TO_SET.apply(actionsString);
 
-    client.revoke(entity, principal, actions);
+    client.revoke(authorizable, principal, actions);
     if (principal == null && actions == null) {
       // Revoked all actions for all principals on the entity
-      output.printf("Successfully revoked all actions on entity '%s' for all principals", entity.toString());
+      output.printf("Successfully revoked all actions on entity '%s' for all principals", authorizable.toString());
     } else {
       // currently, the CLI only supports 2 scenarios:
       // 1. both actions and principal are null - supported in the if block.
@@ -67,7 +67,7 @@ public abstract class RevokeActionCommand extends AbstractAuthCommand {
       Preconditions.checkNotNull(actions, "Actions cannot be null when principal is not null in the revoke command");
       Preconditions.checkNotNull(principal, "Principal cannot be null when actions is not null in the revoke command");
       output.printf("Successfully revoked action(s) '%s' on entity '%s' for %s '%s'\n",
-                    Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
+                    Joiner.on(",").join(actions), authorizable.toString(), principal.getType(), principal.getName());
     }
   }
 }

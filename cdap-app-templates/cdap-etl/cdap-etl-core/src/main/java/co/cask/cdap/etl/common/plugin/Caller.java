@@ -26,21 +26,10 @@ import java.util.concurrent.Callable;
 public abstract class Caller {
   public static final Caller DEFAULT = new Caller() {
     @Override
-    public <T> T call(Callable<T> callable, CallArgs args) throws Exception {
+    public <T> T call(Callable<T> callable) throws Exception {
       return callable.call();
     }
   };
-
-  /**
-   * Call a Callable, overriding default behavior using the specified call arguments.
-   *
-   * @param callable the callable to call
-   * @param args arguments that may override default behavior
-   * @param <T> the return type
-   * @return the result of the callable
-   * @throws Exception if there was any exception encountered while calling the callable
-   */
-  public abstract <T> T call(Callable<T> callable, CallArgs args) throws Exception;
 
   /**
    * Call a Callable.
@@ -50,9 +39,7 @@ public abstract class Caller {
    * @return the result of the callable
    * @throws Exception if there was any exception encountered while calling the callable
    */
-  public <T> T call(Callable<T> callable) throws Exception {
-    return call(callable, CallArgs.NONE);
-  }
+  public abstract <T> T call(Callable<T> callable) throws Exception;
 
   /**
    * Call a Callable that does not throw checked exceptions. It is up to you to ensure that it does not throw checked
@@ -63,22 +50,8 @@ public abstract class Caller {
    * @return the result of the callable
    */
   public <T> T callUnchecked(Callable<T> callable) {
-    return callUnchecked(callable, CallArgs.NONE);
-  }
-
-  /**
-   * Call a Callable that does not throw checked exceptions with the specified arguments.
-   * It is up to you to ensure that it does not throw checked exceptions.
-   * Otherwise, any checked exceptions will be wrapped in a RuntimeException and propagated.
-   *
-   * @param callable the callable to call
-   * @param args arguments that may override default behavior
-   * @param <T> the return type
-   * @return the result of the callable
-   */
-  public <T> T callUnchecked(Callable<T> callable, CallArgs args) {
     try {
-      return call(callable, args);
+      return call(callable);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

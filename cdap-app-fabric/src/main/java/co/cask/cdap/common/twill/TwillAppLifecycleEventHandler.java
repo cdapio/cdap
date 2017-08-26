@@ -18,15 +18,14 @@ package co.cask.cdap.common.twill;
 import co.cask.cdap.app.runtime.NoOpProgramStateWriter;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
-import co.cask.cdap.app.store.RuntimeStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
-import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
-import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
+import co.cask.cdap.messaging.guice.MessagingClientModule;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
@@ -60,8 +59,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private ProgramRunId programRunId;
   private ProgramStateWriter programStateWriter;
   private ZKClientService zkClientService;
-  private AtomicBoolean launchedContainer;
-  private AtomicBoolean stoppedContainer;
+  private AtomicBoolean runningPublished;
+  private AtomicBoolean endStatePublished;
 
   /**
    * Constructs an instance of TwillAppLifecycleEventHandler that abort the application if some runnable has no
@@ -100,6 +99,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   public void initialize(EventHandlerContext context) {
     super.initialize(context);
 
+    this.runningPublished = new AtomicBoolean();
+    this.endStatePublished = new AtomicBoolean();
     this.twillRunId = context.getRunId();
     this.programRunId = GSON.fromJson(context.getSpecification().getConfigs().get("programRunId"), ProgramRunId.class);
 
@@ -124,17 +125,18 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           new ZKClientModule(),
           new KafkaClientModule(),
           new DiscoveryRuntimeModule().getDistributedModules(),
+          new MessagingClientModule(),
           new AbstractModule() {
             @Override
             protected void configure() {
-              bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
-              bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+              bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
             }
           }
         );
 
         zkClientService = injector.getInstance(ZKClientService.class);
-        startServices();
+        zkClientService.startAndWait();
+
         this.programStateWriter = injector.getInstance(ProgramStateWriter.class);
       } catch (Exception e) {
         throw Throwables.propagate(e);
@@ -147,21 +149,13 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   }
 
   @Override
-  public void started() {
-    super.started();
-    this.launchedContainer = new AtomicBoolean(false);
-    this.stoppedContainer = new AtomicBoolean(false);
-  }
-
-  @Override
   public void containerLaunched(String runnableName, int instanceId, String containerId) {
     super.containerLaunched(runnableName, instanceId, containerId);
 
-    if (!launchedContainer.compareAndSet(false, true)) {
-      return;
+    if (runningPublished.compareAndSet(false, true)) {
+      // The program is marked as running when the first container for the program is launched
+      programStateWriter.running(programRunId, twillRunId.getId());
     }
-    // The program is marked as running when the first container for the program is launched
-    programStateWriter.running(programRunId, twillRunId.getId());
   }
 
   @Override
@@ -169,38 +163,38 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     super.completed();
 
     // If we already stopped the container due to an error, just return
-    if (stoppedContainer.get()) {
-      return;
+    if (endStatePublished.compareAndSet(false, true)) {
+      programStateWriter.completed(programRunId);
     }
-    programStateWriter.completed(programRunId);
   }
 
   @Override
   public void killed() {
     super.killed();
-    programStateWriter.killed(programRunId);
+
+    if (endStatePublished.compareAndSet(false, true)) {
+      programStateWriter.killed(programRunId);
+    }
   }
 
   @Override
   public void containerStopped(String runnableName, int instanceId, String containerId, int exitStatus) {
     super.containerStopped(runnableName, instanceId, containerId, exitStatus);
 
-    // Let the completed handler handle when a container has completed with no error
+    // Let the completed() method handle when a container has completed with no error
     if (exitStatus == 0) {
       return;
     }
 
     String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
                                         containerId, instanceId, exitStatus);
-    LOG.error(errorMessage);
-
     switch(programRunId.getType()) {
       case WORKFLOW:
       case SPARK:
       case MAPREDUCE:
-        // For workflow, mapreduce, and spark, if there is an error, record the error state
-        if (stoppedContainer.compareAndSet(false, true)) {
-          programStateWriter.error(programRunId, new RuntimeException(errorMessage));
+        // For workflow, MapReduce, and spark, if there is an error, record the error state
+        if (endStatePublished.compareAndSet(false, true)) {
+          programStateWriter.error(programRunId, new Exception(errorMessage));
         }
         break;
       default:
@@ -214,13 +208,9 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   @Override
   public void aborted() {
     super.aborted();
-    programStateWriter.error(programRunId,
-                             new Exception(String.format("No containers for {}. Abort the application", programRunId)));
-  }
-
-  private void startServices() {
-    if (zkClientService != null) {
-      zkClientService.startAndWait();
+    if (endStatePublished.compareAndSet(false, true)) {
+      programStateWriter.error(
+        programRunId, new Exception(String.format("No containers for %s. Abort the application", programRunId)));
     }
   }
 

@@ -28,19 +28,16 @@ import co.cask.cdap.data2.dataset2.lib.table.hbase.CombinedHBaseMetricsTable;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTableAdmin;
 import co.cask.cdap.data2.dataset2.lib.timeseries.EntityTable;
 import co.cask.cdap.data2.dataset2.lib.timeseries.FactTable;
-import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.hbase.wd.RowKeyDistributorByHashPrefix;
 import co.cask.cdap.metrics.process.MetricsConsumerMetaTable;
-import co.cask.cdap.metrics.store.upgrade.DataMigrationException;
-import co.cask.cdap.metrics.store.upgrade.MetricsDataMigrator;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +73,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   @Override
   public FactTable getOrCreateFactTable(int resolution) {
     String v3TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                       Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
+                                   Constants.Metrics.DEFAULT_METRIC_V3_TABLE_PREFIX) + ".ts." + resolution;
 
     int ttl = cConf.getInt(Constants.Metrics.RETENTION_SECONDS + "." + resolution + ".seconds", -1);
 
@@ -118,21 +115,17 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
   protected MetricsTable getOrCreateResolutionMetricsTable(String v3TableName, TableProperties.Builder props,
                                                            int resolution) {
     try {
-      MetricsTable v2Table = null;
+      String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
+                                     Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
 
-      // TODO: By default do not allow reading from v2 tables. Remove this check once CDAP-12306 is fixed
-      if (cConf.getBoolean(Constants.Metrics.METRICS_V2_TABLE_SCAN_ENABLED)) {
-        String v2TableName = cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
-                                       Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX + ".ts." + resolution);
-        // metrics tables are in the system namespace
-        DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
-        v2Table = dsFramework.getDataset(v2TableId, null, null);
-      }
+      // metrics tables are in the system namespace
+      DatasetId v2TableId = NamespaceId.SYSTEM.dataset(v2TableName);
+      MetricsTable v2Table = dsFramework.getDataset(v2TableId, ImmutableMap.<String, String>of(), null);
 
       props.add(HBaseTableAdmin.PROPERTY_SPLITS,
-                GSON.toJson(getV3MetricsTableSplits(Constants.Metrics.METRICS_HBASE_SPLITS)));
-      props.add(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS,
-                cConf.get(Constants.Metrics.METRICS_HBASE_MAX_SCAN_THREADS));
+                GSON.toJson(getV3MetricsTableSplits(cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS))));
+      props.add(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS,
+                cConf.getInt(Constants.Metrics.METRICS_HBASE_TABLE_SPLITS));
 
       DatasetId v3TableId = NamespaceId.SYSTEM.dataset(v3TableName);
       MetricsTable v3Table = DatasetsUtil.getOrCreateDataset(dsFramework, v3TableId, MetricsTable.class.getName(),
@@ -140,7 +133,7 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
       if (v2Table != null) {
         // the cluster is upgraded, so use Combined Metrics Table
-        return new CombinedHBaseMetricsTable(v2Table, v3Table);
+        return new CombinedHBaseMetricsTable(v2Table, v3Table, resolution, cConf, dsFramework);
       }
 
       return v3Table;
@@ -173,31 +166,6 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
 
     // adding kafka consumer meta
     factory.createConsumerMeta();
-  }
-
-  /**
-   * Migrates metrics data from version 2.7 and older to 2.8
-   *
-   * @param conf             CConfiguration
-   * @param hConf            Configuration
-   * @param datasetFramework framework to add types and datasets to
-   * @param keepOldData      - boolean flag to specify if we have to keep old metrics data
-   * @throws DataMigrationException
-   */
-  public static void migrateData(CConfiguration conf, Configuration hConf, DatasetFramework datasetFramework,
-                                 boolean keepOldData, HBaseTableUtil tableUtil) throws DataMigrationException {
-    DefaultMetricDatasetFactory factory = new DefaultMetricDatasetFactory(conf, datasetFramework);
-    MetricsDataMigrator migrator = new MetricsDataMigrator(conf, hConf, datasetFramework, factory);
-    // delete existing destination tables
-    migrator.cleanupDestinationTables();
-    try {
-      setupDatasets(factory);
-    } catch (Exception e) {
-      String msg = "Exception creating destination tables";
-      LOG.error(msg, e);
-      throw new DataMigrationException(msg);
-    }
-    migrator.migrateMetricsTables(tableUtil, keepOldData);
   }
 
   private int getRollTime(int resolution) {

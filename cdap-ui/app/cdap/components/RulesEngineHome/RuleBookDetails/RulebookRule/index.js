@@ -19,10 +19,15 @@ import {Col} from 'reactstrap';
 import { DragSource, DropTarget } from 'react-dnd';
 import flow from 'lodash/flow';
 import classnames from 'classnames';
+import { Sparklines, SparklinesLine, SparklinesBars } from 'react-sparklines';
 import IconSVG from 'components/IconSVG';
+import isNil from 'lodash/isNil';
 import T from 'i18n-react';
 
 const PREFIX = 'features.RulesEngine.RulebookRule';
+const SPARKLINECOLOR = '#0099ff';
+const SVGHEIGHT = 20;
+const SVGWIDTH = 80;
 
 const ItemTypes = {
   Rule: 'RULEBOOKRULE'
@@ -90,6 +95,7 @@ const dropTarget = {
   }
 };
 
+
 class RulebookRule extends Component {
   static propTypes = {
     index: PropTypes.number,
@@ -117,11 +123,11 @@ class RulebookRule extends Component {
         }}
       >
         <Col xs={1}>{index + 1}</Col>
-        <Col xs={3}>{rule.id}</Col>
+        <Col xs={2}>{rule.id}</Col>
         <Col xs={5}>{rule.description}</Col>
-        <Col xs={2}>
+        <Col xs={1}>
           <button
-            className="btn btn-link"
+            className="btn btn-link remove-button"
             href
             onClick={() => onRemove(rule.id)}
           >
@@ -129,7 +135,19 @@ class RulebookRule extends Component {
           </button>
         </Col>
         <Col xs={1}>
-          <IconSVG name="icon-bars" />
+          <IconSVG
+            className="move-icon"
+            name="icon-arrows-v"
+          />
+        </Col>
+        <Col xs={2}>
+          {
+            isNil(rule.metric) ? null :
+              <Sparklines data={rule.metric} svgWidth={SVGWIDTH} svgHeight={SVGHEIGHT} limit={10}>
+                <SparklinesBars style={{ fill: SPARKLINECOLOR, fillOpacity: ".15" }} />
+                <SparklinesLine style={{ stroke: SPARKLINECOLOR, fill: "none" }} />
+              </Sparklines>
+          }
         </Col>
       </div>
     ));

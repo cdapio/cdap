@@ -25,10 +25,11 @@ import co.cask.cdap.api.spark.SparkExecutionContext
 import co.cask.cdap.api.spark.dynamic.SparkInterpreter
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-
 import java.io.Externalizable
 import java.io.ObjectInput
 import java.io.ObjectOutput
+
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
 import scala.reflect.ClassTag
 
@@ -128,4 +129,6 @@ class SerializableSparkExecutionContext(val delegate: SparkExecutionContext) ext
   }
 
   override def getDataTracer(loggerName: String): DataTracer = delegate.getDataTracer(loggerName)
+
+  override def getTriggeringScheduleInfo: Option[TriggeringScheduleInfo] = delegate.getTriggeringScheduleInfo
 }

@@ -16,6 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
+import co.cask.cdap.proto.ScheduleDetail;
+import co.cask.cdap.proto.id.ScheduleId;
 import com.google.common.base.Objects;
 
 /**
@@ -51,11 +54,29 @@ public class ProgramScheduleRecord {
 
     return Objects.equal(this.schedule, that.schedule) &&
       Objects.equal(this.meta, that.meta);
-
   }
 
   @Override
   public int hashCode() {
     return Objects.hashCode(schedule, meta);
+  }
+
+  @Override
+  public String toString() {
+    return "ProgramScheduleRecord{" +
+      "schedule=" + schedule +
+      ", meta=" + meta +
+      '}';
+  }
+
+  public ScheduleDetail toScheduleDetail() {
+    ScheduleProgramInfo programInfo =
+      new ScheduleProgramInfo(schedule.getProgramId().getType().getSchedulableType(),
+                              schedule.getProgramId().getProgram());
+    ScheduleId scheduleId = schedule.getScheduleId();
+    return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
+                              scheduleId.getSchedule(), schedule.getDescription(), programInfo,
+                              schedule.getProperties(), schedule.getTrigger(), schedule.getConstraints(),
+                              schedule.getTimeoutMillis(), meta.getStatus().name());
   }
 }

@@ -50,6 +50,7 @@
            ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body" ng-class="{'view-icon': MySidePanel.view === 'icon', 'view-list': MySidePanel.view === 'list'}">
 
+          <!-- ICON VIEW -->
           <div ng-if="MySidePanel.view === 'icon'"
                ng-repeat="plugin in group.filtered = (group.plugins | myMultiKeySearch: ['name', 'label']: MySidePanel.searchText | orderBy: 'pluginTemplate || name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"
@@ -60,13 +61,30 @@
                content-data="plugin"
                data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
-            <div class="text-center fa {{plugin.icon}}"></div>
-            <div class="name plugin-name">{{ plugin.name | myRemoveCamelcase}}</div>
+
+            <div
+              class="text-center fa icon-container"
+              ng-if="MySidePanel.shouldShowCustomIcon(plugin)"
+            >
+              <img src="{{ MySidePanel.getCustomIconSrc(plugin) }}" />
+            </div>
+
+            <div
+              class="text-center fa {{plugin.icon}}"
+              ng-if="!MySidePanel.shouldShowCustomIcon(plugin)">
+            </div>
+
+            <div class="name plugin-name">
+              {{ MySidePanel.generateLabel(plugin) }}
+            </div>
+
             <div class="plugin-badge">T</div>
           </div>
           <div class="no-item-message" ng-if="group.filtered.length === 0">
             <h4>No {{MySidePanel.itemGenericName}} found.</h4>
           </div>
+
+          <!-- LIST VIEW -->
           <div ng-if="MySidePanel.view === 'list'"
                ng-repeat="plugin in group.filtered = (group.plugins | myMultiKeySearch: ['name', 'label']: MySidePanel.searchText | orderBy: 'pluginTemplate || name') track by $index"
                class="plugin-item {{plugin.nodeClass}}"

@@ -60,8 +60,18 @@ class HydratorPlusPlusNodeConfigCtrl {
     ];
 
     this.metricsContext = rNodeMetricsContext;
+    this.isMetricsEnabled = this.$scope.isDisabled && (Array.isArray(rNodeMetricsContext.runs) && rNodeMetricsContext.runs.length);
     if (this.metricsContext) {
-      this.nodeMetrics = [`user.${this.state.node.name}.records.in`, `user.${this.state.node.name}.records.out`];
+      this.nodeMetrics = [
+        `user.${this.state.node.name}.records.in`,
+        `user.${this.state.node.name}.records.out`,
+        `user.${this.state.node.name}.records.error`,
+        `user.${this.state.node.name}.process.time.total`,
+        `user.${this.state.node.name}.process.time.avg`,
+        `user.${this.state.node.name}.process.time.max`,
+        `user.${this.state.node.name}.process.time.min`,
+        `user.${this.state.node.name}.process.time.stddev`
+      ];
     } else {
       this.nodeMetrics = [];
     }
@@ -142,6 +152,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       isSink: config.isSink || false,
       isTransform: config.isTransform || false,
       isAction: config.isAction || false,
+      isCondition: config.isCondition || false,
 
       type: config.appType || null,
       watchers: [],
@@ -151,9 +162,12 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.defaultState = angular.copy(this.state);
 
-    if (this.state.node.outputSchema && this.state.node.outputSchema.length > 0) {
+    let propertiesSchema = this.myHelpers.objectQuery(this.state.node, 'plugin', 'properties', 'schema');
+    let schema = propertiesSchema || this.state.node.outputSchema;
+
+    if (schema && schema.length > 0) {
       try {
-        this.avsc.parse(this.state.node.outputSchema);
+        this.avsc.parse(schema);
       } catch (e) {
         this.state.schemaAdvance = true;
       }

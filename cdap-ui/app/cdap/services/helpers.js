@@ -19,6 +19,7 @@ import numeral from 'numeral';
 import moment from 'moment';
 import isNil from 'lodash/isNil';
 import isEmpty from 'lodash/isEmpty';
+import T from 'i18n-react';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -104,7 +105,7 @@ function humanReadableDuration(timeInSeconds) {
   const ONE_YEAR_SECONDS = ONE_MONTH_SECONDS * 12;
   const pluralize = (number, label) => number > 1 ? `${label}s` : label;
   if (timeInSeconds < 60) {
-    return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, 'sec')}`;
+    return `${Math.floor(timeInSeconds)} ${pluralize(timeInSeconds, T.translate('commons.secShortLabel'))}`;
   }
   if (timeInSeconds < ONE_HOUR_SECONDS) {
     let mins = Math.floor(timeInSeconds / ONE_MIN_SECONDS);
@@ -232,11 +233,14 @@ function isNilOrEmptyString(value) {
 }
 
 function requiredFieldsCompleted(state, requiredFields) {
-  let emptyFieldsInState = Object.keys(state)
-    .filter(fieldName => {
-      return isNilOrEmptyString(state[fieldName]) && requiredFields.indexOf(fieldName) !== -1;
-    });
-  return !emptyFieldsInState.length ? true : false;
+  for (let i = 0; i < requiredFields.length; i++) {
+    let requiredField = requiredFields[i];
+    if (isNilOrEmptyString(state[requiredField])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 const defaultAction = {
@@ -246,6 +250,18 @@ const defaultAction = {
 
 const difference = (first, second) => {
   return first > second ? first - second : second - first;
+};
+
+const isPluginSink = (pluginType) => {
+  return ['batchsink', 'realtimesink', 'sparksink'].indexOf(pluginType) !== -1;
+};
+
+const isPluginSource = (pluginType) => {
+  return ['batchsource', 'realtimesource', 'streamingsource'].indexOf(pluginType) !== -1;
+};
+
+const isBatchPipeline = (pipelineType) => {
+  return ['cdap-data-pipeline'].indexOf(pipelineType) !== -1;
 };
 
 export {
@@ -263,5 +279,8 @@ export {
   preventPropagation,
   requiredFieldsCompleted,
   defaultAction,
-  difference
+  difference,
+  isPluginSource,
+  isPluginSink,
+  isBatchPipeline
 };

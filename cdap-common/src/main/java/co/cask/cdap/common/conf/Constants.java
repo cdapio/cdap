@@ -173,6 +173,8 @@ public final class Constants {
     public static final String BOSS_THREADS = "app.boss.threads";
     public static final String WORKER_THREADS = "app.worker.threads";
     public static final String APP_SCHEDULER_QUEUE = "apps.scheduler.queue";
+    public static final String STATUS_EVENT_FETCH_SIZE = "app.program.status.event.fetch.size";
+    public static final String STATUS_EVENT_POLL_DELAY_MILLIS = "app.program.status.event.poll.delay.millis";
     public static final String MAPREDUCE_JOB_CLIENT_CONNECT_MAX_RETRIES = "mapreduce.jobclient.connect.max.retries";
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
@@ -238,6 +240,11 @@ public final class Constants {
     public static final String PROGRAM_CONTAINER_DIST_JARS = "program.container.dist.jars";
 
     public static final String APP_UPDATE_SCHEDULES = "app.deploy.update.schedules";
+
+    /**
+     * Topic name for publishing program status events to the messaging system
+     */
+    public static final String PROGRAM_STATUS_EVENT_TOPIC = "program.status.event.topic";
   }
 
   /**
@@ -270,6 +277,11 @@ public final class Constants {
     public static final String STREAM_SIZE_EVENT_TOPIC = "stream.size.event.topic";
 
     public static final String EVENT_POLL_DELAY_MILLIS = "scheduler.event.poll.delay.millis";
+
+    public static final String TIME_EVENT_FETCH_SIZE = "scheduler.time.event.fetch.size";
+    public static final String STREAM_SIZE_EVENT_FETCH_SIZE = "scheduler.stream.size.event.fetch.size";
+    public static final String DATA_EVENT_FETCH_SIZE = "scheduler.data.event.fetch.size";
+    public static final String PROGRAM_STATUS_EVENT_FETCH_SIZE = "scheduler.program.status.event.fetch.size";
   }
 
   /**
@@ -585,9 +597,7 @@ public final class Constants {
     // NOTE: "v3" to avoid conflict with data of older metrics system
     public static final String DEFAULT_METRIC_V3_TABLE_PREFIX = "metrics.v3.table";
     public static final String METRICS_HBASE_MAX_SCAN_THREADS = "metrics.hbase.max.scan.threads";
-    public static final String METRICS_V2_TABLE_SCAN_ENABLED = "metrics.v2.table.scan.enabled";
-    // Hardcode this value because we do not want user to control it
-    public static final int METRICS_HBASE_SPLITS = 16;
+    public static final String METRICS_HBASE_TABLE_SPLITS = "metrics.table.splits";
 
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 
@@ -607,7 +617,9 @@ public final class Constants {
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
 
-    public static final String EMIT_PRGOGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+    public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+
+    public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
 
     /**
      * Metric's dataset related constants.
@@ -926,6 +938,8 @@ public final class Constants {
       public static final String ENABLED = "security.authorization.enabled";
       /** Extension jar path */
       public static final String EXTENSION_JAR_PATH = "security.authorization.extension.jar.path";
+      /** Extra classpath for security extension **/
+      public static final String EXTENSION_EXTRA_CLASSPATH = "security.authorization.extension.extra.classpath";
       /** Prefix for extension properties */
       public static final String EXTENSION_CONFIG_PREFIX =
         "security.authorization.extension.config.";
@@ -933,9 +947,8 @@ public final class Constants {
       public static final String CACHE_TTL_SECS = "security.authorization.cache.ttl.secs";
       /** Maximum number of entries the authorization cache will hold */
       public static final String CACHE_MAX_ENTRIES = "security.authorization.cache.max.entries";
-      public static final String ADMIN_USERS = "security.authorization.admin.users";
-      /** Enable hierarchical privilege propagation, i.e. privilege on a parent will propagate to all descendants */
-      public static final String PROPAGATE_PRIVILEGES = "security.authorization.propagate.privileges";
+      /** Batch size for query for the visibility of entities */
+      public static final int VISIBLE_BATCH_SIZE = 500;
     }
 
     /**
@@ -1048,6 +1061,11 @@ public final class Constants {
     public static final String SUBMITVIACHILD = "hive.exec.submitviachild";
     public static final String HIVE_AUTHORIZATION_SQL_STD_AUTH_CONFIG_WHITELIST_APPEND =
       "hive.security.authorization.sqlstd.confwhitelist.append";
+    // Same as YarnConfiguration.TIMELINE_SERVICE_ENABLED, which isn't available on all hadoop versions
+    public static final String TIMELINE_SERVICE_ENABLED = "yarn.timeline-service.enabled";
+    // Same as YarnConfiguration.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL, which isn't available on all hadoop versions
+    public static final String TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL =
+      "yarn.timeline-service.delegation.key.update-interval";
 
     /** Determines how to behave when the Hive version is unsupported */
     public static final String HIVE_VERSION_RESOLUTION_STRATEGY = "hive.version.resolution.strategy";
@@ -1266,7 +1284,8 @@ public final class Constants {
     public static final String HTTP_SERVER_MAX_REQUEST_SIZE_MB = "messaging.http.server.max.request.size.mb";
     public static final String HTTP_SERVER_CONSUME_CHUNK_SIZE = "messaging.http.server.consume.chunk.size";
 
-
+    // Distributed mode related configurations
+    public static final String HA_FENCING_DELAY_SECONDS = "messaging.ha.fencing.delay.seconds";
     public static final String CONTAINER_VIRTUAL_CORES = "messaging.container.num.cores";
     public static final String CONTAINER_MEMORY_MB = "messaging.container.memory.mb";
     public static final String CONTAINER_INSTANCES = "messaging.container.instances";

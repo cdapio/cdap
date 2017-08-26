@@ -130,6 +130,7 @@ export default class NodesMetricsGraph extends Component {
     return (<EmptyMessageContainer loading={true} />);
   }
   renderTableBody(records) {
+    let recordsLength = records.length;
     return (
       <table className="table">
         <tbody>
@@ -138,7 +139,7 @@ export default class NodesMetricsGraph extends Component {
               return (
                 <tr>
                   <td>
-                    <span>{record.index}</span>
+                    <span>{recordsLength - record.index + 1}</span>
                     <CopyableRunID
                       runid={record.runid}
                       idprefix={`nodes-metrics-${this.props.recordType}`}

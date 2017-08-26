@@ -54,6 +54,6 @@ public class WrappedPostAction extends PostAction {
         postAction.run(context);
         return null;
       }
-    }, CallArgs.TRACK_TIME);
+    });
   }
 }

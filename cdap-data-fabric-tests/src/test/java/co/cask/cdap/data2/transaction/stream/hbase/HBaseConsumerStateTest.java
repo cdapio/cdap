@@ -56,8 +56,15 @@ import co.cask.cdap.test.SlowTests;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
+import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.inmemory.InMemoryTxSystemClient;
+import org.apache.tephra.inmemory.TxInMemory;
+import org.apache.tephra.persist.NoOpTransactionStateStorage;
+import org.apache.tephra.persist.TransactionStateStorage;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
@@ -85,6 +92,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
   private static ZKClientService zkClientService;
   private static HBaseTableUtil tableUtil;
   private static HBaseDDLExecutor ddlExecutor;
+  private static TransactionManager txService;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -101,7 +109,6 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new NonCustomLocationUnitTestModule().getModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
-      new DataFabricModules().getDistributedModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -115,10 +122,13 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
-      Modules.override(new StreamAdminModules().getDistributedModules())
+      Modules.override(new DataFabricModules().getDistributedModules(),
+                       new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
           protected void configure() {
+            bind(TransactionStateStorage.class).to(NoOpTransactionStateStorage.class);
+            bind(TransactionSystemClient.class).to(InMemoryTxSystemClient.class).in(Singleton.class);
             bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class);
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
@@ -137,6 +147,9 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(TEST_NAMESPACE));
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(OTHER_NAMESPACE));
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
+
+    txService = TxInMemory.getTransactionManager(injector.getInstance(TransactionSystemClient.class));
+    txService.startAndWait();
   }
 
   @AfterClass
@@ -147,6 +160,7 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
       try {
         deleteNamespace(TEST_NAMESPACE);
       } finally {
+        txService.stopAndWait();
         try {
           zkClientService.stopAndWait();
         } finally {

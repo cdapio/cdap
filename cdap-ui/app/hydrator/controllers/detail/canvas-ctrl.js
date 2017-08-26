@@ -99,7 +99,8 @@ angular.module(PKG.name + '.feature.hydrator')
                       isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
                       isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
                       isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform',
-                      isAction: GLOBALS.pluginConvert[nodeWithInfo.type] === 'action'
+                      isAction: GLOBALS.pluginConvert[nodeWithInfo.type] === 'action',
+                      isCondition: GLOBALS.pluginConvert[nodeWithInfo.type] === 'condition',
                     }
                   ));
               }]
@@ -131,9 +132,11 @@ angular.module(PKG.name + '.feature.hydrator')
       return obj;
     }
     this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
+    this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
 
     this.HydratorPlusPlusDetailMetricsStore.registerOnChangeListener(function () {
       this.metrics = convertMetricsArrayIntoObject(this.HydratorPlusPlusDetailMetricsStore.getMetrics());
+      this.logsMetrics = this.HydratorPlusPlusDetailMetricsStore.getLogsMetrics();
     }.bind(this));
 
     HydratorPlusPlusDetailRunsStore.registerOnChangeListener(() => {
@@ -152,7 +155,8 @@ angular.module(PKG.name + '.feature.hydrator')
       let timeDifference = this.currentRun.end ? this.currentRun.end - this.currentRun.start : Math.floor(Date.now() / 1000) - this.currentRun.start;
       this.currentRun = Object.assign({}, this.currentRun, {
         duration: window.CaskCommon.CDAPHelpers.humanReadableDuration(timeDifference),
-        startTime: this.moment(this.currentRun.start * 1000).format('hh:mm:ss a'),
+        startTime: this.currentRun.start ? this.moment(this.currentRun.start * 1000).format('hh:mm:ss a') : null,
+        starting: !this.currentRun.start ? this.currentRun.starting : null,
         statusCssClass: this.MyPipelineStatusMapper.getStatusIndicatorClass(status),
         status
       });

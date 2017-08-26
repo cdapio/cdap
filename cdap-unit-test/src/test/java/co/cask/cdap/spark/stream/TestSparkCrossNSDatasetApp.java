@@ -32,9 +32,17 @@ import java.util.Map;
  * different namespace if they have been provided through runtime arguments else it defaults to its own namespace.
  */
 public class TestSparkCrossNSDatasetApp extends AbstractApplication {
+  public static final String APP_NAME = "TestSparkCrossNSDatasetApp";
+  public static final String SPARK_PROGRAM_NAME = "SparkCrossNSDatasetProgram";
+  public static final String INPUT_DATASET_NAMESPACE = "input.dataset.namespace";
+  public static final String INPUT_DATASET_NAME = "input.dataset.name";
+  public static final String OUTPUT_DATASET_NAMESPACE = "output.dataset.namespace";
+  public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
+  public static final String DEFAULT_OUTPUT_DATASET = "outputDataset";
+
   @Override
   public void configure() {
-    setName("TestSparkCrossNSDatasetApp");
+    setName(APP_NAME);
     setDescription("App to test Spark with Datasets from other namespace");
     createDataset("outputDataset", KeyValueTable.class);
     addSpark(new SparkCrossNSDatasetProgramSpec());
@@ -43,18 +51,13 @@ public class TestSparkCrossNSDatasetApp extends AbstractApplication {
   public static class SparkCrossNSDatasetProgramSpec extends AbstractSpark {
     @Override
     public void configure() {
-      setName(SparkCrossNSDatasetProgram.class.getSimpleName());
+      setName(SPARK_PROGRAM_NAME);
       setDescription("Test Spark with Datasets from other namespace");
       setMainClass(SparkCrossNSDatasetProgram.class);
     }
   }
 
   public static class SparkCrossNSDatasetProgram implements JavaSparkMain {
-
-    public static final String INPUT_DATASET_NAMESPACE = "input.dataset.namespace";
-    public static final String INPUT_DATASET_NAME = "input.dataset.name";
-    public static final String OUTPUT_DATASET_NAMESPACE = "output.dataset.namespace";
-    public static final String OUTPUT_DATASET_NAME = "output.dataset.name";
 
     @Override
     public void run(JavaSparkExecutionContext sec) throws Exception {

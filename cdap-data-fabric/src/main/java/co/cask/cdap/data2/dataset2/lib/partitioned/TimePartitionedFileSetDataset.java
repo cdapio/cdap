@@ -102,6 +102,11 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
   }
 
   @Override
+  public void setMetadata(long time, Map<String, String> metadata) {
+    setMetadata(partitionKeyForTime(time), metadata);
+  }
+
+  @Override
   public void removeMetadata(long time, String metadataKey) {
     removeMetadata(partitionKeyForTime(time), metadataKey);
   }
@@ -159,6 +164,7 @@ public class TimePartitionedFileSetDataset extends PartitionedFileSetDataset imp
         "Output is not supported for external time-partitioned file set '" + spec.getName() + "'");
     }
     PartitionKey key = partitionKeyForTime(time);
+    assertNotExists(key, true);
     return new BasicTimePartitionOutput(this, getOutputPath(key), key);
   }
 

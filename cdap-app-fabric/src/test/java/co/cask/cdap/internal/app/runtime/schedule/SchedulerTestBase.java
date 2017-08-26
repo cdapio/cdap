@@ -128,7 +128,6 @@ public abstract class SchedulerTestBase {
     // Publish a notification on behalf of the stream with enough data to trigger the execution of the job
     metricsPublisher.increment(1024 * 1024);
     waitForRuns(store, PROGRAM_ID, 1, 15);
-    waitUntilFinished(runtimeService, PROGRAM_ID, 15);
 
     // Trigger both scheduled program
     metricsPublisher.increment(1024 * 1024);
@@ -171,25 +170,11 @@ public abstract class SchedulerTestBase {
 
     scheduler.disableSchedule(SCHEDULE_ID_1);
     scheduler.disableSchedule(SCHEDULE_ID_2);
-    waitUntilFinished(runtimeService, PROGRAM_ID, 10);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
     namespaceAdmin.delete(NamespaceId.DEFAULT);
-  }
-
-  /**
-   * Waits until there is nothing running for the given program.
-   */
-  private void waitUntilFinished(final ProgramRuntimeService runtimeService,
-                                 final ProgramId program, long maxWaitSeconds) throws Exception {
-    Tasks.waitFor(false, new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return isProgramRunning(runtimeService, program);
-      }
-    }, maxWaitSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -203,17 +188,5 @@ public abstract class SchedulerTestBase {
         return store.getRuns(programId, ProgramRunStatus.COMPLETED, 0, Long.MAX_VALUE, 100).size();
       }
     }, timeoutSeconds, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
-  }
-
-  private boolean isProgramRunning(ProgramRuntimeService runtimeService, final ProgramId program) {
-    Iterable<ProgramRuntimeService.RuntimeInfo> runtimeInfos =
-      Iterables.filter(runtimeService.listAll(ProgramType.values()),
-                       new Predicate<ProgramRuntimeService.RuntimeInfo>() {
-      @Override
-      public boolean apply(ProgramRuntimeService.RuntimeInfo runtimeInfo) {
-        return runtimeInfo.getProgramId().equals(program);
-      }
-    });
-    return !Iterables.isEmpty(runtimeInfos);
   }
 }

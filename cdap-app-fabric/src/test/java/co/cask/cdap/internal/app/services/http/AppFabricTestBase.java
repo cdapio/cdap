@@ -47,6 +47,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.gateway.handlers.meta.RemoteSystemOperationsService;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.app.services.AppFabricServer;
@@ -58,6 +59,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProtoConstraintCodec;
 import co.cask.cdap.proto.ProtoTrigger;
 import co.cask.cdap.proto.RunRecord;
@@ -579,7 +581,7 @@ public abstract class AppFabricTestBase {
     return readResponse(response, JsonObject.class);
   }
 
-  protected void assertRunHistory(final Id.Program program, final String status, int expected,
+  protected void assertRunHistory(final Id.Program program, final ProgramRunStatus status, int expected,
                                   long timeout, TimeUnit timeoutUnit) throws Exception {
     Tasks.waitFor(expected, new Callable<Integer>() {
       @Override
@@ -678,13 +680,20 @@ public abstract class AppFabricTestBase {
   /**
    * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
    */
-  protected void startProgram(ProgramId program, int expectedStatusCode) throws Exception {
+  protected void startProgram(ProgramId program, Map<String, String> args, int expectedStatusCode) throws Exception {
     String path = String.format("apps/%s/versions/%s/%s/%s/start",
                                 program.getApplication(),
                                 program.getVersion(),
                                 program.getType().getCategoryName(),
                                 program.getProgram());
-    startProgram(path, program.getNamespace(), ImmutableMap.<String, String>of(), expectedStatusCode);
+    startProgram(path, program.getNamespace(), args, expectedStatusCode);
+  }
+
+  /**
+   * Tries to start the given program with the given runtime arguments and expect the call completed with the status.
+   */
+  protected void startProgram(ProgramId program, int expectedStatusCode) throws Exception {
+    startProgram(program, ImmutableMap.<String, String>of(), expectedStatusCode);
   }
 
   /**
@@ -888,6 +897,14 @@ public abstract class AppFabricTestBase {
   protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
                                                                ProgramStatus... programStatuses)
     throws Exception {
+
+    return listSchedulesByTriggerProgram(namespace, programId, null, programStatuses);
+  }
+
+  protected List<ScheduleDetail> listSchedulesByTriggerProgram(String namespace, ProgramId programId,
+                                                               @Nullable ProgramScheduleStatus scheduleStatus,
+                                                               ProgramStatus... programStatuses)
+    throws Exception {
     String schedulesUrl = String.format("schedules/trigger-type/program-status?trigger-namespace-id=%s" +
                                           "&trigger-app-name=%s&trigger-app-version=%s" +
                                           "&trigger-program-type=%s&trigger-program-name=%s", programId.getNamespace(),
@@ -903,6 +920,9 @@ public abstract class AppFabricTestBase {
                                                    }
                                                  });
       schedulesUrl = schedulesUrl + "&trigger-program-statuses=" + Joiner.on(",").join(statusNames);
+    }
+    if (scheduleStatus != null) {
+      schedulesUrl = schedulesUrl + "&schedule-status=" + scheduleStatus;
     }
     return doGetSchedules(namespace, schedulesUrl);
   }
@@ -931,6 +951,13 @@ public abstract class AppFabricTestBase {
                                               String workflowName, ProtoTrigger.Type type) throws Exception {
     String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules?trigger-type=%s",
                                         appName, appVersion, workflowName, type.getCategoryName());
+    return doGetSchedules(namespace, schedulesUrl);
+  }
+
+  protected List<ScheduleDetail> getSchedules(String namespace, String appName, String appVersion,
+                                              String workflowName, ProgramScheduleStatus status) throws Exception {
+    String schedulesUrl = String.format("apps/%s/versions/%s/workflows/%s/schedules?schedule-status=%s",
+                                        appName, appVersion, workflowName, status.name());
     return doGetSchedules(namespace, schedulesUrl);
   }
 
@@ -1027,7 +1054,7 @@ public abstract class AppFabricTestBase {
     return readResponse(response, ScheduleSpecification.class);
   }
 
-  protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
+  protected void verifyNoRunWithStatus(final Id.Program program, final ProgramRunStatus status) throws Exception {
     Tasks.waitFor(0, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
@@ -1036,11 +1063,12 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
-  protected void verifyProgramRuns(Id.Program program, String status) throws Exception {
+  protected void verifyProgramRuns(Id.Program program, ProgramRunStatus status) throws Exception {
     verifyProgramRuns(program, status, 0);
   }
 
-  protected void verifyProgramRuns(final Id.Program program, final String status, final int expected) throws Exception {
+  protected void verifyProgramRuns(final Id.Program program, final ProgramRunStatus status, final int expected)
+    throws Exception {
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -1049,10 +1077,44 @@ public abstract class AppFabricTestBase {
     }, 60, TimeUnit.SECONDS);
   }
 
-  protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
+  protected List<RunRecord> getProgramRuns(Id.Program program, ProgramRunStatus status) throws Exception {
     String path = String.format("apps/%s/%s/%s/runs?status=%s", program.getApplicationId(),
-                                program.getType().getCategoryName(), program.getId(), status);
+                                program.getType().getCategoryName(), program.getId(), status.name());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    String json = EntityUtils.toString(response.getEntity());
+    return GSON.fromJson(json, LIST_RUNRECORD_TYPE);
+  }
+
+  protected void verifyProgramRuns(final ProgramId program, ProgramRunStatus status) throws Exception {
+    verifyProgramRuns(program, status, 0);
+  }
+
+  protected void verifyProgramRuns(final ProgramId program, final ProgramRunStatus status, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() > expected;
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
+  protected void assertProgramRuns(final ProgramId program, final ProgramRunStatus status, final int expected)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return getProgramRuns(program, status).size() == expected;
+      }
+    }, 15, TimeUnit.SECONDS);
+  }
+
+  protected List<RunRecord> getProgramRuns(ProgramId program, ProgramRunStatus status) throws Exception {
+    String path = String.format("apps/%s/versions/%s/%s/%s/runs?status=%s", program.getApplication(),
+                                program.getVersion(), program.getType().getCategoryName(), program.getProgram(),
+                                status.toString());
+    HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     return GSON.fromJson(json, LIST_RUNRECORD_TYPE);

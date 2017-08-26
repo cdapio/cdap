@@ -29,6 +29,8 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
+import co.cask.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
@@ -93,10 +95,12 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
-                                                             new DummyProgramRunnerFactory(),
-                                                             new DefaultImpersonator(cConf, null),
-                                                             authEnforcer, authenticationContext);
+    ArtifactRepository baseArtifactRepo = new DefaultArtifactRepository(conf, null, null,
+                                                                        new DummyProgramRunnerFactory(),
+                                                                        new DefaultImpersonator(cConf, null));
+    ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
+                                                                          authEnforcer, authenticationContext);
+
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
@@ -126,10 +130,11 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, ConfigTestApp.class);
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, ConfigTestApp.class.getSimpleName(), "1.0.0");
     CConfiguration cConf = CConfiguration.create();
-    ArtifactRepository artifactRepo = new ArtifactRepository(conf, null, null, authorizer,
-                                                             new DummyProgramRunnerFactory(),
-                                                             new DefaultImpersonator(cConf, null),
-                                                             authEnforcer, authenticationContext);
+    ArtifactRepository baseArtifactRepo = new DefaultArtifactRepository(conf, null, null,
+                                                                        new DummyProgramRunnerFactory(),
+                                                                        new DefaultImpersonator(cConf, null));
+    ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
+                                                                          authEnforcer, authenticationContext);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     // Create a configurator that is testable. Provide it an application.

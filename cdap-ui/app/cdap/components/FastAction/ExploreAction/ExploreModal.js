@@ -341,7 +341,7 @@ export default class ExploreModal extends Component {
                             <tr key={shortid.generate()}>
                               {
                                 !row.columns ?
-                                  "No Results"
+                                  T.translate('features.FastAction.viewEvents.noResults')
                                 :
                                   row.columns.map(column => {
                                     let content = column;
@@ -394,7 +394,7 @@ export default class ExploreModal extends Component {
         backdrop='static'
       >
         <ModalHeader>
-          Explore Dataset
+          { T.translate('features.FastAction.exploreLabel') }
           <div
            onClick={this.onModalToggle.bind(this)}
            className="float-xs-right"

@@ -16,7 +16,6 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -33,21 +32,26 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResponse;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.security.Principal;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataAdmin} that interacts directly with {@link MetadataStore}.
  */
 public class DefaultMetadataAdmin implements MetadataAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultMetadataAdmin.class);
+
   private static final CharMatcher KEY_AND_TAG_MATCHER = CharMatcher.inRange('A', 'Z')
     .or(CharMatcher.inRange('a', 'z'))
     .or(CharMatcher.inRange('0', '9'))
@@ -181,20 +185,19 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
    * @param results the {@link MetadataSearchResponse} to filter
    * @return filtered {@link MetadataSearchResponse}
    */
-  private MetadataSearchResponse filterAuthorizedSearchResult(MetadataSearchResponse results)
+  private MetadataSearchResponse filterAuthorizedSearchResult(final MetadataSearchResponse results)
     throws Exception {
-    Principal principal = authenticationContext.getPrincipal();
-    final Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
+
     return new MetadataSearchResponse(
       results.getSort(), results.getOffset(), results.getLimit(), results.getNumCursors(), results.getTotal(),
       ImmutableSet.copyOf(
-        Iterables.filter(results.getResults(), new com.google.common.base.Predicate<MetadataSearchResultRecord>() {
-          @Override
-          public boolean apply(MetadataSearchResultRecord metadataSearchResultRecord) {
-            return filter.apply(metadataSearchResultRecord.getEntityId());
-          }
-        })
-      ),
+        AuthorizationUtil.isVisible(results.getResults(), authorizationEnforcer, authenticationContext.getPrincipal(),
+                                    new Function<MetadataSearchResultRecord, EntityId>() {
+                                      @Override
+                                      public EntityId apply(MetadataSearchResultRecord input) {
+                                        return input.getEntityId();
+                                      }
+                                    }, null)),
       results.getCursors(), results.isShowHidden(), results.getEntityScope());
   }
 

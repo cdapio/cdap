@@ -68,7 +68,6 @@ import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.security.auth.context.AuthenticationContextModules;
-import co.cask.cdap.security.authorization.AuthorizationBootstrapper;
 import co.cask.cdap.security.authorization.AuthorizationEnforcementModule;
 import co.cask.cdap.security.authorization.AuthorizationTestModule;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
@@ -196,9 +195,6 @@ public class BaseHiveExploreServiceTest {
     List<Module> modules = useStandalone ? createStandaloneModules(cConf, hConf, tmpFolder)
       : createInMemoryModules(cConf, hConf, tmpFolder);
     injector = Guice.createInjector(modules);
-    if (enableAuthorization) {
-      injector.getInstance(AuthorizationBootstrapper.class).run();
-    }
     transactionManager = injector.getInstance(TransactionManager.class);
     transactionManager.startAndWait();
     transactionSystemClient = injector.getInstance(TransactionSystemClient.class);

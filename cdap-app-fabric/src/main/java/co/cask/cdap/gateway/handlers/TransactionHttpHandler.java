@@ -69,6 +69,7 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Type STRING_LONG_MAP_TYPE = new TypeToken<Map<String, Long>>() { }.getType();
   private static final Type STRING_LONG_SET_MAP_TYPE = new TypeToken<Map<String, Set<Long>>>() { }.getType();
 
+  private final Configuration hConf;
   private final CConfiguration cConf;
   private final TransactionSystemClient txClient;
   private final boolean pruneEnable;
@@ -76,7 +77,8 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
   private Object debugObject;
 
   @Inject
-  public TransactionHttpHandler(CConfiguration cConf, TransactionSystemClient txClient) {
+  public TransactionHttpHandler(Configuration hConf, CConfiguration cConf, TransactionSystemClient txClient) {
+    this.hConf = hConf;
     this.cConf = cConf;
     this.txClient = new TransactionSystemClientAdapter(txClient);
     this.pruneEnable = cConf.getBoolean(TxConstants.TransactionPruning.PRUNE_ENABLE,
@@ -281,15 +283,16 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Path("/transactions/prune/regions/block")
   @GET
-  public void getRegionsToBeCompacted(HttpRequest request, HttpResponder responder) {
+  public void getRegionsToBeCompacted(HttpRequest request, HttpResponder responder,
+                                      @QueryParam("limit") @DefaultValue("-1") int numRegions) {
     if (!initializePruningDebug(responder)) {
       return;
     }
 
     try {
-      Method method = debugClazz.getMethod("getRegionsToBeCompacted");
+      Method method = debugClazz.getMethod("getRegionsToBeCompacted", Integer.class);
       method.setAccessible(true);
-      Object response = method.invoke(debugObject);
+      Object response = method.invoke(debugObject, numRegions);
       Set<String> regionNames = (Set<String>) response;
       responder.sendJson(HttpResponseStatus.OK, regionNames);
     } catch (Exception e) {
@@ -310,7 +313,6 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
           this.debugClazz = getClass().getClassLoader()
             .loadClass("org.apache.tephra.hbase.txprune.InvalidListPruningDebug");
           this.debugObject = debugClazz.newInstance();
-          Configuration hConf = new Configuration();
           for (Map.Entry<String, String> entry : cConf) {
             hConf.set(entry.getKey(), entry.getValue());
           }

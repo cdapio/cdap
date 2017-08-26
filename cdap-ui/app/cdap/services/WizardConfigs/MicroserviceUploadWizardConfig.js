@@ -19,7 +19,8 @@ import UploadJarStep from 'components/CaskWizards/MicroserviceUpload/UploadJarSt
 import UploadJsonStep from 'components/CaskWizards/MicroserviceUpload/UploadJsonStep';
 import ConfigureStep from 'components/CaskWizards/MicroserviceUpload/ConfigureStep';
 import GeneralInfoStep from 'components/CaskWizards/MicroserviceUpload/GeneralInfoStep';
-import EndpointStep from 'components/CaskWizards/MicroserviceUpload/EndpointStep';
+import InboundQueueStep from 'components/CaskWizards/MicroserviceUpload/InboundQueueStep';
+import OutboundQueueStep from 'components/CaskWizards/MicroserviceUpload/OutboundQueueStep';
 import PropertiesStep from 'components/CaskWizards/MicroserviceUpload/PropertiesStep';
 
 import T from 'i18n-react';
@@ -58,17 +59,29 @@ let commonSteps = [
     requiredFields: ['instances', 'vcores', 'memory', 'ethreshold']
   },
   {
-    id: 'endpoints',
+    id: 'inboundQueues',
     shorttitle: T.translate('features.Wizard.MicroserviceUpload.Step5.shorttitle'),
     title: T.translate('features.Wizard.MicroserviceUpload.Step5.title'),
     description: T.translate('features.Wizard.MicroserviceUpload.Step5.description'),
-    content: (<EndpointStep />)
+    content: (<InboundQueueStep />),
+    queueRequiredFields: ['name', 'type'],
+    tmsRequiredFields: ['topic'],
+    sqsRequiredFields: ['region', 'access-key', 'access-id', 'queue-name'],
+    websocketRequiredFields: ['connection'],
+    mapRStreamRequiredFields: ['mapRTopic', 'key-serdes', 'value-serdes']
   },
   {
-    id: 'properties',
+    id: 'outboundQueues',
     shorttitle: T.translate('features.Wizard.MicroserviceUpload.Step6.shorttitle'),
     title: T.translate('features.Wizard.MicroserviceUpload.Step6.title'),
     description: T.translate('features.Wizard.MicroserviceUpload.Step6.description'),
+    content: (<OutboundQueueStep />)
+  },
+  {
+    id: 'properties',
+    shorttitle: T.translate('features.Wizard.MicroserviceUpload.Step7.shorttitle'),
+    title: T.translate('features.Wizard.MicroserviceUpload.Step7.title'),
+    description: T.translate('features.Wizard.MicroserviceUpload.Step7.description'),
     content: (<PropertiesStep />)
   },
 ];

@@ -99,12 +99,12 @@ public class SparkStreamIntegrationTestRun extends TestFrameworkTestBase {
     ApplicationManager spark2 = deployApplication(crossNSDatasetAppNS.getNamespaceId(),
                                                   TestSparkCrossNSDatasetApp.class);
     args = ImmutableMap.of(
-      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAMESPACE,
+      TestSparkCrossNSDatasetApp.INPUT_DATASET_NAMESPACE,
       NamespaceId.DEFAULT.getNamespace(),
-      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.INPUT_DATASET_NAME, "result",
-      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAMESPACE,
+      TestSparkCrossNSDatasetApp.INPUT_DATASET_NAME, "result",
+      TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAMESPACE,
       outputDatasetNS.getNamespaceId().getNamespace(),
-      TestSparkCrossNSDatasetApp.SparkCrossNSDatasetProgram.OUTPUT_DATASET_NAME, "finalDataset"
+      TestSparkCrossNSDatasetApp.OUTPUT_DATASET_NAME, "finalDataset"
     );
 
     sparkManager = spark2.getSparkManager("SparkCrossNSDatasetProgram").start(args);

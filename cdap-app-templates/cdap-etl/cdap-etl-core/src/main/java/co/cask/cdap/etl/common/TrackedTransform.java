@@ -37,27 +37,42 @@ public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destr
   private final String metricInName;
   private final String metricOutName;
   private final DataTracer dataTracer;
+  private final StageStatisticsCollector collector;
 
   public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer) {
-    this(transform, metrics, Constants.Metrics.RECORDS_IN, Constants.Metrics.RECORDS_OUT, dataTracer);
+    this(transform, metrics, dataTracer, new NoopStageStatisticsCollector());
   }
 
-  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics,
-                          @Nullable String metricInName, @Nullable String metricOutName, DataTracer dataTracer) {
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, DataTracer dataTracer,
+                          StageStatisticsCollector collector) {
+    this(transform, metrics, Constants.Metrics.RECORDS_IN, Constants.Metrics.RECORDS_OUT, dataTracer, collector);
+  }
+
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, @Nullable String metricInName,
+                          @Nullable String metricOutName, DataTracer dataTracer) {
+    this(transform, metrics, metricInName, metricOutName, dataTracer, new NoopStageStatisticsCollector());
+  }
+
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics, @Nullable String metricInName,
+                          @Nullable String metricOutName, DataTracer dataTracer, StageStatisticsCollector collector) {
     this.transform = transform;
     this.metrics = metrics;
     this.metricInName = metricInName;
     this.metricOutName = metricOutName;
     this.dataTracer = dataTracer;
+    this.collector = collector;
   }
 
   @Override
   public void transform(IN input, Emitter<OUT> emitter) throws Exception {
     if (metricInName != null) {
       metrics.count(metricInName, 1);
+      if (metricInName.equals(Constants.Metrics.RECORDS_IN)) {
+        collector.incrementInputRecordCount();
+      }
     }
     transform.transform(input, metricOutName == null ? emitter :
-      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer));
+      new TrackedEmitter<>(emitter, metrics, metricOutName, dataTracer, collector));
   }
 
   @Override

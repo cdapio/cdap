@@ -36,6 +36,7 @@ import co.cask.cdap.proto.audit.AuditPayload;
 import co.cask.cdap.proto.audit.AuditType;
 import co.cask.cdap.proto.audit.payload.access.AccessPayload;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -127,6 +128,9 @@ public abstract class StreamAdminTest {
     StreamId streamId = FOO_NAMESPACE.stream(streamName);
     StreamId otherStreamId = OTHER_NAMESPACE.stream(streamName);
 
+    // grant some privileges to the stream so that the user can check the existence
+    grantAndAssertSuccess(streamId, USER, EnumSet.of(Action.EXECUTE));
+    grantAndAssertSuccess(otherStreamId, USER, EnumSet.of(Action.EXECUTE));
     Assert.assertFalse(streamAdmin.exists(streamId));
     Assert.assertFalse(streamAdmin.exists(otherStreamId));
 
@@ -137,8 +141,8 @@ public abstract class StreamAdminTest {
       // expected
     }
 
-    // grant write access for user to foo_namespace
-    grantAndAssertSuccess(streamId.getParent(), USER, ImmutableSet.of(Action.WRITE));
+    // grant admin access for user to stream
+    grantAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ADMIN));
     streamAdmin.create(streamId);
 
     // Even though both streams have the same name, {@code otherStreamId} does not exist because it is in a different
@@ -153,8 +157,8 @@ public abstract class StreamAdminTest {
       // expected
     }
 
-    // grant write access for user to other_namespace
-    grantAndAssertSuccess(otherStreamId.getParent(), USER, ImmutableSet.of(Action.WRITE));
+    // grant admin access for user to stream in other_namespace
+    grantAndAssertSuccess(otherStreamId, USER, ImmutableSet.of(Action.ADMIN));
     streamAdmin.create(otherStreamId);
     Assert.assertTrue(streamAdmin.exists(otherStreamId));
 
@@ -186,13 +190,17 @@ public abstract class StreamAdminTest {
     grantAndAssertSuccess(streamId, USER, ImmutableSet.of(Action.ADMIN));
     streamAdmin.drop(streamId);
     Assert.assertFalse(streamAdmin.exists(streamId));
+
+    // clean up privilege
+    getAuthorizer().revoke(streamId);
+    getAuthorizer().revoke(otherStreamId);
   }
 
   @Test
   public void testConfigAndTruncate() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
-    grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
     StreamId stream = FOO_NAMESPACE.stream("stream");
+    grantAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
 
     streamAdmin.create(stream);
     Assert.assertTrue(streamAdmin.exists(stream));
@@ -203,7 +211,6 @@ public abstract class StreamAdminTest {
     streamAdmin.getProperties(stream);
 
     // Now revoke access to the user to the stream and to the namespace
-    revokeAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
     revokeAndAssertSuccess(stream, USER, EnumSet.allOf(Action.class));
     streamAdmin.getConfig(stream);
 
@@ -259,18 +266,36 @@ public abstract class StreamAdminTest {
     streamAdmin.truncate(stream);
     Assert.assertEquals(0, getStreamSize(stream));
     streamAdmin.drop(stream);
+    revokeAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
   }
 
   @Test
   public void testOwner() throws Exception {
-    // crate a stream with owner
+    // create a stream with owner
     StreamAdmin streamAdmin = getStreamAdmin();
     OwnerAdmin ownerAdmin = getOwnerAdmin();
-    grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE));
     StreamId stream = FOO_NAMESPACE.stream("stream");
     Properties properties = new Properties();
     String ownerPrincipal = "user/somehost@somekdc.net";
+    KerberosPrincipalId principalId = new KerberosPrincipalId(ownerPrincipal);
     properties.put(Constants.Security.PRINCIPAL, ownerPrincipal);
+    try {
+      streamAdmin.create(stream, properties);
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected since user does not have privilege on the stream and the owner principal
+    }
+    // grant privilege on the stream to the user
+    grantAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
+    try {
+      streamAdmin.create(stream, properties);
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected since user doesn ot have privilege on the owner principal
+    }
+    // grant privilege to the owner principal
+    grantAndAssertSuccess(principalId, USER, EnumSet.of(Action.ADMIN));
+    // creation should work this time
     streamAdmin.create(stream, properties);
     Assert.assertTrue(streamAdmin.exists(stream));
 
@@ -303,15 +328,19 @@ public abstract class StreamAdminTest {
     // drop the stream which should also delete the owner info
     streamAdmin.drop(stream);
     Assert.assertFalse(ownerAdmin.exists(stream));
+    // clean up the privileges
+    revokeAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
+    revokeAndAssertSuccess(principalId, USER, EnumSet.of(Action.ADMIN));
   }
 
   @Test
   public void testListStreams() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
     NamespaceId nsId = FOO_NAMESPACE;
-    grantAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));
     StreamId s1 = nsId.stream("s1");
     StreamId s2 = nsId.stream("s2");
+    grantAndAssertSuccess(s1, USER, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(s2, USER, EnumSet.of(Action.ADMIN));
     List<StreamSpecification> specifications = streamAdmin.listStreams(nsId);
     Assert.assertTrue(specifications.isEmpty());
     streamAdmin.create(s1);
@@ -319,43 +348,41 @@ public abstract class StreamAdminTest {
     specifications = streamAdmin.listStreams(nsId);
     Assert.assertEquals(2, specifications.size());
 
-    // Revoke all privileges on s1.
-    revokeAndAssertSuccess(s1, USER, EnumSet.allOf(Action.class));
+    // Revoke privileges on s1.
+    revokeAndAssertSuccess(s1, USER, EnumSet.of(Action.ADMIN));
 
-    // User should still be able to list both streams because it has all privilege on the parent
+    // User should only be able to see s2 since he does not have privilege on s1
     specifications = streamAdmin.listStreams(nsId);
-    Assert.assertEquals(2, specifications.size());
-    Set<String> streamNames = ImmutableSet.of(s1.getStream(), s2.getStream());
-    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
-    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
+    Assert.assertEquals(1, specifications.size());
+    Assert.assertEquals(s2.getStream(), specifications.get(0).getName());
 
     // Revoke all privileges on s2.
-    revokeAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
+    revokeAndAssertSuccess(s2, USER, EnumSet.of(Action.ADMIN));
 
-    // User should still be able to list both streams because it has all privilege on the parent
+    // User should not be able to see any streams
     specifications = streamAdmin.listStreams(nsId);
-    Assert.assertEquals(2, specifications.size());
-    Assert.assertTrue(streamNames.contains(specifications.get(0).getName()));
-    Assert.assertTrue(streamNames.contains(specifications.get(1).getName()));
+    Assert.assertTrue(specifications.isEmpty());
 
     // Revoke all privileges on the namespace
-    revokeAndAssertSuccess(nsId, USER, EnumSet.allOf(Action.class));
+    revokeAndAssertSuccess(nsId, USER, EnumSet.of(Action.ADMIN));
 
     // User shouldn't be able to see any streams
     specifications = streamAdmin.listStreams(nsId);
     Assert.assertTrue(specifications.isEmpty());
 
-    grantAndAssertSuccess(s1, USER, EnumSet.allOf(Action.class));
-    grantAndAssertSuccess(s2, USER, EnumSet.allOf(Action.class));
+    grantAndAssertSuccess(s1, USER, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(s2, USER, EnumSet.of(Action.ADMIN));
     streamAdmin.drop(s1);
     streamAdmin.drop(s2);
+
+    // clean up privilege
+    revokeAndAssertSuccess(s1, USER, EnumSet.of(Action.ADMIN));
+    revokeAndAssertSuccess(s2, USER, EnumSet.of(Action.ADMIN));
   }
 
   @Test
   public void testDropAllInNamespace() throws Exception {
     StreamAdmin streamAdmin = getStreamAdmin();
-    grantAndAssertSuccess(FOO_NAMESPACE, USER, ImmutableSet.of(Action.WRITE, Action.ADMIN));
-    grantAndAssertSuccess(OTHER_NAMESPACE, USER, ImmutableSet.of(Action.WRITE, Action.ADMIN));
 
     StreamId otherStream = OTHER_NAMESPACE.stream("otherStream");
 
@@ -369,14 +396,33 @@ public abstract class StreamAdminTest {
     allStreams.add(otherStream);
 
     for (StreamId stream : allStreams) {
+      // grant privilege to the stream
+      grantAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
       streamAdmin.create(stream);
       writeEvent(stream);
       // all of the streams should have data in it after writing to them
       Assert.assertNotEquals(0, getStreamSize(stream));
     }
 
-    streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
+    // revoke ADMIN from one of the streams and grant READ on the stream to make sure USER is not able to delete but
+    // able to list
+    revokeAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.ADMIN));
+    grantAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.READ));
+    // the drop all should fail since USER does not have ADMIN on one of the streams in the namespace
+    try {
+      streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
+      Assert.fail();
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
+    // all streams should exist
+    Assert.assertEquals(fooStreams.size(), streamAdmin.listStreams(FOO_NAMESPACE).size());
+
+    // grant ADMIN again and this time drop all should succeed
+    grantAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.ADMIN));
+    revokeAndAssertSuccess(fooStreams.get(0), USER, EnumSet.of(Action.READ));
+    streamAdmin.dropAllInNamespace(FOO_NAMESPACE);
     // All of the streams within the default namespace should no longer exist
     for (StreamId defaultStream : fooStreams) {
       Assert.assertFalse(streamAdmin.exists(defaultStream));
@@ -387,12 +433,16 @@ public abstract class StreamAdminTest {
     // truncate should also delete all the data of a stream
     streamAdmin.truncate(otherStream);
     Assert.assertEquals(0, getStreamSize(otherStream));
+
+    // clean up privileges
+    for (StreamId stream : allStreams) {
+      // revoke privilege to the stream
+      revokeAndAssertSuccess(stream, USER, EnumSet.of(Action.ADMIN));
+    }
   }
 
   @Test
   public void testAuditPublish() throws Exception {
-    grantAndAssertSuccess(FOO_NAMESPACE, USER, EnumSet.allOf(Action.class));
-
     // clear existing all messages
     getInMemoryAuditPublisher().popMessages();
 
@@ -400,11 +450,13 @@ public abstract class StreamAdminTest {
     StreamAdmin streamAdmin = getStreamAdmin();
 
     StreamId stream1 = FOO_NAMESPACE.stream("stream1");
+    grantAndAssertSuccess(stream1, USER, EnumSet.of(Action.ADMIN));
     streamAdmin.create(stream1);
     expectedMessages.add(new AuditMessage(0, stream1, "", AuditType.CREATE,
                                           AuditPayload.EMPTY_PAYLOAD));
 
     StreamId stream2 = FOO_NAMESPACE.stream("stream2");
+    grantAndAssertSuccess(stream2, USER, EnumSet.of(Action.ADMIN));
     streamAdmin.create(stream2);
     expectedMessages.add(new AuditMessage(0, stream2, "", AuditType.CREATE,
                                           AuditPayload.EMPTY_PAYLOAD));
@@ -444,6 +496,10 @@ public abstract class StreamAdminTest {
                        });
 
     Assert.assertEquals(expectedMessages, Lists.newArrayList(actualMessages));
+
+    // clean up privilege
+    revokeAndAssertSuccess(stream1, USER, EnumSet.of(Action.ADMIN));
+    revokeAndAssertSuccess(stream2, USER, EnumSet.of(Action.ADMIN));
   }
 
   private long getStreamSize(StreamId streamId) throws IOException {

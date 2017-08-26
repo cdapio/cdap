@@ -26,13 +26,12 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.schedule.Trigger;
+import co.cask.cdap.internal.app.runtime.messaging.TopicMessageIdStore;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.Notification;
@@ -43,8 +42,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,8 +59,7 @@ import javax.annotation.Nullable;
  *   For TMS MessageId:
  *     'M':<topic>
  */
-public class JobQueueDataset extends AbstractDataset implements JobQueue {
-  private static final Logger LOG = LoggerFactory.getLogger(JobQueueDataset.class);
+public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicMessageIdStore {
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
   private static final Gson GSON =
@@ -123,6 +119,12 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
   public void addNotification(ProgramScheduleRecord record, Notification notification) {
     boolean jobExists = false;
     ProgramSchedule schedule = record.getSchedule();
+
+    // Only add notifications for enabled schedules
+    if (record.getMeta().getStatus() != ProgramScheduleStatus.SCHEDULED) {
+      return;
+    }
+
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {
       while (jobs.hasNext()) {
         Job job = jobs.next();
@@ -153,7 +155,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
     // if no job exists for the scheduleId, add a new job with the first notification
     if (!jobExists) {
       List<Notification> notifications = Collections.singletonList(notification);
-      Job.State jobState = isTriggerSatisfied(schedule.getTrigger(), notifications)
+      Job.State jobState = isTriggerSatisfied(schedule, notifications)
         ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
       put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState,
                         record.getMeta().getLastUpdated()));
@@ -165,7 +167,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
     notifications.add(notification);
 
     Job.State newState = job.getState();
-    if (isTriggerSatisfied(job.getSchedule().getTrigger(), notifications)) {
+    if (isTriggerSatisfied(job.getSchedule(), notifications)) {
       newState = Job.State.PENDING_CONSTRAINT;
       job.getState().checkTransition(newState);
     }
@@ -174,14 +176,8 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue {
     put(newJob);
   }
 
-  private boolean isTriggerSatisfied(Trigger trigger, List<Notification> notifications) {
-    if (trigger instanceof TimeTrigger) {
-      // TimeTrigger is satisfied as soon as the Notification arrive, due to how the Notification is initially created.
-      // This is for backward compatibility, since TimeTrigger#isSatisfied looks for the filed
-      // cron expression in notification, which does not exist in notifications from pre-4.3 version
-      return true;
-    }
-    return ((SatisfiableTrigger) trigger).isSatisfied(notifications);
+  private boolean isTriggerSatisfied(ProgramSchedule schedule, List<Notification> notifications) {
+    return ((SatisfiableTrigger) schedule.getTrigger()).isSatisfied(schedule, notifications);
   }
 
   @Override

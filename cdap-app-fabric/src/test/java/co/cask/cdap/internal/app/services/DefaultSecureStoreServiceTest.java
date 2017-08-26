@@ -31,10 +31,12 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.SecureKeyId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
@@ -85,7 +87,8 @@ public class DefaultSecureStoreServiceTest {
   public static void setup() throws Exception {
     SConfiguration sConf = SConfiguration.create();
     sConf.set(Constants.Security.Store.FILE_PASSWORD, "secret");
-    final Injector injector = AppFabricTestHelper.getInjector(createCConf(), sConf, new AbstractModule() {
+    CConfiguration cConf = createCConf();
+    final Injector injector = AppFabricTestHelper.getInjector(cConf, sConf, new AbstractModule() {
       @Override
       protected void configure() {
         // no overrides
@@ -98,14 +101,20 @@ public class DefaultSecureStoreServiceTest {
     secureStore = injector.getInstance(SecureStore.class);
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
-    authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
+
+    // Wait for the default namespace creation
+    String user = SecurityUtil.getMasterPrincipal(cConf);
+    authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                     Collections.singleton(Action.ADMIN));
+    // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
       }
     }, 5, TimeUnit.SECONDS);
-    authorizer.revoke(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.READ));
+    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                      Collections.singleton(Action.ADMIN));
   }
 
   private static void waitForService(String service) {
@@ -151,8 +160,8 @@ public class DefaultSecureStoreServiceTest {
       // expected
     }
 
-    // Grant ALICE write access to the namespace
-    grantAndAssertSuccess(NamespaceId.DEFAULT, ALICE, EnumSet.of(Action.WRITE));
+    // Grant ALICE admin access to the secure key
+    grantAndAssertSuccess(secureKeyId1, ALICE, EnumSet.of(Action.ADMIN));
     // Write should succeed
     secureStoreManager.putSecureData(NamespaceId.DEFAULT.getNamespace(), KEY1, VALUE1, DESCRIPTION1,
                                      Collections.<String, String>emptyMap());
@@ -163,9 +172,12 @@ public class DefaultSecureStoreServiceTest {
     Assert.assertEquals(DESCRIPTION1, secureKeyListEntries.get(KEY1));
     revokeAndAssertSuccess(secureKeyId1, ALICE, EnumSet.allOf(Action.class));
 
-    // Should still be able to list the keys since ALICE has namespace access privilege
-    secureKeyListEntries = secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
-    Assert.assertEquals(1, secureKeyListEntries.size());
+    // Should not be able to list the keys since ALICE does not have privilege on the secure key
+    try {
+      secureStore.listSecureData(NamespaceId.DEFAULT.getNamespace());
+    } catch (UnauthorizedException e) {
+      // expected
+    }
 
     // Give BOB read access and verify that he can read the stored data
     SecurityRequestContext.setUserId(BOB.getName());
@@ -191,11 +203,9 @@ public class DefaultSecureStoreServiceTest {
     Predicate<Privilege> secureKeyIdFilter = new Predicate<Privilege>() {
       @Override
       public boolean apply(Privilege input) {
-        return input.getEntity().equals(secureKeyId1);
+        return input.getAuthorizable().equals(Authorizable.fromEntityId(secureKeyId1));
       }
     };
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(ALICE), secureKeyIdFilter).isEmpty());
-    Assert.assertTrue(Sets.filter(authorizer.listPrivileges(BOB), secureKeyIdFilter).isEmpty());
   }
 
   private void grantAndAssertSuccess(EntityId entityId, Principal principal, Set<Action> actions) throws Exception {

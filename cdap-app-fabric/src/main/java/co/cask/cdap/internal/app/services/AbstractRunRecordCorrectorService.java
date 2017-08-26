@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -41,16 +41,19 @@ import java.util.Set;
  * A default implementation of {@link RunRecordCorrectorService}.
  */
 public class AbstractRunRecordCorrectorService extends AbstractIdleService implements RunRecordCorrectorService {
-  private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractRunRecordCorrectorService.class);
 
   private final Store store;
+  private final ProgramStateWriter programStateWriter;
   private final ProgramLifecycleService programLifecycleService;
   private final ProgramRuntimeService runtimeService;
 
   @Inject
-  AbstractRunRecordCorrectorService(Store store, ProgramLifecycleService programLifecycleService,
+  AbstractRunRecordCorrectorService(Store store, ProgramStateWriter programStateWriter,
+                                    ProgramLifecycleService programLifecycleService,
                                     ProgramRuntimeService runtimeService) {
     this.store = store;
+    this.programStateWriter = programStateWriter;
     this.programLifecycleService = programLifecycleService;
     this.runtimeService = runtimeService;
   }
@@ -143,16 +146,13 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
     for (RunRecordMeta invalidRunRecordMeta : invalidRunRecords) {
       String runId = invalidRunRecordMeta.getPid();
       ProgramId targetProgramId = runIdToProgramId.get(runId);
+      programStateWriter.error(targetProgramId.run(runId),
+                               new Throwable("Marking run record as failed since no running program found."));
+      LOG.warn("Fixed RunRecord {} for program {} with RUNNING status because the program was not " +
+                 "actually running",
+               runId, targetProgramId);
 
-      boolean updated = store.compareAndSetStatus(targetProgramId, runId, ProgramController.State.ALIVE.getRunStatus(),
-                                                  ProgramController.State.ERROR.getRunStatus());
-      if (updated) {
-        LOG.warn("Fixed RunRecord {} for program {} with RUNNING status because the program was not " +
-                   "actually running",
-                 runId, targetProgramId);
-
-        processedInvalidRunRecordIds.add(runId);
-      }
+      processedInvalidRunRecordIds.add(runId);
     }
   }
 

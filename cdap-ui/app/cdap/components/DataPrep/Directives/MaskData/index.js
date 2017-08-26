@@ -17,7 +17,6 @@
 import React, { Component, PropTypes } from 'react';
 import classnames from 'classnames';
 import {setPopoverOffset} from 'components/DataPrep/helper';
-import debounce from 'lodash/debounce';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import DataPrepStore from 'components/DataPrep/store';
@@ -37,7 +36,6 @@ export default class MaskData extends Component {
   }
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('mask-fields-directive'));
-    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
   }
 
   componentDidUpdate() {
@@ -45,9 +43,7 @@ export default class MaskData extends Component {
       this.calculateOffset();
     }
   }
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.offsetCalcDebounce);
-  }
+
   maskCustomSelection() {
     let {highlightColumns} = DataPrepStore.getState().dataprep;
     DataPrepStore.dispatch({

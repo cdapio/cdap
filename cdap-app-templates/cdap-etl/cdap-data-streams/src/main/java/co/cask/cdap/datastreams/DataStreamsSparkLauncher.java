@@ -17,6 +17,8 @@
 package co.cask.cdap.datastreams;
 
 import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -74,6 +76,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     setProperties(properties);
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void initialize() throws Exception {
     SparkClientContext context = getContext();
@@ -157,6 +160,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     WRAPPERLOGGER.info("Pipeline '{}' running", context.getApplicationSpecification().getName());
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void destroy() {
     super.destroy();

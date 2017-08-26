@@ -26,7 +26,7 @@ import co.cask.cdap.api.annotation.Beta;
  */
 @Beta
 public abstract class Transform<IN, OUT> implements StageLifecycle<TransformContext>,
-  Transformation<IN, OUT>, PipelineConfigurable {
+  SubmitterLifecycle<StageSubmitterContext>, Transformation<IN, OUT>, PipelineConfigurable {
   public static final String PLUGIN_TYPE = "transform";
 
   private TransformContext context;
@@ -61,7 +61,19 @@ public abstract class Transform<IN, OUT> implements StageLifecycle<TransformCont
     //no-op
   }
 
+  @Override
+  public void prepareRun(StageSubmitterContext context) throws Exception {
+    //no-op
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, StageSubmitterContext context) {
+    //no-op
+  }
+
+  // not available in configurePipeline, prepareRun, onRunFinish.
   protected TransformContext getContext() {
     return context;
   }
+
 }

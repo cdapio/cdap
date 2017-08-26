@@ -22,7 +22,9 @@ import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
@@ -59,9 +61,12 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
   @Override
   public Void call(JavaRDD<T> data, Time batchTime) throws Exception {
+    if (data.isEmpty()) {
+      return null;
+    }
+
     final long logicalStartTime = batchTime.milliseconds();
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(),
-                                                         sec.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());
@@ -88,7 +93,8 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
       PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec,
                                                                               pipelineRuntime.getArguments().asMap(),
-                                                                              batchTime.milliseconds());
+                                                                              batchTime.milliseconds(),
+                                                                              new NoopStageStatisticsCollector());
       PairFlatMapFunc<T, Object, Object> sinkFunction = new BatchSinkFunction<T, Object, Object>(pluginFunctionContext);
 
       sinkFactory.writeFromRDD(data.flatMapToPair(Compat.convert(sinkFunction)), sec, stageName,

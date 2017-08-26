@@ -18,6 +18,7 @@ package co.cask.cdap.etl.common.plugin;
 
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageSubmitterContext;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 
@@ -33,10 +34,12 @@ import java.util.concurrent.Callable;
 public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
   private final Transform<IN, OUT> transform;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
-  public WrappedTransform(Transform<IN, OUT> transform, Caller caller) {
+  public WrappedTransform(Transform<IN, OUT> transform, Caller caller, OperationTimer operationTimer) {
     this.transform = transform;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -45,6 +48,28 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
       @Override
       public Void call() {
         transform.configurePipeline(pipelineConfigurer);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void prepareRun(final StageSubmitterContext context) throws Exception {
+    caller.call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        transform.prepareRun(context);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void onRunFinish(final boolean succeeded, final StageSubmitterContext context) {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        transform.onRunFinish(succeeded, context);
         return null;
       }
     });
@@ -74,12 +99,17 @@ public class WrappedTransform<IN, OUT> extends Transform<IN, OUT> {
 
   @Override
   public void transform(final IN input, final Emitter<OUT> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.transform(input, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          transform.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 }

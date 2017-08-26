@@ -104,6 +104,8 @@ public abstract class Output {
    * Returns an Output defined by an OutputFormatProvider.
    *
    * @param outputName the name of the output
+   * @param outputFormatProvider an instance of an OutputFormatProvider. It can not be an instance of
+   *                             a {@link DatasetOutputCommitter}.
    */
   public static Output of(String outputName, OutputFormatProvider outputFormatProvider) {
     return new OutputFormatProviderOutput(outputName, outputFormatProvider);

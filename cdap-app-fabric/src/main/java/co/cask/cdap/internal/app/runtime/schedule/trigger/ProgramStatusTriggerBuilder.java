@@ -44,6 +44,11 @@ public class ProgramStatusTriggerBuilder implements TriggerBuilder {
   }
 
   @Override
+  public Type getType() {
+    return Type.PROGRAM_STATUS;
+  }
+
+  @Override
   public ProgramStatusTrigger build(String namespace, String applicationName, String applicationVersion) {
     // Inherit environment attributes from the deployed application
     ProgramId programId = new ApplicationId(namespace, applicationName, applicationVersion).program(programType,

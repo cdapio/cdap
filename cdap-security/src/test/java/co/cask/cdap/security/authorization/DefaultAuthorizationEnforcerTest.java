@@ -16,20 +16,17 @@
 
 package co.cask.cdap.security.authorization;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.EntityId;
-import co.cask.cdap.proto.id.InstanceId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.Authorizer;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.collect.ImmutableSet;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -80,7 +77,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   @Test
   public void testPropagationDisabled() throws Exception {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, false);
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
                                                                                     AUTH_CONTEXT_FACTORY)) {
       DefaultAuthorizationEnforcer authorizationEnforcer =
@@ -93,21 +89,6 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       } catch (UnauthorizedException ignored) {
         // expected
       }
-    }
-  }
-
-  @Test
-  public void testPropagationEnabled() throws Exception {
-    CConfiguration cConfCopy = CConfiguration.copy(CCONF);
-    cConfCopy.setBoolean(Constants.Security.Authorization.PROPAGATE_PRIVILEGES, true);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
-                                                                                    AUTH_CONTEXT_FACTORY)) {
-      DefaultAuthorizationEnforcer authorizationEnforcer =
-        new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
-      authorizerInstantiator.get().grant(NS, ALICE, ImmutableSet.of(Action.ADMIN));
-      authorizationEnforcer.enforce(NS, ALICE, Action.ADMIN);
-      // Since propagation is enabled, Alice should have privileges on APP too.
-      authorizationEnforcer.enforce(APP, ALICE, Action.ADMIN);
     }
   }
 
@@ -128,14 +109,13 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       // auth enforcement for alice should succeed on ns for actions read and write
       authEnforcementService.enforce(NS, ALICE, ImmutableSet.of(Action.READ, Action.WRITE));
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, EnumSet.allOf(Action.class));
-      // since Alice has READ/WRITE on the NS, everything under that should have READ/WRITE as well.
-      authEnforcementService.enforce(ds, ALICE, Action.READ);
-      authEnforcementService.enforce(ds, ALICE, Action.WRITE);
+      // alice do not have READ or WRITE on the dataset, so authorization should fail
+      assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.READ);
+      assertAuthorizationFailure(authEnforcementService, ds, ALICE, Action.WRITE);
 
       // Alice doesn't have Admin right on NS, hence should fail.
       assertAuthorizationFailure(authEnforcementService, NS, ALICE, Action.ADMIN);
-      // also, even though bob's privileges were never updated, auth enforcement for bob should not fail,
-      // because the LoadingCache should make a blocking call to retrieve his privileges
+      // bob enforcement should succeed since we grant him admin privilege
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
       // revoke all of alice's privileges
       authorizer.revoke(NS, ALICE, ImmutableSet.of(Action.READ));
@@ -155,17 +135,18 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
   }
 
   @Test
-  public void testAuthFilter() throws Exception {
+  public void testIsVisible() throws Exception {
     try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(CCONF, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       NamespaceId ns1 = new NamespaceId("ns1");
       NamespaceId ns2 = new NamespaceId("ns2");
-      DatasetId ds11 = ns1.dataset("ds1");
-      DatasetId ds12 = ns1.dataset("ds2");
-      DatasetId ds21 = ns2.dataset("ds1");
-      DatasetId ds22 = ns2.dataset("ds2");
-      DatasetId ds23 = ns2.dataset("ds3");
+      DatasetId ds11 = ns1.dataset("ds11");
+      DatasetId ds12 = ns1.dataset("ds12");
+      DatasetId ds21 = ns2.dataset("ds21");
+      DatasetId ds22 = ns2.dataset("ds22");
+      DatasetId ds23 = ns2.dataset("ds33");
       Set<NamespaceId> namespaces = ImmutableSet.of(ns1, ns2);
+      // Alice has access on ns1, ns2, ds11, ds21, ds23, Bob has access on ds11, ds12, ds22
       authorizer.grant(ns1, ALICE, Collections.singleton(Action.WRITE));
       authorizer.grant(ns2, ALICE, Collections.singleton(Action.ADMIN));
       authorizer.grant(ds11, ALICE, Collections.singleton(Action.READ));
@@ -178,26 +159,19 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authorizer.grant(ds22, BOB, Collections.singleton(Action.ADMIN));
       DefaultAuthorizationEnforcer authEnforcementService =
         new DefaultAuthorizationEnforcer(CCONF, authorizerInstantiator);
-      Predicate<EntityId> aliceFilter = authEnforcementService.createFilter(ALICE);
-      for (NamespaceId namespace : namespaces) {
-        Assert.assertTrue(aliceFilter.apply(namespace));
-      }
-      Predicate<EntityId> bobFilter = authEnforcementService.createFilter(BOB);
-      for (NamespaceId namespace : namespaces) {
-        Assert.assertFalse(bobFilter.apply(namespace));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds11, ds21, ds23)) {
-        Assert.assertTrue(aliceFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds12, ds22)) {
-        Assert.assertTrue(aliceFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds11, ds12, ds22)) {
-        Assert.assertTrue(bobFilter.apply(datasetId));
-      }
-      for (DatasetId datasetId : ImmutableSet.of(ds21, ds23)) {
-        Assert.assertFalse(bobFilter.apply(datasetId));
-      }
+      Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, ALICE).size());
+      // bob should also be able to list two namespaces since he has privileges on the dataset in both namespaces
+      Assert.assertEquals(namespaces.size(), authEnforcementService.isVisible(namespaces, BOB).size());
+      Set<DatasetId> expectedDatasetIds = ImmutableSet.of(ds11, ds21, ds23);
+      Assert.assertEquals(expectedDatasetIds.size(), authEnforcementService.isVisible(expectedDatasetIds,
+                                                                                      ALICE).size());
+      expectedDatasetIds = ImmutableSet.of(ds12, ds22);
+      // this will be empty since now isVisible will not check the hierarchy privilege for the parent of the entity
+      Assert.assertEquals(Collections.EMPTY_SET, authEnforcementService.isVisible(expectedDatasetIds, ALICE));
+      expectedDatasetIds = ImmutableSet.of(ds11, ds12, ds22);
+      Assert.assertEquals(expectedDatasetIds.size(), authEnforcementService.isVisible(expectedDatasetIds, BOB).size());
+      expectedDatasetIds = ImmutableSet.of(ds21, ds23);
+      Assert.assertTrue(authEnforcementService.isVisible(expectedDatasetIds, BOB).isEmpty());
     }
   }
 
@@ -206,21 +180,15 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
     CConfiguration cConfCopy = CConfiguration.copy(CCONF);
     Principal systemUser =
       new Principal(UserGroupInformation.getCurrentUser().getShortUserName(), Principal.PrincipalType.USER);
-    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy,
- AUTH_CONTEXT_FACTORY)) {
+    try (AuthorizerInstantiator authorizerInstantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
       Authorizer authorizer = authorizerInstantiator.get();
       DefaultAuthorizationEnforcer authorizationEnforcer =
         new DefaultAuthorizationEnforcer(cConfCopy, authorizerInstantiator);
       NamespaceId ns1 = new NamespaceId("ns1");
-      InstanceId instanceId = new InstanceId(cConfCopy.get(Constants.INSTANCE_NAME));
-      AuthorizationBootstrapper bootstrapper = new AuthorizationBootstrapper(cConfCopy, authorizer);
-      bootstrapper.run();
-      authorizationEnforcer.enforce(instanceId, systemUser, Action.ADMIN);
       authorizationEnforcer.enforce(NamespaceId.SYSTEM, systemUser, EnumSet.allOf(Action.class));
-      Predicate<EntityId> filter = authorizationEnforcer.createFilter(systemUser);
-      Assert.assertFalse(filter.apply(ns1));
-      Assert.assertTrue(filter.apply(instanceId));
-      Assert.assertTrue(filter.apply(NamespaceId.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(NamespaceId.SYSTEM),
+                          authorizationEnforcer.isVisible(ImmutableSet.of(ns1, NamespaceId.SYSTEM),
+                                                          systemUser));
     }
   }
 
@@ -233,9 +201,7 @@ public class DefaultAuthorizationEnforcerTest extends AuthorizationTestBase {
       authorizerInstantiator.get().grant(ds, BOB, ImmutableSet.of(Action.ADMIN));
       authEnforcementService.enforce(NS, ALICE, Action.ADMIN);
       authEnforcementService.enforce(ds, BOB, Action.ADMIN);
-      Predicate<EntityId> filter = authEnforcementService.createFilter(BOB);
-      Assert.assertTrue(filter.apply(NS));
-      Assert.assertTrue(filter.apply(ds));
+      Assert.assertEquals(2, authEnforcementService.isVisible(ImmutableSet.<EntityId>of(NS, ds), BOB).size());
     }
   }
 

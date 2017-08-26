@@ -62,6 +62,27 @@ export default class LoadingIndicator extends Component {
   }
 
   renderCallsToAction() {
+    if (this.state.status === BACKENDSTATUS.NODESERVERDOWN) {
+      if (window.CDAP_CONFIG.isEnterprise) {
+        return (
+          <div>
+            <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
+            <div>{T.translate(`${PREFIX}.restartUI`)}</div>
+            <div>
+              <span>{T.translate(`${PREFIX}.contactadmin`)}</span>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div>
+            <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
+            <div>{T.translate(`${PREFIX}.restartCDAP`)}</div>
+          </div>
+        );
+      }
+    }
+
     return (
       <div className="subtitle">
         <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>

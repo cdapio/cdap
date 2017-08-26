@@ -44,9 +44,10 @@ import org.apache.spark.api.java.JavaPairRDD
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.apache.twill.api.RunId
-
 import java.io.IOException
 import java.util
+
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo
 
 import scala.collection.JavaConversions._
 import scala.reflect.ClassTag
@@ -210,6 +211,8 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
   }
 
   override def getDataTracer(loggerName: String): DataTracer = sec.getDataTracer(loggerName)
+
+  override def getTriggeringScheduleInfo: TriggeringScheduleInfo = sec.getTriggeringScheduleInfo.getOrElse(null)
 
   @throws[IOException]
   override def listSecureData(namespace: String): util.Map[String, String] = {

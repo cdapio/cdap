@@ -19,7 +19,7 @@ package co.cask.cdap.etl.api;
 import co.cask.cdap.api.annotation.Beta;
 
 /**
- * Context passed to ETL stages.
+ * Context passed to ETL Transform stages.
  */
 @Beta
 public interface TransformContext extends StageContext, LookupProvider {

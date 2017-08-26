@@ -1,0 +1,44 @@
+<!--
+  Copyright © 2017 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="widget-textarea-validate">
+  <div ng-if="(TextareaValidate.warning || TextareaValidate.success) && !TextareaValidate.disabled">
+    <span
+      class="text-warning"
+      ng-if="TextareaValidate.warning.length > 0">
+      {{ TextareaValidate.warning }}
+    </span>
+    <span
+     class="text-success"
+     ng-if="TextareaValidate.success.length > 0">
+      {{ TextareaValidate.success }}
+    </span>
+  </div>
+
+  <div class="textarea-container">
+    <textarea class="form-control"
+              data-ng-trim="false"
+              ng-model="TextareaValidate.model"
+              placeholder="{{TextareaValidate.placeholder}}">
+    </textarea>
+
+    <button ng-if="!TextareaValidate.disabled"
+            class="validate-button btn btn-default"
+            ng-click="TextareaValidate.validate()">
+      {{ TextareaValidate.buttonText }}
+    </button>
+  </div>
+</div>

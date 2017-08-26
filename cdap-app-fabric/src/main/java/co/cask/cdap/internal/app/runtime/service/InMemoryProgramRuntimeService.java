@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service;
 
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunnerFactory;
@@ -58,10 +59,13 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Inject
   public InMemoryProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, CConfiguration cConf,
-                                       ArtifactRepository artifactRepository,
+                                       // for running a program, we only need EXECUTE on the program, there should be
+                                       // no privileges needed for artifacts
+                                       @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+                                         ArtifactRepository noAuthArtifactRepository,
                                        @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
                                        ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, artifactRepository, programStateWriter);
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
     this.hostname = hostname.getCanonicalHostName();
   }
 

@@ -42,6 +42,7 @@ import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
 import com.google.common.reflect.TypeToken;
@@ -540,7 +541,7 @@ public class StreamClient {
   @Deprecated
   public <T extends Collection<? super StreamEvent>> T getEvents(Id.Stream streamId, String startTime,
                                                                  String endTime, int limit, final T results)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
     return getEvents(streamId.toEntityId(), startTime, endTime, limit, results);
   }
 
@@ -559,7 +560,7 @@ public class StreamClient {
    */
   public <T extends Collection<? super StreamEvent>> T getEvents(StreamId streamId, String startTime,
                                                                  String endTime, int limit, final T results)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
     getEvents(streamId, startTime, endTime, limit, new Function<StreamEvent, Boolean>() {
       @Override
       public Boolean apply(StreamEvent input) {
@@ -587,7 +588,7 @@ public class StreamClient {
   @Deprecated
   public <T extends Collection<? super StreamEvent>> T getEvents(Id.Stream streamId, long startTime,
                                                                  long endTime, int limit, final T results)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
     return getEvents(streamId.toEntityId(), startTime, endTime, limit, results);
   }
 
@@ -606,7 +607,7 @@ public class StreamClient {
    */
   public <T extends Collection<? super StreamEvent>> T getEvents(StreamId streamId, long startTime,
                                                                  long endTime, int limit, final T results)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
     return getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, results);
   }
 
@@ -626,7 +627,7 @@ public class StreamClient {
   @Deprecated
   public void getEvents(Id.Stream streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     getEvents(streamId.toEntityId(), startTime, endTime, limit, callback);
   }
@@ -645,7 +646,7 @@ public class StreamClient {
    */
   public void getEvents(StreamId streamId, long startTime, long endTime, int limit,
                         Function<? super StreamEvent, Boolean> callback)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     getEvents(streamId, String.valueOf(startTime), String.valueOf(endTime), limit, callback);
   }
@@ -666,7 +667,7 @@ public class StreamClient {
   @Deprecated
   public void getEvents(Id.Stream streamId, String start, String end, int limit,
                         Function<? super StreamEvent, Boolean> callback)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
     getEvents(streamId.toEntityId(), start, end, limit, callback);
   }
 
@@ -684,7 +685,7 @@ public class StreamClient {
    */
   public void getEvents(StreamId streamId, String start, String end, int limit,
                         Function<? super StreamEvent, Boolean> callback)
-    throws IOException, StreamNotFoundException, UnauthenticatedException {
+    throws IOException, StreamNotFoundException, UnauthenticatedException, UnauthorizedException {
 
     long startTime = TimeMathParser.parseTime(start, TimeUnit.MILLISECONDS);
     long endTime = TimeMathParser.parseTime(end, TimeUnit.MILLISECONDS);
@@ -715,6 +716,10 @@ public class StreamClient {
       }
       if (urlConn.getResponseCode() == HttpURLConnection.HTTP_NO_CONTENT) {
         return;
+      }
+      if (urlConn.getResponseCode() == HttpURLConnection.HTTP_FORBIDDEN) {
+        throw new UnauthorizedException(CharStreams.toString(new InputStreamReader(urlConn.getErrorStream(),
+                                                                                   Charsets.UTF_8)));
       }
 
       // The response is an array of stream event object

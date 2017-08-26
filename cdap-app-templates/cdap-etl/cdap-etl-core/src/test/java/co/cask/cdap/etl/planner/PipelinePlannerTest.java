@@ -126,7 +126,7 @@ public class PipelinePlannerTest {
       new Connection("n9", "n10"),
       new Connection("n9", "n11")
     );
-    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.CONNECTOR_TYPE);
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.Connector.PLUGIN_TYPE);
     Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
     Set<String> emptySet = ImmutableSet.of();
     PipelinePlanner planner = new PipelinePlanner(pluginTypes, reduceTypes, emptySet, emptySet);
@@ -142,9 +142,9 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n1", NODE).addOutputSchema(schema, "n2", "n3", "n4").build())
-      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2")).build())
-      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3")).build())
-      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4")).build())
+      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2", Constants.Connector.SINK_TYPE)).build())
+      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3", Constants.Connector.SINK_TYPE)).build())
+      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4", Constants.Connector.SINK_TYPE)).build())
       .addConnections("n1", ImmutableSet.of("n2.connector", "n3.connector", "n4.connector"))
       .build();
     String phase1Name = getPhaseName("n1", "n2.connector", "n3.connector", "n4.connector");
@@ -165,8 +165,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n5", schema)
                   .addOutputSchema(schema, "n7")
                   .build())
-      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2")).build())
-      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
+      .addStage(StageSpec.builder("n2.connector", connectorSpec("n2", Constants.Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n2.connector", "n2")
       .addConnection("n2", "n6")
       .addConnection("n6", "n7.connector")
@@ -193,8 +193,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n1", schema)
                   .addOutputSchema(schema, "n5")
                   .build())
-      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3")).build())
-      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
+      .addStage(StageSpec.builder("n3.connector", connectorSpec("n3", Constants.Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n3.connector", "n3")
       .addConnection("n3", "n5")
       .addConnection("n5", "n6")
@@ -218,8 +218,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n5", schema)
                   .addOutputSchema(schema, "n7")
                   .build())
-      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4")).build())
-      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
+      .addStage(StageSpec.builder("n4.connector", connectorSpec("n4", Constants.Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n4.connector", "n4")
       .addConnection("n4", "n6")
       .addConnection("n6", "n7.connector")
@@ -240,8 +240,8 @@ public class PipelinePlannerTest {
                   .addInputSchema("n6", schema)
                   .addOutputSchema(schema, "n8")
                   .build())
-      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7")).build())
-      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9")).build())
+      .addStage(StageSpec.builder("n7.connector", connectorSpec("n7", Constants.Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n7.connector", "n7")
       .addConnection("n7", "n8")
       .addConnection("n8", "n9.connector")
@@ -262,7 +262,7 @@ public class PipelinePlannerTest {
                   .addInputSchema("n8", schema)
                   .addOutputSchema(schema, "n10", "n11")
                   .build())
-      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9")).build())
+      .addStage(StageSpec.builder("n9.connector", connectorSpec("n9", Constants.Connector.SOURCE_TYPE)).build())
       .addConnection("n9.connector", "n9")
       .addConnection("n9", "n10")
       .addConnection("n9", "n11")
@@ -312,7 +312,7 @@ public class PipelinePlannerTest {
       new Connection("condition", "n4", false)
     );
 
-    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.CONNECTOR_TYPE,
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.Connector.PLUGIN_TYPE,
                                               CONDITION.getType());
     Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
     Set<String> emptySet = ImmutableSet.of();
@@ -327,7 +327,8 @@ public class PipelinePlannerTest {
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n1", NODE).build())
       .addStage(StageSpec.builder("n2", NODE).build())
-      .addStage(StageSpec.builder("condition.connector", connectorSpec("condition.connector")).build())
+      .addStage(StageSpec.builder("condition.connector",
+                                  connectorSpec("condition.connector", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n1", "n2")
       .addConnection("n2", "condition.connector")
       .build();
@@ -347,7 +348,8 @@ public class PipelinePlannerTest {
       condition.connector -- n3
      */
     PipelinePhase phase3 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition.connector", connectorSpec("condition.connector")).build())
+      .addStage(StageSpec.builder("condition.connector",
+                                  connectorSpec("condition.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n3", NODE).build())
       //.addConnection("condition.connector", "n3", true)
       .addConnection("condition.connector", "n3")
@@ -359,7 +361,8 @@ public class PipelinePlannerTest {
       condition.connector -- n4
      */
     PipelinePhase phase4 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition.connector", connectorSpec("condition.connector")).build())
+      .addStage(StageSpec.builder("condition.connector",
+                                  connectorSpec("condition.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n4", NODE).build())
       .addConnection("condition.connector", "n4")
       .build();
@@ -437,7 +440,7 @@ public class PipelinePlannerTest {
       new Connection("condition5", "n9", true)
     );
 
-    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.CONNECTOR_TYPE,
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.Connector.PLUGIN_TYPE,
                                               CONDITION1.getType(), CONDITION2.getType(), CONDITION3.getType(),
                                               CONDITION4.getType(), CONDITION5.getType());
     Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
@@ -452,7 +455,8 @@ public class PipelinePlannerTest {
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n1", NODE).build())
       .addStage(StageSpec.builder("n2", NODE).build())
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n1", "n2")
       .addConnection("n2", "condition1.connector")
       .build();
@@ -472,8 +476,10 @@ public class PipelinePlannerTest {
       condition1.connector -- n3 - n4 - condition2.connector
      */
     PipelinePhase phase3 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
-      .addStage(StageSpec.builder("condition2.connector", connectorSpec("condition2.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SOURCE_TYPE)).build())
+      .addStage(StageSpec.builder("condition2.connector",
+                                  connectorSpec("condition2.connector", Constants.Connector.SINK_TYPE)).build())
       .addStage(StageSpec.builder("n3", NODE).build())
       .addStage(StageSpec.builder("n4", NODE).build())
       .addConnection("condition1.connector", "n3")
@@ -487,7 +493,8 @@ public class PipelinePlannerTest {
       condition1.connector -- n10
      */
     PipelinePhase phase4 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n10", NODE).build())
       .addConnection("condition1.connector", "n10")
       .build();
@@ -507,9 +514,11 @@ public class PipelinePlannerTest {
       condition2.connector -- n5 -- condition3.connector
      */
     PipelinePhase phase6 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition2.connector", connectorSpec("condition2.connector")).build())
+      .addStage(StageSpec.builder("condition2.connector",
+                                  connectorSpec("condition2.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n5", NODE).build())
-      .addStage(StageSpec.builder("condition3.connector", connectorSpec("condition3.connector")).build())
+      .addStage(StageSpec.builder("condition3.connector",
+                                  connectorSpec("condition3.connector", Constants.Connector.SINK_TYPE)).build())
       .addConnection("condition2.connector", "n5")
       .addConnection("n5", "condition3.connector")
       .build();
@@ -530,7 +539,8 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase8 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n6", NODE).build())
-      .addStage(StageSpec.builder("condition3.connector", connectorSpec("condition3.connector")).build())
+      .addStage(StageSpec.builder("condition3.connector",
+                                  connectorSpec("condition3.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addConnection("condition3.connector", "n6")
       .build();
     String phase8Name = getPhaseName("condition3", "n6");
@@ -541,7 +551,8 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase9 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n7", NODE).build())
-      .addStage(StageSpec.builder("condition3.connector", connectorSpec("condition3.connector")).build())
+      .addStage(StageSpec.builder("condition3.connector",
+                                  connectorSpec("condition3.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addConnection("condition3.connector", "n7")
       .build();
     String phase9Name = getPhaseName("condition3", "n7");
@@ -561,7 +572,8 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase11 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n8", NODE).build())
-      .addStage(StageSpec.builder("condition2.connector", connectorSpec("condition2.connector")).build())
+      .addStage(StageSpec.builder("condition2.connector",
+                                  connectorSpec("condition2.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addConnection("condition2.connector", "n8")
       .build();
     String phase11Name = getPhaseName("condition4", "n8");
@@ -581,7 +593,8 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase13 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n9", NODE).build())
-      .addStage(StageSpec.builder("condition2.connector", connectorSpec("condition2.connector")).build())
+      .addStage(StageSpec.builder("condition2.connector",
+                                  connectorSpec("condition2.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addConnection("condition2.connector", "n9")
       .build();
     String phase13Name = getPhaseName("condition5", "n9");
@@ -637,7 +650,7 @@ public class PipelinePlannerTest {
       new Connection("condition3", "n3", true)
     );
 
-    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.CONNECTOR_TYPE,
+    Set<String> pluginTypes = ImmutableSet.of(NODE.getType(), REDUCE.getType(), Constants.Connector.PLUGIN_TYPE,
                                               CONDITION1.getType(), CONDITION2.getType(), CONDITION3.getType(),
                                               CONDITION4.getType(), CONDITION5.getType());
     Set<String> reduceTypes = ImmutableSet.of(REDUCE.getType());
@@ -650,7 +663,8 @@ public class PipelinePlannerTest {
      */
     PipelinePhase phase1 = PipelinePhase.builder(pluginTypes)
       .addStage(StageSpec.builder("n1", NODE).build())
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SINK_TYPE)).build())
       .addConnection("n1", "condition1.connector")
       .build();
     String phase1Name = getPhaseName("n1", "condition1");
@@ -688,7 +702,8 @@ public class PipelinePlannerTest {
       condition1.connector -- n2
      */
     PipelinePhase phase5 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n2", NODE).build())
       .addConnection("condition1.connector", "n2")
       .build();
@@ -699,7 +714,8 @@ public class PipelinePlannerTest {
       condition1.connector -- n3
      */
     PipelinePhase phase6 = PipelinePhase.builder(pluginTypes)
-      .addStage(StageSpec.builder("condition1.connector", connectorSpec("condition1.connector")).build())
+      .addStage(StageSpec.builder("condition1.connector",
+                                  connectorSpec("condition1.connector", Constants.Connector.SOURCE_TYPE)).build())
       .addStage(StageSpec.builder("n3", NODE).build())
       .addConnection("condition1.connector", "n3")
       .build();
@@ -725,8 +741,9 @@ public class PipelinePlannerTest {
     return PipelinePlanner.getPhaseName(sources, sinkNames);
   }
 
-  private static PluginSpec connectorSpec(String originalName) {
-    return new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
-                          ImmutableMap.of(Constants.CONNECTOR_ORIGINAL_NAME, originalName), null);
+  private static PluginSpec connectorSpec(String originalName, String type) {
+    return new PluginSpec(Constants.Connector.PLUGIN_TYPE, "connector",
+                          ImmutableMap.of(Constants.Connector.ORIGINAL_NAME, originalName,
+                                          Constants.Connector.TYPE, type), null);
   }
 }

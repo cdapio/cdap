@@ -34,7 +34,7 @@ import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.security.impersonation.Impersonator;
 import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
+import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -56,16 +56,16 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
   private final Impersonator impersonator;
-  private final PrivilegesManager privilegesManager;
   private final AuthenticationContext authenticationContext;
+  private final AuthorizationEnforcer authorizationEnforcer;
 
   @Inject
   PreviewApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
                             Store store, OwnerAdmin ownerAdmin, DatasetFramework datasetFramework,
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                            PrivilegesManager privilegesManager,
-                            AuthenticationContext authenticationContext, Impersonator impersonator) {
+                            AuthenticationContext authenticationContext, Impersonator impersonator,
+                            AuthorizationEnforcer authorizationEnforcer) {
     this.cConf = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -74,20 +74,21 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
     this.impersonator = impersonator;
-    this.privilegesManager = privilegesManager;
     this.authenticationContext = authenticationContext;
     this.ownerAdmin = ownerAdmin;
+    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
-    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin));
-    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework,
-                                                   inMemoryDatasetFramework));
-    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework));
-    pipeline.addLast(new ProgramGenerationStage(privilegesManager, authenticationContext));
+    pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
+                                                  authorizationEnforcer, authenticationContext));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
+                                                   ownerAdmin, authenticationContext));
+    pipeline.addLast(new CreateDatasetInstancesStage(cConf, datasetFramework, ownerAdmin, authenticationContext));
+    pipeline.addLast(new ProgramGenerationStage());
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry, ownerAdmin));
     pipeline.setFinally(new DeploymentCleanupStage());
     return pipeline.execute(input);

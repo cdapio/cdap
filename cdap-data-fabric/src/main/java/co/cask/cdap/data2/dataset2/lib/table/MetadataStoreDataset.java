@@ -19,12 +19,15 @@ package co.cask.cdap.data2.dataset2.lib.table;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Delete;
+import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Function;
@@ -125,6 +128,29 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  // Get all non-null values with the given ids
+  public <T> List<T> get(Set<MDSKey> ids, Type typeOfT) {
+    List<T> resultList = new ArrayList<>();
+    List<Get> getList = new ArrayList<>();
+    for (MDSKey id : ids) {
+      getList.add(new Get(id.getKey()));
+    }
+    List<Row> rowList = table.get(getList);
+    for (Row row : rowList) {
+      if (row.isEmpty()) {
+        continue;
+      }
+
+      byte[] value = row.get(COLUMN);
+      if (value == null) {
+        continue;
+      }
+      T result = deserialize(value, typeOfT);
+      resultList.add(result);
+    }
+    return resultList;
   }
 
   // lists all that has same first id parts
@@ -374,6 +400,24 @@ public class MetadataStoreDataset extends AbstractDataset {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  protected MDSKey.Builder getApplicationKeyBuilder(String recordType, @Nullable ApplicationId applicationId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (applicationId != null) {
+      builder.add(applicationId.getNamespace());
+      builder.add(applicationId.getApplication());
+      builder.add(applicationId.getVersion());
+    }
+    return builder;
+  }
+
+  protected MDSKey.Builder getNamespaceKeyBuilder(String recordType, @Nullable NamespaceId namespaceId) {
+    MDSKey.Builder builder = new MDSKey.Builder().add(recordType);
+    if (namespaceId != null) {
+      builder.add(namespaceId.getNamespace());
+    }
+    return builder;
   }
 
   protected MDSKey.Builder getProgramKeyBuilder(String recordType, @Nullable ProgramId programId) {

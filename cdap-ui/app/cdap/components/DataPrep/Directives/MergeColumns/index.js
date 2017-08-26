@@ -22,6 +22,8 @@ import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {columnNameAlreadyExists} from 'components/DataPrep/helper';
 import WarningContainer from 'components/WarningContainer';
+import {setPopoverOffset} from 'components/DataPrep/helper';
+
 import T from 'i18n-react';
 require('./MergeColumns.scss');
 
@@ -58,11 +60,21 @@ export default class MergeColumnsDirective extends Component {
     this.applyDirective = this.applyDirective.bind(this);
   }
 
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('merge-columns-directive'));
+  }
+
   componentWillReceiveProps(nextProps) {
     if (nextProps.isOpen !== this.state.isOpen) {
       this.setState({
         isOpen: nextProps.isOpen
       });
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
     }
   }
 
@@ -267,6 +279,7 @@ export default class MergeColumnsDirective extends Component {
   render() {
     return (
       <div
+        id="merge-columns-directive"
         className={classnames('merge-columns-directive clearfix action-item', {
           'active': this.state.isOpen
         })}

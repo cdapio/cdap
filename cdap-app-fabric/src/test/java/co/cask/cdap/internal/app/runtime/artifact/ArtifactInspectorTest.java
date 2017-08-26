@@ -35,6 +35,7 @@ import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.security.impersonation.DefaultImpersonator;
 import co.cask.cdap.security.impersonation.EntityImpersonator;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
@@ -79,8 +80,8 @@ public class ArtifactInspectorTest {
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
-                                                      new DefaultImpersonator(CConfiguration.create(), null)))) {
+             ImmutableList.of(artifactLocation).iterator(),
+             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
       artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
     }
   }
@@ -96,8 +97,8 @@ public class ArtifactInspectorTest {
     Location artifactLocation = Locations.toLocation(appFile);
     try (CloseableClassLoader artifactClassLoader =
            classLoaderFactory.createClassLoader(
-             artifactLocation, new EntityImpersonator(artifactId.toEntityId(),
-                                                      new DefaultImpersonator(CConfiguration.create(), null)))) {
+             ImmutableList.of(artifactLocation).iterator(),
+             new EntityImpersonator(artifactId.toEntityId(), new DefaultImpersonator(CConfiguration.create(), null)))) {
 
       ArtifactClasses classes = artifactInspector.inspectArtifact(artifactId, appFile, artifactClassLoader);
 

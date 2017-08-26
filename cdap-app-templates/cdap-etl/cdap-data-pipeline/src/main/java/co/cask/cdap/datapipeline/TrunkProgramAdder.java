@@ -17,10 +17,11 @@
 package co.cask.cdap.datapipeline;
 
 import co.cask.cdap.api.customaction.CustomAction;
+import co.cask.cdap.api.workflow.Condition;
 import co.cask.cdap.api.workflow.WorkflowConfigurer;
 
 /**
- * Adds programs on the workflow trunk.
+ * Implementation of {@link WorkflowProgramAdder} which adds node to the Workflow trunk.
  */
 public class TrunkProgramAdder implements WorkflowProgramAdder {
   private final WorkflowConfigurer configurer;
@@ -42,5 +43,35 @@ public class TrunkProgramAdder implements WorkflowProgramAdder {
   @Override
   public void addAction(CustomAction action) {
     configurer.addAction(action);
+  }
+
+  @Override
+  public WorkflowProgramAdder condition(Condition condition) {
+    return new ConditionToTrunkAdder<>(this, configurer.condition(condition));
+  }
+
+  @Override
+  public WorkflowProgramAdder otherwise() {
+    throw new UnsupportedOperationException("Operation not supported.");
+  }
+
+  @Override
+  public WorkflowProgramAdder end() {
+    throw new UnsupportedOperationException("Operation not supported.");
+  }
+
+  @Override
+  public WorkflowProgramAdder fork() {
+    return new ForkToTrunkAdder<>(this, configurer.fork());
+  }
+
+  @Override
+  public WorkflowProgramAdder also() {
+    throw new UnsupportedOperationException("Operation not supported.");
+  }
+
+  @Override
+  public WorkflowProgramAdder join() {
+    throw new UnsupportedOperationException("Operation not supported.");
   }
 }

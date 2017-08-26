@@ -73,20 +73,11 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   @Override
   public void create() throws IOException {
-    create(false);
-  }
-
-  /**
-   * @param truncating whether this call to create() is part of a truncate() operation. The effect is:
-   *                   If possessExisting is true, then the truncate() has just dropped this
-   *                   dataset and that deleted the base directory: we must recreate it.
-   */
-  private void create(boolean truncating) throws IOException {
     if (isExternal) {
       validateExists(FileSetProperties.DATA_EXTERNAL);
     } else if (useExisting) {
       validateExists(FileSetProperties.DATA_USE_EXISTING);
-    } else if (!truncating && possessExisting) {
+    } else if (possessExisting) {
       validateExists(FileSetProperties.DATA_POSSESS_EXISTING);
     } else {
       if (exists()) {
@@ -152,8 +143,15 @@ public class FileSetAdmin implements DatasetAdmin, Updatable {
 
   @Override
   public void truncate() throws IOException {
-    drop();
-    create(true);
+    if (!isExternal && !useExisting) {
+      // we can't simply delete and recreate the base location, because it may have pre-existed:
+      // - we might create it with different permissions/ownership than the original
+      // - we might not even have permission to create (write in the parent dir)
+      // Hence: delete all contents (all children) of the base location.
+      for (Location child : baseLocation.list()) {
+        child.delete(true);
+      }
+    }
   }
 
   @Override

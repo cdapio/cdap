@@ -15,10 +15,13 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MySidePanel', function ($scope) {
+  .controller('MySidePanel', function ($scope, AvailablePluginsStore, $filter, myHelpers) {
     this.groups = $scope.panelGroups;
     this.groupGenericName = $scope.groupGenericName || 'group';
     this.itemGenericName = $scope.itemGenericName || 'item';
+
+    let myRemoveCamelCase = $filter('myRemoveCamelcase');
+    this.pluginsMap = {};
 
     this.view = $scope.view || 'icon';
     $scope.$watch('MySidePanel.groups.length', function() {
@@ -46,4 +49,60 @@ angular.module(PKG.name + '.commons')
         fn.call($scope.onPanelItemClickContext, event, item);
       }
     };
+
+    function generatePluginMapKey(plugin) {
+      let {
+        name,
+        type,
+        artifact
+      } = plugin;
+
+      if (plugin.pluginTemplate) {
+        name = plugin.pluginName;
+        type = plugin.pluginType;
+      }
+
+      return `${name}-${type}-${artifact.name}-${artifact.version}-${artifact.scope}`;
+    }
+
+    this.generateLabel = (plugin) => {
+      if (plugin.pluginTemplate) {
+        return plugin.name;
+      }
+
+      let key = generatePluginMapKey(plugin);
+
+      let displayName = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'display-name');
+
+      displayName = displayName || myRemoveCamelCase(plugin.name);
+
+      return displayName;
+    };
+
+    this.shouldShowCustomIcon = (plugin) => {
+      let key = generatePluginMapKey(plugin);
+      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+
+      return ['inline', 'link'].indexOf(iconSourceType) !== -1;
+    };
+
+    this.getCustomIconSrc = (plugin) => {
+      let key = generatePluginMapKey(plugin);
+      let iconSourceType = myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'type');
+
+      if (iconSourceType === 'inline') {
+        return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'data');
+      }
+
+      return myHelpers.objectQuery(this.pluginsMap, key, 'widgets', 'icon', 'arguments', 'url');
+    };
+
+    let sub = AvailablePluginsStore.subscribe(() => {
+      this.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
+    });
+
+    $scope.$on('$destroy', () => {
+      sub();
+    });
+
   });

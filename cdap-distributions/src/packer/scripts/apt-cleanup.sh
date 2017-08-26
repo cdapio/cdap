@@ -30,6 +30,6 @@ apt-get purge -y fuse
 
 # Autoremove and clean
 apt-get autoremove -y
-apt-get autoclean
+apt-get clean
 
 exit 0

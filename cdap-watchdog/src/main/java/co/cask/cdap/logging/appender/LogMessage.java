@@ -34,6 +34,7 @@ public class LogMessage implements ILoggingEvent {
   private final ILoggingEvent loggingEvent;
   private final LoggingContext loggingContext;
   private final Map<String, String> mdc;
+  private Object[] argumentArray;
 
   public LogMessage(ILoggingEvent loggingEvent, LoggingContext loggingContext) {
     this.loggingEvent = loggingEvent;
@@ -62,7 +63,7 @@ public class LogMessage implements ILoggingEvent {
 
   @Override
   public Object[] getArgumentArray() {
-    return loggingEvent.getArgumentArray();
+    return argumentArray == null ? loggingEvent.getArgumentArray() : argumentArray;
   }
 
   @Override
@@ -118,6 +119,13 @@ public class LogMessage implements ILoggingEvent {
   @Override
   public void prepareForDeferredProcessing() {
     loggingEvent.prepareForDeferredProcessing();
+    Object[] args = loggingEvent.getArgumentArray();
+    if (args != null && argumentArray == null) {
+      argumentArray = new Object[args.length];
+      for (int i = 0; i < args.length; i++) {
+        argumentArray[i] = args[i].toString();
+      }
+    }
   }
 
   @Override

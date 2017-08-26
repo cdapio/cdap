@@ -37,10 +37,13 @@ import java.util.concurrent.Callable;
 public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OUT, VAL_OUT> {
   private final BatchSink<IN, KEY_OUT, VAL_OUT> batchSink;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
-  public WrappedBatchSink(BatchSink<IN, KEY_OUT, VAL_OUT> batchSink, Caller caller) {
+  public WrappedBatchSink(BatchSink<IN, KEY_OUT, VAL_OUT> batchSink, Caller caller,
+                          OperationTimer operationTimer) {
     this.batchSink = batchSink;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -68,13 +71,18 @@ public class WrappedBatchSink<IN, KEY_OUT, VAL_OUT> extends BatchSink<IN, KEY_OU
   @Override
   public void transform(final IN input,
                         final Emitter<KeyValue<KEY_OUT, VAL_OUT>> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        batchSink.transform(input, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          batchSink.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 
   @Override

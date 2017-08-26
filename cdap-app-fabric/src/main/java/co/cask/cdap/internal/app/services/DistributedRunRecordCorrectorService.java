@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -39,10 +40,10 @@ public class DistributedRunRecordCorrectorService extends AbstractRunRecordCorre
   private ScheduledExecutorService scheduledExecutorService;
 
   @Inject
-  public DistributedRunRecordCorrectorService(CConfiguration cConf, Store store,
+  public DistributedRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                               ProgramLifecycleService programLifecycleService,
                                               ProgramRuntimeService runtimeService) {
-    super(store, programLifecycleService, runtimeService);
+    super(store, programStateWriter, programLifecycleService, runtimeService);
     this.cConf = cConf;
   }
 
@@ -56,8 +57,9 @@ public class DistributedRunRecordCorrectorService extends AbstractRunRecordCorre
       LOG.debug("Invalid run id corrector interval {}. Setting it to 180 seconds.", interval);
       interval = 180L;
     }
+    // Schedule the run record corrector with 5 minutes initial delay and 180 seconds interval between runs
     scheduledExecutorService.scheduleWithFixedDelay(new RunRecordsCorrectorRunnable(),
-                                                    2L, interval, TimeUnit.SECONDS);
+                                                    300L, interval, TimeUnit.SECONDS);
   }
 
   @Override

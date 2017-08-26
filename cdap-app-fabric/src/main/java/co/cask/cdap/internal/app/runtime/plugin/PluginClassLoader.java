@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.plugin;
 
+import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
@@ -52,7 +53,7 @@ import java.util.jar.Manifest;
  * ClassLoader as the Combine ClassLoader.
  */
 public class PluginClassLoader extends DirectoryClassLoader {
-
+  private final ArtifactId artifactId;
   private final Set<String> exportPackages;
 
   static ClassLoader createParent(ClassLoader templateClassLoader) {
@@ -77,9 +78,17 @@ public class PluginClassLoader extends DirectoryClassLoader {
     return new CombineClassLoader(programClassLoader.getParent(), ImmutableList.of(filteredTemplateClassLoader));
   }
 
-  PluginClassLoader(File directory, ClassLoader parent) {
+  PluginClassLoader(ArtifactId artifactId, File directory, ClassLoader parent) {
     super(directory, parent, "lib");
+    this.artifactId = artifactId;
     this.exportPackages = ManifestFields.getExportPackages(getManifest());
+  }
+
+  /**
+   * @return the plugin's artifact id
+   */
+  public ArtifactId getArtifactId() {
+    return artifactId;
   }
 
   /**

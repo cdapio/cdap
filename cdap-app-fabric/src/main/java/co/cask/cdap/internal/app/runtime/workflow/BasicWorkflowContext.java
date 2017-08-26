@@ -20,6 +20,7 @@ import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
+import co.cask.cdap.api.workflow.ConditionSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowNodeState;
@@ -50,6 +51,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   private final WorkflowSpecification workflowSpec;
   private final WorkflowActionSpecification specification;
+  private final ConditionSpecification conditionSpecification;
   private final WorkflowToken token;
   private final Map<String, WorkflowNodeState> nodeStates;
   private ProgramState state;
@@ -61,7 +63,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
                        DiscoveryServiceClient discoveryServiceClient, Map<String, WorkflowNodeState> nodeStates,
                        @Nullable PluginInstantiator pluginInstantiator,
                        SecureStore secureStore, SecureStoreManager secureStoreManager,
-                       MessagingService messagingService) {
+                       MessagingService messagingService, @Nullable ConditionSpecification conditionSpecification) {
     super(program, programOptions, cConf, (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           datasetFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, Collections.singletonMap(Constants.Metrics.Tag.WORKFLOW_RUN_ID,
@@ -69,6 +71,7 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
           secureStore, secureStoreManager, messagingService, pluginInstantiator);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
+    this.conditionSpecification = conditionSpecification;
     this.token = token;
     this.nodeStates = nodeStates;
   }
@@ -84,6 +87,14 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
       throw new UnsupportedOperationException("Operation not allowed.");
     }
     return specification;
+  }
+
+  @Override
+  public ConditionSpecification getConditionSpecification() {
+    if (conditionSpecification == null) {
+      throw new UnsupportedOperationException("Operation not allowed.");
+    }
+    return conditionSpecification;
   }
 
   @Override

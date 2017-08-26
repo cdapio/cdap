@@ -48,11 +48,12 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginEndpoint;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.plugin.PluginService;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
+import co.cask.cdap.proto.artifact.ArtifactPropertiesRequest;
 import co.cask.cdap.proto.artifact.ArtifactRanges;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
+import co.cask.cdap.proto.artifact.ArtifactSummaryProperties;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -123,6 +124,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+  private static final Type BATCH_ARTIFACT_PROPERTIES_REQUEST =
+    new TypeToken<List<ArtifactPropertiesRequest>>() { }.getType();
+  private static final Type BATCH_ARTIFACT_PROPERTIES_RESPONSE =
+    new TypeToken<List<ArtifactSummaryProperties>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
@@ -158,6 +163,46 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       LOG.error("Error while refreshing system artifacts.", e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+  }
+
+  @POST
+  @Path("/namespaces/{namespace-id}/artifactproperties")
+  public void getArtifactProperties(HttpRequest request, HttpResponder responder,
+                                    @PathParam("namespace-id") String namespaceId) throws Exception {
+
+    NamespaceId namespace = validateAndGetNamespace(namespaceId);
+
+    List<ArtifactPropertiesRequest> propertyRequests;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      propertyRequests = GSON.fromJson(reader, BATCH_ARTIFACT_PROPERTIES_REQUEST);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Unable to parse request: " + e.getMessage(), e);
+    }
+
+    List<ArtifactSummaryProperties> result = new ArrayList<>(propertyRequests.size());
+    for (ArtifactPropertiesRequest propertiesRequest : propertyRequests) {
+      NamespaceId requestNamespace =
+        propertiesRequest.getScope() == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespace;
+      ArtifactId artifactId = validateAndGetArtifactId(requestNamespace, propertiesRequest.getName(),
+                                                       propertiesRequest.getVersion());
+      ArtifactDetail artifactDetail;
+      try {
+        artifactDetail = artifactRepository.getArtifact(artifactId.toId());
+      } catch (ArtifactNotFoundException e) {
+        continue;
+      }
+      Map<String, String> properties = artifactDetail.getMeta().getProperties();
+      Map<String, String> filteredProperties = new HashMap<>(propertiesRequest.getProperties().size());
+      for (String propertyKey : propertiesRequest.getProperties()) {
+        if (properties.containsKey(propertyKey)) {
+          filteredProperties.put(propertyKey, properties.get(propertyKey));
+        }
+      }
+      result.add(new ArtifactSummaryProperties(propertiesRequest.getName(), propertiesRequest.getVersion(),
+                                               propertiesRequest.getScope(), filteredProperties));
+    }
+
+    responder.sendJson(HttpResponseStatus.OK, result, BATCH_ARTIFACT_PROPERTIES_RESPONSE);
   }
 
   @GET
@@ -224,10 +269,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
+      ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
       ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
@@ -251,10 +296,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId.toId());
       Map<String, String> properties = artifactDetail.getMeta().getProperties();
       Map<String, String> result;
 
@@ -283,7 +328,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                               @PathParam("artifact-version") String artifactVersion) throws Exception {
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     Map<String, String> properties;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
@@ -296,7 +341,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      artifactRepository.writeArtifactProperties(artifactId, properties);
+      artifactRepository.writeArtifactProperties(artifactId.toId(), properties);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
@@ -314,7 +359,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                             @PathParam("property") String key) throws Exception {
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     String value = request.getContent().toString(Charsets.UTF_8);
     if (value == null) {
@@ -323,7 +368,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
 
     try {
-      artifactRepository.writeArtifactProperty(artifactId, key, value);
+      artifactRepository.writeArtifactProperty(artifactId.toId(), key, value);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception writing properties for artifact {}.", artifactId, e);
@@ -342,10 +387,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     throws Exception {
 
     NamespaceId namespace = validateAndGetScopedNamespace(Ids.namespace(namespaceId), scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
+      ArtifactDetail detail = artifactRepository.getArtifact(artifactId.toId());
       responder.sendString(HttpResponseStatus.OK, detail.getMeta().getProperties().get(key));
     } catch (IOException e) {
       LOG.error("Exception reading property for artifact {}.", artifactId, e);
@@ -362,10 +407,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifactProperties(artifactId);
+      artifactRepository.deleteArtifactProperties(artifactId.toId());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception deleting properties for artifact {}.", artifactId, e);
@@ -383,10 +428,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifactProperty(artifactId, key);
+      artifactRepository.deleteArtifactProperty(artifactId.toId(), key);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception updating properties for artifact {}.", artifactId, e);
@@ -405,10 +450,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
+      SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
+        artifactRepository.getPlugins(namespace, artifactId.toId());
       Set<String> pluginTypes = Sets.newHashSet();
       for (Set<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
@@ -435,11 +481,11 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
       SortedMap<ArtifactDescriptor, Set<PluginClass>> plugins =
-        artifactRepository.getPlugins(namespace, artifactId, pluginType);
+        artifactRepository.getPlugins(namespace, artifactId.toId(), pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, Set<PluginClass>> pluginsEntry : plugins.entrySet()) {
@@ -478,7 +524,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     String requestBody = request.getContent().toString(Charsets.UTF_8);
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     if (requestBody.isEmpty()) {
       throw new BadRequestException("Request body is used as plugin method parameter, " +
@@ -486,7 +532,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
     try {
       PluginEndpoint pluginEndpoint =
-        pluginService.getPluginEndpoint(namespace, artifactId, pluginType, pluginName, methodName);
+        pluginService.getPluginEndpoint(namespace, artifactId.toId(), pluginType, pluginName, methodName);
       Object response = pluginEndpoint.invoke(GSON.fromJson(requestBody, pluginEndpoint.getMethodParameterType()));
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(response));
     } catch (JsonSyntaxException e) {
@@ -532,7 +578,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     NamespaceId namespace = Ids.namespace(namespaceId);
     NamespaceId artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
     final NamespaceId pluginArtifactNamespace = validateAndGetScopedNamespace(namespace, pluginScope);
-    Id.Artifact parentArtifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
+    ArtifactId parentArtifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
     final ArtifactVersionRange pluginRange = pluginVersion == null ? null : ArtifactVersionRange.parse(pluginVersion);
     int limitNumber = Integer.valueOf(limit);
     limitNumber = limitNumber <= 0 ? Integer.MAX_VALUE : limitNumber;
@@ -551,8 +597,8 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
     try {
       SortedMap<ArtifactDescriptor, PluginClass> plugins =
-        artifactRepository.getPlugins(namespace, parentArtifactId, pluginType, pluginName, predicate, limitNumber,
-                                      sortOrder);
+        artifactRepository.getPlugins(namespace, parentArtifactId.toId(), pluginType, pluginName, predicate,
+                                      limitNumber, sortOrder);
       List<PluginInfo> pluginInfos = Lists.newArrayList();
 
       // flatten the map
@@ -664,10 +710,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
           try {
             String version = (artifactVersion == null || artifactVersion.isEmpty()) ?
               getBundleVersion(uploadedFile) : artifactVersion;
-            Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, version);
+            ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
             // add the artifact to the repo
-            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts, additionalPluginClasses);
+            artifactRepository.addArtifact(artifactId.toId(), uploadedFile, parentArtifacts, additionalPluginClasses);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());
@@ -728,10 +774,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                              @PathParam("artifact-version") String artifactVersion) throws Exception {
     NamespaceId namespace = NamespaceId.SYSTEM.getNamespace().equalsIgnoreCase(namespaceId) ?
       NamespaceId.SYSTEM : validateAndGetNamespace(namespaceId);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactId artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
-      artifactRepository.deleteArtifact(artifactId);
+      artifactRepository.deleteArtifact(artifactId.toId());
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (IOException e) {
       LOG.error("Exception deleting artifact named {} for namespace {} from the store.", artifactName, namespaceId, e);
@@ -812,10 +858,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     return ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : namespace;
   }
 
-  private Id.Artifact validateAndGetArtifactId(NamespaceId namespace, String name,
-                                               String version) throws BadRequestException {
+  private ArtifactId validateAndGetArtifactId(NamespaceId namespace, String name,
+                                              String version) throws BadRequestException {
     try {
-      return Id.Artifact.from(namespace.toId(), name, version);
+      return namespace.artifact(name, version);
     } catch (Exception e) {
       throw new BadRequestException(e.getMessage());
     }

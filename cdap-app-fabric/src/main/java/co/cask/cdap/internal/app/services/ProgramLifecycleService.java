@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.services;
 
-import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.app.ApplicationSpecification;
@@ -33,21 +32,15 @@ import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
-import co.cask.cdap.common.security.AuthEnforce;
-import co.cask.cdap.common.service.Retries;
-import co.cask.cdap.common.service.RetryStrategies;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
-import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
-import co.cask.cdap.proto.BasicThrowable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRecord;
@@ -56,7 +49,6 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
@@ -65,11 +57,11 @@ import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.scheduler.Scheduler;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.cdap.store.NamespaceStore;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
@@ -79,7 +71,6 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.logging.LogEntry;
-import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +83,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -133,8 +123,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting ProgramLifecycleService");
-
-
   }
 
   @Override
@@ -168,29 +156,24 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private ProgramStatus getExistingAppProgramStatus(ApplicationSpecification appSpec, ProgramId programId)
     throws Exception {
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(programId);
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
 
-    if (runtimeInfo == null) {
-      if (programId.getType() != ProgramType.WEBAPP) {
-        //Runtime info not found. Check to see if the program exists.
-        ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
-        if (spec == null) {
-          // program doesn't exist
-          throw new NotFoundException(programId);
-        }
-        ensureAccess(programId);
-
-        if ((programId.getType() == ProgramType.MAPREDUCE || programId.getType() == ProgramType.SPARK) &&
-          !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
-          // MapReduce program exists and running as a part of Workflow
-          return ProgramStatus.RUNNING;
-        }
-        return ProgramStatus.STOPPED;
-      }
+    if (programId.getType() == ProgramType.WEBAPP) {
       throw new IllegalStateException("Webapp status is not supported");
     }
 
-    return runtimeInfo.getController().getState().getProgramStatus();
+    ProgramSpecification spec = getExistingAppProgramSpecification(appSpec, programId);
+    if (spec == null) {
+      // program doesn't exist
+      throw new NotFoundException(programId);
+    }
+
+    // A program is running if there are any RUNNING or STARTING run records
+    boolean runningRunRecords = !store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty();
+    if (runningRunRecords || !store.getRuns(programId, ProgramRunStatus.STARTING, 0, Long.MAX_VALUE, 1).isEmpty()) {
+      return ProgramStatus.RUNNING;
+    }
+    return ProgramStatus.STOPPED;
   }
 
   /**
@@ -201,6 +184,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   @Nullable
   public ProgramSpecification getProgramSpecification(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.allOf(Action.class), authorizationEnforcer,
+                                         authenticationContext.getPrincipal());
     ApplicationSpecification appSpec;
     appSpec = store.getApplication(programId.getParent());
     if (appSpec == null) {
@@ -217,7 +202,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   private ProgramSpecification getExistingAppProgramSpecification(ApplicationSpecification appSpec, ProgramId programId)
     throws Exception {
-    ensureAccess(programId);
     String programName = programId.getProgram();
     ProgramType type = programId.getType();
     ProgramSpecification programSpec;
@@ -255,6 +239,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    */
   public synchronized ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug)
     throws Exception {
+    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     if (isConcurrentRunsInSameAppForbidden(programId.getType()) && isRunningInSameProgram(programId)) {
       throw new ConflictException(String.format("Program %s is already running in an version of the same application",
                                                 programId));
@@ -269,7 +254,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
       userArgs.putAll(overrides);
     }
 
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = start(programId, sysArgs, userArgs, debug);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = startInternal(programId, sysArgs, userArgs, debug);
     if (runtimeInfo == null) {
       throw new IOException(String.format("Failed to start program %s", programId));
     }
@@ -278,6 +263,9 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   /**
    * Start a Program.
+   *
+   * Note that this method can only be called through internal service, it does not have auth check for starting the
+   * program.
    *
    * @param programId  the {@link ProgramId program} to start
    * @param systemArgs system arguments
@@ -290,9 +278,10 @@ public class ProgramLifecycleService extends AbstractIdleService {
    *                               a user requires {@link Action#EXECUTE} on the program
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
-  public ProgramRuntimeService.RuntimeInfo start(final ProgramId programId, final Map<String, String> systemArgs,
-                                                 final Map<String, String> userArgs, boolean debug) throws Exception {
-    authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
+  public ProgramRuntimeService.RuntimeInfo startInternal(final ProgramId programId,
+                                                         final Map<String, String> systemArgs,
+                                                         final Map<String, String> userArgs,
+                                                         boolean debug) throws Exception {
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     BasicArguments systemArguments = new BasicArguments(systemArgs);
     BasicArguments userArguments = new BasicArguments(userArgs);
@@ -436,9 +425,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * the specified program. To get runtime arguments for a program, a user requires
    * {@link Action#READ} privileges on the program.
    */
-  @AuthEnforce(entities = "programId", enforceOn = ProgramId.class, actions = Action.READ)
-  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId)
-    throws NotFoundException, UnauthorizedException {
+  public Map<String, String> getRuntimeArgs(@Name("programId") ProgramId programId) throws Exception {
+    // user can have READ, ADMIN or EXECUTE to retrieve the runtime arguments
+    AuthorizationUtil.ensureOnePrivilege(programId, EnumSet.of(Action.READ, Action.EXECUTE, Action.ADMIN),
+                                         authorizationEnforcer, authenticationContext.getPrincipal());
+
     if (!store.programExists(programId)) {
       throw new NotFoundException(programId);
     }
@@ -492,6 +483,11 @@ public class ProgramLifecycleService extends AbstractIdleService {
                                                   programId.getType().getPrettyName()));
     }
     resetLogLevels(programId, loggerNames, component, runId);
+  }
+
+  public boolean programExists(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return store.programExists(programId);
   }
 
   private boolean isRunning(ProgramId programId) throws Exception {
@@ -606,7 +602,8 @@ public class ProgramLifecycleService extends AbstractIdleService {
       throw new NotFoundException(applicationId);
     }
     ProgramSchedule schedule = scheduler.getSchedule(scheduleId);
-    ensureAccess(schedule.getProgramId());
+    AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
+                                   authenticationContext.getPrincipal());
     return scheduler.getScheduleStatus(scheduleId);
   }
 
@@ -685,8 +682,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
 
   private boolean hasAccess(ProgramId programId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
-    Predicate<EntityId> filter = authorizationEnforcer.createFilter(principal);
-    return filter.apply(programId);
+    return !authorizationEnforcer.isVisible(Collections.singleton(programId), principal).isEmpty();
   }
 
   private void setWorkerInstances(ProgramId programId, int instances)
@@ -841,18 +837,6 @@ public class ProgramLifecycleService extends AbstractIdleService {
     }
 
     return targetProgramId;
-  }
-
-  /**
-   * Ensures that the logged-in user has a {@link Action privilege} on the specified program instance.
-   *
-   * @param programId the {@link ProgramId} to check for privileges
-   * @throws UnauthorizedException if the logged in user has no {@link Action privileges} on the specified dataset
-   */
-  private void ensureAccess(ProgramId programId) throws Exception {
-    if (!hasAccess(programId)) {
-      throw new UnauthorizedException(authenticationContext.getPrincipal(), Action.READ, programId);
-    }
   }
 
   /**

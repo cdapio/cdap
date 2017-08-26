@@ -39,8 +39,8 @@ import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.RuntimeUsageRegistry;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ProgramDiscoveryExploreClient;
+import co.cask.cdap.internal.app.program.MessagingProgramStateWriter;
 import co.cask.cdap.internal.app.queue.QueueReaderFactory;
-import co.cask.cdap.internal.app.store.DirectStoreProgramStateWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteLineageWriter;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeStore;
 import co.cask.cdap.internal.app.store.remote.RemoteRuntimeUsageRegistry;
@@ -174,7 +174,7 @@ public class DistributedProgramRunnableModule {
           // For binding DataSet transaction stuff
           install(new DataFabricFacadeModule());
 
-          bind(ProgramStateWriter.class).to(DirectStoreProgramStateWriter.class);
+          bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
 
           bind(RuntimeStore.class).to(RemoteRuntimeStore.class);
 

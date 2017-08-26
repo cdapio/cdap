@@ -61,6 +61,7 @@ import org.apache.tephra.TransactionSystemClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -84,7 +85,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   @Inject
   CoreSchedulerService(TransactionSystemClient txClient, final DatasetFramework datasetFramework,
                        final SchedulerService schedulerService,
-                       final NotificationSubscriberService notificationSubscriberService,
+                       final ScheduleNotificationSubscriberService scheduleNotificationSubscriberService,
                        final ConstraintCheckerService constraintCheckerService,
                        final NamespaceQueryAdmin namespaceQueryAdmin, final Store store) {
     this.datasetFramework = datasetFramework;
@@ -112,14 +113,14 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
             migrateSchedules(namespaceQueryAdmin, store);
             cleanupJobs();
             constraintCheckerService.startAndWait();
-            notificationSubscriberService.startAndWait();
+            scheduleNotificationSubscriberService.startAndWait();
             schedulerStarted.set(true);
             LOG.info("Started core scheduler service.");
           }
 
           @Override
           protected void shutDown() throws Exception {
-            notificationSubscriberService.stopAndWait();
+            scheduleNotificationSubscriberService.stopAndWait();
             constraintCheckerService.stopAndWait();
             schedulerService.stopAndWait();
             LOG.info("Stopped core scheduler service.");
@@ -160,7 +161,7 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   private void migrateSchedules(final NamespaceQueryAdmin namespaceQueryAdmin, final Store appMetaStore)
     throws Exception {
 
-    List<NamespaceMeta> namespaceMetas = namespaceQueryAdmin.list();
+    List<NamespaceMeta> namespaceMetas = new ArrayList<>(namespaceQueryAdmin.list());
     ProgramScheduleStoreDataset.MigrationStatus migrationStatus =
       execute(new StoreTxRunnable<ProgramScheduleStoreDataset.MigrationStatus, RuntimeException>() {
         @Override
@@ -469,6 +470,26 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
       @Override
       public List<ProgramSchedule> run(ProgramScheduleStoreDataset store) {
         return store.listSchedules(programId);
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(final ApplicationId appId) throws NotFoundException {
+    return execute(new StoreTxRunnable<List<ProgramScheduleRecord>, RuntimeException>() {
+      @Override
+      public List<ProgramScheduleRecord> run(ProgramScheduleStoreDataset store) {
+        return store.listScheduleRecords(appId);
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
+  public List<ProgramScheduleRecord> listScheduleRecords(final ProgramId programId) throws NotFoundException {
+    return execute(new StoreTxRunnable<List<ProgramScheduleRecord>, RuntimeException>() {
+      @Override
+      public List<ProgramScheduleRecord> run(ProgramScheduleStoreDataset store) {
+        return store.listScheduleRecords(programId);
       }
     }, RuntimeException.class);
   }

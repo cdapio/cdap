@@ -247,7 +247,7 @@ public class UnitTestManager extends AbstractTestManager {
   public ArtifactManager addPluginArtifact(ArtifactId artifactId, Set<ArtifactRange> parents,
                                            Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents);
+    artifactRepository.addArtifact(artifactId.toId(), pluginJar, parents, null);
     Preconditions.checkState(pluginJar.delete());
     return artifactManagerFactory.create(artifactId);
   }

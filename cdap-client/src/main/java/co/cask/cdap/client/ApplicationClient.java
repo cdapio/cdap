@@ -31,9 +31,11 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -859,5 +861,55 @@ public class ApplicationClient {
     }
 
     return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();
+  }
+
+  /**
+   * Add a schedule to an application.
+   *
+   * @param app the application
+   * @param scheduleDetail the schedule to be added
+   */
+  public void addSchedule(ApplicationId app, ScheduleDetail scheduleDetail)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException,
+    UnauthorizedException, BadRequestException {
+    String path = String.format("apps/%s/versions/%s/schedules/%s", app.getApplication(), app.getVersion(),
+                                scheduleDetail.getName());
+    HttpResponse response = restClient.execute(HttpMethod.PUT, config.resolveNamespacedURLV3(app.getParent(), path),
+                                               GSON.toJson(scheduleDetail), ImmutableMap.<String, String>of(),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_BAD_REQUEST);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(app);
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(String.format("Bad Request. Reason: %s",
+                                                  response.getResponseBodyAsString()));
+    }
+  }
+
+  /**
+   * Enable a schedule in an application.
+   *
+   * @param scheduleId the id of the schedule to be enabled
+   */
+  public void enableSchedule(ScheduleId scheduleId)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException,
+    UnauthorizedException, BadRequestException {
+    String path = String.format("apps/%s/versions/%s/program-type/schedules/program-id/%s/action/enable",
+                                scheduleId.getApplication(), scheduleId.getVersion(),
+                                scheduleId.getSchedule());
+    HttpResponse response = restClient.execute(HttpMethod.PUT,
+                                               config.resolveNamespacedURLV3(scheduleId.getParent().getParent(), path),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND,
+                                               HttpURLConnection.HTTP_BAD_REQUEST);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(scheduleId.getParent());
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(String.format("Bad Request. Reason: %s",
+                                                  response.getResponseBodyAsString()));
+    }
   }
 }

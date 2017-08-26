@@ -18,7 +18,6 @@ import React, {PropTypes, Component} from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import {setPopoverOffset} from 'components/DataPrep/helper';
-import debounce from 'lodash/debounce';
 import {preventPropagation} from 'services/helpers';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
@@ -114,7 +113,6 @@ export default class MarkAsError extends Component {
 
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('mark-as-error-directive'));
-    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
   }
 
   componentDidUpdate() {
@@ -130,7 +128,6 @@ export default class MarkAsError extends Component {
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.offsetCalcDebounce);
     MouseTrap.unbind('enter');
   }
 

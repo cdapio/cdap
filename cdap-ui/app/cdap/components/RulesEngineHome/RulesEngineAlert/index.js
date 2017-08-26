@@ -32,7 +32,7 @@ export default class RulesEngineAlert extends Component {
   state = this.getDefaultState();
 
   componentDidMount() {
-    RulesEngineStore.subscribe(() => {
+    this.rulesStoreSubscription = RulesEngineStore.subscribe(() => {
       let {error} = RulesEngineStore.getState();
       if (error.showError) {
         this.setState({
@@ -44,6 +44,12 @@ export default class RulesEngineAlert extends Component {
         this.setState(this.getDefaultState());
       }
     });
+  }
+
+  componentWillUnmount() {
+    if (this.rulesStoreSubscription) {
+      this.rulesStoreSubscription();
+    }
   }
 
   render() {

@@ -35,7 +35,6 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -63,14 +62,12 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
   private final MetadataStore metadataStore;
-  private final PrivilegesManager privilegesManager;
   private final Impersonator impersonator;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
                                     QueueAdmin queueAdmin, MetricStore metricStore,
-                                    MetadataStore metadataStore, PrivilegesManager privilegesManager,
-                                    Impersonator impersonator) {
+                                    MetadataStore metadataStore, Impersonator impersonator) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
@@ -78,7 +75,6 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
     this.metadataStore = metadataStore;
-    this.privilegesManager = privilegesManager;
     this.impersonator = impersonator;
   }
 
@@ -95,8 +91,6 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       ProgramType type = ProgramTypes.fromSpecification(spec);
       final ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
       programTerminator.stop(programId);
-      // revoke privileges
-      privilegesManager.revoke(programId);
 
       // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow

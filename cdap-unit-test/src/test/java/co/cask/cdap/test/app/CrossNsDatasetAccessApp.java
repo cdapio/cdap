@@ -30,6 +30,7 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
  * An app using dataset from another namespace
  */
 public class CrossNsDatasetAccessApp extends AbstractApplication {
+  public static final String APP_NAME = "WriterApp";
   public static final String STREAM_NAME = "dataStream";
   public static final String FLOW_NAME = "dataFlow";
   public static final String OUTPUT_DATASET_NS = "output.dataset.ns";
@@ -37,7 +38,7 @@ public class CrossNsDatasetAccessApp extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("WriterApp");
+    setName(APP_NAME);
     setDescription("Writes from a stream to DS in another NS");
     addStream(new Stream(STREAM_NAME));
     addFlow(new WhoFlow());

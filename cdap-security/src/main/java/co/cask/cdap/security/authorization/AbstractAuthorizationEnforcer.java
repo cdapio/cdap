@@ -41,12 +41,10 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
     }
   };
 
-  private final boolean securityEnabled;
-  private final boolean authorizationEnabled;
+  private final boolean securityAuthorizationEnabled;
 
   AbstractAuthorizationEnforcer(CConfiguration cConf) {
-    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+    this.securityAuthorizationEnabled = AuthorizationUtil.isSecurityAuthorizationEnabled(cConf);
   }
 
   @Override
@@ -95,6 +93,6 @@ public abstract class AbstractAuthorizationEnforcer implements AuthorizationEnfo
   }
 
   protected boolean isSecurityAuthorizationEnabled() {
-    return securityEnabled && authorizationEnabled;
+    return securityAuthorizationEnabled;
   }
 }

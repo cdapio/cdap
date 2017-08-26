@@ -30,6 +30,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.WorkflowId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -50,7 +51,23 @@ public class LastRunConstraintTest {
   private static final DatasetId DATASET_ID = TEST_NS.dataset("pfs1");
 
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
+  private int sourceId;
 
+  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime) {
+    setStartAndRunning(store, id, pid, startTime, ImmutableMap.<String, String>of(),
+                       ImmutableMap.<String, String>of());
+
+  }
+
+
+  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime,
+                                  final Map<String, String> runtimeArgs,
+                                  final Map<String, String> systemArgs) {
+    store.setStart(id, pid, startTime, null, runtimeArgs,
+                   systemArgs, AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id, pid, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
+  }
+  
   @Test
   public void testLastRunConstraint() {
     Store store = AppFabricTestHelper.getInjector().getInstance(Store.class);
@@ -79,42 +96,46 @@ public class LastRunConstraintTest {
     // a RUNNING workflow, started 3 hours ago will fail the constraint check
     Map<String, String> systemArgs = ImmutableMap.of(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
     long startTime = nowSec - TimeUnit.HOURS.toSeconds(3);
-    store.setStartAndRun(WORKFLOW_ID, pid1, startTime, startTime + 1, EMPTY_MAP, systemArgs);
+    setStartAndRunning(store, WORKFLOW_ID, pid1, startTime, EMPTY_MAP, systemArgs);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // a SUSPENDED workflow started 3 hours ago will also fail the constraint check
-    store.setSuspend(WORKFLOW_ID, pid1);
+    store.setSuspend(WORKFLOW_ID, pid1, AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
-    store.setResume(WORKFLOW_ID, pid1);
+    store.setResume(WORKFLOW_ID, pid1, AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow runs completes 2 hours ago, the constraint check will be satisfied
-    store.setStop(WORKFLOW_ID, pid1, nowSec - TimeUnit.HOURS.toSeconds(2), ProgramRunStatus.COMPLETED);
+    store.setStop(WORKFLOW_ID, pid1, nowSec - TimeUnit.HOURS.toSeconds(2), ProgramRunStatus.COMPLETED,
+                  AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // a RUNNING workflow, started 2 hours ago will fail the constraint check
     startTime = nowSec - TimeUnit.HOURS.toSeconds(2);
-    store.setStartAndRun(WORKFLOW_ID, pid2, startTime, startTime + 1);
+    setStartAndRunning(store, WORKFLOW_ID, pid2, startTime);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow run fails 1 minute ago, the constraint check will be satisfied
-    store.setStop(WORKFLOW_ID, pid2, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.FAILED);
+    store.setStop(WORKFLOW_ID, pid2, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.FAILED,
+                  AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // similarly, a KILLED workflow, started 2 hours ago will also fail the constraint check
     startTime = nowSec - TimeUnit.HOURS.toSeconds(2);
-    store.setStartAndRun(WORKFLOW_ID, pid3, startTime, startTime + 1);
+    setStartAndRunning(store, WORKFLOW_ID, pid3, startTime);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
-    store.setStop(WORKFLOW_ID, pid3, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.KILLED);
+    store.setStop(WORKFLOW_ID, pid3, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.KILLED,
+                  AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(true, lastRunConstraint.check(schedule, constraintContext));
 
     // a RUNNING workflow, started 2 hours ago will fail the constraint check
     startTime = nowSec - TimeUnit.HOURS.toSeconds(2);
-    store.setStartAndRun(WORKFLOW_ID, pid4, startTime, startTime + 1);
+    setStartAndRunning(store, WORKFLOW_ID, pid4, startTime);
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
 
     // if that same workflow runs completes 1 minute ago, the constraint check will not be satisfied
-    store.setStop(WORKFLOW_ID, pid4, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.COMPLETED);
+    store.setStop(WORKFLOW_ID, pid4, nowSec - TimeUnit.MINUTES.toSeconds(1), ProgramRunStatus.COMPLETED,
+                  AppFabricTestHelper.createSourceId(++sourceId));
     assertSatisfied(false, lastRunConstraint.check(schedule, constraintContext));
   }
 

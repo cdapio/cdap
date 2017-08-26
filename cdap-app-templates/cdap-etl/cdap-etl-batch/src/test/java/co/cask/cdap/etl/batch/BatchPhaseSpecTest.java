@@ -48,11 +48,11 @@ public class BatchPhaseSpecTest {
      * source2 --|
      */
     Map<String, String> props = new HashMap<>();
-    PluginSpec connectorSpec = new PluginSpec(Constants.CONNECTOR_TYPE, "connector",
+    PluginSpec connectorSpec = new PluginSpec(Constants.Connector.PLUGIN_TYPE, "connector",
                                               ImmutableMap.<String, String>of(), null);
     ArtifactId artifactId = new ArtifactId("art", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
     PipelinePhase.Builder builder =
-      PipelinePhase.builder(ImmutableSet.of(BatchSource.PLUGIN_TYPE, Constants.CONNECTOR_TYPE))
+      PipelinePhase.builder(ImmutableSet.of(BatchSource.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE))
         .addStage(StageSpec.builder("source1", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
                     .build())
         .addStage(StageSpec.builder("source2", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
@@ -65,7 +65,7 @@ public class BatchPhaseSpecTest {
     BatchPhaseSpec phaseSpec =
       new BatchPhaseSpec("phase-1", builder.build(), new Resources(), new Resources(), new Resources(),
                          false, false, Collections.<String, String>emptyMap(),
-                         0, Collections.<String, String>emptyMap());
+                         0, Collections.<String, String>emptyMap(), false);
     Assert.assertEquals("Sources 'source1', 'source2' to sinks 'sink.connector'.", phaseSpec.getDescription());
   }
 }

@@ -19,6 +19,7 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
+import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,6 +32,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import org.apache.http.HttpResponse;
@@ -38,6 +40,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -49,12 +52,14 @@ import java.util.concurrent.TimeUnit;
 public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private static Store store;
+  private static ProgramStateWriter programStateWriter;
   private static ProgramLifecycleService programLifecycleService;
   private static ProgramRuntimeService runtimeService;
 
   @BeforeClass
   public static void setup() throws Exception {
     store = getInjector().getInstance(DefaultStore.class);
+    programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
   }
@@ -79,12 +84,12 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString()).size();
+        return getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING).size();
       }
     }, 5, TimeUnit.SECONDS);
 
     // Get the RunRecord
-    List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+    List<RunRecord> runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runRecords.size());
     final RunRecord rr = runRecords.get(0);
 
@@ -108,7 +113,9 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     // Use the store manipulate state to be RUNNING
     long now = System.currentTimeMillis();
     long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-    store.setStartAndRun(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs, nowSecs + 1);
+    store.setStart(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs, null, ImmutableMap.<String, String>of(),
+                   ImmutableMap.<String, String>of(), ByteBuffer.allocate(0).array());
+    store.setRunning(wordcountFlow1.toEntityId(), rr.getPid(), nowSecs + 1, null, ByteBuffer.allocate(1).array());
 
     // Now check again via Store to assume data store is wrong.
     RunRecord runRecordMeta = store.getRun(wordcountFlow1.toEntityId(), rr.getPid());
@@ -116,15 +123,18 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
 
     // Verify there is NO FAILED run record for the application
-    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
+    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED);
     Assert.assertEquals(0, runRecords.size());
 
     // Start the RunRecordCorrectorService, which will fix the run record
-    new LocalRunRecordCorrectorService(store, programLifecycleService, runtimeService).startUp();
+    new LocalRunRecordCorrectorService(store, programStateWriter, programLifecycleService, runtimeService).startUp();
 
-    // Verify there is one FAILED run record for the application
-    runRecords = getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED.toString());
-    Assert.assertEquals(1, runRecords.size());
-    Assert.assertEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+    // Wait for the FAILED run record for the application
+    Tasks.waitFor(1, new Callable<Integer>() {
+                    @Override
+                    public Integer call() throws Exception {
+                      return getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED).size();
+                    }
+                  }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }
 }

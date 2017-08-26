@@ -42,7 +42,8 @@ public class TransformFunction<T> implements FlatMapFunc<T, RecordInfo<Object>> 
       Transform<T, Object> plugin = pluginFunctionContext.createPlugin();
       plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(),
+                                         pluginFunctionContext.getStageStatisticsCollector());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());
     }
     emitter.reset();

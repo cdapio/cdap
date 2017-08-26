@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.spark;
 
 import co.cask.cdap.api.macro.MacroEvaluator;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.Alert;
 import co.cask.cdap.etl.api.AlertPublisher;
@@ -32,10 +33,13 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.BasicArguments;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelinePhase;
 import co.cask.cdap.etl.common.RecordInfo;
-import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.function.AlertPassFilter;
 import co.cask.cdap.etl.spark.function.BatchSinkFunction;
 import co.cask.cdap.etl.spark.function.ErrorPassFilter;
@@ -53,7 +57,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -61,23 +64,27 @@ import java.util.Set;
  */
 public abstract class SparkPipelineRunner {
 
-  protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec) throws Exception;
+  protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
+                                                                   StageStatisticsCollector collector) throws Exception;
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
     StageSpec stageSpec, String inputStageName,
-    SparkCollection<Object> inputCollection) throws Exception;
+    SparkCollection<Object> inputCollection, StageStatisticsCollector collector) throws Exception;
 
   protected abstract SparkCollection<Object> mergeJoinResults(
     StageSpec stageSpec,
-    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception;
+    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
+    StageStatisticsCollector collector) throws Exception;
 
   public void runPipeline(PipelinePhase pipelinePhase, String sourcePluginType,
                           JavaSparkExecutionContext sec,
                           Map<String, Integer> stagePartitions,
-                          PipelinePluginContext pluginContext) throws Exception {
+                          PluginContext pluginContext,
+                          Map<String, StageStatisticsCollector> collectors) throws Exception {
 
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(sec.getWorkflowToken(), sec.getRuntimeArguments(), sec.getLogicalStartTime(), sec,
+      new DefaultMacroEvaluator(new BasicArguments(sec),
+                                sec.getLogicalStartTime(), sec,
                                 sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 
@@ -113,14 +120,22 @@ public abstract class SparkPipelineRunner {
       SparkCollection<Object> stageData = null;
 
       Map<String, SparkCollection<Object>> inputDataCollections = new HashMap<>();
-      Set<String> stageInputs = stageSpec.getInputs();
+      Set<String> stageInputs = pipelinePhase.getStageInputs(stageName);
       for (String inputStageName : stageInputs) {
         StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
         if (inputStageSpec == null) {
           // means the input to this stage is in a separate phase. For example, it is an action.
           continue;
         }
-        String port = inputStageSpec.getOutputPorts().get(stageName).getPort();
+        String port = null;
+        // if this stage is a connector like c1.connector, the outputPorts will contain the original 'c1' as
+        // a key, but not 'c1.connector'. Similarly, if the input stage is a connector, it won't have any output ports
+        // however, this is fine since we know that the output of a connector stage is always normal output,
+        // not errors or alerts or output port records
+        if (!Constants.Connector.PLUGIN_TYPE.equals(inputStageSpec.getPluginType()) &&
+          !Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
+          port = inputStageSpec.getOutputPorts().get(stageName).getPort();
+        }
         SparkCollection<Object> inputRecords = port == null ?
           emittedRecords.get(inputStageName).outputRecords :
           emittedRecords.get(inputStageName).outputPortRecords.get(port);
@@ -139,32 +154,41 @@ public abstract class SparkPipelineRunner {
         }
       }
 
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+      boolean isConnectorSource =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSources().contains(stageName);
+      boolean isConnectorSink =
+        Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipelinePhase.getSinks().contains(stageName);
+
+      StageStatisticsCollector collector = collectors.get(stageName) == null ? new NoopStageStatisticsCollector()
+        : collectors.get(stageName);
+
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+
       if (stageData == null) {
 
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
-        if (sourcePluginType.equals(pluginType)) {
-          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec);
+        if (sourcePluginType.equals(pluginType) || isConnectorSource) {
+          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                       combinedData, hasErrorOutput, hasAlertOutput);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
 
-      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType)) {
+      } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
         stageData.store(stageSpec, Compat.convert(new BatchSinkFunction(pluginFunctionContext)));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec);
+        SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                     combinedData, hasErrorOutput, hasAlertOutput);
 
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
 
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec);
+        SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                     combinedData, hasErrorOutput, hasAlertOutput);
 
@@ -204,7 +228,7 @@ public abstract class SparkPipelineRunner {
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
         Integer partitions = stagePartitions.get(stageName);
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions);
+        SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                     combinedData, hasErrorOutput, hasAlertOutput);
 
@@ -218,7 +242,7 @@ public abstract class SparkPipelineRunner {
         for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
           String inputStage = inputStreamEntry.getKey();
           SparkCollection<Object> inputStream = inputStreamEntry.getValue();
-          preJoinStreams.put(inputStage, addJoinKey(stageSpec, inputStage, inputStream));
+          preJoinStreams.put(inputStage, addJoinKey(stageSpec, inputStage, inputStream, collector));
         }
 
         Set<String> remainingInputs = new HashSet<>();
@@ -271,7 +295,7 @@ public abstract class SparkPipelineRunner {
           throw new IllegalStateException("There are no inputs into join stage " + stageName);
         }
 
-        emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs).cache());
+        emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector).cache());
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -295,7 +319,7 @@ public abstract class SparkPipelineRunner {
         }
 
         if (inputAlerts != null) {
-          inputAlerts.publishAlerts(stageSpec);
+          inputAlerts.publishAlerts(stageSpec, collector);
         }
 
       } else {
@@ -322,7 +346,7 @@ public abstract class SparkPipelineRunner {
     for (String outputStageName : outputs) {
       StageSpec outputStage = pipelinePhase.getStage(outputStageName);
       //noinspection ConstantConditions
-      if (outputStage.getInputs().size() > 1) {
+      if (pipelinePhase.getStageInputs(outputStageName).size() > 1) {
         return true;
       }
     }

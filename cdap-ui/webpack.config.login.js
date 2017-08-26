@@ -17,7 +17,10 @@ var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var path = require('path');
+var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
+
 var plugins = [
+  new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
     context: path.resolve(__dirname, 'dll'),
     manifest: require(path.join(__dirname, 'dll', '/shared-vendor-manifest.json'))

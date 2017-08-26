@@ -27,6 +27,7 @@ import co.cask.cdap.etl.api.batch.BatchJoiner;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
 import co.cask.cdap.etl.batch.PipeTransformExecutor;
 import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.connector.MultiConnectorFactory;
 import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.Destroyables;
@@ -76,7 +77,8 @@ public class TransformRunner<KEY, VALUE> {
     this.outputWriter = getSinkWriter(context, phaseSpec.getPhase(), hConf);
 
     // instantiate and initialize all transformations and setup the TransformExecutor
-    PipelinePluginInstantiator pluginInstantiator = new PipelinePluginInstantiator(context, metrics, phaseSpec);
+    PipelinePluginInstantiator pluginInstantiator =
+      new PipelinePluginInstantiator(context, metrics, phaseSpec, new MultiConnectorFactory());
     // stage name -> runtime args for that stage
     Map<String, String> runtimeArgs = GSON.fromJson(
       hConf.get(ETLMapReduce.RUNTIME_ARGS_KEY), ETLMapReduce.RUNTIME_ARGS_TYPE);
@@ -113,7 +115,8 @@ public class TransformRunner<KEY, VALUE> {
     MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
                                               new BasicArguments(context.getWorkflowToken(), runtimeArgs),
-                                              sourceStage, phaseSpec.getNumOfRecordsPreview());
+                                              sourceStage, phaseSpec.getNumOfRecordsPreview(),
+                                              phaseSpec.pipelineContainsCondition());
     this.transformExecutor = transformExecutorFactory.create(phase, outputWriter, transformErrorSinkMap);
   }
 

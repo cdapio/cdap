@@ -47,7 +47,12 @@ $dsv_input_border_color: rgba(0, 0, 0, 0.15);
       color: $brand-primary;
     }
   }
-  .dsv-editor-container .dsv-row-container input.form-control {
-    border: 1px solid $dsv_input_border_color;
+  .dsv-editor-container .dsv-row-container {
+    .btn.btn-link {
+      padding: 0.5rem 1rem;
+    }
+    input.form-control {
+      border: 1px solid $dsv_input_border_color;
+    }
   }
 }
