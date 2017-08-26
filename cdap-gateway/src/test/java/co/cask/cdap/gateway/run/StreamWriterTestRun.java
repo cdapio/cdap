@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.gateway.GatewayFastTestsSuite;
 import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.gateway.apps.AppWritingtoStream;
+import co.cask.cdap.proto.ProgramRunStatus;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -53,8 +54,8 @@ public class StreamWriterTestRun extends GatewayTestBase {
                                                           AppWritingtoStream.SERVICE), null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    waitState("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, "RUNNING");
-    waitState("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, "RUNNING");
+    waitForProgramRuns("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, ProgramRunStatus.RUNNING, 1);
+    waitForProgramRuns("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, ProgramRunStatus.RUNNING, 1);
 
     checkCount(AppWritingtoStream.VALUE);
     checkHeader("Event", "1");
@@ -65,24 +66,15 @@ public class StreamWriterTestRun extends GatewayTestBase {
                                                           AppWritingtoStream.FLOW), null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    //Stop Worker
-    String workerState = getState("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER);
-    if (workerState != null && workerState.equals("RUNNING")) {
-      response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/workers/%s/stop",
-                                                            AppWritingtoStream.APPNAME,
-                                                            AppWritingtoStream.WORKER), null);
-      Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
-    }
-
     //Stop Service
     response = GatewayFastTestsSuite.doPost(String.format("/v3/namespaces/default/apps/%s/services/%s/stop",
                                                           AppWritingtoStream.APPNAME,
                                                           AppWritingtoStream.SERVICE), null);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
 
-    waitState("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, "STOPPED");
-    waitState("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER, "STOPPED");
-    waitState("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, "STOPPED");
+    waitForProgramRuns("flows", AppWritingtoStream.APPNAME, AppWritingtoStream.FLOW, ProgramRunStatus.KILLED, 1);
+    waitForProgramRuns("workers", AppWritingtoStream.APPNAME, AppWritingtoStream.WORKER, ProgramRunStatus.COMPLETED, 1);
+    waitForProgramRuns("services", AppWritingtoStream.APPNAME, AppWritingtoStream.SERVICE, ProgramRunStatus.KILLED, 1);
 
     response = GatewayFastTestsSuite.doDelete(String.format("/v3/namespaces/default/apps/%s",
                                                             AppWritingtoStream.APPNAME));

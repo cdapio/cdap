@@ -21,7 +21,6 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {UncontrolledTooltip} from 'components/UncontrolledComponents';
-import debounce from 'lodash/debounce';
 import {setPopoverOffset} from 'components/DataPrep/helper';
 import {preventPropagation} from 'services/helpers';
 
@@ -58,11 +57,6 @@ export default class EncodeDecode extends Component {
 
   componentDidMount() {
     this.calculateOffset = setPopoverOffset.bind(this, document.getElementById(`${this.props.directive}-directive`));
-    this.offsetCalcDebounce = debounce(this.calculateOffset, 1000);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.offsetCalcDebounce);
   }
 
   applyDirective({getDirective = () => {}}) {

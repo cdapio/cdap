@@ -19,6 +19,7 @@ package co.cask.cdap.security.impersonation;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Preconditions;
@@ -262,8 +263,8 @@ public final class SecurityUtil {
    * impersonation principal
    */
   public static void verifyOwnerPrincipal(NamespacedEntityId existingEntity,
-                                    @Nullable String specifiedOwnerPrincipal,
-                                    OwnerAdmin ownerAdmin)
+                                          @Nullable String specifiedOwnerPrincipal,
+                                          OwnerAdmin ownerAdmin)
     throws IOException, UnauthorizedException {
     // if an owner principal was not specified then ensure that a direct owner doesn't exist. Although, if an owner
     // principal was specified then it must be equal to the effective impersonating principal of this entity
@@ -277,5 +278,35 @@ public final class SecurityUtil {
                                                     Constants.Security.PRINCIPAL, specifiedOwnerPrincipal,
                                                     Constants.Security.PRINCIPAL));
     }
+  }
+
+  /**
+   * Helper function to get the effective owner of an entity. It will check the owner store to get the namespace
+   * owner if the provided owner principal is null.
+   *
+   * Note that this method need not be used after the entity is created, in that case simply
+   * use {@link OwnerAdmin}.getImpersonationPrincipal()
+   *
+   * @param ownerAdmin owner admin to query the owner
+   * @param namespaceId the namespace the entity is in
+   * @param ownerPrincipal the owner principal of the entity, null if not provided
+   * @return the effective owner of the entity, null if no owner is provided for both the enity and the namespace.
+   */
+  @Nullable
+  public static KerberosPrincipalId getEffectiveOwner(OwnerAdmin ownerAdmin, NamespaceId namespaceId,
+                                                      @Nullable String ownerPrincipal) throws IOException {
+    if (ownerPrincipal != null) {
+      // if entity owner is present, return it
+      return new KerberosPrincipalId(ownerPrincipal);
+    }
+
+    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
+      // if entity owner is not present, get the namespace impersonation principal
+      String namespacePrincipal = ownerAdmin.getImpersonationPrincipal(namespaceId);
+      return namespacePrincipal == null ? null : new KerberosPrincipalId(namespacePrincipal);
+    }
+
+    // No owner found
+    return null;
   }
 }

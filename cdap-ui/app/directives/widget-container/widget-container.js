@@ -27,7 +27,8 @@ angular.module(PKG.name + '.commons')
         widgetDisabled: '=',
         inputSchema: '=',
         stageName: '=',
-        isFieldRequired: '='
+        isFieldRequired: '=',
+        node: '='
       },
       replace: false,
       link: function (scope, element) {

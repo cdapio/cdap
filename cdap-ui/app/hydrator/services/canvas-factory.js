@@ -28,13 +28,15 @@
 
       node.visited = true;
       finalConnections.push(node);
-      var nextConnection = originalConnections.filter(function(conn) {
+      var nextConnections = originalConnections.filter(function(conn) {
         if (node.to === conn.from) {
           return conn;
         }
       });
-      if (nextConnection.length) {
-        return addConnectionsInOrder(nextConnection[0], finalConnections, originalConnections);
+      if (nextConnections.length) {
+        nextConnections.forEach(nextConnection => {
+          return addConnectionsInOrder(nextConnection, finalConnections, originalConnections);
+        });
       }
     }
     /*

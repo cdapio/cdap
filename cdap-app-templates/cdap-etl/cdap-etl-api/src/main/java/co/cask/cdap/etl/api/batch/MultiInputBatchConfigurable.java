@@ -19,13 +19,16 @@ package co.cask.cdap.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurable;
 import co.cask.cdap.etl.api.MultiInputPipelineConfigurer;
+import co.cask.cdap.etl.api.SubmitterLifecycle;
 
 /**
  * Base class for multi input Batch run configuration methods.
  * @param <T> batch execution context
  */
 @Beta
-public abstract class MultiInputBatchConfigurable<T extends BatchContext> implements MultiInputPipelineConfigurable {
+public abstract class MultiInputBatchConfigurable<T extends BatchContext>
+  implements MultiInputPipelineConfigurable, SubmitterLifecycle<T> {
+
   @Override
   public void configurePipeline(MultiInputPipelineConfigurer multiInputPipelineConfigurer) {
     // no-op
@@ -37,6 +40,7 @@ public abstract class MultiInputBatchConfigurable<T extends BatchContext> implem
    * @param context batch execution context
    * @throws Exception if there's an error during this method invocation
    */
+  @Override
   public abstract void prepareRun(T context) throws Exception;
 
   /**
@@ -45,6 +49,7 @@ public abstract class MultiInputBatchConfigurable<T extends BatchContext> implem
    * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
    * @param context batch execution context
    */
+  @Override
   public void onRunFinish(boolean succeeded, T context) {
     // no-op
   }

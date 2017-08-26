@@ -45,19 +45,21 @@ export function isCustomOption(selectedOption) {
   return selectedOption.substr(0, 6) === 'CUSTOM';
 }
 
-export function setPopoverOffset(element, footerHeight = 54) {
+export function setPopoverOffset(element, popoverLevel = 'second-level-popover') {
   let elem = element;
   let elemBounding = elem.getBoundingClientRect();
-  const FOOTER_HEIGHT = footerHeight;
 
-  let popover = document.getElementsByClassName('second-level-popover');
+  let popover = document.getElementsByClassName(popoverLevel);
   let popoverHeight = popover[0].getBoundingClientRect().height;
   let tableContainerScroll = document.getElementById('dataprep-table-id').scrollTop;
   let popoverMenuItemTop = elemBounding.top;
-  let bodyBottom = document.body.getBoundingClientRect().bottom - FOOTER_HEIGHT;
+  let bodyBottom = document.body.getBoundingClientRect().bottom;
   let bodyTop = document.body.getBoundingClientRect().top;
 
-  let diff = bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll;
+  // FIXME: 5 is the magic number for aligning the bottom of the popover menu with the popover item.
+  // We should fix the logic of showing the menu to not account in these magic numbers.
+  // JIRA: CDAP-12468 to track this for a subsequent release.
+  let diff = (bodyBottom - (popoverMenuItemTop + popoverHeight) - tableContainerScroll) + 5;
 
   if (elemBounding.bottom > popover[0].getBoundingClientRect().bottom) {
     // This is to align the bottom of second level popover menu with that of the main menu

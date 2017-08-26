@@ -611,26 +611,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-pipelines</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
-                  <resources>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-batch/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-batch-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
                 <id>copy-pipelines-spark1_2.10</id>
                 <phase>prepare-package</phase>
                 <goals>
@@ -784,6 +764,9 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
+                        <!-- Wrangler excludes -->
+                        <exclude name="**/target/wrangler-core*"/>
+                        <exclude name="**/target/wrangler-test*"/>
                         <!--We don't want to package the following plugins with CDAP-->
                         <exclude name="**/target/solrsearch-plugins*"/>
                         <exclude name="**/target/hive-plugins*"/>

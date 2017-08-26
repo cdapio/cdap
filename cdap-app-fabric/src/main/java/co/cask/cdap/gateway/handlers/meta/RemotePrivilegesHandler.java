@@ -23,6 +23,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.AuthorizationPrivilege;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.proto.security.VisibilityRequest;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
 import co.cask.http.HttpResponder;
@@ -72,6 +73,19 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
     authorizationEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
                                   authorizationPrivilege.getAction());
     responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/isVisible")
+  public void isVisible(HttpRequest request, HttpResponder responder) throws Exception {
+    VisibilityRequest visibilityRequest = GSON.fromJson(request.getContent().toString(Charsets.UTF_8),
+                                                        VisibilityRequest.class);
+    Principal principal = visibilityRequest.getPrincipal();
+    Set<EntityId> entityIds = visibilityRequest.getEntityIds();
+    LOG.trace("Checking visibility for principal {} on entities {}", principal, entityIds);
+    Set<? extends EntityId> visiableEntities = authorizationEnforcer.isVisible(entityIds, principal);
+    LOG.debug("Returning entities visible for principal {} as {}", principal, visiableEntities);
+    responder.sendJson(HttpResponseStatus.OK, visiableEntities);
   }
 
   @POST

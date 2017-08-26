@@ -20,6 +20,7 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.etl.api.StageContext;
+import co.cask.cdap.etl.api.action.SettableArguments;
 
 import java.util.Map;
 
@@ -34,4 +35,9 @@ public interface ConditionContext extends StageContext, Transactional, SecureSto
    * @return stage statistics associated with the stages that were executed before the condition
    */
   Map<String, StageStatistics> getStageStatistics();
+
+  /**
+   * Return the arguments which can be updated.
+   */
+  SettableArguments getArguments();
 }

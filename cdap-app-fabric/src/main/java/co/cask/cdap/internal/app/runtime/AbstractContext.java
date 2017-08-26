@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.Admin;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
+import co.cask.cdap.api.SchedulableProgramContext;
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
@@ -42,6 +43,7 @@ import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
@@ -74,6 +76,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.id.ApplicationId;
@@ -103,6 +106,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -110,16 +114,20 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements SecureStore, LineageDatasetContext, Transactional, RuntimeContext, PluginContext, MessagingContext {
+  implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
+  PluginContext, MessagingContext {
 
-  private static final Gson GSON =
-    new GsonBuilder().registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec()).create();
+  private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec())
+    .create();
 
   private final CConfiguration cConf;
   private final Program program;
   private final ProgramOptions programOptions;
   private final ProgramRunId programRunId;
   private final Iterable<? extends EntityId> owners;
+  @Nullable
+  private final TriggeringScheduleInfo triggeringScheduleInfo;
   private final Map<String, String> runtimeArguments;
   private final Metrics userMetrics;
   private final MetricsContext programMetrics;
@@ -159,21 +167,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.programOptions = programOptions;
     this.cConf = cConf;
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
+    this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
     this.owners = createOwners(program.getId());
-    this.programMetrics =
-      createProgramMetrics(programRunId,
-                           cConf.getBoolean(Constants.Metrics.EMIT_PRGOGRAM_CONTAINER_METRICS) ?
-                             metricsService : new NoOpMetricsCollectionService(),
-                           metricsTags);
-    this.userMetrics = new ProgramUserMetrics(programMetrics);
-    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
-                                                          program.getType(),
-                                                          cConf);
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
+
+    this.programMetrics = createProgramMetrics(programRunId, getMetricsService(cConf, metricsService, runtimeArgs),
+                                               metricsTags);
+    this.userMetrics = new ProgramUserMetrics(programMetrics);
+    this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
+                                                          program.getType(),
+                                                          cConf);
 
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
@@ -209,6 +216,23 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
+  }
+
+  private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
+                                                     Map<String, String> runtimeArgs) {
+    String emitMetricsPreference = runtimeArgs.get(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
+
+    // Get the option for emitting metrics from preferences or as a fall back from cConf
+    boolean emitMetrics = emitMetricsPreference != null ? Boolean.valueOf(emitMetricsPreference) :
+      cConf.getBoolean(Constants.Metrics.EMIT_PROGRAM_CONTAINER_METRICS);
+    return emitMetrics ? metricsService : new NoOpMetricsCollectionService();
+  }
+
+  @Nullable
+  private TriggeringScheduleInfo getTriggeringScheduleInfo(ProgramOptions programOptions) {
+    String scheduleInfoString =
+      programOptions.getArguments().getOption(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);
+    return scheduleInfoString == null ? null : GSON.fromJson(scheduleInfoString, TriggeringScheduleInfo.class);
   }
 
   /**
@@ -436,6 +460,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    return pluginContext.getPluginProperties(pluginId, evaluator);
+  }
+
+  @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     return pluginContext.loadPluginClass(pluginId);
   }
@@ -520,6 +549,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return dataTracerFactory.getDataTracer(program.getId().getParent(), dataTracerName);
   }
 
+  @Nullable
+  @Override
+  public TriggeringScheduleInfo getTriggeringScheduleInfo() {
+    return triggeringScheduleInfo;
+  }
+
   /**
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
@@ -549,6 +584,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   public interface ThrowingRunnable {
     void run() throws Exception;
+  }
+
+  /**
+   * Run some code with the context class loader combined from the program class loader and the system class loader.
+   */
+  public <T> T executeChecked(final Callable<T> callable) throws Exception {
+    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    try {
+      return callable.call();
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassloader);
+    }
   }
 
   /**

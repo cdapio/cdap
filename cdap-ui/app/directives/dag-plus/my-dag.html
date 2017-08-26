@@ -111,16 +111,20 @@
                 ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
             <div class="endpoint-circle"
+                  ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'endpoint-circle-right': node.type === 'condition'}"
+                  ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
+              <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
+            </div>
+            <div class="endpoint-circle endpoint-circle-bottom"
+                  ng-if="node.type === 'condition'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)">
-              <div class="endpoint-caret"
-                    ng-if="!DAGPlusPlusCtrl.isDisabled">
-              </div>
+              <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
             <div ng-if="node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
-                   uib-tooltip="{{node.errorMessage || 'Please see node configuration panel'}}"
+                   uib-tooltip="{{node.errorMessage || 'Please check the node properties'}}"
                    tooltip-append-to-body="true"
                    tooltip-class="tooltip-error">
                 <span class="badge badge-danger">
@@ -131,7 +135,7 @@
             <div ng-if="!node.error">
               <div class="error-node-notification"
                    ng-if="node.errorCount > 0"
-                   uib-tooltip="Please see node configuration panel"
+                   uib-tooltip="Please check the node properties"
                    tooltip-append-to-body="true"
                    tooltip-class="tooltip-warning">
                 <span class="badge badge-warning">
@@ -140,9 +144,22 @@
               </div>
             </div>
             <div class="node-info">
-              <div class="node-icon fa {{node.icon}}"></div>
+              <div
+                ng-if="!DAGPlusPlusCtrl.shouldShowCustomIcon(node)"
+                class="node-icon fa {{node.icon}}"></div>
+
+              <div
+                class="node-icon icon-container"
+                ng-if="DAGPlusPlusCtrl.shouldShowCustomIcon(node)"
+              >
+                <img src="{{ DAGPlusPlusCtrl.getCustomIconSrc(node) }}" />
+              </div>
+
+
               <div class="node-metadata">
-                <div class="node-name" ng-bind="node.plugin.label || node.name | myEllipsis: 15"></div>
+                <div class="node-name"
+                      ng-bind="node.plugin.label || node.name | myEllipsis: 15">
+                </div>
                 <div class="node-version"
                       ng-class="{ 'hidden': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
                       ng-bind="node.plugin.artifact.version">
@@ -151,21 +168,17 @@
                         ng-class="{'btn-shown': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
                         ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
                   <span class="node-configure-btn-label">
-                    <span ng-if="!DAGPlusPlusCtrl.isDisabled">
-                      Configure Properties
-                    </span>
-                    <span ng-if="DAGPlusPlusCtrl.isDisabled">
-                      View Properties
-                    </span>
+                    Properties
                   </span>
                 </button>
               </div>
             </div>
             <div class="node-metrics"
-                  ng-show="DAGPlusPlusCtrl.isDisabled">
+                  ng-if="DAGPlusPlusCtrl.isDisabled && node.type !== 'condition'">
               <my-node-metrics
                 on-click="DAGPlusPlusCtrl.onMetricsClick"
                 node="node"
+                disabled="disableMetricsClick"
                 metrics-data="metricsData">
               </my-node-metrics>
             </div>

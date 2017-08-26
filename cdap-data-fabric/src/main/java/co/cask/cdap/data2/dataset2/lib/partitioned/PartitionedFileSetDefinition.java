@@ -45,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -161,8 +162,9 @@ public class PartitionedFileSetDefinition
                                                                Partitioning partitioning) {
     if (FileSetArguments.getOutputPath(arguments) == null) {
       PartitionKey key = PartitionedFileSetArguments.getOutputPartitionKey(arguments, partitioning);
+      // we need to copy the map, to avoid modifying the passed-in map
+      arguments = Maps.newHashMap(arguments);
       if (key != null) {
-        arguments = Maps.newHashMap(arguments);
         FileSetArguments.setOutputPath(arguments, PartitionedFileSetDataset.getOutputPath(key, partitioning));
       } else if (PartitionedFileSetArguments.getDynamicPartitioner(arguments) != null) {
         // when using DynamicPartitioner, use the baseLocation of the fileSet as the output location

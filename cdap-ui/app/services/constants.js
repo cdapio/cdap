@@ -20,7 +20,7 @@ var pluginLabels = {
   'transform': 'Transform',
   'analytics': 'Analytics',
   'sink': 'Sink',
-  'action': 'Action',
+  'action': 'Conditions and Actions',
   'errortransform': 'Error Handlers'
 };
 angular.module(PKG.name + '.services')
@@ -48,8 +48,8 @@ angular.module(PKG.name + '.services')
         'batchjoiner': 'batchjoiner',
         'windower': 'windower',
         'errortransform': 'errortransform',
-        'sparkprogram': 'sparkprogram',
-        'alertpublisher': 'alertpublisher'
+        'alertpublisher': 'alertpublisher',
+        'condition': 'condition'
       },
       'cdap-etl-realtime': {
         'source': 'realtimesource',
@@ -67,7 +67,8 @@ angular.module(PKG.name + '.services')
         'action': 'action',
         'errortransform': 'errortransform',
         'sparkprogram': 'sparkprogram',
-        'alertpublisher': 'alertpublisher'
+        'alertpublisher': 'alertpublisher',
+        'condition': 'condition'
       },
       'post-run-actions': {
         'email': 'Send Email',
@@ -85,12 +86,13 @@ angular.module(PKG.name + '.services')
       'sparksink': pluginLabels['sink'],
       'sparkcompute': pluginLabels['analytics'],
       'batchjoiner': pluginLabels['analytics'],
-      'action': 'Action',
+      'action': pluginLabels['action'],
       'streamingsource': pluginLabels['source'],
       'windower': pluginLabels['transform'],
       'errortransform': pluginLabels['errortransform'],
       'sparkprogram': pluginLabels['action'],
-      'alertpublisher': pluginLabels['sink']
+      'alertpublisher': pluginLabels['sink'],
+      'condition': pluginLabels['action'],
     },
     pluginLabels: pluginLabels,
     // understand what plugin type is what.
@@ -110,7 +112,8 @@ angular.module(PKG.name + '.services')
       'action': 'action',
       'errortransform': 'transform',
       'sparkprogram': 'action',
-      'alertpublisher': 'sink'
+      'alertpublisher': 'sink',
+      'condition': 'condition'
     },
 
     artifactConvert: {

@@ -441,7 +441,7 @@ public class DataStreamsTest extends HydratorTestBase {
 
     sparkManager.stop();
     sparkManager.waitForStatus(false, 10, 1);
-
+    
     validateMetric(appId, "source1.records.out", 2);
     validateMetric(appId, "source2.records.out", 3);
     validateMetric(appId, "agg1.records.in", 5);

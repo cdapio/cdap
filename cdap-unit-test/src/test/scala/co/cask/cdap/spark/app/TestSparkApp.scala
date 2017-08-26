@@ -16,9 +16,8 @@
 
 package co.cask.cdap.spark.app
 
-import co.cask.cdap.api.annotation.Property
-import co.cask.cdap.api.annotation.UseDataSet
-import co.cask.cdap.api.app.AbstractApplication
+import co.cask.cdap.api.annotation.{Property, UseDataSet}
+import co.cask.cdap.api.app.{AbstractApplication, ProgramType}
 import co.cask.cdap.api.common.Bytes
 import co.cask.cdap.api.customaction.AbstractCustomAction
 import co.cask.cdap.api.data.schema.Schema
@@ -26,8 +25,7 @@ import co.cask.cdap.api.data.stream.Stream
 import co.cask.cdap.api.dataset.lib._
 import co.cask.cdap.api.spark.AbstractSpark
 import co.cask.cdap.api.workflow.AbstractWorkflow
-import co.cask.cdap.api.Config
-import co.cask.cdap.api.ProgramStatus
+import co.cask.cdap.api.{Config, ProgramStatus}
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
 
 import scala.collection.JavaConversions._
@@ -71,7 +69,14 @@ class TestSparkApp extends AbstractApplication[Config] {
 
     addSpark(new ForkSpark("ForkSpark1"))
     addSpark(new ForkSpark("ForkSpark2"))
+
+    addSpark(new TriggeredSpark)
+
     addWorkflow(new ForkSparkWorkflow)
+
+    addWorkflow(new TriggeredWorkflow)
+    schedule(buildSchedule("schedule", ProgramType.WORKFLOW, classOf[TriggeredWorkflow].getSimpleName)
+      .triggerOnProgramStatus(ProgramType.SPARK, classOf[ScalaClassicSpark].getSimpleName, ProgramStatus.COMPLETED))
   }
 
   final class ClassicSpark extends AbstractSpark {
@@ -124,6 +129,13 @@ class TestSparkApp extends AbstractApplication[Config] {
       val values = getContext.getWorkflowToken.getAll("sum")
       require(values.map(_.getValue.getAsInt).distinct.size == 2,
               "Expect number of distinct 'sum' token be 2: " + values)
+    }
+  }
+
+  final class TriggeredWorkflow extends AbstractWorkflow {
+    override def configure(): Unit = {
+      setDescription("TriggeredWorkflow description")
+      addSpark(classOf[TriggeredSpark].getSimpleName)
     }
   }
 }

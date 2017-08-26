@@ -19,6 +19,7 @@ package co.cask.cdap.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.SubmitterLifecycle;
 
 /**
  * Base class for Batch run configuration methods.
@@ -26,7 +27,7 @@ import co.cask.cdap.etl.api.PipelineConfigurer;
  * @param <T> batch execution context
  */
 @Beta
-public abstract class BatchConfigurable<T extends BatchContext> implements PipelineConfigurable {
+public abstract class BatchConfigurable<T extends BatchContext> implements PipelineConfigurable, SubmitterLifecycle<T> {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
@@ -39,6 +40,7 @@ public abstract class BatchConfigurable<T extends BatchContext> implements Pipel
    * @param context batch execution context
    * @throws Exception if there's an error during this method invocation
    */
+  @Override
   public abstract void prepareRun(T context) throws Exception;
 
   /**
@@ -47,6 +49,7 @@ public abstract class BatchConfigurable<T extends BatchContext> implements Pipel
    * @param succeeded defines the result of batch execution: true if run succeeded, false otherwise
    * @param context batch execution context
    */
+  @Override
   public void onRunFinish(boolean succeeded, T context) {
     // no-op
   }

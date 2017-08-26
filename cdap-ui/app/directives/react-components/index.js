@@ -30,6 +30,9 @@ angular.module(PKG.name + '.commons')
   .directive('pipelineSummary', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineSummary);
   })
+  .directive('rulesEngineHome', function(reactDirective) {
+    return reactDirective(window.CaskCommon.RulesEngineHome);
+  })
   .directive('pipelineNodeMetricsGraph', function(reactDirective) {
     return reactDirective(window.CaskCommon.PipelineNodeMetricsGraph);
   })
@@ -38,4 +41,7 @@ angular.module(PKG.name + '.commons')
   })
   .directive('loadingIndicator', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingIndicator);
+  })
+  .directive('pipelineTriggersSidebars', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineTriggersSidebars);
   });

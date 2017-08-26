@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.Input;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Output;
@@ -39,8 +40,8 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
+import co.cask.cdap.internal.app.runtime.batch.dataset.output.Outputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.internal.app.runtime.batch.stream.StreamInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -64,9 +65,11 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -129,10 +132,6 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     if (spec.getOutputDataSet() != null) {
       addOutput(Output.ofDataset(spec.getOutputDataSet()));
     }
-  }
-
-  public TransactionContext getTransactionContext() throws TransactionFailureException {
-    return getDatasetCache().newTransactionContext();
   }
 
   private LoggingContext createLoggingContext(ProgramId programId, RunId runId,
@@ -219,41 +218,33 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
     }
   }
 
-  private void addOutput(String alias, OutputFormatProvider outputFormatProvider) {
+  @Override
+  public void addOutput(Output output) {
+    String alias = output.getAlias();
     if (this.outputs.containsKey(alias)) {
       throw new IllegalArgumentException("Output already configured: " + alias);
     }
-    this.outputs.put(alias, new ProvidedOutput(alias, outputFormatProvider));
-  }
 
-  @Override
-  public void addOutput(Output output) {
+    ProvidedOutput providedOutput;
     if (output instanceof Output.DatasetOutput) {
-      Output.DatasetOutput datasetOutput = ((Output.DatasetOutput) output);
-      String datasetNamespace = datasetOutput.getNamespace();
-      if (datasetNamespace == null) {
-        datasetNamespace = getNamespace();
-      }
-      String datasetName = output.getName();
-      Map<String, String> arguments = ((Output.DatasetOutput) output).getArguments();
-
-      // we can delay the instantiation of the Dataset to later, but for now, we still have to maintain backwards
-      // compatibility for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
-      // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
-      // this dataset instantiation
-      DatasetOutputFormatProvider outputFormatProvider =
-        new DatasetOutputFormatProvider(datasetNamespace, datasetName, arguments,
-                                        getDataset(datasetNamespace, datasetName, arguments, AccessType.WRITE),
-                                        MapReduceBatchWritableOutputFormat.class);
-      addOutput(output.getAlias(), outputFormatProvider);
-
+      providedOutput = Outputs.transform((Output.DatasetOutput) output, this);
     } else if (output instanceof Output.OutputFormatProviderOutput) {
-      addOutput(output.getAlias(), ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider());
+      OutputFormatProvider outputFormatProvider =
+        ((Output.OutputFormatProviderOutput) output).getOutputFormatProvider();
+      if (outputFormatProvider instanceof DatasetOutputCommitter) {
+        // disallow user from adding a DatasetOutputCommitter as an OutputFormatProviderOutput because we would not
+        // be able to call its methods in MainOutputCommitter. It needs to be a DatasetOutput.
+        throw new IllegalArgumentException("Cannot add a DatasetOutputCommitter as an OutputFormatProviderOutput. " +
+                                             "Add the output as a DatasetOutput.");
+      }
+      providedOutput = new ProvidedOutput(output, outputFormatProvider);
     } else {
       // shouldn't happen unless user defines their own Output class
       throw new IllegalArgumentException(String.format("Output %s has unknown output class %s",
                                                        output.getName(), output.getClass().getCanonicalName()));
     }
+
+    this.outputs.put(alias, providedOutput);
   }
 
   /**
@@ -266,9 +257,8 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   /**
    * @return a map from output name to provided output for the MapReduce job
    */
-  Map<String, ProvidedOutput> getOutputs() {
-    // LinkedHashMap() will preserve the order of the outputs
-    return new LinkedHashMap<>(outputs);
+  List<ProvidedOutput> getOutputs() {
+    return new ArrayList<>(outputs.values());
   }
 
   @Override

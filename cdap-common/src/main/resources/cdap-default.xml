@@ -182,7 +182,7 @@
 
   <property>
     <name>twill.java.heap.memory.ratio</name>
-    <value>0.7</value>
+    <value>0.6</value>
     <description>
       The minimum ratio of heap to non-heap memory for Apache Twill container
     </description>
@@ -420,6 +420,23 @@
   </property>
 
   <property>
+    <name>app.program.status.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status update events
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.status.event.poll.delay.millis</name>
+    <value>2000</value>
+    <description>
+      The delay in milliseconds to check again for new program status events after it detects there was no event
+    </description>
+  </property>
+
+  <property>
     <name>app.ssl.bind.port</name>
     <value>30443</value>
     <description>
@@ -500,6 +517,43 @@
   </property>
 
   <property>
+    <name>scheduler.time.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      time schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.stream.size.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      stream size schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.data.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      data schedule events
+    </description>
+  </property>
+
+  <property>
+    <name>scheduler.program.status.event.fetch.size</name>
+    <value>100</value>
+    <description>
+      Maximum number of events to fetch from the messaging system in each processing cycle for
+      program status schedule events
+    </description>
+  </property>
+
+
+  <property>
     <name>time.event.topic</name>
     <value>timeevent</value>
     <description>
@@ -514,6 +568,15 @@
       Topic name for publishing time events from stream size scheduler to the messaging system
     </description>
   </property>
+
+  <property>
+    <name>program.status.event.topic</name>
+    <value>programstatusevent</value>
+    <description>
+      Topic name for publishing program status events from program runners to the messaging system
+    </description>
+  </property>
+
 
   <property>
     <name>workflow.token.max.size.mb</name>
@@ -649,7 +712,8 @@
     <name>data.tx.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of transaction service instances
+      Maximum number of transaction service instances.
+      Increasing the number of transaction service instances only improves availability, but not scalability
     </description>
   </property>
 
@@ -1563,7 +1627,6 @@
     <description>
       Number of instances for the messaging service
     </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -1588,6 +1651,14 @@
     <description>
       Number of seconds after which the metadata cache in HBase data table
       coprocessors will expire
+    </description>
+  </property>
+
+  <property>
+    <name>messaging.ha.fencing.delay.seconds</name>
+    <value>5</value>
+    <description>
+      Number of seconds to wait before the leader process start serving requests
     </description>
   </property>
 
@@ -1664,9 +1735,10 @@
 
   <property>
     <name>messaging.max.instances</name>
-    <value>1</value>
+    <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of instances for the messaging service
+      Maximum number of instances for the messaging service.
+      Increasing the number of messaging service instances only improves availability, but not scalability
     </description>
     <final>true</final>
   </property>
@@ -1715,7 +1787,7 @@
 
   <property>
     <name>messaging.system.topics</name>
-    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic}</value>
+    <value>${audit.topic},${data.event.topic},${metrics.topic.prefix}:${metrics.messaging.topic.num},${notification.topic},${time.event.topic},${stream.size.event.topic},${program.status.event.topic}</value>
     <description>
       A comma-separated list of topics that are always available in the
       system namespace. Multiple topics sharing the same prefix and
@@ -2072,6 +2144,15 @@
   </property>
 
   <property>
+    <name>metrics.table.migration.sleep.millis</name>
+    <value>10</value>
+    <description>
+      Delay in milliseconds after migration of each row from pre-4.3 to post 4.3 metrics tables.
+      This is used to throttle the metrics migration and reduce its the load on the metrics system
+    </description>
+  </property>
+
+  <property>
     <name>app.program.metrics.enabled</name>
     <value>true</value>
     <description>
@@ -2088,10 +2169,11 @@
   </property>
 
   <property>
-    <name>metrics.v2.table.scan.enabled</name>
-    <value>false</value>
+    <name>metrics.table.splits</name>
+    <value>16</value>
     <description>
-      Enable or disable scanning v2 metrics tables. By default set to false.
+      Number of splits for all metrics tables. This property can only be changed before CDAP starts up for the first
+      time and creates the metrics tables. Once all metrics tables are created, this property will not take any effect.
     </description>
   </property>
 
@@ -2471,6 +2553,88 @@
   </property>
 
   <property>
+    <name>system.notification.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.delay.ms</name>
+    <value>5000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.retries</name>
+    <value>5000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.max.time.secs</name>
+    <value>7200</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.notification.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for notification publish or subscription. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.base.delay.ms</name>
+    <value>1000</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.delay.ms</name>
+    <value>3000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.max.time.secs</name>
+    <value>600</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.program.state.retry.policy.type</name>
+    <value>fixed.delay</value>
+    <description>
+      The type of retry policy for programs. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
     <name>worker.retry.policy.base.delay.ms</name>
     <value>1000</value>
     <description>
@@ -2785,23 +2949,6 @@
   </property>
 
   <property>
-    <name>security.authorization.admin.users</name>
-    <value></value>
-    <description>
-      A comma-separated list of users for whom admin privileges are to be
-      granted on the CDAP instance during CDAP startup, so that these users
-      can create namespaces. These users are also granted admin privileges
-      on the 'default' namespace, so that they can manage privileges on the
-      'default' namespace. This provides a method to bootstrap CDAP on an
-      authorization-enabled cluster. The default value is empty, in which
-      case no users have access to creating namespaces or to managing
-      privileges on the 'default' namespace. In that scenario, authorization
-      in CDAP has to be bootstrapped externally using interfaces provided by
-      the configured authorization extension.
-    </description>
-  </property>
-
-  <property>
     <name>security.authorization.cache.max.entries</name>
     <value>100000</value>
     <description>
@@ -2838,18 +2985,6 @@
       containing the extension code. This jar is only used when
       authorization is enabled by setting ${security.authorization.enabled}
       to true.
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.propagate.privileges</name>
-    <value>true</value>
-    <description>
-      Allows the propagation of privileges to descendants. If set to 'true', then having a
-      privilege on an entity will allow the user to perform actions on all the descendants
-      of that entity. For example, if set to 'true', then having READ on a namespace will
-      allow a user to READ all datasets in that namespace. If set to 'false', then users
-      will need privileges on each entity an action is performed on.
     </description>
   </property>
 

@@ -17,8 +17,13 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.api.Predicate;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.proto.security.Role;
@@ -34,6 +39,7 @@ import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +50,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class InMemoryAuthorizer extends AbstractAuthorizer {
 
-  private final ConcurrentMap<EntityId, ConcurrentMap<Principal, Set<Action>>> privileges = new ConcurrentHashMap<>();
+  private final ConcurrentMap<Authorizable, ConcurrentMap<Principal, Set<Action>>> privileges =
+    new ConcurrentHashMap<>();
   private final ConcurrentMap<Role, Set<Principal>> roleToPrincipals = new ConcurrentHashMap<>();
   private final Set<Principal> superUsers = new HashSet<>();
   // Bypass enforcement for tests that want to simulate every user as a super user
@@ -86,32 +93,57 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-    // TODO: needs to be implemented
-    throw new UnsupportedOperationException("This method needs to be implemented!");
+    if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
+      return entityIds;
+    }
+    Set<EntityId> results =  new HashSet<>();
+    for (EntityId entityId : entityIds) {
+      for (Authorizable existingEntity : privileges.keySet()) {
+        if (isParent(entityId, existingEntity.getEntityParts())) {
+          Set<Action> allowedActions = privileges.get(existingEntity).get(principal);
+          if (allowedActions != null && !allowedActions.isEmpty()) {
+            results.add(entityId);
+            break;
+          }
+        }
+      }
+    }
+    return results;
   }
 
   @Override
   public Predicate<EntityId> createFilter(Principal principal) throws Exception {
-    // super users do not have any enforcement
-    if (superUsers.contains(principal) || superUsers.contains(allSuperUsers)) {
-      return ALLOW_ALL;
-    }
-    return super.createFilter(principal);
+    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
   }
 
   @Override
-  public void grant(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).addAll(actions);
+  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    grant(Authorizable.fromEntityId(entity), principal, actions);
   }
 
   @Override
-  public void revoke(EntityId entity, Principal principal, Set<Action> actions) {
-    getActions(entity, principal).removeAll(actions);
+  public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    getActions(authorizable, principal).addAll(actions);
   }
 
   @Override
-  public void revoke(EntityId entity) {
-    privileges.remove(entity);
+  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    revoke(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    getActions(authorizable, principal).removeAll(actions);
+  }
+
+  @Override
+  public void revoke(EntityId entity) throws Exception {
+    revoke(Authorizable.fromEntityId(entity));
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable) throws Exception {
+    privileges.remove(authorizable);
   }
 
   @Override
@@ -179,21 +211,25 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
 
   private Set<Privilege> getPrivileges(Principal principal) {
     Set<Privilege> result = new HashSet<>();
-    for (Map.Entry<EntityId, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
-      EntityId entityId = entry.getKey();
-      Set<Action> actions = getActions(entityId, principal);
+    for (Map.Entry<Authorizable, ConcurrentMap<Principal, Set<Action>>> entry : privileges.entrySet()) {
+      Authorizable authorizable = entry.getKey();
+      Set<Action> actions = getActions(authorizable, principal);
       for (Action action : actions) {
-        result.add(new Privilege(entityId, action));
+        result.add(new Privilege(authorizable, action));
       }
     }
     return Collections.unmodifiableSet(result);
   }
 
-  private Set<Action> getActions(EntityId entity, Principal principal) {
-    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(entity);
+  private Set<Action> getActions(EntityId entityId, Principal principal) {
+    return getActions(Authorizable.fromEntityId(entityId), principal);
+  }
+
+  private Set<Action> getActions(Authorizable authorizable, Principal principal) {
+    ConcurrentMap<Principal, Set<Action>> allActions = privileges.get(authorizable);
     if (allActions == null) {
       allActions = new ConcurrentHashMap<>();
-      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(entity, allActions);
+      ConcurrentMap<Principal, Set<Action>> existingAllActions = privileges.putIfAbsent(authorizable, allActions);
       allActions = (existingAllActions == null) ? allActions : existingAllActions;
     }
     Set<Action> actions = allActions.get(principal);
@@ -214,5 +250,86 @@ public class InMemoryAuthorizer extends AbstractAuthorizer {
       }
     }
     return roles;
+  }
+
+  private boolean isParent(EntityId guessingParent, Map<EntityType, String> guessingChild) {
+    Map<EntityType, String> questionedEntityParts = Authorizable.fromEntityId(guessingParent).getEntityParts();
+    for (EntityType entityType : questionedEntityParts.keySet()) {
+      if (!(guessingChild.containsKey(entityType) &&
+        guessingChild.get(entityType).equals(questionedEntityParts.get(entityType)))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public final class AuthorizableEntityId {
+    private final EntityId entityId;
+
+    AuthorizableEntityId(EntityId entityId) {
+      this.entityId = entityId;
+    }
+
+    public EntityId getEntityId() {
+      return entityId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      AuthorizableEntityId that = (AuthorizableEntityId) o;
+      if (!that.getEntityId().getEntityType().equals(entityId.getEntityType())) {
+        return false;
+      }
+
+      EntityId thatEntityId = that.getEntityId();
+      if (entityId.getEntityType().equals(EntityType.ARTIFACT)) {
+        ArtifactId artifactId = (ArtifactId) entityId;
+        ArtifactId thatArtifactId = (ArtifactId) thatEntityId;
+        return Objects.equals(artifactId.getNamespace(), thatArtifactId.getNamespace()) &&
+          Objects.equals(artifactId.getArtifact(), thatArtifactId.getArtifact());
+      }
+      if (entityId.getEntityType().equals(EntityType.APPLICATION)) {
+        ApplicationId applicationId = (ApplicationId) entityId;
+        ApplicationId thatApplicationId = (ApplicationId) thatEntityId;
+        return Objects.equals(applicationId.getNamespace(), thatApplicationId.getNamespace()) &&
+          Objects.equals(applicationId.getApplication(), thatApplicationId.getApplication());
+      }
+      if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+        ProgramId programId = (ProgramId) entityId;
+        ProgramId thatProgramId = (ProgramId) thatEntityId;
+        return Objects.equals(programId.getNamespace(), thatProgramId.getNamespace()) &&
+          Objects.equals(programId.getApplication(), thatProgramId.getApplication()) &&
+          Objects.equals(programId.getType(), thatProgramId.getType()) &&
+          Objects.equals(programId.getProgram(), thatProgramId.getProgram());
+      }
+      return Objects.equals(entityId, that.entityId);
+    }
+
+    @Override
+    public int hashCode() {
+      if (entityId.getEntityType().equals(EntityType.ARTIFACT)) {
+        ArtifactId artifactId = (ArtifactId) entityId;
+        return Objects.hash(artifactId.getEntityType(), artifactId.getNamespace(), artifactId.getArtifact());
+      }
+      if (entityId.getEntityType().equals(EntityType.APPLICATION)) {
+        ApplicationId applicationId = (ApplicationId) entityId;
+        return Objects.hash(applicationId.getEntityType(), applicationId.getNamespace(),
+                            applicationId.getApplication());
+      }
+      if (entityId.getEntityType().equals(EntityType.PROGRAM)) {
+        ProgramId programId = (ProgramId) entityId;
+        return Objects.hash(programId.getEntityType(), programId.getNamespace(), programId.getApplication(),
+                            programId.getType(), programId.getProgram());
+      }
+      return Objects.hash(entityId);
+    }
   }
 }

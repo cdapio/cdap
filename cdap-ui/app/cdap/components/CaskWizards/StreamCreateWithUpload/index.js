@@ -27,7 +27,7 @@ require('./StreamCreate.scss');
 import cookie from 'react-cookie';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-
+import Rx from 'rx';
 
 export default class StreamCreateWithUploadWizard extends Component {
   constructor(props) {
@@ -71,6 +71,11 @@ export default class StreamCreateWithUploadWizard extends Component {
             let filename = state.upload.filename;
             let filetype = 'text/' + filename.split('.').pop();
             let authToken = cookie.load('CDAP_Auth_Token');
+            if (typeof fileContents !== 'object') {
+              return Rx.Observable.create((observer) => {
+                observer.onNext();
+              });
+            }
             return UploadDataActionCreator
               .uploadData({
                 url,

@@ -170,6 +170,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+    Assert.assertNotNull(previewRunner.getRunRecord());
   }
 
   @Test

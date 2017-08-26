@@ -14,18 +14,19 @@
  * the License.
 */
 
-$rule_row_bg_color: #cccccc;
-$rule_expanded_bg_color: #eeeeee;
+$rule_row_bg_color: white;
+$rule_row_border_color: #cccccc;
 $dsv_editor_input_border_color: rgba(0, 0, 0, 0.15);
 $drag_bars_color: gray;
 
 .engine-rule {
   &.row {
-    border-bottom: 1px solid $rule_row_bg_color;
+    border-bottom: 1px solid $rule_row_border_color;
     padding: 7px;
     cursor: pointer;
     padding-left: 0;
     padding-right: 0;
+    font-size: 13px;
 
     > div > :first-child {
       padding-left: 0;
@@ -37,11 +38,8 @@ $drag_bars_color: gray;
     }
 
     &.expanded {
-      background: $rule_expanded_bg_color;
-
-      &:hover {
-        background: $rule_expanded_bg_color;
-      }
+      background: $rule_row_bg_color;
+      font-weight: bold;
 
       form {
         padding: 20px 0;
@@ -54,6 +52,10 @@ $drag_bars_color: gray;
         }
         .dsv-input-container {
           width: calc(100% - 50px);
+
+          &.disabled {
+            width: 100%;
+          }
         }
         .action-buttons-container {
           width: 50px;

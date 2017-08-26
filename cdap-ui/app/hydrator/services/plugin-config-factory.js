@@ -77,6 +77,7 @@ class HydratorPlusPlusPluginConfigFactory {
         return this.generateConfigFor12Spec(backendProperties, nodeConfig);
       case '1.3':
       case '1.4':
+      case '1.5':
         return this.generateConfigFor13Spec(backendProperties, nodeConfig);
       default: // No spec version which means
         throw 'NO_JSON_FOUND';

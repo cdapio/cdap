@@ -22,6 +22,7 @@ import co.cask.cdap.internal.guava.reflect.TypeToken;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
 import co.cask.cdap.security.spi.authorization.PrivilegesManager;
@@ -55,23 +56,38 @@ public class RemotePrivilegesManager extends RemoteOpsClient implements Privileg
 
   @Override
   public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    LOG.trace("Making request to grant {} on {} to {}", actions, entity, principal);
-    executeRequest("grant", entity, principal, actions);
-    LOG.debug("Granted {} on {} to {} successfully", actions, entity, principal);
+    grant(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void grant(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    LOG.trace("Making request to grant {} on {} to {}", actions, authorizable, principal);
+    executeRequest("grant", authorizable, principal, actions);
+    LOG.debug("Granted {} on {} to {} successfully", actions, authorizable, principal);
   }
 
   @Override
   public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
-    LOG.trace("Making request to revoke {} on {} to {}", actions, entity, principal);
-    executeRequest("revoke", entity, principal, actions);
-    LOG.debug("Revoked {} on {} to {} successfully", actions, entity, principal);
+    revoke(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable, Principal principal, Set<Action> actions) throws Exception {
+    LOG.trace("Making request to revoke {} on {} to {}", actions, authorizable, principal);
+    executeRequest("revoke", authorizable, principal, actions);
+    LOG.debug("Revoked {} on {} to {} successfully", actions, authorizable, principal);
   }
 
   @Override
   public void revoke(EntityId entity) throws Exception {
-    LOG.trace("Making request to revoke all actions on {}", entity);
-    executeRequest("revokeAll", entity);
-    LOG.debug("Revoked all actions on {} successfully", entity);
+    revoke(Authorizable.fromEntityId(entity));
+  }
+
+  @Override
+  public void revoke(Authorizable authorizable) throws Exception {
+    LOG.trace("Making request to revoke all actions on {}", authorizable);
+    executeRequest("revokeAll", authorizable);
+    LOG.debug("Revoked all actions on {} successfully", authorizable);
   }
 
   @Override

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.partitioned;
 
+import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -98,7 +99,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
       final PartitionedFileSet pfs = pfsManager.get();
 
       // create a partition n=1 in standard path
-      final PartitionOutput output1 =  pfs.getPartitionOutput(KEY_1);
+      final PartitionOutput output1 = pfs.getPartitionOutput(KEY_1);
       location1 = output1.getLocation();
       try (Writer writer = new OutputStreamWriter(location1.append("file").getOutputStream())) {
         writer.write("1,1\n");
@@ -114,7 +115,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
       pfs.addPartition(KEY_2, path2);
 
       // create some file in the standard location for n=3 and add it to Hive but not the PFS for n=4
-      final PartitionOutput output3 =  pfs.getPartitionOutput(KEY_3);
+      final PartitionOutput output3 = pfs.getPartitionOutput(KEY_3);
       location3 = output3.getLocation();
       String basePath = pfs.getEmbeddedFileSet().getBaseLocation().toURI().getPath();
       String absPath3 = location3.toURI().getPath();
@@ -192,7 +193,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
    *  1. addPartition(location) fails because partition already exists
    *  2. addPartition(location) fails because Hive partition already exists
    *  3. addPartition(location) succeeds but transaction fails
-   *  4. partitionOutput.addPartition() fails because partition already exists
+   *  4. getPartitionOutput() fails because partition already exists
    *  5. partitionOutput.addPartition() fails because Hive partition already exists
    *  6. partitionOutput.addPartition() succeeds but transaction fails
    *  7. mapreduce writing partition fails because location already exists
@@ -270,28 +271,17 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
     }
     pfsValidator.validate();
 
-    // 4. partitionOutput.addPartition() fails because partition already exists
-    final PartitionOutput output2x =  pfs.getPartitionOutput(KEY_2);
-    final Location location2x = output2x.getLocation();
-    try (Writer writer = new OutputStreamWriter(location2x.append("file").getOutputStream())) {
-      writer.write("2x,2x\n");
-    }
+    // 4. partitionOutput.getPartitionOutput() fails because partition already exists
     try {
-      pfsManager.execute(new Runnable() {
-        @Override
-        public void run() {
-          output2x.addPartition();
-        }
-      });
-      Assert.fail("Expected tx to fail because partition for number=2 already exists");
-    } catch (TransactionFailureException e) {
-      // expected
+      pfs.getPartitionOutput(KEY_1);
+      Assert.fail("Expected getPartitionOutput to fail, because the partition already exists.");
+    } catch (DataSetException expected) {
+
     }
     pfsValidator.validate();
-    Assert.assertFalse(location2x.exists());
 
     // 5. partitionOutput.addPartition() fails because Hive partition already exists
-    final PartitionOutput output4x =  pfs.getPartitionOutput(KEY_4);
+    final PartitionOutput output4x = pfs.getPartitionOutput(KEY_4);
     final Location location4x = output4x.getLocation();
     try (Writer writer = new OutputStreamWriter(location4x.append("file").getOutputStream())) {
       writer.write("4x,4x\n");
@@ -311,7 +301,7 @@ public class PartitionRollbackTestRun extends TestFrameworkTestBase {
     Assert.assertFalse(location4x.exists());
 
     // 6. partitionOutput.addPartition() succeeds but transaction fails
-    final PartitionOutput output5x =  pfs.getPartitionOutput(KEY_5);
+    final PartitionOutput output5x = pfs.getPartitionOutput(KEY_5);
     final Location location5x = output5x.getLocation();
     try (Writer writer = new OutputStreamWriter(location5x.append("file").getOutputStream())) {
       writer.write("5x,5x\n");

@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.streaming.StreamingContext;
 import co.cask.cdap.etl.api.streaming.StreamingSource;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
@@ -64,10 +65,11 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   }
 
   @Override
-  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec) throws Exception {
+  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
+                                                          StageStatisticsCollector collector) throws Exception {
     StreamingSource<Object> source;
     if (checkpointsDisabled) {
-      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+      PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
       source = pluginFunctionContext.createPlugin();
     } else {
       // check for macros in any StreamingSource. If checkpoints are enabled,
@@ -102,8 +104,9 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   @Override
   protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec, String inputStageName,
-                                                           SparkCollection<Object> inputCollection) throws Exception {
-    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec);
+                                                           SparkCollection<Object> inputCollection,
+                                                           StageStatisticsCollector collector) throws Exception {
+    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaDStream<Object> dStream = inputCollection.getUnderlying();
     JavaPairDStream<Object, Object> result =
       dStream.transformToPair(new DynamicJoinOn<>(dynamicDriverContext, inputStageName));
@@ -112,9 +115,10 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   @Override
   protected SparkCollection<Object> mergeJoinResults(
-    StageSpec stageSpec, SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception {
+    StageSpec stageSpec, SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
+    StageStatisticsCollector collector) throws Exception {
 
-    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec);
+    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaPairDStream<Object, List<JoinElement<Object>>> pairDStream = joinedInputs.getUnderlying();
     JavaDStream<Object> result = pairDStream.transform(new DynamicJoinMerge<>(dynamicDriverContext));
     return new DStreamCollection<>(sec, result);

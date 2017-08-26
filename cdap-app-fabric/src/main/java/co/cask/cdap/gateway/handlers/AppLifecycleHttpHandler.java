@@ -18,6 +18,7 @@ package co.cask.cdap.gateway.handlers;
 
 
 import co.cask.cdap.api.artifact.ArtifactSummary;
+import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.common.ApplicationNotFoundException;
@@ -384,10 +385,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           // if we don't null check, it gets serialized to "null"
           String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
 
-          applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
-                                                artifactSummary, configString, createProgramTerminator(),
-                                                ownerPrincipalId, appRequest.canUpdateSchedules());
-
+          try {
+            applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
+                                                  artifactSummary, configString, createProgramTerminator(),
+                                                  ownerPrincipalId, appRequest.canUpdateSchedules());
+          } catch (DatasetManagementException e) {
+            if (e.getCause() instanceof UnauthorizedException) {
+              throw (UnauthorizedException) e.getCause();
+            } else {
+              throw e;
+            }
+          }
           responder.sendString(HttpResponseStatus.OK, "Deploy Complete");
         } catch (ArtifactNotFoundException e) {
           responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());

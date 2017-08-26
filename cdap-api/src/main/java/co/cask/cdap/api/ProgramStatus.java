@@ -15,6 +15,10 @@
  */
 package co.cask.cdap.api;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Represents the runtime status of program.
  */
@@ -23,5 +27,7 @@ public enum ProgramStatus {
   RUNNING,
   COMPLETED,
   FAILED,
-  KILLED
+  KILLED;
+
+  public static final Set<ProgramStatus> TERMINAL_STATES = new HashSet<>(Arrays.asList(COMPLETED, FAILED, KILLED));
 }

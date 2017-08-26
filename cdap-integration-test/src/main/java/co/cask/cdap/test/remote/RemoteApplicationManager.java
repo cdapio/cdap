@@ -20,6 +20,7 @@ import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
@@ -27,10 +28,12 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.FlowId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.ServiceId;
 import co.cask.cdap.proto.id.WorkflowId;
 import co.cask.cdap.test.AbstractApplicationManager;
@@ -47,6 +50,8 @@ import com.google.common.base.Throwables;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * {@link AbstractApplicationManager} for use in integration tests.
@@ -119,10 +124,11 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
     try {
       for (ProgramRecord programRecord : applicationClient.listPrograms(application)) {
         // have to do a check, since appFabricServer.stop will throw error when you stop something that is not running.
-        ProgramId id = application.program(programRecord.getType(), programRecord.getName());
-        if (isRunning(id)) {
-          programClient.stop(id);
+        ProgramId programId = application.program(programRecord.getType(), programRecord.getName());
+        if (isRunning(programId)) {
+          programClient.stop(programId);
         }
+        waitForStopped(programId);
       }
     } catch (Exception e) {
       throw Throwables.propagate(e);
@@ -133,6 +139,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public void stopProgram(ProgramId programId) {
     try {
       programClient.stop(programId);
+      waitForStopped(programId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -151,7 +158,7 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public boolean isRunning(ProgramId programId) {
     try {
       String status = programClient.getStatus(programId);
-      return "STARTING".equals(status) || "RUNNING".equals(status);
+      return "RUNNING".equals(status);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -161,6 +168,24 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) {
     try {
       return programClient.getProgramRuns(programId, status.name(), 0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void addSchedule(ScheduleDetail scheduleDetail) {
+    try {
+      applicationClient.addSchedule(application, scheduleDetail);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
+  }
+
+  @Override
+  public void enableSchedule(ScheduleId scheduleId) throws Exception {
+    try {
+      applicationClient.enableSchedule(scheduleId);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

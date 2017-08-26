@@ -830,9 +830,9 @@ creating the source:
               "name": "Kafka",
               "type": "streamingsource",
               "artifact": {
-                "name": "spark-plugins",
+                "name": "kafka-plugins",
                 "version": "|cdap-pipelines-version|",
-                "scope": "SYSTEM"
+                "scope": "USER"
               },
               "properties": {
                 "referenceName": "purchasesTopic",

@@ -35,10 +35,13 @@ import java.util.concurrent.Callable;
 public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
   private final ErrorTransform<IN, OUT> transform;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
-  public WrappedErrorTransform(ErrorTransform<IN, OUT> transform, Caller caller) {
+  public WrappedErrorTransform(ErrorTransform<IN, OUT> transform, Caller caller,
+                               OperationTimer operationTimer) {
     this.transform = transform;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -76,13 +79,18 @@ public class WrappedErrorTransform<IN, OUT> extends ErrorTransform<IN, OUT> {
 
   @Override
   public void transform(final ErrorRecord<IN> input, final Emitter<OUT> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        transform.transform(input, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          transform.transform(input, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 
 }

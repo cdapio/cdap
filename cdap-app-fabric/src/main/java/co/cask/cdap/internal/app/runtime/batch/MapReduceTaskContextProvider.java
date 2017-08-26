@@ -35,15 +35,24 @@ import co.cask.cdap.messaging.MessagingService;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.MRConfig;
+import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
+import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -163,12 +172,27 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
     final SecureStore secureStore = injector.getInstance(SecureStore.class);
     final SecureStoreManager secureStoreManager = injector.getInstance(SecureStoreManager.class);
     final MessagingService messagingService = injector.getInstance(MessagingService.class);
-    // Multiple instances of BasicMapReduceTaskContext can shares the same program.
+    // Multiple instances of BasicMapReduceTaskContext can share the same program.
     final AtomicReference<Program> programRef = new AtomicReference<>();
 
     return new CacheLoader<ContextCacheKey, BasicMapReduceTaskContext>() {
       @Override
       public BasicMapReduceTaskContext load(ContextCacheKey key) throws Exception {
+        TaskAttemptID taskAttemptId = key.getTaskAttemptID();
+        // taskAttemptId could be null if used from a org.apache.hadoop.mapreduce.Partitioner or
+        // from a org.apache.hadoop.io.RawComparator, in which case we can get the JobId from the conf. Note that the
+        // JobId isn't in the conf for the OutputCommitter#setupJob method, in which case we use the taskAttemptId
+        Path txFile = MainOutputCommitter.getTxFile(key.getConfiguration(),
+                                                    taskAttemptId != null ? taskAttemptId.getJobID() : null);
+        FileSystem fs = txFile.getFileSystem(key.getConfiguration());
+        Preconditions.checkArgument(fs.exists(txFile));
+
+        Transaction tx;
+        try (FSDataInputStream txFileInputStream = fs.open(txFile)) {
+          byte[] txByteArray = ByteStreams.toByteArray(txFileInputStream);
+          tx = new TransactionCodec().decode(txByteArray);
+        }
+
         MapReduceContextConfig contextConfig = new MapReduceContextConfig(key.getConfiguration());
         MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(key.getConfiguration());
 
@@ -197,7 +221,6 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         MapReduceMetrics.TaskType taskType = null;
         String taskId = null;
 
-        TaskAttemptID taskAttemptId = key.getTaskAttemptID();
         // taskAttemptId can be null, if used from a org.apache.hadoop.mapreduce.Partitioner or
         // from a org.apache.hadoop.io.RawComparator
         if (taskAttemptId != null) {
@@ -214,7 +237,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         return new BasicMapReduceTaskContext(
           program, contextConfig.getProgramOptions(), cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
-          contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
+          tx, programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
           authorizationEnforcer, authenticationContext, messagingService
         );

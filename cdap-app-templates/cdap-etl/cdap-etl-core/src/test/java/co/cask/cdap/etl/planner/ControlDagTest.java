@@ -69,6 +69,23 @@ public class ControlDagTest {
         new Connection("n3", "n5"),
         new Connection("n4", "n5")));
     Assert.assertEquals(0, cdag.trim());
+
+    /*
+              |--> n2 --|
+              |         |--> n5
+         n1 --|--> n3 --|
+              |
+              |--> n4 --> n6
+     */
+    cdag = new ControlDag(
+      ImmutableSet.of(
+        new Connection("n1", "n2"),
+        new Connection("n1", "n3"),
+        new Connection("n1", "n4"),
+        new Connection("n2", "n5"),
+        new Connection("n3", "n5"),
+        new Connection("n4", "n6")));
+    Assert.assertEquals(0, cdag.trim());
   }
 
   @Test
@@ -313,6 +330,42 @@ public class ControlDagTest {
         new Connection("n4", "n6"),
         new Connection("n3", "n3.n6"),
         new Connection("n6", "n3.n6")));
+    Assert.assertEquals(expected, cdag);
+
+    /*
+              |--> n2 --|
+              |         |--> n5
+         n1 --|--> n3 --|
+              |
+              |--> n4 --> n6
+     */
+    cdag = new ControlDag(
+      ImmutableSet.of(
+        new Connection("n1", "n2"),
+        new Connection("n1", "n3"),
+        new Connection("n1", "n4"),
+        new Connection("n2", "n5"),
+        new Connection("n3", "n5"),
+        new Connection("n4", "n6")));
+    cdag.flatten();
+
+    /*
+              |--> n2 ---------|
+              |                |
+         n1 --|--> n3 ---------|--> n2.n3.n6 --> n5
+              |                |
+              |--> n4 --> n6 --|
+     */
+    expected = new ControlDag(
+      ImmutableSet.of(
+        new Connection("n1", "n2"),
+        new Connection("n1", "n3"),
+        new Connection("n1", "n4"),
+        new Connection("n4", "n6"),
+        new Connection("n2", "n2.n3.n6"),
+        new Connection("n3", "n2.n3.n6"),
+        new Connection("n6", "n2.n3.n6"),
+        new Connection("n2.n3.n6", "n5")));
     Assert.assertEquals(expected, cdag);
   }
 }

@@ -24,17 +24,22 @@ import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.api.spark.JavaSparkMain;
+import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.api.JoinElement;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.batch.PipelinePluginInstantiator;
+import co.cask.cdap.etl.batch.connector.SingleConnectorFactory;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.RecordInfo;
 import co.cask.cdap.etl.common.SetMultimapCodec;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.plugin.PipelinePluginContext;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
 import co.cask.cdap.etl.spark.SparkPipelineRunner;
+import co.cask.cdap.etl.spark.SparkStageStatisticsCollector;
 import co.cask.cdap.etl.spark.function.BatchSourceFunction;
 import co.cask.cdap.etl.spark.function.JoinMergeFunction;
 import co.cask.cdap.etl.spark.function.JoinOnFunction;
@@ -45,12 +50,13 @@ import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.spark.api.java.JavaSparkContext;
-import scala.Tuple2;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -75,8 +81,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient int numOfRecordsPreview;
 
   @Override
-  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
                                  .flatMap(Compat.convert(new BatchSourceFunction(pluginFunctionContext,
@@ -85,8 +91,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
 
   @Override
   protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec, String inputStageName,
-                                                           SparkCollection<Object> inputCollection) throws Exception {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+                                                           SparkCollection<Object> inputCollection,
+                                                           StageStatisticsCollector collector) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return inputCollection.flatMapToPair(
       Compat.convert(new JoinOnFunction<>(pluginFunctionContext, inputStageName)));
   }
@@ -94,9 +101,9 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   @Override
   protected SparkCollection<Object> mergeJoinResults(
     StageSpec stageSpec,
-    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs) throws Exception {
-
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
+    StageStatisticsCollector collector) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(pluginFunctionContext)));
   }
 
@@ -129,6 +136,37 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                     phaseSpec.isStageLoggingEnabled(),
                                                                     phaseSpec.isProcessTimingEnabled());
-    runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginContext);
+
+    Map<String, StageStatisticsCollector> collectors = new HashMap<>();
+    if (phaseSpec.pipelineContainsCondition()) {
+      Iterator<StageSpec> iterator = phaseSpec.getPhase().iterator();
+      while (iterator.hasNext()) {
+        StageSpec spec = iterator.next();
+        collectors.put(spec.getName(), new SparkStageStatisticsCollector(jsc));
+      }
+    }
+    try {
+      PipelinePluginInstantiator pluginInstantiator =
+        new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
+      runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors);
+    } finally {
+      updateWorkflowToken(sec.getWorkflowToken(), collectors);
+    }
+  }
+
+  private void updateWorkflowToken(WorkflowToken token, Map<String, StageStatisticsCollector> collectors) {
+    for (Map.Entry<String, StageStatisticsCollector> entry : collectors.entrySet()) {
+      SparkStageStatisticsCollector collector = (SparkStageStatisticsCollector) entry.getValue();
+      String keyPrefix = Constants.StageStatistics.PREFIX + "." + entry.getKey() + ".";
+
+      String inputRecordKey = keyPrefix + Constants.StageStatistics.INPUT_RECORDS;
+      token.put(inputRecordKey, String.valueOf(collector.getInputRecordCount()));
+
+      String outputRecordKey = keyPrefix + Constants.StageStatistics.OUTPUT_RECORDS;
+      token.put(outputRecordKey, String.valueOf(collector.getOutputRecordCount()));
+
+      String errorRecordKey = keyPrefix + Constants.StageStatistics.ERROR_RECORDS;
+      token.put(errorRecordKey, String.valueOf(collector.getErrorRecordCount()));
+    }
   }
 }

@@ -17,21 +17,16 @@
 package co.cask.cdap.internal.app.runtime.plugin;
 
 import co.cask.cdap.api.artifact.ArtifactId;
-import co.cask.cdap.api.artifact.ArtifactRange;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
-import co.cask.cdap.api.plugin.PluginSelector;
-import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -44,65 +39,20 @@ public final class FindPluginHelper {
   }
 
   /**
-   * Find and return the requested plugin using the artifact repository, if found.
-   * @param artifactRepository artifact repository to find plugin artifact.
-   * @param pluginInstantiator plugin instantiator to add the identified plugin artifact.
-   * @param namespace namespace of plugin
-   * @param parentArtifactId parent artifact
-   * @param pluginType plugin type
-   * @param pluginName name of the plugin
+   * Get the Plugin information from the specified information.
+   *
+   * @param parents plugin parents of the plugin. Each item in the iterable must be the parent of the item before it,
+   *                with the first item as the direct parent of the plugin
+   * @param pluginEntry artifact and class information for the plugin
    * @param properties plugin properties
-   * @param selector seelector used to select a plugin
-   * @return {@link Plugin}
-   * @throws PluginNotExistsException
-   * @throws ArtifactNotFoundException
-   */
-  public static Plugin findPlugin(ArtifactRepository artifactRepository,
-                              PluginInstantiator pluginInstantiator,
-                              NamespaceId namespace,
-                              Id.Artifact parentArtifactId, String pluginType, String pluginName,
-                              PluginProperties properties, PluginSelector selector)
-    throws PluginNotExistsException, ArtifactNotFoundException {
-    return findPlugin(artifactRepository, pluginInstantiator, namespace,
-                      new ArtifactRange(parentArtifactId.getNamespace().getId(), parentArtifactId.getName(),
-                                        parentArtifactId.getVersion(), true,
-                                        parentArtifactId.getVersion(), true),
-                      pluginType, pluginName, properties, selector);
-  }
-
-
-  /**
-   * Find and return the requested plugin using the artifact repository, if found.
-   * @param artifactRepository artifact repository to find plugin artifact.
-   * @param pluginInstantiator plugin instantiator to add the identified plugin artifact.
-   * @param namespace namespace of plugin
-   * @param parentArtifactRange parent artifact range
    * @param pluginType plugin type
-   * @param pluginName name of the plugin
-   * @param properties plugin properties
-   * @param selector seelector used to select a plugin
-   * @return {@link Plugin}
-   * @throws PluginNotExistsException
-   * @throws ArtifactNotFoundException
+   * @param pluginName plugin name
+   * @param pluginInstantiator instantiator to add the plugin artifact to
+   * @return plugin information
    */
-  public static Plugin findPlugin(ArtifactRepository artifactRepository,
-                                  PluginInstantiator pluginInstantiator,
-                                  NamespaceId namespace,
-                                  ArtifactRange parentArtifactRange, String pluginType, String pluginName,
-                                  PluginProperties properties, PluginSelector selector)
-    throws PluginNotExistsException, ArtifactNotFoundException {
-    Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
-    Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry;
-    try {
-      pluginEntry = artifactRepository.findPlugin(namespace, parentArtifactRange, pluginType, pluginName, selector);
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
-    return getPlugin(pluginEntry, properties, pluginType, pluginName, pluginInstantiator);
-  }
-
-  private static Plugin getPlugin(Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry, PluginProperties properties,
-                                  String pluginType, String pluginName, PluginInstantiator pluginInstantiator) {
+  public static Plugin getPlugin(Iterable<ArtifactId> parents, Map.Entry<ArtifactDescriptor, PluginClass> pluginEntry,
+                                 PluginProperties properties,
+                                 String pluginType, String pluginName, PluginInstantiator pluginInstantiator) {
     CollectMacroEvaluator collectMacroEvaluator = new CollectMacroEvaluator();
 
     // Just verify if all required properties are provided.
@@ -123,7 +73,7 @@ public final class FindPluginHelper {
     } catch (IOException e) {
       Throwables.propagate(e);
     }
-    return new Plugin(artifact, pluginEntry.getValue(),
+    return new Plugin(parents, artifact, pluginEntry.getValue(),
                       properties.setMacros(collectMacroEvaluator.getMacros()));
   }
 

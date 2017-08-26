@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.program.ProgramDescriptor;
 import co.cask.cdap.app.runtime.AbstractProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -52,6 +53,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.api.records.NodeState;
@@ -98,9 +100,12 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   DistributedProgramRuntimeService(ProgramRunnerFactory programRunnerFactory, TwillRunner twillRunner, Store store,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
-                                   ArtifactRepository artifactRepository, Impersonator impersonator,
-                                   ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, artifactRepository, programStateWriter);
+                                   // for running a program, we only need EXECUTE on the program, there should be no
+                                   // privileges needed for artifacts
+                                   @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+                                     ArtifactRepository noAuthArtifactRepository,
+                                   Impersonator impersonator, ProgramStateWriter programStateWriter) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
     this.programRunnerFactory = programRunnerFactory;
     this.twillRunner = twillRunner;
     this.store = store;

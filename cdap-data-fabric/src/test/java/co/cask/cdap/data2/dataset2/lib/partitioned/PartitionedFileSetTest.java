@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partition;
+import co.cask.cdap.api.dataset.lib.PartitionAlreadyExistsException;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -578,13 +579,20 @@ public class PartitionedFileSetTest {
         combinedEntries.putAll(updatedMetadata);
         Assert.assertEquals(combinedEntries, partitionDetail.getMetadata().asMap());
 
-        // adding an entry, for a key that already exists will overwrite the previous value
-        dataset.addMetadata(PARTITION_KEY, "key3", "value4");
+        // using the setMetadata API, adding an entry, for a key that already exists will overwrite the previous value
+        dataset.setMetadata(PARTITION_KEY, Collections.singletonMap("key3", "value4"));
 
         partitionDetail = dataset.getPartition(PARTITION_KEY);
         Assert.assertNotNull(partitionDetail);
         Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value4"),
                             partitionDetail.getMetadata().asMap());
+
+        // adding an entry, for a key that already exists will throw an Exception
+        try {
+          dataset.addMetadata(PARTITION_KEY, "key2", "value3");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
 
         // possible to remove multiple metadata entries; if a key doesn't exist, no error is thrown
         dataset.removeMetadata(PARTITION_KEY, ImmutableSet.of("key2", "key3", "key4"));
@@ -616,15 +624,7 @@ public class PartitionedFileSetTest {
 
     txContext.start();
 
-    PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
-    Location outputLocation = output.getLocation().append("file");
-    Assert.assertFalse(outputLocation.exists());
-
-    // this will create the file
-    outputLocation.getOutputStream().close();
-    Assert.assertTrue(outputLocation.exists());
-
-    output.addPartition();
+    Location outputLocation = createPartition(pfs, PARTITION_KEY, "file");;
     Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
     Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
 
@@ -643,43 +643,21 @@ public class PartitionedFileSetTest {
     TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
 
     txContext.start();
-
-    PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
-    Location outputLocation = output.getLocation().append("file");
-    Assert.assertFalse(outputLocation.exists());
-
-    try (OutputStream outputStream = outputLocation.getOutputStream()) {
-      // write 1 to the first file
-      outputStream.write(1);
-    }
-    Assert.assertTrue(outputLocation.exists());
-
-    output.addPartition();
+    // write 1 to the first file
+    Location outputLocation = createPartition(pfs, PARTITION_KEY, "file", 1);
     Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
     Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
-
     txContext.finish();
 
-    // because the previous transaction aborted, the partition as well as the file will not exist
     txContext.start();
     pfs.dropPartition(PARTITION_KEY);
-
     Assert.assertNull(pfs.getPartition(PARTITION_KEY));
     Assert.assertFalse(outputLocation.exists());
 
-    // create a new partition with the same partition key (same relative path for the partition
-    PartitionOutput partitionOutput2 = pfs.getPartitionOutput(PARTITION_KEY);
-    Location outputLocation2 = partitionOutput2.getLocation().append("file");
-    Assert.assertFalse(outputLocation2.exists());
-    // create the file
-    try (OutputStream outputStream = outputLocation2.getOutputStream()) {
-      // write 2 to the second file
-      outputStream.write(2);
-    }
+    // create a new partition with the same partition key (same relative path for the partition)
+    // write 2 to the second file
+    Location outputLocation2 = createPartition(pfs, PARTITION_KEY, "file", 2);
     Assert.assertTrue(outputLocation2.exists());
-
-    partitionOutput2.addPartition();
-
     txContext.abort();
 
     // since the previous transaction aborted, the partition and its files should still exist
@@ -692,7 +670,6 @@ public class PartitionedFileSetTest {
       // should be nothing else in the file
       Assert.assertEquals(0, inputStream.available());
     }
-
     txContext.finish();
   }
 
@@ -701,32 +678,74 @@ public class PartitionedFileSetTest {
     PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
     TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
 
-    // because the previous transaction aborted, the partition as well as the file will not exist
     txContext.start();
-
     Assert.assertNull(pfs.getPartition(PARTITION_KEY));
-
-    PartitionOutput partitionOutput = pfs.getPartitionOutput(PARTITION_KEY);
-    Location outputLocation = partitionOutput.getLocation().append("file");
-
-    Assert.assertFalse(outputLocation.exists());
-
-    try (OutputStream outputStream = outputLocation.getOutputStream()) {
-      // create and write 1 to the file
-      outputStream.write(1);
-    }
-
-    Assert.assertTrue(outputLocation.exists());
-
-    partitionOutput.addPartition();
+    Location outputLocation = createPartition(pfs, PARTITION_KEY, "file");
     Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
-
     pfs.dropPartition(PARTITION_KEY);
-
     txContext.abort();
 
     // the file shouldn't exist because the transaction was aborted (AND because it was dropped at the end of the tx)
     Assert.assertFalse(outputLocation.exists());
+  }
+
+  @Test
+  public void testRollbackOfPartitionCreateWhereItAlreadyExisted() throws Exception {
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+    TransactionContext txContext = new TransactionContext(txClient, (TransactionAware) pfs);
+
+    txContext.start();
+    Assert.assertNull(pfs.getPartition(PARTITION_KEY));
+    Location file1Location = createPartition(pfs, PARTITION_KEY, "file1");
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+    txContext.finish();
+
+    // the file should exist because the transaction completed successfully
+    Assert.assertTrue(file1Location.exists());
+
+    // if you attempt to add a partition X, and it already existed, the transaction rollback should not remove
+    // the files of the original, existing partition X.
+    txContext.start();
+    Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
+
+    try {
+      // PartitionedFileSet#getPartitionOutput should fail
+      createPartition(pfs, PARTITION_KEY, "file2");
+      Assert.fail("Expected PartitionAlreadyExistsException");
+    } catch (PartitionAlreadyExistsException expected) {
+    }
+    // because of the above failure, we want to abort and rollback the transaction
+    txContext.abort();
+
+    // the file should still exist because the aborted transaction should've failed before even needing to rollback
+    // the partition's files
+    Assert.assertTrue(file1Location.exists());
+
+    // file2 shouldn't exist
+    txContext.start();
+    Assert.assertFalse(pfs.getPartition(PARTITION_KEY).getLocation().append("file2").exists());
+    txContext.finish();
+  }
+
+  private Location createPartition(PartitionedFileSet pfs, PartitionKey key, String fileName) throws IOException {
+    return createPartition(pfs, key, fileName, 1);
+  }
+
+  // creates a file under the partition path for the given key and adds it to the PartitionedFileSet
+  // writes the given int into the file and asserts that it exists
+  private Location createPartition(PartitionedFileSet pfs, PartitionKey key, String fileName,
+                                   int intToWrite) throws IOException {
+    PartitionOutput partitionOutput = pfs.getPartitionOutput(key);
+    Location outputLocation = partitionOutput.getLocation().append(fileName);
+    Assert.assertFalse(outputLocation.exists());
+
+    try (OutputStream outputStream = outputLocation.getOutputStream()) {
+      outputStream.write(intToWrite);
+    }
+    Assert.assertTrue(outputLocation.exists());
+
+    partitionOutput.addPartition();
+    return outputLocation;
   }
 
   @Test
@@ -831,12 +850,8 @@ public class PartitionedFileSetTest {
     dsFrameworkUtil.newTransactionExecutor((TransactionAware) pfs).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
-        PartitionOutput output = pfs.getPartitionOutput(PARTITION_KEY);
-        Location outputLocation = output.getLocation().append("file");
+        Location outputLocation = createPartition(pfs, PARTITION_KEY, "file");
         outputLocationRef.set(outputLocation);
-        OutputStream out = outputLocation.getOutputStream();
-        out.close();
-        output.addPartition();
         Assert.assertTrue(outputLocation.exists());
         Assert.assertNotNull(pfs.getPartition(PARTITION_KEY));
         Assert.assertTrue(pfs.getPartition(PARTITION_KEY).getLocation().exists());
@@ -1038,7 +1053,7 @@ public class PartitionedFileSetTest {
     return true;
   }
 
-  public static List<PartitionFilter> generateFilters() {
+  private static List<PartitionFilter> generateFilters() {
     List<PartitionFilter> filters = Lists.newArrayList();
     addSingleConditionFilters(filters, "s", S_CONDITIONS);
     addSingleConditionFilters(filters, "i", I_CONDITIONS);

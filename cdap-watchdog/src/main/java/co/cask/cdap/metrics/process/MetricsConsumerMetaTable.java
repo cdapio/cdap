@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.lib.table.MetricsTable;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import javax.annotation.Nullable;
 
 /**
  * An abstraction on persistent storage of consumer information.
@@ -29,6 +30,11 @@ import java.util.TreeMap;
 public class MetricsConsumerMetaTable {
   private static final byte[] OFFSET_COLUMN = Bytes.toBytes("o");
   private static final byte[] MESSAGE_ID_COLUMN = Bytes.toBytes("m");
+
+  private static final byte[] PROCESS_COUNT = Bytes.toBytes("pct");
+  private static final byte[] PROCESS_TIMESTAMP_OLDEST = Bytes.toBytes("pto");
+  private static final byte[] LAST_PROCESS_TIMESTAMP = Bytes.toBytes("lpt");
+  private static final byte[] PROCESS_TIMESTAMP_LATEST = Bytes.toBytes("ptl");
 
   private final MetricsTable metaTable;
 
@@ -56,6 +62,26 @@ public class MetricsConsumerMetaTable {
     metaTable.putBytes(updates);
   }
 
+
+  public <T extends MetricsMetaKey>
+  void saveMetricsProcessorStats(Map<T, TopicProcessMeta> messageIds) throws Exception {
+    SortedMap<byte[], SortedMap<byte[], byte[]>> updates = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+    for (Map.Entry<T, TopicProcessMeta> entry : messageIds.entrySet()) {
+      TopicProcessMeta metaInfo = entry.getValue();
+      if (metaInfo.getMessagesProcessed() > 0L) {
+        SortedMap<byte[], byte[]> columns = new TreeMap<>(Bytes.BYTES_COMPARATOR);
+        columns.put(PROCESS_COUNT, Bytes.toBytes(metaInfo.getMessagesProcessed()));
+        columns.put(PROCESS_TIMESTAMP_LATEST, Bytes.toBytes(metaInfo.getLatestMetricsTimestamp()));
+        columns.put(PROCESS_TIMESTAMP_OLDEST, Bytes.toBytes(metaInfo.getOldestMetricsTimestamp()));
+        columns.put(LAST_PROCESS_TIMESTAMP, Bytes.toBytes(metaInfo.getLastProcessedTimestamp()));
+
+        columns.put(MESSAGE_ID_COLUMN, entry.getValue().getMessageId());
+        updates.put(entry.getKey().getKey(), columns);
+      }
+    }
+    metaTable.putBytes(updates);
+  }
+
   /**
    * Gets the value as a long in the {@link MetricsTable} of a given key.
    *
@@ -71,6 +97,14 @@ public class MetricsConsumerMetaTable {
     return Bytes.toLong(result);
   }
 
+  private synchronized long getLong(byte[] rowKey, byte[] column) {
+    byte[] result = metaTable.get(rowKey, column);
+    if (result == null) {
+      return 0;
+    }
+    return Bytes.toLong(result);
+  }
+
   /**
    * Gets the value as a byte array in the {@link MetricsTable} of a given key.
    *
@@ -78,7 +112,17 @@ public class MetricsConsumerMetaTable {
    * @return The value or {@code null} if the value is not found.
    * @throws Exception If there is an error when fetching.
    */
-  public synchronized <T extends MetricsMetaKey> byte[] getBytes(T metaKey) throws Exception {
-    return metaTable.get(metaKey.getKey(), MESSAGE_ID_COLUMN);
+  @Nullable
+  public synchronized <T extends MetricsMetaKey> TopicProcessMeta getTopicProcessMeta(T metaKey) throws Exception {
+    // TODO : update to use get with multiple columns after CDAP-12459 is fixed
+    byte[] messageId = metaTable.get(metaKey.getKey(), MESSAGE_ID_COLUMN);
+    if (messageId == null) {
+      return null;
+    }
+    long processedCount = getLong(metaKey.getKey(), PROCESS_COUNT);
+    long oldestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_OLDEST);
+    long latestTs = getLong(metaKey.getKey(), PROCESS_TIMESTAMP_LATEST);
+    long lastProcessedTs = getLong(metaKey.getKey(), LAST_PROCESS_TIMESTAMP);
+    return new TopicProcessMeta(messageId, oldestTs, latestTs, processedCount, lastProcessedTs);
   }
 }

@@ -81,7 +81,7 @@ public interface ProgramController {
     /**
      * Trying to resume a suspended program.
      */
-    RESUMING(ProgramRunStatus.RUNNING),
+    RESUMING(ProgramRunStatus.RESUMING),
 
     /**
      * Trying to stop a program.
@@ -105,21 +105,12 @@ public interface ProgramController {
 
     private final ProgramRunStatus runStatus;
 
-    private final ProgramStatus programStatus;
-
     State(ProgramRunStatus runStatus) {
       this.runStatus = runStatus;
-      this.programStatus = ProgramRunStatus.STARTING == runStatus || ProgramRunStatus.RUNNING == runStatus ?
-        ProgramStatus.RUNNING :
-        ProgramStatus.STOPPED;
     }
 
     public ProgramRunStatus getRunStatus() {
       return runStatus;
-    }
-
-    public ProgramStatus getProgramStatus() {
-      return programStatus;
     }
 
     public boolean isDone() {

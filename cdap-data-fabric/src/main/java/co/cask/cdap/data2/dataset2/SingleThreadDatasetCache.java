@@ -35,6 +35,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
@@ -95,7 +96,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       @ParametersAreNonnullByDefault
       public Dataset load(DatasetCacheKey key) throws Exception {
         Dataset dataset = instantiator.getDataset(new DatasetId(key.getNamespace(), key.getName()),
-                                                  key.getArguments(), key.getAccessType());
+                                                  // avoid DatasetDefinition or Dataset from modifying the cache key
+                                                  ImmutableMap.copyOf(key.getArguments()), key.getAccessType());
         if (dataset instanceof MeteredDataset && metricsContext != null) {
           ((MeteredDataset) dataset).setMetricsCollector(
             metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));

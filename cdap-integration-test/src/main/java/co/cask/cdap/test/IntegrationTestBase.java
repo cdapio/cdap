@@ -127,6 +127,7 @@ public abstract class IntegrationTestBase {
       // if we didn't create the namespace, don't delete it; only clear the data/programs within it
       doClear(namespaceEntry.getKey(), deleteUponTeardown);
     }
+    registeredNamespaces.clear();
     LOG.info("Completed tearDown.");
   }
 

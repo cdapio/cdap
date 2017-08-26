@@ -49,12 +49,12 @@ public class ListPrivilegesCommand extends AbstractAuthCommand {
     String principalType = arguments.get(ArgumentName.PRINCIPAL_TYPE.toString());
     String principalName = arguments.get(ArgumentName.PRINCIPAL_NAME.toString());
     Table table = Table.builder()
-      .setHeader("Entity", "Action")
+      .setHeader("Authorizable", "Action")
       .setRows(Lists.newArrayList(client.listPrivileges(new Principal(principalName, Principal.PrincipalType.valueOf
         (principalType.toUpperCase())))), new RowMaker<Privilege>() {
         @Override
         public List<?> makeRow(Privilege privilege) {
-          return Lists.newArrayList(privilege.getEntity().toString(), privilege.getAction().name());
+          return Lists.newArrayList(privilege.getAuthorizable().toString(), privilege.getAction().name());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

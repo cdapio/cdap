@@ -18,13 +18,12 @@ package co.cask.cdap.etl.planner;
 
 import co.cask.cdap.etl.proto.Connection;
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
@@ -129,19 +128,41 @@ public class ControlDag extends Dag {
       return;
     }
 
-    Multimap<String, String> branchEndpointOutputs = HashMultimap.create();
+    Map<String, Set<String>> branchEndpointOutputs = new HashMap<>();
     // can't just use branchEndpointOutputs.keySet(),
     // because that won't track branch endpoints that had no output (sinks)
     Set<String> branchEndpoints = new HashSet<>();
     for (String output : outputs) {
       String branchEndpoint = findBranchEnd(output);
       branchEndpoints.add(branchEndpoint);
-      branchEndpointOutputs.putAll(branchEndpoint, outgoingConnections.get(branchEndpoint));
+      branchEndpointOutputs.put(branchEndpoint, new HashSet<>(outgoingConnections.get(branchEndpoint)));
     }
 
-    // if all the branch endpoints connect to a single node, there is no need to add a join node
-    Set<String> endpointOutputs = new HashSet<>(branchEndpointOutputs.values());
-    if (endpointOutputs.size() == 1) {
+    /*
+       if all the branch endpoints connect to a single node, there is no need to add a join node.
+       even if there is one output, still need to check that no branch endpoints are a sink. For example:
+
+              |--> n2 --|
+              |         |--> n5
+         n1 --|--> n3 --|
+              |
+              |--> n4 --> n6
+
+       then branchEndpointOutputs is:
+         n2 -> [n5]
+         n3 -> [n5]
+         n6 -> []
+       and we need to add a join node.
+     */
+    Set<String> endpointOutputs = new HashSet<>();
+    boolean endpointsContainSink = false;
+    for (Set<String> branchEndpointOutput : branchEndpointOutputs.values()) {
+      endpointOutputs.addAll(branchEndpointOutput);
+      if (branchEndpointOutput.isEmpty()) {
+        endpointsContainSink = true;
+      }
+    }
+    if (endpointOutputs.size() == 1 && !endpointsContainSink) {
       flattenFrom(endpointOutputs.iterator().next());
       return;
     }
@@ -151,8 +172,11 @@ public class ControlDag extends Dag {
     String newJoinNode = generateJoinNodeName(branchEndpoints);
     addNode(newJoinNode, branchEndpoints, endpointOutputs);
     // remove the outgoing connections from endpoints that aren't going to our new join node
-    for (Map.Entry<String, String> endpointEntry : branchEndpointOutputs.entries()) {
-      removeConnection(endpointEntry.getKey(), endpointEntry.getValue());
+    for (Map.Entry<String, Set<String>> endpointEntry : branchEndpointOutputs.entrySet()) {
+      String branchEndpoint = endpointEntry.getKey();
+      for (String branchEndpointOutput : endpointEntry.getValue()) {
+        removeConnection(branchEndpoint, branchEndpointOutput);
+      }
     }
     /*
        have to trim again due to reshuffling of nodes. For example, if we have:

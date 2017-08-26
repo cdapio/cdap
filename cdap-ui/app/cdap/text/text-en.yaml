@@ -2,6 +2,7 @@
 # Please keep this file alphabetically sorted!
 commons:
   application: Application
+  as: as
   back: Back
   cask: CASK
   cdap: CDAP
@@ -81,13 +82,18 @@ commons:
     reset: Reset
     valuePlaceholder: value
   market: Cask Market
+  milliSecondsShortLabel: ms
   nameLabel: Name
+  notAvailable: 'N/A'
   please: Please
   resource-center: Add Entity
   schemaLabel: Schema
+  secondsShortLabel: secs
+  secShortLabel: sec
+  stream: Stream
   then: Then
   tracker: Cask Tracker
-  stream: Stream
+  typeLabel: Type
   when: When
   wrangler: Cask Wrangler
 features:
@@ -1042,8 +1048,10 @@ features:
     contactadmin: Contact System Administrator
     defaultMessage: 'Loading...'
     nodeserverDown: 'User interface service is down'
-    servicesDown: We deteced a few system services are down
-    serviceDown: We detect that {serviceName} is down
+    restartCDAP: Restart CDAP
+    restartUI: Restart the UI; or
+    servicesDown: A few system services are down
+    serviceDown: The system service {serviceName} is down
     systemDashboard: View System Services Dashboard
     tryMessage: 'You can try to: '
 
@@ -1101,9 +1109,7 @@ features:
     version: "Version :"
   Navbar:
     dataprepLabel: Data Preparation
-    Dataprep:
-      home: Home
-      rulesmgmt: Rules Management
+    Dataprep: Preparation
     metadataLabel: Metadata
     Metadata:
       dictionaryLabel: Dictionary
@@ -1116,7 +1122,7 @@ features:
       datasets: Datasets
       namespaceLabel: Namespace
       streams: Streams
-    overviewLabel: Overview
+    overviewLabel: Control Center
     pipelinesLabel: Pipelines
     ProductDropdown:
       aboutLabel: About CDAP
@@ -1131,6 +1137,7 @@ features:
       olduilink: Switch to Classic View
       prodWebsiteLabel: Product Website
       supportLabel: Support
+    rulesmgmt: Rules
   Overview:
     DatasetTab:
       title: "Datasets and Streams used by \"{appId}\""
@@ -1226,9 +1233,21 @@ features:
       minutes: Minutes
       nodata: No Data
       numberOfRecords: Number of Records
-      recordsInTitle: "Records In - Run #{runNumber}"
-      recordsOutTitle: "Records out - Run #{runNumber}"
+      processTimeTable:
+        avgProcessTime: Average Processing Time
+        minProcessTime: Min Process Time (one record)
+        maxProcessTime: Max Process Time (one record)
+        recordInPerSec: Records In per second
+        recordOutPerSec: Records Out per second
+        stddevProcessTime: Standard Deviation
+      recordsInTitle: Records In
+      recordsOutTitle: Records out
+      recordsErrorTitle: Records Error # Error Records??
+      runOfTitle: Run {runNumber} of {totalRun}
       seconds: Seconds
+      totalRecordsIn: "Total Records In: {totalRecordsIn}"
+      totalRecordsOut: "Total Records Out: {totalRecordsOut}"
+      totalRecordsError: "Total Errors: {totalRecordsError}"
     runsHistoryGraph:
       hint:
         duration: Duration
@@ -1264,6 +1283,62 @@ features:
       runTime: Run Time
       totalRuns: TotalRuns
     title: 'Summary'
+
+  PipelineTriggers:
+    collapsedTabLabel: "Show Inbound Triggers ({count})"
+    description: Description
+    EnabledTriggers:
+      buttonLabel: Disable Trigger
+      pipelineCount:
+        0: "No Pipelines set as trigger"
+        1: "1 Pipeline is set as trigger"
+        _: "{context.count} Pipelines is set as trigger"
+      tabLabel: "View Enabled Triggers ({count})"
+      title: "View pipelines enabled to trigger pipeline \"{pipelineName}\""
+    Events:
+      COMPLETED: Succeeds
+      FAILED: Fails
+      KILLED: Stops
+    expandedTabLabel: "Hide Inbound Triggers ({count})"
+    helperText: "\"{pipelineName}\" is triggered when this pipeline"
+    namespace: Namespace
+    pipelineName: Pipeline Name
+    ScheduleRuntimeArgs:
+      configure_enable_btn: Configure and Enable Trigger
+      DefaultMessages:
+        choose_runtime_arg: Choose a Runtime Argument
+        choose_plugin: Choose a Plugin
+        choose_plugin_property: Choose a Plugin Property
+        choose_runtime_arg_map: Choose a Runtime Argument to map
+      PayloadConfigModal:
+        title: Payload Configuration
+        configPayloadBtn: Configure Payload
+      Tabs:
+        RuntimeArgs:
+          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          TableHeaders:
+            runtimeargs: Runtime Arguments
+            t_runtimeargs: Trigger Runtime Arguments
+          tab_message: Select how Runtime Arguments for trigger "{triggeringPipelineid}" map to Runtime Arguments for "{triggeredPipelineid}"
+          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
+          title: Runtime Arguments
+        StageProps:
+          noRuntimeArgsMessage: No Runtime Arguments found for "{triggeredPipelineid}"
+          TableHeaders:
+            pluginName: Plugin Name
+            pluginProperty: Plugin Property
+            runtimeArg: Runtime Argument
+          tab_message: Set which of the plugin properties in trigger "{triggeringPipelineid}" map to "{triggeredPipelineid}" Runtime Arguments.
+          tab_message2: (if not mapped, Runtime Arguments are derived from pipeline's or namespace's preferences)
+          title: Plugin Config
+    SetTriggers:
+      buttonLabel: Enable Trigger
+      pipelineCount: "{count} pipelines available"
+      tabLabel: Set Pipeline Triggers
+      title: "Set which pipeline triggers \"{pipelineName}\""
+      viewNamespace: View pipelines in namespace
+    viewPipeline: View Pipeline
+
   PropertiesEditor:
     AddProperty:
       button: Add Property
@@ -1328,6 +1403,12 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
   RulesEngine:
+    AddRulesEngineToPipelineModal:
+      batchPipelineBtn: Batch Pipeline
+      error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline
+      message: Choose the type of pipeline to create
+      modalTitle: Add to Pipeline
+      realtimePipelineBtn: Realtime Pipeline
     CreateRule:
       form:
         actionplaceholder: Action
@@ -1339,52 +1420,69 @@ features:
         today: Today
     CreateRulebook:
       admin: Admin
-      createBtnLabel: Create
+      createBtnLabel: Create Rulebook
+      createBtnNext: "Next: Add Rules"
       created: Created
       descriptionplaceholder: Add description
-      nameplaceholder: Add name
+      nameplaceholder: Start by Naming this Rulebook
+      now: Now
       owner: Owner
-      today: Created Today
+      version: Version {version}
     Home:
       pageTitle: Rules Management
       Tabs:
-        rbTitle: Rules Books
+        rbTitle: RuleBooks
         rulesTitle: Rules
+    ImportRulebook:
+      description: Upload your Rulebook file
+      footertitle: Failed to Upload Rulebook
+      shorttitle: Import Rulebook
+      title: Upload Rulebook
     Rulebook:
       owner: Owner
       rules: Rules
-      version: Version
     RulebookDetails:
       addone: to add one
-      lastupdated: Last Updated on
+      applyBtnLabel: Apply
+      lastmodified: Modified on
       norulebooks: No Rulebooks added
       owner: Owner # ?Again should we reuse?
+      version: Version {version}
+    RulebookMenu:
+      createPipeline: Create a Pipeline
+      delete: Delete
+      download: Download
     RulebooksPopover:
-      addToRulebookbtn: Add to RuleBook
+      addToRulebookbtn: Add to RuleBook >
       norulesbooks: No Rulebooks found
     RulesEngineServiceControl:
       benefits:
-        b1: Non-Programmers who want to analyze big data
-        b2: One-time infrastructure setup
-        b3: Separation of Logic and Data
-        b4: Speed and Scalability
-        title: Some of the benefits of Rules Engine are,
-      description: Rules Engine is a sophisticated if-then-else statement interpreter that runs natively on big data system like Spark and Hadoop.
-            It provides an alternative computational model for transforming your data while empowering the business
-            users to specify and manage the transformations and policy enforcements.
+        b1: "Intuitive UI: Business users can easily set up and govern data ingestion and data processing - no programming required"
+        b2: "Flexible Management: Rules and Rulebooks can be easily added, updated and shared"
+        b3: "Fully integrated: The Rules Engine is available as a library to integrate with JBoss, WebLogic, Spring, and SQL tools"
+        b4: "Scalable: The Rules Engine is horizontally scalable, i.e. it scales out with your big data environment"
+        b5: "Easy governance: The Rules engine provides a centralized repository for policies and transformations"
+        title: "Benefits of the Cask Rules Engine include:"
+      checkMessage: Checking if Rules Engine is available...
+      contactMessage: Contact support@cask.co to enable
+      description: Cask Distributed Rules Engine provides an easy way to create and manage a knowledge base that is executable in your big data environment.
+                  The intuitive UI allows business analysts to set up business rules and use them within a data pipeline.
       enableBtnLabel: Enable Rules Engine
+      errorTitle: Enabling Rules Engine Failed
       title: Welcome to Rules Engine Management
     RulesList:
-      dropContainerText: Add a rule by drag and drop from the rule list on the left
+      dropContainerText: Add a rule by dragging and dropping from the Rules tab
       rulesLabel: Rules
     RulebookRule:
       remove: Remove
     RulebooksTab:
       createrulebook: Create a new Rulebook
+      importrulebook: Import a Rulebook
+      searchLabel: Select a Rulebook
       searchplaceholder: Search Rulebook by name, owner or description
     RulesTab:
       createRuleBtn: Create a New Rule
-      lastUpdated: Last Updated
+      date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
   SchemaEditor:
@@ -1421,6 +1519,25 @@ features:
   Tags:
     label: Tags
     notags: No tags found. Click to add a new business tag.
+
+  TriggeredPipelines:
+    collapsedTabLabel: "Show Outbound Triggers ({count})"
+    description: Description
+    Events:
+      COMPLETED: Succeeds
+      KILLED: Stopped
+      FAILED: Fails
+    expandedTabLabel: "Hide Outbound Triggers ({count})"
+    helperText: "This pipeline is triggered when \"{pipelineName}\""
+    namespace: Namespace
+    pipelineCount:
+      "0": "No Pipelines triggered"
+      "1": "1 Pipeline triggered"
+      _: "{context.count} Pipelines triggered"
+    pipelineName: Pipeline Name
+    title: "Pipelines to be triggered by \"{pipelineName}\""
+    viewPipeline: View Pipeline
+
   ViewSwitch:
     actionsLabel: Actions
     DatasetStreamTable:
@@ -1556,11 +1673,36 @@ features:
       callToAction: Start Microservice
       headerlabel: Add Microservice
       footertitle: Add Microservice
+      MicroserviceQueue:
+        labels:
+          accessId: Access-id
+          accessKey: Access-key
+          connection: Connection String
+          endpoint: Endpoint
+          keySerdes: Key Serdes
+          mapRTopic: Topic Name
+          namespace: Namespace
+          queueName: Queue Name
+          region: Region
+          sslKeystoreFilePath: SSL Keystore File Path
+          sslKeystoreKeyPassword: SSL Keystore Key Password
+          sslKeystorePassword: SSL Keystore Password
+          sslKeystoreType: SSL Keystore Type
+          sslTruststoreFilePath: SSL Truststore File Path
+          sslTruststorePassword: SSL Truststore Password
+          sslTruststoreType: SSL Truststore Type
+          topic: Topic Name
+          valueSerdes: Value Serdes
+        types:
+          mapr-stream: Mapr Stream
+          sqs: Amazon SQS
+          tms: TMS (Transactional Messaging System)
+          websocket: Websocket
       secondaryCallToAction: Microservice Details
       Step1:
         description: Provide name, description and version for a microservice you would like to create.
         descriptionPlaceholder: Description of the microservice
-        helperText: Please load the microservice-app artifact for creating and managing microservices using the _load artifact <artifact-jar-file>_ CLI command.
+        helperText: Microservice Core is not available. Please contact support@cask.co to enable.
         instanceNameLabel: Instance Name
         instanceNamePlaceholder: Name of the microservice instance
         microserviceOptionLabel: Microservice Name
@@ -1612,16 +1754,17 @@ features:
         vcoresLabel: Virtual Cores
         vcoresPlaceholder: The number of virtual cores for the microservice
       Step5:
-        description: Provide inbound and outbound queue names (TMS Queue names).
-        fetchLabel: Fetch size (MB)
-        fetchPlaceholder: The fetch size across all the queues.
-        inboundLabel: Inbound queues
-        inboundPlaceholder: Name of inbound queue
-        outboundLabel: Outbound queues
-        outboundPlaceholder: Name of outbound queue
-        shorttitle: Endpoint Specification
-        title: Endpoint Specification
+        description: Provide inbound queue properties.
+        fetchLabel: Fetch Size
+        propertiesLabel: Inbound Queues
+        shorttitle: Inbound Queues
+        title: Inbound Queues
       Step6:
+        description: Provide outbound queue properties.
+        propertiesLabel: Outbound Queues
+        shorttitle: Outbound Queues
+        title: Outbound Queues
+      Step7:
         description: Provide microservice specific properties.
         keyPlaceholder: name
         propertiesLabel: Properties

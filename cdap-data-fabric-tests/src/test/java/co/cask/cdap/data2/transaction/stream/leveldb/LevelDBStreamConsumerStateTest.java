@@ -20,8 +20,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.NonCustomLocationUnitTestModule;
+import co.cask.cdap.common.namespace.NamespaceQueryAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.namespace.SimpleNamespaceQueryAdmin;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -50,6 +51,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import org.apache.tephra.TransactionManager;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -68,6 +70,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
   private static StreamConsumerStateStoreFactory stateStoreFactory;
   private static StreamAdmin streamAdmin;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static TransactionManager txService;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -84,7 +87,6 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getInMemoryModules(),
-      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AuthorizationTestModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new AuthenticationContextModules().getNoOpModule(),
@@ -96,6 +98,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
             bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
             bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
             bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+            bind(NamespaceQueryAdmin.class).to(SimpleNamespaceQueryAdmin.class);
           }
         })
     );
@@ -103,6 +106,8 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
     streamCoordinatorClient.startAndWait();
+    txService = injector.getInstance(TransactionManager.class);
+    txService.startAndWait();
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
@@ -110,6 +115,7 @@ public class LevelDBStreamConsumerStateTest extends StreamConsumerStateTestBase 
   @AfterClass
   public static void shutdown() throws Exception {
     streamCoordinatorClient.stopAndWait();
+    txService.stopAndWait();
   }
 
   @Override

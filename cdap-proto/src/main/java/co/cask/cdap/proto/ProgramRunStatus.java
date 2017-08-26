@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.workflow.NodeStatus;
 
 /**
@@ -26,6 +27,7 @@ public enum ProgramRunStatus {
   STARTING,
   RUNNING,
   SUSPENDED,
+  RESUMING,
   COMPLETED,
   FAILED,
   KILLED;
@@ -50,6 +52,24 @@ public enum ProgramRunStatus {
       default:
         throw new IllegalArgumentException(String.format("No node status available corresponding to program status %s",
                                                          status.name()));
+    }
+  }
+
+  public static ProgramStatus toProgramStatus(ProgramRunStatus status) {
+    switch(status) {
+      case STARTING:
+        return ProgramStatus.INITIALIZING;
+      case RUNNING:
+        return ProgramStatus.RUNNING;
+      case COMPLETED:
+        return ProgramStatus.COMPLETED;
+      case FAILED:
+        return ProgramStatus.FAILED;
+      case KILLED:
+        return ProgramStatus.KILLED;
+      default:
+        throw new IllegalArgumentException(String.format("No program status available corresponding to program run " +
+                                                         "status %s", status.name()));
     }
   }
 }

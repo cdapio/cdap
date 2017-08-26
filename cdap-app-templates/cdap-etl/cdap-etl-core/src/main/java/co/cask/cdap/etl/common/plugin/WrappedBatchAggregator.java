@@ -37,10 +37,13 @@ import java.util.concurrent.Callable;
 public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
   private final BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator;
   private final Caller caller;
+  private final OperationTimer operationTimer;
 
-  public WrappedBatchAggregator(BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator, Caller caller) {
+  public WrappedBatchAggregator(BatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator, Caller caller,
+                                OperationTimer operationTimer) {
     this.aggregator = aggregator;
     this.caller = caller;
+    this.operationTimer = operationTimer;
   }
 
   @Override
@@ -102,24 +105,34 @@ public class WrappedBatchAggregator<GROUP_KEY, GROUP_VALUE, OUT> extends BatchAg
 
   @Override
   public void groupBy(final GROUP_VALUE groupValue, final Emitter<GROUP_KEY> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        aggregator.groupBy(groupValue, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          aggregator.groupBy(groupValue, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 
   @Override
   public void aggregate(final GROUP_KEY groupKey, final Iterator<GROUP_VALUE> groupValues,
                         final Emitter<OUT> emitter) throws Exception {
-    caller.call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        aggregator.aggregate(groupKey, groupValues, emitter);
-        return null;
-      }
-    }, CallArgs.TRACK_TIME);
+    operationTimer.start();
+    try {
+      caller.call(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          aggregator.aggregate(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
+          return null;
+        }
+      });
+    } finally {
+      operationTimer.reset();
+    }
   }
 }

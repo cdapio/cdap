@@ -34,15 +34,15 @@ public class NoStageLoggingCaller extends Caller {
   }
 
   @Override
-  public <T> T call(Callable<T> callable, CallArgs args) throws Exception {
+  public <T> T call(Callable<T> callable) throws Exception {
     String stage = MDC.get(Constants.MDC_STAGE_KEY);
     if (stage == null) {
-      return delegate.call(callable, args);
+      return delegate.call(callable);
     }
 
     MDC.remove(Constants.MDC_STAGE_KEY);
     try {
-      return delegate.call(callable, args);
+      return delegate.call(callable);
     } finally {
       MDC.put(Constants.MDC_STAGE_KEY, stage);
     }

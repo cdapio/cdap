@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * {@link DirectoryClassLoader} for {@link Authorizer} extensions.
@@ -71,7 +72,7 @@ public class AuthorizerClassLoader extends DirectoryClassLoader {
     }
   }
 
-  AuthorizerClassLoader(File unpackedJarDir) {
-    super(unpackedJarDir, createParent(), "lib");
+  AuthorizerClassLoader(File unpackedJarDir, @Nullable String authorizerExtraClasspath) {
+    super(unpackedJarDir, authorizerExtraClasspath, createParent(), "lib");
   }
 }

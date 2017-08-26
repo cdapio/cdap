@@ -82,6 +82,11 @@ public class PipelinePhase implements Iterable<StageSpec> {
     return stagesByName.get(stageName);
   }
 
+  public Set<String> getStageInputs(String stage) {
+    Set<String> inputs = dag == null ? null : dag.getNodeInputs(stage);
+    return Collections.unmodifiableSet(inputs == null ? new HashSet<String>() : inputs);
+  }
+
   public Set<String> getStageOutputs(String stage) {
     Set<String> outputs = dag == null ? null : dag.getNodeOutputs(stage);
     return Collections.unmodifiableSet(outputs == null ? new HashSet<String>() : outputs);

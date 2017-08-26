@@ -50,6 +50,7 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * Add a partition for a given time, stored at a given path (relative to the file set's base path).
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   void addPartition(long time, String path);
 
@@ -58,26 +59,38 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * with given metadata.
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   void addPartition(long time, String path, Map<String, String> metadata);
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * If the metadata key already exists, it will be overwritten.
+   * Note that existing entries can not be updated.
    *
    * @param time the partition time in milliseconds since the Epoch
-   * @throws PartitionNotFoundException when a partition for the given time is not found
+   *
+   * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition
-   * If the metadata key already exists, it will be overwritten.
+   * Note that existing entries can not be updated.
    *
    * @param time the partition time in milliseconds since the Epoch
-   * @throws PartitionNotFoundException when a partition for the given time is not found
+   *
+   * @throws DataSetException in case an attempt is made to update existing entries.
    */
   void addMetadata(long time, Map<String, String> metadata);
+
+  /**
+   * Sets metadata entries for a particular partition. If the metadata entry key does not already exist, it will be
+   * created; otherwise, it will be overwritten. Other existing keys remain unchanged.
+   *
+   * @throws PartitionNotFoundException when a partition for the given key is not found
+   * @throws IllegalArgumentException if the partition key does not match the partitioning of the dataset
+   */
+  void setMetadata(long time, Map<String, String> metadata);
 
   /**
    * Removes a metadata entry for a particular time.
@@ -126,6 +139,7 @@ public interface TimePartitionedFileSet extends PartitionedFileSet {
    * to add the partition to this dataset.
    *
    * @param time the partition time in milliseconds since the Epoch
+   * @throws PartitionAlreadyExistsException if the partition for the given time already exists
    */
   TimePartitionOutput getPartitionOutput(long time);
 }

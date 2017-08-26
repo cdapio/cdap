@@ -14,9 +14,14 @@
  * the License.
 */
 
+@import '../../../styles/variables.scss';
+
+$icon_color: #cccccc;
+
 .rules-engine-service-control {
   display: flex;
   height: calc(100vh - 104px);
+  font-size: 15px;
 
   .text-container,
   .image-containers {
@@ -27,17 +32,20 @@
   .image-containers {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
+    padding-top: 50px;
+    padding-left: 25px;
     img {
-      height: calc(50% - 20px);
-      width: 80%;
-      margin-bottom: 10px;
+      height: auto;
+      margin: 20px;
+      &:first-child {
+        margin-top: 0;
+      }
     }
   }
   .text-container {
     padding-top: 50px;
+    padding-left: 30px;
+    padding-right: 30px;
 
     p {
       line-height: 2;
@@ -45,18 +53,40 @@
     }
     .rules-engine-benefit {
       ul {
-        padding-left: 15px;
-        line-height: 3;
+        padding-left: 0;
         list-style: none;
-        > li:before {
-          content: ' - ';
+        li {
+          display: flex;
+          padding: 10px 0;
+          svg,
+          span.fa {
+            font-size: 2rem;
+            fill: $icon_color;
+            color: $icon_color;
+            margin-right: 10px;
+            &.icon-edit,
+            &.icon-cogs,
+            &.fa-university,
+            &.icon-arrows-alt {
+              font-size: 1.7rem;
+            }
+          }
         }
       }
+    }
+    .mail-to-link {
+      color: $cdap-orange;
     }
     .btn {
       .btn-label {
         vertical-align: top;
       }
+    }
+  }
+  .rules-engine-service-control-error {
+    margin-top: 20px;
+    .icon-svg {
+      margin-right: 5px;
     }
   }
 }

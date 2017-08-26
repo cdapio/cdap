@@ -21,6 +21,10 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.deploy.LocalApplicationManager;
 import co.cask.cdap.pipeline.AbstractStage;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
+import co.cask.cdap.security.impersonation.OwnerAdmin;
+import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -29,11 +33,16 @@ import com.google.common.reflect.TypeToken;
  */
 public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployable> {
   private final DatasetModulesDeployer datasetModulesDeployer;
+  private final OwnerAdmin ownerAdmin;
+  private final AuthenticationContext authenticationContext;
 
   public DeployDatasetModulesStage(CConfiguration configuration,
-                                   DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework) {
+                                   DatasetFramework datasetFramework, DatasetFramework inMemoryDatasetFramework,
+                                   OwnerAdmin ownerAdmin, AuthenticationContext authenticationContext) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.datasetModulesDeployer = new DatasetModulesDeployer(datasetFramework, inMemoryDatasetFramework, configuration);
+    this.ownerAdmin = ownerAdmin;
+    this.authenticationContext = authenticationContext;
   }
 
   /**
@@ -43,11 +52,16 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {
+    KerberosPrincipalId ownerPrincipal = input.getOwnerPrincipal();
+    // get the authorizing user
+    String authorizingUser =
+      AuthorizationUtil.getAppAuthorizingUser(ownerAdmin, authenticationContext, input.getApplicationId(),
+                                              ownerPrincipal);
     ClassLoader classLoader = getContext().getProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY);
     datasetModulesDeployer.deployModules(input.getApplicationId().getParent(),
                                          input.getSpecification().getDatasetModules(),
                                          input.getArtifactLocation(),
-                                         classLoader);
+                                         classLoader, authorizingUser);
 
     // Emit the input to next stage.
     emit(input);

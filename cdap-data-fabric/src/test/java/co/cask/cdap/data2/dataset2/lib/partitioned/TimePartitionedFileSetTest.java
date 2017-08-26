@@ -106,14 +106,21 @@ public class TimePartitionedFileSetTest {
         tpfs.addMetadata(time, "key3", "value4");
         allMetadata.put("key3", "value4");
 
-        // adding an entry, for a key that already exists will overwrite the previous value
-        tpfs.addMetadata(time, "key3", "value5");
+        // using the setMetadata API, adding an entry, for a key that already exists will overwrite the previous value
+        tpfs.setMetadata(time, Collections.singletonMap("key3", "value5"));
         allMetadata.put("key3", "value5");
 
         Map<String, String> newMetadata = ImmutableMap.of("key4", "value4",
                                                           "key5", "value5");
         tpfs.addMetadata(time, newMetadata);
         allMetadata.putAll(newMetadata);
+
+        try {
+          // attempting to update an existing key throws a DatasetException
+          tpfs.addMetadata(time, "key3", "value5");
+          Assert.fail("Expected not to be able to update an existing metadata entry");
+        } catch (DataSetException expected) {
+        }
 
         partitionByTime = tpfs.getPartitionByTime(time);
         Assert.assertNotNull(partitionByTime);

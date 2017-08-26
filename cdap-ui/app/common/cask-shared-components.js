@@ -33,10 +33,12 @@
  var PipelineSummary = require('../cdap/components/PipelineSummary').default;
  var PipelineNodeMetricsGraph = require('../cdap/components/PipelineNodeGraphs/PipelineNodeMetricsGraph').default;
  var CDAPHelpers = require('../cdap/services/helpers');
+ var RulesEngineHome = require('../cdap/components/RulesEngineHome').default;
  var Mousetrap = require('mousetrap');
  var StatusFactory = require('../cdap/services/StatusFactory').default;
  var LoadingIndicator = require('../cdap/components/LoadingIndicator').default;
  var StatusAlertMessage = require('../cdap/components/StatusAlertMessage').default;
+ var PipelineTriggersSidebars = require('../cdap/components/PipelineTriggersSidebars').default;
 
  export {
   Store,
@@ -59,5 +61,7 @@
   CDAPHelpers,
   StatusFactory,
   LoadingIndicator,
-  StatusAlertMessage
+  StatusAlertMessage,
+  RulesEngineHome,
+  PipelineTriggersSidebars
 };

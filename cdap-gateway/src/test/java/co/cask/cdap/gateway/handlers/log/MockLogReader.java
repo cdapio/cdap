@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
@@ -77,10 +78,26 @@ public class MockLogReader implements LogReader {
   private final DefaultStore store;
   private final List<LogEvent> logEvents = Lists.newArrayList();
   private final Map<ProgramId, RunRecord> runRecordMap = Maps.newHashMap();
+  private int sourceId; 
 
   @Inject
   MockLogReader(DefaultStore store) {
     this.store = store;
+  }
+
+  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime) {
+    setStartAndRunning(id, pid, startTime, ImmutableMap.<String, String>of(),
+                       ImmutableMap.<String, String>of());
+
+  }
+
+
+  private void setStartAndRunning(final ProgramId id, final String pid, final long startTime,
+                                  final Map<String, String> runtimeArgs,
+                                  final Map<String, String> systemArgs) {
+    store.setStart(id, pid, startTime, null, runtimeArgs, systemArgs,
+                   AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id, pid, startTime + 1, null, AppFabricTestHelper.createSourceId(++sourceId));
   }
 
   public void generateLogs() throws InterruptedException {
@@ -141,7 +158,7 @@ public class MockLogReader implements LogReader {
     ProgramId workflowId = SOME_WORKFLOW_APP.workflow(SOME_WORKFLOW);
     long currentTime = TimeUnit.SECONDS.toMillis(10);
     RunId workflowRunId = RunIds.generate();
-    store.setStartAndRun(workflowId, workflowRunId.getId(), currentTime, currentTime + 1);
+    setStartAndRunning(workflowId, workflowRunId.getId(), currentTime);
     runRecordMap.put(workflowId, store.getRun(workflowId, workflowRunId.getId()));
     WorkflowLoggingContext wfLoggingContext = new WorkflowLoggingContext(workflowId.getNamespace(),
                                                                          workflowId.getApplication(),
@@ -157,8 +174,8 @@ public class MockLogReader implements LogReader {
                                                      ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                                      ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStartAndRun(mapReduceId, mapReduceRunId.getId(), currentTime, currentTime + 1,
-                         new HashMap<String, String>(), systemArgs);
+    setStartAndRunning(mapReduceId, mapReduceRunId.getId(), currentTime,
+                       new HashMap<String, String>(), systemArgs);
 
     runRecordMap.put(mapReduceId, store.getRun(mapReduceId, mapReduceRunId.getId()));
     WorkflowProgramLoggingContext context = new WorkflowProgramLoggingContext(workflowId.getNamespace(),
@@ -177,8 +194,8 @@ public class MockLogReader implements LogReader {
                                  ProgramOptionConstants.WORKFLOW_NAME, SOME_WORKFLOW,
                                  ProgramOptionConstants.WORKFLOW_RUN_ID, workflowRunId.getId());
 
-    store.setStartAndRun(sparkId, sparkRunId.getId(), currentTime, currentTime + 1,
-                         new HashMap<String, String>(), systemArgs);
+    setStartAndRunning(sparkId, sparkRunId.getId(), currentTime,
+                       new HashMap<String, String>(), systemArgs);
     runRecordMap.put(sparkId, store.getRun(sparkId, sparkRunId.getId()));
     context = new WorkflowProgramLoggingContext(workflowId.getNamespace(), workflowId.getApplication(),
                                                 workflowId.getProgram(), workflowRunId.getId(), ProgramType.SPARK,
@@ -402,9 +419,10 @@ public class MockLogReader implements LogReader {
     if (programId != null) {
       //noinspection ConstantConditions
       runRecordMap.put(programId, new RunRecord(runId.getId(), startTs, startTs + 1, stopTs, runStatus, null));
-      store.setStartAndRun(programId, runId.getId(), startTs, startTs + 1);
+      setStartAndRunning(programId, runId.getId(), startTs);
       if (stopTs != null) {
-        store.setStop(programId, runId.getId(), stopTs, runStatus);
+        store.setStop(programId, runId.getId(), stopTs, runStatus,
+                      AppFabricTestHelper.createSourceId(++sourceId));
       }
     }
   }

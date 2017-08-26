@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
@@ -80,6 +81,14 @@ public class WorkflowTest {
     }
   };
 
+  private int sourceId;
+
+  private void setStartAndRunning(Store store, final ProgramId id, final String pid, final long startTime) {
+    store.setStart(id, pid, startTime, null, ImmutableMap.<String, String>of(),
+                   ImmutableMap.<String, String>of(), AppFabricTestHelper.createSourceId(++sourceId));
+    store.setRunning(id, pid, startTime + startDelaySecs, null, AppFabricTestHelper.createSourceId(++sourceId));
+  }
+
 
   @Test(timeout = 120 * 1000L)
   public void testWorkflow() throws Exception {
@@ -106,9 +115,9 @@ public class WorkflowTest {
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Starting");
         long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        injector.getInstance(Store.class).setStartAndRun(controller.getProgramRunId().getParent(),
-                                                         controller.getProgramRunId().getRun(),
-                                                         nowSecs, nowSecs + startDelaySecs);
+        setStartAndRunning(injector.getInstance(Store.class), controller.getProgramRunId().getParent(),
+                           controller.getProgramRunId().getRun(),
+                           nowSecs);
       }
 
       @Override
@@ -217,9 +226,9 @@ public class WorkflowTest {
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         LOG.info("Initializing");
         long nowSecs = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        injector.getInstance(Store.class).setStartAndRun(controller.getProgramRunId().getParent(),
+        setStartAndRunning(injector.getInstance(Store.class), controller.getProgramRunId().getParent(),
                                                          controller.getProgramRunId().getRun(),
-                                                         nowSecs, nowSecs + startDelaySecs);
+                                                         nowSecs);
       }
 
       @Override

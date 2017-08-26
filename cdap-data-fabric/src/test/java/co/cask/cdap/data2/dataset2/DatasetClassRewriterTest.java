@@ -405,7 +405,7 @@ public class DatasetClassRewriterTest {
 
     @Override
     public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-      throw new UnsupportedOperationException("This method needs to be implemented!");
+      return entityIds;
     }
 
     @Override
@@ -442,7 +442,7 @@ public class DatasetClassRewriterTest {
 
     @Override
     public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
-      throw new UnsupportedOperationException("This method needs to be implemented!");
+      return entityIds;
     }
 
     @Override

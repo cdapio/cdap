@@ -57,17 +57,17 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
 
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreRenewer.class);
 
-  private final YarnConfiguration hConf;
+  private final YarnConfiguration yarnConf;
   private final LocationFactory locationFactory;
   private final SecureStore secureStore;
   private final boolean secureExplore;
   private Long updateInterval;
 
   @Inject
-  TokenSecureStoreRenewer(YarnConfiguration hConf, CConfiguration cConf,
+  TokenSecureStoreRenewer(YarnConfiguration yarnConf, CConfiguration cConf,
                           LocationFactory locationFactory,
                           SecureStore secureStore) {
-    this.hConf = hConf;
+    this.yarnConf = yarnConf;
     this.locationFactory = locationFactory;
     this.secureStore = secureStore;
     this.secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)
@@ -111,16 +111,16 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       Credentials refreshedCredentials = new Credentials();
 
       if (User.isSecurityEnabled()) {
-        YarnTokenUtils.obtainToken(hConf, refreshedCredentials);
+        YarnTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
 
-      if (User.isHBaseSecurityEnabled(hConf)) {
-        HBaseTokenUtils.obtainToken(hConf, refreshedCredentials);
+      if (User.isHBaseSecurityEnabled(yarnConf)) {
+        HBaseTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
 
       if (secureExplore) {
         HiveTokenUtils.obtainToken(refreshedCredentials);
-        JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
+        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
 
       if (secureStore instanceof DelegationTokensUpdater) {
@@ -128,7 +128,7 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
         ((DelegationTokensUpdater) secureStore).addDelegationTokens(renewer, refreshedCredentials);
       }
 
-      YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
+      YarnUtils.addDelegationTokens(yarnConf, locationFactory, refreshedCredentials);
 
       return refreshedCredentials;
     } catch (IOException ioe) {
@@ -159,17 +159,22 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
   private long calculateUpdateInterval() {
     List<Long> renewalTimes = Lists.newArrayList();
 
-    renewalTimes.add(hConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                   DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+    renewalTimes.add(yarnConf.getLong(DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+                                      DFSConfigKeys.DFS_NAMENODE_DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
     // The value contains in hbase-default.xml, so it should always there. If it is really missing, default it to 1 day.
-    renewalTimes.add(hConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
-                                   TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+    renewalTimes.add(yarnConf.getLong(Constants.HBase.AUTH_KEY_UPDATE_INTERVAL,
+                                      TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+
+    if (yarnConf.getBoolean(Constants.Explore.TIMELINE_SERVICE_ENABLED, false)) {
+      renewalTimes.add(yarnConf.getLong(Constants.Explore.TIMELINE_DELEGATION_KEY_UPDATE_INTERVAL,
+                                        TimeUnit.MILLISECONDS.convert(1, TimeUnit.DAYS)));
+    }
 
     if (secureExplore) {
       // Renewal interval for YARN
-      renewalTimes.add(hConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                     YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+      renewalTimes.add(yarnConf.getLong(YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+                                        YarnConfiguration.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
 
       // Renewal interval for Hive. Also see: https://issues.apache.org/jira/browse/HIVE-9214
       Configuration hiveConf = getHiveConf();
@@ -181,8 +186,8 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
       }
 
       // Renewal interval for JHS
-      renewalTimes.add(hConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
-                                     MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
+      renewalTimes.add(yarnConf.getLong(MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_KEY,
+                                        MRConfig.DELEGATION_TOKEN_RENEW_INTERVAL_DEFAULT));
     }
 
     // Set the update interval to the shortest update interval of all required renewals.

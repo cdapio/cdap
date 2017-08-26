@@ -190,104 +190,44 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public boolean compareAndSetStatus(final ProgramId id, final String pid, final ProgramRunStatus expectedStatus,
-                                     final ProgramRunStatus newStatus) {
-    Preconditions.checkArgument(expectedStatus != null, "Expected of program run should be defined");
-    Preconditions.checkArgument(newStatus != null, "New state of program run should be defined");
-    return Transactions.executeUnchecked(transactional, new TxCallable<Boolean>() {
-      @Override
-      public Boolean call(DatasetContext context) throws Exception {
-        AppMetadataStore mds = getAppMetadataStore(context);
-        RunRecordMeta target = mds.getRun(id, pid);
-        if (target.getStatus() == expectedStatus) {
-          long now = System.currentTimeMillis();
-          long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
-          switch (newStatus) {
-            case STARTING:
-              Map<String, String> runtimeArgs = GSON.fromJson(target.getProperties().get("runtimeArgs"),
-                                                              STRING_MAP_TYPE);
-              Map<String, String> systemArgs = GSON.fromJson(target.getProperties().get("systemArgs"),
-                                                             STRING_MAP_TYPE);
-              if (runtimeArgs == null) {
-                runtimeArgs = EMPTY_STRING_MAP;
-              }
-              if (systemArgs == null) {
-                systemArgs = EMPTY_STRING_MAP;
-              }
-              mds.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), runtimeArgs, systemArgs);
-              break;
-            case RUNNING:
-              mds.recordProgramRunning(id, pid, nowSecs, target.getTwillRunId());
-              break;
-            case SUSPENDED:
-              mds.recordProgramSuspend(id, pid);
-              break;
-            case COMPLETED:
-            case KILLED:
-            case FAILED:
-              BasicThrowable failureCause = newStatus == ProgramRunStatus.FAILED
-                ? new BasicThrowable(new Throwable("Marking run record as failed since no running program found."))
-                : null;
-              mds.recordProgramStop(id, pid, nowSecs, newStatus, failureCause);
-              break;
-            default:
-              break;
-          }
-          return true;
-        }
-        return false;
-      }
-    });
-  }
-
-  @Override
   public void setStart(final ProgramId id, final String pid, final long startTime,
                        final String twillRunId, final Map<String, String> runtimeArgs,
-                       final Map<String, String> systemArgs) {
+                       final Map<String, String> systemArgs, final byte[] sourceId) {
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
+        getAppMetadataStore(context).recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs,
+                                                        sourceId);
       }
     });
   }
 
   @Override
-  public void setRunning(final ProgramId id, final String pid, final long runTime, final String twillRunId) {
+  public void setRunning(final ProgramId id, final String pid, final long runTime, final String twillRunId,
+                         final byte[] sourceId) {
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).recordProgramRunning(id, pid, runTime, twillRunId);
+        getAppMetadataStore(context).recordProgramRunning(id, pid, runTime, twillRunId, sourceId);
       }
     });
-  }
-
-  @Override
-  public void setStartAndRun(ProgramId id, String pid, long startTime, long runTime) {
-    setStartAndRun(id, pid, startTime, runTime, EMPTY_STRING_MAP, EMPTY_STRING_MAP);
-  }
-
-  @Override
-  public void setStartAndRun(ProgramId id, String pid, long startTime, long runTime,
-                             Map<String, String> userArguments, Map<String, String> systemArguments) {
-    setStart(id, pid, startTime, null, userArguments, systemArguments);
-    setRunning(id, pid, runTime, null);
-  }
-
-  @Override
-  public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus) {
-    setStop(id, pid, endTime, runStatus, null);
   }
 
   @Override
   public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus,
-                      final BasicThrowable failureCause) {
+                      byte[] sourceId) {
+    setStop(id, pid, endTime, runStatus, null, sourceId);
+  }
+
+  @Override
+  public void setStop(final ProgramId id, final String pid, final long endTime, final ProgramRunStatus runStatus,
+                      final BasicThrowable failureCause, final byte[] sourceId) {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
         AppMetadataStore metaStore = getAppMetadataStore(context);
-        metaStore.recordProgramStop(id, pid, endTime, runStatus, failureCause);
+        metaStore.recordProgramStop(id, pid, endTime, runStatus, failureCause, sourceId);
 
         // This block has been added so that completed workflow runs can be logged to the workflow dataset
         WorkflowId workflowId = new WorkflowId(id.getParent(), id.getProgram());
@@ -362,21 +302,21 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public void setSuspend(final ProgramId id, final String pid) {
+  public void setSuspend(final ProgramId id, final String pid, final byte[] sourceId) {
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).recordProgramSuspend(id, pid);
+        getAppMetadataStore(context).recordProgramSuspend(id, pid, sourceId);
       }
     });
   }
 
   @Override
-  public void setResume(final ProgramId id, final String pid) {
+  public void setResume(final ProgramId id, final String pid, final byte[] sourceId) {
     Transactions.executeUnchecked(transactional, new TxRunnable() {
       @Override
       public void run(DatasetContext context) throws Exception {
-        getAppMetadataStore(context).recordProgramResumed(id, pid);
+        getAppMetadataStore(context).recordProgramResumed(id, pid, sourceId);
       }
     });
   }
@@ -451,6 +391,26 @@ public class DefaultStore implements Store {
       @Override
       public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
         return getAppMetadataStore(context).getRuns(programRunIds);
+      }
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(final NamespaceId namespaceId) {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+      @Override
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getActiveRuns(namespaceId);
+      }
+    });
+  }
+
+  @Override
+  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(final ApplicationId applicationId) {
+    return Transactions.executeUnchecked(transactional, new TxCallable<Map<ProgramRunId, RunRecordMeta>>() {
+      @Override
+      public Map<ProgramRunId, RunRecordMeta> call(DatasetContext context) throws Exception {
+        return getAppMetadataStore(context).getActiveRuns(applicationId);
       }
     });
   }

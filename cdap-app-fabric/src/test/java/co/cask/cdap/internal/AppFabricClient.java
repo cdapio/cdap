@@ -56,6 +56,8 @@ import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
+import co.cask.cdap.proto.id.ScheduleId;
+import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -98,7 +100,6 @@ public class AppFabricClient {
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Type RUN_RECORDS_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
   private static final Type SCHEDULE_DETAILS_TYPE = new TypeToken<List<ScheduleDetail>>() { }.getType();
-  private static final Type SCHEDULE_SPECS_TYPE = new TypeToken<List<ScheduleSpecification>>() { }.getType();
 
   private final LocationFactory locationFactory;
   private final AppLifecycleHttpHandler appLifecycleHttpHandler;
@@ -284,7 +285,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Set flowlet instances failed");
   }
 
-  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName, String flowletName) {
+  public Instances getFlowletInstances(String namespaceId, String applicationId, String flowName,
+                                       String flowletName) throws Exception {
     MockResponder responder = new MockResponder();
     String uri = String.format("%s/apps/%s/flows/%s/flowlets/%s/instances",
                                getNamespacePath(namespaceId), applicationId, flowName, flowletName);
@@ -302,7 +304,7 @@ public class AppFabricClient {
                                getNamespacePath(namespace), app, workflow);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
     try {
-      workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow, null, null);
+      workflowHttpHandler.getWorkflowSchedules(request, responder, namespace, app, workflow, null, null, null);
     } catch (BadRequestException e) {
       // cannot happen
       throw Throwables.propagate(e);
@@ -377,16 +379,33 @@ public class AppFabricClient {
   }
 
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) throws Exception {
-    String namespaceId = programId.getNamespaceId();
-    String appId = programId.getApplicationId();
+    String namespace = programId.getNamespaceId();
+    String application = programId.getApplicationId();
     String programName = programId.getId();
     String categoryName = programId.getType().getCategoryName();
 
+    return doGetHistory(namespace, application, ApplicationId.DEFAULT_VERSION, programName, categoryName, status);
+  }
+
+  public List<RunRecord> getHistory(ProgramId programId, ProgramRunStatus status) throws Exception {
+    String namespace = programId.getNamespace();
+    String application = programId.getApplication();
+    String applicationVersion = programId.getVersion();
+    String programName = programId.getProgram();
+    String categoryName = programId.getType().getCategoryName();
+
+    return doGetHistory(namespace, application, applicationVersion, programName, categoryName, status);
+  }
+
+  private List<RunRecord> doGetHistory(String namespace, String application, String applicationVersion,
+                                       String programName, String categoryName, ProgramRunStatus status)
+    throws Exception {
+
     MockResponder responder = new MockResponder();
-    String uri = String.format("%s/apps/%s/%s/%s/runs?status=" + status.name(),
-                               getNamespacePath(namespaceId), appId, categoryName, programName);
+    String uri = String.format("%s/apps/%s/versions/%s/%s/runs?status=" + status.name(),
+                               getNamespacePath(namespace), application, applicationVersion, categoryName, programName);
     HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, uri);
-    programLifecycleHttpHandler.programHistory(request, responder, namespaceId, appId,
+    programLifecycleHttpHandler.programHistory(request, responder, namespace, application, applicationVersion,
                                                categoryName, programName, status.name(), null, null, 100);
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Getting workflow history failed");
 
@@ -429,6 +448,9 @@ public class AppFabricClient {
 
   private void verifyResponse(HttpResponseStatus expected, HttpResponseStatus actual, String errorMsg) {
     if (!expected.equals(actual)) {
+      if (actual.getCode() == HttpResponseStatus.FORBIDDEN.getCode()) {
+        throw new UnauthorizedException(actual.getReasonPhrase());
+      }
       throw new IllegalStateException(String.format("Expected %s, got %s. Error: %s",
                                                     expected, actual, errorMsg));
     }
@@ -613,5 +635,29 @@ public class AppFabricClient {
                                            application.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Getting app info failed");
     return mockResponder.decodeResponseContent(new TypeToken<List<PluginInstanceDetail>>() { }.getType(), GSON);
+  }
+
+  public void addSchedule(ApplicationId application, ScheduleDetail scheduleDetail) throws Exception {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/versions/%s/schedules/%s", getNamespacePath(application.getNamespace()),
+                               application.getVersion(), application.getApplication(), scheduleDetail.getName());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.PUT, uri);
+    request.setContent(ChannelBuffers.wrappedBuffer(GSON.toJson(scheduleDetail).getBytes()));
+    programLifecycleHttpHandler.addSchedule(request, responder, application.getNamespace(),
+                                            application.getApplication(), application.getVersion(),
+                                            scheduleDetail.getName());
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Add schedule failed");
+  }
+
+  public void enableSchedule(ScheduleId scheduleId) throws Exception {
+    MockResponder responder = new MockResponder();
+    String uri = String.format("%s/apps/%s/versions/%s/program-type/schedules/program-id/%s/action/enable",
+                               getNamespacePath(scheduleId.getNamespace()), scheduleId.getVersion(),
+                               scheduleId.getApplication(), scheduleId.getSchedule());
+    HttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, uri);
+    programLifecycleHttpHandler.performAction(request, responder, scheduleId.getNamespace(),
+                                              scheduleId.getApplication(), scheduleId.getVersion(),
+                                              "schedules", scheduleId.getSchedule(), "enable");
+    verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Enable schedule failed");
   }
 }

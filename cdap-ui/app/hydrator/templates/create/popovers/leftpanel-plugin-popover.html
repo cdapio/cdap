@@ -26,7 +26,7 @@
   <ul class="list-group">
     <li class="list-group-item">
       <h5>
-        <strong>{{ contentData.name }}</strong>
+        <strong>{{ popoverContext.generateLabel(contentData) }}</strong>
         <a href="#" ng-if="!contentData.pluginTemplate"
            class="template-label"
            ng-click="delayClose(1) && popoverContext.onItemClicked($event,  {action: 'createTemplate', contentData: contentData})">
@@ -71,7 +71,7 @@
         ng-repeat="specificPlugin in contentData.allArtifacts track by $index"
         ng-class="{'active': specificPlugin.artifact.version === contentData.defaultArtifact.version}"
         ng-click="(contentData.defaultArtifact = specificPlugin.artifact) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
-      {{::specificPlugin.artifact.version}}
+      {{::specificPlugin.artifact.version}} ({{::specificPlugin.artifact.scope}})
     </a>
   </ul>
 </div>

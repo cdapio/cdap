@@ -34,10 +34,10 @@ public class StageLoggingCaller extends Caller {
   }
 
   @Override
-  public <T> T call(Callable<T> callable, CallArgs args) throws Exception {
+  public <T> T call(Callable<T> callable) throws Exception {
     MDC.put(Constants.MDC_STAGE_KEY, stageName);
     try {
-      return delegate.call(callable, args);
+      return delegate.call(callable);
     } finally {
       MDC.remove(Constants.MDC_STAGE_KEY);
     }

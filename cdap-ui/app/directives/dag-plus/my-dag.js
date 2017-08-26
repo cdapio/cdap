@@ -30,6 +30,7 @@ commonModule.directive('myDagPlus', function() {
       nodeDelete: '&',
       context: '=',
       showMetrics: '=',
+      disableMetricsClick: '=',
       metricsData: '=',
       nodePopoverTemplate: '@',
       disableNodeClick: '=',

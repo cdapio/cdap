@@ -17,20 +17,27 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.AllProgramsApp;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.metadata.dataset.SortInfo;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.proto.EntityScope;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.element.EntityTypeSimpleName;
+import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
+import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.cdap.security.spi.authorization.Authorizer;
 import com.google.inject.Injector;
@@ -49,6 +56,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test authorization for metadata
@@ -72,12 +81,62 @@ public class MetadataAdminAuthorizationTest {
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+
+    // Wait for the default namespace creation
+    String user = SecurityUtil.getMasterPrincipal(cConf);
+    authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                     Collections.singleton(Action.ADMIN));
+    // Starting the Appfabric server will create the default namespace
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return injector.getInstance(NamespaceAdmin.class).exists(NamespaceId.DEFAULT);
+      }
+    }, 5, TimeUnit.SECONDS);
+    authorizer.revoke(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+                      Collections.singleton(Action.ADMIN));
   }
 
   @Test
   public void testSearch() throws Exception {
     SecurityRequestContext.setUserId(ALICE.getName());
-    authorizer.grant(NamespaceId.DEFAULT, ALICE, Collections.singleton(Action.WRITE));
+    ApplicationId applicationId = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    // grant all the privileges needed to deploy the app
+    authorizer.grant(applicationId, ALICE, Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.artifact(AllProgramsApp.class.getSimpleName(), "1.0-SNAPSHOT"),
+                     ALICE, Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME2), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DATASET_NAME3), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.dataset(AllProgramsApp.DS_WITH_SCHEMA_NAME), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.stream(AllProgramsApp.STREAM_NAME), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName()), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.datasetType(KeyValueTable.class.getName()), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    authorizer.grant(NamespaceId.DEFAULT.datasetType(ObjectMappedTable.class.getName()), ALICE,
+                     Collections.singleton(Action.ADMIN));
+    // no auto grant now, need to have privileges on the program to be able to see the programs
+    authorizer.grant(applicationId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR2.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+    authorizer.grant(applicationId.program(ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), ALICE,
+                     Collections.singleton(Action.EXECUTE));
+
     AppFabricTestHelper.deployApplication(Id.Namespace.DEFAULT, AllProgramsApp.class, "{}", cConf);
     EnumSet<EntityTypeSimpleName> types = EnumSet.allOf(EntityTypeSimpleName.class);
     Assert.assertFalse(

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.batch;
 
+import co.cask.cdap.api.annotation.TransactionControl;
+import co.cask.cdap.api.annotation.TransactionPolicy;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.metrics.Metrics;
@@ -25,6 +27,7 @@ import co.cask.cdap.etl.api.Engine;
 import co.cask.cdap.etl.api.batch.BatchActionContext;
 import co.cask.cdap.etl.api.batch.PostAction;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.batch.ETLSpark;
@@ -81,13 +84,15 @@ public class ETLWorkflow extends AbstractWorkflow {
     setProperties(properties);
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void initialize(WorkflowContext context) throws Exception {
     super.initialize(context);
     postActions = new LinkedHashMap<>();
     BatchPipelineSpec batchPipelineSpec =
       GSON.fromJson(context.getWorkflowSpecification().getProperty("pipeline.spec"), BatchPipelineSpec.class);
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(context.getToken(), context.getRuntimeArguments(),
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(context.getToken(),
+                                                                                 context.getRuntimeArguments()),
                                                               context.getLogicalStartTime(), context,
                                                               context.getNamespace());
     postActionSpecs = new HashMap<>();
@@ -101,6 +106,7 @@ public class ETLWorkflow extends AbstractWorkflow {
     }
   }
 
+  @TransactionPolicy(TransactionControl.EXPLICIT)
   @Override
   public void destroy() {
     WorkflowContext workflowContext = getContext();

@@ -25,8 +25,10 @@ import co.cask.cdap.etl.api.batch.SparkCompute;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
 import co.cask.cdap.etl.api.streaming.Windower;
+import co.cask.cdap.etl.common.NoopStageStatisticsCollector;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
 import co.cask.cdap.etl.spark.SparkPairCollection;
@@ -84,13 +86,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec) {
-    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec), false)));
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
+    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec, collector), false)));
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec) {
-    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec), true)));
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
+                                                                  StageStatisticsCollector collector) {
+    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec, collector), true)));
   }
 
   @Override
@@ -104,8 +107,9 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
-    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec);
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                       StageStatisticsCollector collector) {
+    DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaPairDStream<Object, T> keyedCollection =
       stream.transformToPair(new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext));
 
@@ -118,7 +122,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public <U> SparkCollection<U> compute(final StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
-      new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec), compute);
+      new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec, new NoopStageStatisticsCollector()), compute);
     Transactionals.execute(sec, new TxRunnable() {
       @Override
       public void run(DatasetContext datasetContext) throws Exception {
@@ -134,16 +138,18 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public void store(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
-    Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
+    // cache since the streaming sink function will check if the rdd is empty, which can cause recomputation
+    // and confusing metrics if its not cached.
+    Compat.foreachRDD(stream.cache(), new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
   }
 
   @Override
   public void store(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
-    Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
+    Compat.foreachRDD(stream.cache(), new StreamingSparkSinkFunction<T>(sec, stageSpec));
   }
 
   @Override
-  public void publishAlerts(final StageSpec stageSpec) throws Exception {
+  public void publishAlerts(final StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
     Compat.foreachRDD((JavaDStream<Alert>) stream, new StreamingAlertPublishFunction(sec, stageSpec));
   }
 

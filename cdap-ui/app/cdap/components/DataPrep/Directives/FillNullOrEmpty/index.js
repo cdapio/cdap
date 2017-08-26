@@ -19,6 +19,7 @@ import classnames from 'classnames';
 import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import {setPopoverOffset} from 'components/DataPrep/helper';
 
 export default class FillNullOrEmptyDirective extends Component {
   constructor(props) {
@@ -33,9 +34,16 @@ export default class FillNullOrEmptyDirective extends Component {
     this.handleKeyPress = this.handleKeyPress.bind(this);
   }
 
+  componentDidMount() {
+    this.calculateOffset = setPopoverOffset.bind(this, document.getElementById('fill-null-or-empty-directive'));
+  }
+
   componentDidUpdate() {
     if (this.props.isOpen && this.state.input.length === 0) {
       this.inputBox.focus();
+    }
+    if (this.props.isOpen && this.calculateOffset) {
+      this.calculateOffset();
     }
   }
 
@@ -126,6 +134,7 @@ export default class FillNullOrEmptyDirective extends Component {
   render() {
     return (
       <div
+        id="fill-null-or-empty-directive"
         className={classnames('clearfix action-item', {
           'active': this.props.isOpen
         })}

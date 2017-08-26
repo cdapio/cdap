@@ -22,10 +22,17 @@ import co.cask.cdap.api.schedule.Trigger;
  * A Trigger builder that builds a {@link AbstractCompositeTrigger}
  */
 public abstract class AbstractCompositeTriggerBuilder implements TriggerBuilder {
+  private final Type type;
   protected final Trigger[] triggers;
 
-  protected AbstractCompositeTriggerBuilder(Trigger... triggers) {
+  protected AbstractCompositeTriggerBuilder(Type type, Trigger... triggers) {
+    this.type = type;
     this.triggers = triggers;
+  }
+
+  @Override
+  public Type getType() {
+    return type;
   }
 
   protected SatisfiableTrigger[] getBuiltTriggers(String namespace, String applicationName, String applicationVersion) {

@@ -24,6 +24,7 @@ import co.cask.cdap.api.spark.JavaSparkExecutionContext;
 import co.cask.cdap.etl.api.batch.SparkExecutionPluginContext;
 import co.cask.cdap.etl.api.batch.SparkPluginContext;
 import co.cask.cdap.etl.api.batch.SparkSink;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.spark.SparkPipelineRuntime;
@@ -56,9 +57,12 @@ public class StreamingSparkSinkFunction<T> implements Function2<JavaRDD<T>, Time
 
   @Override
   public Void call(JavaRDD<T> data, Time batchTime) throws Exception {
+    if (data.isEmpty()) {
+      return null;
+    }
+
     final long logicalStartTime = batchTime.milliseconds();
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(sec.getWorkflowToken(),
-                                                         sec.getRuntimeArguments(),
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
                                                          sec.getNamespace());

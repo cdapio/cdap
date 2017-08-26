@@ -16,6 +16,7 @@
 
 package co.cask.cdap.common.security;
 
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.Text;
@@ -32,6 +33,7 @@ import org.apache.twill.internal.yarn.YarnUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,7 @@ public final class YarnTokenUtils {
 
   /**
    * Gets a Yarn delegation token and stores it in the given Credentials.
+   * Also gets Yarn App Timeline Server, if it is enabled.
    *
    * @return the same Credentials instance as the one given in parameter.
    */
@@ -58,6 +61,19 @@ public final class YarnTokenUtils {
       yarnClient.start();
 
       try {
+        if (configuration.getBoolean(Constants.Explore.TIMELINE_SERVICE_ENABLED, false)) {
+          // yarnClient.getTimelineDelegationToken() is only accessible in Hadoop 2.6.0+, and only on those versions
+          // would/should user enable Yarn ATS
+          Method method = yarnClient.getClass().getDeclaredMethod("getTimelineDelegationToken");
+          method.setAccessible(true);
+          Token<? extends TokenIdentifier> atsToken = (Token<? extends TokenIdentifier>) method.invoke(yarnClient);
+          if (atsToken != null) {
+            credentials.addToken(atsToken.getService(), atsToken);
+            LOG.debug("Added Yarn Timeline Server delegation token: {}", atsToken);
+          }
+        }
+
+
         Text renewer = new Text(UserGroupInformation.getCurrentUser().getShortUserName());
         org.apache.hadoop.yarn.api.records.Token rmDelegationToken = yarnClient.getRMDelegationToken(renewer);
 

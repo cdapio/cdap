@@ -21,18 +21,19 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Properties;
+import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /**
  * Creates streams.
  */
 final class StreamCreator {
-  private static final Gson GSON = new Gson();
   private final StreamAdmin streamAdmin;
   private static final Logger LOG = LoggerFactory.getLogger(StreamCreator.class);
 
@@ -46,21 +47,28 @@ final class StreamCreator {
    * @param namespaceId the namespace to have the stream created in
    * @param streamSpecs the set of stream specifications for streams to be created
    * @param ownerPrincipal the principal of the stream owner if one exists else null
+   * @param authorizingUser the authorizing user who will be making the call
    * @throws Exception if there was an exception creating a stream
    */
-  void createStreams(NamespaceId namespaceId, Iterable<StreamSpecification> streamSpecs,
-                     @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
-    for (StreamSpecification spec : streamSpecs) {
-      Properties props = new Properties();
+  void createStreams(final NamespaceId namespaceId, Iterable<StreamSpecification> streamSpecs,
+                     @Nullable KerberosPrincipalId ownerPrincipal, String authorizingUser) throws Exception {
+    for (final StreamSpecification spec : streamSpecs) {
+      final Properties props = new Properties();
       if (spec.getDescription() != null) {
         props.put(Constants.Stream.DESCRIPTION, spec.getDescription());
       }
       if (ownerPrincipal != null) {
         props.put(Constants.Security.PRINCIPAL, ownerPrincipal.getPrincipal());
       }
-      if (streamAdmin.create(namespaceId.stream(spec.getName()), props) != null) {
-        LOG.info("Stream '{}.{}' created successfully.", namespaceId.getNamespace(), spec.getName());
-      }
+      AuthorizationUtil.authorizeAs(authorizingUser, new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          if (streamAdmin.create(namespaceId.stream(spec.getName()), props) != null) {
+            LOG.info("Stream '{}.{}' created successfully.", namespaceId.getNamespace(), spec.getName());
+          }
+          return null;
+        }
+      });
     }
   }
 }

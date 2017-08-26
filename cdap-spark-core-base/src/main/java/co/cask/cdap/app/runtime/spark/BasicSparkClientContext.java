@@ -25,12 +25,14 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.preview.DataTracer;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkSpecification;
@@ -170,6 +172,12 @@ final class BasicSparkClientContext implements SparkClientContext {
     return sparkRuntimeContext.getDataTracer(dataTracerName);
   }
 
+  @Nullable
+  @Override
+  public TriggeringScheduleInfo getTriggeringScheduleInfo() {
+    return sparkRuntimeContext.getTriggeringScheduleInfo();
+  }
+
   @Override
   public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
     return sparkRuntimeContext.getDatasetCache().getDataset(name);
@@ -248,6 +256,11 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
     return sparkRuntimeContext.getPluginProperties(pluginId);
+  }
+
+  @Override
+  public PluginProperties getPluginProperties(String pluginId, MacroEvaluator evaluator) {
+    return sparkRuntimeContext.getPluginProperties(pluginId, evaluator);
   }
 
   @Override

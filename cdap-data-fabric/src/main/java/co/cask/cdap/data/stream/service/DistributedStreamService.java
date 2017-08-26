@@ -21,6 +21,8 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.retry.RetryableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.logging.LogSamplers;
+import co.cask.cdap.common.logging.Loggers;
 import co.cask.cdap.common.stream.notification.StreamSizeNotification;
 import co.cask.cdap.common.zookeeper.coordination.BalancedAssignmentStrategy;
 import co.cask.cdap.common.zookeeper.coordination.PartitionReplica;
@@ -113,6 +115,8 @@ public class DistributedStreamService extends AbstractStreamService {
   private ResourceCoordinator resourceCoordinator;
   private Cancellable coordinationSubscription;
   private ExecutorService heartbeatsSubscriptionExecutor;
+  // LOG every 10 mins.
+  private static final Logger STREAM_RATE_LIMITED_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(600000));
 
   @Inject
   public DistributedStreamService(CConfiguration cConf,
@@ -237,7 +241,7 @@ public class DistributedStreamService extends AbstractStreamService {
           LOG.debug("Size of the events ingested in stream {}: {}", streamId, eventsSize);
           break;
         } catch (Exception e) {
-          LOG.info("Could not compute sizes of files for stream {}. Retrying in 1 sec.", streamId);
+          STREAM_RATE_LIMITED_LOG.warn("Could not compute sizes of files for stream {}.", streamId, e);
           try {
             TimeUnit.SECONDS.sleep(1);
           } catch (InterruptedException ie) {

@@ -16,8 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.schedule;
 
+import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -27,6 +30,8 @@ import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.runtime.AbstractListener;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.proto.id.ProgramId;
@@ -36,13 +41,13 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.gson.GsonBuilder;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -54,18 +59,20 @@ import javax.annotation.Nullable;
 public final class ScheduleTaskRunner {
 
   private static final Logger LOG = LoggerFactory.getLogger(ScheduleTaskRunner.class);
-  private static final Gson GSON = new Gson();
-  private static final Type STRING_STRING_MAP = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
+    .create();
 
+  private final Store store;
   private final ProgramLifecycleService lifecycleService;
   private final PropertiesResolver propertiesResolver;
   private final ListeningExecutorService executorService;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final CConfiguration cConf;
 
-  public ScheduleTaskRunner(ProgramLifecycleService lifecycleService, PropertiesResolver propertiesResolver,
-                            ListeningExecutorService taskExecutor,
+  public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
+                            PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor,
                             NamespaceQueryAdmin namespaceQueryAdmin, CConfiguration cConf) {
+    this.store = store;
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
@@ -76,30 +83,34 @@ public final class ScheduleTaskRunner {
   public void launch(Job job) throws Exception {
     ProgramSchedule schedule = job.getSchedule();
     ProgramId programId = schedule.getProgramId();
+
     Map<String, String> userArgs = Maps.newHashMap();
-    Map<String, String> systemArgs = Maps.newHashMap();
-    // notificationProperties is present only in jobs containing schedules with TimeTrigger and StreamSizeTrigger.
-    // Since both triggers are satisfied by the first notification, there can be only one notification in in the job
-    Map<String, String> notificationProperties = job.getNotifications().get(0).getProperties();
     userArgs.putAll(schedule.getProperties());
     userArgs.putAll(propertiesResolver.getUserProperties(programId.toId()));
-    String userOverridesString = notificationProperties.get(ProgramOptionConstants.USER_OVERRIDES);
-    if (userOverridesString != null) {
-      Map<String, String> userOverrides = GSON.fromJson(userOverridesString, STRING_STRING_MAP);
-      userArgs.putAll(userOverrides);
-    }
 
+    Map<String, String> systemArgs = Maps.newHashMap();
     systemArgs.putAll(propertiesResolver.getSystemProperties(programId.toId()));
-    String systemOverridesString = notificationProperties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-    if (systemOverridesString != null) {
-      Map<String, String> systemOverrides = GSON.fromJson(systemOverridesString, STRING_STRING_MAP);
-      systemArgs.putAll(systemOverrides);
-    }
-    systemArgs.put(ProgramOptionConstants.SCHEDULE_NAME, schedule.getName());
-    systemArgs.put(ProgramOptionConstants.EVENT_NOTIFICATIONS, GSON.toJson(job.getNotifications()));
+
+    // Let the triggers update the arguments first before setting the triggering schedule info
+    ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),
+                                                                                job.getNotifications(),
+                                                                                userArgs, systemArgs);
+
+    TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
+    systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
 
     execute(programId, systemArgs, userArgs);
     LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+  }
+
+  private TriggeringScheduleInfo getTriggeringScheduleInfo(Job job) {
+    TriggerInfoContext triggerInfoContext = new TriggerInfoContext(job, store);
+    SatisfiableTrigger trigger = ((SatisfiableTrigger) job.getSchedule().getTrigger());
+    List<TriggerInfo> triggerInfo = trigger.getTriggerInfos(triggerInfoContext);
+
+    ProgramSchedule schedule = job.getSchedule();
+    return new DefaultTriggeringScheduleInfo(schedule.getName(), schedule.getDescription(),
+                                             triggerInfo, schedule.getProperties());
   }
 
   /**
@@ -118,7 +129,7 @@ public final class ScheduleTaskRunner {
       if (nsPrincipal != null && SecurityUtil.isKerberosEnabled(cConf)) {
         SecurityRequestContext.setUserId(new KerberosName(nsPrincipal).getServiceName());
       }
-      runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
+      runtimeInfo = lifecycleService.startInternal(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
       throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
                                        e, false);

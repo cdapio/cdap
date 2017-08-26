@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.dataset.DatasetClassRewriter;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.DirectoryClassLoader;
@@ -58,7 +59,7 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    * </pre>
    */
   public ProgramClassLoader(CConfiguration cConf, File dir, ClassLoader parent) {
-    super(cConf, dir, parent, "lib");
+    super(dir, cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH), parent, "lib");
     this.dir = dir;
     this.classResourceLookup = ClassLoaders.createClassResourceLookup(this);
     this.datasetClassCache = new HashMap<>();

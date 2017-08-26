@@ -32,6 +32,7 @@ import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -277,6 +278,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(streamAdmin.exists(myStream));
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
+    waitState(program, ProgramStatus.RUNNING.name());
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because unrecoverable reset is disabled
@@ -286,6 +288,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(409, deleteNamespace(NAME));
     Assert.assertTrue(nsLocation.exists());
     stopProgram(program);
+    waitState(program, ProgramStatus.STOPPED.name());
     // delete should work now
     assertResponseCode(200, deleteNamespace(NAME));
     Assert.assertFalse(nsLocation.exists());
@@ -324,6 +327,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     Assert.assertTrue(dsFramework.hasInstance(myDataset));
     Id.Program program = Id.Program.from(NAME_ID, "AppWithServices", ProgramType.SERVICE, "NoOpService");
     startProgram(program);
+    waitState(program, ProgramStatus.RUNNING.name());
     boolean resetEnabled = cConf.getBoolean(Constants.Dangerous.UNRECOVERABLE_RESET);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, false);
     // because reset is not enabled
@@ -334,6 +338,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(409, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     stopProgram(program);
+    waitState(program, ProgramStatus.STOPPED.name());
     assertResponseCode(200, deleteNamespaceData(NAME));
     Assert.assertTrue(nsLocation.exists());
     Assert.assertTrue(getAppList(NAME).size() == 2);

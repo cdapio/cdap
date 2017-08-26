@@ -48,6 +48,7 @@ import co.cask.cdap.data2.queue.QueueEntry;
 import co.cask.cdap.data2.queue.QueueProducer;
 import co.cask.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import co.cask.cdap.internal.app.ServiceSpecificationCodec;
+import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConcurrencyConstraint;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
@@ -162,7 +163,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start a flow and check the status
     startProgram(wordcountFlow1);
-    waitState(wordcountFlow1, ProgramRunStatus.RUNNING.toString());
+    waitState(wordcountFlow1, RUNNING);
 
     // stop the flow and check the status
     stopProgram(wordcountFlow1);
@@ -184,7 +185,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start map-reduce and verify status
     startProgram(dummyMR2);
-    waitState(dummyMR2, ProgramRunStatus.RUNNING.toString());
+    waitState(dummyMR2, RUNNING);
 
     // stop the mapreduce program and check the status
     stopProgram(dummyMR2);
@@ -193,37 +194,11 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // start multiple runs of the map-reduce program
     startProgram(dummyMR2);
     startProgram(dummyMR2);
-
-    // verify that more than one map-reduce program runs are running
-    verifyProgramRuns(dummyMR2, "running", 1);
-
-    // get run records corresponding to the program runs
-    List<RunRecord> historyRuns = getProgramRuns(dummyMR2, "running");
-    Assert.assertEquals(2, historyRuns.size());
-
-    // stop individual runs of the map-reduce program
-    String runId = historyRuns.get(0).getPid();
-    stopProgram(dummyMR2, runId, 200);
-
-    runId = historyRuns.get(1).getPid();
-    stopProgram(dummyMR2, runId, 200);
-
-    waitState(dummyMR2, STOPPED);
-
-    // start multiple runs of the map-reduce program
-    startProgram(dummyMR2);
-    startProgram(dummyMR2);
-    verifyProgramRuns(dummyMR2, "running", 1);
-    historyRuns = getProgramRuns(dummyMR2, "running");
-    Assert.assertEquals(2, historyRuns.size());
+    verifyProgramRuns(dummyMR2, ProgramRunStatus.RUNNING, 1);
 
     // stop all runs of the map-reduce program
     stopProgram(dummyMR2, 200);
     waitState(dummyMR2, STOPPED);
-
-    // get run records, all runs should be stopped
-    historyRuns = getProgramRuns(dummyMR2, "running");
-    Assert.assertTrue(historyRuns.isEmpty());
 
     // deploy an app containing a workflow
     response = deploy(SleepingWorkflowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
@@ -243,9 +218,20 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start workflow and check status
     startProgram(sleepWorkflow2);
-    waitState(sleepWorkflow2, ProgramRunStatus.RUNNING.toString());
+    waitState(sleepWorkflow2, RUNNING);
 
     // workflow will stop itself
+    waitState(sleepWorkflow2, STOPPED);
+
+    // start multiple runs of the workflow
+    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+    startProgram(sleepWorkflow2, ImmutableMap.of("sleep.ms", "5000"));
+    verifyProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING, 1);
+
+    List<RunRecord> runs = getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING);
+    Assert.assertEquals(2, runs.size());
+    stopProgram(sleepWorkflow2, runs.get(0).getPid(), 200);
+    stopProgram(sleepWorkflow2, runs.get(1).getPid(), 200);
     waitState(sleepWorkflow2, STOPPED);
 
     // cleanup
@@ -298,11 +284,13 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(wordcountFlowDefault, 409);
 
     stopProgram(wordcountFlow1, null, 200, null);
-    waitState(wordcountFlow1, "STOPPED");
+    waitState(wordcountFlow1, STOPPED);
 
     // wordcountFlow2 can be run after wordcountFlow1 is stopped
     startProgram(wordcountFlow2, 200);
+    waitState(wordcountFlow2, RUNNING);
     stopProgram(wordcountFlow2, null, 200, null);
+    waitState(wordcountFlow2, STOPPED);
 
     ProgramId wordFrequencyService1 = wordCountApp1.program(ProgramType.SERVICE, "WordFrequencyService");
     ProgramId wordFrequencyService2 = wordCountApp2.program(ProgramType.SERVICE, "WordFrequencyService");
@@ -325,13 +313,18 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // same service cannot be run concurrently in the same app version
     startProgram(wordFrequencyService1, 409);
     stopProgram(wordFrequencyService1, null, 200, null);
+    waitState(wordFrequencyService1, STOPPED);
     Assert.assertEquals(STOPPED, getProgramStatus(wordFrequencyService1));
     // wordFrequencyService1 can be run after wordFrequencyService1 is stopped
     startProgram(wordFrequencyService1, 200);
+    waitState(wordFrequencyService1, RUNNING);
 
     stopProgram(wordFrequencyService1, null, 200, null);
     stopProgram(wordFrequencyService2, null, 200, null);
     stopProgram(wordFrequencyServiceDefault, null, 200, null);
+    waitState(wordFrequencyService1, STOPPED);
+    waitState(wordFrequencyService2, STOPPED);
+    waitState(wordFrequencyServiceDefault, STOPPED);
 
     Id.Artifact sleepWorkflowArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "sleepworkflowapp", VERSION1);
     addAppArtifact(sleepWorkflowArtifactId, SleepingWorkflowApp.class);
@@ -339,10 +332,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ArtifactSummary(sleepWorkflowArtifactId.getName(), sleepWorkflowArtifactId.getVersion().getVersion()));
 
     ApplicationId sleepWorkflowApp1 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION1);
-    ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
+    final ProgramId sleepWorkflow1 = sleepWorkflowApp1.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     ApplicationId sleepWorkflowApp2 = new ApplicationId(Id.Namespace.DEFAULT.getId(), "SleepingWorkflowApp", VERSION2);
-    ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
+    final ProgramId sleepWorkflow2 = sleepWorkflowApp2.program(ProgramType.WORKFLOW, "SleepWorkflow");
 
     // Start wordCountApp1
     Assert.assertEquals(200, deploy(sleepWorkflowApp1, sleepWorkflowRequest).getStatusLine().getStatusCode());
@@ -353,18 +346,37 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // Start wordCountApp2
     Assert.assertEquals(200, deploy(sleepWorkflowApp2, sleepWorkflowRequest).getStatusLine().getStatusCode());
 
-    // start multiple workflow simultaneously
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
-    startProgram(sleepWorkflow1, 200);
-    startProgram(sleepWorkflow2, 200);
+    // start multiple workflow simultaneously with a long sleep time
+    Map<String, String> args = Collections.singletonMap("sleep.ms", "120000");
+    startProgram(sleepWorkflow1, args, 200);
+    startProgram(sleepWorkflow2, args, 200);
+    startProgram(sleepWorkflow1, args, 200);
+    startProgram(sleepWorkflow2, args, 200);
+
+    // Make sure they are all running. Otherwise on slow machine, it's possible that the TMS states hasn't
+    // been consumed and write to the store before we stop the program and query for STOPPED state.
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(sleepWorkflow1, ProgramRunStatus.RUNNING).size();
+      }
+    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(2, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(sleepWorkflow2, ProgramRunStatus.RUNNING).size();
+      }
+    }, 10, TimeUnit.SECONDS, 200, TimeUnit.MILLISECONDS);
+
     // stop multiple workflow simultaneously
     // This will stop all concurrent runs of the Workflow version 1.0.0
     stopProgram(sleepWorkflow1, null, 200, null);
     // This will stop all concurrent runs of the Workflow version 2.0.0
     stopProgram(sleepWorkflow2, null, 200, null);
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow1));
-    Assert.assertEquals(STOPPED, getProgramStatus(sleepWorkflow2));
+
+    // Wait until all are stopped
+    waitState(sleepWorkflow1, STOPPED);
+    waitState(sleepWorkflow2, STOPPED);
 
     //Test for runtime args
     testVersionedProgramRuntimeArgs(sleepWorkflow1);
@@ -418,14 +430,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
-    waitState(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), RUNNING);
+    verifyProgramRuns(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+                      ProgramRunStatus.RUNNING);
 
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
                  409); // conflict
 
     // get run records for later use
     List<RunRecord> runs = getProgramRuns(
-      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), "running");
+      Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
+                      ProgramRunStatus.RUNNING);
     Assert.assertEquals(1, runs.size());
     String runId = runs.get(0).getPid();
 
@@ -438,7 +452,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       @Override
       public Boolean call() throws Exception {
         Id.Program id = Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
-        return getProgramRuns(id, "running").isEmpty();
+        return getProgramRuns(id, ProgramRunStatus.RUNNING).isEmpty();
       }
     }, 10, TimeUnit.SECONDS);
 
@@ -513,15 +527,16 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
       // first run
       startProgram(sleepWorkflow1);
-      waitState(sleepWorkflow1, ProgramRunStatus.RUNNING.toString());
+      int numWorkflowRunsStopped = getProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED).size();
       // workflow stops by itself after actions are done
       waitState(sleepWorkflow1, STOPPED);
+      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
 
       // second run
       startProgram(sleepWorkflow1);
-      waitState(sleepWorkflow1, ProgramRunStatus.RUNNING.toString());
       // workflow stops by itself after actions are done
       waitState(sleepWorkflow1, STOPPED);
+      verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
 
       String url = String.format("apps/%s/%s/%s/runs?status=completed", SLEEP_WORKFLOW_APP_ID, ProgramType.WORKFLOW
         .getCategoryName(), SLEEP_WORKFLOW_NAME);
@@ -617,6 +632,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(wordcountFlow1);
+    waitState(wordcountFlow1, RUNNING);
 
     // test status API after starting the flow
     response = doPost(statusUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'}," +
@@ -628,6 +644,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // start the service
     startProgram(service2);
+    verifyProgramRuns(service2, ProgramRunStatus.RUNNING);
     // test status API after starting the service
     response = doPost(statusUrl2, "[{'appId': 'AppWithServices', 'programType': 'Service', 'programId': " +
       "'NoOpService'}]");
@@ -723,6 +740,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
+    waitState(wordcountFlow1, RUNNING);
 
     response = doPost(instancesUrl1, "[{'appId':'WordCountApp', 'programType':'Flow', 'programId':'WordCountFlow'," +
       "'runnableId': 'StreamSource'}]");
@@ -733,6 +751,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program service2 = Id.Program.from(TEST_NAMESPACE2, APP_WITH_SERVICES_APP_ID,
                                           ProgramType.SERVICE, APP_WITH_SERVICES_SERVICE_NAME);
     startProgram(service2);
+    waitState(service2, RUNNING);
 
     response = doPost(instancesUrl2, "[{'appId':'AppWithServices', 'programType':'Service','programId':'NoOpService'," +
       " 'runnableId':'NoOpService'}]");
@@ -931,6 +950,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Id.Program wordcountFlow1 =
       Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME);
     startProgram(wordcountFlow1);
+    waitState(wordcountFlow1, RUNNING);
 
     liveInfo = getLiveInfo(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW.getCategoryName(),
                            WORDCOUNT_FLOW_NAME);
@@ -945,6 +965,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop
     stopProgram(wordcountFlow1);
+    waitState(wordcountFlow1, STOPPED);
 
     // delete queues
     Assert.assertEquals(200, deleteQueues(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, WORDCOUNT_FLOW_NAME));
@@ -1033,6 +1054,19 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
                                                                              ProgramStatus.KILLED);
     Assert.assertEquals(3, triggeredSchedules1.size());
     assertProgramInSchedules(AppWithMultipleSchedules.TRIGGERED_WORKFLOW, triggeredSchedules1);
+
+    List<ScheduleDetail> filteredSchedules =
+      listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SCHEDULED,
+                                    ProgramStatus.COMPLETED, ProgramStatus.FAILED, ProgramStatus.KILLED);
+    // No schedule is enabled yet
+    Assert.assertEquals(0, filteredSchedules.size());
+    filteredSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow, ProgramScheduleStatus.SUSPENDED,
+                                                      ProgramStatus.COMPLETED,
+                                                      ProgramStatus.FAILED,
+                                                      ProgramStatus.KILLED);
+    // All schedules are suspended
+    Assert.assertEquals(3, filteredSchedules.size());
+
     // Schedules triggered by SOME_WORKFLOW's completed status
     List<ScheduleDetail> triggeredByCompletedSchedules = listSchedulesByTriggerProgram(TEST_NAMESPACE2, someWorkflow,
                                                                                        ProgramStatus.COMPLETED);
@@ -1096,6 +1130,8 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       }
     }, 2, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
+    waitState(service2, RUNNING);
+
     // verify instances
     try {
       getServiceInstances(service1);
@@ -1130,6 +1166,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     // stop service
     stopProgram(service1, 404);
     stopProgram(service2);
+    waitState(service2, STOPPED);
 
     activeResponse = getServiceAvailability(service2);
     // Service has been stopped, so it should return 503
@@ -1312,32 +1349,37 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ImmutableMap<String, String> properties = ImmutableMap.of("a", "b", "c", "d");
     TimeTrigger timeTrigger = new TimeTrigger(timeSchedule.getCronEntry());
     ScheduleSpecification specification = new ScheduleSpecification(timeSchedule, programInfo, properties);
-    ScheduleDetail timeDetail = new ScheduleDetail(scheduleName, specification.getSchedule().getDescription(),
+    ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                                                   scheduleName, specification.getSchedule().getDescription(),
                                                    specification.getProgram(), specification.getProperties(),
                                                    timeTrigger, Collections.<Constraint>emptyList(),
-                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
-      new ScheduleDetail(partitionScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         partitionScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), partitionTrigger,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestPartitionDetail =
-      new ScheduleDetail(partitionScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         partitionScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), protoPartition,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail expectedOrDetail =
-      new ScheduleDetail(orScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         orScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(),
                          new OrTrigger(timeTrigger, partitionTrigger),
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     ScheduleDetail requestOrDetail =
-      new ScheduleDetail(orScheduleName, specification.getSchedule().getDescription(),
+      new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
+                         orScheduleName, specification.getSchedule().getDescription(),
                          specification.getProgram(), specification.getProperties(), protoOr,
-                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS);
+                         Collections.<Constraint>emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", timeDetail);
@@ -1412,9 +1454,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(schedules2, schedulesForApp2);
 
     // Add a schedule with no schedule name in spec
-    ScheduleDetail detail2 = new ScheduleDetail(null, "Something 2", programInfo, properties,
+    ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
+                                                null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
-                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6));
+                                                Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), response.getStatusLine().getStatusCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");
@@ -1793,25 +1836,28 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     String namespace = program.getNamespace();
     // first run
     startProgram(program, 200);
-    waitState(program, ProgramRunStatus.RUNNING.toString());
+    waitState(program, RUNNING);
+
     stopProgram(program, null, 200, null);
     waitState(program, STOPPED);
 
     // second run
     startProgram(program, 200);
-    waitState(program, ProgramRunStatus.RUNNING.toString());
+    waitState(program, RUNNING);
+
+    // one run should be active
     String urlAppVersionPart = ApplicationId.DEFAULT_VERSION.equals(program.getVersion()) ?
       "" : "/versions/" + program.getVersion();
     String url = String.format("apps/%s%s/%s/%s/runs?status=running", program.getApplication(), urlAppVersionPart,
                                program.getType().getCategoryName(), program.getProgram());
-
-    //active size should be 1
     historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
-    // completed runs size should be 1
+
+    // killed runs size should be 1 from the first run
     url = String.format("apps/%s%s/%s/%s/runs?status=killed", program.getApplication(), urlAppVersionPart,
                         program.getType().getCategoryName(), program.getProgram());
     historyStatusWithRetry(getVersionedAPIPath(url, Constants.Gateway.API_VERSION_3_TOKEN, namespace), 1);
 
+    // stop the second run
     stopProgram(program, null, 200, null);
     waitState(program, STOPPED);
 

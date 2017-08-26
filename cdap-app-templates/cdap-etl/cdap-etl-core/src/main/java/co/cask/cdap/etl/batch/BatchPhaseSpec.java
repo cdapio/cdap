@@ -38,12 +38,13 @@ public class BatchPhaseSpec {
   private final Map<String, String> pipelineProperties;
   private final String description;
   private final int numOfRecordsPreview;
+  private final boolean isPipelineContainsCondition;
 
   public BatchPhaseSpec(String phaseName, PipelinePhase phase,
                         Resources resources, Resources driverResources, Resources clientResources,
                         boolean isStageLoggingEnabled, boolean isProcessTimingEnabled,
                         Map<String, String> connectorDatasets, int numOfRecordsPreview,
-                        Map<String, String> pipelineProperties) {
+                        Map<String, String> pipelineProperties, boolean isPipelineContainsCondition) {
     this.phaseName = phaseName;
     this.phase = phase;
     this.resources = resources;
@@ -55,6 +56,7 @@ public class BatchPhaseSpec {
     this.description = createDescription();
     this.numOfRecordsPreview = numOfRecordsPreview;
     this.pipelineProperties = ImmutableMap.copyOf(pipelineProperties);
+    this.isPipelineContainsCondition = isPipelineContainsCondition;
   }
 
   public String getPhaseName() {
@@ -99,6 +101,10 @@ public class BatchPhaseSpec {
 
   public Map<String, String> getPipelineProperties() {
     return pipelineProperties;
+  }
+
+  public boolean pipelineContainsCondition() {
+    return isPipelineContainsCondition;
   }
 
   private String createDescription() {

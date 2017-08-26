@@ -22,28 +22,30 @@
 @node-box-width: 200px;
 @node-box-height: 87px;
 @node-box-height-big: 100px;
+@condition-box-width: 105px;
+@condition-box-height: 105px;
 @endpoint-circle-radius: 7px;
 
-.increase-border-height-width(@currentHeight) {
+.increase-border-height-width(@currentHeight, @currentWidth) {
   @current-border-width: 2px;
   @new-border-width: 3px;
   border-width: @new-border-width;
 
   margin: -(@new-border-width - @current-border-width);
-  width: @node-box-width + (@new-border-width - @current-border-width) * 2;
+  width: @currentWidth + (@new-border-width - @current-border-width) * 2;
   height: @currentHeight + (@new-border-width - @current-border-width) * 2;
 }
 
-.border-color-hover(@currentHeight) {
+.border-color-hover(@currentHeight, @currentWidth: @node-box-width) {
   border: 2px solid currentColor;
 
   &:hover {
-    .increase-border-height-width(@currentHeight);
+    .increase-border-height-width(@currentHeight, @currentWidth);
     cursor: pointer;
   }
 
   &.drag-hover {
-    .increase-border-height-width(@currentHeight);
+    .increase-border-height-width(@currentHeight, @currentWidth);
 
     .node {
       background-color: @configure-btn-bg-hover-color;
@@ -101,6 +103,7 @@ my-dag-plus {
       }
 
       .border-radius(4px);
+
       .box {
         height: @node-box-height-big;
         .border-color-hover(@node-box-height-big);
@@ -112,10 +115,24 @@ my-dag-plus {
             top: 41px;
           }
         }
+
+        &.condition {
+          .node {
+            .endpoint-circle-bottom {
+              top: initial;
+            }
+          }
+        }
       }
 
       .jsplumb-connector {
         cursor: initial;
+      }
+
+      .jsplumb-endpoint {
+        &.condition-endpoint {
+          cursor: initial;
+        }
       }
     }
 
@@ -145,7 +162,8 @@ my-dag-plus {
         background-clip: border-box;
         z-index: 1;
 
-        .endpoint-circle {
+        .endpoint-circle,
+        .endpoint-circle-bottom {
           width: @endpoint-circle-radius * 2;
           height: @endpoint-circle-radius * 2;
           background-color: @endpoint-circle-bg-color;
@@ -186,7 +204,8 @@ my-dag-plus {
             transform: translateX(1px);
           }
 
-          &:hover {
+          &:hover,
+          &.hover {
             &:not(.disabled) {
               background-color: @endpoint-connection-hover-stroke-color;
 
@@ -208,6 +227,14 @@ my-dag-plus {
           .node-icon {
             font-size: 25px;
             display: inline-block;
+
+            &.icon-container {
+              img {
+                height: 25px;
+                width: 25px;
+                vertical-align: top;
+              }
+            }
           }
 
           .node-metadata {
@@ -367,6 +394,104 @@ my-dag-plus {
       &.sparkprogram {
         color: @spark-plugins-color;
       }
+      &.condition {
+        color: @condition-plugin-color;
+        left: 30vw;
+
+        width: @condition-box-width;
+        height: @condition-box-height;
+
+        .border-color-hover(@condition-box-height, @condition-box-width);
+
+        .node {
+          padding: 5px 0;
+
+          .endpoint-circle {
+            top: 44px;
+            background-color: @condition-true-endpoint-bg-color;
+
+            &:before {
+              border-bottom-color: @condition-true-endpoint-bg-color;
+            }
+
+            &:after {
+              border-left-color: @condition-true-endpoint-bg-color;
+            }
+
+            &:hover,
+            &.hover {
+              &:not(.disabled) {
+                background-color: @condition-true-endpoint-bg-color;
+              }
+            }
+          }
+
+          .endpoint-circle-bottom {
+            top: initial;
+            bottom: -@endpoint-circle-radius;
+            right: 43px;
+            background-color: @condition-false-endpoint-bg-color;
+
+            &:before {
+              left: 6px;
+              top: 100%;
+              border-bottom: none;
+              border-left: 2px solid @condition-false-endpoint-bg-color;
+              height: 5px;
+            }
+
+            &:after {
+              border-top: 7px solid @condition-false-endpoint-bg-color;
+              border-left: 7px solid transparent;
+              border-right: 7px solid transparent;
+              transform: translate(-4px, 19px);
+            }
+
+            &:hover,
+            &.hover {
+              &:not(.disabled) {
+                background-color: @condition-false-endpoint-bg-color;
+              }
+            }
+
+            .endpoint-caret {
+              border-left: 4px solid transparent;
+              border-right: 4px solid transparent;
+              border-top: @endpoint-circle-radius solid @endpoint-caret-bg-color;
+              transform: translateY(2px);
+            }
+          }
+
+          .node-info {
+            display: initial;
+            text-align: center;
+
+            .node-icon,
+            .node-metadata {
+              display: block;
+            }
+
+            .node-metadata {
+              transform: initial;
+              margin: initial;
+            }
+          }
+
+          .node-actions {
+            padding-bottom: 5px;
+            padding-right: 7px;
+
+            .menu-icon-node {
+              padding-right: 0;
+            }
+          }
+        }
+
+        .node-popover-menu {
+          right: -60px;
+          top: 75px;
+        }
+      }
     }
 
     .dag-popover-menu,
@@ -409,8 +534,8 @@ my-dag-plus {
 
     .node-popover-menu {
       position: absolute;
-      right: -55px;
-      top: 53px;
+      right: -54px;
+      top: 52px;
     }
 
     .dag-popover-menu {
@@ -494,6 +619,11 @@ my-dag-plus {
     .jsplumb-endpoint {
       z-index: 1;
 
+      &.condition-endpoint {
+        cursor: pointer;
+        z-index: 2;
+      }
+
       svg * {
         fill: transparent;
         stroke: transparent;
@@ -510,6 +640,18 @@ my-dag-plus {
 
     .jsplumb-dragging {
       z-index: 2;
+    }
+
+    .condition-label {
+      color: @condition-label-color;
+      background: @condition-plugin-color;
+      padding: 6px;
+      width: 42px;
+      z-index: 2;
+      border-radius: 15%;
+      text-align: center;
+      font-size: 11px;
+      line-height: 6px;
     }
 
     /* metrics overlay */

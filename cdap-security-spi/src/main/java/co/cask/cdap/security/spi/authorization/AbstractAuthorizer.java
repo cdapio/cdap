@@ -19,6 +19,7 @@ package co.cask.cdap.security.spi.authorization;
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Abstract class that implements {@link Authorizer} and provides default no-op implementations of
@@ -65,18 +67,27 @@ public abstract class AbstractAuthorizer implements Authorizer {
 
   @Override
   public Predicate<EntityId> createFilter(final Principal principal) throws Exception {
-    return new Predicate<EntityId>() {
-      @Override
-      public boolean apply(EntityId entityId) {
-        try {
-          enforce(entityId, principal, EnumSet.allOf(Action.class));
-          return true;
-        } catch (UnauthorizedException e) {
-          return false;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
-        }
-      }
-    };
+    throw new UnsupportedOperationException("createFilter() is deprecated, please use isVisible() instead");
+  }
+
+  @Override
+  public void grant(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    // grant on EntityId is deprecated 4.3 onwards. This implementation is added to remove the burden from the
+    // underlying extension to provide an implementation. This API will be removed in 4.4
+    grant(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
+    // revoke on EntityId is deprecated 4.3 onwards. This implementation is added to remove the burden from the
+    // underlying extension to provide an implementation. This API will be removed in 4.4
+    revoke(Authorizable.fromEntityId(entity), principal, actions);
+  }
+
+  @Override
+  public void revoke(EntityId entity) throws Exception {
+    // revoke on EntityId is deprecated 4.3 onwards. This implementation is added to remove the burden from the
+    // underlying extension to provide an implementation. This API will be removed in 4.4
+    revoke(Authorizable.fromEntityId(entity));
   }
 }

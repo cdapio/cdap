@@ -46,7 +46,8 @@ public class BatchSinkFunction<IN, OUT_KEY, OUT_VAL> implements PairFlatMapFunc<
       BatchSink<IN, OUT_KEY, OUT_VAL> batchSink = pluginFunctionContext.createPlugin();
       batchSink.initialize(pluginFunctionContext.createBatchRuntimeContext());
       transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics(),
-                                         pluginFunctionContext.getDataTracer());
+                                         pluginFunctionContext.getDataTracer(),
+                                         pluginFunctionContext.getStageStatisticsCollector());
       emitter = new TransformingEmitter<>(new Function<KeyValue<OUT_KEY, OUT_VAL>, Tuple2<OUT_KEY, OUT_VAL>>() {
         @Override
         public Tuple2<OUT_KEY, OUT_VAL> apply(KeyValue<OUT_KEY, OUT_VAL> input) {

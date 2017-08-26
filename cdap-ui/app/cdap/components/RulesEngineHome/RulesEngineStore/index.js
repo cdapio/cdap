@@ -22,7 +22,8 @@ const DEFAULTRULEBOOKSSTATE = {
   list: null,
   activeRulebookId: null,
   activeRulebookRules: null,
-  createRulebook: false
+  createRulebook: false,
+  activeTab: '1'
 };
 const DEFAULTRULESSTATE = {
   list: null,
@@ -33,10 +34,15 @@ const DEFAULTERRORSTATE = {
   showError: false,
   message: null
 };
+const DEFAULTINTEGRATIONSTATE = {
+  embedded: false,
+  done: false
+};
 
 const DEFAULTRULESENGINESTATE = {
   rulebooks: DEFAULTRULEBOOKSSTATE,
-  rules: DEFAULTRULESSTATE
+  rules: DEFAULTRULESSTATE,
+  integration: DEFAULTINTEGRATIONSTATE
 };
 
 const RULESENGINEACTIONS = {
@@ -50,7 +56,10 @@ const RULESENGINEACTIONS = {
   SETACTIVERULE: 'SETACTIVERULE',
   RESETACTIVERULE: 'RESETACTIVERULE',
   SETERROR: 'SETERROR',
-  RESETERROR: 'RESETERROR'
+  RESETERROR: 'RESETERROR',
+  SETINTEGRATIONEMBEDDED: 'SETINTEGRATIONEMBEDDED',
+  SETINTEGRATIONDONE: 'SETINTEGRATIONDONE',
+  SETACTIVETAB: 'SETACTIVETAB'
 };
 
 const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
@@ -78,6 +87,12 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
       return Object.assign({}, state, {
         loading: action.payload.loading
       });
+    case RULESENGINEACTIONS.SETACTIVETAB:
+      return Object.assign({}, state, {
+        activeTab: action.payload.activeTab
+      });
+    case RULESENGINEACTIONS.RESET:
+      return DEFAULTRULEBOOKSSTATE;
     default:
       return state;
   }
@@ -99,10 +114,29 @@ const rules = (state = DEFAULTRULESSTATE, action = defaultAction) => {
       return Object.assign({}, state, {
         activeRuleId: null
       });
+    case RULESENGINEACTIONS.SETACTIVETAB:
+      return Object.assign({}, state, {
+        activeRuleId: null
+      });
     case RULESENGINEACTIONS.SETRULESLOADING:
       return Object.assign({}, state, {
         loading: true
       });
+    case RULESENGINEACTIONS.RESET:
+      return DEFAULTRULESSTATE;
+    default:
+      return state;
+  }
+};
+
+const integration = (state = DEFAULTINTEGRATIONSTATE, action = defaultAction) => {
+  switch (action.type) {
+    case RULESENGINEACTIONS.SETINTEGRATIONEMBEDDED:
+      return Object.assign({}, state, {embedded: true});
+    case RULESENGINEACTIONS.SETINTEGRATIONDONE:
+      return Object.assign({}, state, {done: true});
+    case RULESENGINEACTIONS.RESET:
+      return DEFAULTINTEGRATIONSTATE;
     default:
       return state;
   }
@@ -114,6 +148,8 @@ const error = (state = DEFAULTERRORSTATE, action = defaultAction) => {
       return Object.assign({}, state, action.payload.error);
     case RULESENGINEACTIONS.RESETERROR:
       return DEFAULTERRORSTATE;
+    case RULESENGINEACTIONS.RESET:
+      return DEFAULTERRORSTATE;
     default:
       return state;
   }
@@ -123,7 +159,8 @@ const RulesEngineStore = createStore(
   combineReducers({
     rulebooks,
     rules,
-    error
+    error,
+    integration
   }),
   DEFAULTRULESENGINESTATE,
   window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()

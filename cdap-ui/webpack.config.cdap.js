@@ -22,8 +22,10 @@ var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var autoprefixer = require('autoprefixer');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var BrowserSyncPlugin = require('browser-sync-webpack-plugin');
+var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
 
 var plugins = [
+  new CaseSensitivePathsPlugin(),
   new webpack.DllReferencePlugin({
     context: path.resolve(__dirname, 'dll'),
     manifest: require(path.join(__dirname, 'dll', 'shared-vendor-manifest.json'))

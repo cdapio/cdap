@@ -17,8 +17,6 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.etl.spec.PluginSpec;
-import com.google.common.collect.ImmutableMap;
 
 /**
  * Constants used in ETL Applications.
@@ -28,8 +26,6 @@ public final class Constants {
   public static final String PIPELINEID = "pipeline";
   public static final String PIPELINE_SPEC_KEY = "pipeline.spec";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
-  public static final String CONNECTOR_TYPE = "connector";
-  public static final String CONNECTOR_ORIGINAL_NAME = "original";
   public static final String EVENT_TYPE_TAG = "MDC:eventType";
   public static final String PIPELINE_LIFECYCLE_TAG_VALUE = "lifecycle";
   public static final String SPARK_PROGRAM_PLUGIN_TYPE = "sparkprogram";
@@ -45,6 +41,17 @@ public final class Constants {
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
+  }
+
+  /**
+   * Connector constants
+   */
+  public static final class Connector {
+    public static final String PLUGIN_TYPE = "connector";
+    public static final String ORIGINAL_NAME = "original";
+    public static final String TYPE = "type";
+    public static final String SOURCE_TYPE = "source";
+    public static final String SINK_TYPE = "sink";
   }
 
   /**
@@ -78,6 +85,7 @@ public final class Constants {
    * Constants related to the stage statistics.
    */
   public static final class StageStatistics {
+    public static final String PREFIX = "stage.statistics";
     public static final String INPUT_RECORDS = "input.records";
     public static final String OUTPUT_RECORDS = "output.records";
     public static final String ERROR_RECORDS = "error.records";

@@ -1,0 +1,90 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+$tab_header_height: 40px;
+$leftpanel_border_color: #cccccc;
+$leftpanel_bg_color: #f5f5f5;
+$active_tab_color: #333333;
+$nonactive_tab_bg_color: #bbbbbb;
+$nonactive_tab_color: white;
+
+.rules-engine-wrapper {
+  display: flex;
+  width: 100%;
+  height: calc(100vh - 104px);
+
+  .left-panel,
+  .right-panel {
+    height: 100%;
+  }
+  .left-panel {
+    width: 30%;
+    border-right: 1px solid $leftpanel_border_color;
+    min-width: 470px;
+
+    @media (max-width: 1000px) {
+      min-width: 300px;
+    }
+  }
+  .right-panel {
+    width: 70%;
+  }
+  .nav.nav-tabs {
+    display: flex;
+    height: $tab_header_height;
+    .nav-item {
+      width: 50%;
+      margin-left: 0;
+      background: $leftpanel_border_color;
+      cursor: pointer;
+
+      &:last-child {
+        .nav-link {
+          border-right: 0;
+        }
+      }
+
+      > * {
+        height: 100%;
+      }
+
+      .nav-link {
+        border-radius: 0;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        background-color: $nonactive_tab_bg_color;
+        color: $nonactive_tab_color;
+
+        &.active {
+          background-color: $leftpanel_bg_color;
+          color: $active-tab-color;
+        }
+      }
+    }
+  }
+  .tab-content {
+    height: calc(100% - #{$tab_header_height}); // height of tab header
+    background-color: $leftpanel_bg_color;
+  }
+  .tab-pane,
+  .tab-pane > div {
+    height: 100%;
+  }
+  .tab-pane > div {
+    overflow-y: auto;
+  }
+}

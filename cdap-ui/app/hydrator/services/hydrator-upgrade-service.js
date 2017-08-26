@@ -15,7 +15,7 @@
  */
 
 class HydratorUpgradeService {
-  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q) {
+  constructor($rootScope, myPipelineApi, $state, $uibModal, HydratorPlusPlusConfigStore, HydratorPlusPlusLeftPanelStore, $q, PipelineAvailablePluginsActions) {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
@@ -23,6 +23,7 @@ class HydratorUpgradeService {
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.leftPanelStore = HydratorPlusPlusLeftPanelStore;
     this.$q = $q;
+    this.PipelineAvailablePluginsActions = PipelineAvailablePluginsActions;
   }
 
   _checkVersionIsInRange(range, version) {
@@ -66,7 +67,29 @@ class HydratorUpgradeService {
    * If there exist 2 artifacts with same version, it will maintain both scopes in an array.
    **/
   _createPluginsMap(pipelineConfig) {
-    let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+    let deferred = this.$q.defer();
+    let activePipelineType = this.HydratorPlusPlusConfigStore.getState().artifact.name;
+
+    if (pipelineConfig.artifact.name !== activePipelineType) {
+      this.PipelineAvailablePluginsActions.fetchPluginsForUpgrade(
+        {
+          namespace: this.$state.params.namespace,
+          pipelineType: 'cdap-data-streams',
+          version: this.$rootScope.cdapVersion
+        }
+      ).then((res) => {
+        let plugins = res;
+        this._formatPluginsMap(plugins, pipelineConfig, deferred);
+      });
+    } else {
+      let plugins = this.leftPanelStore.getState().plugins.pluginTypes;
+      this._formatPluginsMap(plugins, pipelineConfig, deferred);
+    }
+
+    return deferred.promise;
+  }
+
+  _formatPluginsMap(plugins, pipelineConfig, promise) {
     let pluginTypes = Object.keys(plugins);
 
     let pluginsMap = {};
@@ -84,7 +107,7 @@ class HydratorUpgradeService {
 
         allArtifacts.forEach((artifact) => {
           if (!highestVersion) {
-            highestVersion = artifact;
+            highestVersion = angular.copy(artifact);
           } else if (highestVersion.version === artifact.version) {
             highestVersion.scope = [highestVersion.scope, artifact.scope];
           } else {
@@ -92,15 +115,8 @@ class HydratorUpgradeService {
             let currVersion = new window.CaskCommon.Version(artifact.version);
 
             if (currVersion.compareTo(prevVersion) === 1) {
-              highestVersion = artifact;
+              highestVersion = angular.copy(artifact);
             }
-          }
-
-          if (artifactVersionMap[artifact.version]) {
-            let existingScope = artifactVersionMap[artifact.version];
-            artifactVersionMap[artifact.version] = [existingScope, artifact.scope];
-          } else {
-            artifactVersionMap[artifact.version] = artifact.scope;
           }
         });
 
@@ -113,8 +129,6 @@ class HydratorUpgradeService {
         pluginsMap[key] = value;
       });
     });
-
-    let deferred = this.$q.defer();
 
     if (pipelineConfig.artifact.name === 'cdap-data-pipeline') {
       this._fetchPostRunActions()
@@ -136,13 +150,11 @@ class HydratorUpgradeService {
 
           pluginsMap  = Object.assign(pluginsMap, postRunActionsMap);
 
-          deferred.resolve(pluginsMap);
+          promise.resolve(pluginsMap);
         });
     } else {
-      deferred.resolve(pluginsMap);
+      promise.resolve(pluginsMap);
     }
-
-    return deferred.promise;
   }
 
   _checkErrorStages(stages, pluginsMap) {
@@ -221,140 +233,7 @@ class HydratorUpgradeService {
       keyboard: false,
       windowTopClass: 'hydrator-modal node-config-modal upgrade-modal',
       controllerAs: 'PipelineUpgradeController',
-      controller: function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore) {
-        let eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
-        let globalEvents = window.CaskCommon.globalEvents;
-
-        this.pipelineConfig = rPipelineConfig;
-        this.cdapVersion = $rootScope.cdapVersion;
-
-        this.pipelineArtifact = HydratorUpgradeService.checkPipelineArtifactVersion(rPipelineConfig);
-
-        this.problematicStages = [];
-        this.missingArtifactStages = [];
-        this.canUpgradeStages = [];
-        let allStages = [];
-
-        let allPostActions = [];
-        this.problematicPostRunActions = [];
-        this.missingArtifactPostRunActions = [];
-        this.fixAllDisabled = true;
-
-        this.loading = true;
-
-        const checkStages = () => {
-          this.loading = true;
-
-          HydratorUpgradeService.getErrorStages(rPipelineConfig)
-            .then((transformedStages) => {
-              allStages = transformedStages.stages.map((stage) => {
-                stage.icon = DAGPlusPlusFactory.getIcon(stage.stageInfo.plugin.name.toLowerCase());
-                stage.type = GLOBALS.pluginConvert[stage.stageInfo.plugin.type];
-                return stage;
-              });
-
-              allPostActions = transformedStages.postActions.map((stage) => {
-                stage.icon = DAGPlusPlusFactory.getIcon(stage.stageInfo.plugin.name.toLowerCase());
-                stage.type = 'postaction';
-                return stage;
-              });
-
-              this.problematicStages = [];
-              this.missingArtifactStages = [];
-              this.canUpgradeStages = [];
-              this.problematicPostRunActions = [];
-              this.missingArtifactPostRunActions = [];
-
-              transformedStages.stages.forEach((artifact) => {
-                if (artifact.error === 'NOTFOUND') {
-                  this.missingArtifactStages.push(artifact);
-                } else if (artifact.error === 'CAN_UPGRADE') {
-                  artifact.upgrade = true;
-                  this.canUpgradeStages.push(artifact);
-                } else if (artifact.error) {
-                  this.problematicStages.push(artifact);
-                }
-              });
-
-              transformedStages.postActions.forEach((artifact) => {
-                if (artifact.error === 'NOTFOUND') {
-                  this.missingArtifactPostRunActions.push(artifact);
-                } else if (artifact.error) {
-                  this.problematicPostRunActions.push(artifact);
-                }
-              });
-
-              this.fixAllDisabled = this.missingArtifactStages.length > 0 || this.missingArtifactPostRunActions.length > 0;
-
-              if (
-                this.problematicStages.length === 0 &&
-                this.missingArtifactStages.length === 0 &&
-                this.pipelineArtifact &&
-                this.canUpgradeStages.length === 0 &&
-                this.missingArtifactPostRunActions.length === 0 &&
-                this.problematicPostRunActions.length === 0
-              ) {
-                HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
-                $state.go('hydrator.create', { data: rPipelineConfig });
-              } else {
-                this.loading = false;
-              }
-            });
-        };
-
-        checkStages();
-
-        let sub = HydratorPlusPlusLeftPanelStore.subscribe(checkStages);
-
-        this.openMarket = () => {
-          eventEmitter.emit(globalEvents.OPENMARKET);
-        };
-
-        const fix = (stagesList) => {
-          return stagesList.map((stage) => {
-            let updatedStageInfo = stage.stageInfo;
-
-            if (stage.error && stage.error === 'NOTFOUND') {
-              updatedStageInfo.error = true;
-              updatedStageInfo.errorCount = 1;
-              updatedStageInfo.errorMessage = 'Plugin cannot be found';
-            } else if (stage.error) {
-              if (stage.error === 'CAN_UPGRADE' && stage.upgrade || stage.error !== 'CAN_UPGRADE') {
-                updatedStageInfo.plugin.artifact = stage.suggestion;
-              }
-            }
-
-            return updatedStageInfo;
-          });
-        };
-
-        this.fixAll = () => {
-          let newConfig = HydratorUpgradeService.upgradePipelineArtifactVersion(rPipelineConfig);
-
-          // Making a copy here so that the information in the modal does not change when
-          // we modify the artifact information
-          let copyAllStages = angular.copy(allStages);
-          let copyPostActions = angular.copy(allPostActions);
-
-          let stages = fix(copyAllStages);
-          let postActions = fix(copyPostActions);
-
-          newConfig.config.stages = stages;
-          newConfig.config.postActions = postActions;
-
-          if (newConfig.__ui__) {
-            delete newConfig.__ui__;
-          }
-
-          HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
-          $state.go('hydrator.create', { data: newConfig });
-        };
-
-        $scope.$on('$destroy', () => {
-          sub();
-        });
-
-      },
+      controller: 'PipelineUpgradeModalController',
       resolve: {
         rPipelineConfig: function () {
           return pipelineConfig;

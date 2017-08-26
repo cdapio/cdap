@@ -210,10 +210,10 @@ let connectionIsValid = (GLOBALS, fromNode, toNode, cb) => {
 
   /**
    * Rules:
-   *    1. Source can only be connected to Transform or Sink
-   *    2. Transform can only be connected to Transform or Sink
-   *    3. Sink can only be connected to Action
-   *    4. Action can only be connected to Action or Source
+   *    1. Source & Transform can only connect to Transform, Sink, or Condition
+   *    2. Sink can only connect to Action, or Condition
+   *    3. Action can only connect to Action, Source or Condition
+   *    4. Condition can connect to anything
    **/
 
   let fromType = GLOBALS.pluginConvert[fromNode.type],
@@ -222,17 +222,17 @@ let connectionIsValid = (GLOBALS, fromNode, toNode, cb) => {
   switch (fromType) {
     case 'source':
     case 'transform':
-      if (!(toType === 'transform' || toType === 'sink')) {
+      if (!(toType === 'transform' || toType === 'sink' || toType === 'condition')) {
         cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
       }
       break;
     case 'sink':
-      if (toType !== 'action') {
+      if (toType !== 'action' && toType !== 'condition') {
         cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
       }
       break;
     case 'action':
-      if (!(toType === 'action' || toType === 'source')) {
+      if (!(toType === 'action' || toType === 'source' || toType === 'condition')) {
         cb(fromNode.plugin.label + ' → ' + toNode.plugin.label);
       }
       break;

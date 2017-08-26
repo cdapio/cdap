@@ -40,6 +40,9 @@ import javax.annotation.Nullable;
  */
 public class ScheduleDetail {
 
+  private final String namespace;
+  private final String application;
+  private final String applicationVersion;
   private final String name;
   private final String description;
   private final ScheduleProgramInfo program;
@@ -47,6 +50,7 @@ public class ScheduleDetail {
   private final Trigger trigger;
   private final List<? extends Constraint> constraints;
   private final Long timeoutMillis;
+  private final String status;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
@@ -55,6 +59,23 @@ public class ScheduleDetail {
                         @Nullable Trigger trigger,
                         @Nullable List<? extends Constraint> constraints,
                         @Nullable Long timeoutMillis) {
+    this(null, null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null);
+  }
+
+  public ScheduleDetail(@Nullable String namespace,
+                        @Nullable String application,
+                        @Nullable String applicationVersion,
+                        @Nullable String name,
+                        @Nullable String description,
+                        @Nullable ScheduleProgramInfo program,
+                        @Nullable Map<String, String> properties,
+                        @Nullable Trigger trigger,
+                        @Nullable List<? extends Constraint> constraints,
+                        @Nullable Long timeoutMillis,
+                        @Nullable String status) {
+    this.namespace = namespace;
+    this.application = application;
+    this.applicationVersion = applicationVersion;
     this.name = name;
     this.description = description;
     this.program = program;
@@ -62,6 +83,22 @@ public class ScheduleDetail {
     this.trigger = trigger;
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
+    this.status = status;
+  }
+
+  @Nullable
+  public String getNamespace() {
+    return namespace;
+  }
+
+  @Nullable
+  public String getApplication() {
+    return application;
+  }
+
+  @Nullable
+  public String getApplicationVersion() {
+    return applicationVersion;
   }
 
   @Nullable
@@ -97,6 +134,11 @@ public class ScheduleDetail {
   @Nullable
   public Long getTimeoutMillis() {
     return timeoutMillis;
+  }
+
+  @Nullable
+  public String getStatus() {
+    return status;
   }
 
   @Override

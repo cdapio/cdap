@@ -20,8 +20,8 @@ import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
-import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
+import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Joiner;
@@ -32,7 +32,7 @@ import java.io.PrintStream;
 import java.util.Set;
 
 /**
- * Grants a user permission to perform certain actions on an entity.
+ * Grants a user permission to perform certain actions on an auhorizable.
  */
 public class GrantActionCommand extends AbstractAuthCommand {
 
@@ -46,7 +46,7 @@ public class GrantActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
+    Authorizable authorizable = Authorizable.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String principalName = arguments.get("principal-name");
     Principal.PrincipalType principalType =
       Principal.PrincipalType.valueOf(arguments.get("principal-type").toUpperCase());
@@ -55,9 +55,9 @@ public class GrantActionCommand extends AbstractAuthCommand {
     // actions is not an optional argument so should never be null
     Preconditions.checkNotNull(actions, "Actions can never be null in the grant command.");
 
-    client.grant(entity, principal, actions);
+    client.grant(authorizable, principal, actions);
     output.printf("Successfully granted action(s) '%s' on entity '%s' to %s '%s'\n",
-                  Joiner.on(",").join(actions), entity.toString(), principal.getType(), principal.getName());
+                  Joiner.on(",").join(actions), authorizable.toString(), principal.getType(), principal.getName());
   }
 
   @Override
@@ -68,7 +68,7 @@ public class GrantActionCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Grants a principal privileges to perform certain actions on an entity. %s %s",
+    return String.format("Grants a principal privileges to perform certain actions on an authorizable. %s %s",
       ArgumentName.ENTITY_DESCRIPTION_ACTIONS, ArgumentName.ENTITY_DESCRIPTION_ALL_STRING);
   }
 }

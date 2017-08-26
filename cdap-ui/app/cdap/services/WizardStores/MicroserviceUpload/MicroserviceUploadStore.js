@@ -38,6 +38,7 @@ const defaultGeneralState = Object.assign({
   instanceName: '',
   description: '',
   version: 1,
+  microserviceArtifact: {},
   defaultMicroservicePlugins: [],
   defaultMicroserviceOptions: [],
   microserviceOption: '',
@@ -64,16 +65,13 @@ const defaultConfigureState = Object.assign({
   ethreshold: 100
 }, defaultState, { __complete: true });
 
-const defaultEndpointsState = Object.assign({
-  fetch: 100,
-  in: [{
-    property: '',
-    uniqueId : shortid.generate()
-  }],
-  out: [{
-    property: '',
-    uniqueId : shortid.generate()
-  }],
+const defaultInboundQueuesState = Object.assign({
+  queues: [],
+  fetch: ''
+}, defaultState, { __complete: true });
+
+const defaultOutboundQueuesState = Object.assign({
+  queues: []
 }, defaultState, { __complete: true });
 
 const defaultPropertiesState = Object.assign({
@@ -91,7 +89,8 @@ const defaultInitialState = {
   uploadjar: defaultJarState,
   uploadjson: defaultJsonState,
   configure: defaultConfigureState,
-  endpoints: defaultEndpointsState,
+  inboundQueues: defaultInboundQueuesState,
+  outboundQueues: defaultOutboundQueuesState,
   properties: defaultPropertiesState
 };
 
@@ -106,19 +105,38 @@ const configureStepRequiredFields = head(
     .filter(step => step.id === 'configure')
   ).requiredFields;
 
+const queueSteps = head(
+  MicroserviceUploadWizardConfig
+    .steps
+    .filter(step => step.id === 'inboundQueues')
+  );
+
+const queueRequiredFields = queueSteps.queueRequiredFields;
+const tmsRequiredFields = queueSteps.tmsRequiredFields;
+const sqsRequiredFields = queueSteps.sqsRequiredFields;
+const websocketRequiredFields = queueSteps.websocketRequiredFields;
+const mapRStreamRequiredFields = queueSteps.mapRStreamRequiredFields;
+
+const requiredQueuesFieldsCompleted = (queueState) => {
+  for (let i = 0; i < queueState.queues.length; i++) {
+    let queue = queueState.queues[i];
+    if (!requiredFieldsCompleted(queue, queueRequiredFields)
+      || queue.type === 'tms' && !requiredFieldsCompleted(queue.properties, tmsRequiredFields)
+      || queue.type === 'sqs' && !requiredFieldsCompleted(queue.properties, sqsRequiredFields)
+      || queue.type === 'websocket' && !requiredFieldsCompleted(queue.properties, websocketRequiredFields)
+      || queue.type === 'mapr-stream' && !requiredFieldsCompleted(queue.properties, mapRStreamRequiredFields)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 const uploadMicroserviceLabel = 'Upload new microservice';
 
 const onErrorHandler = (reducerId, stateCopy, action) => {
   stateCopy = Object.assign({}, stateCopy);
   if (action.payload.id === reducerId) {
     stateCopy.__error = action.payload.error;
-  }
-  return stateCopy;
-};
-const onSuccessHandler = (reducerId, stateCopy, action) => {
-  stateCopy = Object.assign({}, stateCopy, action);
-  if (action.payload.id === 'general') {
-    stateCopy.__complete = action.payload.res;
   }
   return stateCopy;
 };
@@ -186,13 +204,13 @@ const general = (state = defaultGeneralState, action = defaultAction) => {
           __readOnly: true
         });
       } else {
-        stateCopy = Object.assign({}, state);
+        stateCopy = Object.assign({}, state, {
+          microserviceArtifact: action.payload.artifact
+        });
       }
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('general', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('general', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
       return defaultGeneralState;
     default:
@@ -250,8 +268,6 @@ const uploadjar = (state = defaultJarState, action = defaultAction) => {
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('uploadjar', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('uploadjar', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
       return defaultJarState;
     default:
@@ -325,8 +341,6 @@ const uploadjson = (state = defaultJsonState, action = defaultAction) => {
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('uploadjson', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('uploadjson', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
       return defaultJsonState;
     default:
@@ -371,8 +385,6 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('configure', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('configure', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
       return defaultConfigureState;
     default:
@@ -384,22 +396,17 @@ const configure = (state = defaultConfigureState, action = defaultAction) => {
   });
 };
 
-const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
+const inboundQueues = (state = defaultInboundQueuesState, action = defaultAction) => {
   let stateCopy;
   switch (action.type) {
     case MicroserviceUploadActions.setFetchSize:
-      stateCopy = Object.assign({}, state, {
-        fetch: action.payload.fetchSize
-      });
-      break;
+       stateCopy = Object.assign({}, state, {
+         fetch: action.payload.fetchSize
+       });
+       break;
     case MicroserviceUploadActions.setInboundQueues:
       stateCopy = Object.assign({}, state, {
-        in: cloneDeep(action.payload.inboundQueues)
-      });
-      break;
-    case MicroserviceUploadActions.setOutboundQueues:
-      stateCopy = Object.assign({}, state, {
-        out: cloneDeep(action.payload.outboundQueues)
+        queues: cloneDeep(action.payload.inboundQueues)
       });
       break;
     case MicroserviceUploadActions.setMicroserviceArtifact:
@@ -412,22 +419,73 @@ const endpoints = (state = defaultEndpointsState, action = defaultAction) => {
       }
       break;
     case MicroserviceUploadActions.onError:
-      return onErrorHandler('endpoints', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('endpoints', Object.assign({}, state), action);
+      return onErrorHandler('inboundQueues', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
-      return defaultEndpointsState;
+      return defaultInboundQueuesState;
     default:
       return state;
   }
   return Object.assign({}, stateCopy, {
+    __complete: requiredQueuesFieldsCompleted(stateCopy),
+    __error: action.payload.error || false
+  });
+};
+
+const outboundQueues = (state = defaultOutboundQueuesState, action = defaultAction) => {
+  let stateCopy;
+  switch (action.type) {
+    case MicroserviceUploadActions.setOutboundQueues:
+      stateCopy = Object.assign({}, state, {
+        queues: cloneDeep(action.payload.outboundQueues)
+      });
+      break;
+    case MicroserviceUploadActions.setMicroserviceArtifact:
+      if (isEmpty(action.payload.artifact)) {
+        stateCopy = Object.assign({}, state, {
+          __disabled: true
+        });
+      } else {
+        stateCopy = Object.assign({}, state);
+      }
+      break;
+    case MicroserviceUploadActions.onError:
+      return onErrorHandler('outboundQueues', Object.assign({}, state), action);
+    case MicroserviceUploadActions.onReset:
+      return defaultOutboundQueuesState;
+    default:
+      return state;
+  }
+  return Object.assign({}, stateCopy, {
+    __complete: requiredQueuesFieldsCompleted(stateCopy),
     __error: action.payload.error || false
   });
 };
 
 const properties = (state = defaultPropertiesState, action = defaultAction) => {
   let stateCopy;
+  let pluginProperties;
+
   switch (action.type) {
+    case MicroserviceUploadActions.setMicroservicePluginProperties:
+      stateCopy = Object.assign({}, state);
+      pluginProperties = action.payload.pluginProperties;
+      if (pluginProperties.length > 0) {
+        stateCopy.keyValues.pairs = [];
+        pluginProperties.forEach(pluginProperty => {
+          stateCopy.keyValues.pairs.push({
+            key: pluginProperty,
+            value: '',
+            uniqueId : shortid.generate()
+          });
+        });
+      } else {
+        stateCopy.keyValues.pairs = [{
+          key : '',
+          value : '',
+          uniqueId : shortid.generate()
+        }];
+      }
+      break;
     case MicroserviceUploadActions.setProperties:
       stateCopy = Object.assign({}, state, {
         keyValues: action.payload.keyValues
@@ -444,8 +502,6 @@ const properties = (state = defaultPropertiesState, action = defaultAction) => {
       break;
     case MicroserviceUploadActions.onError:
       return onErrorHandler('properties', Object.assign({}, state), action);
-    case MicroserviceUploadActions.onSuccess:
-      return onSuccessHandler('properties', Object.assign({}, state), action);
     case MicroserviceUploadActions.onReset:
       return defaultPropertiesState;
     default:
@@ -464,7 +520,8 @@ const createStoreWrapper = () => {
       uploadjar,
       uploadjson,
       configure,
-      endpoints,
+      inboundQueues,
+      outboundQueues,
       properties
     }),
     defaultInitialState

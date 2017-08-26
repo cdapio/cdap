@@ -64,7 +64,7 @@ public final class PluginClassLoaders {
 
       List<ClassLoader> pluginClassLoaders = new ArrayList<>();
       for (Plugin plugin : plugins.values()) {
-        ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(plugin.getArtifactId());
+        ClassLoader pluginClassLoader = pluginInstantiator.getPluginClassLoader(plugin);
         if (pluginClassLoader instanceof PluginClassLoader) {
 
           // A ClassLoader to allow loading of all plugin classes used by the program.

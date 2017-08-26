@@ -31,6 +31,7 @@ import co.cask.cdap.etl.common.DefaultAlertPublisherContext;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.PipelineRuntime;
 import co.cask.cdap.etl.common.RecordInfo;
+import co.cask.cdap.etl.common.StageStatisticsCollector;
 import co.cask.cdap.etl.common.TrackedIterator;
 import co.cask.cdap.etl.spark.Compat;
 import co.cask.cdap.etl.spark.SparkCollection;
@@ -96,14 +97,15 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+  public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return wrap(rdd.flatMap(Compat.convert(new TransformFunction<T>(pluginFunctionContext))));
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+  public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
+                                                                  StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return wrap(rdd.flatMap(Compat.convert(new MultiOutputTransformFunction<T>(pluginFunctionContext))));
   }
 
@@ -113,8 +115,9 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions) {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+  public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                       StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(pluginFunctionContext);
     PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
 
@@ -169,8 +172,8 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public void publishAlerts(StageSpec stageSpec) throws Exception {
-    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec);
+  public void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     AlertPublisher alertPublisher = pluginFunctionContext.createPlugin();
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
 

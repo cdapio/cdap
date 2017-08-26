@@ -221,7 +221,11 @@ export default class Calculate extends Component {
       Mousetrap.bind('enter', this.getExpressionAndApply);
     }
     if (this.props.isOpen && !this.state.isDisabled && this.calculateOffset) {
-      this.calculateOffset();
+      if (this.state.operationPopoverOpen) {
+        setPopoverOffset(document.querySelector('#calculate-directive > .second-level-popover .scrollable-list .option.active'), 'third-level-popover');
+      } else {
+        this.calculateOffset();
+      }
     }
   }
 

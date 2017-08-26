@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset.output;
 
+import co.cask.cdap.api.data.batch.Output;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 
 import java.util.Map;
@@ -24,36 +25,41 @@ import java.util.Map;
  * Internal helper class to represent an output format provider and its configuration.
  */
 public class ProvidedOutput {
-  private final String alias;
+  private final Output output;
   private final OutputFormatProvider outputFormatProvider;
   private final String outputFormatClassName;
   private final Map<String, String> outputFormatConfiguration;
 
-  public ProvidedOutput(String alias, OutputFormatProvider outputFormatProvider) {
-    this.alias = alias;
+  public ProvidedOutput(Output originalOutput, OutputFormatProvider outputFormatProvider) {
+    this.output = originalOutput;
     this.outputFormatProvider = outputFormatProvider;
     this.outputFormatClassName = outputFormatProvider.getOutputFormatClassName();
     this.outputFormatConfiguration = outputFormatProvider.getOutputFormatConfiguration();
     if (outputFormatClassName == null) {
-      throw new IllegalArgumentException("Output '" + alias + "' provided null as the output format");
+      throw new IllegalArgumentException(String.format("Output '%s' provided null as the output format",
+                                                       output.getAlias()));
     }
     if (outputFormatConfiguration == null) {
-      throw new IllegalArgumentException("Output '" + alias + "' provided null as the output format configuration");
+      throw new IllegalArgumentException(String.format("Output '%s' provided null as the output format configuration",
+                                                       output.getAlias()));
     }
   }
 
-  public ProvidedOutput(String alias,
+  public ProvidedOutput(Output output,
                         OutputFormatProvider outputFormatProvider,
                         String outputFormatClassName,
                         Map<String, String> outputFormatConfiguration) {
-    this.alias = alias;
+    this.output = output;
     this.outputFormatProvider = outputFormatProvider;
     this.outputFormatClassName = outputFormatClassName;
     this.outputFormatConfiguration = outputFormatConfiguration;
   }
 
-  public String getAlias() {
-    return alias;
+  /**
+   * Returns the original Output used to create this ProvidedOutput.
+   */
+  public Output getOutput() {
+    return output;
   }
 
   public OutputFormatProvider getOutputFormatProvider() {

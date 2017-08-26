@@ -119,6 +119,7 @@ export default class DSVEditor extends Component {
                   <DSVRowWrapper
                     index={index}
                     placeholder={this.props.placeholder}
+                    disabled={this.props.disabled}
                   />
                 </Provider>
               </div>
@@ -133,5 +134,6 @@ export default class DSVEditor extends Component {
 DSVEditor.propTypes = {
   values: PropTypes.array,
   onChange: PropTypes.func,
-  placeholder: PropTypes.string
+  placeholder: PropTypes.string,
+  disabled: PropTypes.bool
 };
