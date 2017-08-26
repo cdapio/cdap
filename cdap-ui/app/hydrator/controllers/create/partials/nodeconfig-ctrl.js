@@ -320,7 +320,7 @@ class HydratorPlusPlusNodeConfigCtrl {
                 )
               );
             }
-            if (!this.state.node.outputSchema) {
+            if (!this.state.node.outputSchema || this.state.node.type === 'condition') {
               this.state.node.outputSchema = this.myHelpers.objectQuery(this.state.node, 'inputSchema', 0, 'schema') || '';
             }
             if (!this.state.node.plugin.label) {
