@@ -4,10 +4,16 @@
   "description": "UI Pack Installer.",
   "main": "index.js",
   "scripts": {
-    "upgrade": "node index.js"
+    "upgrade": "node dist/upgrade.js"
   },
   "author": "",
   "license": "Apache-2.0",
+  "devDependencies": {
+    "babel-core": "6.26.0",
+    "babel-loader": "6.2.5",
+    "webpack": "3.5.5",
+    "babel-preset-es2015": "6.3.13"
+  },
   "dependencies": {
     "archiver": "1.3.0",
     "chalk": "1.1.3",
