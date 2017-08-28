@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.services;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.conf.CConfiguration;
 import com.google.inject.Inject;
 
 /**
@@ -27,10 +28,10 @@ import com.google.inject.Inject;
 public class LocalRunRecordCorrectorService extends AbstractRunRecordCorrectorService {
 
   @Inject
-  public LocalRunRecordCorrectorService(Store store, ProgramStateWriter programStateWriter,
+  public LocalRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                         ProgramLifecycleService programLifecycleService,
                                         ProgramRuntimeService runtimeService) {
-    super(store, programStateWriter, programLifecycleService, runtimeService);
+    super(cConf, store, programStateWriter, programLifecycleService, runtimeService);
   }
 
   @Override

@@ -32,6 +32,8 @@ import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.workflow.WorkflowInfoProvider;
 
+import java.net.URI;
+
 /**
  * A context for a {@link Spark} program to interact with CDAP. This context object will be provided to
  * {@link Spark} program in the {@link ProgramLifecycle#initialize} call.
@@ -85,6 +87,54 @@ public interface SparkClientContext extends SchedulableProgramContext, RuntimeCo
    * @param <T> the SparkConf type
    */
   <T> void setSparkConf(T sparkConf);
+
+  /**
+   * Sets a python script to run using PySpark.
+   *
+   * @see #setPySparkScript(String, Iterable)
+   */
+  void setPySparkScript(String script, URI...additionalPythonFiles);
+
+  /**
+   * Sets a python script to run using PySpark. If this is set, it overrides whatever being set via
+   * the {@link SparkConfigurer#setMainClassName(String)} and the python script is the one always get executed.
+   *
+   * @param script the python script to run using PySpark
+   * @param additionalPythonFiles a list of addition python files to be included in the {@code PYTHONPATH}.
+   *                              Each can be local by having {@code file} scheme or remote,
+   *                              for example, by having {@code hdfs} or {@code http} scheme.
+   *                              If the {@link URI} has no scheme, it will be default based on the execution
+   *                              environment, which would be local file in local sandbox, and remote if running
+   *                              in distributed mode. Note that in distributed mode, using {@code file} scheme
+   *                              means the file has to be present on every node on the cluster, since the
+   *                              spark program can be submitted from any node.
+   */
+  void setPySparkScript(String script, Iterable<URI> additionalPythonFiles);
+
+  /**
+   * Sets a location that points to a python script to run using PySpark.
+   *
+   * @see #setPySparkScript(URI, Iterable)
+   */
+  void setPySparkScript(URI scriptLocation, URI...additionalPythonFiles);
+
+  /**
+   * Sets a location that points to a python script to run using PySpark.
+   * If this is set, it overrides whatever being set via the {@link SparkConfigurer#setMainClassName(String)}
+   * and the python script is the one always get executed.
+   *
+   * @param scriptLocation location to the python script. It can be local by having {@code file} scheme or remote,
+   *                       for example, by having {@code hdfs} or {@code http} scheme.
+   *                       If the {@link URI} has no scheme, it will be default based on the execution
+   *                       environment, which would be local file in local sandbox, and remote if running
+   *                       in distributed mode. Note that in distributed mode, using {@code file} scheme
+   *                       means the file has to be present on every node on the cluster, since the
+   *                       spark program can be submitted from any node.
+   * @param additionalPythonFiles a list of addition python files to be included in the {@code PYTHONPATH}.
+   *                              Each location can be local or remote,
+   *                              with the same definition as the {@code scriptLocation} parameter.
+   */
+  void setPySparkScript(URI scriptLocation, Iterable<URI> additionalPythonFiles);
 
   /**
    * Return the state of the Spark program.

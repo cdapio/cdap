@@ -45,7 +45,9 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   private final Resources executorResources;
 
   public SparkSpecification(String className, String name, String description,
-                            String mainClassName, Set<String> datasets, Map<String, String> properties,
+                            @Nullable String mainClassName,
+                            Set<String> datasets,
+                            Map<String, String> properties,
                             @Nullable Resources clientResources,
                             @Nullable Resources driverResources,
                             @Nullable Resources executorResources) {
@@ -76,8 +78,11 @@ public final class SparkSpecification implements ProgramSpecification, PropertyP
   }
 
   /**
-   * Returns the main class name for the Spark program.
+   * Get the main class name for the Spark program.
+   *
+   * @return the fully qualified class name or {@code null} if it was not set
    */
+  @Nullable
   public String getMainClassName() {
     return mainClassName;
   }

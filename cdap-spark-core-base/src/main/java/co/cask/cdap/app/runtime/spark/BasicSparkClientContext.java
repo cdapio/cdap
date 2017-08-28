@@ -25,7 +25,6 @@ import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.macro.InvalidMacroException;
 import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.messaging.MessageFetcher;
 import co.cask.cdap.api.messaging.MessagePublisher;
@@ -42,6 +41,7 @@ import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Iterables;
 import org.apache.spark.SparkConf;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.RunId;
@@ -49,7 +49,10 @@ import org.apache.twill.api.RunId;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -60,14 +63,18 @@ final class BasicSparkClientContext implements SparkClientContext {
 
   private final SparkRuntimeContext sparkRuntimeContext;
   private final Map<String, LocalizeResource> localizeResources;
+  private final List<URI> additionalPythonLocations;
   private Resources driverResources;
   private Resources executorResources;
   private SparkConf sparkConf;
   private ProgramState state;
+  private String pySparkScript;
+  private URI pySparkScriptLocation;
 
   BasicSparkClientContext(SparkRuntimeContext sparkRuntimeContext) {
     this.sparkRuntimeContext = sparkRuntimeContext;
     this.localizeResources = new HashMap<>();
+    this.additionalPythonLocations = new LinkedList<>();
 
     SparkSpecification spec = sparkRuntimeContext.getSparkSpecification();
     Map<String, String> runtimeArgs = sparkRuntimeContext.getRuntimeArguments();
@@ -320,5 +327,62 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Override
   public MessageFetcher getMessageFetcher() {
     return sparkRuntimeContext.getMessageFetcher();
+  }
+
+  @Override
+  public void setPySparkScript(String script, URI... additionalPythonFiles) {
+    setPySparkScript(script, Arrays.asList(additionalPythonFiles));
+  }
+
+  @Override
+  public void setPySparkScript(String script, Iterable<URI> additionalPythonFiles) {
+    pySparkScript = script;
+    pySparkScriptLocation = null;
+    additionalPythonLocations.clear();
+    Iterables.addAll(additionalPythonLocations, additionalPythonFiles);
+  }
+
+  @Override
+  public void setPySparkScript(URI scriptLocation, URI... additionalPythonFiles) {
+    setPySparkScript(scriptLocation, Arrays.asList(additionalPythonFiles));
+  }
+
+  @Override
+  public void setPySparkScript(URI scriptLocation, Iterable<URI> additionalPythonFiles) {
+    pySparkScriptLocation = scriptLocation;
+    pySparkScript = null;
+    additionalPythonLocations.clear();
+    Iterables.addAll(additionalPythonLocations, additionalPythonFiles);
+  }
+
+  /**
+   * Gets the python script content.
+   *
+   * @return the python script or {@code null} if it was not set
+   */
+  @Nullable
+  String getPySparkScript() {
+    return pySparkScript;
+  }
+
+  /**
+   * Gets the python script location.
+   *
+   * @return the python script location or {@code null} if it was not set
+   */
+  @Nullable
+  URI getPySparkScriptLocation() {
+    return pySparkScriptLocation;
+  }
+
+  /**
+   * Gets the list of addition python files.
+   */
+  List<URI> getAdditionalPythonLocations() {
+    return additionalPythonLocations;
+  }
+
+  boolean isPySpark() {
+    return getPySparkScript() != null || getPySparkScriptLocation() != null;
   }
 }

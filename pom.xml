@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>4.3.0-SNAPSHOT</version>
+  <version>5.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -2627,6 +2627,7 @@
         <module>cdap-app-fabric</module>
         <module>cdap-spark-core</module>
         <module>cdap-spark-core2_2.11</module>
+        <module>cdap-spark-python</module>
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-tms</module>

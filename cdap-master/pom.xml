@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-master</artifactId>
@@ -420,7 +420,7 @@
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
                         <include>co.cask.cdap.cdap-api-spark*.jar</include>
-                        <include>co.cask.cdap.cdap-spark-core*.jar</include>
+                        <include>co.cask.cdap.cdap-spark-*.jar</include>
                       </includes>
                     </resource>
                   </resources>
@@ -442,7 +442,7 @@
                       <!-- Only package with the cdap extensions, not the spark assembly jar -->
                       <includes>
                         <include>co.cask.cdap.cdap-api-spark*.jar</include>
-                        <include>co.cask.cdap.cdap-spark-core*.jar</include>
+                        <include>co.cask.cdap.cdap-spark-*.jar</include>
                       </includes>
                     </resource>
                   </resources>

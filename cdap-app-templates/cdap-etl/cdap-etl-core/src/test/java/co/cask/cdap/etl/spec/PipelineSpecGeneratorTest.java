@@ -419,6 +419,72 @@ public class PipelineSpecGeneratorTest {
     Assert.assertEquals(expected, actual);
   }
 
+  @Test
+  public void testConditionSchemaPropagation() {
+    /*
+     * source --> condition --> sink
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("cond", MOCK_CONDITION))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "cond")
+      .addConnection("cond", "sink", true)
+      .build();
+
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", EMPTY_MAP, ARTIFACT_ID))
+          .addOutputSchema(SCHEMA_A, "cond")
+          .build())
+      .addStage(
+        StageSpec.builder("cond", new PluginSpec(Condition.PLUGIN_TYPE, "mockcondition", EMPTY_MAP, ARTIFACT_ID))
+          .addInputSchema("source", SCHEMA_A)
+          .addOutputPortSchema("sink", null, SCHEMA_A)
+          .setErrorSchema(SCHEMA_A)
+          .build())
+      .addStage(
+        StageSpec.builder("sink", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", EMPTY_MAP, ARTIFACT_ID))
+          .addInputSchema("cond", SCHEMA_A)
+          .setErrorSchema(SCHEMA_A)
+          .build())
+      .addConnections(config.getConnections())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .build();
+
+    PipelineSpec actual = specGenerator.generateSpec(config);
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testConflictingInputSchemasCondition() {
+    /*
+     *           ---- transformA ----
+     *           |                  |
+     * source ---                   |--- condition -- sink
+     *           |                  |
+     *           ---- transformB ----
+     *
+     * sink gets schema A and schema B as input, should fail
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("tB", MOCK_TRANSFORM_B))
+      .addStage(new ETLStage("cond", MOCK_CONDITION))
+      .addConnection("source", "tA")
+      .addConnection("source", "tB")
+      .addConnection("tA", "cond")
+      .addConnection("tB", "cond")
+      .addConnection("cond", "sink", true)
+      .build();
+    specGenerator.generateSpec(etlConfig);
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testConflictingInputSchemas() {
     /*

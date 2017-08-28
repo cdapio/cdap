@@ -199,14 +199,30 @@ public class BundleJarUtil {
    * @throws IOException if there is failure in the archive creation
    */
   public static void addToArchive(File input, final ZipOutputStream output) throws IOException {
+    addToArchive(input, false, output);
+  }
+
+  /**
+   * Adds file(s) to a zip archive. If the given input file is a directory,
+   * all files under it will be added recursively.
+   *
+   * @param input input directory (or file) whose contents needs to be archived
+   * @param includeDirName if {@code true} and if the input is a directory, prefix each entries with the directory name
+   * @param output an opened {@link ZipOutputStream} for the archive content to add to
+   * @throws IOException if there is failure in the archive creation
+   */
+  public static void addToArchive(final File input, final boolean includeDirName,
+                                  final ZipOutputStream output) throws IOException {
     final URI baseURI = input.toURI();
     Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                        Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         URI uri = baseURI.relativize(dir.toUri());
-        if (!uri.getPath().isEmpty()) {
-          output.putNextEntry(new ZipEntry(uri.getPath()));
+        String entryName = includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath();
+
+        if (!entryName.isEmpty()) {
+          output.putNextEntry(new ZipEntry(entryName));
           output.closeEntry();
         }
         return FileVisitResult.CONTINUE;
@@ -219,7 +235,7 @@ public class BundleJarUtil {
           // Only happen if the given "input" is a file.
           output.putNextEntry(new ZipEntry(file.toFile().getName()));
         } else {
-          output.putNextEntry(new ZipEntry(uri.getPath()));
+          output.putNextEntry(new ZipEntry(includeDirName ? input.getName() + "/" + uri.getPath() : uri.getPath()));
         }
         Files.copy(file, output);
         output.closeEntry();

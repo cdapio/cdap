@@ -118,25 +118,35 @@ export default class RulesEngineHome extends Component {
   };
 
   render() {
+    let pageTitle = (
+      <Helmet
+        title={T.translate(`${PREFIX}.pageTitle`)}
+      />
+    );
+    const renderPageTitle = () => !this.props.embedded ? pageTitle : null;
     if (this.state.loading) {
       return (
-        <LoadingSVGCentered />
+        <div>
+          {renderPageTitle()}
+          <LoadingSVGCentered />
+        </div>
       );
     }
 
     if (this.state.backendDown) {
       return (
-        <RulesEngineServiceControl
-          onServiceStart={this.onServiceStart}
-        />
+        <div>
+          {renderPageTitle()}
+          <RulesEngineServiceControl
+            onServiceStart={this.onServiceStart}
+          />
+        </div>
       );
     }
 
     return (
       <div className="rules-engine-home">
-        <Helmet
-          title={T.translate(`${PREFIX}.pageTitle`)}
-        />
+        {renderPageTitle()}
           <RulesEngineWrapper onApply={this.props.onApply}/>
         <RulesEngineAlert />
       </div>
