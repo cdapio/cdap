@@ -126,7 +126,7 @@
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
-    <app.parents>system:cdap-etl-batch[4.2.0,4.3.0-SNAPSHOT),system:cdap-etl-realtime[4.2.0,4.3.0-SNAPSHOT),system:cdap-data-pipeline[4.2.0,4.3.0-SNAPSHOT),system:cdap-data-streams[4.2.0,4.3.0-SNAPSHOT)</app.parents>
+    <app.parents>system:cdap-etl-batch[4.3.0,5.0.0-SNAPSHOT),system:cdap-etl-realtime[4.3.0,5.0.0-SNAPSHOT),system:cdap-data-pipeline[4.3.0,5.0.0-SNAPSHOT),system:cdap-data-streams[4.3.0,5.0.0-SNAPSHOT)</app.parents>
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
   </properties>
