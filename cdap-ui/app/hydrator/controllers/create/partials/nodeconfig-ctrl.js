@@ -421,6 +421,7 @@ class HydratorPlusPlusNodeConfigCtrl {
   fetchPreview() {
     this.previewLoading = true;
     let previewId = this.previewStore.getState().preview.previewId;
+    let previousStageIsCondition = false;
 
     if (!previewId) {
       this.previewLoading = false;
@@ -432,15 +433,24 @@ class HydratorPlusPlusNodeConfigCtrl {
       scope: this.$scope
     };
 
-    let connections = this.ConfigStore.getConfigForExport().config.connections;
+    let { stages, connections } = this.ConfigStore.getConfigForExport().config;
     let adjacencyMap = this.HydratorPlusPlusOrderingFactory.getAdjacencyMap(connections);
     let postBody = [];
-    angular.forEach(adjacencyMap, (value, key) => {
-      let inputPlugin = value.filter(node =>this.state.node.plugin.label === node);
-      if (inputPlugin.length) {
-        postBody.push(key);
+    let previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(this.state.node.plugin.label) !== -1);
+
+    if (previousStageName) {
+      let previousStage = stages.find(stage => stage.name === previousStageName);
+
+      // In case we have multiple condition nodes in a row, we have to keep traversing back
+      // until we find a node that actually has records out
+      while (previousStage && previousStage.plugin.type === 'condition') {
+        previousStageIsCondition = true;
+        previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(previousStageName) !== -1);
+        previousStage = stages.find(stage => stage.name === previousStageName);
       }
-    });
+      postBody.push(previousStageName);
+    }
+
     this.myPipelineApi.getStagePreview(params, {
       tracers: postBody.concat([this.state.node.plugin.label])
     })
@@ -451,18 +461,35 @@ class HydratorPlusPlusNodeConfigCtrl {
           output: {},
           numInputStages: 0
         };
-        angular.forEach(res, (value, key) => {
-          if (key !== this.state.node.plugin.label) {
-            if (!this.state.isSource) {
-              this.previewData.input[key] = this.formatMultipleRecords(value['records.out']);
-              this.previewData.numInputStages = Object.keys(res).length;
-            }
-          } else {
-            if (!this.state.isSink) {
-              this.previewData.output = this.formatMultipleRecords(value['records.out']);
-            }
+        let recordsOut = {};
+        let recordsIn = {};
+
+        // Backend returns metrics for the stages listed in the `tracers` property in the API call,
+        // usually that's the stage the user is clicking on and the last stage connecting to it that
+        // has output records
+        angular.forEach(res, (stageMetrics, stageName) => {
+          if (stageName === this.state.node.plugin.label) {
+            recordsOut = stageMetrics['records.out'];
+          } else { // set the records in of current stage to records out of previous stage with data
+            recordsIn[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
           }
         });
+
+        if (!this.state.isSink) {
+          this.previewData.output = this.formatMultipleRecords(recordsOut);
+        }
+        if (!this.state.isSource) {
+          this.previewData.input = recordsIn;
+          this.previewData.numInputStages = Object.keys(res).length;
+        }
+
+        // set current stage's input records to null only if its output records are null AND if the previous
+        // stage is a Condition, since that means data didn't flow through to that branch
+        if (_.isEmpty(recordsOut) && previousStageIsCondition) {
+          this.previewData.input = {};
+          this.previewData.numInputStages = 0;
+        }
+
         let logViewerState = this.LogViewerStore.getState();
         if (logViewerState.statusInfo) {
           // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
