@@ -2627,6 +2627,7 @@
         <module>cdap-app-fabric</module>
         <module>cdap-spark-core</module>
         <module>cdap-spark-core2_2.11</module>
+        <module>cdap-spark-python</module>
         <module>cdap-security-spi</module>
         <module>cdap-security</module>
         <module>cdap-tms</module>
