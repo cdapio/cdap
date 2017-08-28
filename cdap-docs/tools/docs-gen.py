@@ -216,7 +216,8 @@ def process_pdf(input_file, options):
     print "command: %s" % command
     try:
         output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT,)
-    except:
+    except subprocess.CalledProcessError as e:
+        print ("Fail: ", e.returncode, e.output)    
         raise Exception(func_name, 'output: %s' % output)
 
     if len(output)==0:
