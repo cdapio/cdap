@@ -221,8 +221,20 @@ Then set the class of the custom partitioner as runtime arguments of the output 
 With this, each record processed by the MapReduce job will be written to a path corresponding
 to the ``Partition`` that it was mapped to by the ``DynamicPartitioner``, and the set of new ``Partition``\ s
 will be registered with the output ``PartitionedFileSet`` at the end of the job.
-Note that any partitions written to must not previously exist. Otherwise, the MapReduce job will fail at the
-end of the job and none of the partitions will be added to the ``PartitionedFileSet``.
+
+Note that by default, any partitions written to must not previously exist. Otherwise, the MapReduce job will
+fail at the end of the job and none of the partitions will be added to the ``PartitionedFileSet``.
+However, a DynamicPartitioner can also be configured to allow appending to or overwriting existing partitions.
+For instance, below is an example of configuring the same DynamicPartitioner to allow appending to a partition
+if it already exists. If it does not already exist, the partition will be created::
+
+  Map<String, String> cleanRecordsArgs = new HashMap<>();
+  PartitionedFileSetArguments.setDynamicPartitioner(cleanRecordsArgs, TimeAndZipPartitioner.class,
+                                                    DynamicPartitioner.PartitionWriteOption.CREATE_OR_APPEND);
+  context.addOutput(Output.ofDataset(DataCleansing.CLEAN_RECORDS, cleanRecordsArgs));
+
+Likewise, `CREATE_OR_OVERWRITE` has the effect of overwriting any contents of any
+previously-existing partition.
 
 Incrementally Processing PartitionedFileSets
 ============================================
