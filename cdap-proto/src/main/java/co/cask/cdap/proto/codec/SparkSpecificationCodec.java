@@ -42,7 +42,9 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     jsonObj.add("className", new JsonPrimitive(src.getClassName()));
     jsonObj.add("name", new JsonPrimitive(src.getName()));
     jsonObj.add("description", new JsonPrimitive(src.getDescription()));
-    jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
+    if (src.getMainClassName() != null) {
+      jsonObj.add("mainClassName", new JsonPrimitive(src.getMainClassName()));
+    }
     jsonObj.add("datasets", serializeSet(src.getDatasets(), context, String.class));
     jsonObj.add("properties", serializeMap(src.getProperties(), context, String.class));
 
@@ -61,7 +63,7 @@ public final class SparkSpecificationCodec extends AbstractSpecificationCodec<Sp
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
-    String mainClassName = jsonObj.get("mainClassName").getAsString();
+    String mainClassName = jsonObj.has("mainClassName") ? jsonObj.get("mainClassName").getAsString() : null;
     Set<String> datasets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
 

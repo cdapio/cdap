@@ -32,11 +32,13 @@ $icon_color: #cccccc;
   .image-containers {
     display: flex;
     flex-direction: column;
+    align-items: center;
     padding-top: 50px;
     padding-left: 25px;
     img {
       height: auto;
       margin: 20px;
+      width: 75%;
       &:first-child {
         margin-top: 0;
       }

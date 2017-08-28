@@ -36,7 +36,7 @@ public class HiveStreamRedirectorTest {
     HiveStreamRedirector.redirectToLogger(sessionState, logger);
 
     for (int i = 0; i < 5; i++) {
-      sessionState.out.print("testInfoLog" + i);
+      sessionState.out.println("testInfoLog" + i);
     }
 
     Assert.assertEquals(5, logger.getInfoLogs());

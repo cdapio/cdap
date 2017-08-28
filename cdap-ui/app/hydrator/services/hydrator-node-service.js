@@ -36,6 +36,9 @@ class HydratorPlusPlusNodeService {
       var schema = node.outputSchema;
 
       if (targetNode.type === 'errortransform' && this.GLOBALS.pluginConvert[node.type] !== 'source') {
+        if (Array.isArray(node.inputSchema) && !node.inputSchema.length) {
+          return null;
+        }
         schema = node.inputSchema && Array.isArray(node.inputSchema) ? node.inputSchema[0].schema : node.inputSchema;
       } else if (targetNode.type === 'errortransform' && this.GLOBALS.pluginConvert[node.type] === 'source') {
         return null;

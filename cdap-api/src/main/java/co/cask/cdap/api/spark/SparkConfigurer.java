@@ -31,10 +31,13 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, PluginConfigurer {
 
   /**
-   * Sets the Spark job main class name in specification. The main method of this class will be called to run the
-   * Spark job
+   * Sets the Spark program class name in specification.
+   * The provided class should have a {@code static void main(String[])} method. It can also implements
+   * the {@code co.cask.cdap.api.spark.SparkMain} interface for Spark program written in Scala or
+   * the {@code co.cask.cdap.api.spark.JavaSparkMain} for Spark program written in Java, as defined in the
+   * {@code cdap-api-spark} module.
    *
-   * @param className the fully qualified name of class containing the main method
+   * @param className the fully qualified name of Spark program class.
    */
   void setMainClassName(String className);
 

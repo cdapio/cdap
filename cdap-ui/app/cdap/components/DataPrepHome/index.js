@@ -201,9 +201,19 @@ export default class DataPrepHome extends Component {
   }
 
   render() {
+    let pageTitle = (
+      <Helmet
+        title={T.translate('features.DataPrep.pageTitle')}
+      />
+    );
+    const renderPageTitle = () => {
+      return !this.props.singleWorkspaceMode ?  pageTitle : null;
+    };
+
     if (this.state.backendCheck) {
       return (
         <div className="text-xs-center">
+          {renderPageTitle()}
           <LoadingSVG />
         </div>
       );
@@ -211,9 +221,12 @@ export default class DataPrepHome extends Component {
 
     if (this.state.backendDown) {
       return (
-        <DataPrepServiceControl
-          onServiceStart={this.onServiceStart}
-        />
+        <div>
+          {renderPageTitle()}
+          <DataPrepServiceControl
+            onServiceStart={this.onServiceStart}
+          />
+        </div>
       );
     }
 
@@ -225,14 +238,7 @@ export default class DataPrepHome extends Component {
 
     return (
       <div>
-        {
-          !this.props.singleWorkspaceMode ?
-            <Helmet
-              title={T.translate('features.DataPrep.pageTitle')}
-            />
-          :
-            null
-        }
+        {renderPageTitle()}
         {
           this.renderContents()
         }

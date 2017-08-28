@@ -20,6 +20,8 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -32,10 +34,13 @@ import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A default implementation of {@link RunRecordCorrectorService}.
@@ -47,15 +52,17 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
   private final ProgramStateWriter programStateWriter;
   private final ProgramLifecycleService programLifecycleService;
   private final ProgramRuntimeService runtimeService;
+  private final long startTimeoutSecs;
 
   @Inject
-  AbstractRunRecordCorrectorService(Store store, ProgramStateWriter programStateWriter,
+  AbstractRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
                                     ProgramLifecycleService programLifecycleService,
                                     ProgramRuntimeService runtimeService) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.programLifecycleService = programLifecycleService;
     this.runtimeService = runtimeService;
+    this.startTimeoutSecs = 2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS);
   }
 
   void validateAndCorrectRunningRunRecords() {
@@ -67,7 +74,7 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
     }
 
     if (!processedInvalidRunRecordIds.isEmpty()) {
-      LOG.info("Corrected {} of run records with RUNNING status but no actual program running.",
+      LOG.info("Corrected {} of run records with RUNNING or STARTING status but no actual program running.",
                processedInvalidRunRecordIds.size());
     }
   }
@@ -83,17 +90,26 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
                                                    final Set<String> processedInvalidRunRecordIds) {
     final Map<RunId, ProgramRuntimeService.RuntimeInfo> runIdToRuntimeInfo = runtimeService.list(programType);
 
+    final long now = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+    com.google.common.base.Predicate<RunRecordMeta> filter = new com.google.common.base.Predicate<RunRecordMeta>() {
+      @Override
+      public boolean apply(RunRecordMeta input) {
+        String runId = input.getPid();
+        // runs are marked as starting before they get into the runtimeService list.
+        // Therefore, add some buffer so that we don't incorrectly 'fix' runs that are actually starting
+        long timeSinceStart = now - input.getStartTs();
+
+        // Check if it is not actually running.
+        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId)) && timeSinceStart > startTimeoutSecs;
+      }
+    };
     LOG.trace("Start getting run records not actually running ...");
-    Collection<RunRecordMeta> notActuallyRunning =
-      store.getRuns(ProgramRunStatus.RUNNING,
-                    new com.google.common.base.Predicate<RunRecordMeta>() {
-                      @Override
-                      public boolean apply(RunRecordMeta input) {
-                        String runId = input.getPid();
-                        // Check if it is not actually running.
-                        return !runIdToRuntimeInfo.containsKey(RunIds.fromString(runId));
-                      }
-                    }).values();
+    List<RunRecordMeta> notActuallyRunning = new ArrayList<>();
+
+    notActuallyRunning.addAll(store.getRuns(ProgramRunStatus.RUNNING, filter).values());
+    LOG.trace("{} run records that are not actually running", notActuallyRunning.size());
+    notActuallyRunning.addAll(store.getRuns(ProgramRunStatus.STARTING, filter).values());
+    LOG.trace("{} run records that are not actually running or starting", notActuallyRunning.size());
     LOG.trace("End getting {} run records not actually running.", notActuallyRunning.size());
 
     final Map<String, ProgramId> runIdToProgramId = new HashMap<>();
@@ -135,10 +151,12 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
     LOG.trace("End getting invalid run records.");
 
     if (!invalidRunRecords.isEmpty()) {
-      LOG.warn("Found {} RunRecords with RUNNING status and the program not actually running for program type {}",
+      LOG.warn("Found {} RunRecords with RUNNING or STARTING status and the program not actually " +
+                 "running or starting for program type {}",
                invalidRunRecords.size(), programType.getPrettyName());
     } else {
-      LOG.trace("No RunRecords found with RUNNING status and the program not actually running for program type {}",
+      LOG.trace("No RunRecords found with RUNNING or STARTING status and the program not actually " +
+                  "running or starting for program type {}",
                 programType.getPrettyName());
     }
 
@@ -148,8 +166,8 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
       ProgramId targetProgramId = runIdToProgramId.get(runId);
       programStateWriter.error(targetProgramId.run(runId),
                                new Throwable("Marking run record as failed since no running program found."));
-      LOG.warn("Fixed RunRecord {} for program {} with RUNNING status because the program was not " +
-                 "actually running",
+      LOG.warn("Fixed RunRecord {} for program {} with RUNNING or STARTING status because the program was not " +
+                 "actually running or starting",
                runId, targetProgramId);
 
       processedInvalidRunRecordIds.add(runId);

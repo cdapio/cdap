@@ -130,7 +130,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
                                           CConfiguration cConf) {
     this(metricDatasetFactory, topicPrefix, messagingService, schemaGenerator, readerFactory, metricStore,
          maxDelayMillis, queueSize, topicNumbers, metricsContext, 1000, instanceId,
-         datasetFramework, cConf, false);
+         datasetFramework, cConf,
+         cConf.getBoolean(Constants.MetricsProcessor.METRICS_DATA_MIGRATION_SKIP, false));
   }
 
   @VisibleForTesting
@@ -290,6 +291,8 @@ public class MessagingMetricsProcessorService extends AbstractExecutionThreadSer
         MetricsTableDeleter tableDeleter = new MetricsTableDeleter(datasetFramework, v2metrics1sResolutionTable);
         // just schedule deletion of 1 second table to run after 2 hours
         metricsTableDeleterExecutor.schedule(tableDeleter, 2, TimeUnit.HOURS);
+      } else {
+        LOG.info("Skipping Metrics Data Migration");
       }
     }
 

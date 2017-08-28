@@ -16,12 +16,16 @@
 
 package co.cask.cdap.common.logging;
 
-import co.cask.cdap.api.common.Bytes;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferIndexFinder;
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.slf4j.Logger;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FilterOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import javax.annotation.Nullable;
 
 /**
@@ -29,9 +33,7 @@ import javax.annotation.Nullable;
  */
 public final class RedirectedPrintStream extends FilterOutputStream {
 
-  private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-
-  private final ByteArrayOutputStream byteArrayOutputStream;
+  private final ChannelBuffer buffer;
   private final PrintStream outStream;
   private final Logger logger;
   private final boolean isErrorStream;
@@ -57,56 +59,73 @@ public final class RedirectedPrintStream extends FilterOutputStream {
   }
 
   private RedirectedPrintStream(Logger logger, @Nullable PrintStream outStream, boolean isErrorStream) {
-    super(new ByteArrayOutputStream());
+    super(new ChannelBufferOutputStream(ChannelBuffers.dynamicBuffer()));
     // Safe cast as we know what outputStream we've created.
-    byteArrayOutputStream = (ByteArrayOutputStream) super.out;
+    this.buffer = ((ChannelBufferOutputStream) out).buffer();
     this.logger = logger;
     this.outStream = outStream;
     this.isErrorStream = isErrorStream;
   }
 
   @Override
-  public void flush() {
+  public void flush() throws IOException {
     if (outStream != null) {
       outStream.flush();
     }
 
-    String msg = Bytes.toString(byteArrayOutputStream.toByteArray());
-    byteArrayOutputStream.reset();
+    out.flush();
 
-    if (msg == null || msg.isEmpty()) {
-      return;
+    // Write out buffered data, line by line.
+    // The last line may not be written out if it doesn't have a line separator.
+    int len = buffer.bytesBefore(ChannelBufferIndexFinder.CRLF);
+    while (len > 0) {
+      log(buffer.readSlice(len).toString(StandardCharsets.UTF_8));
+
+      // Skip the CRLF.
+      while (buffer.bytesBefore(ChannelBufferIndexFinder.CRLF) == 0) {
+        buffer.readByte();
+      }
+      len = buffer.bytesBefore(ChannelBufferIndexFinder.CRLF);
     }
 
-    if (msg.endsWith(LINE_SEPARATOR)) {
-      msg = msg.substring(0, msg.length() - LINE_SEPARATOR.length());
-    }
-
-    if (msg.isEmpty()) {
-      return;
-    }
-
-    // change level of logging for error stream
-    if (isErrorStream) {
-      logger.warn(msg);
+    if (!buffer.readable()) {
+      buffer.clear();
     } else {
-      logger.info(msg);
+      buffer.discardReadBytes();
     }
   }
 
   @Override
-  public void write(int i) {
-    byteArrayOutputStream.write(i);
+  public void close() throws IOException {
+    flush();
+    // Log whatever remaining. There shouldn't be line separator anymore after the flush() call.
+    log(buffer.toString(StandardCharsets.UTF_8));
+  }
+
+  @Override
+  public void write(int i) throws IOException {
+    out.write(i);
     if (outStream != null) {
       outStream.write(i);
     }
   }
 
   @Override
-  public void write(byte[] b, int off, int len) {
-    byteArrayOutputStream.write(b, off, len);
+  public void write(byte[] b, int off, int len) throws IOException {
+    out.write(b, off, len);
     if (outStream != null) {
       outStream.write(b, off, len);
+    }
+  }
+
+  private void log(String line) {
+    if (line.isEmpty()) {
+      return;
+    }
+    if (isErrorStream) {
+      logger.warn(line);
+    } else {
+      logger.info(line);
     }
   }
 }

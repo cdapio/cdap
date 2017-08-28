@@ -18,10 +18,13 @@ package co.cask.cdap.app.runtime.spark.classloader;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.spark.SparkPackageUtils;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
 import co.cask.cdap.common.lang.ClassRewriter;
+import co.cask.cdap.common.logging.RedirectedPrintStream;
 import co.cask.cdap.internal.asm.Classes;
+import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +34,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -43,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
@@ -73,6 +78,13 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_CONF_TYPE = Type.getObjectType("org/apache/spark/SparkConf");
   // SparkSubmit is a companion object, hence the "$" at the end
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
+  private static final Type SPARK_PYTHON_RUNNER_TYPE = Type.getObjectType("org/apache/spark/deploy/PythonRunner");
+  // The PythonRunner companion object, hence the "$" at the end
+  private static final Type SPARK_PYTHON_RUNNER_COMPANION_TYPE =
+    Type.getObjectType("org/apache/spark/deploy/PythonRunner$");
+  private static final Type SPARK_PYTHON_WORKER_FACTORY_TYPE =
+    Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory");
+  private static final Type SPARK_REDIRECT_THREAD = Type.getObjectType("org/apache/spark/util/RedirectThread");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
   private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
@@ -130,6 +142,19 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.startsWith(SPARK_SUBMIT_TYPE.getClassName())) {
       // Rewrite System.setProperty call to SparkRuntimeEnv.setProperty for SparkSubmit and all inner classes
       return rewriteSetProperties(input);
+    }
+    if (className.equals(SPARK_PYTHON_RUNNER_TYPE.getClassName())) {
+      // Rewrite the PythonRunner.main call to initialize CDAP spark context and catch exception to avoid system.exit
+      return rewritePythonRunner(input);
+    }
+    if (className.equals(SPARK_PYTHON_RUNNER_COMPANION_TYPE.getClassName())) {
+      // Rewrite all System.out and System.err redirected via RedirectedPrintStream
+      return rewritePythonOutputRedirect(input, null);
+    }
+    if (className.equals(SPARK_PYTHON_WORKER_FACTORY_TYPE.getClassName())) {
+      // Rewrite all System.out and System.err redirected via RedirectedPrintStream
+      // As well as the pythonPath field for local mode to include the pyspark library
+      return rewritePythonOutputRedirect(input, "pythonPath");
     }
     if (className.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
       // Rewrite YarnClient for workaround SPARK-13441.
@@ -522,6 +547,203 @@ public class SparkClassRewriter implements ClassRewriter {
             } else {
               super.visitMethodInsn(opcode, owner, name, desc, itf);
             }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the PythonRunner.main() method to wrap it with call to SparkRuntimeUtils.initSparkMain() method on
+   * enter and cancel on exit. Also, wrap the PythonRunner.main() call with a try block to catch the
+   * {@code SparkUserAppException} into a {@link RuntimeException} to avoid Spark calling System.exit in
+   * {@link SparkSubmit}.
+   */
+  private byte[] rewritePythonRunner(InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+    // Intercept the static void main(String[] args) method.
+    final Method mainMethod = new Method("main", Type.VOID_TYPE, new Type[] { Type.getType(String[].class) });
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        if (!mainMethod.equals(new Method(name, desc)) || !Modifier.isStatic(access)) {
+          return mv;
+        }
+
+        // Wrap the original main method with
+        // Cancellable cancel = SparkRuntimeUtils.initSparkMain();
+        // try {
+        //   // original main() body
+        // } catch (SparkUserAppException e) {
+        //   throw new RuntimeException(e);
+        // } finally {
+        //   cancel.cancel();
+        // }
+        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, desc) {
+
+          final Type sparkUserAppExceptionType = Type.getObjectType("org/apache/spark/SparkUserAppException");
+          final Type cancellableType = Type.getObjectType("org/apache/twill/common/Cancellable");
+          final Label tryLabel = newLabel();
+          final Label tryEndLabel = newLabel();
+          final Label catchLabel = newLabel();
+          final Label finallyLabel = newLabel();
+          int cancellable;
+
+          @Override
+          protected void onMethodEnter() {
+            cancellable = newLocal(cancellableType);
+            invokeStatic(SPARK_RUNTIME_UTILS_TYPE, new Method("initSparkMain", cancellableType, new Type[0]));
+            storeLocal(cancellable);
+
+            // try {
+            visitTryCatchBlock(tryLabel, tryEndLabel, catchLabel, sparkUserAppExceptionType.getInternalName());
+            visitLabel(tryLabel);
+          }
+
+          @Override
+          protected void onMethodExit(int opcode) {
+            // } catch (SparkUserAppException e) {
+            //   throw new RuntimeException(e);
+            visitLabel(tryEndLabel);
+            goTo(finallyLabel);
+            visitLabel(catchLabel);
+            int exception = newLocal(sparkUserAppExceptionType);
+            storeLocal(exception);
+            newInstance(Type.getType(RuntimeException.class));
+            dup();
+            loadLocal(exception);
+            invokeConstructor(Type.getType(RuntimeException.class),
+                              Methods.getMethod(void.class, "<init>", Throwable.class));
+            throwException();
+
+            // } finally {
+            //   cancellable.cancel()
+            // }
+            visitLabel(finallyLabel);
+            loadLocal(cancellable);
+            invokeInterface(cancellableType, new Method("cancel", Type.VOID_TYPE, new Type[0]));
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+    return cw.toByteArray();
+  }
+
+  /**
+   * Replace any occurance of System.out and System.err in the code with
+   *
+   * RedirectedPrintStream.createRedirectedOutStream(
+   *   LoggerFactory.getLogger(SparkRuntimeContextProvider.get().getProgram().getMainClassName()),
+   *   System.out|System.err
+   * );
+   */
+  private byte[] rewritePythonOutputRedirect(InputStream byteCodeStream,
+                                             @Nullable final String pyPathFieldName) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      final Type stringType = Type.getType(String.class);
+      boolean rewritePythonPath;
+
+      @Override
+      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        if (name.equals(pyPathFieldName) && Type.getType(desc).equals(stringType)) {
+          rewritePythonPath = true;
+        }
+        return super.visitField(access, name, desc, signature, value);
+      }
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name,
+                                       String desc, String signature, String[] exceptions) {
+        // Intercept all methods
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        boolean isConstructor = "<init>".equals(name);
+
+        final boolean isDistributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
+        final GeneratorAdapter adapter = new GeneratorAdapter(mv, access, name, desc);
+        return new MethodVisitor(Opcodes.ASM5, mv) {
+
+          @Override
+          public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+            // Rewrite the pythonPath field
+            if (opcode == Opcodes.PUTFIELD && rewritePythonPath && pyPathFieldName.equals(name)) {
+              // Generates
+              // if (SparkRuntimeEnv.getProperty("cdap.spark.pyFiles") != null) {
+              //   <stringOnStack>.concat(File.pathSeparator).concat(SparkRuntimeEnv.getProperty("cdap.spark.pyFiles"))
+              // }
+              // The result will be back on the stack
+              Label nullLabel = adapter.newLabel();
+              // The if condition
+              adapter.push("cdap.spark.pyFiles");
+              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                   Methods.getMethod(String.class, "getProperty", String.class));
+              adapter.ifNull(nullLabel);
+
+              // Inside the if block
+              adapter.push(File.pathSeparator);
+              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
+              adapter.push("cdap.spark.pyFiles");
+              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                   Methods.getMethod(String.class, "getProperty", String.class));
+              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
+              // End of if block
+              adapter.mark(nullLabel);
+
+              super.visitFieldInsn(opcode, owner, name, desc);
+              return;
+            }
+
+            // Rewrite the System.out and System.err
+            Type systemType = Type.getType(System.class);
+            Type printStreamType = Type.getType(PrintStream.class);
+
+            if (opcode != Opcodes.GETSTATIC
+              || !systemType.getInternalName().equals(owner)
+              || !printStreamType.equals(Type.getType(desc))
+              || !("out".equals(name) || "err".equals(name))) {
+              super.visitFieldInsn(opcode, owner, name, desc);
+              return;
+            }
+
+            // RedirectedPrintStream.createRedirectedOutStream(
+            //   LoggerFactory.getLogger(
+            //     SparkRuntimeContextProvider.get().getProgram().getMainClassName()
+            //   ),
+            //   System.out|System.err
+            // );
+            Type runtimeContextProviderType =
+              Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContextProvider");
+            Type runtimeContextType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContext");
+            Type loggerFactoryType = Type.getType(LoggerFactory.class);
+            Type loggerType = Type.getType(Logger.class);
+            Type redirectedPrintStreamType = Type.getType(RedirectedPrintStream.class);
+            Type programType = Type.getType(Program.class);
+
+            // Use the name of the spark program class as the logger name
+            adapter.invokeStatic(runtimeContextProviderType, new Method("get", runtimeContextType, new Type[0]));
+            adapter.invokeVirtual(runtimeContextType, new Method("getProgram", programType, new Type[0]));
+            adapter.invokeInterface(programType, new Method("getMainClassName", stringType, new Type[0]));
+            adapter.invokeStatic(loggerFactoryType,
+                                 new Method("getLogger", loggerType, new Type[]{stringType}));
+
+            // Only write back to stdout/stderr if in distributed mode, which is on separate file
+            // In local mode, we don't want the same log appear two in the log file.
+            if (isDistributed) {
+              adapter.getStatic(systemType, name, printStreamType);
+            } else {
+              adapter.push((Type) null);
+            }
+            adapter.invokeStatic(redirectedPrintStreamType,
+                                 new Method("createRedirectedOutStream", redirectedPrintStreamType,
+                                            new Type[] { loggerType, printStreamType }));
           }
         };
       }

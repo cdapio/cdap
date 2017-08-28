@@ -44,7 +44,7 @@ angular.module(PKG.name + '.feature.tracker')
         controller: 'TrackerEnableController',
         controllerAs: 'EnableController',
         onEnter: function() {
-          document.title = 'CDAP | Enable Search';
+          document.title = 'CDAP | Enable Metadata';
         },
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
