@@ -170,7 +170,7 @@
       <div class="btn"
            ng-class="{'btn-select': TopPanelCtrl.viewLogs}"
            ng-disabled="TopPanelCtrl.appStatus === 'Deployed'"
-           ng-click="TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs"
+           ng-click="TopPanelCtrl.appStatus !== 'Deployed' && TopPanelCtrl.viewLogs = !TopPanelCtrl.viewLogs"
            uib-tooltip="This pipeline has never been run"
            tooltip-enable="TopPanelCtrl.appStatus === 'Deployed'"
            tooltip-placement="bottom-left"
