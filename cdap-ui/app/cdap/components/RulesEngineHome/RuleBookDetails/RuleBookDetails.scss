@@ -45,6 +45,15 @@ $header-bg-color: #f5f5f5;
     align-items: center;
   }
   .rule-book-name-header {
+    .rulebook-menu-container {
+      display: inline-flex;
+      align-items: flex-start;
+      .rule-book-menu {
+        display: inline-flex;
+        align-items: flex-end;
+        height: 28px;
+      }
+    }
     .rule-book-name-version {
       max-width: 100%;
       line-height: 1;

@@ -27,9 +27,15 @@ import MyDataPrepApi from 'api/dataprep';
 import T from 'i18n-react';
 import isNil from 'lodash/isNil';
 import CreateDatasetBtn from 'components/DataPrep/TopPanel/CreateDatasetBtn';
+import {Switch} from 'components/DataPrep/DataPrepContentWrapper';
 import classnames from 'classnames';
+import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import IconSVG from 'components/IconSVG';
+
 
 require('./TopPanel.scss');
+const PREFIX = 'features.DataPrep.TopPanel';
 
 export default class DataPrepTopPanel extends Component {
   constructor(props) {
@@ -64,11 +70,11 @@ export default class DataPrepTopPanel extends Component {
     this.sub();
   }
 
-  toggleSchemaModal() {
+  toggleSchemaModal = () => {
     this.setState({schemaModal: !this.state.schemaModal});
   }
 
-  toggleAddToPipelineModal() {
+  toggleAddToPipelineModal = () => {
     this.setState({addToPipelineModal: !this.state.addToPipelineModal});
   }
 
@@ -100,7 +106,7 @@ export default class DataPrepTopPanel extends Component {
     );
   }
 
-  onSubmit() {
+  onSubmit = () => {
     if (this.props.onSubmit) {
       let directives = DataPrepStore.getState().dataprep.directives;
       let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
@@ -150,6 +156,22 @@ export default class DataPrepTopPanel extends Component {
     }
   }
 
+  menu = [
+    {
+      label: T.translate(`${PREFIX}.copyToCDAPDatasetBtn.btnLabel`),
+      component: CreateDatasetBtn,
+      iconName: 'icon-upload',
+      className: 'createdataset-btn',
+      shouldRender: () => !this.props.singleWorkspaceMode,
+      disabled: () => isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload'
+    },
+    {
+      label: T.translate(`${PREFIX}.viewSchemaBtnLabel`),
+      iconName: 'icon-info-circle',
+      onClick: this.toggleSchemaModal
+    }
+  ];
+
   renderTopPanelDisplay() {
     let info = this.state.workspaceInfo;
 
@@ -158,7 +180,7 @@ export default class DataPrepTopPanel extends Component {
         return (
           <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
-              {T.translate('features.DataPrep.TopPanel.file')}
+              {T.translate(`${PREFIX}.file`)}
             </div>
             <div
               className="title"
@@ -172,14 +194,14 @@ export default class DataPrepTopPanel extends Component {
         return (
           <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
-              {T.translate('features.DataPrep.TopPanel.database')}
+              {T.translate(`${PREFIX}.database`)}
               <span className="connection-name">{info.properties.connectionid}</span>
             </div>
             <div
               className="title"
               title={info.properties.name}
             >
-              {T.translate('features.DataPrep.TopPanel.databaseTitle', {name: info.properties.name})}
+              {T.translate(`${PREFIX}.databaseTitle`, {name: info.properties.name})}
             </div>
           </div>
         );
@@ -187,7 +209,7 @@ export default class DataPrepTopPanel extends Component {
         return (
           <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
-              {T.translate('features.DataPrep.TopPanel.upload')}
+              {T.translate(`${PREFIX}.upload`)}
               <span className="connection-name">{info.properties.connectionid}</span>
             </div>
             <div
@@ -202,7 +224,7 @@ export default class DataPrepTopPanel extends Component {
         return (
           <div className={classnames("data-prep-name", {"upgrade": this.state.higherVersion})}>
             <div className="connection-type">
-              {T.translate('features.DataPrep.TopPanel.kafka')}
+              {T.translate(`${PREFIX}.kafka`)}
             </div>
             <div
               className="title"
@@ -218,14 +240,87 @@ export default class DataPrepTopPanel extends Component {
     return (
       <div className="data-prep-name">
         <strong>
-          {T.translate('features.DataPrep.TopPanel.title')}
+          {T.translate(`${PREFIX}.title`)}
         </strong>
       </div>
     );
   }
 
+  renderMenuItem = (menuItem) => {
+    // This is to prevent items in the menu that doesn't make sense when rendered in pipeline view.
+    if (menuItem.shouldRender && !menuItem.shouldRender()) {
+      return null;
+    }
+    // Hanlding divider here as placing it under DropdownItem will make it clickable.
+    if (menuItem.label === 'divider') {
+      return (<hr />);
+    }
+    const getMenuItem = (menuItem) => {
+      let {label, component: Component} = menuItem;
+      let isDisabled = menuItem.disabled && menuItem.disabled();
+      return (
+        <div>
+          {
+            Component && !isDisabled ?
+              <span>
+                <IconSVG name={menuItem.iconName} />
+                <Component />
+              </span>
+            :
+              <span>
+                <IconSVG name={menuItem.iconName} />
+                <span>{label}</span>
+              </span>
+          }
+        </div>
+      );
+    };
+    return (
+      <DropdownItem
+        className={menuItem.className}
+        title={menuItem.label}
+        onClick={menuItem.disabled && menuItem.disabled() ? () => {} : menuItem.onClick}
+        disabled={menuItem.disabled ? menuItem.disabled() : false}
+      >
+        {getMenuItem(menuItem)}
+      </DropdownItem>
+    );
+  };
+  renderMenu() {
+    return (
+      <UncontrolledDropdown>
+        <DropdownToggle>
+          <IconSVG name="icon-bars" />
+          <IconSVG name="icon-caret-down" />
+        </DropdownToggle>
+        <DropdownMenu right>
+        {
+          this.menu.map((menu) => this.renderMenuItem(menu))
+        }
+      </DropdownMenu>
+    </UncontrolledDropdown>
+    );
+  }
+
+  renderApplyBtn() {
+    return (
+      <button
+        className="btn btn-primary"
+        onClick={this.onSubmit}
+        disabled={this.state.onSubmitLoading || isNil(this.state.workspaceInfo) ? 'disabled' : false}
+      >
+        {
+          this.state.onSubmitLoading ?
+            <IconSVG name="icon-spinner" className="fa-spin" />
+          :
+            null
+        }
+        <span>{T.translate(`${PREFIX}.applyBtnLabel`)}</span>
+      </button>
+    );
+  }
+
   render() {
-    let makeACopyDisabledState = isNil(this.state.workspaceInfo) || objectQuery(this.state, 'workspaceInfo', 'properties', 'connection') === 'upload';
     return (
       <div className="row top-panel clearfix">
         <div className="left-title">
@@ -240,7 +335,7 @@ export default class DataPrepTopPanel extends Component {
                     onClick={this.toggleUpgradeModal}
                   >
                     <span className="fa fa-wrench fa-fw" />
-                    {T.translate('features.DataPrep.TopPanel.upgradeBtnLabel')}
+                    {T.translate(`${PREFIX}.upgradeBtnLabel`)}
                   </button>
                 ) : null
               }
@@ -257,48 +352,26 @@ export default class DataPrepTopPanel extends Component {
               null
           }
           {
+            this.props.singleWorkspaceMode ?
+              this.renderApplyBtn()
+            :
+              (
+                <Switch />
+              )
+          }
+          {
             !this.props.singleWorkspaceMode ?
               <button
                 className="btn btn-primary"
                 onClick={this.toggleAddToPipelineModal}
               >
-                {T.translate('features.DataPrep.TopPanel.addToPipelineBtnLabel')}
+                {T.translate(`${PREFIX}.addToPipelineBtnLabel`)}
               </button>
             :
-            <button
-              className="btn btn-primary"
-              onClick={this.onSubmit.bind(this)}
-              disabled={this.state.onSubmitLoading || isNil(this.state.workspaceInfo) ? 'disabled' : false}
-            >
-              {
-                this.state.onSubmitLoading ?
-                  <span className="fa fa-spinner fa-spin"></span>
-                :
-                  null
-              }
-              <span>{T.translate('features.DataPrep.TopPanel.applyBtnLabel')}</span>
-            </button>
+              null
           }
+          {this.renderMenu()}
           {this.renderAddToPipelineModal()}
-
-          <div className="secondary-actions">
-            {
-              this.props.singleWorkspaceMode ?
-                null
-              :
-                <CreateDatasetBtn
-                  disabledState={makeACopyDisabledState}
-                  title={!objectQuery(this.state, 'workspaceInfo', 'properties', 'path') ? T.translate('features.DataPrep.TopPanel.copyToCDAPDatasetBtn.uploadDisabledMessage') : null}
-                />
-            }
-            <button
-              className="btn btn-link"
-              onClick={this.toggleSchemaModal}
-              disabled={isNil(this.state.workspaceInfo) ? 'disabled' : false}
-            >
-              {T.translate('features.DataPrep.TopPanel.viewSchemaBtnLabel')}
-            </button>
-          </div>
           {this.renderSchemaModal()}
         </div>
       </div>

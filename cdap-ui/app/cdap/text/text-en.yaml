@@ -787,7 +787,7 @@ features:
       expand: Expand the side panel
     TopPanel:
       applyBtnLabel: Apply
-      addToPipelineBtnLabel: Create Pipeline
+      addToPipelineBtnLabel: Create a Pipeline
       database: Database
       databaseTitle: "Table: {name}"
       file: File System
