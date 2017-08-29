@@ -243,7 +243,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function setDuration(app, run) {
-      if (run.status !== 'RUNNING') {
+      if (run.status !== 'RUNNING' && run.status !== 'STARTING') {
         let lastRunDuration = run.end - run.start;
 
         let setInitialTimer = new Date().getTime() - (run.start * 1000);
