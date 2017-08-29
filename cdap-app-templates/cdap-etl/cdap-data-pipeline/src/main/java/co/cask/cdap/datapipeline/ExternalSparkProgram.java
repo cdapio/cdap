@@ -16,16 +16,23 @@
 
 package co.cask.cdap.datapipeline;
 
+import co.cask.cdap.api.ProgramStatus;
+import co.cask.cdap.api.macro.MacroEvaluator;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
 import co.cask.cdap.api.spark.SparkMain;
 import co.cask.cdap.etl.batch.BatchPhaseSpec;
+import co.cask.cdap.etl.common.BasicArguments;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DefaultMacroEvaluator;
 import co.cask.cdap.etl.spec.PluginSpec;
 import co.cask.cdap.etl.spec.StageSpec;
 import com.google.gson.Gson;
 import org.apache.spark.SparkConf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,11 +43,15 @@ import java.util.UUID;
  * spark program.
  */
 public class ExternalSparkProgram extends AbstractSpark {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ExternalSparkProgram.class);
+
   public static final String STAGE_NAME = "stage.name";
   private static final Gson GSON = new Gson();
   static final String PROGRAM_ARGS = "program.args";
   private final BatchPhaseSpec phaseSpec;
   private final StageSpec stageSpec;
+  private Spark delegateSpark;
 
   public ExternalSparkProgram(BatchPhaseSpec phaseSpec, StageSpec stageSpec) {
     this.phaseSpec = phaseSpec;
@@ -49,13 +60,6 @@ public class ExternalSparkProgram extends AbstractSpark {
 
   @Override
   protected void configure() {
-    setName(phaseSpec.getPhaseName());
-
-    Map<String, String> properties = new HashMap<>();
-    properties.put(STAGE_NAME, stageSpec.getName());
-    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
-    setProperties(properties);
-
     PluginSpec pluginSpec = stageSpec.getPlugin();
     PluginProperties pluginProperties = PluginProperties.builder().addAll(pluginSpec.getProperties()).build();
     // use a UUID as plugin ID so that it doesn't clash with anything. Only using the class here to
@@ -70,18 +74,27 @@ public class ExternalSparkProgram extends AbstractSpark {
                                                     pluginSpec.getType(), pluginSpec.getName(), STAGE_NAME));
     }
 
-    if (SparkMain.class.isAssignableFrom(sparkPlugin.getClass())) {
+    if (Spark.class.isAssignableFrom(sparkPlugin.getClass())) {
+      // TODO: Pass in a forwarding configurer so that we can capture the properties set by the plugin
+      // However the usage is very limited as the plugin can always use plugin config to preserve properties
+      ((Spark) sparkPlugin).configure(getConfigurer());
+    } else if (SparkMain.class.isAssignableFrom(sparkPlugin.getClass())) {
       setMainClass(ScalaSparkMainWrapper.class);
     } else {
       setMainClass(JavaSparkMainWrapper.class);
     }
+
+    setName(phaseSpec.getPhaseName());
+
+    Map<String, String> properties = new HashMap<>();
+    properties.put(STAGE_NAME, stageSpec.getName());
+    properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
+    setProperties(properties);
   }
 
   @Override
   protected void initialize() throws Exception {
     SparkClientContext context = getContext();
-    String stageName = context.getSpecification().getProperty(STAGE_NAME);
-    Map<String, String> pluginProperties = context.getPluginProperties(stageName).getProperties();
 
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.driver.extraJavaOptions",
@@ -89,5 +102,36 @@ public class ExternalSparkProgram extends AbstractSpark {
     sparkConf.set("spark.executor.extraJavaOptions",
                   "-XX:MaxPermSize=256m " + sparkConf.get("spark.executor.extraJavaOptions", ""));
     context.setSparkConf(sparkConf);
+
+    String stageName = context.getSpecification().getProperty(STAGE_NAME);
+    Class<?> externalProgramClass = context.loadPluginClass(stageName);
+    // If the external program implements Spark, instantiate it and call initialize() to provide full lifecycle support
+    if (Spark.class.isAssignableFrom(externalProgramClass)) {
+      MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(context),
+                                                                context.getLogicalStartTime(), context,
+                                                                context.getNamespace());
+      delegateSpark = context.newPluginInstance(stageName, macroEvaluator);
+      if (delegateSpark instanceof AbstractSpark) {
+        //noinspection unchecked
+        ((AbstractSpark) delegateSpark).initialize(context);
+      } else {
+        delegateSpark.beforeSubmit(context);
+      }
+    }
+  }
+
+  @Override
+  public void destroy() {
+    if (delegateSpark != null) {
+      if (delegateSpark instanceof AbstractSpark) {
+        ((AbstractSpark) delegateSpark).destroy();
+      } else {
+        try {
+          delegateSpark.onFinish(getContext().getState().getStatus() == ProgramStatus.COMPLETED, getContext());
+        } catch (Exception e) {
+          LOG.warn("Exception on calling onFinish on {}", delegateSpark.getClass(), e);
+        }
+      }
+    }
   }
 }
