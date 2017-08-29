@@ -30,6 +30,225 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
    
+`Release 4.3.0 <http://docs.cask.co/cdap/4.3.0/index.html>`__
+=============================================================
+
+Summary
+-------
+
+1. ** Data Pipelines:**
+	- Support for conditional execution of parts of a pipeline
+	- Ability for pipelines to trigger other pipelines for cross-team, cross-pipeline inter-connectivity, and to build complex interconnected pipelines.
+	- Improved pipeline studio with redesigned nodes, undo/redo capability, metrics
+	- Automated upgrade of pipelines to newer CDAP versions
+	- Custom icons and labels for pipeline plugins
+	- Operational insights into pipelines
+
+2. ** Data Preparation:**
+	- Support for User Defined Directives (UDD), so users can write their own custom directives for cleansing/preparing data. 
+	- Restricting Directive Usage and ability to alias Directives for your IT Administrators to control directive access
+
+3. ** Governance & Security:**
+	- Standardized authorization model 
+	- Apache Ranger Integration for authorization of CDAP entities
+
+4. ** Enhanced support for Apache Spark:**
+	- PySpark Support so data scientists can develop their Spark logic in Python, while still taking advantage of enterprise integration capabilities of CDAP
+	- Spark Dataframe Support so Spark developers can access CDAP datasets as Spark DataFrames
+
+5. ** New Frameworks and Tools:**
+	- Microservices for real-time IoT use cases.
+	- Distributed Rules Engine - for Business Analysts to effectively manage rules for data transformation and data policy
+
+New Features
+------------
+
+Data Pipelines Enhancements
+---------------------------
+
+- :cask-issue:`CDAP-12033` - Added a new splitter transform plugin type that can send output to different ports. Also added a union splitter transform that will send records to different ports depending on which type in the union it is and a splitter transform that splits records based on whether the specified field is null.
+
+- :cask-issue:`CDAP-12034` - Added a way for pipeline plugins to emit alerts, and a new AlertPublisher plugin type that publishes those alerts. Added a plugin that publishes alerts to CDAP TMS and an Apache Kafka Alert Publisher plugin to publish alerts to a Kafka topic.
+
+- :cask-issue:`CDAP-12108` - Batch data pipelines now support condition plugin types which can control the flow of execution of the pipeline. Condition plugins in the pipeline have access to the stage statistics such as number of input records, number of output records, number of error records generated from the stages which executed prior to the condition node. Also implemented Apache Commons JEXL based condition plugin which is available by default for the batch data pipelines.
+
+- :cask-issue:`CDAP-12167` - Plugin ``prepareRun`` and ``onFinish`` methods now run in a separate transaction per plugin so that pipelines with many plugins will not timeout.
+
+- :cask-issue:`CDAP-12191` - All pipeline plugins now have access to the pipeline namespace and name through their context object.
+
+- :cask-issue:`CDAP-9107` - Added a feature that allows undoing and redoing of actions in pipeline Studio.
+
+- :cask-issue:`CDAP-12057` - Made pipeline nodes bigger to show the version and metrics on the node.
+
+- :cask-issue:`CDAP-12077` - Revamped pipeline connections, to allow dropping a connection anywhere on the node, and allow selecting and deleting multiple connections using the Delete key.
+
+- :cask-issue:`CDAP-10619` - Added an automated UI flow for users to upgrade pipelines to newer CDAP versions.
+
+- :cask-issue:`CDAP-11889` - Added visualization for pipeline in UI. This helps visualizing runs, logs/warnings and data flowing through each node for each run in the pipeline.
+
+- :cask-issue:`CDAP-12111` - Added support for plugins of plugins. This allows the parent plugin to expose some APIs that its own plugins will implement and extend.
+
+- :cask-issue:`CDAP-12114` - Added ability to support custom label and custom icons for pipeline plugins.
+
+- :cask-issue:`CDAP-10974` - BatchSource, BatchSink, BatchAggregator, BatchJoiner, and Transform plugins now have a way to get SettableArguments when preparing a run, which allows them to set arguments for the rest of the pipeline.
+
+- :cask-issue:`CDAP-10653` - Runtime arguments are now available to the script plugins such as Javascript and Python via the Context object.
+
+- :cask-issue:`CDAP-12472` - Added a method to PluginContext that will return macro evaluated plugin properties.
+
+- :cask-issue:`CDAP-12094` - Enhanced add field transform plugin to add multiple fields
+
+Triggers
+--------
+
+- :cask-issue:`CDAP-11912` - Added capabilities to trigger programs and data pipelines based on status of other programs and data pipelines.
+
+- :cask-issue:`CDAP-12382` - Added the capability to use plugin properties and runtime arguments from the triggering data pipeline as runtime arguments in the triggered data pipeline.
+
+- :cask-issue:`CDAP-12232` - Added composite AND and OR trigger.
+
+Data Preparation Enhancements
+-----------------------------
+
+- :cask-issue:`CDAP-11618` - Added the ability for users to connect Data Preparation to their existing data in Apache Kafka.
+
+- :cask-issue:`CDAP-12092` - Added point and click interaction for performing various calculations on data in Data Prep.
+
+- :cask-issue:`CDAP-12118` - Added point and click interaction for applying custom transformations in Data Prep.
+
+- :cask-issue:`CDAP-9530` - Added point and click interaction to mask column data.
+
+- :cask-issue:`CDAP-9532` - Added point and click interaction to encode/decode column data
+
+- :cask-issue:`CDAP-11869` - Added point and click interaction to parse Avro and Excel files.
+
+- :cask-issue:`CDAP-11977` - Added point and click interaction for replacing column names in bulk.
+
+- :cask-issue:`CDAP-12091` - Added point and click interaction for defining and incrementing variable.
+
+Spark Enhancements
+------------------
+
+- :cask-issue:`CDAP-4871` - Added capabilities to run PySpark programs in CDAP.
+
+Governance and Security Enhancements
+------------------------------------
+
+- :cask-issue:`CDAP-12134` - Implemented the new authorization model for CDAP. The old authorization model is no longer supported.
+
+- :cask-issue:`CDAP-12317` - Added a new configuration ``security.authorization.extension.jar.path`` in cdap-site.xml which can be used to add extra classpath and is avalible to cdap security extensions
+
+- :cask-issue:`CDAP-12100` - Removed automatic grant/revoke privileges on CDAP entity creation/deletion.
+
+- :cask-issue:`CDAP-12367` - Added support for authorization on Kerberos principal for impersonation.
+
+- :cask-issue:`CDAP-11839` - Modified the authorization model so that read/write on an entity will not depend on its parent.
+
+- :cask-issue:`CDAP-12135` - Deprecated ``createFilter()`` and added a new ``isVisible`` API in AuthorzationEnforcer. Deprecated grant/revoke APIs for EntityId and added new one for Authorizable which support wildcard privileges
+
+- :cask-issue:`CDAP-12283` - Removed version for artifacts for authorization policy to be consistent with applications. From 4.3 onwards CDAP does not support policies on artifact/application version.
+
+Other New Features
+------------------
+
+- :cask-issue:`CDAP-11940` - Added a wizard to allow configuring and deploying microservices in UI.
+
+- :cask-issue:`CDAP-6329` - Enabled GC logging for CDAP services.
+
+- :cask-issue:`CDAP-11448` - Added support for HDInsight 3.6.
+
+- :cask-issue:`CDAP-4874` - CSD now performs a version compatibility check with the active CDAP Parcel
+
+- :cask-issue:`CDAP-12348` - Added live migration of metrics tables from pre 4.3 tables to 4.3 salted metrics tables.
+
+- :cask-issue:`CDAP-12017` - Added capability to salt the row key of the metrics tables so that writes are evenly distributed and there is no region hot spotting
+
+- :cask-issue:`CDAP-12068` - Added a REST API to check the status of metrics processor. We can view the topic level processing stats using this endpoint.
+
+- :cask-issue:`CDAP-12070` - Added option to disable/enable metrics for a program through runtime arguments or preferences. This feature can also be used system wide by enabling/disabling metrics in cdap-site.xml
+
+- :cask-issue:`CDAP-12290` - Added global "CDAP" config to enable/disable metrics emission from user programs.By default metrics is enabled.
+
+- :cask-issue:`CDAP-1952` - DatasetOutputCommiter's methods are now executed in the MapReduce ApplicationMaster, within OutputCommitter's commitJob/abortJob methods. The MapReduceContext.addOutput(Output.of(String, OutputFormatProvider)) API can no longer be used to add OutputFormatProviders that also implement the DatasetOutputCommitter interface.
+
+- :cask-issue:`CDAP-12084` - Allow appending to (or overwriting) a PartitionedFileSet's partitions when using DynamicPartitioner APIs. Introduced a PartitionedFileSet.setMetadata API which now allows modifying partitions' metadata.
+
+- :cask-issue:`CDAP-12085` - Exposed a programmatic API to leverage Hive's functionality to concatenate a partition of a PartitionedFileSet.
+
+- :cask-issue:`CDAP-12378` - Workflow now allows adding configurable conditions with the lifecycle methods.
+
+- :cask-issue:`CDAP-8629` - Allow programs to have concurrent runs in integration test cases.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-12103` - Removed deprecated cdap-etl-realtime artifact.
+
+- :cask-issue:`CDAP-12123` - Removed deprecated deprecated cdap-etl-batch jar from packaging.
+
+- :cask-issue:`CDAP-9150` - Allowed user to override the InputFormat class and OutputFormat class of a FileSet at runtime.
+
+- :cask-issue:`CDAP-12285` - Fixed an issue with the order of HBase compatibility libraries in the class path.
+
+- :cask-issue:`CDAP-9125` - Fixed an issue where CDAP Sentry Integration did not rely on every user having their own individual group.
+
+- :cask-issue:`CDAP-11095` - Added support for a description field in a pipeline config that will be used as the application's description if set.
+
+- :cask-issue:`CDAP-12020` - Reuse network connections for TMS client.
+
+- :cask-issue:`CDAP-12143` - Removes the existing hierarchal authorization model from CDAP
+
+- :cask-issue:`CDAP-12226` - Added an optional delimiter property to the HDFS sink to allow users to configure the delimiter used to separate record fields.
+
+- :cask-issue:`CDAP-12298` - Individual system service status API no longer has to go through CDAP master.
+
+- :cask-issue:`CDAP-9953` - Removed dataset usage in the Hive source and sink, which allows it to work in Spark and fixes a race condition that could cause pipelines to fail with a transaction conflict exception.
+
+- :cask-issue:`CDAP-10228` - Sinks in streaming pipelines no longer have their ``prepareRun`` and ``onFinish`` methods called if the RDD for that batch is empty
+
+- :cask-issue:`CDAP-11704` - Fixed CDAP to work with and publish to YARN Timeline Server in a secure environment.
+
+- :cask-issue:`CDAP-11783` - HBaseDDLExecutor implementation is now localized to the containers without adding it in the container classpath.
+
+- :cask-issue:`CDAP-11800` - Fixed a bug that the stream client gave wrong error message when the authorization check failed for stream read.
+
+- :cask-issue:`CDAP-11880` - Fixed a bug that caused pipelines and other programs to not create datasets at runtime with correct impersonated user.
+
+- :cask-issue:`CDAP-11944` - Removed non-configurable properties from CSD/Ambari
+
+- :cask-issue:`CDAP-11948` - Fixed a bug where committed data could be removed during HBase table flush or compaction.
+
+- :cask-issue:`CDAP-11955` - Fixed a bug where sometimes wrong user was used in explore, which resulted in the failure of deleting namespace.
+
+- :cask-issue:`CDAP-12054` - Fixed PartitionedFileSet to work with CombineFileInputFormat, as input to a batch job.
+
+- :cask-issue:`CDAP-12122` - Fixed a bug in the pipeline planner that caused some pipelines to fail to deploy with a NoSuchElementException
+
+- :cask-issue:`CDAP-12125` - Fixed a bug in MapReduce pipeline timing metrics, where time for a stage could include time spent in other stages.
+
+- :cask-issue:`CDAP-12130` - Fixed an issue that was causing send-to-directive to fail on derived columns in Data Prep.
+
+- :cask-issue:`CDAP-12161` - Fixed a bug in StructuredRecord where a union of null and at least two other types could not be set to a null value.
+
+- :cask-issue:`CDAP-12170` - Fixed a bug where committed files of a PartitionedFileSet could be removed during transaction rollback in the case PartitionOutput#addPartition was called for a partition that already existed. With this fix, PartitionedFileSet#getPartitionOutput should now only be called within a transaction.
+
+- :cask-issue:`CDAP-12193` - Fixed a bug in some MapReduce pipelines that could cause duplicate reads if sources are not properly merged into the same MapReduce.
+
+- :cask-issue:`CDAP-12199` - Fixed a bug that made local datasets inaccessible in a Workflow's initialize and destroy methods.
+
+- :cask-issue:`CDAP-12253` - Fixed a bug where the file batch source was always using a default schema instead of the actual output schema.
+
+- :cask-issue:`CDAP-12269` - Fixed a bug that prevented pipelines from being published when plugin artifact versions were not specified
+
+- :cask-issue:`CDAP-12284` - Fixed a packaging bug that caused debian packages to include the wrong cdap-data-pipeline and cdap-data-streams artifacts for spark2.
+
+- :cask-issue:`CDAP-12351` - Fixes an issue where truncating a file set did not preserve its base directory's ownership and permissions. 
+
+- :cask-issue:`CDAP-12360` - Fixed an issue where certain excessive logging could cause a deadlock in CDAP master.
+
+- :cask-issue:`CDAP-12371` - In order to execute Hive queries using MR execution engine in CM 5.12 cluster, the 'yarn.app.mapreduce.am.staging-dir' property needs to be set to '/user' in the YARN Configuration Safety Value in Cloudera Manager.
+
+
 `Release 4.2.0 <http://docs.cask.co/cdap/4.2.0/index.html>`__
 =============================================================
 
