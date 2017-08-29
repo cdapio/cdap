@@ -116,6 +116,9 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getSchedule = function() {
       return this.getCloneConfig().config.schedule;
     };
+    this.setSchedule = function(schedule) {
+      this.state.cloneConfig.config.schedule = schedule;
+    };
     this.getEngine = function() {
       return this.getCloneConfig().config.engine;
     };
@@ -277,6 +280,10 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getMaxConcurrentRuns = function() {
       return this.getCloneConfig().config.maxConcurrentRuns;
     };
+    this.setMaxConcurrentRuns = function(maxConcurrentRuns) {
+      this.state.cloneConfig.config.maxConcurrentRuns = maxConcurrentRuns;
+    };
+
     this.getNode = this.getPluginObject;
     this.init = function(app) {
       var appConfig = {};
@@ -320,9 +327,9 @@ angular.module(PKG.name + '.feature.hydrator')
         config: {
           instances: appConfigClone.configJson.instances,
           batchInterval: appConfigClone.configJson.batchInterval,
-          resources: appConfigClone.configJson.resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
-          driverResources: appConfigClone.configJson.driverResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
-          clientResources: appConfigClone.configJson.clientResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
+          resources: appConfigClone.configJson.resources,
+          driverResources: appConfigClone.configJson.driverResources,
+          clientResources: appConfigClone.configJson.clientResources,
           schedule: appConfigClone.configJson.schedule,
           connections: uiConfig.connections,
           comments: appConfigClone.configJson.comments,
@@ -334,7 +341,7 @@ angular.module(PKG.name + '.feature.hydrator')
           stageLoggingEnabled: appConfigClone.configJson.stageLoggingEnabled,
           disableCheckpoints: appConfigClone.configJson.disableCheckpoints,
           stopGracefully: appConfigClone.configJson.stopGracefully,
-          maxConcurrentRuns: appConfigClone.configJson.maxConcurrentRuns,
+          maxConcurrentRuns: appConfigClone.configJson.maxConcurrentRuns
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

@@ -79,10 +79,7 @@ class MyRealtimePipelineConfigCtrl {
     }
 
     this.enablePipelineUpdate = false;
-    this.runtimeArguments = this.checkForReset(this.runtimeArguments);
-    this.onRuntimeArgumentsChange = this.onRuntimeArgumentsChange.bind(this);
     this.onCustomEngineConfigChange = this.onCustomEngineConfigChange.bind(this);
-    this.getResettedRuntimeArgument = this.getResettedRuntimeArgument.bind(this);
     this.onDriverMemoryChange = this.onDriverMemoryChange.bind(this);
     this.onDriverCoreChange = this.onDriverCoreChange.bind(this);
     this.onExecutorCoreChange = this.onExecutorCoreChange.bind(this);
@@ -105,43 +102,9 @@ class MyRealtimePipelineConfigCtrl {
     this.containsMacros = HydratorPlusPlusHydratorService.runtimeArgsContainsMacros(this.runtimeArguments);
   }
 
-  onRuntimeArgumentsChange(newRuntimeArguments) {
-    this.runtimeArguments = this.checkForReset(newRuntimeArguments);
-  }
-
   onCustomEngineConfigChange(newCustomConfig) {
     this.customEngineConfig = newCustomConfig;
     this.updatePipelineEditStatus();
-  }
-
-  checkForReset(runtimeArguments) {
-    let runtimeArgumentsPairs = runtimeArguments.pairs;
-    for (let i = 0; i < runtimeArgumentsPairs.length; i++) {
-      if (runtimeArgumentsPairs[i].notDeletable) {
-        if (runtimeArgumentsPairs[i].provided) {
-          runtimeArgumentsPairs[i].showReset = false;
-        } else {
-          let runtimeArgKey = runtimeArgumentsPairs[i].key;
-          if (this.resolvedMacros.hasOwnProperty(runtimeArgKey)) {
-            if (this.resolvedMacros[runtimeArgKey] !== runtimeArgumentsPairs[i].value) {
-              runtimeArgumentsPairs[i].showReset = true;
-            } else {
-              runtimeArgumentsPairs[i].showReset = false;
-            }
-          }
-        }
-      }
-    }
-    return runtimeArguments;
-  }
-
-  getResettedRuntimeArgument(index) {
-    let runtimeArgKey = this.runtimeArguments.pairs[index].key;
-    this.runtimeArguments.pairs[index].value = this.resolvedMacros[runtimeArgKey];
-    window.CaskCommon.KeyValueStore.dispatch({
-      type: window.CaskCommon.KeyValueStoreActions.onUpdate,
-      payload: {pairs: this.runtimeArguments.pairs}
-    });
   }
 
   applyConfig() {
