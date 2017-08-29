@@ -18,7 +18,7 @@ package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.data2.util.ReferenceCountedSupplier;
 import com.google.common.base.Supplier;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 
 /**
  * Supplies instances of {@link CConfigurationCache} implementations.
@@ -29,12 +29,12 @@ public class CConfigurationCacheSupplier implements CacheSupplier<CConfiguration
 
   private final Supplier<CConfigurationCache> supplier;
 
-  public CConfigurationCacheSupplier(final Configuration hConf, final String sysConfTablePrefix,
+  public CConfigurationCacheSupplier(final CoprocessorEnvironment env, final String tablePrefix,
                                      final String maxLifetimeProperty, final int defaultMaxLifetime) {
     this.supplier = new Supplier<CConfigurationCache>() {
       @Override
       public CConfigurationCache get() {
-        return new CConfigurationCache(hConf, sysConfTablePrefix, maxLifetimeProperty, defaultMaxLifetime);
+        return new CConfigurationCache(env, tablePrefix, maxLifetimeProperty, defaultMaxLifetime);
       }
     };
   }

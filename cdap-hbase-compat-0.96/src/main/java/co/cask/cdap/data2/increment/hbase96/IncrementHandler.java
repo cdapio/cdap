@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -81,10 +81,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      this.state = new IncrementHandlerState(env.getConfiguration(),
-                                             env.getRegion().getTableDesc());
-
-      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      HTableDescriptor tableDesc = region.getTableDesc();
+      this.state = new IncrementHandlerState(env, tableDesc);
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
         state.initFamily(columnDesc.getName(), convertFamilyValues(columnDesc.getValues()));
       }

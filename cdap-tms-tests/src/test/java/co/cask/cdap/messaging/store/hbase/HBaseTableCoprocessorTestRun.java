@@ -26,7 +26,8 @@ import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.MessageTableRegionObserver;
 import co.cask.cdap.data2.transaction.messaging.coprocessor.hbase98.PayloadTableRegionObserver;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.ConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -124,8 +125,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     LocationFactory locationFactory = getInjector().getInstance(LocationFactory.class);
     tableFactory = new HBaseTableFactory(cConf, hBaseAdmin.getConfiguration(), tableUtil, locationFactory);
 
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+    new ConfigurationWriter(hConf, cConf).write(ConfigurationReader.Type.DEFAULT, cConf);
 
     // write an initial transaction snapshot
     invalidList.addAll(ImmutableList.of(V[3], V[5], V[7]));
