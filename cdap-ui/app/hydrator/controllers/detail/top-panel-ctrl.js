@@ -464,6 +464,9 @@ class HydratorDetailTopPanelController {
   hidePipelineSummary() {
     this.viewSummary = false;
   }
+  toggleLogs() {
+    this.viewLogs = !this.viewLogs;
+  }
   suspendPipeline() {
     this.scheduleLoading = true;
     this.HydratorPlusPlusDetailActions.suspendSchedule(
