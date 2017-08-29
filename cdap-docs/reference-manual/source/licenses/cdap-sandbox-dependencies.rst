@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2017 Cask Data, Inc.
-    :version: 4.2.0
+    :version: 4.3.0
 
 =================================================
 Cask Data Application Platform |version|
 =================================================
 
-Cask Data Application Platform Sandbox Dependencies
+Cask Data Application Platform Local Sandbox Dependencies
 --------------------------------------------------------------------------------
 
 .. rst2pdf: PageBreak
@@ -17,7 +17,7 @@ Cask Data Application Platform Sandbox Dependencies
 .. rst2pdf: config ../../../_common/_templates/pdf-config
 .. rst2pdf: stylesheets ../../../_common/_templates/pdf-stylesheet
 
-.. csv-table:: **Cask Data Application Platform Sandbox Dependencies**
+.. csv-table:: **Cask Data Application Platform Local Sandbox Dependencies**
    :header: "Package","Version","Classifier","License","License URL"
    :widths: 20, 10, 10, 20, 30
 
@@ -159,13 +159,13 @@ Cask Data Application Platform Sandbox Dependencies
    "org.apache.tephra.tephra-core-0.12.0-incubating.jar","0.12.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libfb303-0.9.2.jar","0.9.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libthrift-0.9.3.jar","0.9.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-api-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-common-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-core-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-discovery-api-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-discovery-core-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-yarn-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.twill.twill-zookeeper-0.11.0.jar","0.11.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-api-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-common-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-core-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-discovery-api-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-discovery-core-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-yarn-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.twill.twill-zookeeper-0.12.0.jar","0.12.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.velocity.velocity-1.5.jar","1.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.xbean.xbean-reflect-3.6.jar","3.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.codehaus.jackson.jackson-core-asl-1.9.13.jar","1.9.13","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

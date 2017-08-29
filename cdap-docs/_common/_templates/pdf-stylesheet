@@ -1,9 +1,6 @@
 # Cask Stylesheet for PDF Generation
 # Copyright © 2014-2017 Cask Data, Inc.
 
-# List the fonts you would like to embed in the PDF here
-embeddedFonts: [["SourceSansPro-Regular.ttf","SourceSansPro-Bold.ttf","SourceSansPro-Italic.ttf","SourceSansPro-BoldItalic.ttf"]]
-
 # font weights: regular, strong emphasis, emphasis, unknown?
 # this does not match the order documented, but seems to be what works...
 
@@ -72,27 +69,11 @@ pageTemplates:
         defaultFooter : ###Page###
         defaultHeader : ###Section###
 
-fontsAlias:
-    stdFont: SourceSansPro-Regular
-    stdBold: SourceSansPro-Bold
-    stdItalic: SourceSansPro-Italic
-    stdBoldItalic: SourceSansPro-BoldItalic
-    stdSans: SourceSansPro-Regular
-    stdSansBold: SourceSansPro-Bold
-    stdSansItalic: SourceSansPro-Italic
-    stdSansBoldItalic: SourceSansPro-BoldItalic
-    stdMono: Courier
-    stdMonoItalic: Courier-Oblique
-    stdMonoBold: Courier-Bold
-    stdMonoBoldItalic: Courier-BoldOblique
-    stdSerif: Times-Roman
-
 linkColor: navy
 
 styles:
     base:
       parent: null
-      fontName: stdFont
       fontSize: 10
       leading: 12
       leftIndent: 0
@@ -101,7 +82,6 @@ styles:
       alignment: TA_LEFT
       spaceBefore: 0
       spaceAfter: 0
-      bulletFontName: stdFont
       bulletFontSize: 10
       bulletIndent: 0
       textColor: black
@@ -124,7 +104,6 @@ styles:
 
     title-reference:
       parent: normal
-      fontName: stdItalic
 
     bodytext:
       parent: normal
@@ -148,7 +127,6 @@ styles:
 
     toc1:
       parent: toc
-      fontName: stdBold
 
     toc2:
       parent: toc
@@ -232,7 +210,6 @@ styles:
 
     figure-caption:
       parent: bodytext
-      fontName: stdItalic
       alignment: TA_CENTER
 
     figure-legend:
@@ -261,14 +238,12 @@ styles:
 
     definition-list-term:
       parent: normal
-      fontName: stdBold
       spaceBefore: 4
       spaceAfter: 0
       keepWithNext: false
 
     definition-list-classifier:
       parent: normal
-      fontName: stdItalic
 
     definition:
       parent: bodytext
@@ -285,7 +260,6 @@ styles:
     fieldname:
       parent: bodytext
       alignment: TA_RIGHT
-      fontName: stdBold
 
     fieldvalue:
       parent: bodytext
@@ -297,7 +271,6 @@ styles:
 
     italic:
       parent: bodytext
-      fontName: stdItalic
 
     heading:
       parent: normal
@@ -307,7 +280,6 @@ styles:
 
     title:
       parent: heading
-      fontName: stdBold
       fontSize: 200%
       alignment: TA_CENTER
       keepWithNext: false
@@ -320,30 +292,24 @@ styles:
 
     heading1:
       parent: heading
-      fontName: stdBold
       fontSize: 175%
 
     heading2:
       parent: heading
-      fontName: stdBold
       fontSize: 150%
 
     heading3:
       parent: heading
-      fontName: stdBoldItalic
       fontSize: 125%
 
     heading4:
       parent: heading
-      fontName: stdBoldItalic
 
     heading5:
       parent: heading
-      fontName: stdBoldItalic
 
     heading6:
       parent: heading
-      fontName: stdBoldItalic
 
     topic-title:
       parent: heading3
@@ -437,7 +403,6 @@ styles:
     literal:
       parent: normal
       fontSize: 9
-      fontName: stdMono
       firstLineIndent: 0
       hyphenation: false
       wordWrap: null
