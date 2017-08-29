@@ -17,7 +17,6 @@
       "zookeeper.quorum": "{{ZK_QUORUM}}"
     },
     "cdap_env": {
-      "cdap_ui_compression_enabled": "false",
       "tez_home": "/usr/hdp/{{HDP_VERSION}}/tez",
       "tez_conf_dir": "/etc/tez/conf"
     },
