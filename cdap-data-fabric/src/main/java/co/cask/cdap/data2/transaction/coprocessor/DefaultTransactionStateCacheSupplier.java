@@ -17,7 +17,7 @@
 package co.cask.cdap.data2.transaction.coprocessor;
 
 import com.google.common.base.Supplier;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.tephra.coprocessor.TransactionStateCache;
 import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
 
@@ -27,12 +27,13 @@ import org.apache.tephra.coprocessor.TransactionStateCacheSupplier;
  * coprocessors.
  */
 public class DefaultTransactionStateCacheSupplier extends TransactionStateCacheSupplier {
-  public DefaultTransactionStateCacheSupplier(final String sysConfigTablePrefix, final Configuration conf) {
+  public DefaultTransactionStateCacheSupplier(final String tablePrefix,
+                                              final CoprocessorEnvironment env) {
     super(new Supplier<TransactionStateCache>() {
       @Override
       public TransactionStateCache get() {
-        TransactionStateCache cache = new DefaultTransactionStateCache(sysConfigTablePrefix);
-        cache.setConf(conf);
+        TransactionStateCache cache = new DefaultTransactionStateCache(tablePrefix, env);
+        cache.setConf(env.getConfiguration());
         return cache;
       }
     });

@@ -17,7 +17,7 @@
 package co.cask.cdap.messaging;
 
 import co.cask.cdap.data2.transaction.coprocessor.CacheSupplier;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import co.cask.cdap.data2.util.ReferenceCountedSupplier;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import com.google.common.base.Supplier;

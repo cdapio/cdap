@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.hbase.coprocessor;
 
 import co.cask.cdap.data2.transaction.coprocessor.CacheSupplier;
 import co.cask.cdap.data2.util.ReferenceCountedSupplier;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import com.google.common.base.Supplier;
 import com.google.common.io.InputSupplier;
 import org.apache.hadoop.hbase.TableName;

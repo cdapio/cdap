@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.queue.hbase.coprocessor;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;

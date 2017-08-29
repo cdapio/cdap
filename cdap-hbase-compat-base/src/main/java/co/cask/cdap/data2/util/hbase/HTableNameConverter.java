@@ -91,6 +91,13 @@ public final class HTableNameConverter {
   }
 
   /**
+   * @return the hbase namespace representing the CDAP system namespace.
+   */
+  public static String getSystemNamespace(String prefix) {
+    return prefix + "_" + NamespaceId.SYSTEM.getNamespace();
+  }
+
+  /**
    * Returns {@link TableId} for the table represented by the given {@link HTableDescriptor}.
    */
   public static TableId from(HTableDescriptor htd) {

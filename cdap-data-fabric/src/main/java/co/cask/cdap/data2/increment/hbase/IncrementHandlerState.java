@@ -18,13 +18,12 @@ package co.cask.cdap.data2.increment.hbase;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -57,7 +56,7 @@ public class IncrementHandlerState {
 
   public static final Log LOG = LogFactory.getLog(IncrementHandlerState.class);
   private final HTableDescriptor hTableDescriptor;
-  private final Configuration conf;
+  private final CoprocessorEnvironment env;
 
   protected final Set<byte[]> txnlFamilies = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
   protected Map<byte[], Long> ttlByFamily = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
@@ -67,8 +66,8 @@ public class IncrementHandlerState {
 
   private TimestampOracle timeOracle = new TimestampOracle();
 
-  public IncrementHandlerState(Configuration conf, HTableDescriptor hTableDescriptor) {
-    this.conf = conf;
+  public IncrementHandlerState(CoprocessorEnvironment env, HTableDescriptor hTableDescriptor) {
+    this.env = env;
     this.hTableDescriptor = hTableDescriptor;
   }
 
@@ -83,11 +82,9 @@ public class IncrementHandlerState {
     this.timeOracle = timeOracle;
   }
 
-  protected CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier(HTableDescriptor htd,
-                                                                                  Configuration conf) {
-    String tablePrefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-    String sysConfigTablePrefix = HTableNameConverter.getSysConfigTablePrefix(tablePrefix);
-    return new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf);
+  private CacheSupplier<TransactionStateCache> getTransactionStateCacheSupplier() {
+    String tablePrefix = hTableDescriptor.getValue(Constants.Dataset.TABLE_PREFIX);
+    return new DefaultTransactionStateCacheSupplier(tablePrefix, env);
   }
 
   public void initFamily(byte[] familyName, Map<byte[], byte[]> familyValues) {
@@ -116,7 +113,7 @@ public class IncrementHandlerState {
 
     // get the transaction state cache as soon as we have a transactional family
     if (!txnlFamilies.isEmpty() && cache == null) {
-      txStateCacheSupplier = getTransactionStateCacheSupplier(hTableDescriptor, conf);
+      txStateCacheSupplier = getTransactionStateCacheSupplier();
       cache = txStateCacheSupplier.get();
     }
   }

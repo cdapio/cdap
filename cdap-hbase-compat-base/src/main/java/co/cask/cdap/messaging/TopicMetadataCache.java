@@ -19,7 +19,7 @@ package co.cask.cdap.messaging;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;

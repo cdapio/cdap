@@ -17,11 +17,12 @@
 package co.cask.cdap.data2.transaction.coprocessor;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
 import com.google.common.util.concurrent.AbstractIdleService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.TableNotFoundException;
 
 import java.io.IOException;
@@ -52,9 +53,9 @@ public class CConfigurationCache extends AbstractIdleService {
   private long cConfUpdatePeriodInMillis = DEFAULT_CCONF_UPDATE_PERIOD;
   private long lastUpdated;
 
-  public CConfigurationCache(Configuration hConf, String sysConfigTablePrefix, String maxLifetimeProperty,
+  public CConfigurationCache(CoprocessorEnvironment env, String tablePrefix, String maxLifetimeProperty,
                              int defaultMaxLifetime) {
-    this.cConfReader = new CConfigurationReader(hConf, sysConfigTablePrefix);
+    this.cConfReader = new CConfigurationReader(env, tablePrefix);
     this.maxLifetimeProperty = maxLifetimeProperty;
     this.defaultMaxLifetime = defaultMaxLifetime;
   }

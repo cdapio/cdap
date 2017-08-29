@@ -48,14 +48,14 @@ import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.transaction.queue.QueueEntryRow;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.queue.QueueTest;
-import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.CConfigurationReader;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.ConsumerConfigCache;
 import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.TableNameAwareCacheSupplier;
 import co.cask.cdap.data2.util.TableId;
-import co.cask.cdap.data2.util.hbase.ConfigurationTable;
+import co.cask.cdap.data2.util.hbase.CConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
-import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -186,8 +186,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NAMESPACE_ID));
     ddlExecutor.createNamespaceIfNotExists(tableUtil.getHBaseNamespace(NAMESPACE_ID1));
 
-    ConfigurationTable configTable = new ConfigurationTable(hConf);
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+    new ConfigurationWriter(hConf, cConf).write(ConfigurationReader.Type.DEFAULT, cConf);
 
     zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
@@ -243,7 +242,7 @@ public abstract class HBaseQueueTest extends QueueTest {
                                                                               "app", "flow", "flowlet", "out"));
   }
 
-  void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
+  private void testHTablePreSplitted(HBaseQueueAdmin admin, QueueName queueName) throws Exception {
     TableId tableId = admin.getDataTableId(queueName);
     if (!admin.exists(queueName)) {
       admin.create(queueName);
@@ -659,16 +658,13 @@ public abstract class HBaseQueueTest extends QueueTest {
     }
   }
 
-
   private ConsumerConfigCache getConsumerConfigCache(QueueName queueName) throws Exception {
     String tableName = HBaseQueueAdmin.getConfigTableName();
     TableId hTableId = tableUtil.createHTableId(new NamespaceId(queueName.getFirstComponent()), tableName);
     try (HTable hTable = tableUtil.createHTable(hConf, hTableId)) {
       HTableDescriptor htd = hTable.getTableDescriptor();
       final TableName configTableName = htd.getTableName();
-      String prefix = htd.getValue(Constants.Dataset.TABLE_PREFIX);
-      CConfigurationReader cConfReader
-        = new CConfigurationReader(hConf, HTableNameConverter.getSysConfigTablePrefix(prefix));
+      CConfigurationReader cConfReader = new CConfigurationReader(hConf, cConf);
       return TableNameAwareCacheSupplier.getSupplier(configTableName,
                                                      cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override

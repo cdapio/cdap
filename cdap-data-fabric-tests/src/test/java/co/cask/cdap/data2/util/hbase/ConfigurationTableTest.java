@@ -19,11 +19,12 @@ package co.cask.cdap.data2.util.hbase;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
-import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
+import org.apache.hadoop.conf.Configuration;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -63,25 +64,42 @@ public class ConfigurationTableTest {
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    ConfigurationTable configTable = new ConfigurationTable(TEST_HBASE.getConfiguration());
-    configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
+    Configuration hConf = TEST_HBASE.getConfiguration();
+    ConfigurationWriter writer = new ConfigurationWriter(hConf, cConf);
+    ConfigurationReader reader = new ConfigurationReader(hConf, cConf);
 
-    String configTableQualifier = "configuration";
-    TableId configTableId = tableUtil.createHTableId(NamespaceId.SYSTEM, configTableQualifier);
-    String configTableName = tableUtil.buildHTableDescriptor(configTableId).build().getNameAsString();
-    // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
-    String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());
+    // read should yield null if table does not exist
+    CConfiguration cConfBeforeTableExists = reader.read(ConfigurationReader.Type.DEFAULT);
+    Assert.assertNull(cConfBeforeTableExists);
 
-    CConfiguration cConf2 = configTable.read(ConfigurationTable.Type.DEFAULT, configTablePrefix);
-    assertNotNull(cConf2);
+    // read should yield null if table does exists but no configuration has been written yet
+    writer.createTableIfNecessary();
+    CConfiguration cConfBeforeConfigWritten = reader.read(ConfigurationReader.Type.DEFAULT);
+    Assert.assertNull(cConfBeforeConfigWritten);
 
-    for (Map.Entry<String, String> e : cConf) {
-      assertEquals("Configuration value mismatch (cConf -> cConf2) for key: " + e.getKey(),
-                   e.getValue(), cConf2.get(e.getKey()));
+    // now write a cConf with an additional property
+    CConfiguration cConfWithAddedProperty = CConfiguration.copy(cConf);
+    cConfWithAddedProperty.set("additional.property", "additional.property.value");
+    writer.write(ConfigurationReader.Type.DEFAULT, cConfWithAddedProperty);
+    CConfiguration cConfAfterWrite = reader.read(ConfigurationReader.Type.DEFAULT);
+    assertNotNull(cConfAfterWrite);
+    validateCConf(cConfWithAddedProperty, cConfAfterWrite);
+
+    // now write without the additional value and read back
+    writer.write(ConfigurationReader.Type.DEFAULT, cConf);
+    CConfiguration cConfAfter2ndWrite = reader.read(ConfigurationReader.Type.DEFAULT);
+    assertNotNull(cConfAfter2ndWrite);
+    validateCConf(cConf, cConfAfter2ndWrite);
+  }
+
+  private void validateCConf(CConfiguration expected, CConfiguration actual) {
+    for (Map.Entry<String, String> e : expected) {
+      assertEquals("Configuration value mismatch (expected -> actual) for key: " + e.getKey(),
+                   e.getValue(), actual.get(e.getKey()));
     }
-    for (Map.Entry<String, String> e : cConf2) {
-      assertEquals("Configuration value mismatch (cConf2 -> cConf) for key: " + e.getKey(),
-                   e.getValue(), cConf.get(e.getKey()));
+    for (Map.Entry<String, String> e : actual) {
+      assertEquals("Configuration value mismatch (actual -> expected) for key: " + e.getKey(),
+                   e.getValue(), expected.get(e.getKey()));
     }
   }
 }

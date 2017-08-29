@@ -81,10 +81,8 @@ public class IncrementHandler extends BaseRegionObserver {
     if (e instanceof RegionCoprocessorEnvironment) {
       RegionCoprocessorEnvironment env = (RegionCoprocessorEnvironment) e;
       this.region = ((RegionCoprocessorEnvironment) e).getRegion();
-      this.state = new IncrementHandlerState(env.getConfiguration(),
-                                             env.getRegion().getTableDesc());
-
-      HTableDescriptor tableDesc = env.getRegion().getTableDesc();
+      HTableDescriptor tableDesc = region.getTableDesc();
+      this.state = new IncrementHandlerState(env, tableDesc);
       for (HColumnDescriptor columnDesc : tableDesc.getFamilies()) {
         state.initFamily(columnDesc.getName(), convertFamilyValues(columnDesc.getValues()));
       }
