@@ -24,27 +24,27 @@ const PREFIX = 'features.DataPrep.Directives.SetCharEncoding';
 const CHARENCODINGOPTIONS = [
   {
     label: T.translate(`${PREFIX}.utf8`),
-    getDirective: (column) => `set-charset ${column} utf-8`
+    getDirective: (column) => `set-charset ${column} 'utf-8'`
   },
   {
     label: T.translate(`${PREFIX}.utf16`),
-    getDirective: (column) => `set-charset ${column} utf-16`
+    getDirective: (column) => `set-charset ${column} 'utf-16'`
   },
   {
     label: T.translate(`${PREFIX}.usascii`),
-    getDirective: (column) => `set-charset ${column} us-ascii`
+    getDirective: (column) => `set-charset ${column} 'us-ascii'`
   },
   {
     label: T.translate(`${PREFIX}.iso88591`),
-    getDirective: (column) => `set-charset ${column} iso-8859-1`
+    getDirective: (column) => `set-charset ${column} 'iso-8859-1'`
   },
   {
     label: T.translate(`${PREFIX}.utf16be`),
-    getDirective: (column) => `set-charset ${column} utf-16be`
+    getDirective: (column) => `set-charset ${column} 'utf-16be'`
   },
   {
     label: T.translate(`${PREFIX}.utf16le`),
-    getDirective: (column) => `set-charset ${column} utf-16le`
+    getDirective: (column) => `set-charset ${column} 'utf-16le'`
   }
 ];
 
