@@ -27,9 +27,11 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.proto.ProgramType;
 import org.apache.tephra.TxConstants;
+import org.apache.twill.api.Configs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -41,9 +43,11 @@ public final class SystemArguments {
 
   private static final Logger LOG = LoggerFactory.getLogger(SystemArguments.class);
 
-  private static final String MEMORY_KEY = "system.resources.memory";
-  private static final String CORES_KEY = "system.resources.cores";
+  public static final String MEMORY_KEY = "system.resources.memory";
+  public static final String CORES_KEY = "system.resources.cores";
+  public static final String RESERVED_MEMORY_KEY_OVERRIDE = "system.resources.reserved.memory.override";
   private static final String LOG_LEVEL = "system.log.level";
+  private static final String LOGGER_LOG_LEVEL_PREFIX = LOG_LEVEL + ".";
   private static final String RETRY_POLICY_TYPE = "system." + Constants.Retry.TYPE;
   private static final String RETRY_POLICY_MAX_TIME_SECS = "system." + Constants.Retry.MAX_TIME_SECS;
   private static final String RETRY_POLICY_MAX_RETRIES = "system." + Constants.Retry.MAX_RETRIES;
@@ -57,13 +61,11 @@ public final class SystemArguments {
    * as the log level. Also, the key {@link #LOG_LEVEL} will be used to setup the log level of the root logger.
    */
   public static Map<String, Level> getLogLevels(Map<String, String> args) {
-    String logLevelPrefix = LOG_LEVEL + ".";
-
     Map<String, Level> logLevels = new HashMap<>();
     for (Map.Entry<String, String> entry : args.entrySet()) {
       String key = entry.getKey();
-      if (key.startsWith(logLevelPrefix)) {
-        logLevels.put(key.substring(logLevelPrefix.length()), Level.toLevel(entry.getValue()));
+      if (key.startsWith(LOGGER_LOG_LEVEL_PREFIX)) {
+        logLevels.put(key.substring(LOGGER_LOG_LEVEL_PREFIX.length()), Level.toLevel(entry.getValue()));
       }
     }
     String logLevel = args.get(LOG_LEVEL);
@@ -95,8 +97,8 @@ public final class SystemArguments {
    *
    * @return the integer value of the argument system.data.tx.timeout, or if that is not given in the arguments,
    *         the value for data.tx.timeout from the CConfiguration.
-   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given in the
-   *         {@link CConfiguration}.
+   * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given by
+   *         the {@link TxConstants.Manager#CFG_TX_MAX_TIMEOUT} setting in the {@link CConfiguration}
    */
   public static int getTransactionTimeout(Map<String, String> args, CConfiguration cConf) {
     Integer timeout = getPositiveInt(args, TRANSACTION_TIMEOUT, "transaction timeout");
@@ -233,6 +235,32 @@ public final class SystemArguments {
     }
     return new Resources(memory != null ? memory : defaultResources.getMemoryMB(),
                          cores != null ? cores : defaultResources.getVirtualCores());
+  }
+
+  /**
+   * Extracts and returns a configuration map containing container related Twill settings.
+   *
+   * @param args the arguments to use for looking up resources configurations
+   * @param containerMemory the container memory size in MB
+   * @return a map of configurations
+   */
+  public static Map<String, String> getTwillContainerConfigs(Map<String, String> args, int containerMemory) {
+    Integer reservedMemory = getPositiveInt(args, RESERVED_MEMORY_KEY_OVERRIDE, "reserved memory size");
+    if (reservedMemory == null) {
+      return Collections.emptyMap();
+    }
+    int heapMemory = containerMemory - reservedMemory;
+    if (heapMemory <= 0) {
+      LOG.warn("Ignoring invalid reserved memory size '{}' from runtime arguments. " +
+                 "It must be smaller than container memory size '{}'", reservedMemory, containerMemory);
+      return Collections.emptyMap();
+    }
+    double ratio = ((double) heapMemory) / containerMemory;
+
+    Map<String, String> config = new HashMap<>();
+    config.put(Configs.Keys.JAVA_RESERVED_MEMORY_MB, reservedMemory.toString());
+    config.put(Configs.Keys.HEAP_RESERVED_MIN_RATIO, String.format("%.2f", ratio));
+    return config;
   }
 
   /**

@@ -45,6 +45,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MapperInput;
 import co.cask.cdap.internal.app.runtime.batch.dataset.input.MultipleInputs;
@@ -96,6 +97,7 @@ import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.Configs;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -106,7 +108,6 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -267,8 +268,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
 
       // set resources for the job
-      TaskType.MAP.setResources(mapredConf, context.getMapperResources());
-      TaskType.REDUCE.setResources(mapredConf, context.getReducerResources());
+      TaskType.MAP.configure(mapredConf, cConf, context.getMapperRuntimeArguments(), context.getMapperResources());
+      TaskType.REDUCE.configure(mapredConf, cConf, context.getReducerRuntimeArguments(), context.getReducerResources());
 
       // replace user's Mapper, Reducer, Partitioner, and Comparator classes with our wrappers in job config
       MapperWrapper.wrap(job);
@@ -1072,7 +1073,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    *
    * See {@link Configuration#getPropertySources(String)}.
    */
-  private boolean isProgrammaticConfig(Configuration conf, String name) {
+  private static boolean isProgrammaticConfig(Configuration conf, String name) {
     String[] sources = conf.getPropertySources(name);
     return sources != null && sources.length > 0 && PROGRAMATIC_SOURCE_PATTERN.matcher(sources[0]).matches();
   }
@@ -1168,48 +1169,116 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     };
   }
 
-  private enum TaskType {
-    MAP(Job.MAP_MEMORY_MB, Job.MAP_JAVA_OPTS),
-    REDUCE(Job.REDUCE_MEMORY_MB, Job.REDUCE_JAVA_OPTS);
+  @VisibleForTesting
+  enum TaskType {
+    MAP(Job.MAP_MEMORY_MB, Job.DEFAULT_MAP_MEMORY_MB, Job.MAP_JAVA_OPTS),
+    REDUCE(Job.REDUCE_MEMORY_MB, Job.DEFAULT_REDUCE_MEMORY_MB, Job.REDUCE_JAVA_OPTS);
 
     private final String memoryConfKey;
+    private final int defaultMemoryMB;
     private final String javaOptsKey;
     private final String vcoreConfKey;
+    private final int defaultVcores;
 
-    TaskType(String memoryConfKey, String javaOptsKey) {
+    TaskType(String memoryConfKey, int defaultMemoryMB, String javaOptsKey) {
       this.memoryConfKey = memoryConfKey;
+      this.defaultMemoryMB = defaultMemoryMB;
       this.javaOptsKey = javaOptsKey;
 
       String vcoreConfKey = null;
+      int defaultVcores = 0;
       try {
-        String fieldName = name() + "_CPU_VCORES";
-        Field field = Job.class.getField(fieldName);
-        vcoreConfKey = field.get(null).toString();
+        String confFieldName = name() + "_CPU_VCORES";
+        vcoreConfKey = Job.class.getField(confFieldName).get(null).toString();
+
+        String defaultValueFieldName = "DEFAULT_" + confFieldName;
+        defaultVcores = (Integer) Job.class.getField(defaultValueFieldName).get(null);
+
       } catch (Exception e) {
         // OK to ignore
         // Some older version of hadoop-mr-client doesn't has the VCORES field as vcores was not supported in YARN.
       }
       this.vcoreConfKey = vcoreConfKey;
+      this.defaultVcores = defaultVcores;
     }
 
     /**
-     * Sets up resources usage for the task represented by this task type.
+     * Sets up the configuration for the task represented by this type.
      *
      * @param conf configuration to modify
-     * @param resources resources information or {@code null} if nothing to set
+     * @param cConf the cdap configuration
+     * @param runtimeArgs the runtime arguments applicable for this task type
+     * @param resources resources information or {@code null} if resources is not set in the
+     *                  {@link MapReduceSpecification} during deployment time and also not set through
+     *                  runtime arguments with the {@link SystemArguments#MEMORY_KEY} setting.
      */
-    public void setResources(Configuration conf, @Nullable Resources resources) {
-      if (resources == null) {
-        return;
-      }
+    public void configure(Configuration conf, CConfiguration cConf,
+                          Map<String, String> runtimeArgs, @Nullable Resources resources) {
 
-      conf.setInt(memoryConfKey, resources.getMemoryMB());
-      // Also set the Xmx to be smaller than the container memory.
-      conf.set(javaOptsKey, "-Xmx" + (int) (resources.getMemoryMB() * 0.8) + "m");
-
+      // Sets the container vcores if it is not set programmatically by the initialize() method, but is provided
+      // through runtime arguments or MR spec.
+      int vcores = 0;
+      String vcoreSource = null;
       if (vcoreConfKey != null) {
-        conf.setInt(vcoreConfKey, resources.getVirtualCores());
+        if (isProgrammaticConfig(conf, vcoreConfKey) || resources == null) {
+          vcores = conf.getInt(vcoreConfKey, defaultVcores);
+          vcoreSource = "from job configuration";
+        } else {
+          vcores = resources.getVirtualCores();
+          conf.setInt(vcoreConfKey, vcores);
+          vcoreSource = runtimeArgs.containsKey(SystemArguments.CORES_KEY)
+            ? "from runtime arguments " + SystemArguments.CORES_KEY : "programmatically";
+        }
       }
+
+      int memoryMB;
+      String memorySource;
+      if (isProgrammaticConfig(conf, memoryConfKey)) {
+        // If set programmatically, get the memory size from the config.
+        memoryMB = conf.getInt(memoryConfKey, defaultMemoryMB);
+        memorySource = "from job configuration";
+      } else {
+        // Sets the container memory size if it is not set programmatically by the initialize() method.
+        memoryMB = resources == null ? conf.getInt(memoryConfKey, defaultMemoryMB) : resources.getMemoryMB();
+        conf.setInt(memoryConfKey, memoryMB);
+        memorySource = runtimeArgs.containsKey(SystemArguments.MEMORY_KEY)
+          ? "from runtime arguments " + SystemArguments.MEMORY_KEY : "programmatically";
+      }
+
+      // Setup the jvm opts, which includes options from cConf and the -Xmx setting
+      // Get the default settings from cConf
+      int reservedMemory = cConf.getInt(Configs.Keys.JAVA_RESERVED_MEMORY_MB);
+      double minHeapRatio = cConf.getDouble(Configs.Keys.HEAP_RESERVED_MIN_RATIO);
+      String maxHeapSource =
+        "from system configuration " + Configs.Keys.JAVA_RESERVED_MEMORY_MB +
+        " and " + Configs.Keys.HEAP_RESERVED_MIN_RATIO;
+
+      // Optionally overrides the settings from the runtime arguments
+      Map<String, String> configs = SystemArguments.getTwillContainerConfigs(runtimeArgs, memoryMB);
+      if (configs.containsKey(Configs.Keys.JAVA_RESERVED_MEMORY_MB)) {
+        reservedMemory = Integer.parseInt(configs.get(Configs.Keys.JAVA_RESERVED_MEMORY_MB));
+        maxHeapSource = "from runtime arguments " + SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE;
+      }
+      if (configs.containsKey(Configs.Keys.HEAP_RESERVED_MIN_RATIO)) {
+        minHeapRatio = Double.parseDouble(configs.get(Configs.Keys.HEAP_RESERVED_MIN_RATIO));
+      }
+
+      int maxHeapSize = org.apache.twill.internal.utils.Resources.computeMaxHeapSize(memoryMB,
+                                                                                     reservedMemory, minHeapRatio);
+
+      String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS) + " -Xmx" + maxHeapSize + "m";
+      // If the job conf has the jvm opts set programmatically, then prepend it with what being determined above;
+      // otherwise, append. The reason is, we want to have the one set programmatically has higher precedence,
+      // while the one set cluster wide (in mapred-site.xml) has lower precedence.
+      jvmOpts = isProgrammaticConfig(conf, javaOptsKey)
+        ? jvmOpts + " " + conf.get(javaOptsKey, "")
+        : conf.get(javaOptsKey, "") + " " + jvmOpts;
+      conf.set(javaOptsKey, jvmOpts.trim());
+
+      LOG.debug("MapReduce {} task container memory is {}MB, set {}. " +
+                  "Maximum heap memory size of {}MB, set {}.{}",
+                name().toLowerCase(), memoryMB, memorySource, maxHeapSize, maxHeapSource,
+                vcores > 0 ? " Virtual cores is " + vcores + ", set " + vcoreSource + "." : ".");
     }
   }
 

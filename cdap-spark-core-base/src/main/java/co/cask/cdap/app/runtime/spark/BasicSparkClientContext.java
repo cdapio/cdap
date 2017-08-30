@@ -77,11 +77,8 @@ final class BasicSparkClientContext implements SparkClientContext {
     this.additionalPythonLocations = new LinkedList<>();
 
     SparkSpecification spec = sparkRuntimeContext.getSparkSpecification();
-    Map<String, String> runtimeArgs = sparkRuntimeContext.getRuntimeArguments();
-    this.driverResources = SystemArguments.getResources(
-      RuntimeArguments.extractScope("task", "driver", runtimeArgs), spec.getDriverResources());
-    this.executorResources = SystemArguments.getResources(
-      RuntimeArguments.extractScope("task", "executor", runtimeArgs), spec.getExecutorResources());
+    this.driverResources = SystemArguments.getResources(getDriverRuntimeArguments(), spec.getDriverResources());
+    this.executorResources = SystemArguments.getResources(getExecutorRuntimeArguments(), spec.getExecutorResources());
   }
 
   @Override
@@ -246,6 +243,20 @@ final class BasicSparkClientContext implements SparkClientContext {
   @Nullable
   SparkConf getSparkConf() {
     return sparkConf;
+  }
+
+  /**
+   * Extracts runtime arguments for the driver scope.
+   */
+  Map<String, String> getDriverRuntimeArguments() {
+    return RuntimeArguments.extractScope("task", "driver", getRuntimeArguments());
+  }
+
+  /**
+   * Extracts runtime arguments for the executor scope.
+   */
+  Map<String, String> getExecutorRuntimeArguments() {
+    return RuntimeArguments.extractScope("task", "executor", getRuntimeArguments());
   }
 
   @Nullable

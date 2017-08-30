@@ -24,6 +24,7 @@ import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.common.service.RetryStrategyType;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
+import org.apache.twill.api.Configs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -45,41 +46,57 @@ public class SystemArgumentsTest {
     Assert.assertEquals(defaultResources, resources);
 
     // Specify memory
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10"), defaultResources);
     Assert.assertEquals(new Resources(10), resources);
 
     // Specify cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(defaultResources.getMemoryMB(), 8), resources);
 
     // Specify both memory and cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10",
-                                                             "system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10",
+                                                             SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(10, 8), resources);
 
     // Specify invalid memory
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "-10"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "-10"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
     // Specify invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.cores", "abc"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.CORES_KEY, "abc"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
     // Specify invalid memory and value cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "xyz",
-                                                             "system.resources.cores", "8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "xyz",
+                                                             SystemArguments.CORES_KEY, "8"), defaultResources);
     Assert.assertEquals(new Resources(defaultResources.getMemoryMB(), 8), resources);
 
     // Specify valid memory and invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "10",
-                                                             "system.resources.cores", "-8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "10",
+                                                             SystemArguments.CORES_KEY, "-8"), defaultResources);
     Assert.assertEquals(new Resources(10, defaultResources.getVirtualCores()), resources);
 
     // Specify invalid memory and invalid cores
-    resources = SystemArguments.getResources(ImmutableMap.of("system.resources.memory", "-1",
-                                                             "system.resources.cores", "-8"), defaultResources);
+    resources = SystemArguments.getResources(ImmutableMap.of(SystemArguments.MEMORY_KEY, "-1",
+                                                             SystemArguments.CORES_KEY, "-8"), defaultResources);
     Assert.assertEquals(defaultResources, resources);
 
+    // Specify reserved memory size
+    Map<String, String> configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "200"), 300);
+    Assert.assertEquals(ImmutableMap.of(Configs.Keys.JAVA_RESERVED_MEMORY_MB, "200",
+                                        Configs.Keys.HEAP_RESERVED_MIN_RATIO, "0.33"),
+                        configs);
+
+    // Specify invalid reserved memory size
+    configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "-1"), 300);
+    Assert.assertTrue(configs.isEmpty());
+
+    // Specify >= container memory size
+    configs = SystemArguments.getTwillContainerConfigs(
+      ImmutableMap.of(SystemArguments.RESERVED_MEMORY_KEY_OVERRIDE, "300"), 300);
+    Assert.assertTrue(configs.isEmpty());
   }
 
   @Test

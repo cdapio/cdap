@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.program.Program;
@@ -26,7 +25,6 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -83,9 +81,9 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner {
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
 
     // Add a runnable for the service handler
-    Resources resources = SystemArguments.getResources(options.getUserArguments(), serviceSpec.getResources());
     launchConfig.addRunnable(serviceSpec.getName(), new ServiceTwillRunnable(serviceSpec.getName()),
-                             resources, serviceSpec.getInstances());
+                             serviceSpec.getInstances(), options.getUserArguments().asMap(),
+                             serviceSpec.getResources());
   }
 
   @Override

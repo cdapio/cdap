@@ -47,7 +47,6 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import co.cask.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import co.cask.cdap.internal.app.runtime.distributed.ProgramTwillApplication.RunnableResource;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -199,7 +198,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     final File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
-      final LaunchConfig launchConfig = new LaunchConfig();
+      final LaunchConfig launchConfig = new LaunchConfig(cConf);
       setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
 
       // Add extra localize resources needed by the program runner
@@ -245,18 +244,24 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
                                                                                  launchConfig.getLaunchOrder(),
                                                                                  localizeResources,
                                                                                  createEventHandler(cConf, options));
-
           TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
           // Add the configuration to container classpath
           twillPreparer.withResources(hConfFile.toURI(), cConfFile.toURI());
 
-          for (Map.Entry<String, RunnableResource> entry : launchConfig.getRunnables().entrySet()) {
+          // Setup log level
+          twillPreparer.setLogLevels(
+            transformLogLevels(SystemArguments.getLogLevels(options.getUserArguments().asMap())));
+
+          // Setup per runnable configurations
+          for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
             String runnable = entry.getKey();
-            RunnableResource runnableResource = entry.getValue();
-            if (runnableResource.getMaxRetries() != null) {
-              twillPreparer.withMaxRetries(runnable, runnableResource.getMaxRetries());
+            RunnableDefinition runnableDefinition = entry.getValue();
+            if (runnableDefinition.getMaxRetries() != null) {
+              twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
             }
+            twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
+            twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
           }
 
           if (options.isDebug()) {
@@ -279,7 +284,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
           if (logbackURI != null) {
             twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
           }
-          setLogLevels(twillPreparer, program, options);
 
           String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
           if ("OFF".equals(logLevelConf)) {
@@ -496,15 +500,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
     return logbackFile.toURI();
   }
 
-  protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
-    Map<String, Level> logLevels = SystemArguments.getLogLevels(options.getUserArguments().asMap());
-    if (logLevels.isEmpty()) {
-      return twillPreparer;
-    }
-    return twillPreparer.setLogLevels(transformLogLevels(logLevels));
-  }
-
-  protected Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
+  private Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
     return Maps.transformValues(logLevels, new Function<Level, LogEntry.Level>() {
       @Override
       public LogEntry.Level apply(Level level) {
@@ -582,13 +578,18 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
    */
   protected static final class LaunchConfig {
 
+    private final CConfiguration cConf;
     private final Map<String, LocalizeResource> extraResources = new HashMap<>();
     private final List<String> extraClasspath = new ArrayList<>();
     private final Map<String, String> extraEnv = new HashMap<>();
-    private final Map<String, RunnableResource> runnables = new HashMap<>();
+    private final Map<String, RunnableDefinition> runnables = new HashMap<>();
     private final List<Set<String>> launchOrder = new ArrayList<>();
     private final Set<Class<?>> extraDependencies = new HashSet<>();
     private ClassAcceptor classAcceptor = new HadoopClassExcluder();
+
+    LaunchConfig(CConfiguration cConf) {
+      this.cConf = cConf;
+    }
 
     public LaunchConfig addExtraResources(Map<String, LocalizeResource> resources) {
       extraResources.putAll(resources);
@@ -609,13 +610,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
       return this;
     }
 
-    public LaunchConfig addRunnable(String name, TwillRunnable runnable, Resources resources, int instances) {
-      return addRunnable(name, runnable, resources, instances, null);
+    public LaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
+                                    Map<String, String> args, Resources defaultResource) {
+      return addRunnable(name, runnable, instances, args, defaultResource, null);
     }
 
-    public LaunchConfig addRunnable(String name, TwillRunnable runnable, Resources resources, int instances,
+    public LaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
+                                    Map<String, String> args, Resources defaultResources,
                                     @Nullable Integer maxRetries) {
-      runnables.put(name, new RunnableResource(runnable, createResourceSpec(resources, instances), maxRetries));
+      ResourceSpecification resourceSpec = createResourceSpec(SystemArguments.getResources(args, defaultResources),
+                                                              instances);
+
+      Map<String, String> configs = SystemArguments.getTwillContainerConfigs(args, resourceSpec.getMemorySize());
+      Map<String, Level> logLevels = SystemArguments.getLogLevels(args);
+
+      runnables.put(name, new RunnableDefinition(runnable, resourceSpec, configs, logLevels, maxRetries));
       return this;
     }
 
@@ -655,7 +664,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
       return classAcceptor;
     }
 
-    public Map<String, RunnableResource> getRunnables() {
+    public Map<String, RunnableDefinition> getRunnables() {
       return runnables;
     }
 

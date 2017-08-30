@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.worker.WorkerSpecification;
 import co.cask.cdap.app.program.Program;
@@ -27,7 +26,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.TwillAppLifecycleEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
 import co.cask.cdap.security.impersonation.Impersonator;
@@ -84,11 +82,9 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner {
 
     String instances = options.getArguments().getOption(ProgramOptionConstants.INSTANCES,
                                                         String.valueOf(workerSpec.getInstances()));
-    Resources resources = SystemArguments.getResources(options.getUserArguments(),
-                                                       workerSpec.getResources());
-
     launchConfig.addRunnable(workerSpec.getName(), new WorkerTwillRunnable(workerSpec.getName()),
-                             resources, Integer.parseInt(instances));
+                             Integer.parseInt(instances), options.getUserArguments().asMap(),
+                             workerSpec.getResources());
   }
 
   @Override
