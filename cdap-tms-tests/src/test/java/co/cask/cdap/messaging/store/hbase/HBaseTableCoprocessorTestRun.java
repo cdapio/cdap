@@ -50,6 +50,7 @@ import org.apache.tephra.ChangeId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TxConstants;
+import org.apache.tephra.manager.InvalidTxList;
 import org.apache.tephra.metrics.TxMetricsCollector;
 import org.apache.tephra.persist.HDFSTransactionStateStorage;
 import org.apache.tephra.persist.TransactionSnapshot;
@@ -95,7 +96,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
 
   private static final HBaseTestBase HBASE_TEST_BASE = HBaseMessageTestSuite.HBASE_TEST_BASE;
   private static final CConfiguration cConf = CConfiguration.create();
-  private static List<Long> invalidSet = ImmutableList.of(V[3], V[5], V[7]);
+  private static InvalidTxList invalidList = new InvalidTxList();
 
   private static Configuration hConf;
   private static HBaseAdmin hBaseAdmin;
@@ -129,8 +130,9 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     // write an initial transaction snapshot
+    invalidList.addAll(ImmutableList.of(V[3], V[5], V[7]));
     TransactionSnapshot txSnapshot = TransactionSnapshot.copyFrom(
-      System.currentTimeMillis(), V[6] - 1, V[7], invalidSet,
+      System.currentTimeMillis(), V[6] - 1, V[7], invalidList,
       // this will set visibility upper bound to V[6]
       Maps.newTreeMap(ImmutableSortedMap.of(V[6], new TransactionManager.InProgressTx(
         V[6] - 1, Long.MAX_VALUE, TransactionManager.InProgressType.SHORT))),
@@ -151,7 +153,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
                                               TopicMetadata.GENERATION_KEY, Integer.toString(GENERATION));
       metadataTable.createTopic(topic);
       List<MessageTable.Entry> entries = new ArrayList<>();
-      long invalidTxWritePtr = invalidSet.get(0);
+      long invalidTxWritePtr = invalidList.toRawList().get(0);
       entries.add(new TestMessageEntry(topicId, GENERATION, "data", invalidTxWritePtr, (short) 0));
       messageTable.store(entries.iterator());
 
