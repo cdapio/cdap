@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
@@ -496,18 +497,25 @@ public abstract class DistributedProgramRunner implements ProgramRunner {
   }
 
   protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
-    Map<String, String> logLevels = SystemArguments.getLogLevels(options.getUserArguments().asMap());
+    Map<String, Level> logLevels = SystemArguments.getLogLevels(options.getUserArguments().asMap());
     if (logLevels.isEmpty()) {
       return twillPreparer;
     }
     return twillPreparer.setLogLevels(transformLogLevels(logLevels));
   }
 
-  protected Map<String, LogEntry.Level> transformLogLevels(Map<String, String> logLevels) {
-    return Maps.transformValues(logLevels, new Function<String, LogEntry.Level>() {
+  protected Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
+    return Maps.transformValues(logLevels, new Function<Level, LogEntry.Level>() {
       @Override
-      public LogEntry.Level apply(String input) {
-        return LogEntry.Level.valueOf(input.toUpperCase());
+      public LogEntry.Level apply(Level level) {
+        // Twill LogEntry.Level doesn't have ALL and OFF, so map them to lowest and highest log level respectively
+        if (level.equals(Level.ALL)) {
+          return LogEntry.Level.TRACE;
+        }
+        if (level.equals(Level.OFF)) {
+          return LogEntry.Level.FATAL;
+        }
+        return LogEntry.Level.valueOf(level.toString());
       }
     });
   }

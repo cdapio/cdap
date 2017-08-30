@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.app.runtime.Arguments;
@@ -50,17 +51,24 @@ public final class SystemArguments {
   private static final String RETRY_POLICY_DELAY_MAX_MS = "system." + Constants.Retry.DELAY_MAX_MS;
   public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
 
-  public static Map<String, String> getLogLevels(Map<String, String> args) {
-    Map<String, String> logLevels = new HashMap<>();
+  /**
+   * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
+   * {@link #LOG_LEVEL} + {@code .}, with the remaining part of the key as the logger name, with the argument value
+   * as the log level. Also, the key {@link #LOG_LEVEL} will be used to setup the log level of the root logger.
+   */
+  public static Map<String, Level> getLogLevels(Map<String, String> args) {
+    String logLevelPrefix = LOG_LEVEL + ".";
+
+    Map<String, Level> logLevels = new HashMap<>();
     for (Map.Entry<String, String> entry : args.entrySet()) {
-      String loggerName = entry.getKey();
-      if (loggerName.length() > LOG_LEVEL.length() && loggerName.startsWith(LOG_LEVEL)) {
-        logLevels.put(loggerName.substring(LOG_LEVEL.length() + 1), entry.getValue());
+      String key = entry.getKey();
+      if (key.startsWith(logLevelPrefix)) {
+        logLevels.put(key.substring(logLevelPrefix.length()), Level.toLevel(entry.getValue()));
       }
     }
     String logLevel = args.get(LOG_LEVEL);
     if (logLevel != null) {
-      logLevels.put(Logger.ROOT_LOGGER_NAME, logLevel);
+      logLevels.put(Logger.ROOT_LOGGER_NAME, Level.toLevel(logLevel));
     }
     return logLevels;
   }
@@ -68,20 +76,11 @@ public final class SystemArguments {
   /**
    * Set the log level for the {@link LogAppenderInitializer}.
    *
-   * Same as calling {@link #setLogLevel(Map, LogAppenderInitializer)} with first argument from
-   * {@link Arguments#asMap()}
-   */
-  public static void setLogLevel(Arguments args, LogAppenderInitializer initializer) {
-    setLogLevel(args.asMap(), initializer);
-  }
-
-  /**
-   * Set the log level for the {@link LogAppenderInitializer}.
    * @param args the arguments to use for looking up resources configurations
    * @param initializer the LogAppenderInitializer which will be used to set up the log level
    */
-  public static void setLogLevel(Map<String, String> args, LogAppenderInitializer initializer) {
-    initializer.setLogLevels(getLogLevels(args));
+  public static void setLogLevel(Arguments args, LogAppenderInitializer initializer) {
+    initializer.setLogLevels(getLogLevels(args.asMap()));
   }
 
   /**
@@ -92,12 +91,12 @@ public final class SystemArguments {
   }
 
   /**
-   * Returns the transction timeout based on the given arguments or, as fallback, the CConfiguration.
+   * Returns the transaction timeout based on the given arguments or, as fallback, the CConfiguration.
    *
-   * @returns the integer value of the argument system.data.tx.timeout, or if that is not given in the arguments,
-   *          the value for data.tx.timeout from the CConfiguration.
+   * @return the integer value of the argument system.data.tx.timeout, or if that is not given in the arguments,
+   *         the value for data.tx.timeout from the CConfiguration.
    * @throws IllegalArgumentException if the transaction timeout exceeds the transaction timeout limit given in the
-   *         CConfiguratuion.
+   *         {@link CConfiguration}.
    */
   public static int getTransactionTimeout(Map<String, String> args, CConfiguration cConf) {
     Integer timeout = getPositiveInt(args, TRANSACTION_TIMEOUT, "transaction timeout");

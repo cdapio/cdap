@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime;
 
+import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -25,6 +26,7 @@ import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.Map;
@@ -113,5 +115,24 @@ public class SystemArgumentsTest {
 
     // Should give up (returning -1) after passing the max retry time
     Assert.assertEquals(-1L, strategy.nextRetry(1, startTime - 6000));
+  }
+
+  @Test
+  public void testLogLevels() {
+    Assert.assertTrue(SystemArguments.getLogLevels(Collections.<String, String>emptyMap()).isEmpty());
+
+    Map<String, String> args = ImmutableMap.of(
+      "system.log.level", "DEBUG",
+      "system.log.level.logger.info", "INFO",
+      "system.log.level.logger.warn", "WARN",
+      "system.log.leveldummyKey", "ERROR"     // <-- This should get picked
+    );
+
+    Map<String, Level> expected = ImmutableMap.of(
+      Logger.ROOT_LOGGER_NAME, Level.DEBUG,
+      "logger.info", Level.INFO,
+      "logger.warn", Level.WARN);
+
+    Assert.assertEquals(expected, SystemArguments.getLogLevels(args));
   }
 }

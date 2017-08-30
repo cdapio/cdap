@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import ch.qos.logback.classic.Level;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
@@ -145,10 +146,12 @@ public final class DistributedFlowProgramRunner extends DistributedProgramRunner
 
   @Override
   protected TwillPreparer setLogLevels(TwillPreparer twillPreparer, Program program, ProgramOptions options) {
+    Map<String, String> arguments = options.getUserArguments().asMap();
     FlowSpecification spec = program.getApplicationSpecification().getFlows().get(program.getName());
+
     for (String flowlet : spec.getFlowlets().keySet()) {
-      Map<String, String> logLevels = SystemArguments.getLogLevels(
-        RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE, flowlet, options.getUserArguments().asMap()));
+      Map<String, Level> logLevels = SystemArguments.getLogLevels(RuntimeArguments.extractScope(FlowUtils.FLOWLET_SCOPE,
+                                                                                                flowlet, arguments));
       if (!logLevels.isEmpty()) {
         twillPreparer.setLogLevels(flowlet, transformLogLevels(logLevels));
       }
