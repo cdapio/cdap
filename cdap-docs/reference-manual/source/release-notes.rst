@@ -36,7 +36,7 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
-1. ** Data Pipelines:**
+1. **Data Pipelines:**
 	- Support for conditional execution of parts of a pipeline
 	- Ability for pipelines to trigger other pipelines for cross-team, cross-pipeline inter-connectivity, and to build complex interconnected pipelines.
 	- Improved pipeline studio with redesigned nodes, undo/redo capability, metrics
@@ -44,19 +44,19 @@ Summary
 	- Custom icons and labels for pipeline plugins
 	- Operational insights into pipelines
 
-2. ** Data Preparation:**
+2. **Data Preparation:**
 	- Support for User Defined Directives (UDD), so users can write their own custom directives for cleansing/preparing data. 
 	- Restricting Directive Usage and ability to alias Directives for your IT Administrators to control directive access
 
-3. ** Governance & Security:**
+3. **Governance & Security:**
 	- Standardized authorization model 
 	- Apache Ranger Integration for authorization of CDAP entities
 
-4. ** Enhanced support for Apache Spark:**
+4. **Enhanced support for Apache Spark:**
 	- PySpark Support so data scientists can develop their Spark logic in Python, while still taking advantage of enterprise integration capabilities of CDAP
 	- Spark Dataframe Support so Spark developers can access CDAP datasets as Spark DataFrames
 
-5. ** New Frameworks and Tools:**
+5. **New Frameworks and Tools:**
 	- Microservices for real-time IoT use cases.
 	- Distributed Rules Engine - for Business Analysts to effectively manage rules for data transformation and data policy
 
