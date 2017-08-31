@@ -137,24 +137,26 @@ public class ProgramScheduleStoreDataset extends AbstractDataset {
     for (ApplicationSpecification appSpec : appMetaStore.getAllApplications(namespaceId)) {
       ApplicationId appId = namespaceId.app(appSpec.getName(), appSpec.getAppVersion());
       for (ScheduleSpecification scheduleSpec : appSpec.getSchedules().values()) {
-        ProgramSchedule schedule = Schedulers.toProgramSchedule(appId, scheduleSpec);
+        String scheduleName = scheduleSpec.getSchedule().getName();
         try {
+          ProgramSchedule schedule = Schedulers.toProgramSchedule(appId, scheduleSpec);
           ProgramId programId = schedule.getProgramId();
           ProgramScheduleStatus status = scheduler.scheduleState(programId, programId.getType().getSchedulableType(),
                                                                  schedule.getName());
           addScheduleWithStatus(schedule, status, System.currentTimeMillis());
         } catch (AlreadyExistsException e) {
           // This should never happen since no schedule with the same schedule key should exist before migration
-          LOG.warn("Schedule '{}' already exists before schedule migration. Skipped.", schedule.getScheduleId(), e);
+          LOG.warn("Schedule '{}' in app '{}' already exists before schedule migration. Skipped.",
+                   scheduleName, appId, e);
         } catch (NotFoundException e) {
-          LOG.warn("Schedule status of '{}' is not found during schedule migration. Skipped.",
-                   schedule.getScheduleId(), e);
+          LOG.warn("Schedule status of '{}' in app '{}' is not found during schedule migration. Skipped.",
+                   scheduleName, appId, e);
         } catch (SchedulerException e) {
-          LOG.warn("Scheduler exception happens when getting status of '{}' during schedule migration. Skipped.",
-                   schedule.getScheduleId(), e);
+          LOG.warn("Scheduler exception happens when getting status of '{}' in app '{}' during schedule migration." +
+                     " Skipped.", scheduleName, appId, e);
         } catch (Exception e) {
-          LOG.error("Unexpected exception happens when migrating schedule '{}'. Skipped.",
-                    schedule.getScheduleId(), e);
+          LOG.error("Unexpected exception happens when migrating schedule '{}' in app '{}'. Skipped.",
+                    scheduleName, appId, e);
         }
       }
     }
