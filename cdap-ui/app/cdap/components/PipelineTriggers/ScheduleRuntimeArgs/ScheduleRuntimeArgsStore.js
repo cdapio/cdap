@@ -17,7 +17,6 @@
 import {createStore, combineReducers} from 'redux';
 import {defaultAction} from 'services/helpers';
 import difference from 'lodash/difference';
-import isNil from 'lodash/isNil';
 import findIndex from 'lodash/findIndex';
 import T from 'i18n-react';
 
@@ -45,10 +44,8 @@ const UNMAPPEDCONFIGSTAGEPROPERTIES = {};
 const DEFAULTARGS = {
   triggeringPipelineInfo: {
     macros: DEFAULTMACROS,
-    unMappedMacros: DEFAULTMACROS,
     configStages: DEFAULTCONFIGSTAGES,
-    unMappedConfigStages: DEFAULTCONFIGSTAGES,
-    unMappedConfigStageProperties: UNMAPPEDCONFIGSTAGEPROPERTIES,
+    configStagesMap: UNMAPPEDCONFIGSTAGEPROPERTIES,
     id: null
   },
   triggeredPipelineInfo: {
@@ -68,42 +65,16 @@ const handleDefaultMessage = (input) => {
   return  isDefaultMessage(input) ? '' : input;
 };
 
-const getUsedProperties = (mapping) => {
-  let usedProperties = {};
-  mapping.forEach(arg => {
-    let key = arg.key;
-    if (isNil(key)) {
-      return;
-    }
-    key = key.split(DEFAULTFIELDDELIMITER);
-    if (key.length === 1) {
-      return;
-    }
-    let stage = key[1];
-    let property = key[2];
-    if (isNil(usedProperties[stage])) {
-      usedProperties[stage] = [property];
-    } else {
-      usedProperties[stage].push(property);
-    }
-  });
-  return usedProperties;
-};
-
-const getUnusedProperties = (usedProperties, stages) => {
-  let unUsedProperties = {};
+const arrayToMap = (stages) => {
+  let map = {};
   stages.forEach(stage => {
-    let usedPropertiesForStage = usedProperties[stage.id] || [];
     let properties = stage.properties;
-    if (usedPropertiesForStage.length) {
-      // filter out used properties
-      properties = properties.filter(prop => usedPropertiesForStage.indexOf(prop) === -1);
-    }
-    unUsedProperties[stage.id] = {
+
+    map[stage.id] = {
       properties
     };
   });
-  return unUsedProperties;
+  return map;
 };
 
 const getUpdatedMapping = (state, {key, value}, oldValue) => {
@@ -139,10 +110,8 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
       return Object.assign({}, state, {
         triggeringPipelineInfo: {
           macros: action.payload.macros,
-          unMappedMacros: action.payload.macros,
           configStages: action.payload.configStages,
-          unMappedConfigStages: action.payload.configStages,
-          unMappedConfigStageProperties: getUnusedProperties({}, action.payload.configStages),
+          configStagesMap: arrayToMap(action.payload.configStages),
           id: action.payload.id
         }
       });
@@ -160,21 +129,18 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
         key: action.payload.mappingKey,
         value: action.payload.mappingValue
       }, action.payload.oldMappedValue);
-      let usedProperties = getUsedProperties(argsMapping);
-      let unUsedProperties = getUnusedProperties(usedProperties, state.triggeringPipelineInfo.configStages);
-      return Object.assign({}, state, {
+
+      let returnObj = Object.assign({}, state, {
         argsMapping,
         triggeredPipelineInfo: Object.assign({}, state.triggeredPipelineInfo, {
           unMappedMacros: action.payload.mappingKey && action.payload.mappingValue ?
             difference(state.triggeredPipelineInfo.macros, argsMapping.map(arg => arg.value))
             :
             state.triggeredPipelineInfo.unMappedMacros
-        }),
-        triggeringPipelineInfo: Object.assign({}, state.triggeringPipelineInfo, {
-          unMappedConfigStageProperties: unUsedProperties,
-          unMappedMacros: difference(state.triggeringPipelineInfo.macros, argsMapping.map(arg => arg.key))
         })
       });
+
+      return returnObj;
     }
     case SCHEDULERUNTIMEARGSACTIONS.RESET:
       return DEFAULTARGS;

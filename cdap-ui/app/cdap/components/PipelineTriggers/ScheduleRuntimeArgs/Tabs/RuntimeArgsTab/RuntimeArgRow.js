@@ -56,8 +56,8 @@ export default class RuntimeArgRow extends Component {
     return key ? [key, DEFAULTRUNTIMEARGSMESSAGE] : [DEFAULTRUNTIMEARGSMESSAGE];
   };
 
-  getDisplayValueForTriggeredPipelineMacro = (triggeredPipelineInfo, triggeringPipelineInfo, key = this.state.key, value = this.state.value) => {
-    if (triggeredPipelineInfo.macros.indexOf(value) === -1 || triggeringPipelineInfo.unMappedMacros.indexOf(key) !== -1) {
+  getDisplayValueForTriggeredPipelineMacro = (triggeredPipelineInfo, triggeringPipelineInfo, value = this.state.value) => {
+    if (triggeredPipelineInfo.macros.indexOf(value) === -1) {
       return [DEFAULTTRIGGEREDMACROMESSAGE];
     }
     return value ? [value, DEFAULTTRIGGEREDMACROMESSAGE] : [DEFAULTTRIGGEREDMACROMESSAGE];
@@ -65,6 +65,7 @@ export default class RuntimeArgRow extends Component {
 
   render() {
     let {triggeringPipelineInfo, triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
+
     return (
       <Row>
         <Col xs={6}>
@@ -75,7 +76,7 @@ export default class RuntimeArgRow extends Component {
             >
               {
                 this.getDisplayValueForTriggeringPipelineMacro(triggeringPipelineInfo)
-                  .concat(triggeringPipelineInfo.unMappedMacros)
+                  .concat(triggeringPipelineInfo.macros)
                   .map((macro) => {
                     return (
                       <option
