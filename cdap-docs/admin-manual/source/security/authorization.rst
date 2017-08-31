@@ -435,7 +435,7 @@ do the following steps:
 
 - use the commands to grant *ADMIN* on these entities: ``namespace:ns1``, ``application:ns1.*``, ``program:ns1.*.*``,
   ``artifact:ns1.*``, ``dataset:ns1.*``, ``stream: ns1.*``, ``dataset_type:ns1.*``, ``dataset_module:ns1.*``,
-  ``securekey:ns1.* ``and ``kerberosprincipal.*`` to the role ``ns1_administrator``
+  ``securekey:ns1.*`` and ``kerberosprincipal.*`` to the role ``ns1_administrator``
 
 - add ``ns1_administrator`` to group ``admin``
 
