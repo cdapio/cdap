@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.ServiceException;
 import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.id.NamespacedEntityId;
 import co.cask.cdap.security.TokenSecureStoreRenewer;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -81,7 +83,12 @@ public class ImpersonationHandler extends AbstractHttpHandler {
     }
     ImpersonationRequest impersonationRequest = GSON.fromJson(requestContent, ImpersonationRequest.class);
     LOG.debug("Fetching credentials for {}", impersonationRequest);
-    UGIWithPrincipal ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
+    UGIWithPrincipal ugiWithPrincipal;
+    try {
+      ugiWithPrincipal = ugiProvider.getConfiguredUGI(impersonationRequest);
+    } catch (IOException e) {
+      throw new ServiceException(e, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
     Credentials credentials = ImpersonationUtils.doAs(ugiWithPrincipal.getUGI(), new Callable<Credentials>() {
       @Override
       public Credentials call() throws Exception {

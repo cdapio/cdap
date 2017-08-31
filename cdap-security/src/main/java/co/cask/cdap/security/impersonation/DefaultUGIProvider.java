@@ -127,8 +127,19 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
         throw new IOException(String.format("Keytab file is not a readable file: %s", localKeytabFile));
       }
 
-      UserGroupInformation loggedInUGI =
-        UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+      UserGroupInformation loggedInUGI;
+      try {
+        loggedInUGI =
+          UserGroupInformation.loginUserFromKeytabAndReturnUGI(expandedPrincipal, localKeytabFile.getAbsolutePath());
+      } catch (Exception e) {
+        // rethrow the exception with additional information tagged, so the user knows which principal/keytab is
+        // not working
+        throw new IOException(String.format("Failed to login for principal=%s, keytab=%s. Check that the principal " +
+                                              "was not deleted and that the keytab is still valid.",
+                                            expandedPrincipal, keytabURI),
+                              e);
+      }
+
       return new UGIWithPrincipal(impersonationRequest.getPrincipal(), loggedInUGI);
     } finally {
       if (!isKeytabLocal && !localKeytabFile.delete()) {
