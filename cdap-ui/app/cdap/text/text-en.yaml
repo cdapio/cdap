@@ -319,12 +319,13 @@ features:
         inputPlaceholder: Destination Column
         inputSuffix: _copy
         label: Copy to a new column
-      dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
+      dataErrorMessageTitle: Unable to load data.
+      dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
-      refreshBtnLinkLabel: Refresh
-      suggestionTitle: "You can try to:"
-      suggestion1: the page
       noData: No data. Try removing some directives.
+      refreshBtnLinkLabel: Refresh
+      suggestion1: the page
+      suggestionTitle: "You can try to:"
     DataPrepBrowser:
       DatabaseBrowser:
         EmptyMessage:
