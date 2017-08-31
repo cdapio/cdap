@@ -798,6 +798,9 @@ The request body is a JSON object specifying the details of the schedule to be c
     {
       "name": "<name of the schedule>",
       "description": "<schedule description>",
+      "namespace": "<namespace of the schedule>",
+      "application": "<application of the schedule>",
+      "applicationVersion": "<application version of the schedule>",
       "program": {
         "programName": "<name of the program>",
         "programType": "WORKFLOW"
@@ -821,7 +824,8 @@ The request body is a JSON object specifying the details of the schedule to be c
       "timeoutMillis": <timeout in milliseconds>
     }
 
-where a trigger is either a time trigger::
+where a trigger is of one of the :ref:`trigger types <schedules-triggers>`.
+It can be a time trigger::
 
     {
       "type": "TIME",
@@ -837,6 +841,47 @@ or a partition trigger::
         "dataset": "<name of the dataset>"
       },
       "numPartitions": <required number of partitions>
+    }
+
+or a program status trigger::
+
+    {
+      "programId": {
+          "namespace": "<namespace of the program>",
+          "application": "<application name of the program>",
+          "version": "<application version of the program>",
+          "type": "<type of the program>",
+          "entity": "PROGRAM",
+          "program": "<name of the program>"
+      },
+      "programStatuses": [ <COMPLETED>, <FAILED>, <KILLED> ],
+      "type": "PROGRAM_STATUS"
+    }
+
+or an `and` trigger, where "triggers" is a non-empty list of any type of triggers::
+
+    {
+      "triggers" : [
+        {
+          "type": "<trigger type>",
+          ...
+        },
+        ...
+      ],
+      "type": "AND"
+    }
+
+or an `or` trigger, where "triggers" is a non-empty list of any type of triggers::
+
+    {
+      "triggers" : [
+        {
+          "type": "<trigger type>",
+          ...
+        },
+        ...
+      ],
+      "type": "OR"
     }
 
 and a constraint can be one of::

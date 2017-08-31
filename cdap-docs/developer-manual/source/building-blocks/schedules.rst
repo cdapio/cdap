@@ -8,10 +8,12 @@
 Schedules
 =========
 
-*Schedules* are used to automate the execution of :ref:`workflows <workflows>` either on a
-recurring time basis or by data availability. The schedules of an application can be added
-as part of application configuration; they can also be managed through RESTful endpoints that
-allow listing, modifying, deleting and creating schedules, as well as disabling and enabling them.
+*Schedules* are used to automate the execution of :ref:`workflows <workflows>` on a
+recurring time basis, on data availability, on certain statuses reached by another program,
+or a logical combination of the conditions mentioned previously. The schedules of an
+application can be added as part of application configuration; they can also be managed
+through RESTful endpoints that allow listing, modifying, deleting and creating schedules,
+as well as disabling and enabling them.
 
 A schedule must have a unique name within its application (the same name can
 be used in different applications), and additionally consists of:
@@ -48,6 +50,21 @@ the same workflow is executing at that time. Note that:
 - This schedule does not specify properties for the workflow execution.
 - This schedule does not configure a timeout, such that the default timeout of one day
   is used.
+
+If more than one conditions are required to construct the *Trigger* for the schedule,
+to an application extended from ``AbstractApplication``, call method `getTriggerFactory
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#getTriggerFactory()>`__
+to get a ``TriggerFactory`` to create a specific *Trigger* as follows::
+
+  schedule(
+    buildSchedule("Workflow1AndWorkflow2CompletedSchedule", ProgramType.WORKFLOW, "TriggeredWorkflow")
+      .triggerOn(getTriggerFactory().and(getTriggerFactory().onProgramStatus(ProgramType.WORKFLOW, "Workflow1",
+                                                                             ProgramStatus.COMPLETED),
+                                         getTriggerFactory().onProgramStatus(ProgramType.WORKFLOW, "Workflow2",
+                                                                             ProgramStatus.COMPLETED)));
+
+This schedule uses an `and` trigger that can only be satisfied when both Workflow1
+is completed and Workflow2 is completed.
 
 Schedules can be added and controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle
 HTTP RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
@@ -104,11 +121,13 @@ Events and Notifications
 ========================
 
 Triggers are fired by events such as creation of a new partition in a dataset, or
-fulfillment of a cron expression of a time trigger. Events reach the scheduling system as
-notifications on the Transactional Messaging System (TMS). A single notification can
-contain multiple events, for example, two new partitions for a dataset. For a time
-trigger, the event contains the logical start time, that is, the time when the cron
+fulfillment of a cron expression of a time trigger, or the status of a program. 
+Events reach the scheduling system as notifications on the Transactional Messaging System (TMS). 
+A single notification can contain multiple events, for example, two new partitions for a dataset.
+For a time trigger, the event contains the logical start time, that is, the time when the cron
 expression fired. This logical start time is given to the workflow as a runtime argument.
+For a program status trigger, the event contains the triggering program status and
+the triggering program run id.
 
 .. _schedules-run-constraints:
 
@@ -147,15 +166,19 @@ Triggers
 
 A trigger can be based on time or data availability, These are the available trigger types:
 
-- ``.triggerByTime(String cronExpression)``: This triggers every time the cron expression
+- ``time``: This is triggered every time the cron expression
   is met. A time trigger is fulfilled immediately, allowing the job to transition into
   *pending constraints* state right away. When the workflow executes, the time at which
   the cron expression was fulfilled is passed to the workflow as its logical start time.
-- ``.triggerByPartition(String datasetName, int numPartitions)``: This is triggered by new
-  partitions in the named dataset (it must be a ``PartitionedFileSet`` or a
-  ``TimePartitionedFileSet``). While a single notification for new partitions in the
-  dataset suffices to to create a job for the schedule, it will remain in *pending trigger*
-  state until enough partitions have arrived to exceed the ``numPartitions`` parameter.
+- ``partition``: This is triggered by new partitions in the named dataset (it must be a
+  ``PartitionedFileSet`` or a ``TimePartitionedFileSet``). While a single notification for
+  new partitions in the dataset suffices to to create a job for the schedule, it will
+  remain in *pending trigger* state until enough partitions have arrived to exceed
+  the ``numPartitions`` parameter.
+- ``program status``: This is triggered when a given program in the specific namespace,
+  application, and application version transitions to any one of the given program statuses.
+- ``and``: This is triggered when all the triggers contained in it are satisfied.
+- ``or``: This is triggered when any of the given triggers contained in it is/are satisfied.
 
 .. _schedules-examples:
 
@@ -171,7 +194,7 @@ to the time window between 10pm and 6am::
 
 The same as before, but ensure that it runs only once in that time window::
 
-  schedule(buildSchedule("runOnlyAtNight", ProgramType.WORKFLOW, "clanupWorkflow")
+  schedule(buildSchedule("runOnlyAtNight", ProgramType.WORKFLOW, "cleanupWorkflow")
              .withTimeWindow("22:00", "06:00”).waitUntilMet()
              .withDurationSinceLastRun(6, TimeUnit.HOURS).abortIfNotMet()
              .triggerOnPartitions("myDataset", 1));
@@ -182,6 +205,16 @@ to allow additional data to arrive::
   schedule(buildSchedule("onPartitionWithDelay", ProgramType.WORKFLOW, "myWorkflow")
              .withDelay(15, TimeUnit.MINUTES)
              .triggerOnPartitions("myDataset", 4));
+
+To schedule a workflow named "cleanupWorkflow" to run whenever "dataProcessingWorkflow"
+(in the same namespace, application, and application version as "cleanupWorkflow")
+fails, and pass in the `src` directory in the "dataProcessingWorkflow" as the 
+`cleanup_dir` directory::
+
+  schedule(buildSchedule("onDataProcessingFail", ProgramType.WORKFLOW, "cleanupWorkflow")
+              .withProperties(ImmutableMap.of("triggering.properties.mapping", 
+                                              ImmutableMap.of("cleanup_dir", "src"))
+              .triggerOnProgramStatus(ProgramType.WORKFLOW, "dataProcessingWorkflow");
 
 To ensure that the workflow runs at least once per hour::
 
