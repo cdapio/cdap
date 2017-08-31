@@ -35,38 +35,35 @@ Authorization <admin-authorization>`.
 
 .. highlight:: json
 
-In this API, a JSON-formatted body is used that contains the principal, the CDAP entity, and the privileges to
+In this API, a JSON-formatted body is used that contains the principal, the CDAP authorizable, and the privileges to
 be granted::
 
   {
-    "entity": {
-      "namespace": "default",
-      "dataset": "dataset",
-      "entity": "DATASET"
+    "authorizable": {
+      "entityType": "DATASET",
+      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
     },
     "principal": {
       "name": "admin",
-      "type": "GROUP"
+      "type": "ROLE"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
 .. highlight:: console
 
-In the above JSON body, the ``entity`` object is the JSON-serialized form of the CDAP
-entity classes |---| for example, for datasets, it is the JSON representation of the
-:cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/co/cask/cdap/proto/id/DatasetId.java>`
-class; for programs, it is the JSON representation of the
-:cdap-java-source-github:`ProgramId <cdap-proto/src/main/java/co/cask/cdap/proto/id/ProgramId.java>`
-class.
+In the above JSON body, the ``authorizable`` object is the JSON-serialized form of the CDAP
+:cdap-java-source-github:`Authorizable <cdap-proto/src/main/java/co/cask/cdap/proto/id/Authorizable.java>` class.
+|---| for example, for datasets, its entity type is DATASET and it can be constructed by the namespace and dataset name.
+More info can be found at the :cdap-java-source-github:`DatasetId <cdap-proto/src/main/java/co/cask/cdap/proto/id/Authorizable.java>`
+class. In entity parts, the name of the entity can be represented using wildcard by including * and ? in the name.
+For example, ``ns*`` represents all namespaces that starts with ``ns``.
+``ns?`` represents all namespaces that starts with ``ns`` and follows by a single character.
 
 The ``principal`` object refers to the principal that you want to grant the privileges to.
-Principals have a ``name`` and a ``type``. The supported types are ``USER``, ``GROUP``, and
-``ROLE``.
+Principals have a ``name`` and a ``type``. The supported types are ``USER``, ``GROUP`` and ``ROLE``.
 
-**Please note that** ``ROLE`` **is experimental and has only been created for
-supporting integration with** :ref:`Apache Sentry <integrations:apache-sentry>`.
-**It may be removed in a future release.**
+**Please note that** the REST endpoints have only been created for supporting :ref:`Apache Sentry <integrations:apache-sentry>`.
 
 The ``actions`` list contains the actions you want to grant the ``principal`` on the
 ``entity``. The supported actions are ``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``.
@@ -86,19 +83,20 @@ with JSON-formatted body that contains the principal, the CDAP entity, and the a
 be granted, such as::
 
   {
-    "entity": {
-      "namespace": "default",
-      "dataset": "dataset",
-      "entity": "DATASET"
+    "authorizable": {
+      "entityType": "DATASET",
+      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
     },
     "principal": {
       "name": "admin",
-      "type": "GROUP"
+      "type": "ROLE"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
 .. highlight:: console
+
+- Granting privileges is only supported for ``ROLE`` type.
 
 .. rubric:: HTTP Responses
 
@@ -109,7 +107,7 @@ be granted, such as::
    * - Status Codes
      - Description
    * - ``200 OK``
-     - Privileges were successfully listed for the specified principal
+     - Privileges were successfully granted for the specified principal
 
 
 .. _http-restful-api-security-auth-revoke:
@@ -125,28 +123,27 @@ You can revoke privileges for a principal on a CDAP Entity by making an HTTP POS
 with JSON-formatted body that contains the principal, the CDAP entity and the actions to be revoked::
 
   {
-    "entity": {
-      "namespace": "default",
-      "dataset": "dataset",
-      "entity": "DATASET"
+    "authorizable": {
+      "entityType": "DATASET",
+      "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
     },
     "principal": {
       "name": "admin",
-      "type": "GROUP"
+      "type": "ROLE"
     },
     "actions": ["READ", "WRITE", "ADMIN"]
   }
 
 .. highlight:: console
 
-The ``entity`` object is mandatory in a revoke request.
+The ``authorizable`` object is mandatory in a revoke request.
 
 - If both ``principal`` and ``actions`` are not provided, then the API revokes all
   privileges on the specified entity for all principals.
-- If ``entity`` and ``principal`` are provided, but ``actions`` is not, the API revokes
+- If ``authorizable`` and ``principal`` are provided, but ``actions`` is not, the API revokes
   all actions (``READ``, ``WRITE``, ``ADMIN``, and ``EXECUTE``) on the specified entity for
   the specified principal.
-- Revoking privileges is only supported for ``GROUP`` or ``ROLE`` types.
+- Revoking privileges is only supported for ``ROLE`` type.
 
 .. rubric:: HTTP Responses
 
@@ -193,38 +190,36 @@ You can list all privileges for a principal on all CDAP entities by making an HT
 
 .. highlight:: json
 
-This will return a JSON array that lists each privilege for the principal with its ``entity`` and ``action``.
+This will return a JSON array that lists each privilege for the principal with its ``authorizable`` and ``action``.
 Example output (pretty-printed)::
 
   [
     {
-      "entity": {
-        "namespace": "default",
-        "dataset": "dataset",
-        "entity": "DATASET"
+      "authorizable": {
+        "entityType": "DATASET",
+        "entityParts": {"NAMESPACE": "default", "DATASET": "dataset"}
       },
       "action": "WRITE"
     },
     {
-      "entity": {
-        "namespace": "default",
-        "entity": "NAMESPACE"
+      "authorizable": {
+        "entityType": "NAMESPACE",
+        "entityParts": {"NAMESPACE": "default"}
       },
       "action": "READ"
     },
     {
-      "entity": {
-        "namespace": "default",
-        "application": "app",
-        "type": "Flow",
-        "program": "testflow",
-        "entity": "PROGRAM"
+      "authorizable": {
+        "entityType": "PROGRAM",
+        "entityParts":{"NAMESPACE": "default", "APPLICATION": "HelloWorld", "PROGRAM": "flow.testFlow"}
       },
       "action": "EXECUTE"
     }
   ]
 
 .. highlight:: console
+
+- Listing privileges are supported for ``USER``, ``GROUP`` and ``ROLE`` type.
 
 
 .. _http-restful-api-secure-storage:

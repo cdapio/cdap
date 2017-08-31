@@ -32,15 +32,16 @@ properties to :ref:`cdap-site.xml <appendix-cdap-default-security>`:
      - Absolute path of the JAR file to be used as the authorization extension. This file
        must be present on the local file system of the CDAP Master. In an HA environment, it
        should be present on the local file system of all CDAP Master hosts.
+   * - ``security.authorization.extension.extra.classpath`` (Optional)
+     - Extra classpath for security extension
 
 Authorization in CDAP only takes effect once :ref:`perimeter security
 <admin-perimeter-security>` is also enabled by setting ``security.enabled`` to ``true``.
-Additionally, it is recommended that Kerberos be enabled on the cluster by setting
-``kerberos.auth.enabled`` to ``true``.
+Additionally, Kerberos must be enabled on the cluster and for CDAP by setting
+``kerberos.auth.enabled`` to ``true`` since CDAP Authorization depends on Kerberos.
 
 These additional properties can also be optionally modified to configure authorization:
 
-- ``security.authorization.admin.users``
 - ``security.authorization.cache.max.entries``
 - ``security.authorization.cache.ttl.secs``
 
@@ -53,62 +54,62 @@ require additional properties to be configured. Please see the documentation on
 individual extensions for configuring properties specific to that extension:
 
 - :ref:`Integrations: Apache Sentry <apache-sentry>`
+- `Integrations: Apache Ranger <https://github.com/caskdata/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
 
 :ref:`Security extension properties <appendix-cdap-default-security>`, which are specified
 in ``cdap-site.xml``, begin with the prefix ``security.authorization.extension.config``.
 
-.. _security-cdap-instance:
-
-CDAP Instances
-==============
-The concept of a *CDAP Instance* has been introduced to support authorization policies in
-CDAP. A *CDAP Instance* is uniquely identified by an *instance name*, specified by the
-property ``instance.name`` in the :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Certain
-operations in CDAP (listed in the next section) require privileges on the CDAP instance
-identified by this property. One purpose of introducing this concept is to support, in the
-future, the notion of multiple CDAP instances on which authorization policies are enforced
-using the same authorization backend.
 
 .. _security-authorization-policies:
 
 Authorization Policies
 ======================
 Currently, CDAP allows users to enforce authorization for *READ*, *WRITE*, *EXECUTE*, and
-*ADMIN* operations. (This list will be expanded to allow for additional distinctions and
-be made finer-grained in the future.)
+*ADMIN* operations. The authorization model requires pre-granted privileges on entities for all
+operations.
 
 In general, this summarizes the authorization policies in CDAP:
 
-- A **create** operation on an entity requires *WRITE* on the entity's parent. For
-  example, creating a namespace requires *WRITE* on the CDAP instance. Deploying an
-  application, artifact, or dataset, or creating a stream requires a *WRITE* on the
-  namespace.
+- A **create** operation on an entity requires *ADMIN* on the entity. Privileges need to be pre-granted to
+  create the entity. For example, creating a namespace requires *ADMIN* on the namespace itself.
 - A **read** operation (such as reading from a dataset or a stream) on an entity requires
-  *READ* on the entity **and** *READ* on the parent.
+  *READ* on the entity.
 - A **write** operation (such as writing to a dataset or a stream) on an entity requires
   *WRITE* on the entity.
 - An **admin** operation (such as setting properties) on an entity requires *ADMIN* on
   the entity.
-- A **delete** operation on an entity requires *ADMIN* on the entity.
-- A **list** operation (such as listing or searching applications, datasets, streams,
+- A **delete** operation on an entity requires *ADMIN* on the entity. Note that if the deletion operation will delete
+  multiple entities, *ADMIN* is required on all the entities. For example, delete on a namespace requires *ADMIN* on
+  all entities in the namespace.
+- A **execute** operation on a program requires *EXECUTE* on the program.
+- A **list** or **view** operation (such as listing or searching applications, datasets, streams,
   artifacts) only returns those entities that the logged-in user has at least one (*READ*,
-  *WRITE*, *EXECUTE*, *ADMIN*) privilege on.
-- A **view** operation on an entity only succeeds if the user has at least one (*READ*,
-  *WRITE*, *EXECUTE*, *ADMIN*) privilege on it.
+  *WRITE*, *EXECUTE*, *ADMIN*) privilege on or on any of its descendants.
+- A **get** operation on an entity (such as getting the dataset property, app detail) only succeeds if the user has
+  at least one (*READ*, *WRITE*, *EXECUTE*, *ADMIN*) privilege on it or any of its descendants.
+- Only admins of the authorization backend can grant or revoke the privileges.
 
 Additionally:
 
-- Upon successful creation of an entity, the logged-in user receives all privileges
-  *(READ*, *WRITE*, *EXECUTE*, and *ADMIN)* on that entity.
-- Upon successful deletion of an entity, all privileges on that entity for all users are revoked.
+- Upon successful creation/deletion of an entity, the privileges remain unaffected.
+  It is the responsibility of the administrator to delete privileges from the authorization backend on entity deletion.
+  If the privileges are not deleted and the entity is recreated the privileges will affect the enforcement on the entity.
+- More privileges are needed for the following operations in the following cases:
+    - Deploying an application with new artifact requires *ADMIN* on the artifact.
+    - Deploying an application with existing artifact requires *READ, WRITE, EXECUTE,* or *ADMIN* on the artifact.
+    - Deploying an application requires *ADMIN* privilege on all the datasets and streams that will be created
+      along with the app, and *ADMIN* privilege on the dataset module and types if there are custom datasets.
+    - Creating a dataset needs *ADMIN* privilege on the dataset module and types if it is a custom dataset.
+    - If no impersonation is involved, correct privileges on the streams and datasets needs to be given to *cdap* to allow
+      *cdap* accessing these entities.
+    - If impersonation is involved, *admin* privilege on the principal is required to create a namespace, deploy an app
+      create dataset or streams.
 
-CDAP supports hierarchical authorization enforcement, which means that an operation that
-requires a certain privilege on an entity is allowed if the user has the same privilege on
-the entity's parent. For example, reading from a CDAP dataset will succeed even if the
-user does not have specific *READ* privileges on the dataset, but instead has *READ*
-privileges on the namespace in which the dataset exists.
-
-Note: :ref:`CDAP Instance <security-cdap-instance>` is not a part of the authorization hierarchy. For example, READ on a CDAP Instance does not give READ on any of the Namespaces or any other entities in the Namespace.
+CDAP does **not** support hierarchical authorization enforcement, which means that privileges on each entity
+are evaluated independently. CDAP has the concept of visibility, which means user will be able to view the entity if
+the user has any of the privilege on the entity or any of its descendants. For example, user can see the application if the user has
+*ADMIN* on the program. Note that visibility should not be confused with enforcement. In this case the user will not be
+able to to perform *ADMIN* action on the application itself.
 
 Authorization policies for various CDAP operations are listed in these tables:
 
@@ -124,15 +125,18 @@ Namespaces
    * - Operation
      - Privileges Required
    * - Create
-     - *WRITE* (on the CDAP instance)
+     - *ADMIN*
    * - Update
      - *ADMIN*
    * - Delete
-     - *ADMIN*
-   * - List
-     - Only returns those namespaces on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
-     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+     - *ADMIN* on the namespace, and *ADMIN* on all entities in the namespace, note that lack of the privileges may
+       result in an inconsistent state for the namespace. Some entities may get cleaned up while entities with insufficient
+       privileges will remain.
+   * - List/View
+     - Only returns those namespaces which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN* on the
+       namespace or on any of its descendants
+   * - Get
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN* on the namespace or any of its descendants
 
 .. _security-authorization-policies-artifacts:
 
@@ -146,16 +150,16 @@ Artifacts
    * - Operation
      - Privileges Required
    * - Add
-     - *WRITE* (on the namespace)
+     - *ADMIN*
    * - Add a property
      - *ADMIN*
    * - Remove a property
      - *ADMIN*
    * - Delete
      - *ADMIN*
-   * - List
+   * - List/View
      - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-applications:
@@ -170,13 +174,15 @@ Applications
    * - Operation
      - Privileges Required
    * - Add
-     - *WRITE* (on the namespace) and *READ* (on the artifact if deployed from an artifact)
+     - *ADMIN* (on the application) and *ADMIN* (if adding new artifacts) or
+       any privileges(if using existing artifacts) on the artifact
    * - Delete
      - *ADMIN*
-   * - List
-     - Only returns those applications on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
-     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - List/View
+     - Only returns those applications which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN* on the
+       application or on any of its descendants
+   * - Get
+     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN* on the application or any of its descendants
 
 .. _security-authorization-policies-programs:
 
@@ -190,19 +196,21 @@ Programs
    * - Operation
      - Privileges Required
    * - Start, Stop, or Debug
-     - *EXECUTE* (on the program) and *READ* (on the namespace)
+     - *EXECUTE*
    * - Set instances
      - *ADMIN*
    * - Set runtime arguments
      - *ADMIN*
    * - Retrieve runtime arguments
-     - *READ*
+     - At least one of *READ, EXECUTE* or *ADMIN*
    * - Retrieve status
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - List
+   * - List/View
      - Only returns those programs on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - Resume/Suspend schedule
+     - *EXECUTE*
 
 .. _security-authorization-policies-datasets:
 
@@ -216,22 +224,23 @@ Datasets
    * - Operation
      - Privileges Required
    * - Create
-     - *WRITE* (on the namespace)
+     - *ADMIN* on the dataset and, for custom datasets, at least one of *READ, WRITE, EXECUTE,* or *ADMIN* on the
+       dataset type
    * - Read
-     - *READ* (on the dataset and the namespace)
+     - *READ*
    * - Write
      - *WRITE*
    * - Update
-     - *ADMIN* (on the dataset) and *READ* (on the namespace)
+     - *ADMIN*
    * - Upgrade
      - *ADMIN*
    * - Truncate
      - *ADMIN*
    * - Drop
      - *ADMIN*
-   * - List
-     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+   * - List/View
+     - Only returns those datasets on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-dataset-modules:
@@ -246,14 +255,14 @@ Dataset Modules
    * - Operation
      - Privileges Required
    * - Deploy
-     - *WRITE* (on the namespace)
+     - *ADMIN*
    * - Delete
      - *ADMIN*
    * - Delete-all in the namespace
-     - *ADMIN* (on the namespace)
-   * - List
-     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+     - *ADMIN* on all dataset modules in the namespace
+   * - List/View
+     - Only returns those dataset modules on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-dataset-types:
@@ -267,9 +276,9 @@ Dataset Types
 
    * - Operation
      - Privileges Required
-   * - List
-     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+   * - List/View
+     - Only returns those dataset types on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-secure-keys:
@@ -284,13 +293,13 @@ Secure Keys
    * - Operation
      - Privileges Required
    * - Create
-     - *WRITE* (on the namespace)
+     - *ADMIN*
+   * - READ the secure data
+     - *READ*
    * - Delete
      - *ADMIN*
-   * - List
-     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
-     - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - List/View
+     - Only returns those secure keys on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
 .. _security-authorization-policies-streams:
 
@@ -304,89 +313,162 @@ Streams
    * - Operation
      - Privileges Required
    * - Create
-     - *WRITE* (on the namespace)
+     - *ADMIN*
    * - Retrieving events
-     - *READ* (on the stream and the namespace)
-   * - Retrieving properties
-     - At least one of *READ*, *WRITE*, *ADMIN*, or *EXECUTE*
+     - *READ*
    * - Sending events to a stream (sync, async, or batch)
-     - *WRITE* (on the stream) and *READ* (on the namespace)
+     - *WRITE*
    * - Drop
      - *ADMIN*
    * - Drop-all in the namespace
-     - *ADMIN* (on the namespace)
+     - *ADMIN* on all streams in the namespace
    * - Update
      - *ADMIN*
    * - Truncate
      - *ADMIN*
-   * - List
-     - Only returns those artifacts on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
-   * - View
+   * - List/View
+     - Only returns those streams on which user has at least one of *READ, WRITE, EXECUTE,* or *ADMIN*
+   * - Get
      - At least one of *READ, WRITE, EXECUTE,* or *ADMIN*
 
+.. _security-authorization-policies-principal:
 
-.. _security-bootstrapping-authorization:
+Kerberos Principal
+------------------
 
-Bootstrapping Authorization
-===========================
+.. list-table::
+   :widths: 25 75
+   :header-rows: 1
+
+   * - Operation
+     - Privileges Required
+   * - Deploy an app to impersonate a kerberos principal
+     - *ADMIN* on the principal
+   * - Create a namespace with owner prinicpal
+     - *ADMIN* on the principal
+   * - Create a dataset with owner prinicpal
+     - *ADMIN* on the principal
+   * - Create a stream with owner prinicpal
+     - *ADMIN* on the principal
+
+
+.. _security-pre-grant-wildcard-privilege:
+
+Pre-grant and Wildcard Privileges
+=================================
+The new authorization model requires pre-granted privilege on all entity for any operation.
 When CDAP is first started with authorization enabled, no users are granted privileges on
-any CDAP entities. Without any privileges, it can be impossible to bootstrap CDAP (create
-a new namespace or create entities in the *default* namespace) unless an
-external interface (such as `Hue <http://gethue.com/>`__) is used for a supported
-authorization extension (such as :ref:`Integrations: Apache Sentry <apache-sentry>`).
+any CDAP entities. Without any privileges, CDAP will not be able to create the default namespace.
+To create the default namespace, grant *ADMIN* on default namespace to the CDAP master user.
+The default namespace will get created in several minutes automatically.
 
-To make this bootstrap process easier, during startup the CDAP Master issues these grants to
-select users:
+To pre-grant the privilege, wildcard can be used to minimize the burden of granting privileges on all entities.
+Detailed ways of granting privileges can be found in the following sections for different authorization backends.
 
-- The user that runs the CDAP Master is granted *ADMIN* on the CDAP instance, so that the
-  *default* namespace can be created by that user if it does not already exist.
+.. _security-sentry-integration:
 
-- The user that runs the CDAP Master is granted *READ*, *WRITE*, *EXECUTE*, and
-  *ADMIN* on the system namespace, so operations such as creation of system tables,
-  deployment of system artifacts, and deployment of system dataset modules can be
-  performed by that user.
+Sentry Integration
+------------------
+:ref:`CDAP CLI <cdap-cli>` can be used to grant or revoke the privileges for :ref:`Integrations: Apache Sentry <apache-sentry>`.
 
-- Additionally, a comma-separated list of users specified as the
-  ``security.authorization.admin.users`` in ``cdap-site.xml`` is granted *ADMIN*
-  privileges on the CDAP instance and the *default* namespace, so that they have the
-  required privileges to create namespaces and grant other users access to the *default*
-  namespace. It is recommended that this property be set to the list of users that will
-  administer and manage the CDAP installation.
-
-You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands
-<cli-available-commands-security>`:
+You can use the :ref:`CDAP CLI <cdap-cli>` to issue :ref:`security commands <cli-available-commands-security>`.
+Wildcard can be used to grant or revoke actions on multiple entities by including ``*`` and ``?`` in the entity name:
 
 - To grant a principal privileges to perform certain actions on an entity, use::
 
     > grant actions <actions> on entity <entity-id> to <principal-type> <principal-name>
+    > revoke actions <actions> on entity <entity-id> from <principal-type> <principal-name>
 
   where:
 
   - ``<actions>`` is a comma-separated list of privileges, any of *READ, WRITE, EXECUTE,* or *ADMIN*.
 
   - ``<entity>`` is of the form ``<entity-type>:<entity-id>``, where ``<entity-type>`` is
-    one of ``namespace``, ``artifact``, ``app``, ``dataset``, ``program``, ``stream``, or ``view``.
+    one of ``namespace``, ``artifact``, ``application``, ``dataset``, ``program``, ``stream``, ``dataset_type`` or
+    ``dataset_module``.
 
   - For namespaces, ``<entity-id>`` is composed from the namespace, such as
     ``namespace:<namespace-name>``.
 
-  - For artifacts and apps, ``<entity-id>`` is composed of the namespace, entity name, and
-    version, such as ``<namespace-name>.<artifact-name>.<artifact-version>`` or
-    ``<namespace-name>.<app-name>.<app-version>``.
+  - For datasets, streams, artifacts and apps, ``<entity-id>`` is the namespace and entity names, such as
+    ``<namespace-name>.<dataset-name>``, ``<namespace-name>.<stream-name>``, ``<namespace-name>.<artifact-name>``,
+    and ``<namespace-name>.<app-name>``.
 
   - For programs, ``<entity-id>`` includes the application name and the program type:
     ``<namespace-name>.<app-name>.<program-type>.<program-name>``. ``<program-type>`` is
     one of flow, mapreduce, service, spark, worker, or workflow.
 
-  - For datasets and streams, ``<entity-id>`` is the namespace and entity names, such as
-    ``<namespace-name>.<dataset-name>`` or ``<namespace-name>.<stream-name>``.
+  - For datasets, streams, artifacts and apps, ``<entity-id>`` is the namespace and entity names, such as
+    ``<namespace-name>.<dataset-name>``, ``<namespace-name>.<stream-name>``, ``<namespace-name>.<artifact-name>``,
+    and ``<namespace-name>.<app-name>``.
 
-  - For (stream) views, ``<entity-id>`` includes the stream that they were created from:
-    ``<namespace-name>.<stream-name>.<view-name>``.
+  - ``<principal-type>`` can **only** be ``role`` since Sentry only supports granting privileges to roles.
+
+  - Wildcard can be used in each entity name to grant privileges to multiple entities. For example,
+    ``namespace:ns*`` represents all namespaces that starts with ``ns``.
+    ``namespace:ns?`` represents all namespaces that starts with ``ns`` and follows by a single character.
+    ``program:ns1.app1.*`` represents all types of programs in application app1 in namespace ns1.
+
+- To add the role to other principal, use::
+
+    > add role <role-name> to <principal-type> <principal-name>
+
+  where:
+
+  - ``<role-name>`` is the role name that adds to the principal.
+
+  - ``<principal-type>`` can **only** be ``group``.
+
+- To create a new role, use::
+
+    > create role <role-name>
 
 - To check the results, list the privileges for a principal::
 
     > list privileges for <principal-type> <principal-name>
+
+For example,
+to make ``alice``, in group ``admin``, as the administrator on a namespace ``ns1`` in a new environment,
+do the following steps:
+
+- create a new role ``ns1_administrator``
+
+- use the commands to grant *ADMIN* on these entities: ``namespace:ns1``, ``application:ns1.*``, ``program:ns1.*.*``,
+  ``artifact:ns1.*``, ``dataset:ns1.*``, ``stream: ns1.*``, ``dataset_type:ns1.*``, ``dataset_module:ns1.*``,
+  ``securekey:ns1.*`` and ``kerberosprincipal.*`` to the role ``ns1_administrator``
+
+- add ``ns1_administrator`` to group ``admin``
+
+Note that:
+
+- Only users in sentry admin group can be used to grant/revoke the privileges, this property can be set or updated by
+  changing property ``sentry.service.admin.group`` in sentry.
+- Any update to privileges will take some time to take effect based on the cache timeout. By default, the maximum
+  time will be 10 minutes.
+
+.. _security-ranger-integration:
+
+Ranger Integration
+------------------
+To use Apache Ranger as the authorization backend, please refer to `CDAP Ranger Extension <https://github.com/caskdata/cdap-security-extn/wiki/CDAP-Ranger-Extension>`_
+
+
+.. _security-differences-between-new-and-old-model:
+
+Differences Between New and Old Model
+=====================================
+CDAP has migrated to the new auth model in 4.3 and old auth model will not work. The detailed new authorization policy
+can be checked :ref:`above <security-authorization-policies>`.
+
+In general, this summarizes the authorization policies change in CDAP:
+   - No hierarchical authorization enforcement is supported, which means having a privilege on an entity's parent does
+     not give that privilege on the entity. For example, having *READ* on the namespace does not give *READ* to
+     the datasets and streams in the namespace.
+   - No authorization bootstrap, no privileges on instance and no admin users. The new model removes the requirement
+     of privileges on CDAP instance and admin users. Each privilege needs to be pre-granted to create the entity
+     either through CDAP CLI or through an external interface of the supported authorization extension.
+   - Automatic grant on entity creation and automatic revoke on entity deletion are removed. It is the responsibility
+     of the administrator to create and delete privileges.
 
 
 .. _security-auth-policy-pushdown:
