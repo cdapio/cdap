@@ -84,6 +84,8 @@ public class AuthorizationCLITest extends CLITestBase {
 
     private static String[] getAuthConfigs(File tmpDir) throws IOException {
       LocationFactory locationFactory = new LocalLocationFactory(tmpDir);
+      Location realmfile = locationFactory.create("realmfile");
+      realmfile.createNew();
       File file = new File(AppJarHelper.createDeploymentJar(locationFactory,
                                                             InMemoryAuthorizer.AuthorizableEntityId.class).toURI());
       Location authExtensionJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class, file);
@@ -91,6 +93,8 @@ public class AuthorizationCLITest extends CLITestBase {
         // We want to enable security, but bypass it for only testing authorization commands
         Constants.Security.ENABLED, "true",
         Constants.Security.AUTH_HANDLER_CLASS, BasicAuthenticationHandler.class.getName(),
+        // we bypass authentication, but BasicAuthenticationHandler requires a valid file upon initialization
+        Constants.Security.BASIC_REALM_FILE, realmfile.toString(),
         Constants.Security.Router.BYPASS_AUTHENTICATION_REGEX, ".*",
         Constants.Security.Authorization.ENABLED, "true",
         Constants.Security.Authorization.CACHE_MAX_ENTRIES, "0",

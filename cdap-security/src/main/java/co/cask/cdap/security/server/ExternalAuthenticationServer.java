@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -72,7 +71,6 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
   private Cancellable serviceCancellable;
   private Server server;
-  private InetAddress bindAddress;
 
   /**
    * Constants for a valid JSON response.
@@ -127,91 +125,81 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    try {
-      server = new Server();
+    server = new Server();
+    InetAddress bindAddress = InetAddress.getByName(cConfiguration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
 
-      try {
-        bindAddress = InetAddress.getByName(cConfiguration.get(Constants.Security.AUTH_SERVER_BIND_ADDRESS));
-      } catch (UnknownHostException e) {
-        LOG.error("Error finding host to connect to.", e);
-        throw e;
+    QueuedThreadPool threadPool = new QueuedThreadPool();
+    threadPool.setMaxThreads(maxThreads);
+    server.setThreadPool(threadPool);
+
+    initHandlers();
+
+    ServletContextHandler context = new ServletContextHandler();
+    context.setServer(server);
+    context.addServlet(HttpServletDispatcher.class, "/");
+    context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
+    context.setSecurityHandler(authenticationHandler);
+
+    // Status endpoint should be handled without the authentication
+    ContextHandler statusContext = new ContextHandler();
+    statusContext.setContextPath(Constants.EndPoints.STATUS);
+    statusContext.setServer(server);
+    statusContext.setHandler(new StatusRequestHandler());
+
+    if (cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
+      SslContextFactory sslContextFactory = new SslContextFactory();
+      String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
+      String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
+      String keyStoreType = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE,
+                                               Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
+      String keyPassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
+
+      Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
+      Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
+
+      sslContextFactory.setKeyStorePath(keyStorePath);
+      sslContextFactory.setKeyStorePassword(keyStorePassword);
+      sslContextFactory.setKeyStoreType(keyStoreType);
+      if (keyPassword != null && keyPassword.length() != 0) {
+        sslContextFactory.setKeyManagerPassword(keyPassword);
       }
 
-      QueuedThreadPool threadPool = new QueuedThreadPool();
-      threadPool.setMaxThreads(maxThreads);
-      server.setThreadPool(threadPool);
+      String trustStorePath = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
+      if (StringUtils.isNotEmpty(trustStorePath)) {
+        String trustStorePassword =
+          cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
+        String trustStoreType = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,
+                                                   Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
 
-      initHandlers();
+        // SSL handshaking will involve requesting for a client certificate, if cert is not provided
+        // server continues with the connection but the client is considered to be unauthenticated
+        sslContextFactory.setWantClientAuth(true);
 
-      ServletContextHandler context = new ServletContextHandler();
-      context.setServer(server);
-      context.addServlet(HttpServletDispatcher.class, "/");
-      context.addEventListener(new AuthenticationGuiceServletContextListener(handlers));
-      context.setSecurityHandler(authenticationHandler);
-
-      // Status endpoint should be handled without the authentication
-      ContextHandler statusContext = new ContextHandler();
-      statusContext.setContextPath(Constants.EndPoints.STATUS);
-      statusContext.setServer(server);
-      statusContext.setHandler(new StatusRequestHandler());
-
-      if (cConfiguration.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED, false)) {
-        SslContextFactory sslContextFactory = new SslContextFactory();
-        String keyStorePath = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PATH);
-        String keyStorePassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_PASSWORD);
-        String keyStoreType = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYSTORE_TYPE,
-                                                 Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
-        String keyPassword = sConfiguration.get(Constants.Security.AuthenticationServer.SSL_KEYPASSWORD);
-
-        Preconditions.checkArgument(keyStorePath != null, "Key Store Path Not Configured");
-        Preconditions.checkArgument(keyStorePassword != null, "KeyStore Password Not Configured");
-
-        sslContextFactory.setKeyStorePath(keyStorePath);
-        sslContextFactory.setKeyStorePassword(keyStorePassword);
-        sslContextFactory.setKeyStoreType(keyStoreType);
-        if (keyPassword != null && keyPassword.length() != 0) {
-          sslContextFactory.setKeyManagerPassword(keyPassword);
-        }
-
-        String trustStorePath = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
-        if (StringUtils.isNotEmpty(trustStorePath)) {
-          String trustStorePassword =
-            cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
-          String trustStoreType = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,
-                                                     Constants.Security.AuthenticationServer.DEFAULT_SSL_KEYSTORE_TYPE);
-
-          // SSL handshaking will involve requesting for a client certificate, if cert is not provided
-          // server continues with the connection but the client is considered to be unauthenticated
-          sslContextFactory.setWantClientAuth(true);
-
-          sslContextFactory.setTrustStore(trustStorePath);
-          sslContextFactory.setTrustStorePassword(trustStorePassword);
-          sslContextFactory.setTrustStoreType(trustStoreType);
-          sslContextFactory.setValidateCerts(true);
-        }
-        // TODO Figure out how to pick a certificate from key store
-
-        SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
-        sslConnector.setHost(bindAddress.getCanonicalHostName());
-        sslConnector.setPort(port);
-        server.setConnectors(new Connector[]{sslConnector});
-      } else {
-        SelectChannelConnector connector = new SelectChannelConnector();
-        connector.setHost(bindAddress.getCanonicalHostName());
-        connector.setPort(port);
-        server.setConnectors(new Connector[]{connector});
+        sslContextFactory.setTrustStore(trustStorePath);
+        sslContextFactory.setTrustStorePassword(trustStorePassword);
+        sslContextFactory.setTrustStoreType(trustStoreType);
+        sslContextFactory.setValidateCerts(true);
       }
+      // TODO Figure out how to pick a certificate from key store
 
-      HandlerCollection handlers = new HandlerCollection();
-      handlers.addHandler(statusContext);
-      handlers.addHandler(context);
-      // AuditLogHandler must be last, since it needs the response that was sent to the client
-      handlers.addHandler(auditLogHandler);
-
-      server.setHandler(handlers);
-    } catch (Exception e) {
-      LOG.error("Error while starting Authentication Server.", e);
+      SslSelectChannelConnector sslConnector = new SslSelectChannelConnector(sslContextFactory);
+      sslConnector.setHost(bindAddress.getCanonicalHostName());
+      sslConnector.setPort(port);
+      server.setConnectors(new Connector[]{sslConnector});
+    } else {
+      SelectChannelConnector connector = new SelectChannelConnector();
+      connector.setHost(bindAddress.getCanonicalHostName());
+      connector.setPort(port);
+      server.setConnectors(new Connector[]{connector});
     }
+
+    HandlerCollection handlers = new HandlerCollection();
+    handlers.addHandler(statusContext);
+    handlers.addHandler(context);
+    // AuditLogHandler must be last, since it needs the response that was sent to the client
+    handlers.addHandler(auditLogHandler);
+
+    server.setHandler(handlers);
 
     try {
       server.start();

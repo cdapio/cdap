@@ -88,9 +88,7 @@ public class AuthenticationServerMain extends DaemonMain {
         if (rootCause instanceof ServiceBindException) {
           LOG.error("Failed to start Authentication Server: {}", rootCause.getMessage());
         } else {
-          // exception stack trace will be logged by
-          // UncaughtExceptionIdleService.UNCAUGHT_EXCEPTION_HANDLER
-          LOG.error("Failed to start Authentication Server");
+          LOG.error("Failed to start Authentication Server", e);
         }
       }
     } else {
