@@ -20,6 +20,7 @@
 $loading_bar_color: white;
 $rule-book-metadata-color: #999999;
 $header-bg-color: #f5f5f5;
+$rule-book-create-fields-required-color: $cdap-red-text;
 
 .rule-book-details {
   padding: $tab_header_height;
@@ -83,7 +84,16 @@ $header-bg-color: #f5f5f5;
     padding: 10px;
     margin-left: -10px;
     margin-right: -10px;
+  }
 
+  .rule-book-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .rv-xy-plot.rv-radial-chart {
+      margin-top: -10px;
+    }
   }
 }
 
@@ -110,6 +120,12 @@ $header-bg-color: #f5f5f5;
     .form-control {
       margin: 10px 0;
     }
+
+    .fields-required-text {
+      color: $rule-book-create-fields-required-color;
+      font-size: 11px;
+    }
+
     .button-container {
       display: flex;
       align-items: center;
@@ -155,12 +171,5 @@ $header-bg-color: #f5f5f5;
 }
 
 .rule-book-metadata {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   margin: 10px 0 20px;
-
-  .rv-xy-plot.rv-radial-chart {
-    margin-top: -10px;
-  }
 }

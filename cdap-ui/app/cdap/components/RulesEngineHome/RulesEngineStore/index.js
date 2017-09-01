@@ -81,7 +81,8 @@ const rulebooks = (state = DEFAULTRULEBOOKSSTATE, action = defaultAction) => {
       });
     case RULESENGINEACTIONS.SETCREATERULEBOOK:
       return Object.assign({}, state, {
-        createRulebook: action.payload.isCreate
+        createRulebook: action.payload.isCreate,
+        activeRulebookId: null
       });
     case RULESENGINEACTIONS.SETRULEBOOKSLOADING:
       return Object.assign({}, state, {

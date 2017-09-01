@@ -489,6 +489,7 @@ features:
             description: Write your own regex pattern
           datePattern: Date
           datetimePattern: Date Time
+          disabledTooltip: Extracting fields using patterns can only be applied on columns of data type 'string'
           emailPattern: Email
           exampleLabel: 'E.g.'
           htmlHyperlinkPattern: URLs from HTML Anchors
@@ -552,7 +553,7 @@ features:
         replaceWith: Replace with
         title: Find and Replace
       Format:
-        disabledTooltip: "Format directives can only be executed on columns of type 'string' or 'date'"
+        disabledTooltip: "Format directives can only be executed on columns of data type 'string' or 'date'"
         Formats:
           CONCATENATE:
             addDescription: of the content of each row
@@ -1420,6 +1421,7 @@ features:
         today: Today
     CreateRulebook:
       admin: Admin
+      allFieldsRequired: "* All fields are required"
       createBtnLabel: Create Rulebook
       createBtnNext: "Next: Add Rules"
       created: Created
