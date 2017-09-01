@@ -255,3 +255,56 @@ To manually failover from the master to a slave cluster, follow these steps:
 #. Start CDAP on the slave::
 
     [slave] $ cdap master start
+
+
+Upgrading Replicated Clusters
+=============================
+Consider a scenario where CDAP is running on the master cluster with data getting replicated on the slave cluter.
+To upgrade the replicated clusters, follow these steps:
+
+1. Update the CDAP repository definition on the slave cluster by running either of these methods:
+
+  - On RPM using Yum:
+
+    .. include:: ../_includes/installation/installation.txt
+      :start-after: Download the Cask Yum repo definition file:
+      :end-before:  .. end_install-rpm-using-yum
+
+  - On Debian using APT:
+
+    .. include:: ../_includes/installation/installation.txt
+      :start-after: Download the Cask APT repo definition file:
+      :end-before:  .. end_install-debian-using-apt
+
+2. Update the CDAP packages on the slave cluster by running either of these methods:
+
+  - On RPM using Yum::
+
+    $ sudo yum upgrade 'cdap*'
+
+  - On Debian using APT::
+
+    $ sudo apt-get install --only-upgrade '^cdap.*'
+
+3. Generate the coprocessor jar on the slave cluster corresponding to the newly downloaded CDAP version::
+
+       $ sudo -u <cdap-user> cdap setup coprocessors
+
+   The coprocessor jar will be stored on the HDFS and path to the jar will be printed on console.
+
+4. Copy the coprocessor jar to the same HDFS location on the master cluster.
+
+5. Stop all CDAP services on the master cluster.
+
+6. Make sure that all HBase and HDFS data is replicated on the slave cluster.
+
+7. Run the upgrade tool on the slave cluster.::
+
+     $ sudo -u <cdap-user> /opt/cdap/master/bin/cdap run co.cask.cdap.data.tools.UpgradeTool upgrade
+
+   Since replication is enabled and HBaseDDLExecutor is in place, HBase tables on the master cluster will also get
+   upgraded.
+
+8. New version of the CDAP can be started on the slave cluster now.
+
+9. Download and install the new CDAP packages on the master cluster using the steps mentioned above for slave. This is to keep the master ready when there is a failover from slave. Note that there is no need to run the upgrade tool on the master since HBase tables on master were already upgraded when the upgrade tool was executed on the slave.
