@@ -26,7 +26,7 @@ CDAP_BRANCH='release/4.3'
 # otherwise, it should be CDAP_TAG=''
 CDAP_TAG=${CDAP_TAG:+hdi4.3}
 # The CDAP package version passed to Chef
-CDAP_VERSION='4.3.0-1'
+CDAP_VERSION='4.3.1-1'
 # The version of Chef to install
 CHEF_VERSION='12.10.24'
 # cdap-site.xml configuration parameters
