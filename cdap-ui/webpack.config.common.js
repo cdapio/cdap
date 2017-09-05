@@ -43,6 +43,10 @@ var loaders = [
     loader: 'style-loader!css-loader!sass-loader'
   },
   {
+    test: /\.json$/,
+    loader: 'json-loader'
+  },
+  {
     test: /\.js$/,
     loader: 'babel',
     exclude: /node_modules/
@@ -52,7 +56,7 @@ var loaders = [
     loader: 'url-loader?limit=10000&mimetype=application/font-woff'
   },
   {
-    test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+    test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     loader: 'file-loader'
   },
   {

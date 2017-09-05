@@ -17,7 +17,6 @@
 import React, { Component, PropTypes } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
 import DataPrepContentWrapper from 'components/DataPrep/DataPrepContentWrapper';
-import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
 import DataPrepLoading from 'components/DataPrep/DataPrepLoading';
 import DataPrepErrorAlert from 'components/DataPrep/DataPrepErrorAlert';
 import MyDataPrepApi from 'api/dataprep';
@@ -288,11 +287,10 @@ export default class DataPrep extends Component {
         </div>
 
         <div className="row dataprep-body">
-          <div className="dataprep-main col-xs-9">
+          <div className="dataprep-main col-xs-12">
             <DataPrepContentWrapper />
           </div>
 
-          <DataPrepSidePanel />
         </div>
 
         <DataPrepLoading />

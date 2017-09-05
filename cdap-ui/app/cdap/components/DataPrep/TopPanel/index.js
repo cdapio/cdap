@@ -343,6 +343,12 @@ export default class DataPrepTopPanel extends Component {
             </div>
           </div>
         </div>
+        {
+          !this.props.singleWorkspaceMode ?
+            <Switch />
+          :
+            null
+        }
 
         <div className="action-buttons">
           {
@@ -355,9 +361,7 @@ export default class DataPrepTopPanel extends Component {
             this.props.singleWorkspaceMode ?
               this.renderApplyBtn()
             :
-              (
-                <Switch />
-              )
+              null
           }
           {
             !this.props.singleWorkspaceMode ?

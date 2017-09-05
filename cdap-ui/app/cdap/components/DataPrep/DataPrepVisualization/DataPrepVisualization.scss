@@ -1,0 +1,139 @@
+/*
+ * Copyright © 2017 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+*/
+
+@import '~cask-datavoyager/build/style.css';
+@import '../../../styles/variables.scss';
+
+$left-pane-title-color: black;
+$datapane-bg-color: #f5f5f5;
+$encoding-pane-bg-color: #eeeeee;
+$wild-card-pill-bg-color: #dce0e9;
+$field-pill-bg-color: #cccccc;
+$encoding-shelf-bg-color: #989fb8;
+$encoding-shelf-font-color: white;
+
+.datapre-visualization {
+  height: 100%;
+  .voyager {
+    background: $cdap-white;
+    h2,
+    h3 {
+      color: $left-pane-title-color;
+    }
+    .SplitPane.vertical {
+      .Pane.vertical.Pane1 {
+        .pane.data-pane__data-pane {
+          background: $datapane-bg-color;
+          .data-pane__data-pane-title {
+            + div {
+              display: none;
+            }
+          }
+          h2.data-pane__data-pane-title,
+          .data-pane__data-pane-section h3 {
+            color: $left-pane-title-color;
+          }
+          .data-pane__data-pane-section {
+            .field-list__field-list {
+              .field__field-pill {
+                background-color: $field-pill-bg-color;
+              }
+            }
+            .field__wildcard-field-pill {
+              background: $wild-card-pill-bg-color;
+            }
+          }
+        }
+      }
+      .Pane.vertical.Pane2 {
+        .SplitPane.vertical {
+          .Pane.vertical.Pane1,
+          .Pane.vertical.Pane1 .pane.encoding-pane__encoding-pane {
+            background: $wild-card-pill-bg-color;
+          }
+          .Pane.vertical.Pane1 {
+            .pane.encoding-pane__encoding-pane {
+              .encoding-shelf__encoding-shelf,
+              .encoding-shelf__wildcard-shelf {
+                height: 25px;
+                padding: 2px;
+                border-radius: 6px;
+                color: $encoding-shelf-font-color;
+                background-color: $encoding-shelf-bg-color;
+                padding-left: 5px;
+                .encoding-shelf__shelf-label {
+                  display: inline-flex;
+                  align-items: center;
+                }
+                .encoding-shelf__placeholder {
+                  border-radius: 3px;
+                  display: inline-flex;
+                  align-items: center;
+                }
+                .encoding-shelf__field-wrapper,
+                .encoding-shelf__field-wrapper > div {
+                  height: 100%;
+                  border: none;
+                  color: $left-pane-title-color;
+                  .field__field-pill {
+                    height: 100%;
+                    align-items: center;
+                  }
+                }
+              }
+              .encoding-pane__shelf-group {
+                .filter-pane__filter-pane {
+                  .filter-pane__filter-shelf {
+                    overflow: auto;
+                  }
+                }
+              }
+            }
+          }
+          .Pane.vertical.Pane2 {
+            .view-pane__view-pane {
+              .plot-list__load-more {
+                cursor: pointer;
+                margin-top: 10px;
+                border-radius: 4px;
+              }
+            }
+            .view-pane__view-pane-gallery {
+              background: $encoding-shelf-font-color;
+            }
+            .plot__plot-list-item-group,
+            .plot__plot-group {
+              border: 1px solid $field-pill-bg-color;
+              border-radius: 4px;
+              overflow: auto;
+              .field__wildcard-field-pill {
+                background: $wild-card-pill-bg-color;
+              }
+              .persist-scroll.plot__plot-scroll {
+                overflow: auto;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.function-picker__function-chooser {
+  border: 1px solid $field-pill-bg-color;
+  padding: 10px;
+}

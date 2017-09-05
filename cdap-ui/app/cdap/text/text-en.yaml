@@ -804,6 +804,9 @@ features:
       PipelineModal:
         defaultErrorMessage: Error adding to pipeline
       realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      Tabs:
+        dataprep: Data
+        dataviz: Insights
       title: Data Preparation
       upgradeBtnLabel: Upgrade
       upload: Local File Upload
