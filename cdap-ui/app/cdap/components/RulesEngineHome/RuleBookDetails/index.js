@@ -255,7 +255,7 @@ export default class RuleBookDetails extends Component {
               {T.translate(`${PREFIX}.version`, {version: rulebookDetails.version})}
             </p>
           </div>
-          <div>
+          <div className="rulebook-menu-container">
             {
               integration.embedded ?
                 <button

@@ -16,9 +16,8 @@
 
 import React, { Component, PropTypes } from 'react';
 import DataPrepTopPanel from 'components/DataPrep/TopPanel';
-import DataPrepTable from 'components/DataPrep/DataPrepTable';
+import DataPrepContentWrapper from 'components/DataPrep/DataPrepContentWrapper';
 import DataPrepSidePanel from 'components/DataPrep/DataPrepSidePanel';
-import DataPrepCLI from 'components/DataPrep/DataPrepCLI';
 import DataPrepLoading from 'components/DataPrep/DataPrepLoading';
 import DataPrepErrorAlert from 'components/DataPrep/DataPrepErrorAlert';
 import MyDataPrepApi from 'api/dataprep';
@@ -281,7 +280,6 @@ export default class DataPrep extends Component {
 
           <div className="top-section-content float-xs-left">
             {this.renderTabs()}
-
             <DataPrepTopPanel
               singleWorkspaceMode={this.props.singleWorkspaceMode}
               onSubmit={this.onSubmitToListener.bind(this)}
@@ -291,8 +289,7 @@ export default class DataPrep extends Component {
 
         <div className="row dataprep-body">
           <div className="dataprep-main col-xs-9">
-            <DataPrepTable />
-            <DataPrepCLI />
+            <DataPrepContentWrapper />
           </div>
 
           <DataPrepSidePanel />
