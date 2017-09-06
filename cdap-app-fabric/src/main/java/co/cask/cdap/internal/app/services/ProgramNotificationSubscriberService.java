@@ -23,8 +23,10 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetManagementException;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.messaging.MessagePublisher;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.retry.RetryableException;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LogSamplers;
@@ -44,6 +46,7 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -78,6 +81,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final CConfiguration cConf;
   private final AtomicBoolean upgradeComplete;
   private final DatasetFramework datasetFramework;
+  private final String recordedProgramStatusPublishTopic;
 
   private ExecutorService taskExecutorService;
 
@@ -89,6 +93,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.cConf = cConf;
     this.datasetFramework = datasetFramework;
     this.upgradeComplete = new AtomicBoolean(false);
+    this.recordedProgramStatusPublishTopic = cConf.get(Constants.AppFabric.PROGRAM_STATUS_RECORD_EVENT_TOPIC);
   }
 
   @Override
@@ -144,7 +149,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     @Override
     protected void processNotifications(DatasetContext context,
-                                        AbstractNotificationSubscriberService.NotificationIterator notifications) {
+                                        AbstractNotificationSubscriberService.NotificationIterator notifications)
+      throws Exception {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       while (notifications.hasNext()) {
         processNotification(appMetadataStore, notifications.next(), notifications.getLastMessageId().getBytes());
@@ -152,7 +158,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
 
     private void processNotification(AppMetadataStore appMetadataStore, Notification notification,
-                                     byte[] messageIdBytes) {
+                                     byte[] messageIdBytes) throws Exception {
       Map<String, String> properties = notification.getProperties();
       // Required parameters
       String programRun = properties.get(ProgramOptionConstants.PROGRAM_RUN_ID);
@@ -195,6 +201,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
       long endTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.END_TIME);
 
+      ProgramRunStatus recordedStatus;
       switch(programRunStatus) {
         case STARTING:
           long startTimeSecs = getTimeSeconds(notification.getProperties(), ProgramOptionConstants.START_TIME);
@@ -212,9 +219,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           }
           Map<String, String> userArguments = GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
           Map<String, String> systemArguments = GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-          appMetadataStore.recordProgramStart(programId, runId, startTimeSecs, twillRunId,
-                                              userArguments, systemArguments, messageIdBytes);
-          return;
+          recordedStatus = appMetadataStore.recordProgramStart(programId, runId, startTimeSecs, twillRunId,
+                                                               userArguments, systemArguments, messageIdBytes);
+          break;
         case RUNNING:
           long logicalStartTimeSecs = getTimeSeconds(notification.getProperties(),
                                                      ProgramOptionConstants.LOGICAL_START_TIME);
@@ -223,14 +230,15 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                      programRunId, ProgramOptionConstants.LOGICAL_START_TIME, notification);
             return;
           }
-          appMetadataStore.recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId, messageIdBytes);
-          return;
+          recordedStatus =
+            appMetadataStore.recordProgramRunning(programId, runId, logicalStartTimeSecs, twillRunId, messageIdBytes);
+          break;
         case SUSPENDED:
-          appMetadataStore.recordProgramSuspend(programId, runId, messageIdBytes);
-          return;
+          recordedStatus = appMetadataStore.recordProgramSuspend(programId, runId, messageIdBytes);
+          break;
         case RESUMING:
-          appMetadataStore.recordProgramResumed(programId, runId, messageIdBytes);
-          return;
+          recordedStatus = appMetadataStore.recordProgramResumed(programId, runId, messageIdBytes);
+          break;
         case COMPLETED:
         case KILLED:
           if (endTimeSecs == -1) {
@@ -238,8 +246,9 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                      programRunId, notification);
             return;
           }
-          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null, messageIdBytes);
-          return;
+          recordedStatus =
+            appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, null, messageIdBytes);
+          break;
         case FAILED:
           if (endTimeSecs == -1) {
             LOG.warn("Ignore program failed notification for program {} without end time specified, {}",
@@ -247,12 +256,28 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             return;
           }
           BasicThrowable cause = decodeBasicThrowable(properties.get(ProgramOptionConstants.PROGRAM_ERROR));
-          appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause, messageIdBytes);
-          return;
+          recordedStatus =
+            appMetadataStore.recordProgramStop(programId, runId, endTimeSecs, programRunStatus, cause, messageIdBytes);
+          break;
         default:
           // This should not happen
           LOG.error("Unsupported program status {} for program {}, {}", programRunStatus, programRunId, notification);
+          return;
       }
+      if (recordedStatus != null) {
+        publishRecordedStatus(programRunId, recordedStatus);
+      }
+    }
+
+    private void publishRecordedStatus(ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
+      Notification programStatusNotification =
+        new Notification(Notification.Type.PROGRAM_STATUS,
+                         ImmutableMap.of(ProgramOptionConstants.PROGRAM_RUN_ID, GSON.toJson(programRunId),
+                                         ProgramOptionConstants.PROGRAM_STATUS, status.name()));
+
+      getMessagingContext().getMessagePublisher().publish(NamespaceId.SYSTEM.getNamespace(),
+                                                          recordedProgramStatusPublishTopic,
+                                                          GSON.toJson(programStatusNotification));
     }
 
     @Nullable
