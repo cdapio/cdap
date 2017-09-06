@@ -332,10 +332,17 @@ public class SparkTestRun extends TestFrameworkTestBase {
 
     Assert.assertEquals(100, count);
 
-    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
-                                               Constants.Metrics.Tag.APP, TestSparkApp.class.getSimpleName(),
-                                               Constants.Metrics.Tag.SPARK, PythonSpark.class.getSimpleName());
-    Assert.assertEquals(100, getMetricsManager().getTotalMetric(tags, "user.body"));
+    final Map<String, String> tags = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
+      Constants.Metrics.Tag.APP, TestSparkApp.class.getSimpleName(),
+      Constants.Metrics.Tag.SPARK, PythonSpark.class.getSimpleName());
+
+    Tasks.waitFor(100L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getMetricsManager().getTotalMetric(tags, "user.body");
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
 
