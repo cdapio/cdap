@@ -63,18 +63,18 @@ public class StreamSizeTrigger extends ProtoTrigger.StreamSizeTrigger implements
         continue;
       }
 
-      String userOverridesJson = notification.getProperties().get(ProgramOptionConstants.USER_OVERRIDES);
-      if (userOverridesJson == null) {
+      String systemOverridesJson = notification.getProperties().get(ProgramOptionConstants.SYSTEM_OVERRIDES);
+      if (systemOverridesJson == null) {
         LOG.warn("The notification '{}' in the job of schedule '{}' does not contain property '{}'.",
-                 notification, context.getSchedule(), ProgramOptionConstants.USER_OVERRIDES);
+                 notification, context.getSchedule(), ProgramOptionConstants.SYSTEM_OVERRIDES);
         continue;
       }
 
-      Map<String, String> userOverrides = GSON.fromJson(userOverridesJson, STRING_STRING_MAP);
+      Map<String, String> systemOverrides = GSON.fromJson(systemOverridesJson, STRING_STRING_MAP);
       try {
-        long streamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
-        long basePollingTime = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
-        long baseStreamSize = Long.valueOf(userOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
+        long streamSize = Long.valueOf(systemOverrides.get(ProgramOptionConstants.RUN_DATA_SIZE));
+        long basePollingTime = Long.valueOf(systemOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_TIME));
+        long baseStreamSize = Long.valueOf(systemOverrides.get(ProgramOptionConstants.RUN_BASE_COUNT_SIZE));
         TriggerInfo triggerInfo = new DefaultStreamSizeTriggerInfo(streamId.getNamespace(), streamId.getStream(),
                                                                    triggerMB, streamSize,
                                                                    basePollingTime, baseStreamSize);
