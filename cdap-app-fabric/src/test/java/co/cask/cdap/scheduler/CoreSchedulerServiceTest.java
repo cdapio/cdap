@@ -296,7 +296,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       testNewPartition(i + 1);
     }
 
-    // Enable COMPOSITE_SCHEDULE after previous new data partitions notifications are published
+    // Enable COMPOSITE_SCHEDULE before publishing events to DATASET_NAME2
     enableSchedule(AppWithFrequentScheduledWorkflows.COMPOSITE_SCHEDULE);
 
     // disable the two partition schedules, send them notifications (but they should not trigger)
@@ -335,8 +335,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // Publish two more new partition notifications to satisfy the partition trigger in the composite trigger,
     // and thus the whole composite trigger will be satisfied
-    minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     // This would make sure the subscriber has processed the data event
     waitUntilProcessed(dataEventTopic, minPublishTime);
@@ -537,7 +537,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       public Integer call() throws Exception {
         return getRuns(program, ProgramRunStatus.COMPLETED);
       }
-    }, 10, TimeUnit.SECONDS);
+    }, 30, TimeUnit.SECONDS);
   }
 
   private int getRuns(ProgramId workflowId, ProgramRunStatus status) {

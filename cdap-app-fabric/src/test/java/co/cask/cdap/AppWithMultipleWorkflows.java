@@ -56,7 +56,7 @@ public class AppWithMultipleWorkflows extends AbstractApplication {
 
     @Override
     public void run() {
-      LOG.info("Ran some dummy action");
+      LOG.info("Ran some dummy action {}", getContext().getWorkflowInfo().getName());
     }
   }
 
