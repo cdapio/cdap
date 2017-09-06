@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +38,7 @@ import javax.annotation.Nullable;
  * this ClassLoader just delegates to other ClassLoaders, but never define class, hence no Class
  * loaded by this class would have {@link Class#getClassLoader()}} returning this ClassLoader.
  */
-public class CombineClassLoader extends ClassLoader {
+public class CombineClassLoader extends URLClassLoader {
 
   private static final Logger LOG = LoggerFactory.getLogger(CombineClassLoader.class);
   private final List<ClassLoader> delegates;
@@ -47,8 +50,19 @@ public class CombineClassLoader extends ClassLoader {
    * @param delegates list of ClassLoaders for delegation
    */
   public CombineClassLoader(@Nullable ClassLoader parent, Iterable<? extends ClassLoader> delegates) {
-    super(parent);
+    super(new URL[0], parent);
     this.delegates = ImmutableList.copyOf(delegates);
+  }
+
+  @Override
+  public URL[] getURLs() {
+    List<URL> urls = new ArrayList<>();
+    for (ClassLoader delegate : delegates) {
+      if (delegate instanceof URLClassLoader) {
+        Collections.addAll(urls, ((URLClassLoader) delegate).getURLs());
+      }
+    }
+    return urls.toArray(new URL[urls.size()]);
   }
 
   /**
@@ -72,7 +86,7 @@ public class CombineClassLoader extends ClassLoader {
   }
 
   @Override
-  protected URL findResource(String name) {
+  public URL findResource(String name) {
     for (ClassLoader classLoader : delegates) {
       URL url = classLoader.getResource(name);
       if (url != null) {
@@ -83,7 +97,7 @@ public class CombineClassLoader extends ClassLoader {
   }
 
   @Override
-  protected Enumeration<URL> findResources(String name) throws IOException {
+  public Enumeration<URL> findResources(String name) throws IOException {
     // Using LinkedHashSet to preserve the ordering
     Set<URL> urls = Sets.newLinkedHashSet();
     for (ClassLoader classLoader : delegates) {

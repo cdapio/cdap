@@ -22,6 +22,7 @@ import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -40,7 +41,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -93,6 +93,8 @@ public final class SparkPackageUtils {
   private static final String SPARK_YARN_JAR = "spark.yarn.jar";
   // Spark2 conf key for spark archive (zip of jars) location
   private static final String SPARK_YARN_ARCHIVE = "spark.yarn.archive";
+  // The Hive conf directories as determined by the startup script
+  private static final String EXPLORE_CONF_DIRS = "explore.conf.dirs";
 
   // Environment variable name for locating spark home directory
   private static final String SPARK_HOME = Constants.SPARK_HOME;
@@ -215,41 +217,74 @@ public final class SparkPackageUtils {
                                                      File.createTempFile(SPARK_DEFAULTS_CONF, null, tempDir));
     localizeResources.put(SPARK_DEFAULTS_CONF, new LocalizeResource(sparkDefaultConfFile));
 
-    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR
+    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR and the explore conf directory
     // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
-    // This is part of workaround for CDAP-5019 (SPARK-13441).
-    File hadoopConfDir = null;
+    // This is part of workaround for CDAP-5019 (SPARK-13441) and CDAP-12330
+    List<File> configDirs = new ArrayList<>();
+
     if (System.getenv().containsKey(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())) {
-      hadoopConfDir = new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key()));
+      configDirs.add(new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())));
     } else {
       URL yarnSiteLocation = SparkPackageUtils.class.getClassLoader().getResource("yarn-site.xml");
-      if (yarnSiteLocation != null) {
-        try {
-          hadoopConfDir = new File(yarnSiteLocation.toURI()).getParentFile();
-        } catch (URISyntaxException e) {
-          // Shouldn't happen
-          LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml");
-        }
+      if (yarnSiteLocation == null || !"file".equals(yarnSiteLocation.getProtocol())) {
+        LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml location: {}", yarnSiteLocation);
+      } else {
+        configDirs.add(new File(yarnSiteLocation.getPath()).getParentFile());
       }
     }
-    if (hadoopConfDir != null && hadoopConfDir.isDirectory()) {
-      try {
-        final File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
-        try (
-          ZipOutputStream zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))
-        ) {
-          for (File file : DirUtils.listFiles(hadoopConfDir)) {
-            // Shallow copy of files under the hadoop conf dir. Ignore files that cannot be read
-            if (file.isFile() && file.canRead()) {
-              zipOutput.putNextEntry(new ZipEntry(file.getName()));
-              Files.copy(file.toPath(), zipOutput);
-            }
+
+    // Include the explore config dirs as well
+    Splitter splitter = Splitter.on(File.pathSeparatorChar).omitEmptyStrings();
+    for (String dir: splitter.split(System.getProperty(EXPLORE_CONF_DIRS, ""))) {
+      configDirs.add(new File(dir));
+    }
+
+    if (!configDirs.isEmpty()) {
+      File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
+      Set<String> entries = new HashSet<>();
+      try (ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))) {
+        for (File configDir : configDirs) {
+          try {
+            LOG.debug("Adding files from {} to {}.zip", configDir, LOCALIZED_CONF_DIR);
+            addConfigFiles(configDir, entries, output);
+          } catch (IOException e) {
+            LOG.warn("Failed to create archive from {}", configDir, e);
           }
         }
-        localizeResources.put(LOCALIZED_CONF_DIR, new LocalizeResource(targetFile, true));
-      } catch (IOException e) {
-        LOG.warn("Failed to create archive from {}", hadoopConfDir, e);
       }
+      localizeResources.put(LOCALIZED_CONF_DIR, new LocalizeResource(targetFile, true));
+      env.put("YARN_CONF_DIR", "$PWD/" + LOCALIZED_CONF_DIR);
+    }
+  }
+
+  /**
+   * Shallow copy of files under the given directory. Files that cannot be read are ignored.
+   *
+   * @param dir the directory
+   * @param entries entries that were already added. This method should update this set when adding new entries
+   * @param zipOutput the {@link ZipOutputStream} to write to
+   */
+  private static void addConfigFiles(File dir, Set<String> entries, ZipOutputStream zipOutput) throws IOException {
+    for (File file : DirUtils.listFiles(dir)) {
+      // Ignore files that cannot be read or the same file was added (happen when this method get called multiple times)
+      if (!file.isFile() || !file.canRead() || !entries.add(file.getName())) {
+        continue;
+      }
+
+      zipOutput.putNextEntry(new ZipEntry(file.getName()));
+
+      // Rewrite the hive-site.xml file to set "hive.metastore.token.signature" to "hiveserver2ClientToken"
+      if ("hive-site.xml".equals(file.getName())) {
+        Configuration conf = new Configuration(false);
+        conf.clear();
+        conf.addResource(file.toURI().toURL());
+        conf.set("hive.metastore.token.signature", "hiveserver2ClientToken");
+        conf.writeXml(zipOutput);
+      } else {
+        Files.copy(file.toPath(), zipOutput);
+      }
+
+      zipOutput.closeEntry();
     }
   }
 

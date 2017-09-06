@@ -23,22 +23,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Enumeration;
 
 /**
  * A ClassLoader that do class loading by delegating to another ClassLoader. It holds the delegating ClassLoader
  * with a {@link WeakReference} so that garbage collection of the delegating ClassLoader is possible.
  */
-public class WeakReferenceDelegatorClassLoader extends ClassLoader implements Delegator<ClassLoader> {
+public class WeakReferenceDelegatorClassLoader extends URLClassLoader implements Delegator<ClassLoader> {
 
   private static final Logger LOG = LoggerFactory.getLogger(WeakReferenceDelegatorClassLoader.class);
+  private static final URL[] EMPTY_URLS = new URL[0];
 
   private final WeakReference<ClassLoader> delegate;
 
   public WeakReferenceDelegatorClassLoader(ClassLoader classLoader) {
-    // Parent is null, meaning it's the bootstrap ClassLoader
-    super(null);
+    // Wrap the parent with a weak reference as well.
+    super(EMPTY_URLS,
+          classLoader.getParent() == null ? null : new WeakReferenceDelegatorClassLoader(classLoader.getParent()));
     this.delegate = new WeakReference<>(classLoader);
+  }
+
+  @Override
+  public URL[] getURLs() {
+    ClassLoader delegate = ensureDelegateExists();
+    if (delegate instanceof URLClassLoader) {
+      return ((URLClassLoader) delegate).getURLs();
+    }
+    return EMPTY_URLS;
   }
 
   @Override
