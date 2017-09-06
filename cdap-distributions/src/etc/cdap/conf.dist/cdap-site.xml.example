@@ -81,7 +81,7 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.default.replication.factor</name>
+    <name>kafka.server.default.replication.factor</name>
     <value>1</value>
     <description>
       CDAP Kafka service replication factor; used to replicate Kafka

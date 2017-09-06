@@ -463,7 +463,7 @@ CDAP Kafka
 - Two properties govern the Kafka setting in the cluster:
 
   - The **list of Kafka seed brokers** is generated automatically, but the
-    replication factor (``kafka.default.replication.factor``) is not set
+    replication factor (``kafka.server.default.replication.factor``) is not set
     automatically. Instead, it needs to be set manually.
   - The **replication factor** is used to replicate Kafka messages across
     multiple machines to prevent data loss in the event of a hardware
