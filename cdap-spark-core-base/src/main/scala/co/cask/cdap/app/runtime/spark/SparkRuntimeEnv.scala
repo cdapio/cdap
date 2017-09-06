@@ -23,6 +23,7 @@ import org.apache.spark.scheduler.SparkListener
 import org.apache.spark.streaming.StreamingContext
 import org.slf4j.LoggerFactory
 
+import java.lang.Thread.UncaughtExceptionHandler
 import java.util
 import java.util.Properties
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -51,6 +52,7 @@ object SparkRuntimeEnv {
   private var streamingContext: Option[StreamingContext] = None
   private val batchedWALs = new mutable.ListBuffer[AnyRef]
   private val rateControllers = new mutable.ListBuffer[AnyRef]
+  private val pyMonitorThreads = new mutable.ListBuffer[Thread]
   private val sparkListeners = new ConcurrentLinkedQueue[SparkListener]()
 
   /**
@@ -151,6 +153,28 @@ object SparkRuntimeEnv {
   }
 
   /**
+    * Adds the reference to MonitorThread instance for interrupting the thread on completion.
+    * @param thread
+    */
+  def addPyMonitorThread(thread: Thread): Unit = {
+    this.synchronized {
+      thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler {
+        override def uncaughtException(t: Thread, e: Throwable): Unit = {
+          e match {
+            case e: InterruptedException => LOG.trace("Thread {} interrupted", t)
+            case e => LOG.warn("Exception raised from {}", t: Any, e: Any)
+          }
+        }
+      })
+      if (stopped) {
+        thread.interrupt()
+        throw new IllegalStateException("Spark program is already stopped")
+      }
+      pyMonitorThreads += thread
+    }
+  }
+
+  /**
     * Returns the current [[org.apache.spark.SparkContext]].
     *
     * @throws IllegalStateException if there is no SparkContext available.
@@ -221,7 +245,7 @@ object SparkRuntimeEnv {
       ssc.foreach(_.stop(false, false))
     } finally {
       sc.foreach(context => {
-        val cleanup = createCleanup(context, batchedWALs, rateControllers);
+        val cleanup = createCleanup(context, batchedWALs, rateControllers, pyMonitorThreads);
         try {
           context.stop
         } finally {
@@ -241,7 +265,9 @@ object SparkRuntimeEnv {
     * associated with the given SparkContext.
     */
   private def createCleanup(sc: SparkContext,
-                            batchedWALs: Iterable[AnyRef], rateControllers: Iterable[AnyRef]): () => Unit = {
+                            batchedWALs: Iterable[AnyRef],
+                            rateControllers: Iterable[AnyRef],
+                            pyMonitorThreads: Iterable[Thread]): () => Unit = {
     val closers = ArrayBuffer.empty[Option[() => Unit]]
 
     // Create a closer function for the file server in Spark
@@ -278,6 +304,18 @@ object SparkRuntimeEnv {
 
     // Create a closer function for shutting down all executor services
     closers += Some(() => rateControllers.foreach(stopRateController))
+
+    // Create a closer function for interrupting MonitorThread
+    closers += Some(() => pyMonitorThreads.foreach(t => {
+      while (t.isAlive) {
+        LOG.debug("Interrupting {}", t)
+        t.interrupt()
+        // Wait for 200ms for the thread to terminate. If not, try to interrupt it again.
+        // The monitor thread has a 10 seconds sleep after it do its work.
+        // So this loop should be able to kill the thread.
+        t.join(200)
+      }
+    }))
 
     // Creates a function that calls all closers
     () => closers.foreach(_.foreach(_()))
