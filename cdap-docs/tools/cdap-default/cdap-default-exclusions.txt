@@ -4,7 +4,6 @@ log.process.pipeline.buffer.size
 log.process.pipeline.logger.cache.expiration.ms
 log.process.pipeline.logger.cache.size
 log.saver.status.bind.address
-metrics.query.bind.address
 
 # Deprecated properties
 

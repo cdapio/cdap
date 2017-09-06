@@ -111,17 +111,6 @@
   </property>
 
 
-  <!-- Metrics Configuration -->
-  
-  <property>
-    <name>metrics.query.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Metrics Query service bind address
-    </description>
-  </property>
-
-
   <!-- Router Configuration -->
 
   <property>

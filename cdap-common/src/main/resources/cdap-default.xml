@@ -2094,22 +2094,6 @@
   </property>
 
   <property>
-    <name>metrics.query.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Metrics query service bind address
-    </description>
-  </property>
-
-  <property>
-    <name>metrics.query.bind.port</name>
-    <value>45005</value>
-    <description>
-      Metrics query service bind port
-    </description>
-  </property>
-
-  <property>
     <name>metrics.topic.prefix</name>
     <value>metrics</value>
     <description>

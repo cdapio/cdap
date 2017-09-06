@@ -417,13 +417,11 @@ public class TestBase {
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
     cConf.set(Constants.Stream.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
-    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
     cConf.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);
     cConf.set(Constants.Metadata.SERVICE_BIND_ADDRESS, localhost);
-    cConf.set(Constants.Metrics.SERVER_PORT, Integer.toString(Networks.getRandomPort()));
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
