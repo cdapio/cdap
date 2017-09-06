@@ -170,7 +170,7 @@ public class Schedulers {
     try {
       CronExpression.validateExpression(quartzCron);
     } catch (ParseException e) {
-      throw new IllegalArgumentException(e);
+      throw new IllegalArgumentException(String.format("Invalid cron expression '%s'", quartzCron), e);
     }
   }
 
@@ -182,7 +182,7 @@ public class Schedulers {
     // Checks if the cronEntry is quartz cron Expression or unix like cronEntry format.
     // CronExpression will directly be used for tests.
     String parts [] = cronEntry.split(" ");
-    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format");
+    Preconditions.checkArgument(parts.length >= 5 , "Invalid cron entry format in '%s'", cronEntry);
     if (parts.length == 5) {
       // Convert cron entry format to Quartz format by replacing wild-card character "*"
       // if day-of-the-month is not "?" and day-of-the-week is wild-card, replace day-of-the-week with "?"
