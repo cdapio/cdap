@@ -110,7 +110,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
                         MessagingService messagingService) {
     super(program, programOptions, cConf, spec.getDataSets(), dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(workflowProgramInfo), secureStore, secureStoreManager,
-          messagingService, pluginInstantiator);
+          messagingService, pluginInstantiator, false);
 
     this.workflowProgramInfo = workflowProgramInfo;
     this.loggingContext = createLoggingContext(program.getId(), getRunId(), workflowProgramInfo);
