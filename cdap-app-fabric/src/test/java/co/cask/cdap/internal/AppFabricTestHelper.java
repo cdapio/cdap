@@ -119,10 +119,12 @@ public class AppFabricTestHelper {
       configuration.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder("data").getAbsolutePath());
       configuration.set(Constants.AppFabric.REST_PORT, Integer.toString(Networks.getRandomPort()));
       configuration.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+      // Speed up tests
+      configuration.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
+      configuration.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+
       injector = Guice.createInjector(Modules.override(new AppFabricTestModule(configuration, sConf)).with(overrides));
-      if (configuration.getBoolean(Constants.Security.ENABLED) &&
-        configuration.getBoolean(Constants.Security.Authorization.ENABLED)) {
-      }
+
       MessagingService messagingService = injector.getInstance(MessagingService.class);
       if (messagingService instanceof Service) {
         ((Service) messagingService).startAndWait();

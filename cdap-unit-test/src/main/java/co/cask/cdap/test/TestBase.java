@@ -428,6 +428,11 @@ public class TestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR, TMP_FOLDER.newFolder("hive").getAbsolutePath());
+
+    // Speed up test
+    cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
+    cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
+
     return cConf;
   }
 
