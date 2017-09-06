@@ -1038,6 +1038,14 @@ features:
       timeRangeTitle: Select Time Range
       to: To
 
+  HttpExecutor:
+    body: Body
+    header: Header
+    path: Path
+    responseTitle: Response
+    send: Send
+    statusCode: Status Code
+
   JumpButton:
     buttonLabel: Jump
     viewHydrator: View in Hydrator

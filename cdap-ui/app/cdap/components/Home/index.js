@@ -27,6 +27,7 @@ import DataPrepHome from 'components/DataPrepHome';
 import DataPrepConnections from 'components/DataPrepConnections';
 import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
