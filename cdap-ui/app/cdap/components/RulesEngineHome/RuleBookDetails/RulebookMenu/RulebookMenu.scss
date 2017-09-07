@@ -17,8 +17,8 @@
 $icon-color: #999999;
 
 .rule-book-menu {
-  display: inline-block;
-  vertical-align: top;
+  display: inline-flex;
+  align-items: flex-end;
 
   .dropdown {
     > .btn.btn-secondary {
@@ -28,6 +28,7 @@ $icon-color: #999999;
       align-items: flex-end;
       background-color: transparent;
       color: $icon-color;
+      padding: 0 0 0 10px;
 
       &:focus,
       &:hover,

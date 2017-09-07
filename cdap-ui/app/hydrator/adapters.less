@@ -134,6 +134,7 @@ body.theme-cdap {
   &.state-hydrator-detail {
     .detail-canvas-container {
       position: relative;
+
       .run-level-information {
         padding: 20px 20px 0px 20px;
         position: absolute;
@@ -187,6 +188,12 @@ body.theme-cdap {
           margin-right: 20px;
           font-weight: 500;
           color: black;
+        }
+
+        &.no-runs {
+          > span {
+            padding: 0 15px;
+          }
         }
       }
     }

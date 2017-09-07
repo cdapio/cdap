@@ -27,6 +27,8 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
+import co.cask.cdap.api.schedule.TriggerInfo;
+import co.cask.cdap.api.schedule.TriggeringScheduleInfo;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
@@ -46,6 +48,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
@@ -91,19 +94,16 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
-@Ignore
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
@@ -137,10 +137,9 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-  private static final Gson GSON = new GsonBuilder()
+  private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(WorkflowTokenDetail.class, new WorkflowTokenDetailCodec())
     .create();
-  private static final Type NOTIFICATION_LIST_TYPE = new TypeToken<List<Notification>>() { }.getType();
 
   private static MessagingService messagingService;
   private static Store store;
@@ -295,7 +294,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       testNewPartition(i + 1);
     }
 
-    // Enable COMPOSITE_SCHEDULE after previous new data partitions notifications are published
+    // Enable COMPOSITE_SCHEDULE before publishing events to DATASET_NAME2
     enableSchedule(AppWithFrequentScheduledWorkflows.COMPOSITE_SCHEDULE);
 
     // disable the two partition schedules, send them notifications (but they should not trigger)
@@ -334,8 +333,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
 
     // Publish two more new partition notifications to satisfy the partition trigger in the composite trigger,
     // and thus the whole composite trigger will be satisfied
-    minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
+    minPublishTime = System.currentTimeMillis();
     publishNotification(dataEventTopic, NamespaceId.DEFAULT, AppWithFrequentScheduledWorkflows.DATASET_NAME2);
     // This would make sure the subscriber has processed the data event
     waitUntilProcessed(dataEventTopic, minPublishTime);
@@ -345,13 +344,16 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     for (RunRecordMeta runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
       Map<String, String> sysArgs = runRecordMeta.getSystemArgs();
+      Assert.assertNotNull(sysArgs);
+      TriggeringScheduleInfo scheduleInfo = GSON.fromJson(sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO),
+                                                  TriggeringScheduleInfo.class);
       Assert.assertEquals(AppWithFrequentScheduledWorkflows.TEN_SECOND_SCHEDULE_1,
-                          sysArgs.get(ProgramOptionConstants.SCHEDULE_NAME));
-      List<Notification> notifications =
-        GSON.fromJson(sysArgs.get(ProgramOptionConstants.EVENT_NOTIFICATIONS), NOTIFICATION_LIST_TYPE);
+                          scheduleInfo.getName());
+
+      List<TriggerInfo> triggerInfos = scheduleInfo.getTriggerInfos();
       // Only one notification is enough to satisfy Time Trigger
-      Assert.assertEquals(1, notifications.size());
-      Assert.assertEquals(Notification.Type.TIME, notifications.get(0).getNotificationType());
+      Assert.assertEquals(1, triggerInfos.size());
+      Assert.assertEquals(TriggerInfo.Type.TIME, triggerInfos.get(0).getType());
     }
 
     // Also verify that the two partition schedules did not trigger
@@ -533,7 +535,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       public Integer call() throws Exception {
         return getRuns(program, ProgramRunStatus.COMPLETED);
       }
-    }, 10, TimeUnit.SECONDS);
+    }, 30, TimeUnit.SECONDS);
   }
 
   private int getRuns(ProgramId workflowId, ProgramRunStatus status) {

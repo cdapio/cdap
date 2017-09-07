@@ -158,7 +158,8 @@
 
               <div class="node-metadata">
                 <div class="node-name"
-                      ng-bind="node.plugin.label || node.name | myEllipsis: 15">
+                      ng-bind="node.plugin.label || node.name | myEllipsis: 15"
+                      ng-attr-title="{{node.plugin.label || node.name}}">
                 </div>
                 <div class="node-version"
                       ng-class="{ 'hidden': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"

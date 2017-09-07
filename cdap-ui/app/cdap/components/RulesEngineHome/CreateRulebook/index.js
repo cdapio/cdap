@@ -102,6 +102,9 @@ export default class CreateRulebook extends Component {
             placeholder={T.translate(`${PREFIX}.descriptionplaceholder`)}
           >
           </textarea>
+          <p className="fields-required-text">
+            <i>{T.translate(`${PREFIX}.allFieldsRequired`)}</i>
+          </p>
           <div className="button-container">
             <Button
               color="secondary"

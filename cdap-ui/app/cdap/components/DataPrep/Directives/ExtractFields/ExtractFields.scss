@@ -32,6 +32,12 @@ $menu-hover-bg: #dddddd;
             background-color: $menu-hover-bg;
           }
         }
+
+        &.disabled {
+          .option {
+            cursor: not-allowed;
+          }
+        }
       }
     }
   }

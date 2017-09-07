@@ -14,9 +14,15 @@
   the License.
 -->
 
-<div class="run-level-information" ng-if="CanvasCtrl.currentRunIndex && CanvasCtrl.totalRuns">
+<div class="run-level-information"
+      ng-class="{'no-runs': !CanvasCtrl.currentRunIndex || !CanvasCtrl.totalRuns}">
   <h3 class="run-number-container">
-    Run {{CanvasCtrl.currentRunIndex}} of {{CanvasCtrl.totalRuns}}
+    <span ng-if="CanvasCtrl.currentRunIndex && CanvasCtrl.totalRuns">
+      Run {{CanvasCtrl.currentRunIndex}} of {{CanvasCtrl.totalRuns}}
+    </span>
+    <span ng-if="!CanvasCtrl.currentRunIndex || !CanvasCtrl.totalRuns">
+      No Runs
+    </span>
   </h3>
 
   <span>
@@ -26,6 +32,7 @@
     >
     </span>
     <strong ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.currentRun.status}}</strong>
+    <strong ng-if="!CanvasCtrl.currentRun.startTime && !CanvasCtrl.currentRun.starting">Deployed</strong>
     <strong ng-if="CanvasCtrl.currentRun.starting">Starting</strong>
   </span>
   <span>
@@ -48,10 +55,6 @@
     <span ng-if="CanvasCtrl.currentRun.startTime">{{CanvasCtrl.logsMetrics['system.app.log.error'] || '0'}}</span>
     <span ng-if="!CanvasCtrl.currentRun.startTime">--</span>
   </span>
-</div>
-
-<div class="run-level-information" ng-if="!CanvasCtrl.totalRuns">
-  <h3> Deployed </h3>
 </div>
 
 <my-dag-plus
