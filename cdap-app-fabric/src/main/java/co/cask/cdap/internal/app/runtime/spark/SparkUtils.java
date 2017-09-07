@@ -20,6 +20,8 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +30,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -37,9 +38,13 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
@@ -68,6 +73,9 @@ public final class SparkUtils {
   // File name of the Spark conf directory as defined by the Spark framework
   // This is for the Hack to workaround CDAP-5019 (SPARK-13441)
   public static final String LOCALIZED_CONF_DIR = "__spark_conf__";
+
+  // The Hive conf directories as determined by the startup script
+  private static final String EXPLORE_CONF_DIRS = "explore.conf.dirs";
 
   private static Map<String, String> sparkEnv;
 
@@ -163,44 +171,81 @@ public final class SparkUtils {
       localizeResources.put(sparkDefaultConfFile.getName(), new LocalizeResource(sparkDefaultConfFile));
     }
 
-    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR
+    // Shallow copy all files under directory defined by $HADOOP_CONF_DIR and the explore conf directory
     // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
-    // This is part of workaround for CDAP-5019 (SPARK-13441).
-    File hadoopConfDir = null;
+    // This is part of workaround for CDAP-5019 (SPARK-13441) and CDAP-12330
+    List<File> configDirs = new ArrayList<>();
+
     if (System.getenv().containsKey(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())) {
-      hadoopConfDir = new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key()));
+      configDirs.add(new File(System.getenv(ApplicationConstants.Environment.HADOOP_CONF_DIR.key())));
     } else {
       URL yarnSiteLocation = SparkUtils.class.getClassLoader().getResource("yarn-site.xml");
-      if (yarnSiteLocation != null) {
-        try {
-          hadoopConfDir = new File(yarnSiteLocation.toURI()).getParentFile();
-        } catch (URISyntaxException e) {
-          // Shouldn't happen
-          LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml");
-        }
+      if (yarnSiteLocation == null || !"file".equals(yarnSiteLocation.getProtocol())) {
+        LOG.warn("Failed to derive HADOOP_CONF_DIR from yarn-site.xml location: {}", yarnSiteLocation);
+      } else {
+        configDirs.add(new File(yarnSiteLocation.getPath()).getParentFile());
       }
     }
-    if (hadoopConfDir != null && hadoopConfDir.isDirectory()) {
+
+    // Include the explore config dirs as well
+    Splitter splitter = Splitter.on(File.pathSeparatorChar).omitEmptyStrings();
+    for (String dir: splitter.split(System.getProperty(EXPLORE_CONF_DIRS, ""))) {
+      configDirs.add(new File(dir));
+    }
+
+    if (!configDirs.isEmpty()) {
       try {
-        final File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
-        try (
-          ZipOutputStream zipOutput = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))
-        ) {
-          for (File file : DirUtils.listFiles(hadoopConfDir)) {
-            // Shallow copy of files under the hadoop conf dir. Ignore files that cannot be read
-            if (file.isFile() && file.canRead()) {
-              zipOutput.putNextEntry(new ZipEntry(file.getName()));
-              Files.copy(file.toPath(), zipOutput);
+        File targetFile = File.createTempFile(LOCALIZED_CONF_DIR, ".zip", tempDir);
+        Set<String> entries = new HashSet<>();
+        try (ZipOutputStream output = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(targetFile)))) {
+          for (File configDir : configDirs) {
+            try {
+              LOG.debug("Adding files from {} to {}.zip", configDir, LOCALIZED_CONF_DIR);
+              addConfigFiles(configDir, entries, output);
+            } catch (IOException e) {
+              LOG.warn("Failed to create archive from {}", configDir, e);
             }
           }
         }
         localizeResources.put(LOCALIZED_CONF_DIR, new LocalizeResource(targetFile, true));
       } catch (IOException e) {
-        LOG.warn("Failed to create archive from {}", hadoopConfDir, e);
+        LOG.warn("Failed to create {}.zip file. Spark program execution may fail, " +
+                   "depending on the hadoop distribution version", LOCALIZED_CONF_DIR);
       }
     }
 
     return sparkAssemblyJar.getName();
+  }
+
+  /**
+   * Shallow copy of files under the given directory. Files that cannot be read are ignored.
+   *
+   * @param dir the directory
+   * @param entries entries that were already added. This method should update this set when adding new entries
+   * @param zipOutput the {@link ZipOutputStream} to write to
+   */
+  private static void addConfigFiles(File dir, Set<String> entries, ZipOutputStream zipOutput) throws IOException {
+    for (File file : DirUtils.listFiles(dir)) {
+      // Ignore files that cannot be read or the same file was added (happen when this method get called multiple times)
+      if (!file.isFile() || !file.canRead() || !entries.add(file.getName())) {
+        continue;
+      }
+
+      zipOutput.putNextEntry(new ZipEntry(file.getName()));
+
+      // Rewrite the hive-site.xml file to set "hive.metastore.token.signature" to "hiveserver2ClientToken"
+      if ("hive-site.xml".equals(file.getName())) {
+        Configuration conf = new Configuration(false);
+        conf.clear();
+        conf.addResource(file.toURI().toURL());
+        conf.set("hive.metastore.token.signature", "hiveserver2ClientToken");
+        conf.writeXml(zipOutput);
+      } else {
+        Files.copy(file.toPath(), zipOutput);
+      }
+
+      zipOutput.closeEntry();
+    }
   }
 
   /**
@@ -237,6 +282,7 @@ public final class SparkUtils {
     // The spark-defaults.conf will be localized to container
     // and we shouldn't have SPARK_HOME set
     env.put(SPARK_CONF_DIR, "$PWD");
+    env.put("YARN_CONF_DIR", "$PWD/" + LOCALIZED_CONF_DIR);
     env.remove(SPARK_HOME);
 
     // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
