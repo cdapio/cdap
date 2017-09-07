@@ -32,9 +32,10 @@
 </div>
 
 <div class="row preview-tab" ng-if="HydratorPlusPlusNodeConfigCtrl.previewData">
+
   <!-- INPUT RECORDS -->
   <div ng-class="{'col-xs-12': HydratorPlusPlusNodeConfigCtrl.state.isSink, 'preview-records input': true, 'col-xs-6': HydratorPlusPlusNodeConfigCtrl.state.isTransform }"
-       ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSource">
+       ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSource && !HydratorPlusPlusNodeConfigCtrl.state.isCondition">
     <h4>Input Records</h4>
 
     <div ng-repeat="(key, value) in HydratorPlusPlusNodeConfigCtrl.previewData.input">
@@ -103,7 +104,7 @@
 
   <!-- OUTPUT RECORDS -->
   <div ng-class="{'col-xs-12': HydratorPlusPlusNodeConfigCtrl.state.isSource, 'preview-records output': true, 'col-xs-6': HydratorPlusPlusNodeConfigCtrl.state.isTransform}"
-      ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">
+      ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink && !HydratorPlusPlusNodeConfigCtrl.state.isCondition">
 
     <h4>Output Records</h4>
 
@@ -143,6 +144,16 @@
         Output records are not available for stage "{{ HydratorPlusPlusNodeConfigCtrl.state.node.plugin.label }}". Please try running preview again.
       </h4>
     </div>
+  </div>
 
+  <!-- NEITHER (CONDITION STAGES) -->
+  <div class="col-xs-12 preview-records"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.state.isCondition">
+    <h4>Input Records & Output Records</h4>
+    <div class="text-center">
+      <h4 class="message">
+        Preview data is not supported for condition stages.
+      </h4>
+    </div>
   </div>
 </div>
