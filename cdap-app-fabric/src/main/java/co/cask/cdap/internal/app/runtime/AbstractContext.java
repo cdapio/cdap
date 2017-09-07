@@ -141,6 +141,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final int defaultTxTimeout;
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
+  // whether the context classloader should be set when executing a TxRunnable.
+  // when true, the context classloader will be set to a CombineClassloader[ProgramClassLoader, MainClassLoader]
+  // when false, it is assumed that the caller will be setting the context classloader correctly
+  private final boolean shouldSetContextClassloader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
 
@@ -160,7 +164,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
                             SecureStore secureStore, SecureStoreManager secureStoreManager,
                             MessagingService messagingService,
-                            @Nullable PluginInstantiator pluginInstantiator) {
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            boolean shouldSetContextClassloader) {
     super(program.getId());
 
     this.program = program;
@@ -216,6 +221,18 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     if (!multiThreaded) {
       datasetCache.addExtraTransactionAware(messagingContext);
     }
+    this.shouldSetContextClassloader = shouldSetContextClassloader;
+  }
+
+  protected AbstractContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
+                            Set<String> datasets, DatasetFramework dsFramework, TransactionSystemClient txClient,
+                            DiscoveryServiceClient discoveryServiceClient, boolean multiThreaded,
+                            @Nullable MetricsCollectionService metricsService, Map<String, String> metricsTags,
+                            SecureStore secureStore, SecureStoreManager secureStoreManager,
+                            MessagingService messagingService,
+                            @Nullable PluginInstantiator pluginInstantiator) {
+    this(program, programOptions, cConf, datasets, dsFramework, txClient, discoveryServiceClient, multiThreaded,
+         metricsService, metricsTags, secureStore, secureStoreManager, messagingService, pluginInstantiator, true);
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -503,7 +520,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Execute in a transaction with optional retry on conflict.
    */
   public void execute(final TxRunnable runnable, boolean retryOnConflict) throws TransactionFailureException {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    final ClassLoader originalClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
     try {
       Transactional txnl = retryOnConflict
         ? Transactions.createTransactionalWithRetry(transactional, RetryStrategies.retryOnConflict(20, 100))
@@ -511,7 +528,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       txnl.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          ClassLoader oldClassLoader = shouldSetContextClassloader ?
+            setContextCombinedClassLoader() : ClassLoaders.setContextClassLoader(originalClassLoader);
           try {
             runnable.run(context);
           } finally {
@@ -520,18 +538,19 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         }
       });
     } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
+      ClassLoaders.setContextClassLoader(originalClassLoader);
     }
   }
 
   @Override
   public void execute(int timeoutInSeconds, final TxRunnable runnable) throws TransactionFailureException {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    final ClassLoader originalClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
     try {
       transactional.execute(timeoutInSeconds, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          ClassLoader oldClassLoader = shouldSetContextClassloader ?
+            setContextCombinedClassLoader() : ClassLoaders.setContextClassLoader(originalClassLoader);
           try {
             runnable.run(context);
           } finally {
@@ -540,7 +559,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
         }
       });
     } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
+      ClassLoaders.setContextClassLoader(originalClassLoader);
     }
   }
 

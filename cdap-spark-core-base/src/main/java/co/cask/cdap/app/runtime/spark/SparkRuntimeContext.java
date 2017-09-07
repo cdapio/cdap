@@ -83,7 +83,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       MessagingService messagingService) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
-          secureStore, secureStoreManager, messagingService, pluginInstantiator);
+          secureStore, secureStoreManager, messagingService, pluginInstantiator, false);
     this.cConf = cConf;
     this.hConf = hConf;
     this.hostname = hostname;

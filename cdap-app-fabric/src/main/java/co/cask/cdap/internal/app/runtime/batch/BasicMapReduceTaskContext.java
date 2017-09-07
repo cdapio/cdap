@@ -135,7 +135,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             MessagingService messagingService) {
     super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
-          secureStoreManager, messagingService, pluginInstantiator);
+          secureStoreManager, messagingService, pluginInstantiator, false);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;
