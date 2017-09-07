@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,20 +18,16 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.customaction.AbstractCustomAction;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.dataset.lib.ObjectStores;
 import co.cask.cdap.api.schedule.Schedules;
+import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Application with workflow scheduling based on a {@link StreamSizeSchedule}.
@@ -45,21 +41,15 @@ public class AppWithStreamSizeSchedule extends AbstractApplication {
 
   @Override
   public void configure() {
-    try {
-      setName("AppWithStreamSizeSchedule");
-      setDescription("Sample application");
-      ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
-      ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
-      addWorkflow(new SampleWorkflow());
-      addStream(new Stream("stream"));
+    setName("AppWithStreamSizeSchedule");
+    setDescription("Sample application");
+    addWorkflow(new SampleWorkflow());
+    addStream(new Stream("stream"));
 
-      scheduleWorkflow(Schedules.builder("SampleSchedule1").createDataSchedule(Schedules.Source.STREAM, "stream", 1),
-                       "SampleWorkflow", SCHEDULE_PROPS);
-      scheduleWorkflow(Schedules.builder("SampleSchedule2").createDataSchedule(Schedules.Source.STREAM, "stream", 2),
-                       "SampleWorkflow", SCHEDULE_PROPS);
-    } catch (UnsupportedTypeException e) {
-      throw Throwables.propagate(e);
-    }
+    scheduleWorkflow(Schedules.builder("SampleSchedule1").createDataSchedule(Schedules.Source.STREAM, "stream", 1),
+                     "SampleWorkflow", SCHEDULE_PROPS);
+    scheduleWorkflow(Schedules.builder("SampleSchedule2").createDataSchedule(Schedules.Source.STREAM, "stream", 2),
+                     "SampleWorkflow", SCHEDULE_PROPS);
   }
 
   /**
@@ -79,18 +69,16 @@ public class AppWithStreamSizeSchedule extends AbstractApplication {
    * DummyAction
    */
   public static class DummyAction extends AbstractCustomAction {
-    private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
     public void run() {
-      LOG.info("Ran dummy action");
-      try {
-        TimeUnit.MILLISECONDS.sleep(500);
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someValue"));
-      } catch (InterruptedException e) {
-        LOG.info("Interrupted");
-      }
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someValue"));
+
+      List<TriggerInfo> triggerInfos = getContext().getTriggeringScheduleInfo().getTriggerInfos();
+      Preconditions.checkState(triggerInfos.size() == 1);
+      TriggerInfo info = triggerInfos.get(0);
+      Preconditions.checkState(info.getType() == TriggerInfo.Type.STREAM_SIZE);
     }
   }
 }

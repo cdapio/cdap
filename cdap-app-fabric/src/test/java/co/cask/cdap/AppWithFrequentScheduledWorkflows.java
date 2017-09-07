@@ -64,7 +64,7 @@ public class AppWithFrequentScheduledWorkflows extends AbstractApplication {
       );
     // OrTrigger with only TimeTrigger to be triggered
     Trigger orTrigger2 =
-      getTriggerFactory().or(getTriggerFactory().byTime("*/9 * * * * ?"),
+      getTriggerFactory().or(getTriggerFactory().byTime("*/5 * * * * ?"),
                              getTriggerFactory().onProgramStatus(ProgramType.WORKFLOW, SCHEDULED_WORKFLOW_1,
                                                                  ProgramStatus.KILLED));
     schedule(buildSchedule(COMPOSITE_SCHEDULE, ProgramType.WORKFLOW, COMPOSITE_WORKFLOW)

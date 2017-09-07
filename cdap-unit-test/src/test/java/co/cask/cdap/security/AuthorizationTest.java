@@ -266,6 +266,7 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException e) {
       // Expected
     }
+    flowManager.waitForStatus(false);
 
     authorizer.grant(streamId1, ALICE, ImmutableSet.of(Action.READ));
     flowManager.start();
