@@ -140,8 +140,8 @@ To sample the *cleanRecords* ``PartitionedFileSet``, execute an explore query us
 
   $ cdap cli execute "\"SELECT record FROM dataset_cleanRecords LIMIT 5\""
 
-- Alternatively, go to the *rawRecords*
-  :cdap-ui-datasets-explore:`dataset overview page, explore tab <rawRecords>`
+- Alternatively, go to the *cleanRecords*
+  :cdap-ui-datasets-explore:`dataset overview page, explore tab <cleanRecords>`
   and execute the query from there.
 
 The records that are not filtered out (those that adhere to the given schema) will be displayed::

@@ -581,9 +581,6 @@ public final class Constants {
     // Key prefix for retention seconds. The actual key is suffixed by the table resolution.
     public static final String RETENTION_SECONDS = "metrics.data.table.retention.resolution";
 
-    public static final String SERVER_ADDRESS = "metrics.query.bind.address";
-    public static final String SERVER_PORT = "metrics.query.bind.port";
-
     public static final String TOPIC_PREFIX = "metrics.topic.prefix";
     public static final String KAFKA_TOPIC_PREFIX = "metrics.kafka.topic.prefix";
     public static final String KAFKA_PARTITION_SIZE = "metrics.kafka.partition.size";

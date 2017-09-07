@@ -4,7 +4,6 @@ log.process.pipeline.buffer.size
 log.process.pipeline.logger.cache.expiration.ms
 log.process.pipeline.logger.cache.size
 log.saver.status.bind.address
-metrics.query.bind.address
 
 # Deprecated properties
 
@@ -15,6 +14,3 @@ kafka.log.dir
 kafka.log.retention.hours
 kafka.num.partitions
 kafka.zookeeper.connection.timeout.ms
-metadata.updates.kafka.broker.list
-metadata.updates.kafka.topic
-metadata.updates.publish.enabled

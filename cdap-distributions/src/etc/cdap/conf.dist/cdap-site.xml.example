@@ -81,7 +81,7 @@
   <!-- Kafka Server Configuration -->
 
   <property>
-    <name>kafka.default.replication.factor</name>
+    <name>kafka.server.default.replication.factor</name>
     <value>1</value>
     <description>
       CDAP Kafka service replication factor; used to replicate Kafka
@@ -107,17 +107,6 @@
     <description>
       Comma-separated list of CDAP Kafka service brokers; for distributed CDAP, 
       replace with list of FQDN:port brokers
-    </description>
-  </property>
-
-
-  <!-- Metrics Configuration -->
-  
-  <property>
-    <name>metrics.query.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>
-      Metrics Query service bind address
     </description>
   </property>
 

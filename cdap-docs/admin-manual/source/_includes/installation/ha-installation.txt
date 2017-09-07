@@ -52,7 +52,7 @@ CDAP Kafka
   - The **replication factor** is used to replicate Kafka messages across multiple
     machines to prevent data loss in the event of a hardware failure:
   
-      ``kafka.default.replication.factor``: 2
+      ``kafka.server.default.replication.factor``: 2
 
 - The recommended setting is to run at least two Kafka brokers with a minimum replication
   factor of two; set this property to the maximum number of tolerated machine failures

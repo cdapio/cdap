@@ -453,7 +453,6 @@ public class StandaloneMain {
     cConf.set(Constants.Dataset.Executor.ADDRESS, localhost);
     cConf.set(Constants.Stream.ADDRESS, localhost);
     cConf.set(Constants.Metrics.ADDRESS, localhost);
-    cConf.set(Constants.Metrics.SERVER_ADDRESS, localhost);
     cConf.set(Constants.MetricsProcessor.ADDRESS, localhost);
     cConf.set(Constants.LogSaver.ADDRESS, localhost);
     cConf.set(Constants.Explore.SERVER_ADDRESS, localhost);

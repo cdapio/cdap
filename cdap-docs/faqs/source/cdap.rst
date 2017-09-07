@@ -27,8 +27,7 @@ How do I set the CDAP properties for components running on multiple machines?
 -----------------------------------------------------------------------------
 In the configuration file ``cdap-site.xml``, there are numerous properties that specify an
 IP address where a service is running, such as ``router.server.address``,
-``metrics.query.bind.address``, ``data.tx.bind.address``, ``app.bind.address``,
-``router.bind.address``.
+``data.tx.bind.address``, ``app.bind.address``, ``router.bind.address``.
 
 Our convention is that:
 
