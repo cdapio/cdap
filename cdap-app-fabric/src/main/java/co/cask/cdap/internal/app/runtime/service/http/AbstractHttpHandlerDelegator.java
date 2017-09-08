@@ -31,13 +31,10 @@ import co.cask.http.HandlerContext;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.handler.codec.http.HttpRequest;
-
-import java.util.Arrays;
 
 /**
  * An abstract base class for all {@link HttpHandler} generated through the {@link HttpHandlerGenerator}.
@@ -86,12 +83,17 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   }
 
   /**
-   * Returns a combined class loader of user program class loader and system class loader
+   * Returns a {@link ClassLoader} for calling handler method.
    */
   @SuppressWarnings("unused")
-  protected final ClassLoader createHandlerContextClassLoader() {
-    return new CombineClassLoader(null, Arrays.asList(getHandler().getClass().getClassLoader(),
-                                                      AbstractHttpServiceHandler.class.getClassLoader()));
+  protected final ClassLoader getHandlerContextClassLoader() {
+    HttpServiceContext serviceContext = context.getServiceContext();
+    if (serviceContext instanceof BasicHttpServiceContext) {
+      return ((BasicHttpServiceContext) serviceContext).getProgramInvocationClassLoader();
+    }
+    // This is for unit-tests
+    return new CombineClassLoader(null, getHandler().getClass().getClassLoader(),
+                                  AbstractHttpServiceHandler.class.getClassLoader());
   }
 
   /**
@@ -123,7 +125,7 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
       @Override
       public BodyProducer create(HttpContentProducer contentProducer, TransactionalHttpServiceContext serviceContext) {
         final ClassLoader programContextClassLoader = new CombineClassLoader(
-          null, ImmutableList.of(contentProducer.getClass().getClassLoader(), getClass().getClassLoader()));
+          null, contentProducer.getClass().getClassLoader(), getClass().getClassLoader());
 
         // Capture the context since we need to keep it until the end of the content producing.
         // We don't need to worry about double capturing of the context when HttpContentConsumer is used.
@@ -157,8 +159,9 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
                              "This instance of HttpServiceContext does not support transactions.");
     final Cancellable contextReleaser = context.capture();
 
-    final ClassLoader programContextClassLoader = new CombineClassLoader(
-      null, ImmutableList.of(consumer.getClass().getClassLoader(), getClass().getClassLoader()));
+    final ClassLoader programContextClassLoader = new CombineClassLoader(null,
+                                                                         consumer.getClass().getClassLoader(),
+                                                                         getClass().getClassLoader());
 
     return new BodyConsumerAdapter(new DelayedHttpServiceResponder(responder, new BodyProducerFactory() {
       @Override

@@ -40,6 +40,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -103,6 +104,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final TaskLocalizationContext taskLocalizationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final MapReduceClassLoader mapReduceClassLoader;
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
@@ -132,7 +134,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             SecureStoreManager secureStoreManager,
                             AuthorizationEnforcer authorizationEnforcer,
                             AuthenticationContext authenticationContext,
-                            MessagingService messagingService) {
+                            MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader) {
     super(program, programOptions, cConf,  ImmutableSet.<String>of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator);
@@ -143,7 +145,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.mapReduceClassLoader = mapReduceClassLoader;
     initializeTransactionAwares();
+  }
+
+  @Override
+  protected ClassLoader createProgramInvocationClassLoader() {
+    return new WeakReferenceDelegatorClassLoader(mapReduceClassLoader);
   }
 
   @Override

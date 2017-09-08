@@ -23,7 +23,6 @@ import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ClassPathResources;
 import co.cask.cdap.common.lang.FilterClassLoader;
-import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
@@ -35,7 +34,6 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.SparkConf;
 import org.apache.spark.streaming.DStreamGraph;
 import org.apache.spark.streaming.StreamingContext;
@@ -226,36 +224,6 @@ public final class SparkRuntimeUtils {
   }
 
   /**
-   * Sets the context ClassLoader to the given {@link SparkClassLoader}. It will also set the
-   * ClassLoader for the {@link Configuration} contained inside the {@link SparkClassLoader}.
-   *
-   * @return a {@link Cancellable} to reset the classloader to the one prior to the call
-   */
-  public static Cancellable setContextClassLoader(final SparkClassLoader sparkClassLoader) {
-    final Configuration hConf = sparkClassLoader.getRuntimeContext().getConfiguration();
-    final ClassLoader oldConfClassLoader = hConf.getClassLoader();
-
-    // Always wrap it with WeakReference to avoid ClassLoader leakage from Spark.
-    ClassLoader classLoader = new WeakReferenceDelegatorClassLoader(sparkClassLoader);
-    hConf.setClassLoader(classLoader);
-
-    final Thread currentThread = Thread.currentThread();
-    final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
-    return new Cancellable() {
-      @Override
-      public void cancel() {
-        hConf.setClassLoader(oldConfClassLoader);
-        currentThread.setContextClassLoader(oldClassLoader);
-
-        // Do not remove the next line.
-        // This is necessary to keep a strong reference to the SparkClassLoader so that it won't get GC until this
-        // cancel() is called
-        LOG.trace("Reset context ClassLoader. The SparkClassLoader is: {}", sparkClassLoader);
-      }
-    };
-  }
-
-  /**
    * Sets the {@link TaskSupport} for the given Scala {@link ParArray} to {@link ThreadPoolTaskSupport}.
    * This method is mainly used by {@link SparkRunnerClassLoader} to set the {@link TaskSupport} for the
    * parallel array used inside the {@link DStreamGraph} class in spark to avoid thread leakage after the
@@ -312,7 +280,8 @@ public final class SparkRuntimeUtils {
       sparkClassLoader = SparkClassLoader.create();
     }
 
-    final Cancellable restoreMainClassLoader = SparkRuntimeUtils.setContextClassLoader(sparkClassLoader);
+    final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
+      sparkClassLoader.getRuntimeContext().getProgramInvocationClassLoader());
     final SparkExecutionContext sec = sparkClassLoader.getSparkExecutionContext(true);
     final SparkRuntimeContext runtimeContext = sparkClassLoader.getRuntimeContext();
 
@@ -386,7 +355,7 @@ public final class SparkRuntimeUtils {
         // since it's the last thing that Spark main methhod would do.
         if (Thread.currentThread() == mainThread) {
           mainThreadCallLatch.countDown();
-          restoreMainClassLoader.cancel();
+          mainThread.setContextClassLoader(oldClassLoader);
         }
         driverService.stopAndWait();
       }

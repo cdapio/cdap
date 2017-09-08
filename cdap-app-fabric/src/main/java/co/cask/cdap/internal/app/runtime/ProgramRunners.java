@@ -18,10 +18,12 @@ package co.cask.cdap.internal.app.runtime;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.proto.id.KerberosPrincipalId;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.io.ByteStreams;
@@ -109,6 +111,19 @@ public final class ProgramRunners {
     String id = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
     Preconditions.checkArgument(id != null, "Missing " + ProgramOptionConstants.RUN_ID + " in program options");
     return RunIds.fromString(id);
+  }
+
+  /**
+   * Returns the application principal if there is one.
+   *
+   * @param programOptions the program options to extract information from
+   * @return the application principal or {@code null} if no application principal is available.
+   */
+  @Nullable
+  public static KerberosPrincipalId getApplicationPrincipal(ProgramOptions programOptions) {
+    Arguments systemArgs = programOptions.getArguments();
+    boolean hasAppPrincipal = Boolean.parseBoolean(systemArgs.getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS));
+    return hasAppPrincipal ? new KerberosPrincipalId(systemArgs.getOption(ProgramOptionConstants.PRINCIPAL)) : null;
   }
 
   /**

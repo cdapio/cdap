@@ -25,6 +25,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -47,7 +48,6 @@ import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
  * Context to be used at Spark runtime to provide common functionality that are needed at both the driver and
  * the executors.
  */
-public final class SparkRuntimeContext extends AbstractContext implements Metrics, Closeable {
+public final class SparkRuntimeContext extends AbstractContext implements Metrics {
 
   private final CConfiguration cConf;
   private final Configuration hConf;
@@ -67,6 +67,11 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final LoggingContext loggingContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+
+  // This is needed to maintain a strong reference while the Spark program is running,
+  // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
+  @SuppressWarnings("unused")
+  private SparkClassLoader sparkClassLoader;
 
   SparkRuntimeContext(Configuration hConf, Program program, ProgramOptions programOptions,
                       CConfiguration cConf, String hostname, TransactionSystemClient txClient,
@@ -212,6 +217,14 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
       .add("id", getProgram().getId())
       .add("runId", getRunId())
       .toString();
+  }
+
+  @Override
+  protected ClassLoader createProgramInvocationClassLoader() {
+    sparkClassLoader = new SparkClassLoader(this);
+    ClassLoader classLoader = new WeakReferenceDelegatorClassLoader(sparkClassLoader);
+    hConf.setClassLoader(classLoader);
+    return classLoader;
   }
 
   /**

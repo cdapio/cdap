@@ -20,10 +20,7 @@ import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.Transactionals;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -37,7 +34,6 @@ import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -80,6 +76,7 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.inject.Injector;
 import com.google.inject.ProvisionException;
 import org.apache.hadoop.conf.Configuration;
@@ -97,7 +94,6 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
@@ -167,19 +163,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final StreamAdmin streamAdmin;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final ProgramLifecycle<MapReduceContext> programLifecycle;
 
   private Job job;
   private Runnable cleanupTask;
 
-  // This needs to keep as a field.
-  // We need to hold a strong reference to the ClassLoader until the end of the MapReduce job.
-  @SuppressWarnings("FieldCanBeLocal")
-  private ClassLoader classLoader;
   private volatile boolean stopRequested;
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           final MapReduce mapReduce, MapReduceSpecification specification,
-                          BasicMapReduceContext context, Location programJarLocation,
+                          final BasicMapReduceContext context, Location programJarLocation,
                           NamespacedLocationFactory locationFactory, StreamAdmin streamAdmin,
                           AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext) {
     this.injector = injector;
@@ -193,6 +186,31 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     this.context = context;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.programLifecycle = new ProgramLifecycle<MapReduceContext>() {
+      @Override
+      public void initialize(MapReduceContext context) throws Exception {
+        if (mapReduce instanceof ProgramLifecycle) {
+          //noinspection unchecked
+          ((ProgramLifecycle) mapReduce).initialize(context);
+        } else {
+          mapReduce.beforeSubmit(context);
+        }
+      }
+
+      @Override
+      public void destroy() {
+        if (mapReduce instanceof ProgramLifecycle) {
+          //noinspection unchecked
+          ((ProgramLifecycle) mapReduce).destroy();
+        } else {
+          try {
+            mapReduce.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
+          } catch (Exception e) {
+            throw new UncheckedExecutionException(e);
+          }
+        }
+      }
+    };
   }
 
   @Override
@@ -210,15 +228,15 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       Job job = createJob(new File(tempDir, "mapreduce"));
       Configuration mapredConf = job.getConfiguration();
 
-      classLoader = new MapReduceClassLoader(injector, cConf, mapredConf, context.getProgram().getClassLoader(),
-                                             context.getApplicationSpecification().getPlugins(),
-                                             context.getPluginInstantiator());
+      MapReduceClassLoader classLoader = new MapReduceClassLoader(injector, cConf, mapredConf,
+                                                                  context.getProgram().getClassLoader(),
+                                                                  context.getApplicationSpecification().getPlugins(),
+                                                                  context.getPluginInstantiator());
       cleanupTask = createCleanupTask(cleanupTask, classLoader);
-
-      mapredConf.setClassLoader(new WeakReferenceDelegatorClassLoader(classLoader));
-      ClassLoaders.setContextClassLoader(mapredConf.getClassLoader());
-
+      context.setMapReduceClassLoader(classLoader);
       context.setJob(job);
+
+      mapredConf.setClassLoader(context.getProgramInvocationClassLoader());
 
       beforeSubmit(job);
 
@@ -332,8 +350,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       }
       contextConfig.set(context, cConfCopy, programJar.toURI(), localizedUserResources);
 
-      // submits job and returns immediately. Shouldn't need to set context ClassLoader.
-      job.submit();
+      // submits job and returns immediately.
+      // Set the context classloader to the program invocation one (which is a weak reference wrapped MRClassloader)
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgramInvocationClassLoader());
+      try {
+        job.submit();
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
+      }
       // log after the job.submit(), because the jobId is not assigned before then
       LOG.info("Submitted MapReduce Job: {}.", context);
 
@@ -524,7 +548,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * For MapReduce programs created after 3.5, calls the initialize method of the {@link ProgramLifecycle}.
    * This method also sets up the Input/Output within the same transaction.
    */
-  @SuppressWarnings("unchecked")
   private void beforeSubmit(final Job job) throws Exception {
     context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
     // AbstractMapReduce implements final initialize(context) and requires subclass to
@@ -538,40 +561,18 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                                            mapReduce, "initialize", MapReduceContext.class)
       : TransactionControl.IMPLICIT;
 
-    if (TransactionControl.EXPLICIT == txControl) {
-      doInitialize(job);
-    } else {
-      Transactionals.execute(context, new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          doInitialize(job);
-        }
-      }, Exception.class);
-    }
+    context.initializeProgram(programLifecycle, txControl, false);
+
     // once the initialize method is executed, set the status of the MapReduce to RUNNING
     context.setState(new ProgramState(ProgramStatus.RUNNING, null));
 
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(context.getProgramInvocationClassLoader());
     try {
       // set input/outputs info, and get one of the configured mapper's TypeToken
       TypeToken<?> mapperTypeToken = setInputsIfNeeded(job);
       setOutputsIfNeeded(job);
       setOutputClassesIfNeeded(job, mapperTypeToken);
       setMapOutputClassesIfNeeded(job, mapperTypeToken);
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
-  }
-
-  private void doInitialize(Job job) throws Exception {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    try {
-      if (mapReduce instanceof ProgramLifecycle) {
-        //noinspection unchecked
-        ((ProgramLifecycle) mapReduce).initialize(context);
-      } else {
-        mapReduce.beforeSubmit(context);
-      }
     } finally {
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
@@ -597,42 +598,12 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   /**
    * Calls the destroy method of {@link ProgramLifecycle}.
    */
-  private void destroy() throws Exception {
+  private void destroy() {
     TransactionControl txControl = mapReduce instanceof ProgramLifecycle
       ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, MapReduce.class, mapReduce, "destroy")
       : TransactionControl.IMPLICIT;
 
-    try {
-      if (TransactionControl.IMPLICIT == txControl) {
-        context.execute(new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            doDestroy();
-          }
-        });
-      } else {
-        doDestroy();
-      }
-    } catch (Throwable e) {
-      if (e instanceof TransactionFailureException && e.getCause() != null
-        && !(e instanceof TransactionConflictException)) {
-        e = e.getCause();
-      }
-      LOG.warn("Error executing the destroy method of the MapReduce program {}", context.getProgram().getName(), e);
-    }
-  }
-
-  private void doDestroy() throws Exception {
-    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    try {
-      if (mapReduce instanceof ProgramLifecycle) {
-        ((ProgramLifecycle) mapReduce).destroy();
-      } else {
-        mapReduce.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
-      }
-    } finally {
-      ClassLoaders.setContextClassLoader(oldClassLoader);
-    }
+    context.destroyProgram(programLifecycle, txControl, false);
   }
 
   private void assertConsistentTypes(Class<? extends Mapper> firstMapperClass,

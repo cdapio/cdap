@@ -19,9 +19,7 @@ package co.cask.cdap.app.runtime.spark;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.ProgramState;
 import co.cask.cdap.api.ProgramStatus;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.TransactionControl;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkClientContext;
@@ -62,6 +60,7 @@ import com.google.common.io.Resources;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -70,7 +69,6 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunnable;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,11 +137,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   private final LocationFactory locationFactory;
   private final AtomicReference<ListenableFuture<RunId>> completion;
   private final BasicSparkClientContext context;
+  private final ProgramLifecycle<SparkRuntimeContext> programLifecycle;
 
   private Callable<ListenableFuture<RunId>> submitSpark;
   private Runnable cleanupTask;
 
-  SparkRuntimeService(CConfiguration cConf, Spark spark, @Nullable File pluginArchive,
+  SparkRuntimeService(CConfiguration cConf, final Spark spark, @Nullable File pluginArchive,
                       SparkRuntimeContext runtimeContext, SparkSubmitter sparkSubmitter,
                       LocationFactory locationFactory) {
     this.cConf = cConf;
@@ -154,6 +153,30 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.locationFactory = locationFactory;
     this.completion = new AtomicReference<>();
     this.context = new BasicSparkClientContext(runtimeContext);
+    this.programLifecycle = new ProgramLifecycle<SparkRuntimeContext>() {
+      @Override
+      public void initialize(SparkRuntimeContext runtimeContext) throws Exception {
+        // Use the BasicSparkClientContext to call user method.
+        if (spark instanceof ProgramLifecycle) {
+          ((ProgramLifecycle) spark).initialize(context);
+        } else {
+          spark.beforeSubmit(context);
+        }
+      }
+
+      @Override
+      public void destroy() {
+        if (spark instanceof ProgramLifecycle) {
+          ((ProgramLifecycle) spark).destroy();
+        } else {
+          try {
+            spark.onFinish(context.getState().getStatus() == ProgramStatus.COMPLETED, context);
+          } catch (Exception e) {
+            throw new UncheckedExecutionException(e);
+          }
+        }
+      }
+    };
   }
 
   @Override
@@ -395,6 +418,8 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
    */
   @SuppressWarnings("unchecked")
   private void initialize() throws Exception {
+    context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
+
     // AbstractSpark implements final initialize(context) and requires subclass to
     // implement initialize(), whereas programs that directly implement Spark have
     // the option to override initialize(context) (if they implement ProgramLifeCycle)
@@ -405,58 +430,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
                                            spark, "initialize", SparkClientContext.class)
       : TransactionControl.IMPLICIT;
 
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
-        try {
-          context.setState(new ProgramState(ProgramStatus.INITIALIZING, null));
-          if (spark instanceof ProgramLifecycle) {
-            ((ProgramLifecycle) spark).initialize(context);
-          } else {
-            spark.beforeSubmit(context);
-          }
-        } finally {
-          cancellable.cancel();
-        }
-      }
-    };
-    if (TransactionControl.IMPLICIT == txControl) {
-      context.execute(runnable);
-    } else {
-      runnable.run(context);
-    }
+    runtimeContext.initializeProgram(programLifecycle, txControl, false);;
   }
 
   /**
    * Calls the destroy or onFinish method of {@link ProgramLifecycle}.
    */
-  private void destroy(final ProgramState state) throws Exception {
-    final TransactionControl txControl = spark instanceof ProgramLifecycle
+  private void destroy(final ProgramState state) {
+    context.setState(state);
+
+    TransactionControl txControl = spark instanceof ProgramLifecycle
       ? Transactions.getTransactionControl(TransactionControl.IMPLICIT, Spark.class, spark, "destroy")
       : TransactionControl.IMPLICIT;
 
-    TxRunnable runnable = new TxRunnable() {
-      @Override
-      public void run(DatasetContext ctxt) throws Exception {
-        Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
-        try {
-          context.setState(state);
-          if (spark instanceof ProgramLifecycle) {
-            ((ProgramLifecycle) spark).destroy();
-          } else {
-            spark.onFinish(state.getStatus() == ProgramStatus.COMPLETED, context);
-          }
-        } finally {
-          cancellable.cancel();
-        }
-      }
-    };
-    if (TransactionControl.IMPLICIT == txControl) {
-      context.execute(runnable);
-    } else {
-      runnable.run(context);
-    }
+    runtimeContext.destroyProgram(programLifecycle, txControl, false);
   }
 
   /**

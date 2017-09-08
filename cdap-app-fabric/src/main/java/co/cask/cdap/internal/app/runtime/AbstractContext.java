@@ -48,7 +48,6 @@ import co.cask.cdap.api.security.store.SecureStore;
 import co.cask.cdap.api.security.store.SecureStoreData;
 import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
-import co.cask.cdap.app.preview.DataTracerFactory;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.services.AbstractServiceDiscoverer;
@@ -75,6 +74,7 @@ import co.cask.cdap.internal.app.preview.DataTracerFactoryProvider;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.messaging.BasicMessagingAdmin;
 import co.cask.cdap.internal.app.runtime.messaging.MultiThreadMessagingContext;
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.messaging.MessagingService;
@@ -89,17 +89,21 @@ import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.cdap.proto.id.TopicId;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.derby.iapi.services.i18n.MessageService;
 import org.apache.tephra.RetryStrategies;
+import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -115,8 +119,9 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
   implements SecureStore, LineageDatasetContext, Transactional, SchedulableProgramContext, RuntimeContext,
-  PluginContext, MessagingContext {
+  PluginContext, MessagingContext, Closeable {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractContext.class);
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(PartitionKey.class, new PartitionKeyCodec())
     .create();
@@ -141,15 +146,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final int defaultTxTimeout;
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
+  private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
-
-  private final DataTracerFactory dataTracerFactory = new DataTracerFactory() {
-    @Override
-    public DataTracer getDataTracer(ApplicationId applicationId, String tracerName) {
-      return DataTracerFactoryProvider.get(applicationId).getDataTracer(applicationId, tracerName);
-    }
-  };
 
   /**
    * Constructs a context. To have plugin support, the {@code pluginInstantiator} must not be null.
@@ -181,31 +180,32 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.retryStrategy = SystemArguments.getRetryStrategy(programOptions.getUserArguments().asMap(),
                                                           program.getType(),
                                                           cConf);
+    this.messagingService = messagingService;
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
 
+    // Creating the DynamicDatasetCache
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
     for (String name : datasets) {
-      staticDatasets.put(name, runtimeArguments);
+      staticDatasets.put(name, runtimeArgs);
     }
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
 
-    this.messagingService = messagingService;
-    this.messagingContext = new MultiThreadMessagingContext(messagingService);
-
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
       ? new MultiThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
-                                    runtimeArguments, programMetrics, staticDatasets, messagingContext)
+                                    runtimeArgs, programMetrics, staticDatasets, messagingContext)
       : new SingleThreadDatasetCache(instantiator, retryingTxClient, program.getId().getNamespaceId(),
-                                     runtimeArguments, programMetrics, staticDatasets);
+                                     runtimeArgs, programMetrics, staticDatasets);
+    if (!multiThreaded) {
+      datasetCache.addExtraTransactionAware(messagingContext);
+    }
+
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
                                                   program.getApplicationSpecification().getPlugins());
-    String appPrincipalExists = programOptions.getArguments().getOption(ProgramOptionConstants.APP_PRINCIPAL_EXISTS);
-    KerberosPrincipalId principalId = null;
-    if (appPrincipalExists != null && Boolean.parseBoolean(appPrincipalExists)) {
-      principalId = new KerberosPrincipalId(programOptions.getArguments().getOption(ProgramOptionConstants.PRINCIPAL));
-    }
+
+    KerberosPrincipalId principalId = ProgramRunners.getApplicationPrincipal(programOptions);
     this.admin = new DefaultAdmin(dsFramework, program.getId().getNamespaceId(), secureStoreManager,
                                   new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),
                                   retryStrategy, principalId);
@@ -213,9 +213,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.defaultTxTimeout = determineTransactionTimeout(cConf);
     this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
 
-    if (!multiThreaded) {
-      datasetCache.addExtraTransactionAware(messagingContext);
-    }
   }
 
   private MetricsCollectionService getMetricsService(CConfiguration cConf, MetricsCollectionService metricsService,
@@ -438,6 +435,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Release all resources held by this context, for example, datasets. Subclasses should override this
    * method to release additional resources.
    */
+  @Override
   public void close() {
     datasetCache.close();
   }
@@ -511,7 +509,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       txnl.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
           try {
             runnable.run(context);
           } finally {
@@ -531,7 +529,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       transactional.execute(timeoutInSeconds, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = setContextCombinedClassLoader();
+          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
           try {
             runnable.run(context);
           } finally {
@@ -546,7 +544,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public DataTracer getDataTracer(String dataTracerName) {
-    return dataTracerFactory.getDataTracer(program.getId().getParent(), dataTracerName);
+    ApplicationId applicationId = programRunId.getParent().getParent();
+    return DataTracerFactoryProvider.get(applicationId).getDataTracer(applicationId, dataTracerName);
   }
 
   @Nullable
@@ -559,11 +558,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
   public void executeChecked(final ThrowingRunnable runnable) throws Exception {
-    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       runnable.run();
     } finally {
-      ClassLoaders.setContextClassLoader(oldClassloader);
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -571,11 +570,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
   public void executeUnchecked(final Runnable runnable) {
-    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       runnable.run();
     } finally {
-      ClassLoaders.setContextClassLoader(oldClassloader);
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -590,11 +589,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * Run some code with the context class loader combined from the program class loader and the system class loader.
    */
   public <T> T executeChecked(final Callable<T> callable) throws Exception {
-    ClassLoader oldClassloader = setContextCombinedClassLoader();
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
     try {
       return callable.call();
     } finally {
-      ClassLoaders.setContextClassLoader(oldClassloader);
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 
@@ -604,27 +603,33 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    * is wrapped into a transaction, possibly with retry on conflict.
    *
    * @param program the program to be initialized
-   * @param programContext the program context
    * @param txControl the transaction control
    * @param retryOnConflict if true, transactional execution will be retried on conflict
    * @param <T> the type of the program context
    */
-  public <T extends AbstractContext> void initializeProgram(final ProgramLifecycle<? super T> program,
-                                                            final T programContext, TransactionControl txControl,
-                                                            boolean retryOnConflict)
-    throws Exception {
+  public <T extends RuntimeContext> void initializeProgram(final ProgramLifecycle<T> program,
+                                                           TransactionControl txControl,
+                                                           boolean retryOnConflict) throws Exception {
     if (TransactionControl.IMPLICIT == txControl) {
-      programContext.execute(new TxRunnable() {
+      execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
-          program.initialize(programContext);
+          //noinspection unchecked
+          program.initialize((T) AbstractContext.this);
         }
       }, retryOnConflict);
     } else {
-      programContext.executeChecked(new ThrowingRunnable() {
+      executeChecked(new ThrowingRunnable() {
         @Override
         public void run() throws Exception {
-          program.initialize(programContext);
+          try {
+            //noinspection unchecked
+            program.initialize((T) AbstractContext.this);
+          } catch (LinkageError e) {
+            // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the
+            // initialization of the user program is missing dependencies (CDAP-2543)
+            throw new Exception(e.getMessage(), e);
+          }
         }
       });
     }
@@ -633,32 +638,44 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   /**
    * Destroy a program. The destroy() method is executed with the context class loader combined from the
    * program class loader and the system class loader. If the transaction control is implicit, then this code
-   * is wrapped into a transaction, possibly with retry on conflict.
+   * is wrapped into a transaction, possibly with retry on conflict. This method never throw exception. Any error
+   * raised during the destroy lifecycle call will just be logged.
    *
    * @param program the program to be destroyed
-   * @param programContext the program context
    * @param txControl the transaction control
    * @param retryOnConflict if true, transactional execution will be retried on conflict
-   * @param <T> the type of the program context
    */
-  public <T extends AbstractContext> void destroyProgram(final ProgramLifecycle<? super T> program,
-                                                         final T programContext, TransactionControl txControl,
-                                                         boolean retryOnConflict)
-    throws TransactionFailureException {
-    if (TransactionControl.IMPLICIT == txControl) {
-      programContext.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          program.destroy();
+  public void destroyProgram(final ProgramLifecycle<?> program, TransactionControl txControl, boolean retryOnConflict) {
+    try {
+      try {
+        if (TransactionControl.IMPLICIT == txControl) {
+          execute(new TxRunnable() {
+            @Override
+            public void run(DatasetContext context) throws Exception {
+              program.destroy();
+            }
+          }, retryOnConflict);
+        } else {
+          executeChecked(new ThrowingRunnable() {
+            @Override
+            public void run() throws Exception {
+              program.destroy();
+            }
+          });
         }
-      }, retryOnConflict);
-    } else {
-      programContext.executeUnchecked(new Runnable() {
-        @Override
-        public void run() {
-          program.destroy();
-        }
-      });
+      } catch (TransactionConflictException e) {
+        // For Tx conflict, use it as is.
+        throw e;
+      } catch (TransactionFailureException | UncheckedExecutionException e) {
+        // For tx failure (implicit case) or unchecked execution exception (explicit with CDAP wrapper case),
+        // throw the cause for logging.
+        throw e.getCause() == null ? e : e.getCause();
+      }
+    } catch (Throwable t) {
+      // Don't propagate exception raised by destroy() method
+      ProgramRunId programRunId = getProgramRunId();
+      LOG.error("Exception raised on destroy lifecycle method in class {} of the {} program of run {}",
+                getProgram().getMainClassName(), programRunId.getType().getPrettyName(), programRunId, t);
     }
   }
 
@@ -666,9 +683,36 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return retryStrategy;
   }
 
-  private ClassLoader setContextCombinedClassLoader() {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(program.getClassLoader(), getClass().getClassLoader())));
+  /**
+   * Returns the {@link ClassLoader} used for program method invocation.
+   */
+  public final ClassLoader getProgramInvocationClassLoader() {
+    ClassLoader classLoader = programInvocationClassLoader;
+    if (classLoader != null) {
+      return classLoader;
+    }
+
+    synchronized (this) {
+      classLoader = programInvocationClassLoader;
+      if (classLoader != null) {
+        return classLoader;
+      }
+      classLoader = programInvocationClassLoader = createProgramInvocationClassLoader();
+      return classLoader;
+    }
+  }
+
+  /**
+   * Creates a new instance of {@link ClassLoader} that will be used for program method invocation.
+   * By default it is a {@link CombineClassLoader} with program classloader,
+   * plugins export-package classloader and system classloader in that loading order.
+   */
+  protected ClassLoader createProgramInvocationClassLoader() {
+    // A classloader that can load all export-package classes from all plugins
+    ClassLoader pluginsClassLoader = PluginClassLoaders.createFilteredPluginsClassLoader(
+      program.getApplicationSpecification().getPlugins(), pluginInstantiator);
+
+    return new CombineClassLoader(null, program.getClassLoader(), pluginsClassLoader, getClass().getClassLoader());
   }
 
   @Override
