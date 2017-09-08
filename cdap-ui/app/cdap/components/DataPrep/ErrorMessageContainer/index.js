@@ -15,30 +15,36 @@
 */
 
 import React, {PropTypes} from 'react';
-import {setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 require('./ErrorMessageContainer.scss');
 import T from 'i18n-react';
 
-export default function ErrorMessageContainer({workspaceId, workspaceName}) {
+export default function ErrorMessageContainer({workspaceName, refreshFn}) {
+  const prefix = 'features.DataPrep.DataPrepTable';
+
+  let errorMessageTitle = T.translate(`${prefix}.dataErrorMessageTitle`);
+  if (workspaceName) {
+    errorMessageTitle = T.translate(`${prefix}.dataErrorMessageTitle2`, {workspaceName});
+  }
+
   return (
     <div className="dataprep-error-container">
       <h4>
         <strong>
-          {T.translate(`features.DataPrep.DataPrepTable.dataErrorMessageTitle`, {workspaceName})}
+          {errorMessageTitle}
         </strong>
       </h4>
       <hr />
       <div className="message-container">
-        <div> {T.translate(`features.DataPrep.DataPrepTable.suggestionTitle`)} </div>
+        <div> {T.translate(`${prefix}.suggestionTitle`)} </div>
         <span>
           <span
             className="btn-link"
-            onClick={() => setWorkspace(workspaceId).subscribe()}
+            onClick={refreshFn}
           >
-            {T.translate(`features.DataPrep.DataPrepTable.refreshBtnLinkLabel`)}
+            {T.translate(`${prefix}.refreshBtnLinkLabel`)}
           </span>
 
-          {T.translate(`features.DataPrep.DataPrepTable.suggestion1`)}
+          {T.translate(`${prefix}.suggestion1`)}
         </span>
       </div>
     </div>
@@ -46,6 +52,6 @@ export default function ErrorMessageContainer({workspaceId, workspaceName}) {
 }
 
 ErrorMessageContainer.propTypes = {
-  workspaceId: PropTypes.string,
-  workspaceName: PropTypes.string
+  workspaceName: PropTypes.string,
+  refreshFn: PropTypes.func
 };

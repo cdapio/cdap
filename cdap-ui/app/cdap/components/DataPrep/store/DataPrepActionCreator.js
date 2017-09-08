@@ -24,6 +24,7 @@ import {objectQuery} from 'services/helpers';
 import ee from 'event-emitter';
 import {orderBy, find} from 'lodash';
 
+let workspaceRetries;
 
 export function execute(addDirective, shouldReset, hideLoading = false) {
   let eventEmitter = ee(ee);
@@ -76,6 +77,81 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   });
 }
 
+function setWorkspaceRetry(params, observer, workspaceId) {
+  MyDataPrepApi.getWorkspace(params)
+    .subscribe((res) => {
+      let {dataprep} = DataPrepStore.getState();
+      /*
+        1. Open a tab with huge data (like 400 columns and 100 rows)
+        2. Change of mind, open another tab
+        3. 2nd tab's data comes in quick and you are happy browsing it
+        4. Baam 1st tab's data comes and royally overwrites the one you are seeing.
+
+        This is to prevent that. We can't cancel the request we made but we should show only that is relevant
+      */
+      if (dataprep.workspaceId !== workspaceId) {
+        return;
+      }
+      let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
+      let requestBody = directiveRequestBodyCreator(directives);
+
+      let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
+      let workspaceInfo = objectQuery(res, 'values', '0');
+
+      MyDataPrepApi.execute(params, requestBody)
+        .subscribe((response) => {
+          observer.onNext(response);
+
+          DataPrepStore.dispatch({
+            type: DataPrepActions.setWorkspace,
+            payload: {
+              data: response.values,
+              headers: response.header,
+              types: response.types,
+              directives,
+              workspaceId,
+              workspaceUri,
+              workspaceInfo
+            }
+          });
+
+          fetchColumnsInformation(params, requestBody, response.header);
+
+        }, (err) => {
+          // Backend returned an exception. Show default error message for now able to show data.
+          if (workspaceRetries < 3) {
+            workspaceRetries += 1;
+            setWorkspaceRetry(params, observer, workspaceId);
+          } else {
+            observer.onNext(err);
+            DataPrepStore.dispatch({
+              type: DataPrepActions.disableLoading
+            });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setDataError,
+              payload: {
+                errorMessage: true
+              }
+            });
+          }
+        });
+
+    }, (err) => {
+      if (workspaceRetries < 3) {
+        workspaceRetries += 1;
+        setWorkspaceRetry(params, observer, workspaceId);
+      } else {
+        DataPrepStore.dispatch({
+          type: DataPrepActions.setDataError,
+          payload: {
+            errorMessage: true
+          }
+        });
+        observer.onError(err);
+      }
+    });
+}
+
 export function setWorkspace(workspaceId) {
   let namespace = NamespaceStore.getState().selectedNamespace;
 
@@ -92,64 +168,10 @@ export function setWorkspace(workspaceId) {
     }
   });
 
+  workspaceRetries = 0;
+
   return Rx.Observable.create((observer) => {
-    MyDataPrepApi.getWorkspace(params)
-      .subscribe((res) => {
-        let {dataprep} = DataPrepStore.getState();
-        /*
-          1. Open a tab with huge data (like 400 columns and 100 rows)
-          2. Change of mind, open another tab
-          3. 2nd tab's data comes in quick and you are happy browsing it
-          4. Baam 1st tab's data comes and royally overwrites the one you are seeing.
-
-          This is to prevent that. We can't cancel the request we made but we should show only that is relevant
-        */
-        if (dataprep.workspaceId !== workspaceId) {
-          return;
-        }
-        let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
-        let requestBody = directiveRequestBodyCreator(directives);
-
-        let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
-        let workspaceInfo = objectQuery(res, 'values', '0');
-
-        MyDataPrepApi.execute(params, requestBody)
-          .subscribe((response) => {
-            observer.onNext(response);
-
-            DataPrepStore.dispatch({
-              type: DataPrepActions.setWorkspace,
-              payload: {
-                data: response.values,
-                headers: response.header,
-                types: response.types,
-                directives,
-                workspaceId,
-                workspaceUri,
-                workspaceInfo
-              }
-            });
-
-            fetchColumnsInformation(params, requestBody, response.header);
-
-          }, (err) => {
-            // Backend returned an exception. Show default error message for now able to show data.
-            observer.onNext(err);
-            DataPrepStore.dispatch({
-              type: DataPrepActions.disableLoading
-            });
-            DataPrepStore.dispatch({
-              type: DataPrepActions.setDataError,
-              payload: {
-                errorMessage: 'Something is wrong'
-              }
-            });
-          });
-
-      }, (err) => {
-        console.log('get workspace err', err);
-        observer.onError(err);
-      });
+    setWorkspaceRetry(params, observer, workspaceId);
   });
 }
 
