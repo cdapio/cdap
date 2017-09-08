@@ -70,7 +70,7 @@ export default class ConnectionsUpload extends Component {
     let url = `/namespaces/${namespace}/apps/dataprep/services/service/methods/workspaces`;
 
     let headers = {
-      'Content-Type': 'application/octet-stream',
+      'Content-Type': 'application/data-prep',
       'X-Archive-Name': fileName,
       'file': fileName
     };
