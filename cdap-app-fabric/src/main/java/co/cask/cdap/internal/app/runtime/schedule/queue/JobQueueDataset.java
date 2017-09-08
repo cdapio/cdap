@@ -42,6 +42,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,6 +64,8 @@ import javax.annotation.Nullable;
 public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicMessageIdStore {
 
   static final String EMBEDDED_TABLE_NAME = "t"; // table
+
+  private static final Logger LOG = LoggerFactory.getLogger(JobQueueDataset.class);
   private static final Gson GSON =
     new GsonBuilder()
       .registerTypeAdapter(Trigger.class, new TriggerCodec())
@@ -138,10 +142,16 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
           long scheduleLastUpdated = record.getMeta().getLastUpdated();
           if (job.getScheduleLastUpdatedTime() != scheduleLastUpdated) {
             // schedule has changed: this job is obsolete
+            LOG.info("For job '{}' job.getScheduleLastUpdatedTime():'{}' != scheduleLastUpdated:'{}', " +
+                       "update IS_OBSOLETE_COL for '{}'",
+                     job, job.getScheduleLastUpdatedTime(), scheduleLastUpdated, job.getJobKey());
             table.put(getRowKey(job.getJobKey().getScheduleId(), job.getJobKey().getCreationTime()),
                       IS_OBSOLETE_COL, Bytes.toBytes(System.currentTimeMillis()));
           } else if (System.currentTimeMillis() - job.getCreationTime() > job.getSchedule().getTimeoutMillis()) {
             // job has timed out; mark it obsolete
+            LOG.info("Job '{}' more than {}Millis have passed since creation time '{}'" +
+                       "update IS_OBSOLETE_COL for '{}'",
+                     job, job.getSchedule().getTimeoutMillis(), job.getCreationTime(), job.getJobKey());
             table.put(getRowKey(job.getJobKey().getScheduleId(), job.getJobKey().getCreationTime()),
                       IS_OBSOLETE_COL, Bytes.toBytes(System.currentTimeMillis()));
           } else {
@@ -157,8 +167,10 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
       List<Notification> notifications = Collections.singletonList(notification);
       Job.State jobState = isTriggerSatisfied(schedule, notifications)
         ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
-      put(new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState,
-                        record.getMeta().getLastUpdated()));
+      Job newJob = new SimpleJob(schedule, System.currentTimeMillis(), notifications, jobState,
+                                 record.getMeta().getLastUpdated());
+      LOG.info("Create new job '{}'", newJob);
+      put(newJob);
     }
   }
 
@@ -173,6 +185,7 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
     }
     Job newJob = new SimpleJob(job.getSchedule(), job.getCreationTime(), notifications, newState,
                                job.getScheduleLastUpdatedTime());
+    LOG.info("Add notification '{}' to existing job '{}' to get new job '{}'", notification, job, newJob);
     put(newJob);
   }
 

@@ -352,8 +352,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     } catch (Exception e) {
       for (Job job: getAllJobs()) {
         if (job.getSchedule().getTrigger() instanceof AndTrigger) {
-          LOG.error("Cannot satisfy AND trigger in schedule '{}' to launch program '{}' with the notifications '{}'",
-                    job.getSchedule().getName(), job.getSchedule().getProgramId(), job.getNotifications());
+          LOG.error("Cannot satisfy AND trigger in schedule '{}' to launch program '{}' with the job '{}'",
+                    job.getSchedule().getName(), job.getSchedule().getProgramId(), job);
         }
       }
       throw e;
