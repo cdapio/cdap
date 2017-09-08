@@ -18,6 +18,7 @@
 
 $hr_color: lightgray;
 $dsv_input_border_color: rgba(0, 0, 0, 0.15);
+$rule-create-fields-required-color: $cdap-red-text;
 
 .create-rule-container {
   padding: 10px;
@@ -27,6 +28,27 @@ $dsv_input_border_color: rgba(0, 0, 0, 0.15);
 
   .when-then-clause-container {
     padding-top: 10px;
+
+    .form-group.row {
+      .col-form-label {
+        width: 20%;
+      }
+
+      .when-then-value {
+        width: 100%;
+
+        @media (min-width: 576px) {
+          width: 80%;
+        }
+      }
+    }
+
+    .fields-required-text {
+      color: $rule-create-fields-required-color;
+      font-size: 11px;
+      margin-bottom: 0;
+      margin-top: -1rem;
+    }
   }
   hr {
     margin-left: -10px;

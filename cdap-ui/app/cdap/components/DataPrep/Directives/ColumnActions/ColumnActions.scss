@@ -35,6 +35,8 @@ $option-hover-bg-color: #eeeeee;
     }
   }
   .dropdown-item {
+    cursor: pointer;
+
     &:focus,
     &:active,
     &.active,
