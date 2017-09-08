@@ -54,6 +54,7 @@ import co.cask.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import co.cask.cdap.internal.app.runtime.schedule.queue.Job;
 import co.cask.cdap.internal.app.runtime.schedule.queue.JobQueueDataset;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AndTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -99,7 +100,10 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -107,6 +111,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 public class CoreSchedulerServiceTest extends AppFabricTestBase {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CoreSchedulerServiceTest.class);
 
   private static final NamespaceId NS_ID = new NamespaceId("schedtest");
   private static final ApplicationId APP1_ID = NS_ID.app("app1");
@@ -341,7 +347,17 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // This would make sure the subscriber has processed the data event
     waitUntilProcessed(dataEventTopic, minPublishTime);
     // Wait for 1 run to complete for compositeWorkflow
-    waitForCompleteRuns(1, compositeWorkflow);
+    try {
+      waitForCompleteRuns(1, compositeWorkflow);
+    } catch (Exception e) {
+      for (Job job: getAllJobs()) {
+        if (job.getSchedule().getTrigger() instanceof AndTrigger) {
+          LOG.error("Cannot satisfy AND trigger in schedule '{}' to launch program '{}' with the notifications '{}'",
+                    job.getSchedule().getName(), job.getSchedule().getProgramId(), job.getNotifications());
+        }
+      }
+      throw e;
+    }
 
     for (RunRecordMeta runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
                                                      0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
