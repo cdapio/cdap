@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myFileUploader', function($q, $window, cfpLoadingBar, myAuth, myAlert) {
+  .factory('myFileUploader', function($q, $window, cfpLoadingBar, myAuth, myAlert, MY_CONFIG) {
     function upload(fileObj, header){
       var deferred = $q.defer();
       var path, customHeaderNames, xhr;
-      if (!myAuth.currentUser) {
+      if (MY_CONFIG.securityEnabled && !myAuth.currentUser) {
         deferred.reject(400);
         myAlert({
           title: 'Must specify user: ',
@@ -47,7 +47,7 @@ angular.module(PKG.name + '.services')
 
         xhr.setRequestHeader('X-Archive-Name', fileObj.file.name);
 
-        if (myAuth.currentUser.token) {
+        if (MY_CONFIG.securityEnabled && myAuth.currentUser.token) {
           xhr.setRequestHeader('Authorization', 'Bearer ' + myAuth.currentUser.token);
         }
 
