@@ -19,7 +19,9 @@ package co.cask.cdap.etl.tool.config;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.api.artifact.ArtifactVersion;
+import co.cask.cdap.api.artifact.ArtifactVersionRange;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.etl.proto.UpgradeContext;
 import co.cask.cdap.etl.proto.UpgradeableConfig;
 import co.cask.cdap.etl.proto.v2.DataStreamsConfig;
@@ -44,21 +46,23 @@ public class Upgrader {
   public static final Set<String> ARTIFACT_NAMES =
     ImmutableSet.of(BATCH_NAME, DATA_PIPELINE_NAME, DATA_STREAMS_NAME);
   private static final Gson GSON = new Gson();
-  private static final ArtifactVersion CURRENT_VERSION = new ArtifactVersion(ETLVersion.getVersion());
   private static final ArtifactVersion LOWEST_VERSION = new ArtifactVersion("3.2.0");
 
+  private final String newVersion;
+  private final ArtifactVersionRange upgradeRange;
   private final UpgradeContext etlBatchContext;
   private final UpgradeContext dataPipelineContext;
   private final UpgradeContext dataStreamsContext;
 
-  public Upgrader(ArtifactClient artifactClient) {
-    String newVersion = ETLVersion.getVersion();
-    this.etlBatchContext =
-      new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(BATCH_NAME, newVersion));
+  public Upgrader(NamespaceClient namespaceClient, ArtifactClient artifactClient,
+                  String newVersion, boolean includeCurrentVersion) {
+    this.etlBatchContext = new ClientUpgradeContext(namespaceClient, artifactClient, BATCH_NAME, newVersion);
     this.dataPipelineContext =
-      new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(DATA_PIPELINE_NAME, newVersion));
-    this.dataStreamsContext =
-      new ClientUpgradeContext(artifactClient, NamespaceId.SYSTEM.artifact(DATA_STREAMS_NAME, newVersion));
+      new ClientUpgradeContext(namespaceClient, artifactClient, DATA_PIPELINE_NAME, newVersion);
+    this.dataStreamsContext = new ClientUpgradeContext(namespaceClient, artifactClient, DATA_STREAMS_NAME, newVersion);
+    this.upgradeRange = new ArtifactVersionRange(LOWEST_VERSION, true,
+                                                 new ArtifactVersion(newVersion), includeCurrentVersion);
+    this.newVersion = newVersion;
   }
 
   public boolean shouldUpgrade(ArtifactSummary artifactSummary) {
@@ -71,9 +75,8 @@ public class Upgrader {
       return false;
     }
 
-    // check the version is in range [3.2.0 - 4.0.0)
     ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
-    return LOWEST_VERSION.compareTo(artifactVersion) <= 0 && CURRENT_VERSION.compareTo(artifactVersion) > 0;
+    return upgradeRange.versionIsInRange(artifactVersion);
   }
 
   public boolean upgrade(ArtifactSummary oldArtifact, String oldConfigStr,
@@ -92,7 +95,7 @@ public class Upgrader {
       return false;
     }
 
-    ArtifactSummary newArtifact = new ArtifactSummary(artifactName, ETLVersion.getVersion(), ArtifactScope.SYSTEM);
+    ArtifactSummary newArtifact = new ArtifactSummary(artifactName, newVersion, ArtifactScope.SYSTEM);
     AppRequest<? extends ETLConfig> appRequest;
     switch (artifactName) {
       case BATCH_NAME:

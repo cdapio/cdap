@@ -19,10 +19,15 @@ package co.cask.cdap.etl.tool.config;
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactSummary;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.etl.proto.ArtifactSelectorConfig;
 import co.cask.cdap.etl.proto.UpgradeContext;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.id.ArtifactId;
+import co.cask.cdap.proto.id.NamespaceId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import javax.annotation.Nullable;
@@ -31,12 +36,19 @@ import javax.annotation.Nullable;
  * Uses an ArtifactClient to get the artifact for a specific plugin.
  */
 public class ClientUpgradeContext implements UpgradeContext {
-  protected final ArtifactClient artifactClient;
-  protected final ArtifactId artifactId;
+  private static final Logger LOG = LoggerFactory.getLogger(ClientUpgradeContext.class);
+  private final NamespaceClient namespaceClient;
+  private final ArtifactClient artifactClient;
+  private final String artifactName;
+  private final String artifactVersion;
+  private ArtifactId artifactId;
 
-  public ClientUpgradeContext(ArtifactClient artifactClient, ArtifactId artifactId) {
+  public ClientUpgradeContext(NamespaceClient namespaceClient, ArtifactClient artifactClient, String artifactName,
+                              String artifactVersion) {
+    this.namespaceClient = namespaceClient;
     this.artifactClient = artifactClient;
-    this.artifactId = artifactId;
+    this.artifactName = artifactName;
+    this.artifactVersion = artifactVersion;
   }
 
   @Nullable
@@ -44,7 +56,7 @@ public class ClientUpgradeContext implements UpgradeContext {
   public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
     try {
       List<PluginInfo> plugins =
-        artifactClient.getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.SYSTEM);
+        artifactClient.getPluginInfo(getArtifactId(), pluginType, pluginName, ArtifactScope.SYSTEM);
 
       if (plugins.isEmpty()) {
         return null;
@@ -58,7 +70,26 @@ public class ClientUpgradeContext implements UpgradeContext {
                                         chosenArtifact.getName(),
                                         chosenArtifact.getVersion());
     } catch (Exception e) {
+      LOG.warn("Unable to find an artifact for plugin of type {} and name {}. " +
+                 "Plugin artifact section will be left empty.", pluginType, pluginName);
       return null;
     }
+  }
+
+  private ArtifactId getArtifactId() {
+    if (artifactId == null) {
+      // just need to get a namespace that exists, ArtifactScope.SYSTEM will take care of the rest.
+      NamespaceId namespaceId = NamespaceId.DEFAULT;
+      try {
+        List<NamespaceMeta> namespaces = namespaceClient.list();
+        if (!namespaces.isEmpty()) {
+          namespaceId = namespaceClient.list().get(0).getNamespaceId();
+        }
+      } catch (Exception e) {
+        LOG.warn("Unable to list namespaces. Plugin artifact sections will likely be left empty.", e);
+      }
+      artifactId = namespaceId.artifact(artifactName, artifactVersion);
+    }
+    return artifactId;
   }
 }
