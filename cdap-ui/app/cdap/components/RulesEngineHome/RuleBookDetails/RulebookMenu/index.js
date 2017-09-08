@@ -95,12 +95,6 @@ export default class RulebookMenu extends Component {
       iconName: 'icon-download'
     },
     {
-      label: T.translate(`${PREFIX}.createPipeline`),
-      onClick: this.toggleRulesEngineToPipelineModal,
-      iconName: 'icon-pipelines',
-      skipInPipelines: true
-    },
-    {
       label: 'divider'
     },
     {
@@ -131,6 +125,17 @@ export default class RulebookMenu extends Component {
     }
     return (
       <div className="rule-book-menu">
+        {
+          this.props.embedded ?
+            null
+          :
+            <button
+              className="btn btn-primary"
+              onClick={this.toggleRulesEngineToPipelineModal}
+            >
+              {T.translate(`${PREFIX}.createPipeline`)}
+            </button>
+        }
         <UncontrolledDropdown>
           <DropdownToggle>
             <IconSVG name="icon-bars" />

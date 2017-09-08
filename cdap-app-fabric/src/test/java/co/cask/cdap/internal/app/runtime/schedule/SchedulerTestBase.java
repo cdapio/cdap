@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.AppWithStreamSizeSchedule;
 import co.cask.cdap.api.metrics.MetricStore;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -29,17 +28,14 @@ import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.scheduler.Scheduler;
-import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Iterables;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -64,7 +60,6 @@ public abstract class SchedulerTestBase {
   private static Scheduler scheduler;
   private static Store store;
   private static NamespaceAdmin namespaceAdmin;
-  private static ProgramRuntimeService runtimeService;
   protected static MetricStore metricStore;
   protected static Injector injector;
 
@@ -107,7 +102,6 @@ public abstract class SchedulerTestBase {
     metricStore = injector.getInstance(MetricStore.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    runtimeService = injector.getInstance(ProgramRuntimeService.class);
   }
 
   @Test

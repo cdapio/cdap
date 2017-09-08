@@ -72,8 +72,19 @@ body.state-hydrator-create.state-hydrator {
           }
           .action-buttons {
             min-width: auto;
-            .secondary-actions {
-              vertical-align: middle;
+            padding: 12px 20px 10px 10px;
+            display: flex;
+            align-items: center;
+            > span.text-danger {
+              margin-right: 10px;
+            }
+            .dropdown {
+              .dropdown-menu {
+                > button,
+                &:focus {
+                  outline: none;
+                }
+              }
             }
           }
         }

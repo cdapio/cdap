@@ -33,7 +33,6 @@ import com.google.common.reflect.TypeToken;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -84,6 +83,8 @@ public class SparkClassRewriter implements ClassRewriter {
     Type.getObjectType("org/apache/spark/deploy/PythonRunner$");
   private static final Type SPARK_PYTHON_WORKER_FACTORY_TYPE =
     Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory");
+  private static final Type SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE =
+    Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory$MonitorThread");
   private static final Type SPARK_REDIRECT_THREAD = Type.getObjectType("org/apache/spark/util/RedirectThread");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
@@ -117,10 +118,12 @@ public class SparkClassRewriter implements ClassRewriter {
 
   private final Function<String, URL> resourceLookup;
   private final boolean rewriteYarnClient;
+  private final boolean distributed;
 
   public SparkClassRewriter(Function<String, URL> resourceLookup, boolean rewriteYarnClient) {
     this.resourceLookup = resourceLookup;
     this.rewriteYarnClient = rewriteYarnClient;
+    this.distributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
   }
 
   @Nullable
@@ -149,12 +152,14 @@ public class SparkClassRewriter implements ClassRewriter {
     }
     if (className.equals(SPARK_PYTHON_RUNNER_COMPANION_TYPE.getClassName())) {
       // Rewrite all System.out and System.err redirected via RedirectedPrintStream
-      return rewritePythonOutputRedirect(input, null);
+      return rewritePythonRunnerCompanion(input);
     }
     if (className.equals(SPARK_PYTHON_WORKER_FACTORY_TYPE.getClassName())) {
-      // Rewrite all System.out and System.err redirected via RedirectedPrintStream
-      // As well as the pythonPath field for local mode to include the pyspark library
-      return rewritePythonOutputRedirect(input, "pythonPath");
+      // Rewrite the PythonWorkerFactory. See method for details.
+      return rewritePythonWorkerFactory(input);
+    }
+    if (className.equals(SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE.getClassName())) {
+      return rewritePythonWorkerMonitorThread(input);
     }
     if (className.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
       // Rewrite YarnClient for workaround SPARK-13441.
@@ -635,51 +640,56 @@ public class SparkClassRewriter implements ClassRewriter {
   }
 
   /**
-   * Replace any occurance of System.out and System.err in the code with
-   *
-   * RedirectedPrintStream.createRedirectedOutStream(
-   *   LoggerFactory.getLogger(SparkRuntimeContextProvider.get().getProgram().getMainClassName()),
-   *   System.out|System.err
-   * );
+   * Rewrites the PythonRunner companion class to have all System.out/err goes into Logger.
    */
-  private byte[] rewritePythonOutputRedirect(InputStream byteCodeStream,
-                                             @Nullable final String pyPathFieldName) throws IOException {
+  private byte[] rewritePythonRunnerCompanion(InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        // Intercept all methods
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        return new OutputRedirectMethodVisitor(mv, access, name, desc, distributed);
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
+
+  /**
+   * Rewrite all System.out and System.err redirected via RedirectedPrintStream.
+   * Also update pythonPath field in local mode to include the pyspark library
+   */
+  private byte[] rewritePythonWorkerFactory(InputStream byteCodeStream) throws IOException {
     ClassReader cr = new ClassReader(byteCodeStream);
     ClassWriter cw = new ClassWriter(0);
 
     cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
 
-      final Type stringType = Type.getType(String.class);
-      boolean rewritePythonPath;
-
-      @Override
-      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
-        if (name.equals(pyPathFieldName) && Type.getType(desc).equals(stringType)) {
-          rewritePythonPath = true;
-        }
-        return super.visitField(access, name, desc, signature, value);
-      }
-
       @Override
       public MethodVisitor visitMethod(int access, String name,
                                        String desc, String signature, String[] exceptions) {
-        // Intercept all methods
-        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
-        boolean isConstructor = "<init>".equals(name);
+        // Intercept all methods. Always redirect outputs
+        MethodVisitor mv = new OutputRedirectMethodVisitor(super.visitMethod(access, name, desc, signature, exceptions),
+                                                           access, name, desc, distributed);
 
-        final boolean isDistributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
         final GeneratorAdapter adapter = new GeneratorAdapter(mv, access, name, desc);
         return new MethodVisitor(Opcodes.ASM5, mv) {
 
           @Override
           public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-            // Rewrite the pythonPath field
-            if (opcode == Opcodes.PUTFIELD && rewritePythonPath && pyPathFieldName.equals(name)) {
+            // Rewrite the pythonPath field when setting the field value
+            if (opcode == Opcodes.PUTFIELD && "pythonPath".equals(name)) {
+              Type stringType = Type.getType(String.class);
+
               // Generates
               // if (SparkRuntimeEnv.getProperty("cdap.spark.pyFiles") != null) {
               //   <stringOnStack>.concat(File.pathSeparator).concat(SparkRuntimeEnv.getProperty("cdap.spark.pyFiles"))
               // }
               // The result will be back on the stack
+              // The "cdap.spark.pyFiles" property is only set in local mode by SparkRuntimeService
               Label nullLabel = adapter.newLabel();
               // The if condition
               adapter.push("cdap.spark.pyFiles");
@@ -696,60 +706,35 @@ public class SparkClassRewriter implements ClassRewriter {
               adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
               // End of if block
               adapter.mark(nullLabel);
-
-              super.visitFieldInsn(opcode, owner, name, desc);
-              return;
             }
 
-            // Rewrite the System.out and System.err
-            Type systemType = Type.getType(System.class);
-            Type printStreamType = Type.getType(PrintStream.class);
-
-            if (opcode != Opcodes.GETSTATIC
-              || !systemType.getInternalName().equals(owner)
-              || !printStreamType.equals(Type.getType(desc))
-              || !("out".equals(name) || "err".equals(name))) {
-              super.visitFieldInsn(opcode, owner, name, desc);
-              return;
-            }
-
-            // RedirectedPrintStream.createRedirectedOutStream(
-            //   LoggerFactory.getLogger(
-            //     SparkRuntimeContextProvider.get().getProgram().getMainClassName()
-            //   ),
-            //   System.out|System.err
-            // );
-            Type runtimeContextProviderType =
-              Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContextProvider");
-            Type runtimeContextType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContext");
-            Type loggerFactoryType = Type.getType(LoggerFactory.class);
-            Type loggerType = Type.getType(Logger.class);
-            Type redirectedPrintStreamType = Type.getType(RedirectedPrintStream.class);
-            Type programType = Type.getType(Program.class);
-
-            // Use the name of the spark program class as the logger name
-            adapter.invokeStatic(runtimeContextProviderType, new Method("get", runtimeContextType, new Type[0]));
-            adapter.invokeVirtual(runtimeContextType, new Method("getProgram", programType, new Type[0]));
-            adapter.invokeInterface(programType, new Method("getMainClassName", stringType, new Type[0]));
-            adapter.invokeStatic(loggerFactoryType,
-                                 new Method("getLogger", loggerType, new Type[]{stringType}));
-
-            // Only write back to stdout/stderr if in distributed mode, which is on separate file
-            // In local mode, we don't want the same log appear two in the log file.
-            if (isDistributed) {
-              adapter.getStatic(systemType, name, printStreamType);
-            } else {
-              adapter.push((Type) null);
-            }
-            adapter.invokeStatic(redirectedPrintStreamType,
-                                 new Method("createRedirectedOutStream", redirectedPrintStreamType,
-                                            new Type[] { loggerType, printStreamType }));
+            super.visitFieldInsn(opcode, owner, name, desc);
           }
         };
       }
     }, ClassReader.EXPAND_FRAMES);
 
     return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the PythonWorkerFactory MonitorThread so that it can be interrupted when the Spark program finished.
+   * This rewrite is only needed in local mode to avoid thread leakage.
+   */
+  @Nullable
+  private byte[] rewritePythonWorkerMonitorThread(InputStream byteCodeStream) throws IOException {
+    if (distributed) {
+      return null;
+    }
+    return rewriteConstructor(SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE, byteCodeStream, new ConstructorRewriter() {
+      @Override
+      void onMethodEnter(String name, String desc, GeneratorAdapter generatorAdapter) {
+        generatorAdapter.loadThis();
+        generatorAdapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
+                                      new Method("addPyMonitorThread", Type.VOID_TYPE,
+                                                 new Type[] { Type.getType(Thread.class) }));
+      }
+    });
   }
 
   /**
@@ -978,6 +963,76 @@ public class SparkClassRewriter implements ClassRewriter {
 
     void onMethodExit(String name, String desc, GeneratorAdapter generatorAdapter) {
       // no-op
+    }
+  }
+
+  /**
+   * A {@link MethodVisitor} for replacing any occurance of System.out and System.err in the code with
+   *
+   * <pre>
+   * RedirectedPrintStream.createRedirectedOutStream(
+   *   LoggerFactory.getLogger(SparkRuntimeContextProvider.get().getProgram().getMainClassName()),
+   *   System.out|System.err
+   * );
+   * </pre>
+   */
+  private static final class OutputRedirectMethodVisitor extends MethodVisitor {
+
+    private static final Type SYSTEM_TYPE = Type.getType(System.class);
+    private static final Type PRINT_STREAM_TYPE = Type.getType(PrintStream.class);
+    private static final Type STRING_TYPE = Type.getType(String.class);
+
+    private final GeneratorAdapter adapter;
+    private final boolean distributed;
+
+    OutputRedirectMethodVisitor(MethodVisitor mv, int access, String name, String desc, boolean distributed) {
+      super(Opcodes.ASM5, mv);
+      this.adapter = new GeneratorAdapter(mv, access, name, desc);
+      this.distributed = distributed;
+    }
+
+    @Override
+    public void visitFieldInsn(int opcode, String owner, String name, String desc) {
+      // Rewrite the System.out and System.err
+      if (opcode != Opcodes.GETSTATIC
+        || !SYSTEM_TYPE.getInternalName().equals(owner)
+        || !PRINT_STREAM_TYPE.equals(Type.getType(desc))
+        || !("out".equals(name) || "err".equals(name))) {
+        super.visitFieldInsn(opcode, owner, name, desc);
+        return;
+      }
+
+      // RedirectedPrintStream.createRedirectedOutStream(
+      //   LoggerFactory.getLogger(
+      //     SparkRuntimeContextProvider.get().getProgram().getMainClassName()
+      //   ),
+      //   System.out|System.err
+      // );
+      Type runtimeContextProviderType =
+        Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContextProvider");
+      Type runtimeContextType = Type.getObjectType("co/cask/cdap/app/runtime/spark/SparkRuntimeContext");
+      Type loggerFactoryType = Type.getType(LoggerFactory.class);
+      Type loggerType = Type.getType(Logger.class);
+      Type redirectedPrintStreamType = Type.getType(RedirectedPrintStream.class);
+      Type programType = Type.getType(Program.class);
+
+      // Use the name of the spark program class as the logger name
+      adapter.invokeStatic(runtimeContextProviderType, new Method("get", runtimeContextType, new Type[0]));
+      adapter.invokeVirtual(runtimeContextType, new Method("getProgram", programType, new Type[0]));
+      adapter.invokeInterface(programType, new Method("getMainClassName", STRING_TYPE, new Type[0]));
+      adapter.invokeStatic(loggerFactoryType,
+                           new Method("getLogger", loggerType, new Type[]{STRING_TYPE}));
+
+      // Only write back to stdout/stderr if in distributed mode, which is on separate file
+      // In local mode, we don't want the same log appear two in the log file.
+      if (distributed) {
+        adapter.getStatic(SYSTEM_TYPE, name, PRINT_STREAM_TYPE);
+      } else {
+        adapter.push((Type) null);
+      }
+      adapter.invokeStatic(redirectedPrintStreamType,
+                           new Method("createRedirectedOutStream", redirectedPrintStreamType,
+                                      new Type[] { loggerType, PRINT_STREAM_TYPE }));
     }
   }
 }

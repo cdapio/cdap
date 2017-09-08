@@ -25,6 +25,7 @@ import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import {setPopoverOffset} from 'components/DataPrep/helper';
+import {UncontrolledTooltip} from 'components/UncontrolledComponents';
 
 require('./ExtractFields.scss');
 export default class ExtractFields extends Component {
@@ -37,6 +38,8 @@ export default class ExtractFields extends Component {
     this.parseUsingDelimiters = this.parseUsingDelimiters.bind(this);
     this.preventPropagation = this.preventPropagation.bind(this);
     this.handleUsingDelimiters = this.handleUsingDelimiters.bind(this);
+
+    this.isUsingPatternsDisabled = DataPrepStore.getState().dataprep.types[this.props.column] !== 'string';
   }
 
   componentDidMount() {
@@ -52,12 +55,17 @@ export default class ExtractFields extends Component {
   renderDetail() {
     if (!this.props.isOpen) { return null; }
 
+    let usingPatternsId = 'extract-fields-using-patterns';
+
     return (
       <div
         className="extract-fields second-level-popover"
         onClick={this.preventPropagation}
       >
-        <div className="extract-field-options">
+        <div
+          id={usingPatternsId}
+          className={classnames("extract-field-options", {'disabled': this.isUsingPatternsDisabled})}
+        >
           <div
             onClick={this.parseUsingPatterns}
             className="option"
@@ -65,6 +73,16 @@ export default class ExtractFields extends Component {
             {T.translate(`${PREFIX}.patternSubmenuTitle`)}
           </div>
         </div>
+        {
+          this.isUsingPatternsDisabled ? (
+            <UncontrolledTooltip
+              target={usingPatternsId}
+              delay={{show: 250, hide: 0}}
+            >
+              {T.translate(`${PREFIX}.UsingPatterns.disabledTooltip`)}
+            </UncontrolledTooltip>
+          ) : null
+        }
         <div className="extract-field-options">
           <div
             onClick={this.parseUsingDelimiters}
@@ -87,6 +105,8 @@ export default class ExtractFields extends Component {
   }
 
   parseUsingPatterns() {
+    if (this.isUsingPatternsDisabled) { return null; }
+
     this.setState({
       activeModal: (
         <UsingPatternsModal

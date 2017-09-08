@@ -282,6 +282,7 @@ public abstract class AppFabricTestBase {
     }
     // Use a shorter delay to speedup tests
     cConf.setLong(Constants.Scheduler.EVENT_POLL_DELAY_MILLIS, 100L);
+    cConf.setLong(Constants.AppFabric.STATUS_EVENT_POLL_DELAY_MILLIS, 100L);
     return cConf;
   }
 
