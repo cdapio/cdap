@@ -186,7 +186,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     try {
       MapReduceTaskContextProvider provider;
       synchronized (this) {
