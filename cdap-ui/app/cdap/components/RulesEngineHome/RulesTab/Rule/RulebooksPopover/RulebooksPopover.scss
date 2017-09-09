@@ -18,6 +18,7 @@ $submenu_color: #cccccc;
 $disabled_menu_hover_bg_color: gray;
 $submenu_bg_color: white;
 $add_button_color: #0099ff;
+$width_popover: 180px;
 
 .rule-book-popover {
   position: relative;
@@ -35,8 +36,15 @@ $add_button_color: #0099ff;
     left: 100%;
     z-index: 1000;
     box-shadow: 1px 2px 5px $submenu_color;
-    min-width: 180px;
+    min-width: $width_popover;
     border: 1px solid $submenu_color;
+
+    > div {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: $width_popover;
+    }
 
     &.empty {
       color: $submenu_color;

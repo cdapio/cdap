@@ -1442,6 +1442,11 @@ features:
       footertitle: Failed to Upload Rulebook
       shorttitle: Import Rulebook
       title: Upload Rulebook
+    Rule:
+      ConfirmationModal:
+        failedMessage: Deleting rule {id} failed
+        text: Are you sure you want to delete "{id}"
+        title: Delete Rule
     Rulebook:
       owner: Owner
       rules: Rules
