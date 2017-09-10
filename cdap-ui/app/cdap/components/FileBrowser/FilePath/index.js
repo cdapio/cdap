@@ -209,5 +209,6 @@ FilePath.propTypes = {
   baseStatePath: PropTypes.string,
   fullpath: PropTypes.string,
   enableRouting: PropTypes.bool,
-  onPathChange: PropTypes.func
+  onPathChange: PropTypes.func,
+  originalPath: PropTypes.string
 };

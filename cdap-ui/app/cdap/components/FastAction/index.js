@@ -109,7 +109,7 @@ export default class FastAction extends Component {
 }
 
 FastAction.propTypes = {
-  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log']),
+  type: PropTypes.oneOf(['delete', 'truncate', 'startStop', 'sendEvents', 'explore', 'setPreferences', 'log', 'viewEvents']),
   entity: PropTypes.object,
   onSuccess: PropTypes.func,
   opened: PropTypes.bool,

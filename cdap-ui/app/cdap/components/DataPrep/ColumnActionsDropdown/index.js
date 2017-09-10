@@ -105,6 +105,7 @@ export default class ColumnActionsDropdown extends Component {
         requiredColCount: 1
       },
       {
+        id: shortid.generate(),
         tag: CustomTransform,
         requiredColCount: 1
       },
@@ -295,10 +296,10 @@ export default class ColumnActionsDropdown extends Component {
         <PopoverContent>
           <ScrollableList target={`dataprep-action-${this.dropdownId}`}>
               {
-                this.directives.map((directive) => {
+                this.directives.map((directive, index) => {
                   if (directive.tag === 'divider') {
                     return (
-                      <div className="column-action-divider">
+                      <div className="column-action-divider" key={index}>
                         <hr />
                       </div>
                     );

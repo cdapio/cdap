@@ -105,7 +105,10 @@ const TabConfig = PropTypes.shape({
 });
 ConfigurableTab.propTypes = {
   onTabClick: PropTypes.func,
-  activeTab: PropTypes.string,
+  activeTab: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number
+  ]),
   tabConfig: PropTypes.shape({
     tabs: PropTypes.arrayOf(TabConfig),
     layout: PropTypes.string,

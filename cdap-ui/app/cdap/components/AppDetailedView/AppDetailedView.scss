@@ -16,6 +16,33 @@
 
 @import "../../styles/variables.scss";
 
+@mixin overviewStyles() {
+  .overview-tab {
+    > .nav-tabs {
+      .nav-item {
+        .nav-link {
+          float: left;
+          padding: 0;
+
+          a {
+            text-decoration: none;
+            padding: 0.5em 1em;
+            float: left;
+            color: inherit;
+
+            &.active {
+              font-weight: bold;
+              text-decoration: none;
+              padding-bottom: 5px;
+              border-bottom: 2px solid $cdap_orange;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .app-detailed-view {
   height: calc(100vh - 104px);
   background: rgba(238, 238, 238, 1);
@@ -57,31 +84,9 @@
     top: 8px;
     position: absolute;
   }
-  .overview-tab {
-    > .nav-tabs {
-      .nav-item {
-        .nav-link {
-          float: left;
-          padding: 0;
 
-          a {
-            text-decoration: none;
-            padding: 0.5em 1em;
-            float: left;
-            color: inherit;
+  @include overviewStyles();
 
-            &.active {
-              font-weight: bold;
-              text-decoration: none;
-              padding-bottom: 5px;
-              border-bottom: 2px solid $cdap_orange;
-            }
-          }
-        }
-      }
-
-    }
-  }
   > .fa.fa-spinner.fa-spin {
     position: fixed;
     left: 50%;

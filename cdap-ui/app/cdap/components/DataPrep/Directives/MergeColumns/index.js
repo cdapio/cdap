@@ -299,7 +299,7 @@ export default class MergeColumnsDirective extends Component {
 }
 
 MergeColumnsDirective.propTypes = {
-  column: PropTypes.array,
+  column: PropTypes.oneOfType([PropTypes.array, PropTypes.string]),
   onComplete: PropTypes.func,
   isOpen: PropTypes.bool,
   close: PropTypes.func

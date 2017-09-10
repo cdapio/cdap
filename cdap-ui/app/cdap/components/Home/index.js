@@ -19,17 +19,41 @@ import React, { Component } from 'react';
 import {Route, Switch} from 'react-router-dom';
 import Page404 from 'components/404';
 import EntityListView from 'components/EntityListView';
-import AppDetailedView from 'components/AppDetailedView';
-import DatasetDetailedView from 'components/DatasetDetailedView';
-import StreamDetailedView from 'components/StreamDetailedView';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import Loadable from 'react-loadable';
 import NamespaceStore from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import RulesEngineHome from 'components/RulesEngineHome';
-import DataPrepHome from 'components/DataPrepHome';
-import DataPrepConnections from 'components/DataPrepConnections';
-import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
 import {setActiveBrowser, setDatabaseProperties} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+require('./Home.scss');
 
+const DataPrepBrowser = Loadable({
+  loader: () => import(/* webpackChunkName: "DataPrepBrowser" */ 'components/DataPrep/DataPrepBrowser'),
+  loading: LoadingSVGCentered
+});
+const DataPrepConnections = Loadable({
+  loader: () => import(/* webpackChunkName: "DataPrepConnections" */ 'components/DataPrepConnections'),
+  loading: LoadingSVGCentered
+});
+const DataPrepHome = Loadable({
+  loader: () => import(/* webpackChunkName: "DataPrepHome" */ 'components/DataPrepHome'),
+  loading: LoadingSVGCentered
+});
+const RulesEngineHome = Loadable({
+  loader: () => import(/* webpackChunkName: "RulesEngineHome" */ 'components/RulesEngineHome'),
+  loading: LoadingSVGCentered
+});
+const DatasetDetailedView = Loadable({
+  loader: () => import(/* webpackChunkName: "DatasetDetailedView" */ 'components/DatasetDetailedView'),
+  loading: LoadingSVGCentered
+});
+const StreamDetailedView = Loadable({
+  loader: () => import(/* webpackChunkName: "StreamDetailedView" */ 'components/StreamDetailedView'),
+  loading: LoadingSVGCentered
+});
+const AppDetailedView = Loadable({
+  loader: () => import(/* webpackChunkName: "AppDetailedView" */ 'components/AppDetailedView'),
+  loading: LoadingSVGCentered
+});
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({

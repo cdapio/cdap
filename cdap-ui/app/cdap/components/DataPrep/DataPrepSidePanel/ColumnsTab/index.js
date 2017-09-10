@@ -132,7 +132,7 @@ export default class ColumnsTab extends Component {
         <DropdownToggle className="columns-tab-dropdown-toggle">
           <IconSVG name="icon-caret-square-o-down" />
         </DropdownToggle>
-        <DropdownMenu left>
+        <DropdownMenu>
           <DropdownItem
             className="toggle-all-option"
             onClick={this.clearAllColumns}

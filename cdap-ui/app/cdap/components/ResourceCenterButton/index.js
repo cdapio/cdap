@@ -14,11 +14,11 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
 
-import React, { Component } from 'react';
-import PlusButtonModal from 'components/PlusButtonModal';
+import PropTypes from 'prop-types';
+import React, {Component} from 'react';
 import PlusButtonStore from 'services/PlusButtonStore';
+import PlusButtonModal from 'components/PlusButtonModal';
 import classnames from 'classnames';
 require('./ResourceCenterButton.scss');
 

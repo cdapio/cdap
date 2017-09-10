@@ -28,6 +28,11 @@ var plugins = [
     path: path.join(__dirname, 'dll', 'shared-[name]-manifest.json'),
     name: 'shared_[name]',
     context: path.resolve(__dirname, 'dll')
+  }),
+  new webpack.optimize.UglifyJsPlugin({
+    compress: {
+      warnings: false
+    }
   })
 ];
 var webpackConfig = {
@@ -36,6 +41,7 @@ var webpackConfig = {
       'babel-polyfill',
       'react',
       'react-dom',
+      'react-addons-css-transition-group',
       'redux',
       'lodash',
       'classnames',
@@ -45,11 +51,10 @@ var webpackConfig = {
       'whatwg-fetch',
       'react-vis',
       'clipboard',
+      'react-dnd-html5-backend',
       'react-dnd',
-      'vega',
-      'vega-lite',
-      'vega-tooltip',
-      'cask-datavoyager'
+      'event-emitter',
+      'react-loadable'
     ]
   },
   output: {
@@ -66,18 +71,6 @@ var webpackConfig = {
   }
 };
 
-if (mode === 'production') {
-  plugins.push(
-    new webpack.optimize.UglifyJsPlugin({
-      compress: {
-        warnings: false
-      }
-    })
-  );
-  webpackConfig = Object.assign({}, webpackConfig, {
-    plugins
-  });
-}
 if (mode !== 'production') {
   webpackConfig = Object.assign({}, webpackConfig, {
     devtool: 'source-map'

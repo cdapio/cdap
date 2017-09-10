@@ -14,11 +14,15 @@
  * the License.
  */
 
+@import "../AppDetailedView/AppDetailedView.scss";
+
 .app-detailed-view {
   &.streams-detailed-view {
     .iframe-container {
       height: 100%;
     }
+
+    @include overviewStyles();
 
     .properties-container {
       padding: 15px 10px;
