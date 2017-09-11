@@ -45,12 +45,14 @@ import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.ArtifactManagerFactory;
@@ -419,6 +421,21 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
     return appFabricClient.getVersionedInfo(applicationId);
+  }
+
+  @Override
+  public void addSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    appFabricClient.addSchedule(scheduleId.getParent(), scheduleDetail);
+  }
+
+  @Override
+  public void updateSchedule(ScheduleId scheduleId, ScheduleDetail scheduleDetail) throws Exception {
+    appFabricClient.updateSchedule(scheduleId, scheduleDetail);
+  }
+
+  @Override
+  public void deleteSchedule(ScheduleId scheduleId) throws Exception {
+    appFabricClient.deleteSchedule(scheduleId);
   }
 
   private Manifest createManifest(Class<?> cls, Class<?>... classes) {

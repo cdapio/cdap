@@ -27,11 +27,15 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectStore;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.schedule.SchedulableProgramType;
+import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
+import co.cask.cdap.internal.schedule.constraint.Constraint;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -39,6 +43,7 @@ import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ScheduleDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.ArtifactId;
@@ -49,6 +54,7 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.proto.id.ScheduleId;
 import co.cask.cdap.proto.id.StreamId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
@@ -1096,8 +1102,9 @@ public class AuthorizationTest extends TestBase {
   @Test
   public void testScheduleAuth() throws Exception {
     createAuthNamespace();
+    ApplicationId appId = AUTH_NAMESPACE.app(AppWithSchedule.class.getSimpleName());
     Map<EntityId, Set<Action>> neededPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(AUTH_NAMESPACE.app(AppWithSchedule.class.getSimpleName()), EnumSet.of(Action.ADMIN))
+      .put(appId, EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.artifact(AppWithSchedule.class.getSimpleName(), "1.0-SNAPSHOT"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AppWithSchedule.INPUT_NAME), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AppWithSchedule.OUTPUT_NAME), EnumSet.of(Action.ADMIN))
@@ -1106,12 +1113,13 @@ public class AuthorizationTest extends TestBase {
     setUpPrivilegeAndRegisterForDeletion(ALICE, neededPrivileges);
 
     ApplicationManager appManager = deployApplication(AUTH_NAMESPACE, AppWithSchedule.class);
+    String workflowName = AppWithSchedule.SampleWorkflow.class.getSimpleName();
     ProgramId workflowID = new ProgramId(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(),
-                                         ProgramType.WORKFLOW, AppWithSchedule.SampleWorkflow.class.getSimpleName());
+                                         ProgramType.WORKFLOW, workflowName);
     cleanUpEntities.add(workflowID);
 
     final WorkflowManager workflowManager =
-      appManager.getWorkflowManager(AppWithSchedule.SampleWorkflow.class.getSimpleName());
+      appManager.getWorkflowManager(workflowName);
     ScheduleManager scheduleManager = workflowManager.getSchedule(AppWithSchedule.EVERY_HOUR_SCHEDULE);
 
     // switch to BOB
@@ -1127,13 +1135,11 @@ public class AuthorizationTest extends TestBase {
     // bob should also not be able see the status of the schedule
     try {
       scheduleManager.status(HttpURLConnection.HTTP_FORBIDDEN);
-      Assert.fail("Getting schedule status should have failed since BOB does not have READ on the program");
+      Assert.fail("Getting schedule status should have failed since BOB does not have any privilege on the program");
     } catch (UnauthorizedException e) {
       // Expected
     }
 
-    // switch to Alice
-    SecurityRequestContext.setUserId(ALICE.getName());
     // give BOB READ permission in the workflow
     grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.READ));
 
@@ -1150,8 +1156,6 @@ public class AuthorizationTest extends TestBase {
     // but BOB should be able to get schedule status now
     Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
 
-    // switch to Alice
-    SecurityRequestContext.setUserId(ALICE.getName());
     // give BOB EXECUTE permission in the workflow
     grantAndAssertSuccess(workflowID, BOB, EnumSet.of(Action.EXECUTE));
 
@@ -1164,6 +1168,58 @@ public class AuthorizationTest extends TestBase {
     // suspend the schedule so that it does not start running again
     scheduleManager.suspend();
     Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(), scheduleManager.status(HttpURLConnection.HTTP_OK));
+
+    ScheduleId scheduleId = new ScheduleId(appId.getNamespace(), appId.getApplication(), appId.getVersion(),
+                                           "testSchedule");
+    ScheduleDetail scheduleDetail =
+      new ScheduleDetail(AUTH_NAMESPACE.getNamespace(), AppWithSchedule.class.getSimpleName(), "1.0-SNAPSHOT",
+                         "testSchedule", "Something 2",
+                         new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, workflowName),
+                         Collections.<String, String>emptyMap(), new TimeTrigger("*/1 * * * *"),
+                         Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null);
+
+    try {
+      addSchedule(scheduleId, scheduleDetail);
+      Assert.fail("Adding schedule should fail since BOB does not have AMDIN on the app");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+
+    // grant BOB ADMIN on the app
+    grantAndAssertSuccess(appId, BOB, EnumSet.of(Action.ADMIN));
+
+    // add schedule should succeed
+    addSchedule(scheduleId, scheduleDetail);
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(),
+                        workflowManager.getSchedule(scheduleId.getSchedule()).status(HttpURLConnection.HTTP_OK));
+
+    // update schedule should succeed
+    updateSchedule(scheduleId, scheduleDetail);
+    Assert.assertEquals(ProgramScheduleStatus.SUSPENDED.name(),
+                        workflowManager.getSchedule(scheduleId.getSchedule()).status(HttpURLConnection.HTTP_OK));
+
+    // revoke ADMIN from BOB
+    getAuthorizer().revoke(Authorizable.fromEntityId(appId), BOB, EnumSet.of(Action.ADMIN));
+
+    try {
+      // delete schedule should fail since we revoke the ADMIN privilege from BOB
+      deleteSchedule(scheduleId);
+      Assert.fail("Deleting schedule should fail since BOB does not have AMDIN on the app");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+
+    try {
+      updateSchedule(scheduleId, scheduleDetail);
+      Assert.fail("Updating schedule should fail since BOB does not have AMDIN on the app");
+    } catch (UnauthorizedException e) {
+      // expected
+    }
+
+    // grant BOB ADMIN on the app again
+    grantAndAssertSuccess(appId, BOB, EnumSet.of(Action.ADMIN));
+    deleteSchedule(scheduleId);
+    workflowManager.getSchedule(scheduleId.getSchedule()).status(HttpURLConnection.HTTP_NOT_FOUND);
 
     // switch to Alice
     SecurityRequestContext.setUserId(ALICE.getName());
