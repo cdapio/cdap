@@ -16,6 +16,7 @@
 
 class HydratorPlusPlusConfigStore {
   constructor(HydratorPlusPlusConfigDispatcher, HydratorPlusPlusCanvasFactory, GLOBALS, mySettings, HydratorPlusPlusConsoleActions, $stateParams, NonStorePipelineErrorFactory, HydratorPlusPlusHydratorService, $q, HydratorPlusPlusPluginConfigFactory, uuid, $state, HYDRATOR_DEFAULT_VALUES, myHelpers, avsc, MY_CONFIG) {
+    'ngInject';
     this.state = {};
     this.mySettings = mySettings;
     this.myHelpers = myHelpers;
@@ -87,18 +88,22 @@ class HydratorPlusPlusConfigStore {
     if (config) {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
-      this.setEngine(this.state.config.engine);
       this.setProperties(this.state.config.properties);
       this.setDriverResources(this.state.config.driverResources);
       this.setResources(this.state.config.resources);
-      this.setClientResources(this.state.config.clientResources);
       this.setInstrumentation(this.state.config.processTimingEnabled);
       this.setStageLogging(this.state.config.stageLoggingEnabled);
-      this.setCheckpointing(this.state.config.disableCheckpoints);
-      this.setGracefulStop(this.state.config.stopGracefully);
-      this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
-      this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
       this.setNodes(this.state.config.stages || []);
+      if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
+        this.setClientResources(this.state.config.clientResources);
+        this.setCheckpointing(this.state.config.disableCheckpoints);
+        this.setGracefulStop(this.state.config.stopGracefully);
+        this.setBatchInterval(this.state.config.batchInterval);
+      } else {
+        this.setEngine(this.state.config.engine);
+        this.setNumRecordsPreview(this.state.config.numOfRecordsPreview);
+        this.setMaxConcurrentRuns(this.state.config.maxConcurrentRuns);
+      }
     }
     this.__defaultState = angular.copy(this.state);
   }
@@ -113,14 +118,11 @@ class HydratorPlusPlusConfigStore {
       resources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       driverResources: angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources),
       connections: [],
-      batchInterval: this.HYDRATOR_DEFAULT_VALUES.batchInterval,
       comments: [],
       postActions: [],
       properties: {},
       processTimingEnabled: true,
-      stageLoggingEnabled: true,
-      numOfRecordsPreview: 100,
-      maxConcurrentRuns: 1
+      stageLoggingEnabled: true
     };
   }
 
@@ -398,9 +400,7 @@ class HydratorPlusPlusConfigStore {
     this.emitChange();
   }
   setEngine(engine) {
-    if (this.GLOBALS.etlBatchPipelines.indexOf(this.state.artifact.name) !== -1) {
-      this.state.config.engine = engine || 'mapreduce';
-    }
+    this.state.config.engine = engine || 'mapreduce';
   }
   getEngine() {
     return this.state.config.engine || 'mapreduce';
@@ -519,17 +519,13 @@ class HydratorPlusPlusConfigStore {
     return this.getConfig().disableCheckpoints;
   }
   setCheckpointing(val=false) {
-    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
-      this.state.config.disableCheckpoints = val;
-    }
+    this.state.config.disableCheckpoints = val;
   }
   getGracefulStop() {
     return this.getConfig().stopGracefully;
   }
   setGracefulStop(val=true) {
-    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
-      this.state.config.stopGracefully = val;
-    }
+    this.state.config.stopGracefully = val;
   }
   getNumRecordsPreview() {
     return this.getConfig().numOfRecordsPreview;
@@ -873,11 +869,7 @@ class HydratorPlusPlusConfigStore {
     return this.getState().config.batchInterval;
   }
   setBatchInterval(interval) {
-    if (!interval) {
-      this.state.config.batchInterval = this.getDefaultConfig().batchInterval;
-    } else {
-      this.state.config.batchInterval = interval;
-    }
+    this.state.config.batchInterval = interval || angular.copy(this.HYDRATOR_DEFAULT_VALUES.batchInterval);
   }
   getInstance() {
     return this.getState().config.instances;
@@ -892,9 +884,7 @@ class HydratorPlusPlusConfigStore {
     this.state.config.resources = resources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
   }
   setClientResources(clientResources) {
-    if (this.state.artifact.name === this.GLOBALS.etlDataStreams) {
-      this.state.config.clientResources = clientResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
-    }
+    this.state.config.clientResources = clientResources || angular.copy(this.HYDRATOR_DEFAULT_VALUES.resources);
   }
   setDriverVirtualCores(virtualCores) {
     this.state.config.driverResources = this.state.config.driverResources || {};
@@ -1036,6 +1026,5 @@ class HydratorPlusPlusConfigStore {
   }
 }
 
-HydratorPlusPlusConfigStore.$inject = ['HydratorPlusPlusConfigDispatcher', 'HydratorPlusPlusCanvasFactory', 'GLOBALS', 'mySettings', 'HydratorPlusPlusConsoleActions', '$stateParams', 'NonStorePipelineErrorFactory', 'HydratorPlusPlusHydratorService', '$q', 'HydratorPlusPlusPluginConfigFactory', 'uuid', '$state', 'HYDRATOR_DEFAULT_VALUES', 'myHelpers', 'avsc', 'MY_CONFIG'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorPlusPlusConfigStore', HydratorPlusPlusConfigStore);

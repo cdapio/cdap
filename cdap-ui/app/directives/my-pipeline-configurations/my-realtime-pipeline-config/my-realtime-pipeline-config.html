@@ -75,27 +75,11 @@
     <div class="configuration-content">
       <div class="configuration-step-content configuration-content-container runtime-arguments"
             ng-if="RealtimePipelineConfigCtrl.activeTab === 'runtimeArgs'">
-        <div class="step-content-heading">
-          Specify Runtime Arguments or Update the Ones Derived from Preferences
-          <div class="step-content-subtitle">
-            By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as Provided.
-          </div>
-        </div>
-        <div class="runtime-arguments-labels key-value-pair-labels">
-          <span class="key-label">Name</span>
-          <span class="value-label">Value</span>
-          <span class="provided-label"
-                ng-if="RealtimePipelineConfigCtrl.containsMacros">
-            Provided
-          </span>
-        </div>
-        <div class="runtime-arguments-values key-value-pair-values">
-          <key-value-pairs
-            key-values="RealtimePipelineConfigCtrl.runtimeArguments"
-            on-key-value-change="RealtimePipelineConfigCtrl.onRuntimeArgumentsChange"
-            get-resetted-key-value="RealtimePipelineConfigCtrl.getResettedRuntimeArgument"
-          ></key-value-pairs>
-        </div>
+        <my-pipeline-runtime-args
+          runtime-arguments="RealtimePipelineConfigCtrl.runtimeArguments"
+          contains-macros="RealtimePipelineConfigCtrl.containsMacros"
+          resolved-macros="RealtimePipelineConfigCtrl.resolvedMacros">
+        </my-pipeline-runtime-args>
       </div>
 
       <div class="configuration-step-content configuration-content-container preview-config"
