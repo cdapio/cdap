@@ -91,7 +91,16 @@ final class TwillLogEntryAdapter implements ILoggingEvent {
 
   @Override
   public StackTraceElement[] getCallerData() {
-    return entry.getStackTraces();
+    StackTraceElement[] stackTraceElements = entry.getStackTraces();
+    if (stackTraceElements.length == 0) {
+      stackTraceElements = new StackTraceElement[1];
+      StackTraceElement stackTraceElement =
+        new StackTraceElement(entry.getSourceClassName(), entry.getSourceMethodName(),
+                              entry.getFileName(), entry.getLineNumber());
+      stackTraceElements[0] = stackTraceElement;
+
+    }
+    return stackTraceElements;
   }
 
   @Override
