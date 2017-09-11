@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.flow.FlowletConnection;
 import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
@@ -32,22 +31,17 @@ import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.id.ApplicationId;
-import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.cdap.security.impersonation.Impersonator;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.common.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Deleted program handler stage. Figures out which programs are deleted and handles callback.
@@ -92,34 +86,10 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       final ProgramId programId = appSpec.getApplicationId().program(type, spec.getName());
       programTerminator.stop(programId);
 
-      // TODO: Unify with AppFabricHttpHandler.removeApplication
       // drop all queues and stream states of a deleted flow
       if (ProgramType.FLOW.equals(type)) {
-        FlowSpecification flowSpecification = (FlowSpecification) spec;
-
-        // Collects stream name to all group ids consuming that stream
-        final Multimap<String, Long> streamGroups = HashMultimap.create();
-        for (FlowletConnection connection : flowSpecification.getConnections()) {
-          if (connection.getSourceType() == FlowletConnection.Type.STREAM) {
-            long groupId = FlowUtils.generateConsumerGroupId(programId, connection.getTargetName());
-            streamGroups.put(connection.getSourceName(), groupId);
-          }
-        }
-        // Remove all process states and group states for each stream
-        final String namespace = String.format("%s.%s", programId.getApplication(), programId.getProgram());
-
-        final NamespaceId namespaceId = appSpec.getApplicationId().getParent();
-        impersonator.doAs(appSpec.getApplicationId(), new Callable<Void>() {
-
-          @Override
-          public Void call() throws Exception {
-            for (Map.Entry<String, Collection<Long>> entry : streamGroups.asMap().entrySet()) {
-              streamConsumerFactory.dropAll(namespaceId.stream(entry.getKey()), namespace, entry.getValue());
-            }
-            queueAdmin.dropAllForFlow(programId.getParent().flow(programId.getEntityName()));
-            return null;
-          }
-        });
+        FlowUtils.clearDeletedFlow(impersonator, queueAdmin, streamConsumerFactory, programId,
+                                   (FlowSpecification) spec);
         deletedFlows.add(programId.getEntityName());
       }
 
