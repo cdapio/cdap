@@ -67,12 +67,18 @@ public class UpgradeTool {
   private final Upgrader upgrader;
   @Nullable
   private final File errorDir;
+  @Nullable
+  private final File outputDir;
+  private final boolean dryrun;
 
-  private UpgradeTool(ClientConfig clientConfig, @Nullable File errorDir) {
+  private UpgradeTool(ClientConfig clientConfig, @Nullable File errorDir, @Nullable File outputDir,
+                      String version, boolean includeCurrentVersion, boolean dryrun) {
     this.appClient = new ApplicationClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
     this.errorDir = errorDir;
-    this.upgrader = new Upgrader(new ArtifactClient(clientConfig));
+    this.outputDir = outputDir;
+    this.upgrader = new Upgrader(namespaceClient, new ArtifactClient(clientConfig), version, includeCurrentVersion);
+    this.dryrun = dryrun;
   }
 
   private Set<ApplicationId> upgrade() throws Exception {
@@ -96,36 +102,55 @@ public class UpgradeTool {
   }
 
   private boolean upgrade(final ApplicationId appId) throws Exception {
-    ApplicationDetail appDetail = appClient.get(appId);
+    final ApplicationDetail appDetail = appClient.get(appId);
 
     if (!upgrader.shouldUpgrade(appDetail.getArtifact())) {
       LOG.debug("Skipping app {} since it is not an upgradeable pipeline.", appId);
       return false;
     }
 
-    LOG.info("Upgrading pipeline: {}", appId);
-    return upgrader.upgrade(appDetail.getArtifact(), appDetail.getConfiguration(), new Upgrader.UpgradeAction() {
-      @Override
-      public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) {
-        try {
-          appClient.update(appId, appRequest);
-          return true;
-        } catch (Exception e) {
-          LOG.error("Error upgrading pipeline {}.", appId, e);
-          if (errorDir != null) {
-            File errorFile = new File(errorDir, String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
-            LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
-                      appId, errorFile.getAbsolutePath());
-            try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
-              outputStreamWriter.write(GSON.toJson(appRequest));
-            } catch (IOException e1) {
-              LOG.error("Error writing config out for manual investigation.", e1);
-            }
+    Upgrader.UpgradeAction action;
+    if (dryrun) {
+      action = new Upgrader.UpgradeAction() {
+        @Override
+        public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) throws Exception {
+          LOG.info("Writing dryrun app request for pipeline: {}", appId);
+          String filename = String.format("%s-%s.json", appId.getNamespace(), appId.getApplication());
+          File outputFile = new File(outputDir, filename);
+          try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
+            writer.write(GSON.toJson(appRequest));
           }
-          return false;
+          return true;
         }
-      }
-    });
+      };
+    } else {
+      action = new Upgrader.UpgradeAction() {
+        @Override
+        public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) {
+          LOG.info("Upgrading pipeline: {}", appId);
+          try {
+            appClient.update(appId, appRequest);
+            return true;
+          } catch (Exception e) {
+            LOG.error("Error upgrading pipeline {}.", appId, e);
+            if (errorDir != null) {
+              File errorFile = new File(errorDir,
+                                        String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
+              LOG.error("Writing config for pipeline {} to {} for further manual investigation.",
+                        appId, errorFile.getAbsolutePath());
+              try (OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(errorFile))) {
+                outputStreamWriter.write(GSON.toJson(appRequest));
+              } catch (IOException e1) {
+                LOG.error("Error writing config out for manual investigation.", e1);
+              }
+            }
+            return false;
+          }
+        }
+      };
+    }
+
+    return upgrader.upgrade(appDetail.getArtifact(), appDetail.getConfiguration(), action);
   }
 
   public static void main(String[] args) throws Exception {
@@ -142,6 +167,11 @@ public class UpgradeTool {
         "pipelines in all namespaces will be upgraded."))
       .addOption(new Option("p", "pipeline", true, "Name of the pipeline to upgrade. If specified, a namespace " +
         "must also be given."))
+      .addOption(new Option("v", "version", true, "Pipeline version to upgrade to. This should only be specified if " +
+        "you want to upgrade to a version that is not the same as the version of this tool."))
+      .addOption(new Option("r", "rerun", false, "Whether to re-run upgrade of pipelines. " +
+        "This will re-run the upgrade for any pipelines that are using the current pipeline version in addition " +
+        "to running upgrade for any old pipelines."))
       .addOption(new Option("f", "configfile", true, "File containing old application details to update. " +
         "The file contents are expected to be in the same format as the request body for creating an " +
         "ETL application from one of the etl artifacts. " +
@@ -152,6 +182,9 @@ public class UpgradeTool {
       .addOption(new Option("o", "outputfile", true, "File to write the converted application details provided in " +
         "the configfile option. If none is given, results will be written to the input file + '.converted'. " +
         "The contents of this file can be sent directly to CDAP to update or create an application."))
+      .addOption(new Option("od", "outputdir", true, "Directory to write the application request that would be used " +
+        "to upgrade the pipeline(s). This should only be used with the 'dryrun' command, not the 'upgrade' command. " +
+        "The contents of the app request files can be sent directly to CDAP to update or create an application."))
       .addOption(new Option("e", "errorDir", true, "Optional directory to write any upgraded pipeline configs that " +
         "failed to upgrade. The problematic configs can then be manually edited and upgraded separately. " +
         "Upgrade errors may happen for pipelines that use plugins that are not backwards compatible. " +
@@ -160,43 +193,52 @@ public class UpgradeTool {
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
     String[] commandArgs = commandLine.getArgs();
+    String command = commandArgs.length > 0 ? commandArgs[0] : null;
 
     // if help is an option, or if there isn't a single 'upgrade' command, print usage and exit.
-    if (commandLine.hasOption("h") || commandArgs.length != 1 || !"upgrade".equalsIgnoreCase(commandArgs[0])) {
+    if (commandLine.hasOption("h") || commandArgs.length != 1 ||
+      (!"upgrade".equalsIgnoreCase(command) && !"dryrun".equalsIgnoreCase(command))) {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
-        UpgradeTool.class.getName() + " upgrade",
+        UpgradeTool.class.getName() + " upgrade|dryrun",
         "Upgrades old pipelines to the current version. If the plugins used are not backward-compatible, " +
-          "the attempted upgrade config will be written to the error directory for a manual upgrade.",
+          "the attempted upgrade config will be written to the error directory for a manual upgrade. " +
+          "If 'dryrun' is used as the command instead of 'upgrade', pipelines will not be upgraded, but the " +
+          "application update requests will instead be written as files to the specified outputdir.",
         options, "");
       System.exit(0);
     }
 
     ClientConfig clientConfig = getClientConfig(commandLine);
 
+    String newVersion = commandLine.hasOption("v") ? commandLine.getOptionValue("v") : ETLVersion.getVersion();
+    boolean includeCurrentVersion = commandLine.hasOption("r");
     if (commandLine.hasOption("f")) {
       String inputFilePath = commandLine.getOptionValue("f");
       String outputFilePath = commandLine.hasOption("o") ? commandLine.getOptionValue("o") : inputFilePath + ".new";
-      convertFile(inputFilePath, outputFilePath, new Upgrader(new ArtifactClient(clientConfig)));
+      convertFile(inputFilePath, outputFilePath, new Upgrader(new NamespaceClient(clientConfig),
+                                                              new ArtifactClient(clientConfig),
+                                                              newVersion, includeCurrentVersion));
       System.exit(0);
     }
 
     File errorDir = commandLine.hasOption("e") ? new File(commandLine.getOptionValue("e")) : null;
     if (errorDir != null) {
-      if (!errorDir.exists()) {
-        if (!errorDir.mkdirs()) {
-          LOG.error("Unable to create error directory {}.", errorDir.getAbsolutePath());
-          System.exit(1);
-        }
-      } else if (!errorDir.isDirectory()) {
-        LOG.error("{} is not a directory.", errorDir.getAbsolutePath());
-        System.exit(1);
-      } else if (!errorDir.canWrite()) {
-        LOG.error("Unable to write to error directory {}.", errorDir.getAbsolutePath());
+      ensureDirExists(errorDir);
+    }
+
+    boolean dryrun = "dryrun".equalsIgnoreCase(command);
+    File outputDir = null;
+    if (dryrun) {
+      if (!commandLine.hasOption("od")) {
+        LOG.error("When performing a dryrun, an outputdir must be specified using the -od option.");
         System.exit(1);
       }
+      outputDir = new File(commandLine.getOptionValue("od"));
+      ensureDirExists(outputDir);
     }
-    UpgradeTool upgradeTool = new UpgradeTool(clientConfig, errorDir);
+    UpgradeTool upgradeTool = new UpgradeTool(clientConfig, errorDir, outputDir,
+                                              newVersion, includeCurrentVersion, dryrun);
 
     String namespace = commandLine.getOptionValue("n");
     String pipelineName = commandLine.getOptionValue("p");
@@ -220,6 +262,20 @@ public class UpgradeTool {
     }
 
     printUpgraded(upgradeTool.upgrade());
+  }
+
+  private static void ensureDirExists(File dir) {
+    if (!dir.exists()) {
+      if (!dir.mkdirs()) {
+        LOG.error("Unable to create directory {}.", dir.getAbsolutePath());
+        System.exit(1);
+      }
+    } else if (!dir.isDirectory()) {
+      LOG.error("{} is not a directory.", dir.getAbsolutePath());
+    } else if (!dir.canWrite()) {
+      LOG.error("Unable to write to directory {}.", dir.getAbsolutePath());
+      System.exit(1);
+    }
   }
 
   private static void printUpgraded(Set<ApplicationId> pipelines) {
