@@ -204,7 +204,7 @@ Property                                          Value                Descripti
                                                                        readable only by the CDAP user
 ================================================= ==================== ======================================================
 
-**Note:** To enable SSL for the CDAP UI and allow **self-signed certificates**, add this property to ``cdap-security.xml``:
+**Note:** To enable SSL for the CDAP UI and allow **self-signed certificates**, add this property to ``cdap-site.xml``:
 
 ================================================= ==================== ======================================================
 Property                                          Value                Description
