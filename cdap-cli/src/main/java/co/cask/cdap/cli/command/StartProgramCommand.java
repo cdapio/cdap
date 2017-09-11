@@ -27,7 +27,7 @@ import co.cask.cdap.cli.util.ArgumentParser;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.proto.id.ProgramId;
 import co.cask.common.cli.Arguments;
-import com.google.gson.Gson;
+import com.google.common.base.Joiner;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -36,7 +36,7 @@ import java.util.Map;
  * Starts a program.
  */
 public class StartProgramCommand extends AbstractAuthCommand {
-  private static final Gson GSON = new Gson();
+  private static final Joiner.MapJoiner SPACE_EQUALS_JOINER = Joiner.on(" ").withKeyValueSeparator("=");
 
   protected final ElementType elementType;
   private final ProgramClient programClient;
@@ -65,7 +65,7 @@ public class StartProgramCommand extends AbstractAuthCommand {
     if (runtimeArgsString == null || runtimeArgsString.isEmpty()) {
       // run with stored runtime args
       programClient.start(programId, isDebug, null);
-      runtimeArgsString = GSON.toJson(programClient.getRuntimeArgs(programId));
+      runtimeArgsString = SPACE_EQUALS_JOINER.join(programClient.getRuntimeArgs(programId));
       output.printf("Successfully started %s '%s' of application '%s.%s' with stored runtime arguments '%s'\n",
                     elementType.getName(), programName, appName, appVersion, runtimeArgsString);
     } else {

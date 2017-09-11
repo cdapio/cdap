@@ -408,7 +408,7 @@ public class DatasetTypeManager {
   public void deleteModules(final NamespaceId namespaceId) throws DatasetModuleConflictException {
     Preconditions.checkArgument(namespaceId != null && !NamespaceId.SYSTEM.equals(namespaceId),
                                 "Cannot delete modules from system namespace");
-    LOG.warn("Deleting all modules from namespace {}", namespaceId);
+    LOG.info("Deleting all modules from namespace {}", namespaceId);
     try {
       final DatasetTypeMDS datasetTypeMDS = datasetCache.getDataset(DatasetMetaTableUtil.META_TABLE_NAME);
       final DatasetInstanceMDS datasetInstanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
