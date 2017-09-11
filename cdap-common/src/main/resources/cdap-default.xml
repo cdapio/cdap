@@ -2958,8 +2958,26 @@
   </property>
 
   <property>
+    <name>security.authorization.extension.config.cache.max.entries</name>
+    <value>${security.authorization.cache.max.entries}</value>
+    <description>
+      Number of entries to hold in the container authorization cache. If set to 0, no
+      caching will be performed.
+    </description>
+  </property>
+
+  <property>
     <name>security.authorization.cache.ttl.secs</name>
     <value>300</value>
+    <description>
+      The time-to-live in seconds for entries in the authorization cache
+      used by programs and system services outside of CDAP Master.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.extension.config.cache.ttl.secs</name>
+    <value>${security.authorization.cache.ttl.secs}</value>
     <description>
       The time-to-live in seconds for entries in the authorization cache
       used by programs and system services outside of CDAP Master.

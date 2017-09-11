@@ -203,6 +203,10 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
                   "/path/config.ini");
     cConfCopy.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "service.address",
                   "http://foo.bar.co:5555");
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "cache.ttl.secs",
+                  "500");
+    cConfCopy.set(Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "cache.max.entries",
+                  "50000");
     cConfCopy.set("foo." + Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "dont.include",
                   "not.prefix.should.not.be.included");
     try (AuthorizerInstantiator instantiator = new AuthorizerInstantiator(cConfCopy, AUTH_CONTEXT_FACTORY)) {
@@ -237,6 +241,8 @@ public class AuthorizerInstantiatorTest extends AuthorizationTestBase {
       Properties expectedProps = new Properties();
       expectedProps.put("config.path", "/path/config.ini");
       expectedProps.put("service.address", "http://foo.bar.co:5555");
+      expectedProps.put("cache.ttl.secs", "500");
+      expectedProps.put("cache.max.entries", "50000");
       Properties actualProps = validAuthorizer.getProperties();
       Assert.assertEquals(expectedProps, actualProps);
     }
