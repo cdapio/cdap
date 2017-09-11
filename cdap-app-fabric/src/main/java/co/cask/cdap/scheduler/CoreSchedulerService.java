@@ -413,6 +413,18 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   }
 
   @Override
+  public void modifySchedulesTriggeredByDeletedProgram(final ProgramId programId) {
+    checkStarted();
+    execute(new StoreAndQueueTxRunnable<Void, RuntimeException>() {
+      @Override
+      public Void run(ProgramScheduleStoreDataset store, JobQueueDataset queue) {
+        store.modifySchedulesTriggeredByDeletedProgram(programId);
+        return null;
+      }
+    }, RuntimeException.class);
+  }
+
+  @Override
   public ProgramSchedule getSchedule(final ScheduleId scheduleId) throws NotFoundException {
     checkStarted();
     return execute(store -> store.getSchedule(scheduleId), NotFoundException.class);

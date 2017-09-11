@@ -22,7 +22,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.runtime.schedule.store.Schedulers;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.messaging.MessagingService;
@@ -399,9 +399,9 @@ public final class TimeScheduler implements Scheduler {
     co.cask.cdap.api.schedule.Trigger trigger = schedule.getTrigger();
     Map<String, TriggerKey> cronTriggerKeyMap = new HashMap<>();
     // Get a set of TimeTrigger if the schedule's trigger is a composite trigger
-    if (trigger instanceof AbstractCompositeTrigger) {
+    if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
       Set<SatisfiableTrigger> triggerSet =
-        ((AbstractCompositeTrigger) trigger).getUnitTriggers().get(ProtoTrigger.Type.TIME);
+        ((AbstractSatisfiableCompositeTrigger) trigger).getUnitTriggers().get(ProtoTrigger.Type.TIME);
       if (triggerSet == null) {
         return ImmutableMap.of();
       }

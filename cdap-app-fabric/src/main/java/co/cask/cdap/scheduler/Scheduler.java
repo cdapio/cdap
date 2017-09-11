@@ -109,6 +109,16 @@ public interface Scheduler {
   void deleteSchedules(ProgramId programId);
 
   /**
+   * Update all schedules that can be triggered by the given deleted program. Schedules will be removed if they
+   * contain single {@link co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger}. Schedules with
+   * composite triggers will be updated if the composite trigger can still be satisfied after the program is deleted,
+   * otherwise the schedules will be deleted.
+   *
+   * @param programId id of the deleted program
+   */
+  void modifySchedulesTriggeredByDeletedProgram(ProgramId programId);
+
+  /**
    * Read a schedule from the store.
    *
    * @param scheduleId the id of the schedule to read

@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -29,16 +30,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Abstract base class for composite trigger.
  */
-public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractCompositeTrigger
-  implements SatisfiableTrigger {
+public abstract class AbstractSatisfiableCompositeTrigger
+  extends ProtoTrigger.AbstractCompositeTrigger<SatisfiableTrigger> implements SatisfiableTrigger {
   // A map of non-composite trigger type and set of triggers of the same type
   private Map<Type, Set<SatisfiableTrigger>> unitTriggers;
 
-  protected AbstractCompositeTrigger(Type type, SatisfiableTrigger... triggers) {
+  protected AbstractSatisfiableCompositeTrigger(Type type, List<SatisfiableTrigger> triggers) {
     super(type, triggers);
   }
 
@@ -46,8 +48,8 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   public Set<String> getTriggerKeys() {
     // Only keep unique trigger keys in the set
     ImmutableSet.Builder<String> triggerKeysBuilder = ImmutableSet.builder();
-    for (Trigger trigger : getTriggers()) {
-      triggerKeysBuilder.addAll(((SatisfiableTrigger) trigger).getTriggerKeys());
+    for (SatisfiableTrigger trigger : getTriggers()) {
+      triggerKeysBuilder.addAll(trigger.getTriggerKeys());
     }
     return triggerKeysBuilder.build();
   }
@@ -55,8 +57,8 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
   @Override
   public void updateLaunchArguments(ProgramSchedule schedule, List<Notification> notifications,
                                     Map<String, String> systemArgs, Map<String, String> userArgs) {
-    for (Trigger trigger : getTriggers()) {
-      ((SatisfiableTrigger) trigger).updateLaunchArguments(schedule, notifications, systemArgs, userArgs);
+    for (SatisfiableTrigger trigger : getTriggers()) {
+      trigger.updateLaunchArguments(schedule, notifications, systemArgs, userArgs);
     }
   }
 
@@ -74,12 +76,11 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
     unitTriggers = new HashMap<>();
     for (Trigger trigger : getTriggers()) {
       // Add current non-composite trigger to the corresponding set in the map
-      Type triggerType = ((ProtoTrigger) trigger).getType();
-      if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
+      Type triggerType = trigger.getType();
+      if (trigger instanceof AbstractSatisfiableCompositeTrigger) {
         // If the current trigger is a composite trigger, add each of its unit triggers to the set according to type
         for (Map.Entry<Type, Set<SatisfiableTrigger>> entry :
-          ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
-            .getUnitTriggers().entrySet()) {
+          ((AbstractSatisfiableCompositeTrigger) trigger).getUnitTriggers().entrySet()) {
           Set<SatisfiableTrigger> innerUnitTriggerSet = unitTriggers.get(entry.getKey());
           if (innerUnitTriggerSet == null) {
             innerUnitTriggerSet = new HashSet<>();
@@ -111,4 +112,14 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
     }
     return unitTriggerInfos.build();
   }
+
+  /**
+   * Create a new trigger where all sub-triggers related to the given program have been removed.
+   * Returns null if removing relevant sub-triggers results in a trigger that can never be satisfied.
+   *
+   * @param programId the program id of the deleted program
+   * @return the new trigger, or {@code null} if result trigger will never be satisfied
+   */
+  @Nullable
+  public abstract SatisfiableTrigger getTriggerWithDeletedProgram(ProgramId programId);
 }

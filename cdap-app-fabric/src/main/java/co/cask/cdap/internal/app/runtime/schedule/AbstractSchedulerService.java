@@ -25,7 +25,7 @@ import co.cask.cdap.common.AlreadyExistsException;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ServiceUnavailableException;
-import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractSatisfiableCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -147,7 +147,8 @@ public abstract class AbstractSchedulerService extends AbstractIdleService imple
 
   private boolean containsTimeTrigger(ProgramSchedule schedule) {
     // A composite trigger may contain a TimeTrigger
-    return schedule.getTrigger() instanceof TimeTrigger || schedule.getTrigger() instanceof AbstractCompositeTrigger;
+    return schedule.getTrigger() instanceof TimeTrigger
+      || schedule.getTrigger() instanceof AbstractSatisfiableCompositeTrigger;
   }
 
   private boolean containsStreamSizeTrigger(ProgramSchedule schedule) {

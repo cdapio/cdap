@@ -50,7 +50,6 @@ import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.scheduler.Scheduler;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
@@ -114,7 +113,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final ProgramRuntimeService runtimeService;
 
   private final CConfiguration configuration;
-  private final Scheduler programScheduler;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final ApplicationLifecycleService applicationLifecycleService;
@@ -122,14 +120,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   @Inject
   AppLifecycleHttpHandler(CConfiguration configuration,
-                          Scheduler programScheduler,
                           ProgramRuntimeService runtimeService,
                           NamespaceQueryAdmin namespaceQueryAdmin,
                           NamespacedLocationFactory namespacedLocationFactory,
                           ApplicationLifecycleService applicationLifecycleService) {
     this.configuration = configuration;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
-    this.programScheduler = programScheduler;
     this.runtimeService = runtimeService;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.applicationLifecycleService = applicationLifecycleService;
@@ -518,17 +514,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       public void stop(ProgramId programId) throws Exception {
         switch (programId.getType()) {
           case FLOW:
-            stopProgramIfRunning(programId);
-            break;
-          case WORKFLOW:
-            programScheduler.deleteSchedules(programId);
-            break;
-          case MAPREDUCE:
-            //no-op
-            break;
           case SERVICE:
-            stopProgramIfRunning(programId);
-            break;
           case WORKER:
             stopProgramIfRunning(programId);
             break;
