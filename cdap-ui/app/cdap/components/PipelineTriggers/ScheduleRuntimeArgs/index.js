@@ -15,11 +15,13 @@
 */
 
 import React, {Component, PropTypes} from 'react';
-import {fetchPipelineMacroDetails, resetStore} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
-import ScheduleRuntimeArgsStore from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
+import {fetchPipelineMacroDetails, resetStore, bulkSetArgMapping} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsActions';
+import ScheduleRuntimeArgsStore, {SCHEDULERUNTIMEARGSACTIONS} from 'components/PipelineTriggers/ScheduleRuntimeArgs/ScheduleRuntimeArgsStore';
 import ConfigurableTab from 'components/ConfigurableTab';
 import TabConfig from 'components/PipelineTriggers/ScheduleRuntimeArgs/Tabs/TabConfig';
 import T from 'i18n-react';
+import classnames from 'classnames';
+import {objectQuery} from 'services/helpers';
 
 require('./ScheduleRuntimeArgs.scss');
 require('./Tabs/ScheduleRuntimeTabStyling.scss');
@@ -30,7 +32,9 @@ export default class ScheduleRuntimeArgs extends Component {
   static propTypes = {
     onEnableSchedule: PropTypes.func,
     triggeringPipelineInfo: PropTypes.object.isRequired,
-    triggeredPipelineInfo: PropTypes.object.isRequired
+    triggeredPipelineInfo: PropTypes.object.isRequired,
+    disabled: PropTypes.bool,
+    scheduleInfo: PropTypes.object
   };
 
   state = {
@@ -40,19 +44,68 @@ export default class ScheduleRuntimeArgs extends Component {
   };
 
   componentDidMount() {
+    this.sub = ScheduleRuntimeArgsStore.subscribe(() => {
+      let {triggeringPipelineInfo, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
+      let {macros, configStages} = triggeringPipelineInfo;
+
+      this.setState({macros, configStages, argsMapping});
+    });
+
     let {id: triggeringPipelineId, namespace: triggeringPipelineNS} = this.props.triggeringPipelineInfo;
     let {id: triggeredPipelineId, namespace: triggeredPipelineNS} = this.props.triggeredPipelineInfo;
     fetchPipelineMacroDetails(triggeringPipelineId, triggeringPipelineNS);
     fetchPipelineMacroDetails(triggeredPipelineId, triggeredPipelineNS, true);
 
-    ScheduleRuntimeArgsStore.subscribe(() => {
-      let {triggeringPipelineInfo, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
-      let {macros, configStages} = triggeringPipelineInfo;
-      this.setState({macros, configStages, argsMapping});
-    });
+    if (this.props.disabled) {
+      ScheduleRuntimeArgsStore.dispatch({
+        type: SCHEDULERUNTIMEARGSACTIONS.SETDISABLED
+      });
+
+      let {scheduleInfo} = this.props;
+
+      let triggerProperties = objectQuery(scheduleInfo, 'properties', 'triggering.properties.mapping');
+
+      try {
+        triggerProperties = JSON.parse(triggerProperties);
+      } catch (e) {
+        console.log('properties are not JSON');
+        return;
+      }
+
+      let argsArray = [];
+
+      let runtimeArgs = triggerProperties.arguments;
+      if (runtimeArgs.length > 0) {
+        runtimeArgs.forEach((args) => {
+          argsArray.push({
+            key: args.source,
+            value: args.target,
+            type: 'runtime'
+          });
+        });
+      }
+
+      let pluginProperties = triggerProperties.pluginProperties;
+      if (pluginProperties.length > 0) {
+        pluginProperties.forEach((properties) => {
+          let key = `${this.props.triggeringPipelineInfo.id}:${properties.stageName}:${properties.source}`;
+
+          argsArray.push({
+            key,
+            value: properties.target,
+            type: 'properties'
+          });
+        });
+      }
+
+      bulkSetArgMapping(argsArray);
+    }
   }
 
   componentWillUnmount() {
+    if (this.sub) {
+      this.sub();
+    }
     resetStore();
   }
 
@@ -69,11 +122,8 @@ export default class ScheduleRuntimeArgs extends Component {
   };
 
   render() {
-    return (
-      <div className="schedule-runtime-args">
-        <ConfigurableTab
-          tabConfig={TabConfig}
-        />
+    const button = (
+      <div>
         <hr />
         <button
           className="btn btn-primary pull-right"
@@ -82,6 +132,18 @@ export default class ScheduleRuntimeArgs extends Component {
         >
           {T.translate(`${PREFIX}.configure_enable_btn`)}
         </button>
+      </div>
+    );
+
+    return (
+      <div className={classnames('schedule-runtime-args', { disabled: this.props.disabled })}>
+        <fieldset disabled={this.props.disabled}>
+          <ConfigurableTab
+            tabConfig={TabConfig}
+          />
+        </fieldset>
+
+        {this.props.disabled ? null : button}
       </div>
     );
   }

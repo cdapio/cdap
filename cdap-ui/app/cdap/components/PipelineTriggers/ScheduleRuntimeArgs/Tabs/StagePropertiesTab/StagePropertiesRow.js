@@ -69,7 +69,7 @@ export default class StagePropertiesRow extends Component {
 
   updateStore = (oldValue) => {
     let constructedKey = this.getConstructedKey(this.state);
-    setArgMapping(constructedKey, this.state.triggeredPipelineMacro, oldValue);
+    setArgMapping(constructedKey, this.state.triggeredPipelineMacro, 'properties', oldValue);
   };
 
   getDisplaForPropertyName = () => {

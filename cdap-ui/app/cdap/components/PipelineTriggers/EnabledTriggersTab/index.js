@@ -72,7 +72,8 @@ function EnabledTriggersView({enabledTriggers, pipelineName}) {
                       schedule,
                       isExpanded: state.triggers.expandedTrigger === schedule.name,
                       loading: state.enabledTriggers.loading,
-                      info: state.enabledTriggers.pipelineInfo
+                      info: state.enabledTriggers.pipelineInfo,
+                      pipelineName
                     };
                   };
 

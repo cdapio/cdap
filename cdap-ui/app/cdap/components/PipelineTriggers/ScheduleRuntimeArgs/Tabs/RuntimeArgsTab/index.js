@@ -47,14 +47,57 @@ export default class RuntimArgsTab extends Component {
       });
     });
   }
+
+  renderEnabledRow(list) {
+    return (
+      list.map((macro) => {
+        let matchingKeyValue = this.state.runTimeArgMapping.find(arg => arg.value === macro);
+        let key, value;
+        if (matchingKeyValue) {
+          key = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.key;
+          value = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.value;
+        }
+
+        return (
+          <RuntimeArgRow
+            mkey={key}
+            mvalue={value}
+          />
+        );
+
+      })
+    );
+  }
+
+  renderDisabledRows(list) {
+    return (
+      list.map((arg) => {
+        return (
+          <RuntimeArgRow
+            mkey={arg.key}
+            mvalue={arg.value}
+          />
+        );
+      })
+    );
+  }
+
   renderContent() {
-    let {triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
-    if (!triggeredPipelineInfo.macros.length) {
+    let {triggeredPipelineInfo, disabled, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
+    let list = triggeredPipelineInfo.macros;
+
+    if (disabled) {
+      list = argsMapping.filter((arg) => arg.type === 'runtime');
+    }
+
+    if (!list.length) {
+      let emptyMessage = disabled ? `${PREFIX}.disabledNoRuntimeArgsMessage` : `${PREFIX}.noRuntimeArgsMessage`;
+
       return (
         <div className="empty-message-container">
           <h4>
             {
-              T.translate(`${PREFIX}.noRuntimeArgsMessage`, {
+              T.translate(`${emptyMessage}`, {
                 triggeredPipelineid: triggeredPipelineInfo.id
               })
             }
@@ -62,6 +105,7 @@ export default class RuntimArgsTab extends Component {
         </div>
       );
     }
+
     return (
       <div>
         <Row className="header">
@@ -69,44 +113,35 @@ export default class RuntimArgsTab extends Component {
           <Col xs={1} />
           <Col xs={5}> {T.translate(`${PREFIX}.TableHeaders.runtimeargs`)} </Col>
         </Row>
-        {
-          triggeredPipelineInfo.macros.map((macro) => {
-            let matchingKeyValue = this.state.runTimeArgMapping.find(arg => arg.value === macro);
-            let key, value;
-            if (matchingKeyValue) {
-              key = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.key;
-              value = matchingKeyValue.key.split(DEFAULTFIELDDELIMITER).length > 1 ? null : matchingKeyValue.value;
-            }
-
-            return (
-              <RuntimeArgRow
-                mkey={key}
-                mvalue={value}
-              />
-            );
-
-          })
-        }
+        {disabled ? this.renderDisabledRows(list) : this.renderEnabledRow(list)}
       </div>
     );
   }
 
   render() {
-    let {triggeringPipelineInfo, triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
+    let {triggeringPipelineInfo, triggeredPipelineInfo, disabled} = ScheduleRuntimeArgsStore.getState().args;
+
     return (
       <div className="run-time-args-tab">
-        <h4>
-          {
-            T.translate(`${PREFIX}.tab_message`, {
-              triggeringPipelineid: triggeringPipelineInfo.id,
-              triggeredPipelineid: triggeredPipelineInfo.id
-            })
-          }
-          <br />
-          <small>
-            {T.translate(`${PREFIX}.tab_message2`)}
-          </small>
-        </h4>
+        {
+          disabled ?
+            null
+          :
+            (
+              <h4>
+                {
+                  T.translate(`${PREFIX}.tab_message`, {
+                    triggeringPipelineid: triggeringPipelineInfo.id,
+                    triggeredPipelineid: triggeredPipelineInfo.id
+                  })
+                }
+                <br />
+                <small>
+                  {T.translate(`${PREFIX}.tab_message2`)}
+                </small>
+              </h4>
+            )
+        }
         {this.renderContent()}
       </div>
     );

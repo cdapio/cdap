@@ -24,26 +24,42 @@ import T from 'i18n-react';
 const PREFIX = 'features.PipelineTriggers.ScheduleRuntimeArgs.Tabs.StageProps';
 
 export default function StagePropertiesTab() {
-  let {triggeringPipelineInfo, triggeredPipelineInfo, argsMapping} = ScheduleRuntimeArgsStore.getState().args;
-  let macrosWithConfigProperty = argsMapping.filter(arg => arg.key && arg.key.split(DEFAULTFIELDDELIMITER).length > 1).map(arg => arg.value);
+  let {triggeringPipelineInfo, triggeredPipelineInfo, argsMapping, disabled} = ScheduleRuntimeArgsStore.getState().args;
+  let macrosWithConfigProperty = argsMapping.filter(arg => arg.type === 'properties').map(arg => arg.value);
+
+  let list = macrosWithConfigProperty;
+
+  if (!disabled) {
+    list = list.concat(difference(triggeredPipelineInfo.macros, macrosWithConfigProperty));
+  }
+
+  let emptyMessage = disabled ? `${PREFIX}.disabledNoStageConfigMessage` : `${PREFIX}.noRuntimeArgsMessage`;
+
   return (
     <div className="stage-properties-tab">
-      <h4>
-        {
-          T.translate(`${PREFIX}.tab_message`, {
-            triggeringPipelineid: triggeringPipelineInfo.id,
-            triggeredPipelineid: triggeredPipelineInfo.id
-          })
-        }
-        <br />
-        <small>{T.translate(`${PREFIX}.tab_message2`)}</small>
-      </h4>
       {
-        !triggeredPipelineInfo.macros.length ?
+        disabled ?
+          null
+        :
+          (
+            <h4>
+              {
+                T.translate(`${PREFIX}.tab_message`, {
+                  triggeringPipelineid: triggeringPipelineInfo.id,
+                  triggeredPipelineid: triggeredPipelineInfo.id
+                })
+              }
+              <br />
+              <small>{T.translate(`${PREFIX}.tab_message2`)}</small>
+            </h4>
+          )
+      }
+      {
+        !list.length ?
           <div className="empty-message-container">
             <h4>
               {
-                T.translate(`${PREFIX}.noRuntimeArgsMessage`, {
+                T.translate(`${emptyMessage}`, {
                   triggeredPipelineid: triggeredPipelineInfo.id
                 })
               }
@@ -67,8 +83,7 @@ export default function StagePropertiesTab() {
 
           {
             // Pull all those macros with config stages in its key to the top instead of hiding it somewhere in the bottom.
-            macrosWithConfigProperty
-            .concat(difference(triggeredPipelineInfo.macros, macrosWithConfigProperty))
+            list
             .map(macro => {
               let keySplit = [];
               let pipelineName, pipelineStage, stageProperty, value;

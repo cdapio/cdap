@@ -19,7 +19,9 @@ import IconSVG from 'components/IconSVG';
 import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTriggersStore';
 import {disableSchedule, getPipelineInfo} from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
 import LoadingSVG from 'components/LoadingSVG';
+import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
+import NamespaceStore from 'services/NamespaceStore';
 
 const TRIGGER_PREFIX = 'features.PipelineTriggers';
 const PREFIX = `${TRIGGER_PREFIX}.EnabledTriggers`;
@@ -47,8 +49,20 @@ export default class EnabledTriggerRow extends Component {
   renderContent() {
     let {
       schedule,
-      info
+      info,
+      pipelineName
     } = this.props;
+
+    let namespace = NamespaceStore.getState().selectedNamespace;
+    let triggeredPipelineInfo = {
+      id: pipelineName,
+      namespace
+    };
+
+    let triggeringPipelineInfo = {
+      id: schedule.trigger.programId.application,
+      namespace: schedule.trigger.programId.namespace
+    };
 
     let events = schedule.trigger.programStatuses;
     let completed = events.indexOf('COMPLETED') > -1,
@@ -95,6 +109,13 @@ export default class EnabledTriggerRow extends Component {
           >
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
+
+          <PayloadConfigModal
+            triggeringPipelineInfo={triggeringPipelineInfo}
+            triggeredPipelineInfo={triggeredPipelineInfo}
+            scheduleInfo={schedule}
+            disabled={true}
+          />
         </div>
       </div>
     );
@@ -154,5 +175,6 @@ EnabledTriggerRow.propTypes = {
   isExpanded: PropTypes.bool,
   schedule: PropTypes.object,
   loading: PropTypes.bool,
-  info: PropTypes.object
+  info: PropTypes.object,
+  pipelineName: PropTypes.string
 };

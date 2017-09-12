@@ -18,11 +18,36 @@ $form-gray: #cccccc;
 $dropdown_border_bottom_color: #333333;
 
 .schedule-runtime-args {
+  &.disabled {
+    .select-dropdown > select {
+      cursor: not-allowed;
+    }
+  }
+
+  .select-dropdown {
+    display: inline-block;
+    width: 100%;
+    border-bottom: 2px solid $dropdown_border_bottom_color;
+    margin-bottom: 10px;
+    select {
+      border: 0;
+      height: initial;
+      box-shadow: none;
+      cursor: pointer;
+      width: 100%;
+      background: transparent;
+      &:focus,
+      &:active {
+        outline: none;
+      }
+    }
+  }
+
   .tab-content {
     .tab-pane {
       > * {
         width: 100%;
-        padding: 5px 60px;
+        padding: 5px 40px;
         height: 100%;
         h4 {
           font-weight: 500;
@@ -52,24 +77,6 @@ $dropdown_border_bottom_color: #333333;
             > * {
               flex: 0.5;
               align-items: center;
-            }
-          }
-          .select-dropdown {
-            display: inline-block;
-            width: 100%;
-            border-bottom: 2px solid $dropdown_border_bottom_color;
-            margin-bottom: 10px;
-            select {
-              border: 0;
-              height: initial;
-              box-shadow: none;
-              cursor: pointer;
-              width: 100%;
-              background: transparent;
-              &:focus,
-              &:active {
-                outline: none;
-              }
             }
           }
         }

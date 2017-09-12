@@ -68,7 +68,11 @@ export function enableSchedule(pipelineTrigger, activePipeline, selectedNamespac
       programStatuses: config.eventTriggers,
       type: 'PROGRAM_STATUS'
     },
-    constraints: [{"maxConcurrency":3,"type":"CONCURRENCY","waitUntilMet":false}],
+    constraints: [{
+      'maxConcurrency': 3,
+      'type': 'CONCURRENCY',
+      'waitUntilMet': false
+    }],
     timeoutMillis: 86400000
   };
 
