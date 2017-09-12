@@ -130,6 +130,7 @@ export default class CreateRule extends Component {
                 <Col sm={10}>
                   <textarea
                     value={this.state.when}
+                    placeholder={T.translate(`${PREFIX}.form.whenClausePlaceholder`)}
                     onChange={this.onConditionChange}
                     className="form-control"
                     row={15}>
