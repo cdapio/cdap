@@ -115,7 +115,7 @@ public class CLIMainTest extends CLITestBase {
   public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
-  private static final Joiner SPACE_JOINER = Joiner.on(" ");
+  private static final Joiner.MapJoiner SPACE_EQUALS_JOINER = Joiner.on(" ").withKeyValueSeparator("=");
   private static final Gson GSON = new Gson();
   private static final String PREFIX = "123ff1_";
   private static final String V1 = "1.0";
@@ -506,7 +506,7 @@ public class CLIMainTest extends CLITestBase {
 
   public void testServiceRuntimeArgs(String qualifiedServiceId, ServiceId service) throws Exception {
     Map<String, String> runtimeArgs = ImmutableMap.of("sdf", "bacon");
-    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
     testCommandOutputContains(cli, "start service " + qualifiedServiceId + " '" + runtimeArgsKV + "'",
                               "Successfully started service");
     try {
@@ -518,7 +518,7 @@ public class CLIMainTest extends CLITestBase {
 
       Map<String, String> runtimeArgs2 = ImmutableMap.of("sdf", "chickenz");
       String runtimeArgs2Json = GSON.toJson(runtimeArgs2);
-      String runtimeArgs2KV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs2);
+      String runtimeArgs2KV = SPACE_EQUALS_JOINER.join(runtimeArgs2);
       testCommandOutputContains(cli, "set service runtimeargs " + qualifiedServiceId + " '" + runtimeArgs2KV + "'",
                                 "Successfully set runtime args");
       testCommandOutputContains(cli, "start service " + qualifiedServiceId, "Successfully started service");
@@ -542,7 +542,7 @@ public class CLIMainTest extends CLITestBase {
     try {
       // Start service with default version
       Map<String, String> runtimeArgs = ImmutableMap.of("sdf", ApplicationId.DEFAULT_VERSION);
-      String runtimeArgsKV = SPACE_JOINER.withKeyValueSeparator("=").join(runtimeArgs);
+      String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
       testCommandOutputContains(cli, "start service " + serviceArgument + " '" + runtimeArgsKV + "'",
                                 "Successfully started service");
       assertProgramStatus(programClient, service, "RUNNING");
@@ -554,14 +554,14 @@ public class CLIMainTest extends CLITestBase {
 
       // Start serviceV1
       Map<String, String> runtimeArgs1 = ImmutableMap.of("sdf", V1_SNAPSHOT);
-      String runtimeArgs1KV = SPACE_JOINER.withKeyValueSeparator("=").join(runtimeArgs1);
+      String runtimeArgs1KV = SPACE_EQUALS_JOINER.join(runtimeArgs1);
       testCommandOutputContains(cli, "start service " + serviceV1Argument + " '" + runtimeArgs1KV + "'",
                                 "Successfully started service");
       assertProgramStatus(programClient, serviceV1, "RUNNING");
 
       // Set RouteConfig to route all traffic to service with default version
       Map<String, Integer> routeConfig = ImmutableMap.of(ApplicationId.DEFAULT_VERSION, 100, V1_SNAPSHOT, 0);
-      String routeConfigKV = SPACE_JOINER.withKeyValueSeparator("=").join(routeConfig);
+      String routeConfigKV = SPACE_EQUALS_JOINER.join(routeConfig);
       testCommandOutputContains(cli, "set route-config for service " + serviceName + " '" + routeConfigKV + "'",
                                 "Successfully set route configuration");
       for (int i = 0; i < 10; i++) {
@@ -573,7 +573,7 @@ public class CLIMainTest extends CLITestBase {
 
       // Set RouteConfig to route all traffic to serviceV1
       routeConfig = ImmutableMap.of(ApplicationId.DEFAULT_VERSION, 0, V1_SNAPSHOT, 100);
-      routeConfigKV = SPACE_JOINER.withKeyValueSeparator("=").join(routeConfig);
+      routeConfigKV = SPACE_EQUALS_JOINER.join(routeConfig);
       testCommandOutputContains(cli, "set route-config for service " + serviceName + " '" + routeConfigKV + "'",
                                 "Successfully set route configuration");
       for (int i = 0; i < 10; i++) {
@@ -814,7 +814,7 @@ public class CLIMainTest extends CLITestBase {
     String workflow = String.format("%s.%s", FakeApp.NAME, FakeWorkflow.NAME);
     File doneFile = TMP_FOLDER.newFile("fake.done");
     Map<String, String> runtimeArgs = ImmutableMap.of("done.file", doneFile.getAbsolutePath());
-    String runtimeArgsKV = Joiner.on(",").withKeyValueSeparator("=").join(runtimeArgs);
+    String runtimeArgsKV = SPACE_EQUALS_JOINER.join(runtimeArgs);
     testCommandOutputContains(cli, "start workflow " + workflow + " '" + runtimeArgsKV + "'",
                               "Successfully started workflow");
 
