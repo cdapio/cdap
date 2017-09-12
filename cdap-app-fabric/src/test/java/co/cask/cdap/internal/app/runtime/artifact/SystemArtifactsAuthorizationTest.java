@@ -40,7 +40,6 @@ import co.cask.cdap.security.spi.authorization.Authorizer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.io.Files;
 import com.google.inject.Injector;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.AfterClass;
@@ -82,8 +81,6 @@ public class SystemArtifactsAuthorizationTest {
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setBoolean(Constants.Security.Authorization.ENABLED, true);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
-    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
     Location deploymentJar = AppJarHelper.createDeploymentJar(new LocalLocationFactory(TMP_FOLDER.newFolder()),
                                                               InMemoryAuthorizer.class);
     cConf.set(Constants.Security.Authorization.EXTENSION_JAR_PATH, deploymentJar.toURI().getPath());

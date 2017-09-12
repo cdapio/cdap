@@ -31,7 +31,10 @@ import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
 import co.cask.cdap.security.spi.authorization.UnauthorizedException;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -158,5 +161,26 @@ public class AuthorizationUtil {
       SecurityUtil.getEffectiveOwner(ownerAdmin, applicationId.getNamespaceId(),
                                      appOwner == null ? null : appOwner.getPrincipal());
     return effectiveOwner != null ? effectiveOwner.getPrincipal() : authenticationContext.getPrincipal().getName();
+  }
+
+  /**
+   * Get the effective master user, if it is specified in the {@link CConfiguration}, use it. Otherwise, use the
+   * current login user. If security is not enabled, null is returned.
+   */
+  @Nullable
+  public static String getEffectiveMasterUser(CConfiguration cConf) {
+    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    try {
+      if (isSecurityAuthorizationEnabled(cConf)) {
+        masterPrincipal = masterPrincipal == null ? UserGroupInformation.getLoginUser().getShortUserName() :
+          new KerberosName(masterPrincipal).getShortName();
+      } else {
+        masterPrincipal = null;
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to translate the principal name %s to an operating system " +
+                                                 "user name.", masterPrincipal), e);
+    }
+    return masterPrincipal;
   }
 }

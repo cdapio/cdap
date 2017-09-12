@@ -34,6 +34,7 @@ import co.cask.cdap.proto.security.Action;
 import co.cask.cdap.proto.security.Authorizable;
 import co.cask.cdap.proto.security.Principal;
 import co.cask.cdap.proto.security.Privilege;
+import co.cask.cdap.security.authorization.AuthorizationUtil;
 import co.cask.cdap.security.authorization.AuthorizerInstantiator;
 import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.impersonation.SecurityUtil;
@@ -47,7 +48,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -103,8 +103,8 @@ public class DefaultSecureStoreServiceTest {
     authorizer = injector.getInstance(AuthorizerInstantiator.class).get();
 
     // Wait for the default namespace creation
-    String user = SecurityUtil.getMasterPrincipal(cConf);
-    authorizer.grant(NamespaceId.DEFAULT, new Principal(user, Principal.PrincipalType.USER),
+    String user = AuthorizationUtil.getEffectiveMasterUser(cConf);
+    authorizer.grant(Authorizable.fromEntityId(NamespaceId.DEFAULT), new Principal(user, Principal.PrincipalType.USER),
                      Collections.singleton(Action.ADMIN));
     // Starting the Appfabric server will create the default namespace
     Tasks.waitFor(true, new Callable<Boolean>() {
@@ -136,8 +136,6 @@ public class DefaultSecureStoreServiceTest {
     // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
     cConf.setBoolean(Constants.Security.KERBEROS_ENABLED, false);
     cConf.setInt(Constants.Security.Authorization.CACHE_MAX_ENTRIES, 0);
-    // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-    cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName());
 
     LocationFactory locationFactory = new LocalLocationFactory(TEMPORARY_FOLDER.newFolder());
     Location authorizerJar = AppJarHelper.createDeploymentJar(locationFactory, InMemoryAuthorizer.class);

@@ -70,7 +70,6 @@ class DatasetServiceClient {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
-  private static final Type DATASET_NAME_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private final RemoteClient remoteClient;
   private final NamespaceId namespaceId;
@@ -90,16 +89,7 @@ class DatasetServiceClient {
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
-    String masterPrincipal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    try {
-      if (AuthorizationUtil.isSecurityAuthorizationEnabled(cConf)) {
-        this.masterShortUserName = new KerberosName(masterPrincipal).getShortName();
-      } else {
-        this.masterShortUserName = null;
-      }
-    } catch (IOException e) {
-      throw Throwables.propagate(e);
-    }
+    this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
   }
 
   @Nullable

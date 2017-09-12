@@ -29,7 +29,6 @@ import co.cask.cdap.security.authorization.InMemoryAuthorizer;
 import co.cask.cdap.security.server.BasicAuthenticationHandler;
 import co.cask.cdap.security.spi.authentication.SecurityRequestContext;
 import co.cask.common.cli.CLI;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -100,9 +99,7 @@ public class AuthorizationCLITest extends CLITestBase {
         Constants.Security.Authorization.EXTENSION_CONFIG_PREFIX + "superusers", "*",
         // we only want to test authorization, but we don't specify principal/keytab, so disable kerberos
         Constants.Security.KERBEROS_ENABLED, "false",
-        Constants.Explore.EXPLORE_ENABLED, "false",
-        // this is needed since now DefaultAuthorizationEnforcer expects this non-null
-        Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, UserGroupInformation.getLoginUser().getShortUserName()
+        Constants.Explore.EXPLORE_ENABLED, "false"
       };
     }
   }
