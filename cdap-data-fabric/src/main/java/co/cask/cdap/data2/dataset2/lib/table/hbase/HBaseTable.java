@@ -41,6 +41,7 @@ import co.cask.cdap.data2.util.hbase.IncrementBuilder;
 import co.cask.cdap.data2.util.hbase.PutBuilder;
 import co.cask.cdap.data2.util.hbase.ScanBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -57,6 +58,7 @@ import org.apache.hadoop.hbase.client.Mutation;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
@@ -95,6 +97,7 @@ public class HBaseTable extends BufferingTable {
   private final String hTableName;
   private final byte[] columnFamily;
   private final TransactionCodec txCodec;
+
   // name length + name of the table: handy to have one cached
   private final byte[] nameAsTxChangePrefix;
   private final boolean safeReadlessIncrements;
@@ -105,8 +108,17 @@ public class HBaseTable extends BufferingTable {
   private final Map<String, String> arguments;
   private final Map<String, String> properties;
 
+  private byte[] encodedTx;
+
   public HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
                     CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil) throws IOException {
+    this(datasetContext, spec, args, cConf, hConf, tableUtil, new TransactionCodec());
+  }
+
+  @VisibleForTesting
+  HBaseTable(DatasetContext datasetContext, DatasetSpecification spec, Map<String, String> args,
+                    CConfiguration cConf, Configuration hConf, HBaseTableUtil tableUtil, TransactionCodec txCodec)
+    throws IOException {
     super(PrefixedNamespaces.namespace(cConf, datasetContext.getNamespaceId(), spec.getName()),
           TableProperties.getReadlessIncrementSupport(spec.getProperties()), spec.getProperties());
     TableId hBaseTableId = tableUtil.createHTableId(new NamespaceId(datasetContext.getNamespaceId()), spec.getName());
@@ -118,7 +130,7 @@ public class HBaseTable extends BufferingTable {
     this.hTable = hTable;
     this.hTableName = Bytes.toStringBinary(hTable.getTableName());
     this.columnFamily = TableProperties.getColumnFamilyBytes(spec.getProperties());
-    this.txCodec = new TransactionCodec();
+    this.txCodec = txCodec;
     // Overriding the hbase tx change prefix so it resembles the hbase table name more closely, since the HBase
     // table name is not the same as the dataset name anymore
     this.nameAsTxChangePrefix = Bytes.add(new byte[]{(byte) this.hTableName.length()}, Bytes.toBytes(this.hTableName));
@@ -136,6 +148,40 @@ public class HBaseTable extends BufferingTable {
                   .add("hTableName", hTableName)
                   .add("nameAsTxChangePrefix", nameAsTxChangePrefix)
                   .toString();
+  }
+
+  private byte[] getEncodedTx() throws IOException {
+    if (encodedTx == null) {
+      encodedTx = txCodec.encode(tx);
+    }
+    return encodedTx;
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    super.startTx(tx);
+    // set this to null in case it was left over - for whatever reason - by the previous tx
+    encodedTx = null;
+  }
+
+  @Override
+  public void updateTx(Transaction transaction) {
+    super.updateTx(transaction);
+    encodedTx = null;
+  }
+
+  @Override
+  public void postTxCommit() {
+    super.postTxCommit();
+    // we don't do this on commitTx() because we may still need the tx for rollback
+    encodedTx = null;
+  }
+
+  @Override
+  public boolean rollbackTx() throws Exception {
+    boolean success = super.rollbackTx();
+    encodedTx = null;
+    return success;
   }
 
   @Override
@@ -297,7 +343,7 @@ public class HBaseTable extends BufferingTable {
     builder.setAttribute(TX_MAX_LIFETIME_MILLIS_KEY, txMaxLifetimeMillis);
     if (transactional) {
       builder.setAttribute(WRITE_POINTER, Bytes.toBytes(tx.getWritePointer()));
-      builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+      builder.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
     }
     return builder;
   }
@@ -389,7 +435,7 @@ public class HBaseTable extends BufferingTable {
     }
 
     setFilterIfNeeded(hScan, scan.getFilter());
-    hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+    hScan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
 
     ResultScanner resultScanner = wrapResultScanner(hTable.getScanner(hScan.build()));
     return new HBaseScanner(resultScanner, columnFamily);
@@ -437,7 +483,7 @@ public class HBaseTable extends BufferingTable {
       if (tx == null) {
         get.setMaxVersions(1);
       } else {
-        get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, txCodec.encode(tx));
+        get.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, getEncodedTx());
       }
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);

@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.ConflictDetection;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.dataset.table.TableProperties;
@@ -44,25 +45,34 @@ import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.ResultScanner;
+import org.apache.hadoop.hbase.client.RetriesExhaustedWithDetailsException;
+import org.apache.hadoop.hbase.client.Row;
 import org.apache.hadoop.hbase.client.ScannerTimeoutException;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.tephra.DefaultTransactionExecutor;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionCodec;
 import org.apache.tephra.TransactionExecutor;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.tephra.TxConstants;
 import org.apache.tephra.inmemory.DetachedTxSystemClient;
 import org.apache.twill.filesystem.FileContextLocationFactory;
 import org.junit.AfterClass;
@@ -75,11 +85,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 import static org.junit.Assert.assertFalse;
@@ -288,7 +301,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       TEST_HBASE.forEachRegion(enabledTableNameBytes, new Function<HRegion, Object>() {
         @Override
         public Object apply(HRegion hRegion) {
-          Scan scan = hBaseTableUtil.buildScan().build();
+          org.apache.hadoop.hbase.client.Scan scan = hBaseTableUtil.buildScan().build();
           try {
             RegionScanner scanner = hRegion.getScanner(scan);
             List<Cell> results = Lists.newArrayList();
@@ -394,9 +407,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
         Assert.fail("this should have failed with ScannerTimeoutException");
       } catch (Exception e) {
         // we expect a RuntimeException wrapping an HBase ScannerTimeoutException
-        if (e.getCause() instanceof ScannerTimeoutException) {
-          // expected
-        } else {
+        if (!(e.getCause() instanceof ScannerTimeoutException)) {
           throw e;
         }
       }
@@ -420,7 +431,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       : DatasetProperties.of(ImmutableMap.of(HConstants.HBASE_CLIENT_SCANNER_CACHING, property));
     Map<String, String> arguments = argument == null ? Collections.<String, String>emptyMap()
       : ImmutableMap.of(HConstants.HBASE_CLIENT_SCANNER_CACHING, argument);
-    co.cask.cdap.api.dataset.table.Scan scan = new co.cask.cdap.api.dataset.table.Scan(null, null);
+    Scan scan = new Scan(null, null);
     if (scanArgument != null) {
       scan.setProperty(HConstants.HBASE_CLIENT_SCANNER_CACHING, scanArgument);
     }
@@ -442,7 +453,164 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     Assert.assertEquals(rowsExpected, scanCount);
   }
 
+  @Test
+  public void testCachedEncodedTransaction() throws Exception {
+    String tableName = "testEncodedTxTable";
+    DatasetProperties props = DatasetProperties.EMPTY;
+    getTableAdmin(CONTEXT1, tableName, props).create();
+    DatasetSpecification tableSpec = DatasetSpecification
+      .builder(tableName, HBaseTable.class.getName())
+      .build();
+
+    // use a transaction codec that counts the number of times encode() is called
+    final AtomicInteger encodeCount = new AtomicInteger();
+    final TransactionCodec codec = new TransactionCodec() {
+      @Override
+      public byte[] encode(Transaction tx) throws IOException {
+        encodeCount.incrementAndGet();
+        return super.encode(tx);
+      }
+    };
+
+    // use a table util that creates an HTable that validates the encoded tx on each get
+    final AtomicReference<Transaction> txRef = new AtomicReference<>();
+    HBaseTableUtil util = new DelegatingHBaseTableUtil(hBaseTableUtil) {
+      @Override
+      public HTable createHTable(Configuration conf, TableId tableId) throws IOException {
+        HTable htable = super.createHTable(conf, tableId);
+        return new MinimalDelegatingHTable(htable) {
+          @Override
+          public Result get(org.apache.hadoop.hbase.client.Get get) throws IOException {
+            Assert.assertEquals(txRef.get().getTransactionId(),
+                                codec.decode(get.getAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY))
+                                  .getTransactionId());
+            return super.get(get);
+          }
+          @Override
+          public Result[] get(List<org.apache.hadoop.hbase.client.Get> gets) throws IOException {
+            for (org.apache.hadoop.hbase.client.Get get : gets) {
+              Assert.assertEquals(txRef.get().getTransactionId(),
+                                  codec.decode(get.getAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY))
+                                    .getTransactionId());
+            }
+            return super.get(gets);
+          }
+          @Override
+          public ResultScanner getScanner(org.apache.hadoop.hbase.client.Scan scan) throws IOException {
+            Assert.assertEquals(txRef.get().getTransactionId(),
+                                codec.decode(scan.getAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY))
+                                  .getTransactionId());
+            return super.getScanner(scan);
+          }
+        };
+      }
+    };
+
+    HBaseTable table = new HBaseTable(CONTEXT1, tableSpec, Collections.<String, String>emptyMap(),
+                                      cConf, TEST_HBASE.getConfiguration(), util, codec);
+    DetachedTxSystemClient txSystemClient = new DetachedTxSystemClient();
+
+    // test all operations: only the first one encodes
+    Transaction tx = txSystemClient.startShort();
+    txRef.set(tx);
+    table.startTx(tx);
+    table.put(b("row1"), b("col1"), b("val1"));
+    Assert.assertEquals(0, encodeCount.get());
+    table.get(b("row"));
+    Assert.assertEquals(1, encodeCount.get());
+    table.get(ImmutableList.of(new Get("a"), new Get("b")));
+    Assert.assertEquals(1, encodeCount.get());
+    Scanner scanner = table.scan(new Scan(null, null));
+    Assert.assertEquals(1, encodeCount.get());
+    scanner.close();
+    table.increment(b("z"), b("z"), 0L);
+    Assert.assertEquals(1, encodeCount.get());
+    table.commitTx();
+    table.postTxCommit();
+
+    // test that for the next tx, we encode again
+    tx = txSystemClient.startShort();
+    txRef.set(tx);
+    table.startTx(tx);
+    table.get(b("row"));
+    Assert.assertEquals(2, encodeCount.get());
+    table.commitTx();
+
+    // test that we encode again, even of postTxCommit was not called
+    tx = txSystemClient.startShort();
+    txRef.set(tx);
+    table.startTx(tx);
+    table.get(b("row"));
+    Assert.assertEquals(3, encodeCount.get());
+    table.commitTx();
+    table.rollbackTx();
+    // test that rollback does not encode the tx
+    Assert.assertEquals(3, encodeCount.get());
+
+    // test that we encode again if the previous tx rolled back
+    tx = txSystemClient.startShort();
+    txRef.set(tx);
+    table.startTx(tx);
+    table.get(b("row"));
+    Assert.assertEquals(4, encodeCount.get());
+    table.commitTx();
+    table.close();
+    Assert.assertEquals(4, encodeCount.get());
+  }
+
+  /**
+   * Only overrides (and delegates) the methods used by HTable.
+   */
+  class MinimalDelegatingHTable extends HTable {
+    private final HTable delegate;
+
+    MinimalDelegatingHTable(HTable delegate) {
+      this.delegate = delegate;
+    }
+
+    @Override
+    public byte[] getTableName() {
+      return delegate.getTableName();
+    }
+
+    @Override
+    public void flushCommits() throws InterruptedIOException, RetriesExhaustedWithDetailsException {
+      delegate.flushCommits();
+    }
+
+    @Override
+    public void close() throws IOException {
+      delegate.close();
+    }
+
+    @Override
+    public Result get(org.apache.hadoop.hbase.client.Get get) throws IOException {
+      return delegate.get(get);
+    }
+
+    @Override
+    public Result[] get(List<org.apache.hadoop.hbase.client.Get> gets) throws IOException {
+      return delegate.get(gets);
+    }
+
+    @Override
+    public void batch(List<? extends Row> actions, Object[] results) throws InterruptedException, IOException {
+      delegate.batch(actions, results);
+    }
+
+    @Override
+    public ResultScanner getScanner(org.apache.hadoop.hbase.client.Scan scan) throws IOException {
+      return delegate.getScanner(scan);
+    }
+
+    @Override
+    public void delete(Delete delete) throws IOException {
+      delegate.delete(delete);
+    }
+  }
+
   private static byte[] b(String s) {
     return Bytes.toBytes(s);
   }
+
 }
