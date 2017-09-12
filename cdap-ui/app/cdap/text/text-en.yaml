@@ -1413,13 +1413,14 @@ features:
       realtimePipelineBtn: Realtime Pipeline
     CreateRule:
       form:
-        actionplaceholder: Action
+        actionplaceholder: 'Eg. find-and-replace Name "s/ //g"'
         apply: Apply
         cancel: Cancel
         description: Description
         descriptionplaceholder: Description for the rule
         nameplaceholder: Name of the rule
         today: Today
+        whenClausePlaceholder: "E.g. !isnullorempty(Name) && whitespace(Name)"
     CreateRulebook:
       admin: Admin
       allFieldsRequired: "* All fields are required"
