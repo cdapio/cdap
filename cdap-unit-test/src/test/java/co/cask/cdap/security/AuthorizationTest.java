@@ -32,7 +32,10 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.test.AppJarHelper;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import co.cask.cdap.proto.ApplicationDetail;
+import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
@@ -81,10 +84,12 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -542,8 +547,9 @@ public class AuthorizationTest extends TestBase {
     // Deploy dummy app should be successful since we already pre-grant the required privileges
     deployApplication(AUTH_NAMESPACE, DummyApp.class);
 
+    final ApplicationId appId = AUTH_NAMESPACE.app(AllProgramsApp.NAME);
     Map<EntityId, Set<Action>> anotherAppNeededPrivilege = ImmutableMap.<EntityId, Set<Action>>builder()
-      .put(AUTH_NAMESPACE.app(AllProgramsApp.NAME), EnumSet.of(Action.ADMIN))
+      .put(appId, EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.artifact(AllProgramsApp.class.getSimpleName(), "1.0-SNAPSHOT"), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME), EnumSet.of(Action.ADMIN))
       .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME2), EnumSet.of(Action.ADMIN))
@@ -553,6 +559,18 @@ public class AuthorizationTest extends TestBase {
       .put(AUTH_NAMESPACE.datasetType(ObjectMappedTable.class.getName()), EnumSet.of(Action.ADMIN))
       .build();
     setUpPrivilegeAndRegisterForDeletion(ALICE, anotherAppNeededPrivilege);
+
+    Map<EntityId, Set<Action>> bobDatasetPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
+      .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME), EnumSet.of(Action.ADMIN))
+      .put(AUTH_NAMESPACE.dataset(AllProgramsApp.DATASET_NAME2), EnumSet.of(Action.ADMIN))
+      .build();
+    Map<EntityId, Set<Action>> bobProgramPrivileges = ImmutableMap.<EntityId, Set<Action>>builder()
+      .put(appId.program(ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), EnumSet.of(Action.EXECUTE))
+      .put(appId.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME), EnumSet.of(Action.EXECUTE))
+      .put(appId.program(ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), EnumSet.of(Action.EXECUTE))
+      .build();
+    setUpPrivilegeAndRegisterForDeletion(BOB, bobDatasetPrivileges);
+    setUpPrivilegeAndRegisterForDeletion(BOB, bobProgramPrivileges);
 
     deployApplication(AUTH_NAMESPACE, AllProgramsApp.class);
 
@@ -566,6 +584,27 @@ public class AuthorizationTest extends TestBase {
     } catch (UnauthorizedException expected) {
       // expected
     }
+
+    ApplicationDetail applicationDetail = getAppDetail(appId);
+
+    Assert.assertEquals(
+      bobDatasetPrivileges.keySet(),
+      Sets.<EntityId>newHashSet(Iterables.transform(applicationDetail.getDatasets(),
+                                                    new Function<DatasetDetail, DatasetId>() {
+                                                      @Override
+                                                      public DatasetId apply(DatasetDetail input) {
+                                                        return appId.getNamespaceId().dataset(input.getName());
+                                                      }})));
+    Assert.assertEquals(
+      bobProgramPrivileges.keySet(),
+      Sets.<EntityId>newHashSet(Iterables.transform(applicationDetail.getPrograms(),
+                                                    new Function<ProgramRecord, ProgramId>() {
+                                                      @Override
+                                                      public ProgramId apply(ProgramRecord input) {
+                                                        return appId.program(input.getType(), input.getName());
+                                                      }})));
+    Assert.assertEquals(Collections.emptyList(), applicationDetail.getStreams());
+
     // Switch to ALICE, deletion should be successful since ALICE has ADMIN privileges
     SecurityRequestContext.setUserId(ALICE.getName());
     deleteAllApplications(AUTH_NAMESPACE);

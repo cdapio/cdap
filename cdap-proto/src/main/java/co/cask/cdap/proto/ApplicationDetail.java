@@ -128,6 +128,10 @@ public class ApplicationDetail {
     return datasets;
   }
 
+  public List<PluginDetail> getPlugins() {
+    return plugins;
+  }
+
   public List<ProgramRecord> getPrograms() {
     return programs;
   }

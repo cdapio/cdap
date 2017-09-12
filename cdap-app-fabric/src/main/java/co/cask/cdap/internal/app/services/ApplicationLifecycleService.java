@@ -58,13 +58,17 @@ import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.DatasetDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PluginInstanceDetail;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
+import co.cask.cdap.proto.StreamDetail;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSortOrder;
 import co.cask.cdap.proto.id.ApplicationId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.KerberosPrincipalId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -80,6 +84,7 @@ import co.cask.cdap.security.impersonation.OwnerAdmin;
 import co.cask.cdap.security.impersonation.SecurityUtil;
 import co.cask.cdap.security.spi.authentication.AuthenticationContext;
 import co.cask.cdap.security.spi.authorization.AuthorizationEnforcer;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
@@ -97,7 +102,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -249,7 +253,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new ApplicationNotFoundException(appId);
     }
     String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return ApplicationDetail.fromSpec(appSpec, ownerPrincipal);
+    return filterApplicationDetail(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
   }
 
   public Collection<String> getAppVersions(String namespace, String application) throws Exception {
@@ -821,6 +825,42 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       }
     }
     return result;
+  }
+
+  /**
+   * Filter the {@link ApplicationDetail} by only returning the visible entities
+   */
+  private ApplicationDetail filterApplicationDetail(final ApplicationId appId,
+                                                    ApplicationDetail applicationDetail) throws Exception {
+    Principal principal = authenticationContext.getPrincipal();
+    List<ProgramRecord> filteredPrograms =
+      AuthorizationUtil.isVisible(applicationDetail.getPrograms(), authorizationEnforcer, principal,
+                                  new Function<ProgramRecord, EntityId>() {
+                                    @Override
+                                    public EntityId apply(ProgramRecord input) {
+                                      return appId.program(input.getType(), input.getName());
+                                    }
+                                  }, null);
+    List<StreamDetail> filteredStreams =
+      AuthorizationUtil.isVisible(applicationDetail.getStreams(), authorizationEnforcer, principal,
+                                  new Function<StreamDetail, EntityId>() {
+                                    @Override
+                                    public EntityId apply(StreamDetail input) {
+                                      return appId.getNamespaceId().stream(input.getName());
+                                    }
+                                  }, null);
+    List<DatasetDetail> filteredDatasets =
+      AuthorizationUtil.isVisible(applicationDetail.getDatasets(), authorizationEnforcer, principal,
+                                  new Function<DatasetDetail, EntityId>() {
+                                    @Override
+                                    public EntityId apply(DatasetDetail input) {
+                                      return appId.getNamespaceId().dataset(input.getName());
+                                    }
+                                  }, null);
+    return new ApplicationDetail(applicationDetail.getName(), applicationDetail.getAppVersion(),
+                                 applicationDetail.getDescription(), applicationDetail.getConfiguration(),
+                                 filteredStreams, filteredDatasets, filteredPrograms, applicationDetail.getPlugins(),
+                                 applicationDetail.getArtifact(), applicationDetail.getOwnerPrincipal());
   }
 
   // get filter for app specs by artifact name and version. if they are null, it means don't filter.

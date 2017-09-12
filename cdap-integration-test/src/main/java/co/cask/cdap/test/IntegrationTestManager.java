@@ -37,6 +37,8 @@ import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.ApplicationNotFoundException;
+import co.cask.cdap.common.UnauthenticatedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramResources;
@@ -45,6 +47,7 @@ import co.cask.cdap.common.test.PluginJarHelper;
 import co.cask.cdap.explore.jdbc.ExploreConnectionParams;
 import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -391,6 +394,11 @@ public class IntegrationTestManager extends AbstractTestManager {
   @Override
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
     applicationClient.deleteAll(namespaceId);
+  }
+
+  @Override
+  public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
+    return applicationClient.get(applicationId);
   }
 
   /**

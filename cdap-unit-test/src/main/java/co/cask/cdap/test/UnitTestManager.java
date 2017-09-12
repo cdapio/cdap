@@ -42,6 +42,7 @@ import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.Artifacts;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -413,6 +414,11 @@ public class UnitTestManager extends AbstractTestManager {
   @Override
   public void deleteAllApplications(NamespaceId namespaceId) throws Exception {
     appFabricClient.deleteAllApplications(namespaceId);
+  }
+
+  @Override
+  public ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception {
+    return appFabricClient.getVersionedInfo(applicationId);
   }
 
   private Manifest createManifest(Class<?> cls, Class<?>... classes) {

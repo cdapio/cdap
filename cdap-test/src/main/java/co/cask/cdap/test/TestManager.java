@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -573,4 +574,11 @@ public interface TestManager {
    * @param namespaceId the namespace from which to remove all apps
    */
   void deleteAllApplications(NamespaceId namespaceId) throws Exception;
+
+  /**
+   * Get the app detail of an application
+   *
+   * @param applicationId the app id of the application
+   */
+  ApplicationDetail getApplicationDetail(ApplicationId applicationId) throws Exception;
 }
