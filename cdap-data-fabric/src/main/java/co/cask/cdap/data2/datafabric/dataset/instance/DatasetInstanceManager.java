@@ -98,7 +98,14 @@ public class DatasetInstanceManager {
    * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
    */
   public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
-    return getAll(namespaceId, new HashMap<String, String>());
+    final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
+    return txExecutorFactory.createExecutor(datasetCache)
+      .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
+        @Override
+        public Collection<DatasetSpecification> call() throws Exception {
+          return instanceMDS.getAll(namespaceId);
+        }
+      });
   }
 
   /**
@@ -107,13 +114,13 @@ public class DatasetInstanceManager {
    * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace which
    * are having the specified properties
    */
-  public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId, final Map<String, String> properties) {
+  public Collection<DatasetSpecification> get(final NamespaceId namespaceId, final Map<String, String> properties) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache)
       .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
         @Override
         public Collection<DatasetSpecification> call() throws Exception {
-          return instanceMDS.getAll(namespaceId, properties);
+          return instanceMDS.get(namespaceId, properties);
         }
       });
   }

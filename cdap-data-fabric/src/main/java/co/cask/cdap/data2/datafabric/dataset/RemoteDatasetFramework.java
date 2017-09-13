@@ -169,7 +169,7 @@ public class RemoteDatasetFramework implements DatasetFramework {
   @Override
   public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
     throws DatasetManagementException {
-    return clientCache.getUnchecked(namespaceId).getAllInstances(properties);
+    return clientCache.getUnchecked(namespaceId).getInstances(properties);
   }
 
   @Nullable

@@ -30,6 +30,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -71,9 +72,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId) throws Exception {
-
     responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
-      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId), new HashMap<String, String>())));
+      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId))));
   }
 
   @PUT
@@ -232,11 +232,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     try {
       return GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
     } finally {
-      try {
-        reader.close();
-      } catch (IOException e) {
-        // no-op
-      }
+      Closeables.closeQuietly(reader);
     }
   }
 }

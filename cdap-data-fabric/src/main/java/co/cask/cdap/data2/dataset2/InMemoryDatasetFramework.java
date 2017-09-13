@@ -315,15 +315,8 @@ public class InMemoryDatasetFramework implements DatasetFramework {
       Collection<DatasetSpecification> specs = instances.row(namespaceId).values();
       ImmutableList.Builder<DatasetSpecificationSummary> specSummaries = ImmutableList.builder();
       for (DatasetSpecification spec : specs) {
-        if (properties.isEmpty()) {
+        if (properties.isEmpty() || Maps.difference(properties, spec.getProperties()).entriesOnlyOnLeft().isEmpty()) {
           specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
-        } else {
-          for (Map.Entry<String, String> property : properties.entrySet()) {
-            String propertyValue = spec.getProperty(property.getKey());
-            if (propertyValue != null && propertyValue.equals(property.getValue())) {
-              specSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
-            }
-          }
         }
       }
       return specSummaries.build();

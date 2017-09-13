@@ -26,6 +26,7 @@ import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,32 +69,28 @@ public final class DatasetInstanceMDS extends MetadataStoreDataset {
   }
 
   public Collection<DatasetSpecification> getAll(NamespaceId namespaceId) {
-    return getAll(namespaceId, new HashMap<String, String>());
-  }
-
-  public Collection<DatasetSpecification> getAll(NamespaceId namespaceId, final Map<String, String> properties) {
-    Predicate<DatasetSpecification> filter = new Predicate<DatasetSpecification>() {
+    Predicate<DatasetSpecification> localDatasetFilter = new Predicate<DatasetSpecification>() {
       @Override
       public boolean apply(@Nullable DatasetSpecification input) {
-        if (input == null) {
-          return false;
-        }
-        if (properties.isEmpty()) {
-          // Filter local datasets when no explicit property based filter is specified
-          // We do not want to show the local datasets on the UI
-          return !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
-        }
+        return input != null
+          && !Boolean.parseBoolean(input.getProperty(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY));
+      }
+    };
+    return getAll(namespaceId, localDatasetFilter);
+  }
 
-        for (Map.Entry<String, String> property : properties.entrySet()) {
-          String propertyValue = input.getProperties().get(property.getKey());
-          if (propertyValue == null || !propertyValue.equals(property.getValue())) {
-            return false;
-          }
-        }
-        return true;
+  public Collection<DatasetSpecification> get(NamespaceId namespaceId, final Map<String, String> properties) {
+    Predicate<DatasetSpecification> propertyFilter = new Predicate<DatasetSpecification>() {
+      @Override
+      public boolean apply(@Nullable DatasetSpecification input) {
+        return input != null && Maps.difference(properties, input.getProperties()).entriesOnlyOnLeft().isEmpty();
       }
     };
 
+    return getAll(namespaceId, propertyFilter);
+  }
+
+  private Collection<DatasetSpecification> getAll(NamespaceId namespaceId, Predicate<DatasetSpecification> filter) {
     Map<MDSKey, DatasetSpecification> instances = listKV(getInstanceKey(namespaceId), null, DatasetSpecification.class,
                                                          Integer.MAX_VALUE, filter);
     return instances.values();

@@ -148,9 +148,9 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
-  Collection<DatasetSpecificationSummary> getAllInstances(Map<String, String> properties)
+  Collection<DatasetSpecificationSummary> getInstances(Map<String, String> properties)
     throws DatasetManagementException {
-    HttpResponse response = doPost("datasets", GSON.toJson(properties));
+    HttpResponse response = doPut("datasets", GSON.toJson(properties));
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          response));

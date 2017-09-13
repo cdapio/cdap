@@ -132,6 +132,28 @@ public class DatasetInstanceService {
    * dataset instances that the current user has access to.
    *
    * @param namespace the namespace to list datasets for
+   * @return the dataset instances in the provided namespace
+   * @throws NotFoundException if the namespace was not found
+   * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
+   */
+  Collection<DatasetSpecification> list(final NamespaceId namespace) throws Exception {
+    ensureNamespaceExists(namespace);
+    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace));
+
+    return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
+                                       new Function<DatasetSpecification, EntityId>() {
+                                         @Override
+                                         public EntityId apply(DatasetSpecification input) {
+                                           return namespace.dataset(input.getName());
+                                         }
+                                       }, null);
+  }
+
+  /**
+   * Lists all dataset instances in a namespace having specified properties. If perimeter security and authorization
+   * are enabled, only returns the dataset instances that the current user has access to.
+   *
+   * @param namespace the namespace to list datasets for
    * @param properties the dataset properties
    * @return the dataset instances in the provided namespace satisfying the given properties.
    * If no property is specified all instances are returned
@@ -140,7 +162,7 @@ public class DatasetInstanceService {
    */
   Collection<DatasetSpecification> list(final NamespaceId namespace, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(namespace);
-    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace, properties));
+    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.get(namespace, properties));
 
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
                                        new Function<DatasetSpecification, EntityId>() {
