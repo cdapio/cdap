@@ -1405,6 +1405,7 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
   RulesEngine:
+
     AddRulesEngineToPipelineModal:
       batchPipelineBtn: Batch Pipeline
       error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline
@@ -1423,7 +1424,6 @@ features:
         whenClausePlaceholder: "E.g. !isnullorempty(Name) && whitespace(Name)"
     CreateRulebook:
       admin: Admin
-      allFieldsRequired: "* All fields are required"
       createBtnLabel: Create Rulebook
       createBtnNext: "Next: Add Rules"
       created: Created
@@ -1489,6 +1489,8 @@ features:
       date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
+    shared:
+      allFieldsRequired: "* All fields are required"
   SchemaEditor:
     Labels:
       fieldName: Field Name

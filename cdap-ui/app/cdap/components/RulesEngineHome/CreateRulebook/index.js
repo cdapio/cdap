@@ -103,7 +103,7 @@ export default class CreateRulebook extends Component {
           >
           </textarea>
           <p className="fields-required-text">
-            <i>{T.translate(`${PREFIX}.allFieldsRequired`)}</i>
+            <i>{T.translate('features.RulesEngine.shared.allFieldsRequired')}</i>
           </p>
           <div className="button-container">
             <Button

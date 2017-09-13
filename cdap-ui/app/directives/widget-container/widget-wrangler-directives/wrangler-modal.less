@@ -14,8 +14,11 @@
  * the License.
 */
 
+@import "../../../styles/variables.less";
+
 @tbody-font-color: #373a3c;
 @tag-success-color: #5cb85c;
+
 body.state-hydrator-create.state-hydrator {
   .modal.wrangler-modal {
     .modal-dialog {
@@ -137,19 +140,6 @@ body.state-hydrator-create.state-hydrator {
                   box-shadow: none;
                 }
               }
-              .dropdown-item {
-                display: block;
-                width: 100%;
-                padding: 3px 1.5rem;
-                clear: both;
-                font-weight: normal;
-                color: #373a3c;
-                text-align: inherit;
-                white-space: nowrap;
-                background: none;
-                border: 0;
-                font-size: 13px;
-              }
             }
             .columns-list {
               table {
@@ -157,7 +147,33 @@ body.state-hydrator-create.state-hydrator {
                   th {
                     padding: 0.3rem;
                   }
+
+                  .columns-tab-toggle-all-dropdown {
+                    .dropdown-menu {
+                      .toggle-all-option {
+                        padding: 5px 10px;
+                      }
+                    }
+                  }
                 }
+              }
+            }
+            .dropdown-item {
+              display: block;
+              width: 100%;
+              padding: 3px 1.5rem;
+              clear: both;
+              font-weight: normal;
+              color: #373a3c;
+              text-align: inherit;
+              white-space: nowrap;
+              background: none;
+              border: 0;
+              font-size: 13px;
+
+              &:hover {
+                cursor: pointer;
+                background-color: @cdap-lighter-grey;
               }
             }
           }
@@ -182,7 +198,9 @@ body.state-hydrator-create.state-hydrator {
       font-size: 14px;
     }
   }
+
   .popover.column_actions_dropdown-element,
+  .popover.columns-tab-toggle-all-dropdown,
   .highlight-popover-element {
     display: block;
     z-index: 1060;
