@@ -274,8 +274,6 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
-  // TODO: Reenable after https://issues.cask.co/browse/CDAP-12583 is resolved
-  @Ignore
   @Test
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
