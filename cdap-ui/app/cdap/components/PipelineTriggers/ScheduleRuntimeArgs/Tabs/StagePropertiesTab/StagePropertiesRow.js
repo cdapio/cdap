@@ -88,7 +88,7 @@ export default class StagePropertiesRow extends Component {
 
   render() {
     let {triggeringPipelineInfo, triggeredPipelineInfo} = ScheduleRuntimeArgsStore.getState().args;
-    let stage = triggeringPipelineInfo.unMappedConfigStageProperties[this.state.stage];
+    let stage = triggeringPipelineInfo.configStagesMap[this.state.stage];
     let properties = [];
     if (stage) {
       properties = stage.properties;
