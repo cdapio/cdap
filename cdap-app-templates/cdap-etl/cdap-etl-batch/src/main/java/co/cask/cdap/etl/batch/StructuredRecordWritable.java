@@ -25,13 +25,17 @@ import org.apache.hadoop.io.WritableComparable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Wrapper around a {@link StructuredRecord} so that it can be used as the output key and/or value of a mapper.
  * This is not very performant and must be improved soon (CDAP-5347).
  */
 public class StructuredRecordWritable implements WritableComparable<StructuredRecordWritable> {
+  // schema cache so that we do not parse schema string for each incoming record
+  private static final Map<byte[], Schema> schemaCache = new TreeMap<>(Bytes.BYTES_COMPARATOR);
   private StructuredRecord record;
 
   // required by Hadoop
@@ -68,8 +72,15 @@ public class StructuredRecordWritable implements WritableComparable<StructuredRe
     int schemaLen = in.readInt();
     byte[] schemaBytes = new byte[schemaLen];
     in.readFully(schemaBytes, 0, schemaLen);
-    String schemaStr = Bytes.toString(schemaBytes);
-    Schema schema = Schema.parseJson(schemaStr);
+
+    Schema schema;
+    if (schemaCache.containsKey(schemaBytes)) {
+      schema = schemaCache.get(schemaBytes);
+    } else {
+      String schemaStr = Bytes.toString(schemaBytes);
+      schema = Schema.parseJson(schemaStr);
+      schemaCache.put(schemaBytes, schema);
+    }
 
     int recordLen = in.readInt();
     byte[] recordBytes = new byte[recordLen];
