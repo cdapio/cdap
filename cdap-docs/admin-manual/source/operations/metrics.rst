@@ -84,8 +84,10 @@ By default, program metrics are enabled, so the default value for this parameter
 This option can be configured at 3 different levels:
 
 - **System wide** In cdap-site.xml (system wide) to control whether app containers emit metrics
-- **Per Run** As a program argument to override the system-wide setting per program run,
-- **Program Preference** permanently for a program by setting a preference.
+- **Per Run** Using the config `system.metrics.enabled` as program argument to override the system-wide setting per program run,
+- **Program Preference** Using the `system.metrics.enabled` permanently for a program by setting a preference.
+- **Scoping Additionally for program types that have sub-components (such as flows, MapReduce and Spark programs),
+a prefix can be added to `system.metrics.enabled` to limit the scope of the arguments. :ref:`Configuring Sub-components <advanced-configuring-resources>`.
 
 Using Metrics Explorer
 ----------------------

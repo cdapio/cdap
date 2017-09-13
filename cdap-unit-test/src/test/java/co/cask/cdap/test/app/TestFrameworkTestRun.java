@@ -37,8 +37,10 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
@@ -111,6 +113,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -461,14 +464,75 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     tableManager.flush();
 
     ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
-    Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
-                                                    DatasetWithMRApp.OUTPUT_KEY, "table2");
+    Map<String, String> argsForMR =
+      ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
+                      DatasetWithMRApp.OUTPUT_KEY, "table2",
+                      "task.*." + SystemArguments.METRICS_CONTEXT_TASK_INCLUDED, "false");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     appManager.stopAll();
 
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     verifyMapperJobOutput(DatasetWithMRApp.class, outTableManager);
+    // test that the metrics emitted by MR task is collected
+    testTaskMetric(mrManager.getHistory().get(0).getPid(), true);
+    // test that the metrics is not emitted with instance tag(task-level)
+    testTaskTagLevelExists(DatasetWithMRApp.class.getSimpleName(),
+                           DatasetWithMRApp.MAPREDUCE_PROGRAM,
+                           mrManager.getHistory().get(0).getPid(), "table1", false);
+  }
+
+  @Category(SlowTests.class)
+  @Test
+  public void testMapReduceTaskMetricsDisable() throws Exception {
+    addDatasetInstance("keyValueTable", "table1");
+    addDatasetInstance("keyValueTable", "table2");
+    DataSetManager<KeyValueTable> tableManager = getDataset("table1");
+    KeyValueTable inputTable = tableManager.get();
+    inputTable.write("hello", "world");
+    tableManager.flush();
+
+    ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
+    Map<String, String> argsForMR =
+      ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
+                      DatasetWithMRApp.OUTPUT_KEY, "table2",
+                      "task.*." + SystemArguments.METRICS_ENABLED, "false");
+    MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
+    mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    appManager.stopAll();
+
+    testTaskMetric(mrManager.getHistory().get(0).getPid(), false);
+  }
+
+  private void testTaskTagLevelExists(String appName,
+                                      String programName, String runId,
+                                      String datasetName, boolean doesExist) throws Exception {
+    List<TagValue> tags = new ArrayList<>();
+    tags.add(new TagValue(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace()));
+    tags.add(new TagValue(Constants.Metrics.Tag.APP, appName));
+    tags.add(new TagValue(Constants.Metrics.Tag.MAPREDUCE, programName));
+    tags.add(new TagValue(Constants.Metrics.Tag.RUN_ID, runId));
+    tags.add(new TagValue(Constants.Metrics.Tag.DATASET, datasetName));
+    tags.add(new TagValue(Constants.Metrics.Tag.MR_TASK_TYPE, "m"));
+    Collection<TagValue> tagsValues =
+      getMetricsManager().searchTags(new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tags));
+    Assert.assertEquals(doesExist, !tagsValues.isEmpty());
+    if (doesExist) {
+      Assert.assertEquals(Constants.Metrics.Tag.INSTANCE_ID, tagsValues.iterator().next().getName());
+    }
+  }
+
+  private void testTaskMetric(String runId, boolean doesExist) throws Exception {
+    List<TagValue> tags = new ArrayList<>();
+    tags.add(new TagValue(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace()));
+    tags.add(new TagValue(Constants.Metrics.Tag.APP, DatasetWithMRApp.class.getSimpleName()));
+    tags.add(new TagValue(Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM));
+    tags.add(new TagValue(Constants.Metrics.Tag.RUN_ID, runId));
+
+    Collection<String> metricNames =
+      getMetricsManager().searchMetricNames(new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tags));
+    // we disabled task level metrics; this should return empty list
+    Assert.assertEquals(doesExist, metricNames.contains("user.test.metric"));
   }
 
   @Category(SlowTests.class)
@@ -1713,10 +1777,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     serviceMetrics.waitForProcessed(1, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, serviceMetrics.getException());
 
+    Map<String, String> argsForMR =
+      ImmutableMap.of("task.*." + SystemArguments.METRICS_CONTEXT_TASK_INCLUDED, "true");
     // Run mapreduce job
-    MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal").start();
+    MapReduceManager mrManager = applicationManager.getMapReduceManager("countTotal").start(argsForMR);
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 1800L, TimeUnit.SECONDS);
 
+    testTaskTagLevelExists(WordCountApp.class.getSimpleName(), "countTotal", mrManager.getHistory().get(0).getPid(),
+                           "mydataset", true);
     long totalCount = Long.valueOf(callServiceGet(serviceManager.getServiceURL(), "total"));
     // every event has 5 tokens
     Assert.assertEquals(5 * 100L, totalCount);
