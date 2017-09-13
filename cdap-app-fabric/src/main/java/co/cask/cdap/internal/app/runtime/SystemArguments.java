@@ -49,6 +49,8 @@ public final class SystemArguments {
   private static final String RETRY_POLICY_DELAY_BASE_MS = "system." + Constants.Retry.DELAY_BASE_MS;
   private static final String RETRY_POLICY_DELAY_MAX_MS = "system." + Constants.Retry.DELAY_MAX_MS;
   public static final String TRANSACTION_TIMEOUT = "system.data.tx.timeout";
+  public static final String METRICS_ENABLED = "system.metrics.enabled";
+  public static final String METRICS_CONTEXT_TASK_INCLUDED = "system.metrics.context.task.included";
 
   public static Map<String, String> getLogLevels(Map<String, String> args) {
     Map<String, String> logLevels = new HashMap<>();
@@ -63,6 +65,18 @@ public final class SystemArguments {
       logLevels.put(Logger.ROOT_LOGGER_NAME, logLevel);
     }
     return logLevels;
+  }
+
+  /**
+   * If args contains {@link SystemArguments#METRICS_ENABLED}
+   * we evaluate and return the boolean value, if the key is not preset we return the defaultValue
+   * @param args runtime arguments
+   * @param defaultValue value to return when key is not preset in the args
+   * @return true if metrics is enabled
+   */
+  public static boolean isProgramMetricsEnabled(Map<String, String> args, boolean defaultValue) {
+    String metricsEnabled = args.get(METRICS_ENABLED);
+    return metricsEnabled == null ? defaultValue : Boolean.valueOf(metricsEnabled);
   }
 
   /**

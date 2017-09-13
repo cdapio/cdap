@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.security.store.SecureStore;
@@ -24,10 +25,13 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.DefaultProgram;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.ProgramDescriptor;
+import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
+import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
 import co.cask.cdap.messaging.MessagingService;
@@ -195,6 +199,7 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         MetricsCollectionService metricsCollectionService = null;
         MapReduceMetrics.TaskType taskType = null;
         String taskId = null;
+        ProgramOptions options = contextConfig.getProgramOptions();
 
         TaskAttemptID taskAttemptId = key.getTaskAttemptID();
         // taskAttemptId can be null, if used from a org.apache.hadoop.mapreduce.Partitioner or
@@ -205,13 +210,18 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
             taskType = MapReduceMetrics.TaskType.from(taskAttemptId.getTaskType());
             // if this is not for a mapper or a reducer, we don't need the metrics collection service
             metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+            options = new SimpleProgramOptions(options.getName(), options.getArguments(),
+                                               new BasicArguments(
+                                                 RuntimeArguments.extractScope(
+                                                   "task", taskType.toString().toLowerCase(),
+                                                   contextConfig.getProgramOptions().getUserArguments().asMap())),
+                                               options.isDebug());
           }
         }
         CConfiguration cConf = injector.getInstance(CConfiguration.class);
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
-
         return new BasicMapReduceTaskContext(
-          program, contextConfig.getProgramOptions(), cConf, taskType, taskId,
+          program, options, cConf, taskType, taskId,
           spec, workflowInfo, discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), programDatasetFramework, classLoader.getPluginInstantiator(),
           contextConfig.getLocalizedResources(), secureStore, secureStoreManager,
