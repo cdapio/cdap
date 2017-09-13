@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -53,5 +54,22 @@ public class ConfCodecTest {
 
     Configuration newHconf = ConfigurationUtil.get(confMap, Constants.Explore.HCONF_KEY, HConfCodec.INSTANCE);
     Assert.assertEquals("hbar", newHconf.get("hfoo"));
+  }
+
+  @Test
+  public void testMultipleMacros() throws IOException {
+    // Validates the fix for the issue described in CDAP-7651
+    Configuration conf = new Configuration();
+    Configuration confToEncode = new Configuration();
+
+    // 30 > Configuration.MAX_SUBST
+    for (int i = 0; i < 30; i++) {
+      confToEncode.set("key.num." + i, "${my.key}");
+    }
+    ConfigurationUtil.set(conf, "test.key", HConfCodec.INSTANCE, confToEncode);
+    conf.set("my.key", "foo");
+    Configuration decodedConf = ConfigurationUtil.get(conf, "test.key", HConfCodec.INSTANCE);
+
+    Assert.assertEquals(ConfigurationUtil.toMap(confToEncode), ConfigurationUtil.toMap(decodedConf));
   }
 }
