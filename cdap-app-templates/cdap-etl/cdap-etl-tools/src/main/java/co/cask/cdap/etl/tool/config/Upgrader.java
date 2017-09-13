@@ -30,7 +30,6 @@ import co.cask.cdap.etl.proto.v2.ETLConfig;
 import co.cask.cdap.etl.proto.v2.ETLStage;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.artifact.AppRequest;
-import co.cask.cdap.proto.id.NamespaceId;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 
@@ -55,13 +54,15 @@ public class Upgrader {
   private final UpgradeContext dataStreamsContext;
 
   public Upgrader(NamespaceClient namespaceClient, ArtifactClient artifactClient,
-                  String newVersion, boolean includeCurrentVersion) {
+                  String newVersion, boolean includeCurrentVersion, boolean downgrade) {
     this.etlBatchContext = new ClientUpgradeContext(namespaceClient, artifactClient, BATCH_NAME, newVersion);
     this.dataPipelineContext =
       new ClientUpgradeContext(namespaceClient, artifactClient, DATA_PIPELINE_NAME, newVersion);
     this.dataStreamsContext = new ClientUpgradeContext(namespaceClient, artifactClient, DATA_STREAMS_NAME, newVersion);
-    this.upgradeRange = new ArtifactVersionRange(LOWEST_VERSION, true,
-                                                 new ArtifactVersion(newVersion), includeCurrentVersion);
+    this.upgradeRange = downgrade ?
+      new ArtifactVersionRange(new ArtifactVersion(newVersion), includeCurrentVersion,
+                               new ArtifactVersion(ETLVersion.getVersion()), true) :
+      new ArtifactVersionRange(LOWEST_VERSION, true, new ArtifactVersion(newVersion), includeCurrentVersion);
     this.newVersion = newVersion;
   }
 
