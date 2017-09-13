@@ -123,8 +123,8 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
 
     Assert.assertTrue(txTable.commitTx());
 
-    transactionManager.canCommit(tx1, txTable.getTxChanges());
-    transactionManager.commit(tx1);
+    transactionManager.canCommit(tx1.getTransactionId(), txTable.getTxChanges());
+    transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
 
     txTable.postTxCommit();
 
@@ -442,8 +442,8 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
     List<byte[]> changes = new ArrayList<>();
     changes.addAll(txUserTable.getTxChanges());
     changes.addAll(txPurchaseTable.getTxChanges());
-    transactionManager.canCommit(tx1, changes);
-    transactionManager.commit(tx1);
+    transactionManager.canCommit(tx1.getTransactionId(), changes);
+    transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
 
     txUserTable.postTxCommit();
     txPurchaseTable.postTxCommit();

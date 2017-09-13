@@ -287,11 +287,7 @@ public final class SparkTransactionHandler extends AbstractHttpHandler {
         if (succeeded) {
           LOG.debug("Committing transaction for job {}", jobId);
           try {
-            if (!txClient.commit(jobTx)) {
-              // If failed to commit (which it shouldn't since there is no conflict detection), throw exception
-              throw new TransactionFailureException("Failed to commit transaction on job success. JobId: "
-                                                      + jobId + ", transaction: " + jobTx);
-            }
+            txClient.commitOrThrow(jobTx);
             transactionInfo.onTransactionCompleted(succeeded, null);
           } catch (Throwable t) {
             // Any failure will invalidate the transaction

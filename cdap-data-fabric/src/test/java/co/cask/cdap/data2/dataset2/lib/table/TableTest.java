@@ -47,6 +47,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
+import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -209,7 +210,7 @@ public abstract class TableTest<T extends Table> {
       Result emptyResult = new Result(R1, ImmutableMap.<byte[], byte[]>of());
 
       ((TransactionAware) myTable).commitTx();
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
 
       // start another transaction, so that the buffering table doesn't cache the values; the underlying Table
       // implementations are tested this way.
@@ -432,7 +433,7 @@ public abstract class TableTest<T extends Table> {
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
 
       // start tx3 and TableAssert.verify that changes of tx1 are not visible yet (even though they are flushed)
@@ -443,12 +444,12 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(null, myTable3.get(R1, C1));
       Assert.assertArrayEquals(null, myTable3.get(R1, C2));
       TableAssert.assertRow(a(), myTable3.get(R1));
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
       // * second, make tx visible
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
       // start tx4 and TableAssert.verify that changes of tx1 are now visible
       // NOTE: table instance can be re-used in series of transactions
       Transaction tx4 = txClient.startShort();
@@ -470,9 +471,9 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(), myTable3.get(R2));
 
       // committing tx4
-      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx4, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx4));
+      txClient.commitOrThrow(tx4);
 
       // do change in tx2 that is conflicting with tx1
       myTable2.put(R1, a(C1), a(V2));
@@ -483,7 +484,12 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V2), myTable2.get(R1));
 
       // cannot commit: conflict should be detected
-      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
 
       // rolling back tx2 changes and aborting tx
       ((TransactionAware) myTable2).rollbackTx();
@@ -501,9 +507,9 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(null, myTable3.get(R2, C1));
       Assert.assertArrayEquals(null, myTable3.get(R2, C2));
       TableAssert.assertRow(a(), myTable3.get(R2));
-      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx5, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx5));
+      txClient.commitOrThrow(tx5);
 
     } finally {
       admin.drop();
@@ -541,7 +547,7 @@ public abstract class TableTest<T extends Table> {
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1 by trying to compareAndSwap
@@ -558,10 +564,15 @@ public abstract class TableTest<T extends Table> {
       Assert.assertTrue(myTable3.compareAndSwap(R1, C1, null, V2));
 
       // * second, make tx visible
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // TableAssert.verify that tx2 cannot commit because of the conflicts...
-      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable2).rollbackTx();
       txClient.abort(tx2);
 
@@ -579,7 +590,12 @@ public abstract class TableTest<T extends Table> {
       // tx3 still cannot see tx1 changes
       Assert.assertTrue(myTable3.compareAndSwap(R1, C2, null, V5));
       // and it cannot commit because its changes cause conflicts
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable3).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable3).rollbackTx();
       txClient.abort(tx3);
 
@@ -591,9 +607,9 @@ public abstract class TableTest<T extends Table> {
       myTable4.delete(R1, a(C1));
 
       // committing tx4
-      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx4, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable4).commitTx());
-      Assert.assertTrue(txClient.commit(tx4));
+      txClient.commitOrThrow(tx4);
 
       // TableAssert.verifying the result contents in next transaction
       Transaction tx5 = txClient.startShort();
@@ -603,9 +619,9 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(null, myTable4.get(R1, C1));
       Assert.assertArrayEquals(V4, myTable4.get(R1, C2));
       TableAssert.assertRow(a(C2, V4), myTable4.get(R1));
-      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx5, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx5));
+      txClient.commitOrThrow(tx5);
 
     } finally {
       admin.drop();
@@ -657,7 +673,7 @@ public abstract class TableTest<T extends Table> {
 
       // committing tx1 in stages to check races are handled well
       // * first, flush operations of table
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
 
       // check that tx2 doesn't see changes (even though they were flushed) of tx1
@@ -684,10 +700,15 @@ public abstract class TableTest<T extends Table> {
       doIncrement(doIncrAndGet, myTable3, R1, a(C1), la(4L), lb(4L));
 
       // * second, make tx visible
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // TableAssert.verify that tx2 cannot commit because of the conflicts...
-      Assert.assertFalse(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable2).rollbackTx();
       txClient.abort(tx2);
 
@@ -711,7 +732,12 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(null, myTable3.get(R1, C5));
       TableAssert.assertRow(a(C1, L4), myTable3.get(R1));
       // and it cannot commit because its changes cause conflicts
-      Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) myTable3).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable3).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable3).rollbackTx();
       txClient.abort(tx3);
 
@@ -722,9 +748,9 @@ public abstract class TableTest<T extends Table> {
       myTable4.delete(R1, a(C1));
 
       // committing tx4
-      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx4, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable4).commitTx());
-      Assert.assertTrue(txClient.commit(tx4));
+      txClient.commitOrThrow(tx4);
 
       // TableAssert.verifying the result contents in next transaction
       Transaction tx5 = txClient.startShort();
@@ -737,9 +763,9 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(L3, myTable4.get(R1, C4));
       Assert.assertArrayEquals(V5, myTable4.get(R1, C5));
       TableAssert.assertRow(a(C3, L5, C4, L3, C5, V5), myTable4.get(R1));
-      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) myTable3).getTxChanges()));
+      txClient.canCommitOrThrow(tx5, ((TransactionAware) myTable3).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable3).commitTx());
-      Assert.assertTrue(txClient.commit(tx5));
+      txClient.commitOrThrow(tx5);
 
     } finally {
       admin.drop();
@@ -817,9 +843,9 @@ public abstract class TableTest<T extends Table> {
   }
 
   private void commitAndAssertSuccess(Transaction tx, TransactionAware txAware) throws Exception {
-    Assert.assertTrue(txClient.canCommit(tx, txAware.getTxChanges()));
+    txClient.canCommitOrThrow(tx, txAware.getTxChanges());
     Assert.assertTrue(txAware.commitTx());
-    Assert.assertTrue(txClient.commit(tx));
+    txClient.commitOrThrow(tx);
   }
 
   @Test
@@ -840,9 +866,9 @@ public abstract class TableTest<T extends Table> {
       myTable1.put(R2, a(C1, C2), a(V2, V3));
       myTable1.put(R3, a(C1, C2), a(V3, V4));
       myTable1.put(R4, a(C1, C2), a(V4, V5));
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // Now, we will test delete ops
       // start new tx2
@@ -902,9 +928,9 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V2, C2, V3), myTable1.get(R2));
       TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
       TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
       // starting tx4 before committing tx2 so that we can check conflicts are detected wrt deletes
       Transaction tx4 = txClient.startShort();
@@ -912,7 +938,7 @@ public abstract class TableTest<T extends Table> {
       Transaction tx5 = txClient.startShort();
 
       // commit tx2 in stages to see how races are handled wrt delete ops
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable2).commitTx());
 
       // start tx6 and TableAssert.verify that changes of tx2 are not visible yet (even though they are flushed)
@@ -928,12 +954,12 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V3, C2, V4), myTable1.get(R3));
       TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
 
-      Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx6, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx6));
+      txClient.commitOrThrow(tx6);
 
       // make tx2 visible
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
 
       // start tx7 and TableAssert.verify that changes of tx2 are now visible
       Transaction tx7 = txClient.startShort();
@@ -948,9 +974,9 @@ public abstract class TableTest<T extends Table> {
       Assert.assertArrayEquals(V1, myTable1.get(R3, C1));
       Assert.assertArrayEquals(V2, myTable1.get(R4, C1));
 
-      Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx6, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx7));
+      txClient.commitOrThrow(tx7);
 
       // but not visible to tx4 that we started earlier than tx2 became visible
       // NOTE: table instance can be re-used between tx
@@ -966,7 +992,12 @@ public abstract class TableTest<T extends Table> {
 
       // writing to deleted column, to check conflicts are detected (delete-write conflict)
       myTable1.put(R1, a(C2), a(V5));
-      Assert.assertFalse(txClient.canCommit(tx4, ((TransactionAware) myTable1).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx4, ((TransactionAware) myTable1).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable1).rollbackTx();
       txClient.abort(tx4);
 
@@ -983,7 +1014,12 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V4, C2, V5), myTable1.get(R4));
       // NOTE: we are TableAssert.verifying conflict in one operation only. We may want to test each...
       myTable1.delete(R1, a(C1));
-      Assert.assertFalse(txClient.canCommit(tx5, ((TransactionAware) myTable1).getTxChanges()));
+      try {
+        txClient.canCommitOrThrow(tx5, ((TransactionAware) myTable1).getTxChanges());
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       ((TransactionAware) myTable1).rollbackTx();
       txClient.abort(tx5);
 
@@ -1007,9 +1043,9 @@ public abstract class TableTest<T extends Table> {
       myTable1.put(R3, a(C3, C4), a(V3, V4));
       myTable1.put(R4, a(C4), a(V4));
       myTable1.put(R5, a(C5), a(V5));
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // Now, we will test scans
       // currently not testing races/conflicts/etc as this logic is not there for scans yet; so using one same tx
@@ -1048,9 +1084,9 @@ public abstract class TableTest<T extends Table> {
       myTable2.put(R2, a(C1, C2, C3), a(V4, V3, V2));
       myTable2.delete(R3, a(C4));
 
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable2).commitTx());
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
 
       // Checking that changes are reflected in new scans in new tx
       Transaction tx3 = txClient.startShort();
@@ -1063,9 +1099,9 @@ public abstract class TableTest<T extends Table> {
                                 a(C4, V4)),
                              myTable1, new Scan(R2, R5));
 
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
     } finally {
       admin.drop();
@@ -1084,9 +1120,9 @@ public abstract class TableTest<T extends Table> {
       for (int i = 0; i < 100; i++) {
         table.put(new Put(Bytes.toBytes("r" + i)).add(C1, V1).add(C2, V2));
       }
-      Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) table).getTxChanges()));
+      txClient.canCommitOrThrow(tx, ((TransactionAware) table).getTxChanges());
       Assert.assertTrue(((TransactionAware) table).commitTx());
-      Assert.assertTrue(txClient.commit(tx));
+      txClient.commitOrThrow(tx);
 
       Transaction tx2 = txClient.startShort();
       ((TransactionAware) table).startTx(tx2);
@@ -1095,7 +1131,7 @@ public abstract class TableTest<T extends Table> {
         gets.add(new Get(Bytes.toBytes("r" + i)));
       }
       List<Row> results = table.get(gets);
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
       for (int i = 0; i < 100; i++) {
         Row row = results.get(i);
         Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
@@ -1114,7 +1150,7 @@ public abstract class TableTest<T extends Table> {
         gets.add(new Get("r" + i).add(C1));
       }
       results = table.get(gets);
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
       for (int i = 0; i < 100; i++) {
         Row row = results.get(i);
         Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
@@ -1137,7 +1173,7 @@ public abstract class TableTest<T extends Table> {
         gets.add(get);
       }
       results = table.get(gets);
-      Assert.assertTrue(txClient.commit(tx4));
+      txClient.commitOrThrow(tx4);
       for (int i = 0; i < 100; i++) {
         Row row = results.get(i);
         Assert.assertArrayEquals(Bytes.toBytes("r" + i), row.getRow());
@@ -1170,9 +1206,9 @@ public abstract class TableTest<T extends Table> {
 
       myTable1.put(Bytes.toBytes("1_09a"), a(C1), a(V1));
 
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       //
       Transaction tx2 = txClient.startShort();
@@ -1183,9 +1219,9 @@ public abstract class TableTest<T extends Table> {
 
       myTable1.put(Bytes.toBytes("1_09b"), a(C1), a(V1));
 
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
 
       //
       Transaction tx3 = txClient.startShort();
@@ -1203,9 +1239,9 @@ public abstract class TableTest<T extends Table> {
       myTable1.put(Bytes.toBytes("1_08b"), a(C1), a(V1));
 
       myTable1.put(Bytes.toBytes("1_09c"), a(C1), a(V1));
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
       // Now, we will test scans
       Transaction tx4 = txClient.startShort();
@@ -1250,9 +1286,9 @@ public abstract class TableTest<T extends Table> {
       verifyScanWithFuzzyRowFilter(table);
 
       // commit tx, start new and TableAssert.verify scan again against "persisted" data
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) table).getTxChanges());
       Assert.assertTrue(((TransactionAware) table).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
       ((TransactionAware) table).postTxCommit();
 
       Transaction tx2 = txClient.startShort();
@@ -1305,9 +1341,9 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) myTable1).startTx(tx1);
       myTable1.put(R1, a(C1, C2, C3, C4, C5), a(V1, V2, V3, V4, V5));
       myTable1.put(R2, a(C1), a(V2));
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // Now, we will test column range get
       Transaction tx2 = txClient.startShort();
@@ -1345,9 +1381,9 @@ public abstract class TableTest<T extends Table> {
       myTable2.put(R1, a(C1, C2, C3), a(V4, V3, V2));
       myTable2.delete(R1, a(C4));
 
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) myTable2).getTxChanges()));
+      txClient.canCommitOrThrow(tx2, ((TransactionAware) myTable2).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable2).commitTx());
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
 
       // Checking that changes are reflected in new scans in new tx
       Transaction tx3 = txClient.startShort();
@@ -1357,9 +1393,9 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C2, V3, C3, V2),
                             myTable1.get(R1, C2, C5, Integer.MAX_VALUE));
 
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
     } finally {
       admin.drop();
@@ -1378,9 +1414,9 @@ public abstract class TableTest<T extends Table> {
       table.write(null, new Put("a").add("x", "x"));
       table.write(new byte[]{'q'}, new Put("a").add("y", "y"));
       table.write(new byte[]{'a'}, new Put("a").add("z", "z"));
-      Assert.assertTrue(txClient.canCommit(tx, ((TransactionAware) table).getTxChanges()));
+      txClient.canCommitOrThrow(tx, ((TransactionAware) table).getTxChanges());
       ((TransactionAware) table).commitTx();
-      Assert.assertTrue(txClient.commit(tx));
+      txClient.commitOrThrow(tx);
 
       // validate that all writes went to row a, and row q was not written
       tx = txClient.startShort();
@@ -1433,12 +1469,12 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V1), table11.get(R1, a(C1)));
       TableAssert.assertRow(a(C1, V2), table21.get(R1, a(C1)));
       // commit tx1
-      Assert.assertTrue(txClient.canCommit(tx1, ImmutableList.copyOf(
+      txClient.canCommitOrThrow(tx1, ImmutableList.copyOf(
         Iterables.concat(((TransactionAware) table11).getTxChanges(),
-                         ((TransactionAware) table21).getTxChanges()))));
+                         ((TransactionAware) table21).getTxChanges())));
       Assert.assertTrue(((TransactionAware) table11).commitTx());
       Assert.assertTrue(((TransactionAware) table21).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // Write data in tx2 and check that cannot commit because of conflicts
       Table table22 = getTable(CONTEXT1, table2);
@@ -1453,9 +1489,14 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V2), table22.get(R1, a(C1)));
       TableAssert.assertRow(a(C1, V3), table32.get(R1, a(C1)));
       // try commit tx2
-      Assert.assertFalse(txClient.canCommit(tx2, ImmutableList.copyOf(
-        Iterables.concat(((TransactionAware) table22).getTxChanges(),
-                         ((TransactionAware) table32).getTxChanges()))));
+      try {
+        txClient.canCommitOrThrow(tx2, ImmutableList.copyOf(
+          Iterables.concat(((TransactionAware) table22).getTxChanges(),
+                           ((TransactionAware) table32).getTxChanges())));
+        Assert.fail("Conflict not detected!");
+      } catch (TransactionConflictException e) {
+        // expected
+      }
       Assert.assertTrue(((TransactionAware) table22).rollbackTx());
       Assert.assertTrue(((TransactionAware) table32).rollbackTx());
       txClient.abort(tx2);
@@ -1473,12 +1514,12 @@ public abstract class TableTest<T extends Table> {
       TableAssert.assertRow(a(C1, V3), table33.get(R1, a(C1)));
       TableAssert.assertRow(a(C1, V4), table43.get(R1, a(C1)));
       // commit tx3
-      Assert.assertTrue(txClient.canCommit(tx3, ImmutableList.copyOf(
+      txClient.canCommitOrThrow(tx3, ImmutableList.copyOf(
         Iterables.concat(((TransactionAware) table33).getTxChanges(),
-                         ((TransactionAware) table43).getTxChanges()))));
+                         ((TransactionAware) table43).getTxChanges())));
       Assert.assertTrue(((TransactionAware) table33).commitTx());
       Assert.assertTrue(((TransactionAware) table43).commitTx());
-      Assert.assertTrue(txClient.commit(tx3));
+      txClient.commitOrThrow(tx3);
 
     } finally {
       getTableAdmin(CONTEXT1, table1).drop();
@@ -1539,20 +1580,25 @@ public abstract class TableTest<T extends Table> {
       table13.put(R1, a(C1), a(V2));
 
       // committing tx1
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table11).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) table11).getTxChanges());
       Assert.assertTrue(((TransactionAware) table11).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       // no conflict should be when committing tx2
-      Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table22).getTxChanges()));
+      txClient.canCommitOrThrow(tx2, ((TransactionAware) table22).getTxChanges());
 
       // but conflict should be when committing tx3
       if (level != ConflictDetection.NONE) {
-        Assert.assertFalse(txClient.canCommit(tx3, ((TransactionAware) table13).getTxChanges()));
+        try {
+          txClient.canCommitOrThrow(tx3, ((TransactionAware) table13).getTxChanges());
+          Assert.fail("Conflict not detected!");
+        } catch (TransactionConflictException e) {
+          // expected
+        }
         ((TransactionAware) table13).rollbackTx();
         txClient.abort(tx3);
       } else {
-        Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table13).getTxChanges()));
+        txClient.canCommitOrThrow(tx3, ((TransactionAware) table13).getTxChanges());
       }
 
       // 2) Test conflicts when using different rows
@@ -1579,20 +1625,25 @@ public abstract class TableTest<T extends Table> {
       table16.put(R1, a(C2), a(V2));
 
       // committing tx4
-      Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) table14).getTxChanges()));
+      txClient.canCommitOrThrow(tx4, ((TransactionAware) table14).getTxChanges());
       Assert.assertTrue(((TransactionAware) table14).commitTx());
-      Assert.assertTrue(txClient.commit(tx4));
+      txClient.commitOrThrow(tx4);
 
       // no conflict should be when committing tx5
-      Assert.assertTrue(txClient.canCommit(tx5, ((TransactionAware) table15).getTxChanges()));
+      txClient.canCommitOrThrow(tx5, ((TransactionAware) table15).getTxChanges());
 
       // but conflict should be when committing tx6 iff we resolve on row level
       if (level == ConflictDetection.ROW) {
-        Assert.assertFalse(txClient.canCommit(tx6, ((TransactionAware) table16).getTxChanges()));
+        try {
+          txClient.canCommitOrThrow(tx6, ((TransactionAware) table16).getTxChanges());
+          Assert.fail("Conflict not detected!");
+        } catch (TransactionConflictException e) {
+          // expected
+        }
         ((TransactionAware) table16).rollbackTx();
         txClient.abort(tx6);
       } else {
-        Assert.assertTrue(txClient.canCommit(tx6, ((TransactionAware) table16).getTxChanges()));
+        txClient.canCommitOrThrow(tx6, ((TransactionAware) table16).getTxChanges());
       }
 
       // 3) Test conflicts when using different columns
@@ -1619,26 +1670,36 @@ public abstract class TableTest<T extends Table> {
       table19.put(R1, a(C1), a(V2));
 
       // committing tx7
-      Assert.assertTrue(txClient.canCommit(tx7, ((TransactionAware) table17).getTxChanges()));
+      txClient.canCommitOrThrow(tx7, ((TransactionAware) table17).getTxChanges());
       Assert.assertTrue(((TransactionAware) table17).commitTx());
-      Assert.assertTrue(txClient.commit(tx7));
+      txClient.commitOrThrow(tx7);
 
       // no conflict should be when committing tx8 iff we resolve on column level
       if (level == ConflictDetection.COLUMN || level == ConflictDetection.NONE) {
-        Assert.assertTrue(txClient.canCommit(tx8, ((TransactionAware) table18).getTxChanges()));
+        txClient.canCommitOrThrow(tx8, ((TransactionAware) table18).getTxChanges());
       } else {
-        Assert.assertFalse(txClient.canCommit(tx8, ((TransactionAware) table18).getTxChanges()));
+        try {
+          txClient.canCommitOrThrow(tx8, ((TransactionAware) table18).getTxChanges());
+          Assert.fail("Conflict not detected!");
+        } catch (TransactionConflictException e) {
+          // expected
+        }
         ((TransactionAware) table18).rollbackTx();
         txClient.abort(tx8);
       }
 
       // but conflict should be when committing tx9
       if (level != ConflictDetection.NONE) {
-        Assert.assertFalse(txClient.canCommit(tx9, ((TransactionAware) table19).getTxChanges()));
+        try {
+          txClient.canCommitOrThrow(tx9, ((TransactionAware) table19).getTxChanges());
+          Assert.fail("Conflict not detected!");
+        } catch (TransactionConflictException e) {
+          // expected
+        }
         ((TransactionAware) table19).rollbackTx();
         txClient.abort(tx9);
       } else {
-        Assert.assertTrue(txClient.canCommit(tx9, ((TransactionAware) table19).getTxChanges()));
+        txClient.canCommitOrThrow(tx9, ((TransactionAware) table19).getTxChanges());
       }
 
     } finally {
@@ -1659,9 +1720,9 @@ public abstract class TableTest<T extends Table> {
       Table myTable0 = getTable(CONTEXT1, MY_TABLE);
       ((TransactionAware) myTable0).startTx(tx0);
       myTable0.put(R2, a(C2), a(V2));
-      Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) myTable0).getTxChanges()));
+      txClient.canCommitOrThrow(tx0, ((TransactionAware) myTable0).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable0).commitTx());
-      Assert.assertTrue(txClient.commit(tx0));
+      txClient.commitOrThrow(tx0);
       ((TransactionAware) myTable0).postTxCommit();
 
       Transaction tx1 = txClient.startShort();
@@ -1711,9 +1772,9 @@ public abstract class TableTest<T extends Table> {
     Transaction tx0 = txClient.startShort();
     ((TransactionAware) table).startTx(tx0);
     table.put(R1, a(C1), a(V1));
-    Assert.assertTrue(txClient.canCommit(tx0, ((TransactionAware) table).getTxChanges()));
+    txClient.canCommitOrThrow(tx0, ((TransactionAware) table).getTxChanges());
     Assert.assertTrue(((TransactionAware) table).commitTx());
-    Assert.assertTrue(txClient.commit(tx0));
+    txClient.commitOrThrow(tx0);
     ((TransactionAware) table).postTxCommit();
 
     // TableAssert.verify
@@ -1734,9 +1795,9 @@ public abstract class TableTest<T extends Table> {
     Transaction tx2 = txClient.startShort();
     ((TransactionAware) table2).startTx(tx2);
     table2.put(R1, a(C2), a(V2));
-    Assert.assertTrue(txClient.canCommit(tx2, ((TransactionAware) table2).getTxChanges()));
+    txClient.canCommitOrThrow(tx2, ((TransactionAware) table2).getTxChanges());
     Assert.assertTrue(((TransactionAware) table2).commitTx());
-    Assert.assertTrue(txClient.commit(tx2));
+    txClient.commitOrThrow(tx2);
     ((TransactionAware) table2).postTxCommit();
 
     // TableAssert.verify it is visible
@@ -1755,9 +1816,9 @@ public abstract class TableTest<T extends Table> {
     Transaction tx4 = txClient.startShort();
     ((TransactionAware) table2).startTx(tx4);
     table2.put(R1, a(C3), a(V3));
-    Assert.assertTrue(txClient.canCommit(tx4, ((TransactionAware) table2).getTxChanges()));
+    txClient.canCommitOrThrow(tx4, ((TransactionAware) table2).getTxChanges());
     Assert.assertTrue(((TransactionAware) table2).commitTx());
-    Assert.assertTrue(txClient.commit(tx4));
+    txClient.commitOrThrow(tx4);
     ((TransactionAware) table2).postTxCommit();
 
     // TableAssert.verify it is visible
@@ -1859,7 +1920,7 @@ public abstract class TableTest<T extends Table> {
       // Try to read the previous write.
       Assert.assertArrayEquals(V1, table.get(new Get(R1, C1)).get(C1));
     } finally {
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
     }
 
     // drop table
@@ -1903,7 +1964,7 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) table).startTx(tx);
       Assert.assertEquals(null, table.get(new Get(R1, C1)).getLong(C1));
     } finally {
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
     }
 
     tx = txClient.startShort();
@@ -1927,7 +1988,7 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) table).commitTx();
 
     } finally {
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
     }
 
     // validate all increments are visible to a new tx
@@ -1936,7 +1997,7 @@ public abstract class TableTest<T extends Table> {
       ((TransactionAware) table).startTx(tx);
       Assert.assertEquals(new Long(readless ? 3L : 2L), table.get(new Get(R1, C1)).getLong(C1));
     } finally {
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
     }
 
     // drop table

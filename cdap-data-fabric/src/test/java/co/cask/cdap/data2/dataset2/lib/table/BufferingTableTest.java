@@ -122,9 +122,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
                                 a(C1, V1)),
                              table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) table1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) table1).getTxChanges());
       Assert.assertTrue(((TransactionAware) table1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       Transaction tx2 = txClient.startShort();
       ((TransactionAware) table1).startTx(tx2);
@@ -136,7 +136,7 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
                                 a(C1, V1)),
                              table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
-      txClient.commit(tx2);
+      txClient.commitOrThrow(tx2);
 
       Transaction tx3 = txClient.startShort();
       ((TransactionAware) table1).startTx(tx3);
@@ -168,9 +168,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
                                 a(C2, V2)),        // 1_04
                              table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
-      Assert.assertTrue(txClient.canCommit(tx3, ((TransactionAware) table1).getTxChanges()));
+      txClient.canCommitOrThrow(tx3, ((TransactionAware) table1).getTxChanges());
       Assert.assertTrue(((TransactionAware) table1).commitTx());
-      txClient.commit(tx3);
+      txClient.commitOrThrow(tx3);
 
       Transaction tx4 = txClient.startShort();
       ((TransactionAware) table1).startTx(tx4);
@@ -187,7 +187,7 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
                                 a(C2, V2)),        // 1_04
                              table1.scan(Bytes.toBytes("1_"), Bytes.toBytes("2_")));
 
-      txClient.commit(tx4);
+      txClient.commitOrThrow(tx4);
     } finally {
       admin.drop();
     }
@@ -211,7 +211,7 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
       table.put(new byte[] {0}, new byte[] {9}, new byte[] {8});
 
       table.commitTx();
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
 
       // start new for in-mem buffer behavior testing
       tx = txClient.startShort();
@@ -402,9 +402,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
       table1.startTx(tx1);
       table1.put(R1, a(C1), a(V1));
       Collection<byte []> tx1Changes = table1.getTxChanges();
-      Assert.assertTrue(txClient.canCommit(tx1, tx1Changes));
+      txClient.canCommitOrThrow(tx1, tx1Changes);
       Assert.assertTrue(table1.commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
       table1.postTxCommit();
 
       // write some values in table2
@@ -412,9 +412,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
       table2.startTx(tx2);
       table2.put(R1, a(C1), a(V1));
       Collection<byte []> tx2Changes = table2.getTxChanges();
-      Assert.assertTrue(txClient.canCommit(tx2, tx2Changes));
+      txClient.canCommitOrThrow(tx2, tx2Changes);
       Assert.assertTrue(table2.commitTx());
-      Assert.assertTrue(txClient.commit(tx2));
+      txClient.commitOrThrow(tx2);
       table1.postTxCommit();
 
       String tx1ChangePrefix = new String(table1.getNameAsTxChangePrefix());
@@ -462,9 +462,9 @@ public abstract class BufferingTableTest<T extends BufferingTable> extends Table
 
       // persist changes
       Collection<byte []> txChanges = table.getTxChanges();
-      Assert.assertTrue(txClient.canCommit(tx1, txChanges));
+      txClient.canCommitOrThrow(tx1, txChanges);
       Assert.assertTrue(table.commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
       table.postTxCommit();
 
       // start another transaction

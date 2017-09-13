@@ -191,7 +191,7 @@ public class FlowTest {
 
     // commit tx
     ((TransactionAware) producer).commitTx();
-    txSystemClient.commit(tx);
+    txSystemClient.commitOrThrow(tx);
 
     // Query the service for at most 10 seconds for the expected result
     Gson gson = new Gson();

@@ -398,9 +398,9 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
       for (int i = 0; i < numRows; i++) {
         myTable1.put(new Put("" + i, "x", "y"));
       }
-      Assert.assertTrue(txClient.canCommit(tx1, ((TransactionAware) myTable1).getTxChanges()));
+      txClient.canCommitOrThrow(tx1, ((TransactionAware) myTable1).getTxChanges());
       Assert.assertTrue(((TransactionAware) myTable1).commitTx());
-      Assert.assertTrue(txClient.commit(tx1));
+      txClient.commitOrThrow(tx1);
 
       try {
         testScannerCache(numRows, tableName, null, null, null);

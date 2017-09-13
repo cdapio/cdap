@@ -209,10 +209,7 @@ final class SparkTransactional implements Transactional {
       txDatasetContext.flush();
 
       if (needCommit) {
-        // Commit transaction
-        if (!txClient.commit(transaction)) {
-          throw new TransactionFailureException("Failed to commit explicit transaction " + transaction);
-        }
+        txClient.commitOrThrow(transaction);
         activeDatasetContext.remove();
         txDatasetContext.postCommit();
         txDatasetContext.discardDatasets();

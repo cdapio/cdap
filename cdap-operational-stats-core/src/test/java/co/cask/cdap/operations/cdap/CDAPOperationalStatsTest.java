@@ -58,9 +58,9 @@ public class CDAPOperationalStatsTest {
     AppFabricTestHelper.deployApplication(NAMESPACE.toId(), AllProgramsApp.class, null, cConf);
     TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
     Transaction tx1 = txClient.startShort();
-    txClient.canCommit(tx1, Collections.singleton(Bytes.toBytes("foo")));
+    txClient.canCommitOrThrow(tx1, Collections.singleton(Bytes.toBytes("foo")));
     Transaction tx2 = txClient.startShort();
-    txClient.commit(tx2);
+    txClient.commitOrThrow(tx2);
     Transaction tx3 = txClient.startShort();
     txClient.invalidate(tx3.getTransactionId());
   }

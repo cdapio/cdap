@@ -101,7 +101,7 @@ public class LevelDBQueueTest extends QueueTest {
     QueueEvictor evictor = ((LevelDBQueueClientFactory) queueClientFactory).createEvictor(queueName, numGroups);
     Transaction tx = txSystemClient.startShort();
     // There is no change, just to get the latest transaction for eviction
-    txSystemClient.commit(tx);
+    txSystemClient.commitOrThrow(tx);
     Uninterruptibles.getUninterruptibly(evictor.evict(tx));
   }
 }

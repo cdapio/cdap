@@ -23,6 +23,7 @@ import com.google.common.base.Supplier;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
@@ -72,12 +73,24 @@ public abstract class RetryingTransactionSystemClient implements TransactionSyst
 
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+    //noinspection deprecation
     return delegate.canCommit(tx, changeIds);
   }
 
   @Override
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+    delegate.canCommitOrThrow(tx, changeIds);
+  }
+
+  @Override
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
+    //noinspection deprecation
     return delegate.commit(tx);
+  }
+
+  @Override
+  public void commitOrThrow(Transaction tx) throws TransactionFailureException {
+    delegate.commitOrThrow(tx);
   }
 
   @Override
@@ -123,6 +136,11 @@ public abstract class RetryingTransactionSystemClient implements TransactionSyst
   @Override
   public int getInvalidSize() {
     return delegate.getInvalidSize();
+  }
+
+  @Override
+  public void pruneNow() {
+    delegate.pruneNow();
   }
 
   protected <V> V supplyWithRetries(Supplier<V> supplier) {

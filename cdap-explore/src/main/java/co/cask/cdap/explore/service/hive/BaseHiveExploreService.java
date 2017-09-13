@@ -92,6 +92,7 @@ import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
 import org.apache.twill.common.Threads;
@@ -1523,7 +1524,9 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
       if (opInfo.isReadOnly() ||
         (opInfo.getStatus() != null && opInfo.getStatus().getStatus() == QueryStatus.OpStatus.FINISHED))  {
-        if (!(txClient.commit(tx))) {
+        try {
+          txClient.commitOrThrow(tx);
+        } catch (TransactionFailureException e) {
           txClient.invalidate(tx.getWritePointer());
           LOG.info("Invalidating transaction: {}", tx);
         }

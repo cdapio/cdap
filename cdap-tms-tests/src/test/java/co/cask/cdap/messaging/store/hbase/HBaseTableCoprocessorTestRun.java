@@ -46,7 +46,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
-import org.apache.tephra.ChangeId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TxConstants;
@@ -67,7 +66,6 @@ import org.junit.rules.TemporaryFolder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
@@ -136,7 +134,7 @@ public class HBaseTableCoprocessorTestRun extends DataCleanupTest {
       // this will set visibility upper bound to V[6]
       Maps.newTreeMap(ImmutableSortedMap.of(V[6], new TransactionManager.InProgressTx(
         V[6] - 1, Long.MAX_VALUE, TransactionManager.InProgressType.SHORT))),
-      new HashMap<Long, Set<ChangeId>>(), new TreeMap<Long, Set<ChangeId>>());
+      new HashMap<Long, TransactionManager.ChangeSet>(), new TreeMap<Long, TransactionManager.ChangeSet>());
     HDFSTransactionStateStorage tmpStorage =
       new HDFSTransactionStateStorage(hConf, new SnapshotCodecProvider(hConf), new TxMetricsCollector());
     tmpStorage.startAndWait();

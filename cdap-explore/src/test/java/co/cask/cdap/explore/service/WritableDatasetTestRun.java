@@ -99,8 +99,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
 
     Assert.assertTrue(table.commitTx());
 
-    transactionManager.canCommit(tx, table.getTxChanges());
-    transactionManager.commit(tx);
+    transactionManager.canCommit(tx.getTransactionId(), table.getTxChanges());
+    transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
 
     table.postTxCommit();
   }
@@ -135,8 +135,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
                           table.get("2_2"));
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx, table.getTxChanges());
-      transactionManager.commit(tx);
+      transactionManager.canCommit(tx.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
       table.postTxCommit();
 
       // Make sure Hive also sees those values
@@ -203,8 +203,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertEquals(value1, table.get("10"));
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx1, table.getTxChanges());
-      transactionManager.commit(tx1);
+      transactionManager.canCommit(tx1.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
       table.postTxCommit();
 
       String query = String.format("insert into table %s select key,value from %s",
@@ -264,8 +264,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertEquals(value1, table.get("10"));
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx1, table.getTxChanges());
-      transactionManager.commit(tx1);
+      transactionManager.canCommit(tx1.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
       table.postTxCommit();
 
       String query = "insert into table " + writableTableName + " select key,value from " + extendedTableName;
@@ -284,8 +284,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
                           table2.get("10_2"));
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx, table.getTxChanges());
-      transactionManager.commit(tx);
+      transactionManager.canCommit(tx.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
       table.postTxCommit();
 
     } finally {
@@ -396,8 +396,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       Assert.assertEquals("ten", table.get(10));
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx1, table.getTxChanges());
-      transactionManager.commit(tx1);
+      transactionManager.canCommit(tx1.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
       table.postTxCommit();
 
       exploreClient.submit(NAMESPACE_ID,
@@ -439,8 +439,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.put(1, "one");
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx, table.getTxChanges());
-      transactionManager.commit(tx);
+      transactionManager.canCommit(tx.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
       table.postTxCommit();
 
       String query = String.format("insert into table %s select * from cdap_namespace.%s",
@@ -461,8 +461,8 @@ public class WritableDatasetTestRun extends BaseHiveExploreServiceTest {
       table.put(2, "two");
 
       Assert.assertTrue(table.commitTx());
-      transactionManager.canCommit(tx, table.getTxChanges());
-      transactionManager.commit(tx);
+      transactionManager.canCommit(tx.getTransactionId(), table.getTxChanges());
+      transactionManager.commit(tx.getTransactionId(), tx.getWritePointer());
       table.postTxCommit();
 
       assertSelectAll(OTHER_NAMESPACE_ID, otherSimpleTableName, ImmutableList.<List<Object>>of(

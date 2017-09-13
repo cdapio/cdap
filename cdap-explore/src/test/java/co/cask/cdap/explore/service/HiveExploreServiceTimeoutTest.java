@@ -90,8 +90,8 @@ public class HiveExploreServiceTimeoutTest extends BaseHiveExploreServiceTest {
 
     Assert.assertTrue(table.commitTx());
 
-    transactionManager.canCommit(tx1, table.getTxChanges());
-    transactionManager.commit(tx1);
+    transactionManager.canCommit(tx1.getTransactionId(), table.getTxChanges());
+    transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
 
     table.postTxCommit();
 
