@@ -23,18 +23,25 @@ import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCache;
 import co.cask.cdap.data2.transaction.coprocessor.CConfigurationCacheSupplier;
 import co.cask.cdap.data2.transaction.coprocessor.DefaultTransactionStateCacheSupplier;
 import co.cask.cdap.data2.util.hbase.HTableNameConverter;
+import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.OperationWithAttributes;
+import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
 import org.apache.hadoop.hbase.coprocessor.RegionCoprocessorEnvironment;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.KeyValueScanner;
+import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.Store;
 import org.apache.hadoop.hbase.regionserver.compactions.CompactionRequest;
@@ -49,6 +56,10 @@ import org.apache.tephra.util.TxUtils;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -64,6 +75,8 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   private CConfigurationCache cConfCache;
   private String sysConfigTablePrefix;
 
+  private Cache<Long, Transaction> txCache;
+
   @Override
   public void start(CoprocessorEnvironment e) throws IOException {
     if (e instanceof RegionCoprocessorEnvironment) {
@@ -76,6 +89,11 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
                                                                 TxConstants.Manager.CFG_TX_MAX_LIFETIME,
                                                                 TxConstants.Manager.DEFAULT_TX_MAX_LIFETIME);
       this.cConfCache = cConfCacheSupplier.get();
+      this.txCache = CacheBuilder.newBuilder()
+        .maximumSize(10)
+        .expireAfterAccess(30, TimeUnit.SECONDS)
+        .build();
+      LOG.info(getClass().getSimpleName() + " loaded with txCache for table '" + tableDesc.getNameAsString() + "'");
     }
     // Need to create the cConf cache before calling start on the parent, since it is required for
     // initializing some properties in the parent class.
@@ -188,5 +206,91 @@ public class DefaultTransactionProcessor extends TransactionProcessor {
   protected Filter getTransactionFilter(Transaction tx, ScanType scanType, Filter filter) {
     IncrementTxFilter incrementTxFilter = new IncrementTxFilter(tx, ttlByFamily, allowEmptyValues, scanType, filter);
     return new CellSkipFilter(incrementTxFilter);
+  }
+
+  @Override
+  public void preGetOp(ObserverContext<RegionCoprocessorEnvironment> e, Get get, List<Cell> results)
+    throws IOException {
+    Transaction tx = getTxFromOperation(get);
+    if (tx != null) {
+      projectFamilyDeletes(get);
+      get.setMaxVersions();
+      get.setTimeRange(TxUtils.getOldestVisibleTimestamp(ttlByFamily, tx, readNonTxnData),
+                       TxUtils.getMaxVisibleTimestamp(tx));
+      Filter newFilter = getTransactionFilter(tx, ScanType.USER_SCAN, get.getFilter());
+      get.setFilter(newFilter);
+    }
+  }
+
+  @Override
+  public RegionScanner preScannerOpen(ObserverContext<RegionCoprocessorEnvironment> e, Scan scan, RegionScanner s)
+    throws IOException {
+    Transaction tx = getTxFromOperation(scan);
+    if (tx != null) {
+      projectFamilyDeletes(scan);
+      scan.setMaxVersions();
+      scan.setTimeRange(TxUtils.getOldestVisibleTimestamp(ttlByFamily, tx, readNonTxnData),
+                        TxUtils.getMaxVisibleTimestamp(tx));
+      Filter newFilter = getTransactionFilter(tx, ScanType.USER_SCAN, scan.getFilter());
+      scan.setFilter(newFilter);
+    }
+    return s;
+  }
+
+  /**
+   * Ensures that family delete markers are present in the columns requested for any scan operation.
+   * @param scan The original scan request
+   * @return The modified scan request with the family delete qualifiers represented
+   */
+  private Scan projectFamilyDeletes(Scan scan) {
+    for (Map.Entry<byte[], NavigableSet<byte[]>> entry : scan.getFamilyMap().entrySet()) {
+      NavigableSet<byte[]> columns = entry.getValue();
+      // wildcard scans will automatically include the delete marker, so only need to add it when we have
+      // explicit columns listed
+      if (columns != null && !columns.isEmpty()) {
+        scan.addColumn(entry.getKey(), TxConstants.FAMILY_DELETE_QUALIFIER);
+      }
+    }
+    return scan;
+  }
+
+  /**
+   * Ensures that family delete markers are present in the columns requested for any get operation.
+   * @param get The original get request
+   * @return The modified get request with the family delete qualifiers represented
+   */
+  private Get projectFamilyDeletes(Get get) {
+    for (Map.Entry<byte[], NavigableSet<byte[]>> entry : get.getFamilyMap().entrySet()) {
+      NavigableSet<byte[]> columns = entry.getValue();
+      // wildcard scans will automatically include the delete marker, so only need to add it when we have
+      // explicit columns listed
+      if (columns != null && !columns.isEmpty()) {
+        get.addColumn(entry.getKey(), TxConstants.FAMILY_DELETE_QUALIFIER);
+      }
+    }
+    return get;
+  }
+
+  private Transaction getTxFromOperation(final OperationWithAttributes op) throws IOException {
+    byte[] wpBytes = op.getAttribute(HBaseTable.WRITE_POINTER);
+    // LOG.info("geTxFromOperation: wpBytes is " + Bytes.toStringBinary(wpBytes));
+    if (wpBytes == null || wpBytes.length != Bytes.SIZEOF_LONG) {
+      LOG.info("Getting tx from operation.");
+      return getFromOperation(op);
+    }
+    final long writePointer = Bytes.toLong(wpBytes);
+    try {
+      return txCache.get(writePointer, new Callable<Transaction>() {
+        @Override
+        public Transaction call() throws Exception {
+          // LOG.info("Write pointer " + writePointer + " not in cache, getting tx from operation.");
+          return getFromOperation(op);
+        }
+      });
+    } catch (ExecutionException e) {
+      Throwable t = e.getCause();
+      Throwables.propagateIfInstanceOf(t, IOException.class);
+      throw Throwables.propagate(t);
+    }
   }
 }
