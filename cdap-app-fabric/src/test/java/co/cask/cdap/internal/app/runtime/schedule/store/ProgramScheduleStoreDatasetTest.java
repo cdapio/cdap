@@ -23,8 +23,11 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AndTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.StreamSizeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
@@ -202,5 +205,125 @@ public class ProgramScheduleStoreDatasetTest extends AppFabricTestBase {
       set.add(record.getSchedule());
     }
     return set;
+  }
+
+  @Test
+  public void testDeleteScheduleByTriggeringProgram() throws Exception {
+    DatasetFramework dsFramework = getInjector().getInstance(DatasetFramework.class);
+    TransactionSystemClient txClient = getInjector().getInstance(TransactionSystemClient.class);
+    TransactionExecutorFactory txExecutorFactory = new DynamicTransactionExecutorFactory(txClient);
+    final ProgramScheduleStoreDataset store = dsFramework.getDataset(Schedulers.STORE_DATASET_ID,
+                                                                     new HashMap<String, String>(), null);
+    Assert.assertNotNull(store);
+    TransactionExecutor txExecutor = txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) store));
+    SatisfiableTrigger prog1Trigger = new ProgramStatusTrigger(PROG1_ID, ProgramStatus.COMPLETED, ProgramStatus.FAILED,
+                                                                ProgramStatus.KILLED);
+    SatisfiableTrigger prog2Trigger = new ProgramStatusTrigger(PROG2_ID, ProgramStatus.COMPLETED, ProgramStatus.FAILED,
+                                                    ProgramStatus.KILLED);
+    final ProgramSchedule sched1 = new ProgramSchedule("sched1", "a program status trigger", PROG3_ID,
+                                                        ImmutableMap.of("propper", "popper"),
+                                                        prog1Trigger, ImmutableList.<Constraint>of());
+    final ProgramSchedule sched2 = new ProgramSchedule("sched2", "a program status trigger", PROG3_ID,
+                                                        ImmutableMap.of("propper", "popper"),
+                                                        prog2Trigger, ImmutableList.<Constraint>of());
+
+    final ProgramSchedule schedOr = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+                                                        ImmutableMap.of("propper", "popper"),
+                                                        new OrTrigger(new PartitionTrigger(DS1_ID, 1), prog1Trigger,
+                                                                      new AndTrigger(new OrTrigger(prog1Trigger,
+                                                                                                   prog2Trigger),
+                                                                                     new PartitionTrigger(DS2_ID, 1)),
+                                                                      new OrTrigger(prog2Trigger)),
+                                                        ImmutableList.<Constraint>of());
+
+    final ProgramSchedule schedAnd = new ProgramSchedule("schedAnd", "an AND trigger", PROG3_ID,
+                                                        ImmutableMap.of("propper", "popper"),
+                                                        new AndTrigger(new PartitionTrigger(DS1_ID, 1), prog2Trigger,
+                                                                       new AndTrigger(prog1Trigger,
+                                                                                      new PartitionTrigger(DS2_ID, 1))),
+                                                         ImmutableList.<Constraint>of());
+
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        store.addSchedules(ImmutableList.of(sched1, sched2, schedOr, schedAnd));
+      }
+    });
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // ProgramStatus event for PROG1_ID should trigger only sched1, schedOr, schedAnd
+        Assert.assertEquals(ImmutableSet.of(sched1, schedOr, schedAnd),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+        // ProgramStatus event for PROG2_ID should trigger only sched2, schedOr, schedAnd
+        Assert.assertEquals(ImmutableSet.of(sched2, schedOr, schedAnd),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+      }
+    });
+    // update or delete all schedules triggered by PROG1_ID
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        store.modifySchedulesTriggeredByDeletedProgram(PROG1_ID);
+      }
+    });
+    final ProgramSchedule schedOrNew = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+                                                           ImmutableMap.of("propper", "popper"),
+                                                           new OrTrigger(new PartitionTrigger(DS1_ID, 1),
+                                                                         new AndTrigger(new OrTrigger(prog2Trigger),
+                                                                                        new PartitionTrigger(DS2_ID,
+                                                                                                             1)),
+                                                                         new OrTrigger(prog2Trigger)),
+                                                           ImmutableList.<Constraint>of());
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // ProgramStatus event for PROG1_ID should trigger no schedules after modifying schedules triggered by it
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.COMPLETED))));
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.FAILED))));
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG1_ID, ProgramStatus.KILLED))));
+        // ProgramStatus event for PROG2_ID should trigger only sched2 and schedOrNew
+        Assert.assertEquals(ImmutableSet.of(sched2, schedOrNew),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+      }
+    });
+    // update or delete all schedules triggered by PROG2_ID
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        store.modifySchedulesTriggeredByDeletedProgram(PROG2_ID);
+      }
+    });
+    final ProgramSchedule schedOrNew1 = new ProgramSchedule("schedOr", "an OR trigger", PROG3_ID,
+                                                           ImmutableMap.of("propper", "popper"),
+                                                           new OrTrigger(new PartitionTrigger(DS1_ID, 1)),
+                                                           ImmutableList.<Constraint>of());
+    txExecutor.execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // ProgramStatus event for PROG2_ID should trigger no schedules after modifying schedules triggered by it
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.COMPLETED))));
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.FAILED))));
+        Assert.assertEquals(Collections.emptySet(),
+                            toScheduleSet(store.findSchedules(
+                              Schedulers.triggerKeyForProgramStatus(PROG2_ID, ProgramStatus.KILLED))));
+        // event for DS1 should trigger only schedOrNew1 since all other schedules are deleted
+        Assert.assertEquals(ImmutableSet.of(schedOrNew1),
+                            toScheduleSet(store.findSchedules(Schedulers.triggerKeyForPartition(DS1_ID))));
+      }
+    });
   }
 }

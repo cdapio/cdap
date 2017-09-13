@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
 import co.cask.cdap.proto.ProtoTrigger;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -29,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Abstract base class for composite trigger.
@@ -111,4 +113,15 @@ public abstract class AbstractCompositeTrigger extends ProtoTrigger.AbstractComp
     }
     return unitTriggerInfos.build();
   }
+
+  /**
+   * Return the simplified version of the current composite trigger based on the condition that the given program
+   * is deleted so that the {@link co.cask.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger} of
+   * the given program contained in the current composite trigger will never be satisfied.
+   *
+   * @param programId the program id of the deleted program
+   * @return the simplified composite trigger, or {@code null} if the composite trigger will never be satisfied
+   */
+  @Nullable
+  public abstract Trigger updateTriggerWithDeletedProgram(ProgramId programId);
 }

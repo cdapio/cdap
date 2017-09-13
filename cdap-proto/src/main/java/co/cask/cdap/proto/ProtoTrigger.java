@@ -191,6 +191,13 @@ public abstract class ProtoTrigger implements Trigger {
     public int hashCode() {
       return triggers.hashCode();
     }
+
+    @Override
+    public String toString() {
+      return getType() + "Trigger{" +
+        "triggers=" + triggers +
+        '}';
+    }
   }
 
   /**

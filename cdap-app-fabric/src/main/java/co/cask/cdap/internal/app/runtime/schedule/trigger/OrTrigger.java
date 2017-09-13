@@ -20,8 +20,11 @@ import co.cask.cdap.api.schedule.Trigger;
 import co.cask.cdap.api.schedule.TriggerInfo;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.proto.Notification;
+import co.cask.cdap.proto.id.ProgramId;
 
+import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * A Trigger that schedules a ProgramSchedule, when at least one of the internal triggers are satisfied.
@@ -45,5 +48,38 @@ public class OrTrigger extends AbstractCompositeTrigger implements SatisfiableTr
   @Override
   public List<TriggerInfo> getTriggerInfos(TriggerInfoContext context) {
     return getUnitTriggerInfosAddRuntimeArgs(context);
+  }
+
+  @Nullable
+  @Override
+  public Trigger updateTriggerWithDeletedProgram(ProgramId programId) {
+    List<SatisfiableTrigger> updatedTriggers = new ArrayList<>();
+    for (Trigger trigger : getTriggers()) {
+      if (trigger instanceof ProgramStatusTrigger &&
+        programId.equals(((ProgramStatusTrigger) trigger).getProgramId())) {
+        // this program status trigger will never be satisfied, skip adding it to updatedTriggers
+        continue;
+      }
+      if (trigger instanceof co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) {
+        Trigger updatedTrigger = ((co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger) trigger)
+          .updateTriggerWithDeletedProgram(programId);
+        if (updatedTrigger == null) {
+          // the updated composite trigger will never be satisfied, skip adding it to updatedTriggers
+          continue;
+        }
+        // add the updated composite trigger into updatedTriggers
+        updatedTriggers.add((SatisfiableTrigger) updatedTrigger);
+      } else {
+        // the trigger is not a composite trigger, add it to updatedTriggers directly
+        updatedTriggers.add((SatisfiableTrigger) trigger);
+      }
+    }
+    // if the updatedTriggers is empty, the OR trigger will never be satisfied
+    if (updatedTriggers.isEmpty()) {
+      return null;
+    }
+    // return a new OR trigger constructed from the updated triggers
+    return new co.cask.cdap.internal.app.runtime.schedule.trigger.OrTrigger(
+      updatedTriggers.toArray(new SatisfiableTrigger[updatedTriggers.size()]));
   }
 }
