@@ -19,9 +19,11 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.metrics.MetricsTags;
 import co.cask.cdap.proto.Id;
@@ -58,6 +60,26 @@ public class MetricsManager {
    */
   public Collection<MetricTimeSeries> query(MetricDataQuery query) throws Exception {
     return metricStore.query(query);
+  }
+
+  /**
+   * Search the metric store and return the collection of metric names for the search query
+   * @param query
+   * @return Collection of metric names
+   * @throws Exception
+   */
+  public Collection<String> searchMetricNames(MetricSearchQuery query) throws Exception {
+    return metricStore.findMetricNames(query);
+  }
+
+  /**
+   * Search the metric store and return the collection of next available tags for the search query
+   * @param query
+   * @return Collection of tag values
+   * @throws Exception
+   */
+  public Collection<TagValue> searchTags(MetricSearchQuery query) throws Exception {
+    return metricStore.findNextAvailableTags(query);
   }
 
   /**

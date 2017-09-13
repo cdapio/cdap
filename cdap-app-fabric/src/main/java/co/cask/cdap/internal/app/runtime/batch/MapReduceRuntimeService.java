@@ -378,7 +378,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   @Override
   protected void run() throws Exception {
-    MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(job, context);
+    MapReduceMetricsWriter metricsWriter = new MapReduceMetricsWriter(job, context, cConf);
 
     int reportInterval = cConf.getInt(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);
     String val = context.getRuntimeArguments().get(Constants.AppFabric.MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS);

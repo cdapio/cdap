@@ -37,9 +37,12 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
+import co.cask.cdap.api.metrics.MetricSearchQuery;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
+import co.cask.cdap.api.metrics.TagValue;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -111,6 +114,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -462,11 +466,27 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(DatasetWithMRApp.class);
     Map<String, String> argsForMR = ImmutableMap.of(DatasetWithMRApp.INPUT_KEY, "table1",
-                                                    DatasetWithMRApp.OUTPUT_KEY, "table2");
+                                                    DatasetWithMRApp.OUTPUT_KEY, "table2",
+                                                    Constants.Metrics.EMIT_MR_TASKL_LEVEL_METRICS, "false");
     MapReduceManager mrManager = appManager.getMapReduceManager(DatasetWithMRApp.MAPREDUCE_PROGRAM).start(argsForMR);
     mrManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
-    appManager.stopAll();
 
+    appManager.stopAll();
+    List<TagValue> tags = new ArrayList<>();
+    tags.add(new TagValue(Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace()));
+    tags.add(new TagValue(Constants.Metrics.Tag.APP, DatasetWithMRApp.class.getSimpleName()));
+    tags.add(new TagValue(Constants.Metrics.Tag.MAPREDUCE, DatasetWithMRApp.MAPREDUCE_PROGRAM));
+    tags.add(new TagValue(Constants.Metrics.Tag.DATASET, "table1"));
+    tags.add(new TagValue(Constants.Metrics.Tag.RUN_ID, mrManager.getHistory().get(0).getPid()));
+    Collection<TagValue> tagValues =
+      getMetricsManager().searchTags(new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tags));
+    // map only task, search should have returned mapper task type
+    Assert.assertEquals(1, tagValues.size());
+    tags.add(tagValues.iterator().next());
+    tagValues =
+      getMetricsManager().searchTags(new MetricSearchQuery(0, Integer.MAX_VALUE, Integer.MAX_VALUE, tags));
+    // we disabled task level metrics; this should return empty list
+    Assert.assertEquals(0, tagValues.size());
     DataSetManager<KeyValueTable> outTableManager = getDataset("table2");
     verifyMapperJobOutput(DatasetWithMRApp.class, outTableManager);
   }

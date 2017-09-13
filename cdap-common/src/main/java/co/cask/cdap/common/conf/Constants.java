@@ -612,6 +612,7 @@ public final class Constants {
                       Constants.Metrics.Tag.COMPONENT, Constants.Service.TRANSACTION);
 
     public static final String EMIT_PROGRAM_CONTAINER_METRICS = "app.program.metrics.enabled";
+    public static final String EMIT_MR_TASKL_LEVEL_METRICS = "mapreduce.task.metrics.enabled";
 
     public static final String METRICS_MIGRATION_SLEEP_MILLIS = "metrics.table.migration.sleep.millis";
 
