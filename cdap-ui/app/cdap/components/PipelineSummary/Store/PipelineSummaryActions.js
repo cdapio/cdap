@@ -23,9 +23,6 @@ import isNil from 'lodash/isNil';
 import cloneDeep from 'lodash/cloneDeep';
 
 function setRuns(runs) {
-  // This is to avoid having a run record with 'STARTING' state.
-  // Run record with just STARTING state isn't of much use in pipeline summary.
-  runs = runs.filter(run => run.start);
   PipelineSummaryStore.dispatch({
     type: PIPELINESSUMMARYACTIONS.SETRUNS,
     payload: {

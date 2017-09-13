@@ -34,6 +34,7 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
+import isNil from 'lodash/isNil';
 
 require('./RunsHistoryGraph.scss');
 require('react-vis/dist/styles/plot.scss');
@@ -124,11 +125,11 @@ export default class RunsHistoryGraph extends Component {
         x = x + (id + 1);
       }
       if (xDomainType === 'time') {
-        x = run.start;
+        x = isNil(run.start) ? 0 : run.start;
       }
       return {
         x,
-        y: run.duration,
+        y: !run.duration ? 0 : run.duration,
         color: run.status === 'FAILED' ? FAILEDRUNCOLOR : SUCCESSRUNCOLOR,
         runid: run.runid
       };
@@ -167,6 +168,8 @@ export default class RunsHistoryGraph extends Component {
     let popOverData;
     if (this.state.currentHoveredElement) {
       popOverData = this.props.runs.find(run => this.state.currentHoveredElement.runid === run.runid);
+
+      popOverData.duration = popOverData.duration ? popOverData.duration : 0;
     }
     if (this.props.isLoading) {
       return (
@@ -305,6 +308,9 @@ export default class RunsHistoryGraph extends Component {
         <tbody>
           {
             runs.map(run => {
+              let startTime = run.start ? moment(run.start * 1000).format('llll') : '--';
+              let duration = humanReadableDuration(run.duration || 0);
+
               return (
                 <tr>
                   <td>
@@ -322,8 +328,8 @@ export default class RunsHistoryGraph extends Component {
                       {run.status}
                     </span>
                   </td>
-                  <td> {moment(run.start * 1000).format('llll')}</td>
-                  <td> {humanReadableDuration(run.duration)}</td>
+                  <td> {startTime}</td>
+                  <td> {duration}</td>
                 </tr>
               );
             })
