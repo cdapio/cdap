@@ -132,13 +132,15 @@ public class DatasetInstanceService {
    * dataset instances that the current user has access to.
    *
    * @param namespace the namespace to list datasets for
-   * @return the dataset instances in the provided namespace
+   * @param properties the dataset properties
+   * @return the dataset instances in the provided namespace satisfying the given properties.
+   * If no property is specified all instances are returned
    * @throws NotFoundException if the namespace was not found
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists
    */
-  Collection<DatasetSpecification> list(final NamespaceId namespace) throws Exception {
+  Collection<DatasetSpecification> list(final NamespaceId namespace, Map<String, String> properties) throws Exception {
     ensureNamespaceExists(namespace);
-    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace));
+    List<DatasetSpecification> datasets = new ArrayList<>(instanceManager.getAll(namespace, properties));
 
     return AuthorizationUtil.isVisible(datasets, authorizationEnforcer, authenticationContext.getPrincipal(),
                                        new Function<DatasetSpecification, EntityId>() {

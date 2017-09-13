@@ -59,6 +59,7 @@ import java.lang.reflect.Type;
 import java.net.ConnectException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -139,6 +140,17 @@ class DatasetServiceClient {
 
   Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
     HttpResponse response = doGet("datasets");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
+                                                         response));
+    }
+
+    return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
+  }
+
+  Collection<DatasetSpecificationSummary> getAllInstances(Map<String, String> properties)
+    throws DatasetManagementException {
+    HttpResponse response = doPost("datasets", GSON.toJson(properties));
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
                                                          response));
@@ -298,6 +310,10 @@ class DatasetServiceClient {
 
   private HttpResponse doPost(String resource) throws DatasetManagementException {
     return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource));
+  }
+
+  private HttpResponse doPost(String resource, String body) throws DatasetManagementException {
+    return doRequest(remoteClient.requestBuilder(HttpMethod.POST, resource).withBody(body));
   }
 
   private HttpResponse doDelete(String resource) throws DatasetManagementException {

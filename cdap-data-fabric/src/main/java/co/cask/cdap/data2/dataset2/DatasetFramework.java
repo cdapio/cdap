@@ -187,6 +187,17 @@ public interface DatasetFramework {
   Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId) throws DatasetManagementException;
 
   /**
+   * Get all dataset instances in the specified namespace
+   *
+   * @param namespaceId the specified namespace id
+   * @param properties the map of dataset properties
+   * @return a collection of {@link DatasetSpecification}s for all datasets in the specified namespace
+   * having specified properties
+   */
+  Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
+    throws DatasetManagementException;
+
+  /**
    * Gets the {@link DatasetSpecification} for the specified dataset instance id
    *
    * @param datasetInstanceId the {@link DatasetId} for which the {@link DatasetSpecification} is desired

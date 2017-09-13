@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -116,6 +117,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModule("module2").getResponseCode());
       Assert.assertEquals(HttpStatus.SC_CONFLICT, deleteModules().getResponseCode());
       Assert.assertEquals(modulesBeforeDelete, getModules().getResponseObject().size());
+
+      // Verify that dataset instance can be retrieved using specified properties
+      Map<String, String> properties = new HashMap<>();
+      properties.putAll(props.getProperties());
+      instances = getInstancesWithProperties(NamespaceId.DEFAULT.getNamespace(), properties).getResponseObject();
+      Assert.assertEquals(1, instances.size());
+      properties.put("some_prop_not_associated_with_dataset", "somevalue");
+      instances = getInstancesWithProperties(NamespaceId.DEFAULT.getNamespace(), properties).getResponseObject();
+      Assert.assertEquals(0, instances.size());
 
       // verify instance was created
       instances = getInstances().getResponseObject();
@@ -449,6 +459,15 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private HttpResponse makeInstancesRequest(String namespace) throws IOException {
     HttpRequest request = HttpRequest.get(getUrl(namespace, "/data/datasets")).build();
     return HttpRequests.execute(request);
+  }
+
+  private ObjectResponse<List<DatasetSpecificationSummary>> getInstancesWithProperties(String namespace,
+                                                                                       Map<String, String> properties)
+    throws IOException {
+    HttpRequest request = HttpRequest.put(getUrl(namespace, "/data/datasets"))
+      .withBody(GSON.toJson(properties)).build();
+    return ObjectResponse.fromJsonBody(HttpRequests.execute(request),
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
   private HttpResponse getInstance(String instanceName) throws IOException {

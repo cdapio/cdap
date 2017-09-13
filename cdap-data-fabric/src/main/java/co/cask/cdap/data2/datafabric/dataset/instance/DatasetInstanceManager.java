@@ -35,6 +35,7 @@ import org.apache.tephra.TransactionExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -97,12 +98,22 @@ public class DatasetInstanceManager {
    * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace
    */
   public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId) {
+    return getAll(namespaceId, new HashMap<String, String>());
+  }
+
+  /**
+   * @param namespaceId {@link NamespaceId} for which dataset instances are required
+   * @param properties {@link Map} of dataset properties
+   * @return collection of {@link DatasetSpecification} of all dataset instances in the given namespace which
+   * are having the specified properties
+   */
+  public Collection<DatasetSpecification> getAll(final NamespaceId namespaceId, final Map<String, String> properties) {
     final DatasetInstanceMDS instanceMDS = datasetCache.getDataset(DatasetMetaTableUtil.INSTANCE_TABLE_NAME);
     return txExecutorFactory.createExecutor(datasetCache)
       .executeUnchecked(new Callable<Collection<DatasetSpecification>>() {
         @Override
         public Collection<DatasetSpecification> call() throws Exception {
-          return instanceMDS.getAll(namespaceId);
+          return instanceMDS.getAll(namespaceId, properties);
         }
       });
   }

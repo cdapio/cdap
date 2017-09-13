@@ -97,6 +97,12 @@ public class ForwardingDatasetFramework implements DatasetFramework {
     return delegate.getInstances(namespaceId);
   }
 
+  @Override
+  public Collection<DatasetSpecificationSummary> getInstances(NamespaceId namespaceId, Map<String, String> properties)
+    throws DatasetManagementException {
+    return delegate.getInstances(namespaceId, properties);
+  }
+
   @Nullable
   @Override
   public DatasetSpecification getDatasetSpec(DatasetId datasetInstanceId) throws DatasetManagementException {
