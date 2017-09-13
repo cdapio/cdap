@@ -36,6 +36,7 @@ $module-color-lightgrey: lightgray;
     display: flex;
     padding: 10px 0;
     flex-wrap: wrap;
+    align-content: flex-start;
     position: relative;
 
     .preferences-saved-message {
@@ -63,6 +64,18 @@ $module-color-lightgrey: lightgray;
 
     .preferences-saved-wrench {
       color: $success-message-bg;
+    }
+
+    > span,
+    > a {
+      height: 70px;
+      display: inline-flex;
+    }
+
+    > a {
+      text-decoration: none;
+
+      &:hover { text-decoration: none; }
     }
   }
 }

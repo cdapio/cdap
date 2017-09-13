@@ -20,6 +20,7 @@ import shortid from 'shortid';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import ReloadSystemArtifacts from 'components/AdminConfigurePane/ReloadSystemArtifacts';
+import HttpExecutorLink from 'components/AdminConfigurePane/HttpExecutorLink';
 require('./AdminConfigurePane.scss');
 
 export default function AdminConfigurePane({ openNamespaceWizard, openPreferenceModal, preferencesSavedState, closePreferencesSavedMessage }) {
@@ -58,6 +59,7 @@ export default function AdminConfigurePane({ openNamespaceWizard, openPreference
         />
 
         <ReloadSystemArtifacts />
+        <HttpExecutorLink />
       </div>
     </div>
   );
