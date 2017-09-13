@@ -72,12 +72,13 @@ public class UpgradeTool {
   private final boolean dryrun;
 
   private UpgradeTool(ClientConfig clientConfig, @Nullable File errorDir, @Nullable File outputDir,
-                      String version, boolean includeCurrentVersion, boolean dryrun) {
+                      String version, boolean includeCurrentVersion, boolean downgrade, boolean dryrun) {
     this.appClient = new ApplicationClient(clientConfig);
     this.namespaceClient = new NamespaceClient(clientConfig);
     this.errorDir = errorDir;
     this.outputDir = outputDir;
-    this.upgrader = new Upgrader(namespaceClient, new ArtifactClient(clientConfig), version, includeCurrentVersion);
+    this.upgrader = new Upgrader(namespaceClient, new ArtifactClient(clientConfig), version,
+                                 includeCurrentVersion, downgrade);
     this.dryrun = dryrun;
   }
 
@@ -105,7 +106,7 @@ public class UpgradeTool {
     final ApplicationDetail appDetail = appClient.get(appId);
 
     if (!upgrader.shouldUpgrade(appDetail.getArtifact())) {
-      LOG.debug("Skipping app {} since it is not an upgradeable pipeline.", appId);
+      LOG.debug("Skipping app {}.", appId);
       return false;
     }
 
@@ -127,12 +128,12 @@ public class UpgradeTool {
       action = new Upgrader.UpgradeAction() {
         @Override
         public boolean upgrade(AppRequest<? extends ETLConfig> appRequest) {
-          LOG.info("Upgrading pipeline: {}", appId);
+          LOG.info("Updating pipeline: {}", appId);
           try {
             appClient.update(appId, appRequest);
             return true;
           } catch (Exception e) {
-            LOG.error("Error upgrading pipeline {}.", appId, e);
+            LOG.error("Error updating pipeline {}.", appId, e);
             if (errorDir != null) {
               File errorFile = new File(errorDir,
                                         String.format("%s-%s.json", appId.getParent(), appId.getEntityName()));
@@ -197,10 +198,11 @@ public class UpgradeTool {
 
     // if help is an option, or if there isn't a single 'upgrade' command, print usage and exit.
     if (commandLine.hasOption("h") || commandArgs.length != 1 ||
-      (!"upgrade".equalsIgnoreCase(command) && !"dryrun".equalsIgnoreCase(command))) {
+      (!"downgrade".equalsIgnoreCase(command) && !"upgrade".equalsIgnoreCase(command) &&
+        !"dryrun".equalsIgnoreCase(command))) {
       HelpFormatter helpFormatter = new HelpFormatter();
       helpFormatter.printHelp(
-        UpgradeTool.class.getName() + " upgrade|dryrun",
+        UpgradeTool.class.getName() + " upgrade|downgrade|dryrun",
         "Upgrades old pipelines to the current version. If the plugins used are not backward-compatible, " +
           "the attempted upgrade config will be written to the error directory for a manual upgrade. " +
           "If 'dryrun' is used as the command instead of 'upgrade', pipelines will not be upgraded, but the " +
@@ -211,6 +213,7 @@ public class UpgradeTool {
 
     ClientConfig clientConfig = getClientConfig(commandLine);
 
+    boolean downgrade = "downgrade".equalsIgnoreCase(command);
     String newVersion = commandLine.hasOption("v") ? commandLine.getOptionValue("v") : ETLVersion.getVersion();
     boolean includeCurrentVersion = commandLine.hasOption("r");
     if (commandLine.hasOption("f")) {
@@ -218,7 +221,7 @@ public class UpgradeTool {
       String outputFilePath = commandLine.hasOption("o") ? commandLine.getOptionValue("o") : inputFilePath + ".new";
       convertFile(inputFilePath, outputFilePath, new Upgrader(new NamespaceClient(clientConfig),
                                                               new ArtifactClient(clientConfig),
-                                                              newVersion, includeCurrentVersion));
+                                                              newVersion, includeCurrentVersion, downgrade));
       System.exit(0);
     }
 
@@ -238,7 +241,7 @@ public class UpgradeTool {
       ensureDirExists(outputDir);
     }
     UpgradeTool upgradeTool = new UpgradeTool(clientConfig, errorDir, outputDir,
-                                              newVersion, includeCurrentVersion, dryrun);
+                                              newVersion, includeCurrentVersion, downgrade, dryrun);
 
     String namespace = commandLine.getOptionValue("n");
     String pipelineName = commandLine.getOptionValue("p");
@@ -249,9 +252,9 @@ public class UpgradeTool {
       }
       ApplicationId appId = new ApplicationId(namespace, pipelineName);
       if (upgradeTool.upgrade(appId)) {
-        LOG.info("Successfully upgraded {}.", appId);
+        LOG.info("Successfully {}d {}.", command, appId);
       } else {
-        LOG.info("{} did not need to be upgraded.", appId);
+        LOG.info("{} did not need to be {}d.", appId, command);
       }
       System.exit(0);
     }
@@ -280,10 +283,10 @@ public class UpgradeTool {
 
   private static void printUpgraded(Set<ApplicationId> pipelines) {
     if (pipelines.size() == 0) {
-      LOG.info("Did not find any pipelines that needed upgrading.");
+      LOG.info("Did not find any pipelines that needed updating.");
       return;
     }
-    LOG.info("Successfully upgraded {} pipelines:", pipelines.size());
+    LOG.info("Successfully updated {} pipelines:", pipelines.size());
     for (ApplicationId pipeline : pipelines) {
       LOG.info("  {}", pipeline);
     }
