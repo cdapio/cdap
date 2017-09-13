@@ -32,6 +32,15 @@ $drag_bars_color: gray;
       padding-left: 0;
     }
 
+    .rule-name-container {
+      display: flex;
+      .rule-name {
+        width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
     .icon-bars {
       cursor: move;
       color: $drag_bars_color;
@@ -41,8 +50,26 @@ $drag_bars_color: gray;
       background: $rule_row_bg_color;
       font-weight: bold;
 
+      .rule-name-container {
+        .rule-name {
+          white-space: pre-wrap;
+        }
+      }
+
       form {
         padding: 20px 0;
+      }
+      p.description {
+        font-weight: normal;
+      }
+      .delete-btn-container {
+        .btn.btn-secondary {
+          border: 0;
+          display: inline-block;
+          .icon-svg {
+            font-size: 1.5rem;
+          }
+        }
       }
 
       .dsv-editor-container .dsv-row-container {

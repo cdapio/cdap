@@ -35,6 +35,7 @@ const  MyRulesEngineApi = {
   getRulebook: apiCreator(dataSrc, 'GET', 'REQUEST', `${rbbasepath}`),
   updateRulebook: apiCreator(dataSrc, 'PUT', 'REQUEST', `${rbbasepath}`),
   deleteRulebook: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${rbbasepath}`),
+  deleteRule: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${serviceMethodsBasepath}/rules/:ruleid`),
 
   // Yare service management
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', `${appPath}`),

@@ -77,9 +77,13 @@ export default class RulebooksPopover extends Component {
         className="sub-menu"
       >
         {
-          rulebooks.list.map(rb => {
+          rulebooks.list.map((rb, i) => {
             return (
-              <div onClick={this.onRulebookSelect.bind(this, rb.id)}>
+              <div
+                onClick={this.onRulebookSelect.bind(this, rb.id)}
+                key={i}
+                title={rb.id}
+              >
                 {rb.id}
               </div>
             );
