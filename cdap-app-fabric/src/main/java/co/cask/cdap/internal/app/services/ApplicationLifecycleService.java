@@ -30,6 +30,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
+import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
@@ -703,6 +704,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private void deleteApp(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+    }
 
     deleteMetrics(appId);
 
@@ -745,6 +749,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private void deleteAppVersion(final ApplicationId appId, ApplicationSpecification spec) throws Exception {
     //Delete the schedules
     scheduler.deleteSchedules(appId);
+    for (WorkflowSpecification workflowSpec : spec.getWorkflows().values()) {
+      scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
+    }
     store.removeApplication(appId);
   }
 

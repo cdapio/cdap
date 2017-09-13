@@ -516,6 +516,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             break;
           case WORKFLOW:
             programScheduler.deleteSchedules(programId);
+            programScheduler.modifySchedulesTriggeredByDeletedProgram(programId);
             break;
           case MAPREDUCE:
             //no-op
