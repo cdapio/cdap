@@ -411,6 +411,24 @@
   </property>
 
   <property>
+    <name>app.program.local.dataset.deleter.initial.delay</name>
+    <value>300</value>
+    <description>
+      Interval in seconds for initial delay for the local dataset deletion thread;
+      this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.local.dataset.deleter.interval</name>
+    <value>3600</value>
+    <description>
+      Interval in seconds of how often the local dataset deletion thread will run;
+      this value should be greater than 0
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.extensions.dir</name>
     <value>/opt/cdap/master/ext/runtimes</value>
     <description>

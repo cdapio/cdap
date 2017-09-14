@@ -23,6 +23,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -39,6 +42,8 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,19 +60,31 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   private final ProgramRuntimeService runtimeService;
   private final long startTimeoutSecs;
   private final int txBatchSize;
+  private final CConfiguration cConf;
+  private final NamespaceAdmin namespaceAdmin;
+  private final DatasetFramework datasetFramework;
+  private ScheduledExecutorService localDatasetDeleterService;
 
   RunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                            ProgramRuntimeService runtimeService) {
-    this(store, programStateWriter, runtimeService, 2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+                            ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                            DatasetFramework datasetFramework) {
+    this(cConf, store, programStateWriter, runtimeService, namespaceAdmin, datasetFramework,
+         2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
          cConf.getInt(Constants.AppFabric.PROGRAM_RUNID_CORRECTOR_TX_BATCH_SIZE));
   }
 
   @VisibleForTesting
-  RunRecordCorrectorService(Store store, ProgramStateWriter programStateWriter, ProgramRuntimeService runtimeService,
+  RunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                            ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                            DatasetFramework datasetFramework,
                             long startTimeoutSecs, int txBatchSize) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.runtimeService = runtimeService;
+    this.cConf = cConf;
+    this.namespaceAdmin = namespaceAdmin;
+    this.datasetFramework = datasetFramework;
+
     this.startTimeoutSecs = startTimeoutSecs;
     this.txBatchSize = txBatchSize;
   }
@@ -133,11 +150,37 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting RunRecordCorrectorService");
+
+    localDatasetDeleterService = Executors.newScheduledThreadPool(1);
+    long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
+    if (interval <= 0) {
+      LOG.warn("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
+      interval = 3600L;
+    }
+
+    long initialDelay = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS);
+    if (initialDelay <= 0) {
+      LOG.warn("Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
+                                initialDelay);
+      initialDelay = 300L;
+    }
+
+    Runnable runnable = new LocalDatasetDeleterRunnable(namespaceAdmin, store, datasetFramework);
+    localDatasetDeleterService.scheduleWithFixedDelay(runnable, initialDelay, interval, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping RunRecordCorrectorService");
+
+    localDatasetDeleterService.shutdown();
+    try {
+      if (!localDatasetDeleterService.awaitTermination(5, TimeUnit.SECONDS)) {
+          localDatasetDeleterService.shutdownNow();
+        }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   /**

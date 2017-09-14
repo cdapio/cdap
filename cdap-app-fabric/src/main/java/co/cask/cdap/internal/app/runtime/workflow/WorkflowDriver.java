@@ -537,13 +537,28 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     executeAll(iterator, appSpec, instantiator, classLoader, token);
   }
 
-  private DatasetProperties addLocalDatasetProperty(DatasetProperties properties) {
+  private DatasetProperties addLocalDatasetProperty(DatasetProperties properties, boolean keepLocal) {
     String dsDescription = properties.getDescription();
     DatasetProperties.Builder builder = DatasetProperties.builder();
     builder.addAll(properties.getProperties());
     builder.add(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
+    builder.add(Constants.AppFabric.WORKFLOW_NAMESPACE_NAME, workflowRunId.getNamespace());
+    builder.add(Constants.AppFabric.WORKFLOW_APPLICATION_NAME, workflowRunId.getApplication());
+    builder.add(Constants.AppFabric.WORKFLOW_APPLICATION_VERSION, workflowRunId.getVersion());
+    builder.add(Constants.AppFabric.WORKFLOW_PROGRAM_NAME, workflowRunId.getProgram());
+    builder.add(Constants.AppFabric.WORKFLOW_RUN_ID, workflowRunId.getRun());
+    if (keepLocal) {
+      builder.add(Constants.AppFabric.WORKFLOW_KEEP_LOCAL, "true");
+    }
     builder.setDescription(dsDescription);
     return builder.build();
+  }
+
+  private boolean keepLocal(String originalDatasetName) {
+    Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, originalDatasetName,
+                                                                         basicWorkflowContext.getRuntimeArguments());
+
+    return Boolean.parseBoolean(datasetArguments.get("keep.local"));
   }
 
   private void createLocalDatasets() throws IOException, DatasetManagementException {
@@ -559,7 +574,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         Retries.callWithRetries(new Retries.Callable<Void, Exception>() {
           @Override
           public Void call() throws Exception {
-            DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties());
+            DatasetProperties properties = addLocalDatasetProperty(instanceSpec.getProperties(),
+                                                                   keepLocal(entry.getKey()));
             // we have to do this check since addInstance method can only be used when app impersonation is enabled
             if (principalId != null) {
               datasetFramework.addInstance(instanceSpec.getTypeName(), instanceId, properties, principalId);
@@ -580,9 +596,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private void deleteLocalDatasets() {
     for (final Map.Entry<String, String> entry : datasetFramework.getDatasetNameMapping().entrySet()) {
-      final Map<String, String> datasetArguments = RuntimeArguments.extractScope(Scope.DATASET, entry.getKey(),
-                                                                           basicWorkflowContext.getRuntimeArguments());
-      if (Boolean.parseBoolean(datasetArguments.get("keep.local"))) {
+      if (keepLocal(entry.getKey())) {
         continue;
       }
 
