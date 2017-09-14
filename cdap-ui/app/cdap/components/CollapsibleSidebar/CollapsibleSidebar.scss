@@ -24,7 +24,7 @@ $collapsible-width: 390px;
   top: 0;
   bottom: 0;
   width: 0;
-  z-index: 1000;
+  z-index: 998;
 
   &.backdrop {
     background-color: rgba(0, 0, 0, 0.7);
