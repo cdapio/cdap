@@ -22,6 +22,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
@@ -40,29 +43,38 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A default implementation of {@link RunRecordCorrectorService}.
+ * A default implementation of {@link RunFixerService}.
  */
-public class AbstractRunRecordCorrectorService extends AbstractIdleService implements RunRecordCorrectorService {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractRunRecordCorrectorService.class);
+public class AbstractRunFixerService extends AbstractIdleService implements RunFixerService {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractRunFixerService.class);
 
   private final Store store;
   private final ProgramStateWriter programStateWriter;
   private final ProgramLifecycleService programLifecycleService;
   private final ProgramRuntimeService runtimeService;
   private final long startTimeoutSecs;
+  private final CConfiguration cConf;
+  private final NamespaceAdmin namespaceAdmin;
+  private final DatasetFramework datasetFramework;
+  private ScheduledExecutorService localDatasetDeleterService;
 
-  @Inject
-  AbstractRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                    ProgramLifecycleService programLifecycleService,
-                                    ProgramRuntimeService runtimeService) {
+  AbstractRunFixerService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                          ProgramLifecycleService programLifecycleService,
+                          ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                          DatasetFramework datasetFrameWork) {
     this.store = store;
     this.programStateWriter = programStateWriter;
     this.programLifecycleService = programLifecycleService;
     this.runtimeService = runtimeService;
     this.startTimeoutSecs = 2L * cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS);
+    this.cConf = cConf;
+    this.namespaceAdmin = namespaceAdmin;
+    this.datasetFramework  = datasetFrameWork;
   }
 
   void validateAndCorrectRunningRunRecords() {
@@ -213,10 +225,27 @@ public class AbstractRunRecordCorrectorService extends AbstractIdleService imple
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting RunRecordCorrectorService");
+    localDatasetDeleterService = Executors.newScheduledThreadPool(1);
+    long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
+    if (interval <= 0) {
+      LOG.debug("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
+      interval = 3600L;
+    }
+    // Schedule the local dataset deleter with 5 minutes initial delay
+    Runnable runnable = new LocalDatasetDeleterRunnable(namespaceAdmin, store, datasetFramework);
+    localDatasetDeleterService.scheduleWithFixedDelay(runnable, 300L, interval, TimeUnit.SECONDS);
   }
 
   @Override
   protected void shutDown() throws Exception {
     LOG.info("Stopping RunRecordCorrectorService");
+    localDatasetDeleterService.shutdown();
+    try {
+      if (!localDatasetDeleterService.awaitTermination(5, TimeUnit.SECONDS)) {
+        localDatasetDeleterService.shutdownNow();
+      }
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt();
+    }
   }
 }

@@ -24,7 +24,9 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
@@ -33,8 +35,6 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -47,14 +47,16 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * Unit test for {@link RunRecordCorrectorService}
+ * Unit test for {@link RunFixerService}
  */
-public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
+public class RunFixerServiceTest extends AppFabricTestBase {
 
   private static Store store;
   private static ProgramStateWriter programStateWriter;
   private static ProgramLifecycleService programLifecycleService;
   private static ProgramRuntimeService runtimeService;
+  private static NamespaceAdmin namespaceAdmin;
+  private static DatasetFramework datasetFramework;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -62,6 +64,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     programStateWriter = getInjector().getInstance(ProgramStateWriter.class);
     runtimeService = getInjector().getInstance(ProgramRuntimeService.class);
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
+    datasetFramework = getInjector().getInstance(DatasetFramework.class);
   }
 
   @Test
@@ -131,8 +135,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
     CConfiguration testConf = CConfiguration.create();
     // set threshold to 0 so that it will actually correct the record
     testConf.set(Constants.AppFabric.PROGRAM_MAX_START_SECONDS, "0");
-    new LocalRunRecordCorrectorService(testConf, store, programStateWriter, programLifecycleService,
-                                       runtimeService).startUp();
+    new LocalRunFixerService(testConf, store, programStateWriter, programLifecycleService,
+                                       runtimeService, namespaceAdmin, datasetFramework).startUp();
 
     // Wait for the FAILED run record for the application
     Tasks.waitFor(1, new Callable<Integer>() {
