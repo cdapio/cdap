@@ -94,6 +94,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -271,6 +272,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     }
   }
 
+  // TODO: Reenable after https://issues.cask.co/browse/CDAP-12583 is resolved
+  @Ignore
   @Test
   @Category(XSlowTests.class)
   public void testRunScheduledJobs() throws Exception {
