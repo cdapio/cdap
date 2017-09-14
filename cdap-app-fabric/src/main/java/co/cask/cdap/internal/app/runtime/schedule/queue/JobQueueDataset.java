@@ -31,6 +31,7 @@ import co.cask.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import co.cask.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import co.cask.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
+import co.cask.cdap.internal.app.runtime.schedule.trigger.AbstractCompositeTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import co.cask.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import co.cask.cdap.internal.schedule.constraint.Constraint;
@@ -42,8 +43,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.hash.Hashing;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.tephra.Transaction;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -79,10 +82,30 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
   private static final int NUM_PARTITIONS = 16;
 
   private final Table table;
+  private final Collection<byte[]> scheduleIds;
 
   JobQueueDataset(String instanceName, @EmbeddedDataset(EMBEDDED_TABLE_NAME) Table table) {
     super(instanceName, table);
     this.table = table;
+    this.scheduleIds = new ArrayList<>();
+  }
+
+  @Override
+  public void startTx(Transaction tx) {
+    super.startTx(tx);
+    scheduleIds.clear();
+  }
+
+  @Override
+  public Collection<byte[]> getTxChanges() {
+    Collection<byte[]> txChanges = super.getTxChanges();
+    if (scheduleIds.isEmpty()) {
+      return txChanges;
+    }
+    Collection<byte[]> totalTxChanges = new ArrayList<>(txChanges.size() + scheduleIds.size());
+    totalTxChanges.addAll(txChanges);
+    totalTxChanges.addAll(scheduleIds);
+    return totalTxChanges;
   }
 
   @Override
@@ -125,6 +148,14 @@ public class JobQueueDataset extends AbstractDataset implements JobQueue, TopicM
       return;
     }
 
+    // If the schedule contains a composite trigger, there can be concurrent transactions trying to get existing job
+    // for this schedule, and they can both create a new job without seeing the new job created by the other
+    // transaction. Add the schedule id to the transaction change set so that concurrent transactions of the same
+    // schedule can have conflict and retry. This prevents concurrent transactions from creating duplicated jobs
+    // for the same schedule.
+    if (schedule.getTrigger() instanceof AbstractCompositeTrigger) {
+      scheduleIds.add(getRowKeyPrefix(schedule.getScheduleId()));
+    }
     try (CloseableIterator<Job> jobs = getJobsForSchedule(schedule.getScheduleId())) {
       while (jobs.hasNext()) {
         Job job = jobs.next();
