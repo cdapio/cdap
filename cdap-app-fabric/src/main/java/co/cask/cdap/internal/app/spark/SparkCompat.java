@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.app.runtime.spark;
+package co.cask.cdap.internal.app.spark;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
