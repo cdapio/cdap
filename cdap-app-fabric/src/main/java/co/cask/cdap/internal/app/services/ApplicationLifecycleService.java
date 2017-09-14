@@ -33,7 +33,7 @@ import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.runtime.ProgramRuntimeService;
+import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ArtifactAlreadyExistsException;
@@ -90,6 +90,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +98,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,11 +114,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
 
   /**
-   * Runtime program service for running and managing programs.
-   */
-  private final ProgramRuntimeService runtimeService;
-
-  /**
    * Store manages non-runtime lifecycle.
    */
   private final Store store;
@@ -129,7 +124,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final PreferencesStore preferencesStore;
   private final MetricStore metricStore;
   private final OwnerAdmin ownerAdmin;
-  private final ArtifactRepository artifactRepository;
+  private final ArtifactRepository authArtifactRepository;
+  private final ArtifactRepository noAuthArtifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final MetadataStore metadataStore;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -140,18 +136,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
-                              ProgramRuntimeService runtimeService, Store store,
+                              Store store,
                               Scheduler scheduler, QueueAdmin queueAdmin,
                               StreamConsumerFactory streamConsumerFactory, UsageRegistry usageRegistry,
                               PreferencesStore preferencesStore, MetricStore metricStore, OwnerAdmin ownerAdmin,
-                              ArtifactRepository artifactRepository,
+                              ArtifactRepository authArtifactRepository,
+                              // to deploy an app with a new artifact, we do not need to check on the artifact
+                              @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
+                                ArtifactRepository noAuthArtifactRepository,
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataStore metadataStore,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               Impersonator impersonator, RouteStore routeStore) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
-    this.runtimeService = runtimeService;
     this.store = store;
     this.scheduler = scheduler;
     this.queueAdmin = queueAdmin;
@@ -159,7 +157,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.usageRegistry = usageRegistry;
     this.preferencesStore = preferencesStore;
     this.metricStore = metricStore;
-    this.artifactRepository = artifactRepository;
+    this.authArtifactRepository = authArtifactRepository;
+    this.noAuthArtifactRepository = noAuthArtifactRepository;
     this.managerFactory = managerFactory;
     this.metadataStore = metadataStore;
     this.ownerAdmin = ownerAdmin;
@@ -370,7 +369,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                       ProgramTerminator programTerminator,
                                                       boolean updateSchedules) throws Exception {
 
-    ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
+    ArtifactDetail artifactDetail = noAuthArtifactRepository.addArtifact(artifactId, jarFile);
+
     try {
       return deployApp(namespace, appName, null, configStr, programTerminator, artifactDetail, ownerPrincipal,
                        updateSchedules);
@@ -378,7 +378,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
       // to the state we were in before this call.
       try {
-        artifactRepository.deleteArtifact(artifactId);
+        authArtifactRepository.deleteArtifact(artifactId);
       } catch (IOException e2) {
         // if the delete fails, nothing we can do, just log it and continue on
         LOG.warn("Failed to delete artifact {} after deployment of artifact and application failed.", artifactId, e2);
@@ -442,7 +442,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
-    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    ArtifactDetail artifactDetail = authArtifactRepository.getArtifact(artifactId);
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail, ownerPrincipal,
                      updateSchedules == null ? appUpdateSchedules : updateSchedules);
   }
@@ -481,7 +481,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                             ArtifactVersionRange.parse(summary.getVersion()));
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
     // collection returned.
-    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
+    List<ArtifactDetail> artifactDetail = authArtifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
     if (artifactDetail.isEmpty()) {
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
