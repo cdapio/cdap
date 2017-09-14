@@ -144,6 +144,8 @@ class MyPipelineSchedulerCtrl {
         return;
       }
       this.savingSchedule = true;
+      this.store.setSchedule(this.cron);
+      this.store.setMaxConcurrentRuns(this.maxConcurrentRuns);
       let pipelineConfig = this.store.getCloneConfig();
       pipelineConfig.config.schedule = this.cron;
       // This is needed to make sure the backend updates the schedule on updating app spec

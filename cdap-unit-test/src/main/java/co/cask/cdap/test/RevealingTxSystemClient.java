@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -57,12 +58,24 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
 
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+    //noinspection deprecation
     return txClient.canCommit(tx, changeIds);
   }
 
   @Override
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+    txClient.canCommitOrThrow(tx, changeIds);
+  }
+
+  @Override
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
+    //noinspection deprecation
     return txClient.commit(tx);
+  }
+
+  @Override
+  public void commitOrThrow(Transaction tx) throws TransactionFailureException {
+    txClient.commitOrThrow(tx);
   }
 
   @Override
@@ -108,6 +121,11 @@ public class RevealingTxSystemClient implements TransactionSystemClient {
   @Override
   public int getInvalidSize() {
     return txClient.getInvalidSize();
+  }
+
+  @Override
+  public void pruneNow() {
+    txClient.pruneNow();
   }
 
   /**

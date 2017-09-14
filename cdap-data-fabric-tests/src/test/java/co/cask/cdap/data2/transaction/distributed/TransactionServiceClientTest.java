@@ -92,7 +92,8 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
     hBaseTestingUtility.startMiniDFSCluster(1);
     Configuration hConf = hBaseTestingUtility.getConfiguration();
     hConf.setBoolean("fs.hdfs.impl.disable.cache", true);
-
+    hConf = getCommonConfiguration(hConf);
+    
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 

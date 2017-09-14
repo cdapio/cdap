@@ -120,9 +120,12 @@ export default class RulesTab extends Component {
             null
         }
         {
-          rules.map(rule => {
+          rules.map((rule) => {
             return (
-              <Rule rule={rule} />
+              <Rule
+                rule={rule}
+                key={rule.id}
+              />
             );
           })
         }

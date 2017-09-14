@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import org.apache.tephra.InvalidTruncateTimeException;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionCouldNotTakeSnapshotException;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.thrift.TException;
@@ -71,7 +72,17 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   @Override
   public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
     try {
+      //noinspection deprecation
       return delegate.canCommit(tx, changeIds);
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
+  public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
+    try {
+      delegate.canCommitOrThrow(tx, changeIds);
     } catch (RuntimeException e) {
       throw handleException(e);
     }
@@ -80,7 +91,17 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   @Override
   public boolean commit(Transaction tx) throws TransactionNotInProgressException {
     try {
+      //noinspection deprecation
       return delegate.commit(tx);
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
+  public void commitOrThrow(Transaction tx) throws TransactionFailureException {
+    try {
+      delegate.commitOrThrow(tx);
     } catch (RuntimeException e) {
       throw handleException(e);
     }
@@ -162,6 +183,15 @@ public class TransactionSystemClientAdapter implements TransactionSystemClient {
   public int getInvalidSize() {
     try {
       return delegate.getInvalidSize();
+    } catch (RuntimeException e) {
+      throw handleException(e);
+    }
+  }
+
+  @Override
+  public void pruneNow() {
+    try {
+      delegate.pruneNow();
     } catch (RuntimeException e) {
       throw handleException(e);
     }

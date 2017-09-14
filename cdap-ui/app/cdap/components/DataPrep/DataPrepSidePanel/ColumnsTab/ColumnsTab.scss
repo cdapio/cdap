@@ -73,6 +73,8 @@ $option-hover-bg-color: #eeeeee;
 
     .table {
       background: transparent;
+      margin-bottom: 0;
+
       thead {
         tr {
           th {
@@ -115,6 +117,45 @@ $option-hover-bg-color: #eeeeee;
         th {
           color: #373a3c;
           padding: 0.3rem;
+        }
+      }
+    }
+
+    .columns-tab-toggle-all-dropdown {
+      .columns-tab-dropdown-toggle {
+        border: 0;
+        padding: 3px 0px;
+        transform: translateX(-2px);
+
+        &:hover,
+        &:focus,
+        &.active,
+        &:active {
+          background-color: initial;
+          outline: 0;
+        }
+
+        &.active,
+        &:active {
+          box-shadow: initial;
+        }
+      }
+
+      .dropdown-menu {
+        padding: 0;
+        min-width: 5rem;
+
+        .toggle-all-option {
+          padding: 5px 10px;
+
+          &:hover {
+            cursor: pointer;
+            background-color: $option-hover-bg-color;
+          }
+        }
+
+        &:focus {
+          outline: 0;
         }
       }
     }

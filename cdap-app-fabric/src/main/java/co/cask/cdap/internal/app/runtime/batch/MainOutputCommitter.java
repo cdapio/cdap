@@ -16,16 +16,12 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
-import co.cask.cdap.api.messaging.TopicNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.service.RetryStrategy;
 import co.cask.cdap.data2.transaction.RetryingLongTransactionSystemClient;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.app.runtime.ProgramRunners;
 import co.cask.cdap.internal.app.runtime.SystemArguments;
 import co.cask.cdap.internal.app.runtime.batch.dataset.output.MultipleOutputsCommitter;
@@ -34,7 +30,6 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.output.ProvidedOutput;
 import co.cask.cdap.messaging.client.StoreRequestBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.id.ProgramId;
-import co.cask.cdap.proto.id.ProgramRunId;
 import com.google.common.base.Throwables;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -47,7 +42,6 @@ import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.v2.util.MRApps;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tephra.Transaction;
@@ -156,9 +150,11 @@ public class MainOutputCommitter extends MultipleOutputsCommitter {
       taskContext.flushOperations();
       // no need to rollback changes if commit fails, as these changes where performed by mapreduce tasks
       // NOTE: can't call afterCommit on datasets in this case: the changes were made by external processes.
-      if (!txClient.commit(transaction)) {
-        LOG.warn("MapReduce Job transaction failed to commit");
-        throw new TransactionFailureException("Failed to commit transaction " + transaction.getWritePointer());
+      try {
+        txClient.commitOrThrow(transaction);
+      } catch (TransactionFailureException e) {
+        LOG.warn("MapReduce Job transaction {} failed to commit", transaction.getTransactionId());
+        throw e;
       }
       taskContext.postTxCommit();
     } catch (Exception e) {

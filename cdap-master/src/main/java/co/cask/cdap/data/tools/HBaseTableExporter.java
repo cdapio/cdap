@@ -240,7 +240,7 @@ public class HBaseTableExporter {
 
       // Always commit the transaction, since we are not doing any data update
       // operation in this tool.
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
       System.out.println("Export operation complete. HFiles are stored at location " + bulkloadDir.toString());
     } finally {
       stop();

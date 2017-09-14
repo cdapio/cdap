@@ -22,7 +22,7 @@ import ee from 'event-emitter';
 import classnames from 'classnames';
 import ColumnActionsDropdown from 'components/DataPrep/ColumnActionsDropdown';
 require('./DataPrepTable.scss');
-import {execute} from 'components/DataPrep/store/DataPrepActionCreator';
+import {execute, setWorkspace} from 'components/DataPrep/store/DataPrepActionCreator';
 import TextboxOnValium from 'components/TextboxOnValium';
 import WarningContainer from 'components/WarningContainer';
 import ColumnHighlighter from 'components/DataPrep/ColumnHighlighter';
@@ -31,6 +31,8 @@ import T from 'i18n-react';
 import DataQuality from 'components/DataPrep/DataPrepTable/DataQuality';
 import captialize from 'lodash/capitalize';
 import ErrorMessageContainer from 'components/DataPrep/ErrorMessageContainer';
+
+const PREFIX = 'features.DataPrep.DataPrepTable';
 
 export default class DataPrepTable extends Component {
   constructor(props) {
@@ -258,7 +260,7 @@ export default class DataPrepTable extends Component {
                             {
                               head.showWarning ?
                                 <WarningContainer
-                                  message={T.translate('features.DataPrep.DataPrepTable.copyToNewColumn.inputDuplicate')}
+                                  message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
                                 >
                                   <div className="warning-btns-container">
                                     <div
@@ -328,7 +330,7 @@ export default class DataPrepTable extends Component {
     let headers = this.state.headers;
     let data = this.state.data;
 
-    if (!this.state.workspaceId) {
+    if (!this.state.workspaceId && !this.state.error) {
       return (
         <div className="dataprep-table empty">
           <div>
@@ -339,10 +341,17 @@ export default class DataPrepTable extends Component {
     }
 
     if (this.state.error) {
+      let workspaceName, refreshFn;
+      if (this.state.currentWorkspaceName && this.state.workspaceId) {
+        workspaceName = this.state.currentWorkspaceName;
+        refreshFn = () => setWorkspace(this.state.workspaceId).subscribe();
+      } else {
+        refreshFn = () => window.location.reload();
+      }
       return (
         <ErrorMessageContainer
-          workspaceName={this.state.currentWorkspaceName}
-          workspaceId={this.state.workspaceId}
+          workspaceName={workspaceName}
+          refreshFn={refreshFn}
         />
       );
     }
@@ -356,14 +365,14 @@ export default class DataPrepTable extends Component {
               (
                 <div>
                   <h5 className="text-xs-center">
-                    {T.translate('features.DataPrep.DataPrepTable.emptyWorkspace')}
+                    {T.translate(`${PREFIX}.emptyWorkspace`)}
                   </h5>
                 </div>
               ) :
               (
                 <div>
                   <h5 className="text-xs-center">
-                    {T.translate('features.DataPrep.DataPrepTable.noData')}
+                    {T.translate(`${PREFIX}.noData`)}
                   </h5>
                 </div>
               )

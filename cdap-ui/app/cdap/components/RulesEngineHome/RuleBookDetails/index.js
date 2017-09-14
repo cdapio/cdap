@@ -248,7 +248,10 @@ export default class RuleBookDetails extends Component {
       <div className="rule-book-details">
         <div className="rule-book-name-header">
           <div className="rule-book-name-version">
-            <strong className="rule-book-name">
+            <strong
+              className="rule-book-name"
+              title={rulebookDetails.id}
+            >
               {rulebookDetails.id}
             </strong>
             <p className="rule-book-version">

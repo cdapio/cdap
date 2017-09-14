@@ -319,12 +319,13 @@ features:
         inputPlaceholder: Destination Column
         inputSuffix: _copy
         label: Copy to a new column
-      dataErrorMessageTitle: Sorry, we could not load data for "{workspaceName}"
+      dataErrorMessageTitle: Unable to load data.
+      dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
-      refreshBtnLinkLabel: Refresh
-      suggestionTitle: "You can try to:"
-      suggestion1: the page
       noData: No data. Try removing some directives.
+      refreshBtnLinkLabel: Refresh
+      suggestion1: the page
+      suggestionTitle: "You can try to:"
     DataPrepBrowser:
       DatabaseBrowser:
         EmptyMessage:
@@ -1037,6 +1038,14 @@ features:
       timeRangeTitle: Select Time Range
       to: To
 
+  HttpExecutor:
+    body: Body
+    header: Header
+    path: Path
+    responseTitle: Response
+    send: Send
+    statusCode: Status Code
+
   JumpButton:
     buttonLabel: Jump
     viewHydrator: View in Hydrator
@@ -1404,6 +1413,7 @@ features:
       description: A stream view is non-materialized view over a stream with schema-on-read capability. Creates a view over an existing stream.
       label: Stream View
   RulesEngine:
+
     AddRulesEngineToPipelineModal:
       batchPipelineBtn: Batch Pipeline
       error: Unable to find Rules Engine Plugin. Please install Rules Engine plugin before adding to pipeline
@@ -1412,16 +1422,16 @@ features:
       realtimePipelineBtn: Realtime Pipeline
     CreateRule:
       form:
-        actionplaceholder: Action
+        actionplaceholder: 'Eg. find-and-replace Name "s/ //g"'
         apply: Apply
         cancel: Cancel
         description: Description
         descriptionplaceholder: Description for the rule
         nameplaceholder: Name of the rule
         today: Today
+        whenClausePlaceholder: "E.g. !isnullorempty(Name) && whitespace(Name)"
     CreateRulebook:
       admin: Admin
-      allFieldsRequired: "* All fields are required"
       createBtnLabel: Create Rulebook
       createBtnNext: "Next: Add Rules"
       created: Created
@@ -1440,6 +1450,11 @@ features:
       footertitle: Failed to Upload Rulebook
       shorttitle: Import Rulebook
       title: Upload Rulebook
+    Rule:
+      ConfirmationModal:
+        failedMessage: Deleting rule {id} failed
+        text: Are you sure you want to delete "{id}"
+        title: Delete Rule
     Rulebook:
       owner: Owner
       rules: Rules
@@ -1487,6 +1502,8 @@ features:
       date: Date
       norules: No Rules found
       searchPlaceholder: Search Rules by name, action or description
+    shared:
+      allFieldsRequired: "* All fields are required"
   SchemaEditor:
     Labels:
       fieldName: Field Name

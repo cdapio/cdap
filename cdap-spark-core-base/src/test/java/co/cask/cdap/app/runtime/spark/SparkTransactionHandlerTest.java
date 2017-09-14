@@ -162,7 +162,7 @@ public class SparkTransactionHandlerTest {
     testRunJob(jobIdGen.getAndIncrement(), generateStages(stageIdGen, 3), true, transaction);
 
     // Should be able to commit the transaction
-    Assert.assertTrue(txClient.commit(transaction));
+    txClient.commitOrThrow(transaction);
   }
 
   /**

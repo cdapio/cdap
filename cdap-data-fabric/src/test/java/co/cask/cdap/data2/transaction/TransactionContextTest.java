@@ -630,21 +630,31 @@ public class TransactionContextTest {
 
     @Override
     public boolean canCommit(Transaction tx, Collection<byte[]> changeIds) throws TransactionNotInProgressException {
+      throw new RuntimeException("This should never be called)");
+    }
+
+    @Override
+    public void canCommitOrThrow(Transaction tx, Collection<byte[]> changeIds) throws TransactionFailureException {
       if (failCanCommitOnce) {
         failCanCommitOnce = false;
-        return false;
+        throw new TransactionConflictException(tx.getTransactionId(), null, null);
       } else {
-        return super.canCommit(tx, changeIds);
+        super.canCommitOrThrow(tx, changeIds);
       }
     }
 
     @Override
     public boolean commit(Transaction tx) throws TransactionNotInProgressException {
+      throw new RuntimeException("This should never be called)");
+    }
+
+    @Override
+    public void commitOrThrow(Transaction tx) throws TransactionFailureException {
       if (failCommits-- > 0) {
-        return false;
+        throw new TransactionConflictException(tx.getTransactionId(), null, null);
       } else {
         state = CommitState.Committed;
-        return super.commit(tx);
+        super.commitOrThrow(tx);
       }
     }
 
@@ -693,10 +703,15 @@ public class TransactionContextTest {
     }
 
     @Override
-    public void abort(Transaction transaction) {
+    public void canCommitOrThrow(Transaction transaction,
+                                 Collection<byte[]> collection) throws TransactionFailureException {
       throw new RuntimeException();
     }
 
+    @Override
+    public void abort(Transaction transaction) {
+      throw new RuntimeException();
+    }
   }
 
   /**

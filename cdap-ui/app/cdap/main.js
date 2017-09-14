@@ -48,6 +48,7 @@ import AuthorizationErrorMessage  from 'components/AuthorizationErrorMessage';
 import Page404 from 'components/404';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import HttpExecutor from 'components/HttpExecutor';
 
 class CDAP extends Component {
   constructor(props) {
@@ -117,6 +118,7 @@ class CDAP extends Component {
                   <Route exact path="/ns/:namespace/dashboard" component={Dashboard} />
                   <Route path="/socket-example" component={ConnectionExample} />
                   <Route path="/schemaeditor" component={SchemaEditor} />
+                  <Route exact path="/httpexecutor" component={HttpExecutor} />
                   <Route component={Page404} />
                 </Switch>
               </div>

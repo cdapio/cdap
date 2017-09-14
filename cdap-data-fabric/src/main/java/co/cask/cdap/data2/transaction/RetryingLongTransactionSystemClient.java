@@ -20,6 +20,7 @@ import co.cask.cdap.common.service.Retries;
 import co.cask.cdap.common.service.RetryStrategy;
 import com.google.common.base.Supplier;
 import org.apache.tephra.Transaction;
+import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionNotInProgressException;
 import org.apache.tephra.TransactionSystemClient;
 
@@ -50,7 +51,20 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
     return callWithRetries(new Retries.Callable<Boolean, TransactionNotInProgressException>() {
       @Override
       public Boolean call() throws TransactionNotInProgressException {
+        //noinspection deprecation
         return delegate.canCommit(tx, changeIds);
+      }
+    });
+  }
+
+  @Override
+  public void canCommitOrThrow(final Transaction tx,
+                               final Collection<byte[]> changeIds) throws TransactionFailureException {
+    callWithRetries(new Retries.Callable<Void, TransactionFailureException>() {
+      @Override
+      public Void call() throws TransactionFailureException {
+        delegate.canCommitOrThrow(tx, changeIds);
+        return null;
       }
     });
   }
@@ -60,7 +74,19 @@ public class RetryingLongTransactionSystemClient extends RetryingTransactionSyst
     return callWithRetries(new Retries.Callable<Boolean, TransactionNotInProgressException>() {
       @Override
       public Boolean call() throws TransactionNotInProgressException {
+        //noinspection deprecation
         return delegate.commit(tx);
+      }
+    });
+  }
+
+  @Override
+  public void commitOrThrow(final Transaction tx) throws TransactionFailureException {
+    callWithRetries(new Retries.Callable<Void, TransactionFailureException>() {
+      @Override
+      public Void call() throws TransactionFailureException {
+        delegate.commitOrThrow(tx);
+        return null;
       }
     });
   }

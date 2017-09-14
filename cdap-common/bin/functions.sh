@@ -1275,6 +1275,8 @@ cdap_apply_pack() {
   local __ui_pack=${1}
   local __ext=${__ui_pack##*.}
 
+  cdap_check_node_version ${CDAP_NODE_VERSION_MINIMUM:-v4.5.0} || return ${?}
+
   if [[ -f ${__ui_pack} ]] && [[ -r ${__ui_pack} ]] && [[ ${__ext} == zip ]]; then
     # ui upgrade script must be run from subdirectory
     cd ${CDAP_HOME}/ui/cdap-ui-upgrade

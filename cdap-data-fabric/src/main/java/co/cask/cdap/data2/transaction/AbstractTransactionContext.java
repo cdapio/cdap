@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import com.google.common.base.Preconditions;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TransactionAware;
-import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionContext;
 import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
@@ -224,7 +223,6 @@ public abstract class AbstractTransactionContext extends TransactionContext {
    * and checks if conflicts will arise when the transaction is going to be committed.
    */
   private void checkForConflicts() throws TransactionFailureException {
-    // Collects set of changes for conflict detection
     Set<byte[]> changes = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     for (TransactionAware txAware : getTransactionAwares()) {
       try {
@@ -242,10 +240,7 @@ public abstract class AbstractTransactionContext extends TransactionContext {
     }
 
     try {
-      if (!txClient.canCommit(currentTx, changes)) {
-        throw new TransactionConflictException(
-          String.format("Conflict detected for transaction %d.", currentTx.getTransactionId()));
-      }
+      txClient.canCommitOrThrow(currentTx, changes);
     } catch (TransactionFailureException e) {
       abort(e);
     } catch (Throwable e) {
@@ -279,12 +274,7 @@ public abstract class AbstractTransactionContext extends TransactionContext {
    */
   private void commit() throws TransactionFailureException {
     try {
-      if (!txClient.commit(currentTx)) {
-        // The only case that the commit call returning false is because of conflict.
-        // For all other kinds of error, exception will be raised.
-        throw new TransactionConflictException(
-          String.format("Conflict detected for transaction %d.", currentTx.getTransactionId()));
-      }
+      txClient.commitOrThrow(currentTx);
     } catch (TransactionFailureException e) {
       abort(e);
     } catch (Throwable e) {

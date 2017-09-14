@@ -141,7 +141,7 @@ public class OpenCloseDataSetTest {
 
     // commit tx
     ((TransactionAware) producer).commitTx();
-    txSystemClient.commit(tx);
+    txSystemClient.commitOrThrow(tx);
 
     while (TrackingTable.getTracker(tableName, "write") < 4) {
       TimeUnit.MILLISECONDS.sleep(50);

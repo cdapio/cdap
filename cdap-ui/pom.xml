@@ -225,22 +225,6 @@
                 </configuration>
               </execution>
               <execution>
-                <id>npm-install-upgrade-ui</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <configuration>
-                  <workingDirectory>${project.basedir}/cdap-ui-upgrade/</workingDirectory>
-                  <executable>${project.basedir}/node/node</executable>
-                  <arguments>
-                    <executable>${project.basedir}/node/npm/bin/npm-cli.js</executable>
-                    <argument>install</argument>
-                    <argument>-s --progress=false</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              <execution>
                 <id>bower-install</id>
                 <phase>process-resources</phase>
                 <goals>

@@ -16,6 +16,8 @@
 
 import React, { Component, PropTypes } from 'react';
 import DataPrep from 'components/DataPrep';
+import DataPrepStore from 'components/DataPrep/store';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import Helmet from 'react-helmet';
 import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
@@ -92,7 +94,7 @@ export default class DataPrepHome extends Component {
 
         this.setState({
           backendCheck: false,
-          error: err.message || err.response.message
+          error: true
         });
       });
   }
@@ -112,35 +114,70 @@ export default class DataPrepHome extends Component {
     this.eventEmitter.emit('DATAPREP_CLOSE_SIDEPANEL');
   }
 
+  updateWorkspaceListRetry(namespace) {
+    MyDataPrepApi.getWorkspaceList({ namespace })
+      .subscribe(
+        (res) => {
+          if (res.values.length === 0) {
+            this.setState({
+              isEmpty: true,
+              toggleConnectionsViewFlag: true,
+              backendDown: false,
+              backendCheck: false
+            });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.disableLoading
+            });
+            return;
+          }
+          let sortedWorkspace = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
+          let isCurrentWorkspaceIdValid = sortedWorkspace.find(ws => ws.id === this.props.match.params.workspaceId);
+          if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
+            let url = this.props.match.url.slice(0, this.props.match.url.indexOf(this.props.match.params.workspaceId));
+            this.props.history.replace(url);
+          }
+          this.setState({
+            rerouteTo: sortedWorkspace[0].id,
+            backendDown: false,
+            backendCheck: false,
+            currentWorkspaceId: sortedWorkspace[0].id
+          });
+          DataPrepStore.dispatch({
+            type: DataPrepActions.disableLoading
+          });
+
+          this.fetching = false;
+        },
+        (err) => {
+          if (err.statusCode === 503) { return; }
+
+          if (this.workspaceListRetries < 3) {
+            this.workspaceListRetries += 1;
+            this.updateWorkspaceListRetry(namespace);
+          } else {
+            this.setState({
+              backendDown: false,
+              backendCheck: false
+            });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.disableLoading
+            });
+            DataPrepStore.dispatch({
+              type: DataPrepActions.setDataError,
+              payload: {
+                errorMessage: true
+              }
+            });
+          }
+        }
+    );
+  }
+
   updateWorkspaceList() {
     let namespace = NamespaceStore.getState().selectedNamespace;
 
-    MyDataPrepApi.getWorkspaceList({ namespace })
-      .subscribe((res) => {
-        if (res.values.length === 0) {
-          this.setState({
-            isEmpty: true,
-            toggleConnectionsViewFlag: true,
-            backendDown: false,
-            backendCheck: false
-          });
-          return;
-        }
-        let sortedWorkspace = orderBy(res.values, [(workspace) => workspace.name.toLowerCase()], ['asc']);
-        let isCurrentWorkspaceIdValid = sortedWorkspace.find(ws => ws.id === this.props.match.params.workspaceId);
-        if (this.props.match.params.workspaceId && !isCurrentWorkspaceIdValid) {
-          let url = this.props.match.url.slice(0, this.props.match.url.indexOf(this.props.match.params.workspaceId));
-          this.props.history.replace(url);
-        }
-        this.setState({
-          rerouteTo: sortedWorkspace[0].id,
-          backendDown: false,
-          backendCheck: false,
-          currentWorkspaceId: sortedWorkspace[0].id
-        });
-
-        this.fetching = false;
-      });
+    this.workspaceListRetries = 0;
+    this.updateWorkspaceListRetry(namespace);
   }
 
   checkWorkspaceId(props) {

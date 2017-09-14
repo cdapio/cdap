@@ -96,8 +96,8 @@ public class HiveExploreObjectMappedTableTestRun extends BaseHiveExploreServiceT
 
     Assert.assertTrue(txTable.commitTx());
 
-    transactionManager.canCommit(tx1, txTable.getTxChanges());
-    transactionManager.commit(tx1);
+    transactionManager.canCommit(tx1.getTransactionId(), txTable.getTxChanges());
+    transactionManager.commit(tx1.getTransactionId(), tx1.getWritePointer());
 
     txTable.postTxCommit();
   }

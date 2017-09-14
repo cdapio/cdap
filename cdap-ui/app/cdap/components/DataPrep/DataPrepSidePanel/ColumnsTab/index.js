@@ -15,7 +15,8 @@
  */
 
 import React, { Component } from 'react';
-import UncontrolledPopover from 'components/UncontrolledComponents/Popover';
+import {UncontrolledDropdown} from 'components/UncontrolledComponents';
+import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import shortid from 'shortid';
@@ -24,6 +25,7 @@ import ColumnsTabDetail from 'components/DataPrep/DataPrepSidePanel/ColumnsTab/C
 import findIndex from 'lodash/findIndex';
 import T from 'i18n-react';
 import ColumnActions from 'components/DataPrep/Directives/ColumnActions';
+import IconSVG from 'components/IconSVG';
 const PREFIX = 'features.DataPrep.DataPrepSidePanel.ColumnsTab';
 
 require('./ColumnsTab.scss');
@@ -123,34 +125,28 @@ export default class ColumnsTab extends Component {
   }
 
   renderDropdown() {
-    const tetherOption = {
-      attachment: 'top left',
-      targetAttachment: 'bottom right',
-      targetOffset: '-5px 5px'
-    };
-    let element = document.getElementById('app-container');
-    if (this.singleWorkspaceMode) {
-      element = document.getElementsByClassName('wrangler-modal')[0];
-    }
-    // FIXME: Should this be a UncontrolledDropdown instead? One less component?
     return (
-      <UncontrolledPopover
-        tetherOption={tetherOption}
-        documentElement={element}
+      <UncontrolledDropdown
+        className="columns-tab-toggle-all-dropdown"
       >
-        <div
-          className="toggle-all-option"
-          onClick={this.clearAllColumns}
-        >
-          {T.translate(`${PREFIX}.toggle.clearAll`)}
-        </div>
-        <div
-          className="toggle-all-option"
-          onClick={this.selectAllColumns}
-        >
-          {T.translate(`${PREFIX}.toggle.selectAll`)}
-        </div>
-      </UncontrolledPopover>
+        <DropdownToggle className="columns-tab-dropdown-toggle">
+          <IconSVG name="icon-caret-square-o-down" />
+        </DropdownToggle>
+        <DropdownMenu left>
+          <DropdownItem
+            className="toggle-all-option"
+            onClick={this.clearAllColumns}
+          >
+            {T.translate(`${PREFIX}.toggle.clearAll`)}
+          </DropdownItem>
+          <DropdownItem
+            className="toggle-all-option"
+            onClick={this.selectAllColumns}
+          >
+            {T.translate(`${PREFIX}.toggle.selectAll`)}
+          </DropdownItem>
+        </DropdownMenu>
+      </UncontrolledDropdown>
     );
   }
 

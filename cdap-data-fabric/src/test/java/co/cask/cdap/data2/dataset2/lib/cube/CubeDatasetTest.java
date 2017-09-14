@@ -111,7 +111,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
       // let's pretend we had conflict and rollback it
       ((TransactionAware) cube1).commitTx();
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
       ((TransactionAware) cube1).postTxCommit();
 
       // 3) read using different cube instance
@@ -125,7 +125,7 @@ public class CubeDatasetTest extends AbstractCubeTest {
 
       // let's pretend we had conflict and rollback it
       ((TransactionAware) cube2).commitTx();
-      txClient.commit(tx);
+      txClient.commitOrThrow(tx);
       ((TransactionAware) cube2).postTxCommit();
     } finally {
       txManager.stopAndWait();

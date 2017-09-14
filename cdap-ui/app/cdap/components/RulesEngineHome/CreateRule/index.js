@@ -99,7 +99,7 @@ export default class CreateRule extends Component {
     return (
       <div className="create-rule-container">
         <Row>
-          <Col xs="7">
+          <Col xs="6">
             <Input
               value={this.state.name}
               onChange={this.onNameChange}
@@ -107,14 +107,17 @@ export default class CreateRule extends Component {
               getRef={(ref) => this.nameRef = ref}
             />
           </Col>
-          <Col xs="5">
+          <Col xs="6">
             {T.translate(`${PREFIX}.form.today`)}
           </Col>
           <Col xs="12">
             <Form onSubmit={preventPropagation} className="when-then-clause-container">
               <FormGroup row>
-                <Label sm={4}> {T.translate(`${PREFIX}.form.description`)} </Label>
-                <Col sm={8}>
+                <Label sm={2}> {T.translate(`${PREFIX}.form.description`)} </Label>
+                <Col
+                  sm={9}
+                  className="when-then-value"
+                >
                   <textarea
                     value={this.state.description}
                     onChange={this.onDescriptionChange}
@@ -127,9 +130,13 @@ export default class CreateRule extends Component {
               </FormGroup>
               <FormGroup row>
                 <Label sm={2}> {T.translate(`commons.when`)} </Label>
-                <Col sm={10}>
+                <Col
+                  sm={9}
+                  className="when-then-value"
+                >
                   <textarea
                     value={this.state.when}
+                    placeholder={T.translate(`${PREFIX}.form.whenClausePlaceholder`)}
                     onChange={this.onConditionChange}
                     className="form-control"
                     row={15}>
@@ -138,7 +145,10 @@ export default class CreateRule extends Component {
               </FormGroup>
               <FormGroup row>
                 <Label sm={2}> {T.translate(`commons.then`)} </Label>
-                <Col sm={10}>
+                <Col
+                  sm={9}
+                  className="when-then-value"
+                >
                   <DSVEditor
                     values={this.state.then}
                     onChange={this.onRulesChange}
@@ -146,6 +156,9 @@ export default class CreateRule extends Component {
                   />
                 </Col>
               </FormGroup>
+              <p className="fields-required-text">
+                <i>{T.translate('features.RulesEngine.shared.allFieldsRequired')}</i>
+              </p>
             </Form>
           </Col>
         </Row>

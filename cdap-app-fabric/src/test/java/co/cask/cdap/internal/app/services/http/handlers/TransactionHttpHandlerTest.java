@@ -51,7 +51,7 @@ public class TransactionHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Transaction tx2 = txClient.startShort();
-    txClient.commit(tx2);
+    txClient.commitOrThrow(tx2);
     response = doPost("/v3/transactions/" + tx2.getWritePointer() + "/invalidate");
     Assert.assertEquals(409, response.getStatusLine().getStatusCode());
 
