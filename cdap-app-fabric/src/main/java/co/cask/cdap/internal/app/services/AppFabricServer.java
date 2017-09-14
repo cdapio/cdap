@@ -82,6 +82,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> servicesNames;
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
+  private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final ProgramLifecycleService programLifecycleService;
   private final RunRecordCorrectorService runRecordCorrectorService;
   private final SystemArtifactLoader systemArtifactLoader;
@@ -112,6 +113,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProgramRuntimeService programRuntimeService,
                          RunRecordCorrectorService runRecordCorrectorService,
                          ApplicationLifecycleService applicationLifecycleService,
+                         ProgramNotificationSubscriberService programNotificationSubscriberService,
                          ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
                          @Named("appfabric.services.names") Set<String> servicesNames,
@@ -134,6 +136,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.handlerHookNames = handlerHookNames;
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
+    this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.programLifecycleService = programLifecycleService;
     this.runRecordCorrectorService = runRecordCorrectorService;
     this.systemArtifactLoader = systemArtifactLoader;
@@ -160,6 +163,7 @@ public class AppFabricServer extends AbstractIdleService {
         systemArtifactLoader.start(),
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
+        programNotificationSubscriberService.start(),
         programLifecycleService.start(),
         runRecordCorrectorService.start(),
         pluginService.start(),
@@ -279,6 +283,7 @@ public class AppFabricServer extends AbstractIdleService {
     applicationLifecycleService.stopAndWait();
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
+    programNotificationSubscriberService.stopAndWait();
     programLifecycleService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     pluginService.stopAndWait();
