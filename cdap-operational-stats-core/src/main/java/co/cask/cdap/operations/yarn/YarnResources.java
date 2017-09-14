@@ -33,9 +33,10 @@ import java.util.List;
  */
 public class YarnResources extends AbstractYarnStats implements YarnResourcesMXBean {
   private static final Logger LOG = LoggerFactory.getLogger(YarnResources.class);
+  private static final int BYTES_PER_MB = 1024 * 1024;
 
-  private int totalMemory;
-  private int usedMemory;
+  private long totalMemory;
+  private long usedMemory;
   private int totalVCores;
   private int usedVCores;
 
@@ -55,17 +56,17 @@ public class YarnResources extends AbstractYarnStats implements YarnResourcesMXB
   }
 
   @Override
-  public int getTotalMemory() {
+  public long getTotalMemory() {
     return totalMemory;
   }
 
   @Override
-  public int getUsedMemory() {
+  public long getUsedMemory() {
     return usedMemory;
   }
 
   @Override
-  public int getFreeMemory() {
+  public long getFreeMemory() {
     return totalMemory - usedMemory;
   }
 
@@ -117,6 +118,9 @@ public class YarnResources extends AbstractYarnStats implements YarnResourcesMXB
         }
       }
     }
+    // YARN APIs return values in MBs. To be consistent with hbase, hdfs, cdap stats, return values in bytes
+    usedMemory *= BYTES_PER_MB;
+    totalMemory *= BYTES_PER_MB;
   }
 
   private void reset() {
