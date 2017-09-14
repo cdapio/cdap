@@ -18,7 +18,7 @@ import React, { Component, PropTypes } from 'react';
 import { Modal, ModalHeader, ModalBody, ModalFooter,FormGroup, Label, Input } from 'reactstrap';
 import isNil from 'lodash/isNil';
 import MouseTrap from 'mousetrap';
-
+import classnames from 'classnames';
 import T from 'i18n-react';
 
 const PREFIX = 'features.DataPrep.Directives.Parse.Parsers.EXCEL';
@@ -29,15 +29,18 @@ export default class ExcelModal extends Component {
     this.state = {
       sheetSource: 'sheetnumber',
       sheetName: null,
-      sheetNumber: 0
+      sheetNumber: 0,
+      firstRowHeader: false
     };
     this.numberTextBox = null;
     this.onSheetNumberChange = this.onSheetNumberChange.bind(this);
     this.onSheetNameChange = this.onSheetNameChange.bind(this);
     this.onSheetSourceChange = this.onSheetSourceChange.bind(this);
+    this.toggleSetFirstRow = this.toggleSetFirstRow.bind(this);
     this.isApplyDisabled = this.isApplyDisabled.bind(this);
     this.applyDirective = this.applyDirective.bind(this);
   }
+
   componentDidMount() {
     MouseTrap.bind('enter', this.applyDirective);
     if (this.numberTextBox) {
@@ -58,6 +61,7 @@ export default class ExcelModal extends Component {
     }
     return false;
   }
+
   onSheetNumberChange(e) {
     let value = parseInt(e.target.value, 10);
     if (value < 0) {
@@ -67,31 +71,39 @@ export default class ExcelModal extends Component {
       sheetNumber: parseInt(value, 10)
     });
   }
+
   onSheetNameChange(e) {
     this.setState({
       sheetName: e.target.value
     });
   }
+
   onSheetSourceChange(e) {
     this.setState({
       sheetSource: e.target.value
     });
   }
+
+  toggleSetFirstRow() {
+    this.setState({firstRowHeader: !this.state.firstRowHeader});
+  }
+
   applyDirective() {
     if (this.isApplyDisabled()) {
       return;
     }
     if (this.state.sheetSource === 'sheetnumber') {
-      this.props.onApply(this.state.sheetNumber.toString());
+      this.props.onApply(`"${this.state.sheetNumber.toString()}" ${this.state.firstRowHeader}`);
       this.props.toggle();
       return;
     }
     if (this.state.sheetSource === 'sheetname') {
-      this.props.onApply(this.state.sheetName);
+      this.props.onApply(`"${this.state.sheetName}" ${this.state.firstRowHeader}`);
       this.props.toggle();
       return;
     }
   }
+
   render() {
     return (
       <Modal
@@ -173,6 +185,21 @@ export default class ExcelModal extends Component {
                 null
             }
           </FormGroup>
+          <div className="optional-config">
+            <span
+              onClick={this.toggleSetFirstRow}
+            >
+              <span
+                className={classnames('fa', {
+                  'fa-square-o': !this.state.firstRowHeader,
+                  'fa-check-square': this.state.firstRowHeader
+                })}
+              />
+              <span>
+                {T.translate(`${PREFIX}.modal.firstRowHeader`)}
+              </span>
+            </span>
+          </div>
         </ModalBody>
         <ModalFooter>
           <button

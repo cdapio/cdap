@@ -704,6 +704,7 @@ features:
             label: Excel
             modal:
               description: Choose how you would like to specify the sheet in your Excel file
+              firstRowHeader: Set first row as header
               sheetNumberLabel: Sheet Number
               sheetNameLabel: Sheet Name
               sheetNameInputPlaceholder: Sheet Name
