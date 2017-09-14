@@ -291,7 +291,7 @@ public abstract class MessageTableTest {
     }
 
     executor.shutdown();
-    Assert.assertTrue(storeCompletion.await(5, TimeUnit.SECONDS));
+    Assert.assertTrue(storeCompletion.await(30, TimeUnit.SECONDS));
 
     // Read from each topic. Each topic should have two messages
     for (int i = 0; i < 2; i++) {
