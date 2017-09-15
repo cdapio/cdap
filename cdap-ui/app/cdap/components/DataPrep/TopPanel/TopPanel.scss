@@ -29,9 +29,18 @@ $dropdown_item_font_color: black;
     margin-left: 0;
     display: flex;
 
+    .left-title,
+    .action-buttons,
+    .content-switch {
+      flex: 0.4;
+    }
+    .content-switch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
     .left-title {
       padding-left: 0;
-      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
 
@@ -103,6 +112,7 @@ $dropdown_item_font_color: black;
       display: flex;
       margin-right: 20px;
       align-items: center;
+      justify-content: flex-end;
 
       .btn-primary {
         margin: 0 10px;
@@ -125,6 +135,9 @@ $dropdown_item_font_color: black;
           &:active,
           &hover {
             outline: none;
+          }
+          &:hover {
+            color: black;
           }
           .icon-bars {
             font-size: 24px;
@@ -161,6 +174,9 @@ $dropdown_item_font_color: black;
               outline: none;
               color: $dropdown_item_font_color;
             }
+          }
+          .btn.btn-secondary {
+            color: black;
           }
         }
       }

@@ -17,6 +17,7 @@
 const DataPrepActions = {
   setData: 'DATAPREP_SET_DATA',
   setDirectives: 'DATAPREP_SET_DIRECTIVES',
+  setProperties: 'DATAPREP_SET_PROPERTIES',
   setWorkspace: 'DATAPREP_SET_WORKSPACE',
   setWorkspaceId: 'DATAPREP_SET_WORKSPACE_ID',
   setInitialized: 'DATAPREP_SET_INITIALIZED',

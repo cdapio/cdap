@@ -45,7 +45,11 @@ var webpackConfig = {
       'whatwg-fetch',
       'react-vis',
       'clipboard',
-      'react-dnd'
+      'react-dnd',
+      'vega',
+      'vega-lite',
+      'vega-tooltip',
+      'cask-datavoyager'
     ]
   },
   output: {

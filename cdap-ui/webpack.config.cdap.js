@@ -36,6 +36,7 @@ var plugins = [
   }),
   new LodashModuleReplacementPlugin({
     shorthands: true,
+    collections: true,
     caching: true
   }),
   new webpack.optimize.DedupePlugin(),
@@ -74,6 +75,10 @@ var loaders = [
     loader: 'yml'
   },
   {
+    test: /\.json$/,
+    loader: 'json-loader'
+  },
+  {
     test: /\.css$/,
     loader: 'style-loader!css-loader!sass-loader'
   },
@@ -94,10 +99,10 @@ var loaders = [
   },
   {
     test: /\.(ttf|eot)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-    loader: 'file-loader'
+    loader: 'url-loader'
   },
   {
-    test: /\.svg$/,
+    test: /\.svg/,
     loader: 'svg-sprite?'+ JSON.stringify({
       prefixize: false
     })

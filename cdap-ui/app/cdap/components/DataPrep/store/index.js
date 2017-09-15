@@ -38,7 +38,8 @@ const defaultInitialState = {
   higherVersion: null,
   loading: false,
   singleWorkspaceMode: false,
-  workspaceInfo: null
+  workspaceInfo: null,
+  properties: {}
 };
 
 const errorInitialState = {
@@ -81,6 +82,16 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         })
       });
       break;
+    case DataPrepActions.setProperties: {
+      let properties = {
+        ...state.properties,
+        ...action.payload.properties
+      };
+      return {
+        ...state,
+        properties
+      };
+    }
     case DataPrepActions.setWorkspaceId:
       stateCopy = Object.assign({}, state, {
         workspaceId: action.payload.workspaceId,
@@ -95,6 +106,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         directives: action.payload.directives || [],
         data: action.payload.data || [],
         types: action.payload.types || {},
+        properties: action.payload.properties || {},
         initialized: true,
         loading: false,
         selectedHeaders: [],

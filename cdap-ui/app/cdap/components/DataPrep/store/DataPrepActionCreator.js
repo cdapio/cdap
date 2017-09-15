@@ -43,6 +43,14 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   }
 
   let workspaceId = store.workspaceId;
+  let properties = store.properties;
+  /*
+      This is because everytime we change the data there is a possibility that we
+      change the schema and with schema change the visualization is not guaranteed
+      to be correct. For now we just clear it. We should become smart enough to say if the
+      visualization is still good enough (with just data change)
+  */
+  properties.visualization = {};
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
@@ -51,6 +59,7 @@ export function execute(addDirective, shouldReset, hideLoading = false) {
   };
 
   let requestBody = directiveRequestBodyCreator(updatedDirectives);
+  requestBody.properties = properties;
 
   return Rx.Observable.create((observer) => {
     MyDataPrepApi.execute(params, requestBody)
@@ -94,6 +103,8 @@ function setWorkspaceRetry(params, observer, workspaceId) {
       }
       let directives = objectQuery(res, 'values', '0', 'recipe', 'directives') || [];
       let requestBody = directiveRequestBodyCreator(directives);
+      let properties = objectQuery(res, 'values', 0, 'properties');
+      requestBody.properties = properties;
 
       let workspaceUri = objectQuery(res, 'values', '0', 'properties', 'path');
       let workspaceInfo = objectQuery(res, 'values', '0');
@@ -111,7 +122,8 @@ function setWorkspaceRetry(params, observer, workspaceId) {
               directives,
               workspaceId,
               workspaceUri,
-              workspaceInfo
+              workspaceInfo,
+              properties
             }
           });
 
@@ -152,7 +164,31 @@ function setWorkspaceRetry(params, observer, workspaceId) {
     });
 }
 
+export function updateWorkspaceProperties() {
+  let {directives, workspaceId, properties} = DataPrepStore.getState().dataprep;
+  let namespace = NamespaceStore.getState().selectedNamespace;
+  let params = {
+    namespace,
+    workspaceId
+  };
+  let requestBody = directiveRequestBodyCreator(directives);
+  requestBody.properties = properties;
+  MyDataPrepApi
+    .execute(params, requestBody)
+    .subscribe(
+      () => {},
+      (err) => console.log('Error updating workspace visualization: ', err)
+    );
+}
+function checkAndUpdateExistingWorkspaceProperties() {
+  let {workspaceId} = DataPrepStore.getState().dataprep;
+  if (!workspaceId) {
+    return;
+  }
+  updateWorkspaceProperties();
+}
 export function setWorkspace(workspaceId) {
+  checkAndUpdateExistingWorkspaceProperties();
   let namespace = NamespaceStore.getState().selectedNamespace;
 
   let params = {
@@ -240,4 +276,15 @@ export function getWorkspaceList(workspaceId) {
         workspaceStream.subscribe();
       }
     });
+}
+
+export function setVisualizationState(state) {
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setProperties,
+    payload: {
+      properties: {
+        visualization: state
+      }
+    }
+  });
 }

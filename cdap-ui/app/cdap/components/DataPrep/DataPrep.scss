@@ -78,8 +78,11 @@ $toggle-btn-disabled-bg-color: #cccccc;
     height: calc(100vh - 184px);
 
     .dataprep-main {
-      padding: 0;
       height: 100%;
+      > .row {
+        margin: 0;
+        height: 100%;
+      }
     }
   }
 }
