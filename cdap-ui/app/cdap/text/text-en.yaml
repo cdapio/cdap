@@ -699,6 +699,7 @@ features:
               CONTROL_D: ^D
               CUSTOM: Custom Delimiter
               PIPE: Pipe
+              SPACE: Space
               TAB: Tab
           EXCEL:
             label: Excel

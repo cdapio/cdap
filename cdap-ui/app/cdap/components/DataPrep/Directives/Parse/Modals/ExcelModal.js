@@ -93,12 +93,12 @@ export default class ExcelModal extends Component {
       return;
     }
     if (this.state.sheetSource === 'sheetnumber') {
-      this.props.onApply(`"${this.state.sheetNumber.toString()}" ${this.state.firstRowHeader}`);
+      this.props.onApply(`'${this.state.sheetNumber.toString()}' ${this.state.firstRowHeader}`);
       this.props.toggle();
       return;
     }
     if (this.state.sheetSource === 'sheetname') {
-      this.props.onApply(`"${this.state.sheetName}" ${this.state.firstRowHeader}`);
+      this.props.onApply(`'${this.state.sheetName}' ${this.state.firstRowHeader}`);
       this.props.toggle();
       return;
     }
