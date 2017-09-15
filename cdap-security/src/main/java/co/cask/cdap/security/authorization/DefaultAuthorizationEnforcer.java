@@ -95,9 +95,10 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
     }
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
-    LOG.debug("Checking visibility of {} for principal {}.", difference, principal);
+    LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
     Set<? extends EntityId> moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
     visibleEntities.addAll(moreVisibleEntities);
+    LOG.trace("Getting {} as visible entities", visibleEntities);
     return Collections.unmodifiableSet(visibleEntities);
   }
 
