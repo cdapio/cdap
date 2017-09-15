@@ -666,6 +666,42 @@
   </property>
 
   <property>
+    <name>data.tx.changeset.count.limit</name>
+    <value>10000</value>
+    <description>
+      Hard limit for the number of entries in a transaction's change set;
+      if exceeded, the transaction fails.
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.changeset.count.warn.threshold</name>
+    <value>5000</value>
+    <description>
+      Soft limit for the number of entries in a transaction's change set;
+      if exceeded, a warning is logged.
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.changeset.size.limit</name>
+    <value>1000000</value>
+    <description>
+      Hard limit for the aggregate size in bytes of a transaction's change set;
+      if exceeded, the transaction fails.
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.changeset.size.warn.threshold</name>
+    <value>500000</value>
+    <description>
+      Soft limit for the aggregate size in bytes of a transaction's change set;
+      if exceeded, a warning is logged.
+    </description>
+  </property>
+
+  <property>
     <name>data.tx.client.count</name>
     <value>50</value>
     <description>
@@ -689,6 +725,15 @@
     <description>
       Name in discovery service for the transaction service
     </description>
+  </property>
+
+  <property>
+    <name>data.tx.grace.period</name>
+    <value>86400</value>
+    <description>
+      Time in seconds used to pad transaction maximum lifetime while pruning
+    </description>
+    <final>true</final>
   </property>
 
   <property>
@@ -777,19 +822,23 @@
   </property>
 
   <property>
-    <name>data.tx.grace.period</name>
-    <value>86400</value>
-    <description>
-      Time in seconds used to pad transaction maximum lifetime while pruning
-    </description>
-    <final>true</final>
-  </property>
-
-  <property>
     <name>data.tx.pruning.plugin.class</name>
     <value>co.cask.data2.txprune.DefaultHBaseTransactionPruningPlugin</value>
     <description>
       Class name for the default transaction pruning plugin
+    </description>
+  </property>
+
+  <property>
+    <name>data.tx.retain.client.id</name>
+    <value>committed</value>
+    <description>
+      Whether and how long to retain the client id of a transaction. Valid values are:
+      "off" to disable retention of the client id; "active" to retain the client id until
+      a transaction is committed; or "committed" to retain the client id as long as its
+      change set participates in conflict detection. Retaining the client id slightly
+      increases the memory footprint of the transaction service. Client ids are never
+      retained past a restart or fail-over of the transaction manager.
     </description>
   </property>
 
@@ -938,6 +987,14 @@
   </property>
 
   <property>
+    <name>dataset.service.boss.threads</name>
+    <value>1</value>
+    <description>
+      Number of Netty service boss threads for the dataset service
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.connection.backlog</name>
     <value>20000</value>
     <description>
@@ -954,10 +1011,10 @@
   </property>
 
   <property>
-    <name>dataset.service.boss.threads</name>
-    <value>1</value>
+    <name>dataset.service.output.dir</name>
+    <value>/datasets</value>
     <description>
-      Number of Netty service boss threads for the dataset service
+      Directory where all dataset modules archives are stored
     </description>
   </property>
 
@@ -966,14 +1023,6 @@
     <value>4</value>
     <description>
       Number of Netty service worker threads for the dataset service
-    </description>
-  </property>
-
-  <property>
-    <name>dataset.service.output.dir</name>
-    <value>/datasets</value>
-    <description>
-      Directory where all dataset modules archives are stored
     </description>
   </property>
 
