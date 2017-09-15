@@ -938,6 +938,38 @@
   </property>
 
   <property>
+    <name>dataset.service.connection.backlog</name>
+    <value>20000</value>
+    <description>
+      Maximum connection backlog of the dataset service
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.exec.threads</name>
+    <value>10</value>
+    <description>
+      Number of Netty service executor threads for the dataset service
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.boss.threads</name>
+    <value>1</value>
+    <description>
+      Number of Netty service boss threads for the dataset service
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.service.worker.threads</name>
+    <value>4</value>
+    <description>
+      Number of Netty service worker threads for the dataset service
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.output.dir</name>
     <value>/datasets</value>
     <description>

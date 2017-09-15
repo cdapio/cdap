@@ -381,12 +381,6 @@ public final class Constants {
       public static final String WORKER_THREADS = "dataset.service.worker.threads";
       public static final String OUTPUT_DIR = "dataset.service.output.dir";
 
-      // Defaults
-      public static final int DEFAULT_BACKLOG = 20000;
-      public static final int DEFAULT_EXEC_THREADS = 10;
-      public static final int DEFAULT_BOSS_THREADS = 1;
-      public static final int DEFAULT_WORKER_THREADS = 4;
-
       /**
        * Annotation for binding default dataset modules for the dataset service
        */
