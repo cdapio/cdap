@@ -16,6 +16,8 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.WorkflowAppWithLocalDataset;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramRuntimeService.RuntimeInfo;
@@ -30,10 +32,14 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.id.DatasetId;
+import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.HttpResponse;
 import org.junit.Assert;
@@ -41,7 +47,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -145,5 +154,66 @@ public class RunFixerServiceTest extends AppFabricTestBase {
                       return getProgramRuns(wordcountFlow1, ProgramRunStatus.FAILED).size();
                     }
                   }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testLocalDatasetDeleteion() throws Exception {
+    // Create App with Flow and the deploy
+    HttpResponse response = deploy(WorkflowAppWithLocalDataset.class,
+                                   Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+    final ProgramId workflow = new NamespaceId(TEST_NAMESPACE1)
+      .app(WorkflowAppWithLocalDataset.APP_NAME)
+      .workflow(WorkflowAppWithLocalDataset.WORKFLOW_NAME);
+
+    startProgram(workflow.toId(), ImmutableMap.of("dataset.*.keep.local", "true"));
+
+    // Wait until we have a COMPLETED run record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
+    // Get the RunRecord
+    List<RunRecord> runRecords = getProgramRuns(workflow.toId(), ProgramRunStatus.COMPLETED);
+
+    Assert.assertEquals(1, runRecords.size());
+
+    String pid = runRecords.get(0).getPid();
+
+    // Get the local dataset specifications
+    final Map<String, String> properties = ImmutableMap.of(Constants.AppFabric.WORKFLOW_LOCAL_DATASET_PROPERTY, "true");
+    Collection<DatasetSpecificationSummary> instances = datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1),
+                                                                                      properties);
+
+    Assert.assertEquals(1, instances.size());
+    DatasetSpecificationSummary summary = instances.iterator().next();
+    Assert.assertTrue(summary.getName().endsWith(pid));
+
+    // Update the dataset properties to remove keep.local so that local dataset deleter can delete it
+    Map<String, String> updatedProperties = new HashMap<>();
+    updatedProperties.putAll(summary.getProperties());
+    updatedProperties.remove(Constants.AppFabric.WORKFLOW_KEEP_LOCAL);
+    datasetFramework.updateInstance(new DatasetId(TEST_NAMESPACE1, summary.getName()),
+                                    DatasetProperties.of(updatedProperties));
+
+    // Start the local dataset deletion service now
+    CConfiguration testConf = CConfiguration.create();
+    // set threshold to 0 so that it will actually correct the record
+    testConf.set(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS, "1");
+    testConf.set(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS, "1");
+    new LocalRunFixerService(testConf, store, programStateWriter, programLifecycleService,
+                             runtimeService, namespaceAdmin, datasetFramework).startUp();
+
+    // Wait for the deletion of the local dataset
+    Tasks.waitFor(0, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return datasetFramework.getInstances(new NamespaceId(TEST_NAMESPACE1), properties).size();
+      }
+    }, 30, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
   }
 }
