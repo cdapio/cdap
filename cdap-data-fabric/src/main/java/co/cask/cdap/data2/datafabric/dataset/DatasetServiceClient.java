@@ -148,6 +148,9 @@ class DatasetServiceClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
+  /**
+   * Get the dataset instances which have the specified dataset properties.
+   */
   Collection<DatasetSpecificationSummary> getInstances(Map<String, String> properties)
     throws DatasetManagementException {
     HttpResponse response = doPut("datasets", GSON.toJson(properties));

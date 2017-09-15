@@ -222,17 +222,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   private Map<String, String> getDatasetProperties(HttpRequest request) {
+    Map<String, String> properties = new HashMap<>();
     ChannelBuffer content = request.getContent();
-
     if (content == ChannelBuffers.EMPTY_BUFFER) {
-      return new HashMap<>();
+      return properties;
     }
 
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-    try {
-      return GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-    } finally {
-      Closeables.closeQuietly(reader);
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
+    } catch (IOException e) {
+      // no-op since is happens during closing of the reader
     }
+    return properties;
   }
 }
