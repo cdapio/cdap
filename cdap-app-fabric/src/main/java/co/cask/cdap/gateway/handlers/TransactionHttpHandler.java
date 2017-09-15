@@ -212,6 +212,17 @@ public class TransactionHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  /**
+   * Trigger transaction pruning.
+   */
+  @Path("/transactions/prune/now")
+  @POST
+  public void pruneNow(HttpRequest request, HttpResponder responder) {
+    txClient.pruneNow();
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+
   @Path("/transactions/prune/regions/{region-name}")
   @GET
   public void getPruneInfo(HttpRequest request, HttpResponder responder, @PathParam("region-name") String regionName) {
