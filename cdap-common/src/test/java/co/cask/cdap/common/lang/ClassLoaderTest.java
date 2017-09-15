@@ -97,10 +97,10 @@ public class ClassLoaderTest {
     // Creates a CombineClassLoader with two delegates.
     // One allows "co.cask.cdap.api.app", the other allows "co.cask.cdap.api.annotation"
     ClassLoader parent = getClass().getClassLoader();
-    ClassLoader classLoader = new CombineClassLoader(null, ImmutableList.of(
+    ClassLoader classLoader = new CombineClassLoader(null,
       new PackageFilterClassLoader(parent, Predicates.equalTo(Application.class.getPackage().getName())),
       new PackageFilterClassLoader(parent, Predicates.equalTo(Beta.class.getPackage().getName()))
-    ));
+    );
 
     // Should be able to load classes from those two packages
     Assert.assertSame(ApplicationConfigurer.class, classLoader.loadClass(ApplicationConfigurer.class.getName()));

@@ -33,6 +33,7 @@ import co.cask.cdap.api.security.store.SecureStoreManager;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
@@ -57,8 +58,6 @@ import co.cask.cdap.proto.id.ProgramId;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.tephra.TransactionContext;
-import org.apache.tephra.TransactionFailureException;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -93,6 +92,7 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   private Resources mapperResources;
   private Resources reducerResources;
   private ProgramState state;
+  private MapReduceClassLoader mapReduceClassLoader;
 
   BasicMapReduceContext(Program program, ProgramOptions programOptions,
                         CConfiguration cConf,
@@ -305,6 +305,19 @@ final class BasicMapReduceContext extends AbstractContext implements MapReduceCo
   @Override
   public void localize(String name, URI uri, boolean archive) {
     resourcesToLocalize.put(name, new LocalizeResource(uri, archive));
+  }
+
+  @Override
+  protected ClassLoader createProgramInvocationClassLoader() {
+    if (mapReduceClassLoader == null) {
+      // This shouldn't happen. Just to prevent bug and be able to catch it in unit-test.
+      throw new IllegalStateException("The MapReduceClassLoader is not yet set");
+    }
+    return new WeakReferenceDelegatorClassLoader(mapReduceClassLoader);
+  }
+
+  void setMapReduceClassLoader(MapReduceClassLoader classLoader) {
+    this.mapReduceClassLoader = classLoader;
   }
 
   Map<String, LocalizeResource> getResourcesToLocalize() {

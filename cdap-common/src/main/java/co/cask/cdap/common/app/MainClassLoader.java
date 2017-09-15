@@ -38,7 +38,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,7 +109,7 @@ public class MainClassLoader extends InterceptableClassLoader {
     classpath.addAll(Arrays.asList(extraClasspath));
 
     ClassLoader filtered = new FilterClassLoader(classLoader, filter);
-    ClassLoader parent = new CombineClassLoader(classLoader.getParent(), Collections.singleton(filtered));
+    ClassLoader parent = new CombineClassLoader(classLoader.getParent(), filtered);
     return new MainClassLoader(classpath.toArray(new URL[classpath.size()]), parent);
   }
 

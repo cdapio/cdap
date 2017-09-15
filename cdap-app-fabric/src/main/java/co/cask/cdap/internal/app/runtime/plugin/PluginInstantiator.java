@@ -44,7 +44,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
@@ -446,8 +445,7 @@ public class PluginInstantiator implements Closeable {
        */
       PluginClassLoader parentPluginCL = classLoaders.get(new ClassLoaderKey(parentsOfParent, parentArtifact));
       ClassLoader parentCL =
-        new CombineClassLoader(parentPluginCL.getParent(),
-                               ImmutableList.of(parentPluginCL.getExportPackagesClassLoader()));
+        new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
       return new PluginClassLoader(key.artifact, unpackedDir, parentCL);
     }
   }

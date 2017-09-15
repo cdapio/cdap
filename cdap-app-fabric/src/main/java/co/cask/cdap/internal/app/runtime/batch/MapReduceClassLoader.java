@@ -95,9 +95,10 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   public MapReduceClassLoader() {
     this(new Parameters(), new TaskContextProviderFactory() {
       @Override
-      public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf) {
+      public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
+                                                 MapReduceClassLoader mapReduceClassLoader) {
         Preconditions.checkState(!MapReduceTaskContextProvider.isLocal(hConf), "Expected to be in distributed mode.");
-        return new DistributedMapReduceTaskContextProvider(cConf, hConf);
+        return new DistributedMapReduceTaskContextProvider(cConf, hConf, mapReduceClassLoader);
       }
     });
   }
@@ -113,8 +114,9 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     this(new Parameters(cConf, hConf,
                         programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
       @Override
-      public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf) {
-        return new MapReduceTaskContextProvider(injector);
+      public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
+                                                 MapReduceClassLoader mapReduceClassLoader) {
+        return new MapReduceTaskContextProvider(injector, mapReduceClassLoader);
       }
     });
   }
@@ -129,7 +131,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     this.taskContextProviderSupplier = new Supplier<MapReduceTaskContextProvider>() {
       @Override
       public MapReduceTaskContextProvider get() {
-        return contextProviderFactory.create(parameters.getCConf(), parameters.getHConf());
+        return contextProviderFactory.create(parameters.getCConf(), parameters.getHConf(), MapReduceClassLoader.this);
       }
     };
   }
@@ -328,6 +330,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     /**
      * Returns a new instance of {@link MapReduceTaskContextProvider}.
      */
-    MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf);
+    MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf,
+                                        MapReduceClassLoader mapReduceClassLoader);
   }
 }

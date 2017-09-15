@@ -25,8 +25,6 @@ public final class ProgramOptionConstants {
 
   public static final String TWILL_RUN_ID = "twillRunId";
 
-  public static final String PROGRAM_ID = "programId";
-
   public static final String PROGRAM_STATUS = "programStatus";
 
   public static final String PROGRAM_RUN_ID = "programRunId";
@@ -43,8 +41,6 @@ public final class ProgramOptionConstants {
 
   public static final String END_TIME = "endTime";
 
-  public static final String RETRY_COUNT = "retryCount";
-
   public static final String PROGRAM_NAME_IN_WORKFLOW = "programNameInWorkflow";
 
   public static final String WORKFLOW_TOKEN = "workflowToken";
@@ -60,8 +56,6 @@ public final class ProgramOptionConstants {
   public static final String SCHEDULE_NAME = "scheduleName";
 
   public static final String CRON_EXPRESSION = "cronExpression";
-
-  public static final String EVENT_NOTIFICATIONS = "eventNotifications";
 
   public static final String RUN_DATA_SIZE = "runDataSize";
 
@@ -99,6 +93,4 @@ public final class ProgramOptionConstants {
   public static final String PRINCIPAL = "principal";
 
   public static final String APP_PRINCIPAL_EXISTS = "appPrincipalExists";
-
-  public static final String KEYTAB_URI = "keytabURI";
 }

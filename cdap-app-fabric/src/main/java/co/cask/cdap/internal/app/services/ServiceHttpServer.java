@@ -300,26 +300,16 @@ public class ServiceHttpServer extends AbstractIdleService {
     };
   }
 
-  private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
+  private void initHandler(HttpServiceHandler handler, BasicHttpServiceContext serviceContext) throws Exception {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT, Object.class,
                                                                    handler, "initialize", HttpServiceContext.class);
-    try {
-      serviceContext.initializeProgram(handler, serviceContext, txCtrl, true);
-    } catch (Throwable t) {
-      LOG.error("Exception raised in HttpServiceHandler.initialize of class {}", handler.getClass(), t);
-      throw Throwables.propagate(t);
-    }
+    serviceContext.initializeProgram(handler, txCtrl, true);
   }
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     TransactionControl txCtrl = Transactions.getTransactionControl(TransactionControl.IMPLICIT,
                                                                    Object.class, handler, "destroy");
-    try {
-      serviceContext.destroyProgram(handler, serviceContext, txCtrl, true);
-    } catch (Throwable t) {
-      LOG.error("Exception raised in HttpServiceHandler.destroy of class {}", handler.getClass(), t);
-      // Don't propagate
-    }
+    serviceContext.destroyProgram(handler, txCtrl, true);
   }
 
   /**
@@ -482,7 +472,7 @@ public class ServiceHttpServer extends AbstractIdleService {
         });
     }
 
-    private HandlerContextPair createContextPair() {
+    private HandlerContextPair createContextPair() throws Exception {
       // Instantiate the user handler and injects Metrics and Dataset fields.
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
       BasicHttpServiceContext context = contextFactory.create(spec);

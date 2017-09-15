@@ -72,15 +72,9 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     LOG.debug("Starting Worker Program {}", program.getId());
 
     // Initialize worker
-    TransactionControl txControl = Transactions.getTransactionControl(
-      TransactionControl.EXPLICIT, Worker.class, worker, "initialize", WorkerContext.class);
-    try {
-      context.initializeProgram(worker, context, txControl, false);
-    } catch (LinkageError e) {
-      // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the initialization
-      // of the user program is missing dependencies (CDAP-2543)
-      throw new Exception(e.getMessage(), e);
-    }
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT, Worker.class,
+                                                                      worker, "initialize", WorkerContext.class);
+    context.initializeProgram(worker, txControl, false);
   }
 
   @Override
@@ -98,13 +92,10 @@ public class WorkerDriver extends AbstractExecutionThreadService {
     if (worker == null) {
       return;
     }
-    try {
-      TransactionControl txControl = Transactions.getTransactionControl(
-        TransactionControl.EXPLICIT, Worker.class, worker, "destroy");
-      context.destroyProgram(worker, context, txControl, false);
-    } finally {
-      context.close();
-    }
+    TransactionControl txControl = Transactions.getTransactionControl(TransactionControl.EXPLICIT,
+                                                                      Worker.class, worker, "destroy");
+    context.destroyProgram(worker, txControl, false);
+    context.close();
   }
 
   @Override

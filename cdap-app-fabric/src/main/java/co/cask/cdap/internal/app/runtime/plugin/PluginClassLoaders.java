@@ -22,7 +22,6 @@ import co.cask.cdap.common.lang.FilterClassLoader;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
@@ -55,7 +54,7 @@ public final class PluginClassLoaders {
   public static ClassLoader createFilteredPluginsClassLoader(Map<String, Plugin> plugins,
                                                              @Nullable PluginInstantiator pluginInstantiator) {
     if (plugins.isEmpty() || pluginInstantiator == null) {
-      return new CombineClassLoader(null, ImmutableList.<ClassLoader>of());
+      return new CombineClassLoader(null);
     }
 
     try {

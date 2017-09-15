@@ -18,11 +18,9 @@ package co.cask.cdap.app.runtime.spark.submit;
 
 
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.runtime.spark.SparkClassLoader;
 import co.cask.cdap.app.runtime.spark.SparkMainWrapper;
 import co.cask.cdap.app.runtime.spark.SparkRuntimeContext;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeEnv;
-import co.cask.cdap.app.runtime.spark.SparkRuntimeUtils;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -34,7 +32,6 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.spark.deploy.SparkSubmit;
-import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,7 +160,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
    * @param args arguments for the {@link SparkSubmit#main(String[])} method.
    */
   private void submit(SparkRuntimeContext runtimeContext, String[] args) {
-    Cancellable cancellable = SparkRuntimeUtils.setContextClassLoader(new SparkClassLoader(runtimeContext));
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(runtimeContext.getProgramInvocationClassLoader());
     try {
       LOG.debug("Calling SparkSubmit for {} {}: {}",
                 runtimeContext.getProgram().getId(), runtimeContext.getRunId(), Arrays.toString(args));
@@ -174,7 +171,7 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
       SparkSubmit.main(args);
       LOG.debug("SparkSubmit returned for {} {}", runtimeContext.getProgram().getId(), runtimeContext.getRunId());
     } finally {
-      cancellable.cancel();
+      ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }
 

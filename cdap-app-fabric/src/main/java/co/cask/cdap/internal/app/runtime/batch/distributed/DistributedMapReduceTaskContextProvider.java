@@ -51,8 +51,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   private final MapReduceContextConfig mapReduceContextConfig;
   private final LogAppenderInitializer logAppenderInitializer;
 
-  public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf) {
-    super(createInjector(cConf, hConf));
+  public DistributedMapReduceTaskContextProvider(CConfiguration cConf, Configuration hConf,
+                                                 MapReduceClassLoader mapReduceClassLoader) {
+    super(createInjector(cConf, hConf), mapReduceClassLoader);
 
     Injector injector = getInjector();
 

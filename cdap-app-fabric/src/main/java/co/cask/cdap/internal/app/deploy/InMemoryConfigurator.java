@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /**
@@ -156,7 +155,7 @@ public final class InMemoryConfigurator implements Configurator {
 
       try {
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(
-          new CombineClassLoader(null, Arrays.asList(app.getClass().getClassLoader(), getClass().getClassLoader())));
+          new CombineClassLoader(null, app.getClass().getClassLoader(), getClass().getClassLoader()));
         try {
           app.configure(configurer, new DefaultApplicationContext<>(appConfig));
         } finally {
