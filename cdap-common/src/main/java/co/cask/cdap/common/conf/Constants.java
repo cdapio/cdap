@@ -592,6 +592,7 @@ public final class Constants {
     public static final String DEFAULT_METRIC_V3_TABLE_PREFIX = "metrics.v3.table";
     public static final String METRICS_HBASE_MAX_SCAN_THREADS = "metrics.hbase.max.scan.threads";
     public static final String METRICS_HBASE_TABLE_SPLITS = "metrics.table.splits";
+    public static final String METRICS_TABLE_HBASE_SPLIT_POLICY = "metrics.table.hbase.split.policy";
 
     public static final int DEFAULT_TIME_SERIES_TABLE_ROLL_TIME = 3600;
 

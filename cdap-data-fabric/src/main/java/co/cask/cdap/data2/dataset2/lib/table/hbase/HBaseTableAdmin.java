@@ -29,10 +29,12 @@ import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.util.hbase.ColumnFamilyDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.CoprocessorManager;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.data2.util.hbase.HTableDescriptorBuilder;
 import co.cask.cdap.data2.util.hbase.TableDescriptorBuilder;
 import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.spi.hbase.ColumnFamilyDescriptor;
 import co.cask.cdap.spi.hbase.HBaseDDLExecutor;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
@@ -52,6 +54,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updatable {
   public static final String PROPERTY_SPLITS = "hbase.splits";
+  public static final String SPLIT_POLICY = "hbase.split.policy";
 
   private static final Gson GSON = new Gson();
 
@@ -125,6 +128,12 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
       splits = GSON.fromJson(splitsProperty, byte[][].class);
     }
 
+    // Disable split policy
+    String splitsPolicy = spec.getProperty(SPLIT_POLICY);
+    if (!Strings.isNullOrEmpty(splitsPolicy)) {
+      tdBuilder.addProperty(HTableDescriptor.SPLIT_POLICY, splitsPolicy);
+    }
+
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       ddlExecutor.createTableIfNotExists(tdBuilder.build(), splits);
       try {
@@ -149,7 +158,7 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
   }
 
   @Override
-  protected boolean needsUpdate(HTableDescriptor tableDescriptor) {
+  protected boolean needsUpdate(HTableDescriptor tableDescriptor, HTableDescriptorBuilder descriptorBuilder) {
     HColumnDescriptor columnDescriptor =
       tableDescriptor.getFamily(TableProperties.getColumnFamilyBytes(spec.getProperties()));
 
@@ -181,6 +190,16 @@ public class HBaseTableAdmin extends AbstractHBaseDataSetAdmin implements Updata
     } else if (specifiedReadlessIncrements && !supportsReadlessIncrements) {
       tableDescriptor.setValue(Table.PROPERTY_READLESS_INCREMENT, "true");
       supportsReadlessIncrements = true;
+      needUpgrade = true;
+    }
+
+
+    String splitsPolicy = spec.getProperty(SPLIT_POLICY);
+    // override using provided split policy
+    if (!Strings.isNullOrEmpty(splitsPolicy) &&
+      (tableDescriptor.getRegionSplitPolicyClassName() == null ||
+        !tableDescriptor.getRegionSplitPolicyClassName().equalsIgnoreCase(splitsPolicy))) {
+      descriptorBuilder.setValue(HTableDescriptor.SPLIT_POLICY, splitsPolicy);
       needUpgrade = true;
     }
 

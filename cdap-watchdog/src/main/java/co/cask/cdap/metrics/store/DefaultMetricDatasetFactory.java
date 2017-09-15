@@ -87,6 +87,9 @@ public class DefaultMetricDatasetFactory implements MetricDatasetFactory {
     // configuring pre-splits
     props.add(HBaseTableAdmin.PROPERTY_SPLITS,
               GSON.toJson(FactTable.getSplits(DefaultMetricStore.AGGREGATIONS.size())));
+    // Disable auto split
+    props.add(HBaseTableAdmin.SPLIT_POLICY,
+              cConf.get(Constants.Metrics.METRICS_TABLE_HBASE_SPLIT_POLICY));
 
     MetricsTable table = getOrCreateResolutionMetricsTable(v3TableName, props, resolution);
     return new FactTable(table, entityTable.get(), resolution, getRollTime(resolution));

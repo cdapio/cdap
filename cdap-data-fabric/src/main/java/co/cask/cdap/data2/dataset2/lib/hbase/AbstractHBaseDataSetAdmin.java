@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -133,13 +133,16 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
 
     try (HBaseDDLExecutor ddlExecutor = ddlExecutorFactory.get()) {
       HTableDescriptor tableDescriptor;
+      HTableDescriptorBuilder newDescriptor;
 
       try (HBaseAdmin admin = new HBaseAdmin(hConf)) {
         tableDescriptor = tableUtil.getHTableDescriptor(admin, tableId);
+        // create a new descriptor for the table update
+        newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
       }
 
       // update any table properties if necessary
-      boolean needUpdate = needsUpdate(tableDescriptor) || force;
+      boolean needUpdate = needsUpdate(tableDescriptor, newDescriptor) || force;
 
       // Get the cdap version from the table
       ProjectInfo.Version version = HBaseTableUtil.getVersion(tableDescriptor);
@@ -150,9 +153,6 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
                    "than current CDAP version '{}'", tableId, version, ProjectInfo.getVersion());
         return;
       }
-
-      // create a new descriptor for the table update
-      HTableDescriptorBuilder newDescriptor = tableUtil.buildHTableDescriptor(tableDescriptor);
 
       // Generate the coprocessor jar
       CoprocessorJar coprocessorJar = createCoprocessorJar();
@@ -234,7 +234,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
    *
    * @return true if the table descriptor is modified, that is, whether update is needed.
    */
-  protected abstract boolean needsUpdate(HTableDescriptor tableDescriptor);
+  protected abstract boolean needsUpdate(HTableDescriptor tableDescriptor, HTableDescriptorBuilder descriptorBuilder);
 
   /**
    * Holder for coprocessor information.
