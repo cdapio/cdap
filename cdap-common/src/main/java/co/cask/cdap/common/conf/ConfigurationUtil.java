@@ -16,8 +16,9 @@
 
 package co.cask.cdap.common.conf;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.common.io.Codec;
-import com.google.common.base.Charsets;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.conf.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,31 +37,39 @@ public final class ConfigurationUtil {
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationUtil.class);
 
   public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
-    String value = new String(codec.encode(obj), Charsets.UTF_8);
-    LOG.trace("Serializing {} {}", key, value);
-    conf.set(key, value);
+    byte[] encoded = codec.encode(obj);
+    LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
+    conf.set(key, Base64.encodeBase64String(encoded));
   }
 
   public static <T> T get(Configuration conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
-    LOG.trace("De-serializing {} {}", key, value);
-    // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
-    // skipped.
-    return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
+    if (value == null) {
+      LOG.trace("De-serializing {} with null value", key);
+      return codec.decode(null);
+    }
+
+    byte[] encoded = Base64.decodeBase64(value);
+    LOG.trace("De-serializing {} {}", key, Bytes.toStringBinary(encoded));
+    return codec.decode(encoded);
   }
 
   public static <T> void set(Map<String, String> conf, String key, Codec<T> codec, T obj) throws IOException {
-    String value = new String(codec.encode(obj), Charsets.UTF_8);
-    LOG.trace("Serializing {} {}", key, value);
-    conf.put(key, value);
+    byte[] encoded = codec.encode(obj);
+    LOG.trace("Serializing {} {}", key, Bytes.toStringBinary(encoded));
+    conf.put(key, Base64.encodeBase64String(encoded));
   }
 
   public static <T> T get(Map<String, String> conf, String key, Codec<T> codec) throws IOException {
     String value = conf.get(key);
-    LOG.trace("De-serializing {} {}", key, value);
-    // Using Latin-1 encoding so that all bytes can be encoded as string. UTF-8 has some invalid bytes that will get
-    // skipped.
-    return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
+    if (value == null) {
+      LOG.trace("De-serializing {} with null value", key);
+      return codec.decode(null);
+    }
+
+    byte[] encoded = Base64.decodeBase64(value);
+    LOG.trace("De-serializing {} {}", key, Bytes.toStringBinary(encoded));
+    return codec.decode(encoded);
   }
 
   /**
