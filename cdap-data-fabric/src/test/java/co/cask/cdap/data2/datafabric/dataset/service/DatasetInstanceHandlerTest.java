@@ -540,7 +540,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
       validateGet(getUrl("/data/datasets"), 200);
       validateGet(getUrl("nosuchnamespace", "/data/datasets"), 404);
       validateGet(getUrl("inval+d", "/data/datasets"), 400);
-      validatePut(getUrl("/data/datasets"), "", 405);
+      validatePut(getUrl("/data/datasets"), "", 200);
       validatePost(getUrl("/data/datasets"), "", 405);
 
       validateGet(getUrl("/data/datasets/nusuch"), 404);
