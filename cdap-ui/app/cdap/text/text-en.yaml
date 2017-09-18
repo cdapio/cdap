@@ -699,11 +699,13 @@ features:
               CONTROL_D: ^D
               CUSTOM: Custom Delimiter
               PIPE: Pipe
+              SPACE: Space
               TAB: Tab
           EXCEL:
             label: Excel
             modal:
               description: Choose how you would like to specify the sheet in your Excel file
+              firstRowHeader: Set first row as header
               sheetNumberLabel: Sheet Number
               sheetNameLabel: Sheet Name
               sheetNameInputPlaceholder: Sheet Name
