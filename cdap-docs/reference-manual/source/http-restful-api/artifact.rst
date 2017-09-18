@@ -59,7 +59,7 @@ Several optional headers may also be specified:
    * - **Artifact-Extends**
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
        Multiple parents can be given by separating them with a ``/``
-     - ``cdap-data-pipeline[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
+     - ``cdap-data-pipeline[3.2.0,5.0.0)/cdap-data-streams[3.2.0,5.0.0)``
    * - **Artifact-Plugins**
      - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
        This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
@@ -100,7 +100,7 @@ Example output (pretty-printed):
         "version": "|release|"
       },
       {
-        "name": "cdap-etl-realtime",
+        "name": "cdap-data-streams",
         "scope": "SYSTEM",
         "version": "|release|"
       },
@@ -715,11 +715,11 @@ as well as the class name. Example output (pretty-printed and reformatted to fit
       },
       {
         "artifact": {
-          "name": "cdap-etl-realtime",
+          "name": "cdap-data-streams",
           "scope": "SYSTEM",
           "version": "|release|"
         },
-        "className": "co.cask.cdap.etl.realtime.ETLRealtimeApplication"
+        "className": "co.cask.cdap.datastreams.DataStreamsApp"
       },
       . . .
       {
