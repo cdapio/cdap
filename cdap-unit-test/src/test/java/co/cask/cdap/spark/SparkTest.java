@@ -107,12 +107,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Unit-tests for testing Spark program.
  */
-public class SparkTestRun extends TestFrameworkTestBase {
+public class SparkTest extends TestFrameworkTestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
 
-  private static final Logger LOG = LoggerFactory.getLogger(SparkTestRun.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SparkTest.class);
 
   private static final String TEST_STRING_1 = "persisted data";
   private static final String TEST_STRING_2 = "distributed systems";
