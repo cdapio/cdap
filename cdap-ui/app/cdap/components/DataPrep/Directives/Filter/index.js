@@ -31,7 +31,7 @@ const PREFIX = 'features.DataPrep.Directives.Filter';
 
 const DIRECTIVES_MAP = {
   'KEEP': {
-    'EMPTY': 'filter-row-if-not-matched',
+    'EMPTY': 'filter-rows-on condition-false',
     'TEXTEXACTLY': 'filter-rows-on regex-not-match',
     'TEXTCONTAINS': 'filter-rows-on regex-not-match',
     'TEXTSTARTSWITH': 'filter-rows-on condition-false',
@@ -40,7 +40,7 @@ const DIRECTIVES_MAP = {
     'CUSTOMCONDITION': 'filter-rows-on condition-false'
   },
   'REMOVE': {
-    'EMPTY': 'filter-row-if-matched',
+    'EMPTY': 'filter-rows-on condition-true',
     'TEXTEXACTLY': 'filter-rows-on regex-match',
     'TEXTCONTAINS': 'filter-rows-on regex-match',
     'TEXTSTARTSWITH': 'filter-rows-on condition-true',
@@ -155,7 +155,7 @@ export default class FilterDirective extends Component {
 
     switch (this.state.selectedCondition) {
       case 'EMPTY':
-        directive = `${condition} ${column} ^\\s*$`;
+        directive = `${condition} ${column} == null || ${column} =~ "^\s*$"`;
         break;
       case 'TEXTCONTAINS':
         if (this.state.ignoreCase) {
@@ -225,7 +225,7 @@ export default class FilterDirective extends Component {
     return (
       <div>
         <div className="custom-condition-container">
-          <strong>{T.translate(`${PREFIX}.customconditionlabel`)}</strong>
+          <strong>{this.props.column}</strong>
           <div id="customConditionTooltip">
             <IconSVG
               name="icon-info-circle"
