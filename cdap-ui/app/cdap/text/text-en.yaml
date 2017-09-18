@@ -528,7 +528,6 @@ features:
           TEXTEXACTLY: value is
           TEXTREGEX: value matches regex
           TEXTSTARTSWITH: value starts with
-        customconditionlabel: 'equals to: '
         customconditiontooltiptitle: JEXL expressions
         customconditiontooltip: "A custom condition can be defined using JEXL expressions. For more details regarding JEXL, please refer to  "
         customconditiontooltiplink: JEXL Expressions
