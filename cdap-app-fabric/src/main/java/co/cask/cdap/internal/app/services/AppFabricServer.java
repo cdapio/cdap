@@ -83,7 +83,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final Set<String> handlerHookNames;
   private final StreamCoordinatorClient streamCoordinatorClient;
   private final ProgramLifecycleService programLifecycleService;
-  private final RunRecordCorrectorService runRecordCorrectorService;
+  private final RunFixerService runFixerService;
   private final SystemArtifactLoader systemArtifactLoader;
   private final PluginService pluginService;
   private final CoreSchedulerService coreSchedulerService;
@@ -110,7 +110,7 @@ public class AppFabricServer extends AbstractIdleService {
                          @Named(Constants.AppFabric.HANDLERS_BINDING) Set<HttpHandler> handlers,
                          @Nullable MetricsCollectionService metricsCollectionService,
                          ProgramRuntimeService programRuntimeService,
-                         RunRecordCorrectorService runRecordCorrectorService,
+                         RunFixerService runFixerService,
                          ApplicationLifecycleService applicationLifecycleService,
                          ProgramLifecycleService programLifecycleService,
                          StreamCoordinatorClient streamCoordinatorClient,
@@ -135,7 +135,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.applicationLifecycleService = applicationLifecycleService;
     this.streamCoordinatorClient = streamCoordinatorClient;
     this.programLifecycleService = programLifecycleService;
-    this.runRecordCorrectorService = runRecordCorrectorService;
+    this.runFixerService = runFixerService;
     this.systemArtifactLoader = systemArtifactLoader;
     this.pluginService = pluginService;
     this.appVersionUpgradeService = appVersionUpgradeService;
@@ -161,7 +161,7 @@ public class AppFabricServer extends AbstractIdleService {
         programRuntimeService.start(),
         streamCoordinatorClient.start(),
         programLifecycleService.start(),
-        runRecordCorrectorService.start(),
+        runFixerService.start(),
         pluginService.start(),
         coreSchedulerService.start()
       )
@@ -280,7 +280,7 @@ public class AppFabricServer extends AbstractIdleService {
     systemArtifactLoader.stopAndWait();
     notificationService.stopAndWait();
     programLifecycleService.stopAndWait();
-    runRecordCorrectorService.stopAndWait();
+    runFixerService.stopAndWait();
     pluginService.stopAndWait();
     if (appVersionUpgradeService != null) {
       appVersionUpgradeService.stopAndWait();

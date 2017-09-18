@@ -179,6 +179,9 @@ public final class Constants {
     public static final String MAPREDUCE_INCLUDE_CUSTOM_CLASSES = "mapreduce.include.custom.format.classes";
     public static final String MAPREDUCE_STATUS_REPORT_INTERVAL_SECONDS = "mapreduce.status.report.interval.seconds";
     public static final String PROGRAM_RUNID_CORRECTOR_INTERVAL_SECONDS = "app.program.runid.corrector.interval";
+    public static final String LOCAL_DATASET_DELETER_INTERVAL_SECONDS = "app.program.local.dataset.deleter.interval";
+    public static final String LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS
+      = "app.program.local.dataset.deleter.initial.delay";
     public static final String SYSTEM_ARTIFACTS_DIR = "app.artifact.dir";
     public static final String PROGRAM_EXTRA_CLASSPATH = "app.program.extra.classpath";
     public static final String SPARK_YARN_CLIENT_REWRITE = "app.program.spark.yarn.client.rewrite.enabled";
@@ -232,6 +235,18 @@ public final class Constants {
      * Name of the property used to identify whether the dataset is local or not.
      */
     public static final String WORKFLOW_LOCAL_DATASET_PROPERTY = "workflow.local.dataset";
+
+    public static final String WORKFLOW_NAMESPACE_NAME = "workflow.namespace.name";
+
+    public static final String WORKFLOW_APPLICATION_NAME = "workflow.application.name";
+
+    public static final String WORKFLOW_APPLICATION_VERSION = "workflow.application.version";
+
+    public static final String WORKFLOW_PROGRAM_NAME = "workflow.program.name";
+
+    public static final String WORKFLOW_RUN_ID = "workflow.run.id";
+
+    public static final String WORKFLOW_KEEP_LOCAL = "workflow.keep.local";
 
     /**
      * Configuration setting to localize extra jars to every program container and to be

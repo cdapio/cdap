@@ -20,18 +20,21 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.runtime.ProgramStateWriter;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import com.google.inject.Inject;
 
 /**
  * A local-mode only run record corrector that corrects run records once upon app fabric server startup.
  */
-public class LocalRunRecordCorrectorService extends AbstractRunRecordCorrectorService {
+public class LocalRunFixerService extends AbstractRunFixerService {
 
   @Inject
-  public LocalRunRecordCorrectorService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
-                                        ProgramLifecycleService programLifecycleService,
-                                        ProgramRuntimeService runtimeService) {
-    super(cConf, store, programStateWriter, programLifecycleService, runtimeService);
+  public LocalRunFixerService(CConfiguration cConf, Store store, ProgramStateWriter programStateWriter,
+                              ProgramLifecycleService programLifecycleService,
+                              ProgramRuntimeService runtimeService, NamespaceAdmin namespaceAdmin,
+                              DatasetFramework datasetFramework) {
+    super(cConf, store, programStateWriter, programLifecycleService, runtimeService, namespaceAdmin, datasetFramework);
   }
 
   @Override
