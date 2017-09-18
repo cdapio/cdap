@@ -60,10 +60,6 @@ $dropdown_item_font_color: black;
         padding: 0 10px;
         width: 100%;
 
-        &.upgrade {
-          width: calc(100% - 100px);
-        }
-
         .title {
           overflow: hidden;
           text-overflow: ellipsis;
@@ -249,7 +245,6 @@ $dropdown_item_font_color: black;
     }
 
     .action-buttons {
-      margin-top: 10px;
       width: 100%;
       display: inline-flex;
 

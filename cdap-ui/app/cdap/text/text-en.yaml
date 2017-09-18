@@ -84,6 +84,7 @@ commons:
   market: Cask Market
   milliSecondsShortLabel: ms
   nameLabel: Name
+  noLabel: No
   notAvailable: 'N/A'
   please: Please
   resource-center: Add Entity
@@ -96,6 +97,7 @@ commons:
   typeLabel: Type
   when: When
   wrangler: Cask Wrangler
+  yesLabel: Yes
 features:
   AboutPage:
     copyright:
@@ -789,38 +791,17 @@ features:
       collapse: Collapse the side panel
       expand: Expand the side panel
     TopPanel:
-      applyBtnLabel: Apply
       addToPipelineBtnLabel: Create a Pipeline
-      database: Database
-      databaseTitle: "Table: {name}"
-      file: File System
-      invalidFieldNameMessage: Invalid column name "{fieldName}"
-      invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
-      invalidFieldNameRemedies2: "You can try to "
+      applyBtnLabel: Apply
       cleanseLinkLabel: "cleanse "
-      invalidFieldNameRemedies3: column names.
-      kafka: Kafka
-      SchemaModal:
-        defaultErrorMessage: Error generating schema.
-      PipelineModal:
-        defaultErrorMessage: Error adding to pipeline
-      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
-      Tabs:
-        dataprep: Data
-        dataviz: Insights
-      title: Data Preparation
-      upgradeBtnLabel: Upgrade
-      upload: Local File Upload
-      viewSchemaBtnLabel: View Schema
       copyToCDAPDatasetBtn:
-        uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
         btnLabel: Ingest Data
-        createBtnLabel: Ingest Data
         copyingSteps:
           Step1: 'Preparing to copy...'
           Step1Error: 'Unable to copy data.'
           Step2: 'Submitting copy task...'
           Step2Error: 'Unable to submit copy task.'
+        createBtnLabel: Ingest Data
         description: You are creating a new Dataset, select a type and enter information about this new entity
         Form:
           datasetNameLabel: Dataset Name
@@ -839,6 +820,30 @@ features:
           parquet: Parquet
         modalTitle: Ingest Data
         monitorBtnLabel: Explore Data
+        uploadDisabledMessage: Ingesting data from a locally uploaded file is not supported.
+      database: Database
+      databaseTitle: "Table: {name}"
+      file: File System
+      invalidFieldNameMessage: Invalid column name "{fieldName}"
+      invalidFieldNameRemedies1: "Spaces and special characters other than - or _ are not allowed in column names."
+      invalidFieldNameRemedies2: "You can try to "
+      invalidFieldNameRemedies3: column names.
+      kafka: Kafka
+      PipelineModal:
+        defaultErrorMessage: Error adding to pipeline
+      realtimeDisabledTooltip: "Importing data from databases in realtime is currently not supported."
+      SchemaModal:
+        defaultErrorMessage: Error generating schema.
+      Tabs:
+        dataprep: Data
+        dataviz: Insights
+      title: Data Preparation
+      upgradeBtnLabel: Upgrade
+      UpgradeModal:
+        confirmation: Are you sure you want to upgrade Data Preparation?
+        modalHeader: Upgrade Data Preparation
+      upload: Local File Upload
+      viewSchemaBtnLabel: View Schema
       WorkspaceModal:
         create: Create
         createModalTitle: Create Workspace
@@ -882,6 +887,7 @@ features:
           password: Password
           port: Port
           required: Required
+          testConnection: Test Connection
           username: Username
         DatabaseOptions:
           install: "Install Driver: "
