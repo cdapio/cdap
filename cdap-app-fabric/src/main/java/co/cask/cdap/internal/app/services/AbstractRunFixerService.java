@@ -228,13 +228,13 @@ public class AbstractRunFixerService extends AbstractIdleService implements RunF
     localDatasetDeleterService = Executors.newScheduledThreadPool(1);
     long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
     if (interval <= 0) {
-      LOG.debug("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
+      LOG.warn("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
       interval = 3600L;
     }
 
     long initialDelay = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INITIAL_DELAY_SECONDS);
     if (initialDelay <= 0) {
-      LOG.debug("Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
+      LOG.warn("Invalid initial delay specified for the local dataset deleter {}. Setting it to 300 seconds.",
                 initialDelay);
       initialDelay = 300L;
     }
