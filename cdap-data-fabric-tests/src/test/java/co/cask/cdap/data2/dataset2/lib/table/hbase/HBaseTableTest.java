@@ -38,6 +38,8 @@ import co.cask.cdap.data2.dataset2.lib.table.BufferingTableTest;
 import co.cask.cdap.data2.increment.hbase.IncrementHandlerState;
 import co.cask.cdap.data2.increment.hbase98.IncrementHandler;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.data2.util.hbase.ConfigurationReader;
+import co.cask.cdap.data2.util.hbase.ConfigurationWriter;
 import co.cask.cdap.data2.util.hbase.HBaseDDLExecutorFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
@@ -125,8 +127,12 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     hBaseTableUtil = new HBaseTableUtilFactory(cConf, new SimpleNamespaceQueryAdmin()).get();
     // TODO: CDAP-1634 - Explore a way to not have every HBase test class do this.
     ddlExecutor = new HBaseDDLExecutorFactory(cConf, TEST_HBASE.getConfiguration()).get();
+    ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NamespaceId.SYSTEM));
     ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE1));
     ddlExecutor.createNamespaceIfNotExists(hBaseTableUtil.getHBaseNamespace(NAMESPACE2));
+
+    ConfigurationWriter writer = new ConfigurationWriter(TEST_HBASE.getConfiguration(), cConf);
+    writer.write(ConfigurationReader.Type.DEFAULT, cConf);
   }
 
   @AfterClass
