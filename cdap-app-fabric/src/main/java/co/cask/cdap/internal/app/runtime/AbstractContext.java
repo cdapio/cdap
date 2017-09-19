@@ -625,9 +625,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
           try {
             //noinspection unchecked
             program.initialize((T) AbstractContext.this);
-          } catch (LinkageError e) {
-            // Need to wrap LinkageError. Otherwise, listeners of this Guava Service may not be called if the
-            // initialization of the user program is missing dependencies (CDAP-2543)
+          } catch (Error e) {
+            // Need to wrap Error. Otherwise, listeners of this Guava Service may not be called if the
+            // initialization of the user program is missing dependencies (CDAP-2543).
+            // Guava 15.0+ have this condition fixed, hence wrapping is no longer needed if upgrade to later Guava.
             throw new Exception(e.getMessage(), e);
           }
         }
